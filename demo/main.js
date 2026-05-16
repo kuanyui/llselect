@@ -194,6 +194,13 @@ selBottom.setItems(COUNTRIES)
   }
 }
 
+// Inject data.js content into the collapsible <details> at the top.
+{
+  const dataSrc = await (await fetch('./data.js')).text()
+  const target = document.getElementById('data-source')
+  if (target) target.innerHTML = highlightJs(dataSrc)
+}
+
 // Minimal JS syntax highlighter. Tokenises left-to-right with a small set of
 // patterns; HTML-escapes everything for safety. Good enough for the curated
 // snippets shown here - not a real JS parser. Output uses .hl-* classes

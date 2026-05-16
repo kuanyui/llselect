@@ -134,12 +134,70 @@ pre[data-demo] code {
   border-bottom: 1px solid #ddd;
   margin-bottom: 1rem;
   z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
 
 .theme-picker label {
   font-size: 0.9rem;
   color: #555;
-  margin-right: 0.5rem;
+  align-self: center;
+}
+
+#data-panel {
+  position: relative;            /* anchor for the floating <pre> */
+  margin-left: auto;             /* push to the right end of the bar */
+  font-size: 0.85rem;
+}
+
+#data-panel > summary {
+  cursor: pointer;
+  user-select: none;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #888;
+  border-radius: 4px;
+  background: #fafafa;
+  color: #333;
+  list-style: none;             /* hide default disclosure triangle */
+}
+
+#data-panel > summary::-webkit-details-marker { display: none; }
+#data-panel > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  transition: transform 0.15s;
+}
+#data-panel[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+#data-panel[open] > pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+#data-panel[open] > pre {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  width: min(40rem, 90vw);
+  max-height: 60vh;
+  background: #282c34;
+  color: #abb2bf;
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  overflow: auto;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
 }
 
 /* 4.4 CSS-only arrow demo - this section deliberately bypasses the theme's
