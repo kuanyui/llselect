@@ -199,6 +199,12 @@ export abstract class LLSelectBase<T = unknown> {
     // Caller-passed element becomes root (preserves its id / external refs).
     this.rootEl = targetEl
     this.rootEl.classList.add(this.classIdMap.rootClass)
+    // Opt the select subtree out of browser scroll-anchoring. Without this,
+    // showing/hiding the listbox on first open after a page load can trigger
+    // a window scroll as the browser tries to keep an anchor element in
+    // place. The property excludes this element and all descendants from
+    // being eligible anchor nodes.
+    this.rootEl.style.overflowAnchor = 'none'
     this.rootEl.replaceChildren()
 
     this.comboboxEl = this.buildComboboxEl()
