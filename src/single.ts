@@ -41,7 +41,7 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
   constructor(targetEl: HTMLElement, settings?: LLSelectSingleSettingsInput<T>) {
     super(targetEl, settings)
     this.onChange = settings?.onChange
-    this.renderCombobox()
+    this.renderTrigger()
   }
 
   /** Return the currently selected value, or `undefined` if none. */
@@ -59,7 +59,7 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
   public setChosen(option: T | undefined): void {
     if (this.areEqual(option, this.chosen)) return
     this.chosen = option
-    this.renderCombobox()
+    this.renderTrigger()
     this.fireChange()
   }
 
@@ -97,7 +97,7 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
     const stillPresent = this.options.some(o => this.settings.compareFn(o, current))
     if (!stillPresent) {
       this.chosen = undefined
-      this.renderCombobox()
+      this.renderTrigger()
       this.fireChange()
     }
   }

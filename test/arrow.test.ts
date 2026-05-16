@@ -11,31 +11,31 @@ function mount(): HTMLElement {
   return el
 }
 
-test('combobox starts with data-state="closed"', () => {
+test('trigger starts with data-state="closed"', () => {
   const sel = new LLSelectSingle<string>(mount())
-  assert.equal(sel.comboboxEl.getAttribute('data-state'), 'closed')
+  assert.equal(sel.triggerEl.getAttribute('data-state'), 'closed')
 })
 
-test('combobox data-state toggles open/closed', () => {
+test('trigger data-state toggles open/closed', () => {
   const sel = new LLSelectSingle<string>(mount())
   sel.setOptions(['a'])
   sel.open()
-  assert.equal(sel.comboboxEl.getAttribute('data-state'), 'open')
+  assert.equal(sel.triggerEl.getAttribute('data-state'), 'open')
   sel.close()
-  assert.equal(sel.comboboxEl.getAttribute('data-state'), 'closed')
+  assert.equal(sel.triggerEl.getAttribute('data-state'), 'closed')
 })
 
-test('combobox has content + arrow slots', () => {
+test('trigger has content + arrow slots', () => {
   const sel = new LLSelectSingle<string>(mount())
   assert.ok(sel.contentEl)
-  assert.ok(sel.contentEl.classList.contains('llselect-combobox-content'))
-  const arrow = sel.comboboxEl.querySelector('.llselect-combobox-arrow')
+  assert.ok(sel.contentEl.classList.contains('llselect-trigger-content'))
+  const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')
   assert.ok(arrow)
 })
 
 test('renderArrow default null: arrow slot is empty', () => {
   const sel = new LLSelectSingle<string>(mount())
-  const arrow = sel.comboboxEl.querySelector('.llselect-combobox-arrow')
+  const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')
   assert.ok(arrow)
   assert.equal(arrow.children.length, 0)
 })
@@ -49,7 +49,7 @@ test('renderArrow returning an element appends it to the arrow slot', () => {
       return el
     },
   })
-  const arrow = sel.comboboxEl.querySelector('.llselect-combobox-arrow')
+  const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')
   assert.ok(arrow)
   assert.equal(arrow.children.length, 1)
   assert.equal(arrow.querySelector('#my-arrow')?.textContent, '▼')
@@ -79,7 +79,7 @@ test('renderArrow returning null leaves the slot empty', () => {
       return returnNull ? null : document.createElement('span')
     },
   })
-  const arrow = sel.comboboxEl.querySelector('.llselect-combobox-arrow')!
+  const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')!
   assert.equal(arrow.children.length, 0)
   returnNull = false
   sel.setOptions(['a'])
@@ -100,7 +100,7 @@ test('contentEl receives placeholder/chosen text (arrow slot preserved)', () => 
   sel.setChosen('a')
   assert.equal(sel.contentEl.textContent, 'a')
   // Arrow slot must still be present after the content change.
-  assert.ok(sel.comboboxEl.querySelector('.survive'))
+  assert.ok(sel.triggerEl.querySelector('.survive'))
 })
 
 // --- icon helpers --------------------------------------------------

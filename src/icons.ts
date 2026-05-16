@@ -1,6 +1,6 @@
 // Opt-in icon helpers. None of these is used by the library by default; pass
 // them via `settings.renderArrow` if you want a built-in dropdown arrow.
-// All paths use fill="currentColor" so they inherit the combobox text color
+// All paths use fill="currentColor" so they inherit the trigger text color
 // (light/dark themes "just work").
 
 const SVG_NS = 'http://www.w3.org/2000/svg'

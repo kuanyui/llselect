@@ -1,4 +1,4 @@
-// KeyboardEvent -> action mapping for the combobox.
+// KeyboardEvent -> action mapping for the trigger element.
 // Pure logic so it can be tested without a DOM.
 
 /**

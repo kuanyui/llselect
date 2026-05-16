@@ -134,7 +134,7 @@ test('LLSelectSingle.open() applies positioner; close() removes it', () => {
   const mount = document.getElementById('mount')!
   const sel = new LLSelectSingle<string>(mount)
   sel.setOptions(['a', 'b'])
-  withMockedRect(sel.comboboxEl, { top: 0, left: 0, right: 200, bottom: 30, width: 200, height: 30 })
+  withMockedRect(sel.triggerEl, { top: 0, left: 0, right: 200, bottom: 30, width: 200, height: 30 })
 
   sel.open()
   assert.equal(sel.listboxEl.hidden, false)
@@ -238,7 +238,7 @@ test('positioner does NOT call onHide when anchor is inside its scroll container
   p.detach()
 })
 
-test('LLSelectSingle auto-closes when combobox is scrolled out of its scroll container', () => {
+test('LLSelectSingle auto-closes when trigger is scrolled out of its scroll container', () => {
   setupDom('<!doctype html><html><body><div id="container" style="overflow-y:auto;height:200px;"><div id="mount"></div></div></body></html>')
   const container = document.getElementById('container')!
   const mount = document.getElementById('mount')!
@@ -246,30 +246,30 @@ test('LLSelectSingle auto-closes when combobox is scrolled out of its scroll con
 
   const sel = new LLSelectSingle<string>(mount)
   sel.setOptions(['a', 'b'])
-  withMockedRect(sel.comboboxEl, { top: 150, left: 0, right: 200, bottom: 180, width: 200, height: 30 })
+  withMockedRect(sel.triggerEl, { top: 150, left: 0, right: 200, bottom: 180, width: 200, height: 30 })
   sel.open()
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'true')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
 
   // Combobox is scrolled above the container's visible area.
-  withMockedRect(sel.comboboxEl, { top: 50, left: 0, right: 200, bottom: 80, width: 200, height: 30 })
+  withMockedRect(sel.triggerEl, { top: 50, left: 0, right: 200, bottom: 80, width: 200, height: 30 })
   window.dispatchEvent(new Event('scroll'))
 
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'false')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
 })
 
-test('LLSelectSingle auto-closes when combobox scrolls fully out of viewport', () => {
+test('LLSelectSingle auto-closes when trigger scrolls fully out of viewport', () => {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
   const mount = document.getElementById('mount')!
   const sel = new LLSelectSingle<string>(mount)
   sel.setOptions(['a', 'b'])
 
-  withMockedRect(sel.comboboxEl, { top: 100, left: 0, right: 200, bottom: 130, width: 200, height: 30 })
+  withMockedRect(sel.triggerEl, { top: 100, left: 0, right: 200, bottom: 130, width: 200, height: 30 })
   sel.open()
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'true')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
 
   // Anchor moves fully above the viewport (e.g. user scrolled it out of view).
-  withMockedRect(sel.comboboxEl, { top: -100, left: 0, right: 200, bottom: -70, width: 200, height: 30 })
+  withMockedRect(sel.triggerEl, { top: -100, left: 0, right: 200, bottom: -70, width: 200, height: 30 })
   window.dispatchEvent(new Event('scroll'))
 
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'false')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
 })

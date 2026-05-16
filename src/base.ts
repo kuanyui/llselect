@@ -23,7 +23,7 @@ import {
 export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
 
 /**
- * Function that produces the combobox's arrow element (typically a dropdown
+ * Function that produces the trigger's arrow element (typically a dropdown
  * chevron or triangle). Called by the library when the arrow may need to
  * change - including on every open/close - so the returned element can vary
  * with `isOpen`. Return `null` to render no arrow for that state.
@@ -38,7 +38,7 @@ export type LLSelectArrowRenderer = (state: { isOpen: boolean }) => HTMLElement 
 export interface LLSelectBaseSettings<T> {
   /** Prefix used for every CSS class and DOM id the library generates. */
   cssClassPrefix: string
-  /** Text shown in the combobox when nothing is selected. */
+  /** Text shown in the trigger when nothing is selected. */
   placeholder: string
   /**
    * Equality predicate for option values. Required for non-primitive `T`
@@ -68,12 +68,12 @@ export type LLSelectBaseSettingsInput<T> = Partial<LLSelectBaseSettings<T>>
 export interface LLSelectClassIdMap {
   /** Class on `rootEl` (the caller-passed mount element). */
   rootClass: string
-  /** Class on `comboboxEl` (the interactive trigger, `role="combobox"`). */
-  comboboxClass: string
+  /** Class on `triggerEl` (the interactive trigger, `role="combobox"`). */
+  triggerClass: string
   /** Class on the inner span where content (text/tags) is rendered. */
-  comboboxContentClass: string
+  triggerContentClass: string
   /** Class on the inner span where the optional dropdown arrow lives. */
-  comboboxArrowClass: string
+  triggerArrowClass: string
   /** Class on `listboxEl` (the popup, `role="listbox"`). */
   listboxClass: string
   /** Class on every option element (`role="option"`) inside the listbox. */
@@ -86,13 +86,13 @@ export interface LLSelectClassIdMap {
   /**
    * Class added to `rootEl` while the listbox is open. Use it as a CSS hook
    * for open-state styling (also available as `[data-state='open']` on the
-   * combobox).
+   * trigger).
    */
   openClass: string
-  /** DOM `id` of `comboboxEl`. Unique across instances. */
-  comboboxId: string
+  /** DOM `id` of `triggerEl`. Unique across instances. */
+  triggerId: string
   /**
-   * DOM `id` of `listboxEl`. Unique across instances. Used by the combobox's
+   * DOM `id` of `listboxEl`. Unique across instances. Used by the trigger's
    * `aria-controls` attribute.
    */
   listboxId: string
@@ -111,14 +111,14 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
   const uniq = `${prefix}${++instanceCounter}`
   return {
     rootClass: `${prefix}-root`,
-    comboboxClass: `${prefix}-combobox`,
-    comboboxContentClass: `${prefix}-combobox-content`,
-    comboboxArrowClass: `${prefix}-combobox-arrow`,
+    triggerClass: `${prefix}-trigger`,
+    triggerContentClass: `${prefix}-trigger-content`,
+    triggerArrowClass: `${prefix}-trigger-arrow`,
     listboxClass: `${prefix}-listbox`,
     optionClass: `${prefix}-option`,
     optionFocusedClass: `${prefix}-option-focused`,
     openClass: `${prefix}-open`,
-    comboboxId: `${uniq}-combobox`,
+    triggerId: `${uniq}-trigger`,
     listboxId: `${uniq}-popup`,
   }
 }
@@ -128,7 +128,7 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
  * positioning, keyboard navigation, lazy listbox rendering, and outside-click
  * handling. Subclasses (`LLSelectSingle`, `LLSelectMultiple`) own
  * chosen-state, decide what happens on option click, and customise the
- * combobox text via `renderContent`.
+ * trigger text via `renderContent`.
  *
  * @typeParam T - option value type. Use `unknown` (default) only when you
  *   intend to narrow inside templates / handlers; usually pass a concrete
@@ -146,9 +146,9 @@ export abstract class LLSelectBase<T = unknown> {
    * click, and keydown events; carries `aria-expanded`, `aria-controls`,
    * `aria-activedescendant`, and `data-state="open|closed"`.
    */
-  public readonly comboboxEl: HTMLElement
+  public readonly triggerEl: HTMLElement
   /**
-   * Inner span inside the combobox where text/tags are written.
+   * Inner span inside the trigger where text/tags are written.
    * Subclasses' `renderContent` writes here so the sibling arrow slot is
    * preserved across re-renders.
    */
@@ -181,7 +181,7 @@ export abstract class LLSelectBase<T = unknown> {
 
   /**
    * @param targetEl - mount element. Becomes `rootEl`; its existing children
-   *   are wiped and replaced with the combobox + listbox structure. Pre-set
+   *   are wiped and replaced with the trigger + listbox structure. Pre-set
    *   classes / id / data-* attributes on this element are preserved.
    * @param settings - optional partial settings. Missing fields use defaults
    *   ({@link LLSelectBaseSettings}).
@@ -207,34 +207,34 @@ export abstract class LLSelectBase<T = unknown> {
     this.rootEl.style.overflowAnchor = 'none'
     this.rootEl.replaceChildren()
 
-    this.comboboxEl = this.buildComboboxEl()
-    this.contentEl = this.comboboxEl.querySelector(`.${this.classIdMap.comboboxContentClass}`) as HTMLElement
-    this.arrowEl = this.comboboxEl.querySelector(`.${this.classIdMap.comboboxArrowClass}`) as HTMLElement
+    this.triggerEl = this.buildTriggerEl()
+    this.contentEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerContentClass}`) as HTMLElement
+    this.arrowEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerArrowClass}`) as HTMLElement
     this.listboxEl = this.buildListboxEl()
     this.listboxEl.hidden = true
     this.listboxEl.style.overflowY = 'auto'
-    this.rootEl.append(this.comboboxEl, this.listboxEl)
+    this.rootEl.append(this.triggerEl, this.listboxEl)
 
-    this.comboboxEl.addEventListener('click', () => this.toggle())
-    this.comboboxEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
+    this.triggerEl.addEventListener('click', () => this.toggle())
+    this.triggerEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
   }
 
   /**
    * Open the listbox. Builds option elements lazily, attaches the positioner
-   * (which auto-closes if the combobox is scrolled out of view), wires the
+   * (which auto-closes if the trigger is scrolled out of view), wires the
    * outside-click handler, and moves keyboard focus into the option list.
    * No-op if already open.
    */
   public open(): void {
     if (this.isOpen) return
     this.isOpen = true
-    this.comboboxEl.setAttribute('aria-expanded', 'true')
-    this.comboboxEl.setAttribute('data-state', 'open')
+    this.triggerEl.setAttribute('aria-expanded', 'true')
+    this.triggerEl.setAttribute('data-state', 'open')
     this.rootEl.classList.add(this.classIdMap.openClass)
     this.listboxEl.hidden = false
     this.refreshArrow()
     this.renderListbox()
-    this.positioner = createPositioner(this.comboboxEl, this.listboxEl, {
+    this.positioner = createPositioner(this.triggerEl, this.listboxEl, {
       onHide: () => this.close(),
     })
     this.attachOutsideClick()
@@ -249,8 +249,8 @@ export abstract class LLSelectBase<T = unknown> {
   public close(): void {
     if (!this.isOpen) return
     this.isOpen = false
-    this.comboboxEl.setAttribute('aria-expanded', 'false')
-    this.comboboxEl.setAttribute('data-state', 'closed')
+    this.triggerEl.setAttribute('aria-expanded', 'false')
+    this.triggerEl.setAttribute('data-state', 'closed')
     this.rootEl.classList.remove(this.classIdMap.openClass)
     this.positioner?.detach()
     this.positioner = undefined
@@ -260,7 +260,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.optionEls = []
     this.focusedEl = undefined
     this.focusedIndex = -1
-    this.comboboxEl.removeAttribute('aria-activedescendant')
+    this.triggerEl.removeAttribute('aria-activedescendant')
     this.refreshArrow()
     this.onClosed()
   }
@@ -304,20 +304,20 @@ export abstract class LLSelectBase<T = unknown> {
   protected afterOptionsChange(): void {}
 
   /**
-   * Orchestrator that re-renders both the combobox content slot and the
+   * Orchestrator that re-renders both the trigger's content slot and the
    * arrow slot. Subclasses normally override {@link renderContent}, not
    * this. Call this from subclass code when both slots need to refresh
    * together (constructor, post-state-change, etc.).
    */
-  protected renderCombobox(): void {
+  protected renderTrigger(): void {
     this.renderContent()
     this.refreshArrow()
   }
 
   /**
-   * Write the combobox's content slot. Override in subclasses to display the
+   * Write the trigger's content slot. Override in subclasses to display the
    * chosen value(s); default writes the placeholder. Always write to
-   * `this.contentEl` (not `this.comboboxEl`) so the sibling arrow slot is
+   * `this.contentEl` (not `this.triggerEl`) so the sibling arrow slot is
    * preserved.
    */
   protected renderContent(): void {
@@ -366,7 +366,7 @@ export abstract class LLSelectBase<T = unknown> {
    */
   protected createOptionEl(option: T, index: number): HTMLElement {
     const el = document.createElement('div')
-    el.id = `${this.classIdMap.comboboxId}-opt${index}`
+    el.id = `${this.classIdMap.triggerId}-opt${index}`
     el.className = this.classIdMap.optionClass
     el.setAttribute('role', 'option')
     el.textContent = this.templateOption(option)
@@ -424,11 +424,11 @@ export abstract class LLSelectBase<T = unknown> {
     if (i >= 0 && i < this.optionEls.length) {
       const el = this.optionEls[i]!
       el.classList.add(this.classIdMap.optionFocusedClass)
-      this.comboboxEl.setAttribute('aria-activedescendant', el.id)
+      this.triggerEl.setAttribute('aria-activedescendant', el.id)
       this.focusedEl = el
       ensureVisibleInScroll(el, this.listboxEl)
     } else {
-      this.comboboxEl.removeAttribute('aria-activedescendant')
+      this.triggerEl.removeAttribute('aria-activedescendant')
     }
   }
 
@@ -500,10 +500,10 @@ export abstract class LLSelectBase<T = unknown> {
     }
   }
 
-  private buildComboboxEl(): HTMLElement {
+  private buildTriggerEl(): HTMLElement {
     const el = document.createElement('div')
-    el.id = this.classIdMap.comboboxId
-    el.className = this.classIdMap.comboboxClass
+    el.id = this.classIdMap.triggerId
+    el.className = this.classIdMap.triggerClass
     el.setAttribute('role', 'combobox')
     el.setAttribute('tabindex', '0')
     el.setAttribute('aria-controls', this.classIdMap.listboxId)
@@ -512,9 +512,9 @@ export abstract class LLSelectBase<T = unknown> {
     el.setAttribute('data-state', 'closed')
     // Two child slots: content (text/tags) and arrow (optional icon).
     const content = document.createElement('span')
-    content.className = this.classIdMap.comboboxContentClass
+    content.className = this.classIdMap.triggerContentClass
     const arrow = document.createElement('span')
-    arrow.className = this.classIdMap.comboboxArrowClass
+    arrow.className = this.classIdMap.triggerArrowClass
     el.append(content, arrow)
     return el
   }

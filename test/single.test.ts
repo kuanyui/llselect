@@ -10,19 +10,19 @@ function mount(): HTMLElement {
   return el
 }
 
-test('initial state shows placeholder in combobox', () => {
+test('initial state shows placeholder in trigger', () => {
   const sel = new LLSelectSingle<string>(mount(), { placeholder: 'Pick one' })
-  assert.equal(sel.comboboxEl.textContent, 'Pick one')
+  assert.equal(sel.triggerEl.textContent, 'Pick one')
   assert.equal(sel.getChosen(), undefined)
 })
 
-test('setChosen updates state, combobox label, and fires onChange', () => {
+test('setChosen updates state, trigger label, and fires onChange', () => {
   const fired: Array<string | undefined> = []
   const sel = new LLSelectSingle<string>(mount(), { onChange: v => fired.push(v) })
   sel.setOptions(['a', 'b', 'c'])
   sel.setChosen('b')
   assert.equal(sel.getChosen(), 'b')
-  assert.equal(sel.comboboxEl.textContent, 'b')
+  assert.equal(sel.triggerEl.textContent, 'b')
   assert.deepEqual(fired, ['b'])
 })
 
@@ -45,14 +45,14 @@ test('open renders one option element per option', () => {
   assert.equal(opts[2]?.textContent, 'z')
 })
 
-test('clicking combobox toggles open state', () => {
+test('clicking trigger toggles open state', () => {
   const sel = new LLSelectSingle<string>(mount())
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'false')
-  sel.comboboxEl.click()
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'true')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
+  sel.triggerEl.click()
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
   assert.ok(sel.rootEl.classList.contains('llselect-open'))
-  sel.comboboxEl.click()
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'false')
+  sel.triggerEl.click()
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
   assert.ok(!sel.rootEl.classList.contains('llselect-open'))
 })
 
@@ -65,8 +65,8 @@ test('clicking option selects it, closes listbox, fires onChange', () => {
   assert.ok(second)
   second.click()
   assert.equal(sel.getChosen(), 'b')
-  assert.equal(sel.comboboxEl.textContent, 'b')
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'false')
+  assert.equal(sel.triggerEl.textContent, 'b')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
   assert.deepEqual(fired, ['b'])
 })
 
@@ -77,7 +77,7 @@ test('setOptions drops chosen if no longer present, fires onChange(undefined)', 
   sel.setChosen('a')
   sel.setOptions(['b', 'c'])
   assert.equal(sel.getChosen(), undefined)
-  assert.equal(sel.comboboxEl.textContent, 'Please select')
+  assert.equal(sel.triggerEl.textContent, 'Please select')
   assert.deepEqual(fired, ['a', undefined])
 })
 
@@ -121,6 +121,6 @@ test('setChosen with undefined clears selection', () => {
   sel.setChosen('a')
   sel.setChosen(undefined)
   assert.equal(sel.getChosen(), undefined)
-  assert.equal(sel.comboboxEl.textContent, 'Please select')
+  assert.equal(sel.triggerEl.textContent, 'Please select')
   assert.deepEqual(fired, ['a', undefined])
 })

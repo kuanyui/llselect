@@ -107,81 +107,81 @@ function focusedLabel(sel: LLSelectSingle<string>): string | null {
 
 test('ArrowDown on closed select opens and focuses first option', () => {
   const sel = mountSelect(['a', 'b', 'c'])
-  fireKey(sel.comboboxEl, 'ArrowDown')
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'true')
+  fireKey(sel.triggerEl, 'ArrowDown')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
   assert.equal(focusedLabel(sel), 'a')
 })
 
 test('ArrowDown on open advances focus', () => {
   const sel = mountSelect(['a', 'b', 'c'])
   sel.open()
-  fireKey(sel.comboboxEl, 'ArrowDown')
+  fireKey(sel.triggerEl, 'ArrowDown')
   assert.equal(focusedLabel(sel), 'b')
-  fireKey(sel.comboboxEl, 'ArrowDown')
+  fireKey(sel.triggerEl, 'ArrowDown')
   assert.equal(focusedLabel(sel), 'c')
-  fireKey(sel.comboboxEl, 'ArrowDown')
+  fireKey(sel.triggerEl, 'ArrowDown')
   assert.equal(focusedLabel(sel), 'c')  // clamps at last
 })
 
 test('ArrowUp moves focus backward, clamps at 0', () => {
   const sel = mountSelect(['a', 'b', 'c'])
   sel.open()
-  fireKey(sel.comboboxEl, 'End')
+  fireKey(sel.triggerEl, 'End')
   assert.equal(focusedLabel(sel), 'c')
-  fireKey(sel.comboboxEl, 'ArrowUp')
+  fireKey(sel.triggerEl, 'ArrowUp')
   assert.equal(focusedLabel(sel), 'b')
-  fireKey(sel.comboboxEl, 'ArrowUp')
-  fireKey(sel.comboboxEl, 'ArrowUp')
+  fireKey(sel.triggerEl, 'ArrowUp')
+  fireKey(sel.triggerEl, 'ArrowUp')
   assert.equal(focusedLabel(sel), 'a')
 })
 
 test('Home / End jump to first / last', () => {
   const sel = mountSelect(['a', 'b', 'c', 'd', 'e'])
   sel.open()
-  fireKey(sel.comboboxEl, 'End')
+  fireKey(sel.triggerEl, 'End')
   assert.equal(focusedLabel(sel), 'e')
-  fireKey(sel.comboboxEl, 'Home')
+  fireKey(sel.triggerEl, 'Home')
   assert.equal(focusedLabel(sel), 'a')
 })
 
 test('Enter selects focused option and closes', () => {
   const sel = mountSelect(['a', 'b', 'c'])
   sel.open()
-  fireKey(sel.comboboxEl, 'ArrowDown')
-  fireKey(sel.comboboxEl, 'Enter')
+  fireKey(sel.triggerEl, 'ArrowDown')
+  fireKey(sel.triggerEl, 'Enter')
   assert.equal(sel.getChosen(), 'b')
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'false')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
 })
 
 test('Space selects focused option (same as Enter)', () => {
   const sel = mountSelect(['a', 'b', 'c'])
   sel.open()
-  fireKey(sel.comboboxEl, 'ArrowDown')
-  fireKey(sel.comboboxEl, ' ')
+  fireKey(sel.triggerEl, 'ArrowDown')
+  fireKey(sel.triggerEl, ' ')
   assert.equal(sel.getChosen(), 'b')
 })
 
 test('Escape closes without selecting', () => {
   const sel = mountSelect(['a', 'b', 'c'])
   sel.open()
-  fireKey(sel.comboboxEl, 'ArrowDown')
-  fireKey(sel.comboboxEl, 'Escape')
+  fireKey(sel.triggerEl, 'ArrowDown')
+  fireKey(sel.triggerEl, 'Escape')
   assert.equal(sel.getChosen(), undefined)
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'false')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
 })
 
 test('Alt+ArrowUp closes the listbox', () => {
   const sel = mountSelect(['a', 'b'])
   sel.open()
-  fireKey(sel.comboboxEl, 'ArrowUp', true)
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'false')
+  fireKey(sel.triggerEl, 'ArrowUp', true)
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
 })
 
 test('aria-activedescendant points at focused option element', () => {
   const sel = mountSelect(['a', 'b', 'c'])
   sel.open()
-  fireKey(sel.comboboxEl, 'ArrowDown')
-  const focusedId = sel.comboboxEl.getAttribute('aria-activedescendant')
+  fireKey(sel.triggerEl, 'ArrowDown')
+  const focusedId = sel.triggerEl.getAttribute('aria-activedescendant')
   assert.ok(focusedId)
   assert.equal(document.getElementById(focusedId)?.textContent, 'b')
 })
@@ -190,11 +190,11 @@ test('PageDown jumps by 10 with clamp', () => {
   const opts = Array.from({ length: 25 }, (_, i) => `opt-${i}`)
   const sel = mountSelect(opts)
   sel.open()
-  fireKey(sel.comboboxEl, 'PageDown')
+  fireKey(sel.triggerEl, 'PageDown')
   assert.equal(focusedLabel(sel), 'opt-10')
-  fireKey(sel.comboboxEl, 'PageDown')
+  fireKey(sel.triggerEl, 'PageDown')
   assert.equal(focusedLabel(sel), 'opt-20')
-  fireKey(sel.comboboxEl, 'PageDown')
+  fireKey(sel.triggerEl, 'PageDown')
   assert.equal(focusedLabel(sel), 'opt-24')  // clamp at maxIndex
 })
 
@@ -214,21 +214,21 @@ test('Single mode: opening without chosen highlights first option', () => {
 test('close() resets focused state and aria-activedescendant', () => {
   const sel = mountSelect(['a', 'b', 'c'])
   sel.open()
-  fireKey(sel.comboboxEl, 'ArrowDown')
-  assert.ok(sel.comboboxEl.getAttribute('aria-activedescendant'))
+  fireKey(sel.triggerEl, 'ArrowDown')
+  assert.ok(sel.triggerEl.getAttribute('aria-activedescendant'))
   sel.close()
-  assert.equal(sel.comboboxEl.getAttribute('aria-activedescendant'), null)
+  assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), null)
 })
 
 test('Enter on closed select opens (does not select)', () => {
   const sel = mountSelect(['a', 'b', 'c'])
-  fireKey(sel.comboboxEl, 'Enter')
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'true')
+  fireKey(sel.triggerEl, 'Enter')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
   assert.equal(sel.getChosen(), undefined)
 })
 
 test('typing letters when closed does NOT open (phase 5: type-to-search comes later)', () => {
   const sel = mountSelect(['apple', 'banana'])
-  fireKey(sel.comboboxEl, 'a')
-  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'false')
+  fireKey(sel.triggerEl, 'a')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
 })
