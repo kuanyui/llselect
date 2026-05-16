@@ -226,6 +226,13 @@ export abstract class LLSelectBase<T = unknown> {
     this.popupListEl = this.buildPopupListEl()
     this.popupEl.append(this.popupListEl)
     this.popupEl.hidden = true
+    // Force border-box on the popup elements so the positioner's max-height
+    // calculation stays correct regardless of the host page's box-sizing
+    // setting. Without this, themes with non-zero padding/border on the
+    // popup would render past the maxHeight set by the positioner and get
+    // clipped by the viewport edge.
+    this.popupEl.style.boxSizing = 'border-box'
+    this.popupListEl.style.boxSizing = 'border-box'
     // popup-list takes the remaining vertical space inside popup and scrolls
     // when items overflow. `min-height: 0` lets flex actually shrink it.
     // These are safe to set in the constructor because they have no effect
