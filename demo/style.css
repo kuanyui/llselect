@@ -63,8 +63,8 @@ article { margin: 1.5rem 0 2rem 1rem; }
   border-radius: 4px;
 }
 
-.scroll-spacer-top { height: 4rem; }
-.scroll-spacer-bottom { height: 20rem; }
+.scroll-spacer-top { height: 16rem; }
+.scroll-spacer-bottom { height: 16rem; }
 
 .page-filler { height: 80vh; }
 

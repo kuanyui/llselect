@@ -63,6 +63,32 @@ export function computePosition(input: PositionInput): PositionResult {
   }
 }
 
+// Walk ancestors and check whether any clipping ancestor (overflow != visible)
+// hides the anchor. Catches the "anchor scrolled out of a scroll container"
+// case that getBoundingClientRect alone misses, since the rect reports
+// viewport coords regardless of ancestor clipping.
+const CLIPPING_OVERFLOW = new Set(['hidden', 'auto', 'scroll', 'clip'])
+
+function isClippedByAncestor(anchor: HTMLElement, anchorRect: DOMRect): boolean {
+  let p: HTMLElement | null = anchor.parentElement
+  while (p) {
+    const s = window.getComputedStyle(p)
+    if (CLIPPING_OVERFLOW.has(s.overflowX) || CLIPPING_OVERFLOW.has(s.overflowY)) {
+      const pRect = p.getBoundingClientRect()
+      if (
+        anchorRect.bottom < pRect.top ||
+        anchorRect.top > pRect.bottom ||
+        anchorRect.right < pRect.left ||
+        anchorRect.left > pRect.right
+      ) {
+        return true
+      }
+    }
+    p = p.parentElement
+  }
+  return false
+}
+
 export interface Positioner {
   reposition(): void
   detach(): void
@@ -93,7 +119,7 @@ export function createPositioner(
       rect.top > window.innerHeight ||
       rect.right < 0 ||
       rect.left > window.innerWidth
-    if (outOfViewport && options?.onHide) {
+    if ((outOfViewport || isClippedByAncestor(anchor, rect)) && options?.onHide) {
       options.onHide()
       return
     }

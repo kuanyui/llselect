@@ -50,6 +50,11 @@ const selScroll = new LLSelectSingle(
   }
 )
 selScroll.setOptions(COUNTRIES)
+// Position the select roughly in the middle of the container so scrolling
+// up clips the anchor below the container, and scrolling down clips it above.
+const scrollContainer = document.querySelector('.scroll-container')
+const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+scrollContainer.scrollTop = 10 * rem
 
 // 3.1 Outside-click pass-through
 let passCount = 0

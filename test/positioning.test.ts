@@ -191,6 +191,72 @@ test('positioner does NOT call onHide when anchor is in viewport', () => {
   p.detach()
 })
 
+test('positioner calls onHide when anchor is clipped above a scroll container', () => {
+  setupDom('<!doctype html><html><body><div id="container" style="overflow-y:auto;height:200px;"><div id="anchor"></div></div><div id="floating"></div></body></html>')
+  const container = document.getElementById('container')!
+  const anchor = document.getElementById('anchor')!
+  const floating = document.getElementById('floating')!
+  // Container occupies y=100..300, anchor sits at y=50..80 (above container top).
+  withMockedRect(container, { top: 100, left: 0, right: 200, bottom: 300, width: 200, height: 200 })
+  withMockedRect(anchor, { top: 50, left: 0, right: 200, bottom: 80, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  assert.equal(calls, 1)
+  p.detach()
+})
+
+test('positioner calls onHide when anchor is clipped below a scroll container', () => {
+  setupDom('<!doctype html><html><body><div id="container" style="overflow-y:auto;height:200px;"><div id="anchor"></div></div><div id="floating"></div></body></html>')
+  const container = document.getElementById('container')!
+  const anchor = document.getElementById('anchor')!
+  const floating = document.getElementById('floating')!
+  withMockedRect(container, { top: 100, left: 0, right: 200, bottom: 300, width: 200, height: 200 })
+  // Anchor at y=350..380 - below container's bottom (300).
+  withMockedRect(anchor, { top: 350, left: 0, right: 200, bottom: 380, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  assert.equal(calls, 1)
+  p.detach()
+})
+
+test('positioner does NOT call onHide when anchor is inside its scroll container', () => {
+  setupDom('<!doctype html><html><body><div id="container" style="overflow-y:auto;height:200px;"><div id="anchor"></div></div><div id="floating"></div></body></html>')
+  const container = document.getElementById('container')!
+  const anchor = document.getElementById('anchor')!
+  const floating = document.getElementById('floating')!
+  withMockedRect(container, { top: 100, left: 0, right: 200, bottom: 300, width: 200, height: 200 })
+  withMockedRect(anchor, { top: 150, left: 0, right: 200, bottom: 180, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  assert.equal(calls, 0)
+  p.detach()
+})
+
+test('LLSelectSingle auto-closes when combobox is scrolled out of its scroll container', () => {
+  setupDom('<!doctype html><html><body><div id="container" style="overflow-y:auto;height:200px;"><div id="mount"></div></div></body></html>')
+  const container = document.getElementById('container')!
+  const mount = document.getElementById('mount')!
+  withMockedRect(container, { top: 100, left: 0, right: 200, bottom: 300, width: 200, height: 200 })
+
+  const sel = new LLSelectSingle<string>(mount)
+  sel.setOptions(['a', 'b'])
+  withMockedRect(sel.comboboxEl, { top: 150, left: 0, right: 200, bottom: 180, width: 200, height: 30 })
+  sel.open()
+  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'true')
+
+  // Combobox is scrolled above the container's visible area.
+  withMockedRect(sel.comboboxEl, { top: 50, left: 0, right: 200, bottom: 80, width: 200, height: 30 })
+  window.dispatchEvent(new Event('scroll'))
+
+  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'false')
+})
+
 test('LLSelectSingle auto-closes when combobox scrolls fully out of viewport', () => {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
   const mount = document.getElementById('mount')!
