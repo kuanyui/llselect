@@ -137,21 +137,21 @@ test('LLSelectSingle.open() applies positioner; close() removes it', () => {
   withMockedRect(sel.triggerEl, { top: 0, left: 0, right: 200, bottom: 30, width: 200, height: 30 })
 
   sel.open()
-  assert.equal(sel.listboxEl.hidden, false)
-  assert.equal(sel.listboxEl.style.position, 'fixed')
-  assert.ok(sel.listboxEl.getAttribute('data-placement'))
+  assert.equal(sel.popupEl.hidden, false)
+  assert.equal(sel.popupEl.style.position, 'fixed')
+  assert.ok(sel.popupEl.getAttribute('data-placement'))
 
   sel.close()
-  assert.equal(sel.listboxEl.hidden, true)
-  assert.equal(sel.listboxEl.style.position, '')
-  assert.equal(sel.listboxEl.getAttribute('data-placement'), null)
+  assert.equal(sel.popupEl.hidden, true)
+  assert.equal(sel.popupEl.style.position, '')
+  assert.equal(sel.popupEl.getAttribute('data-placement'), null)
 })
 
-test('listbox is hidden by default after construction', () => {
+test('popup is hidden by default after construction', () => {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
   const mount = document.getElementById('mount')!
   const sel = new LLSelectSingle<string>(mount)
-  assert.equal(sel.listboxEl.hidden, true)
+  assert.equal(sel.popupEl.hidden, true)
 })
 
 test('positioner calls onHide when anchor is fully above viewport', () => {

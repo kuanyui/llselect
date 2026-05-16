@@ -1,4 +1,4 @@
-// Positioner: places `floating` (listbox) relative to `anchor` (trigger).
+// Positioner: places `floating` (popup) relative to `anchor` (trigger).
 // Pure math is split into `computePosition` so it can be tested without layout.
 
 /** Minimal rect shape consumed by {@link computePosition}. */

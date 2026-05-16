@@ -12,11 +12,11 @@ import {
 } from './keyboard.js'
 
 /**
- * What happens when the user clicks outside an open listbox.
+ * What happens when the user clicks outside an open popup.
  *
- * - `'pass-through'` (default): close the listbox; the outside click still
+ * - `'pass-through'` (default): close the popup; the outside click still
  *   triggers its normal action (button click, link navigation, etc.).
- * - `'block'`: close the listbox only; the outside click is swallowed so no
+ * - `'block'`: close the popup only; the outside click is swallowed so no
  *   underlying handler or default action fires. Avoids accidental side
  *   effects when the user only intended to dismiss the dropdown.
  */
@@ -74,9 +74,9 @@ export interface LLSelectClassIdMap {
   triggerContentClass: string
   /** Class on the inner span where the optional dropdown arrow lives. */
   triggerArrowClass: string
-  /** Class on `listboxEl` (the popup, `role="listbox"`). */
-  listboxClass: string
-  /** Class on every option element (`role="option"`) inside the listbox. */
+  /** Class on `popupEl` (the popup, `role="listbox"`). */
+  popupClass: string
+  /** Class on every option element (`role="option"`) inside the popup. */
   optionClass: string
   /**
    * Extra class added to the currently keyboard-focused option element.
@@ -84,7 +84,7 @@ export interface LLSelectClassIdMap {
    */
   optionFocusedClass: string
   /**
-   * Class added to `rootEl` while the listbox is open. Use it as a CSS hook
+   * Class added to `rootEl` while the popup is open. Use it as a CSS hook
    * for open-state styling (also available as `[data-state='open']` on the
    * trigger).
    */
@@ -92,10 +92,10 @@ export interface LLSelectClassIdMap {
   /** DOM `id` of `triggerEl`. Unique across instances. */
   triggerId: string
   /**
-   * DOM `id` of `listboxEl`. Unique across instances. Used by the trigger's
+   * DOM `id` of `popupEl`. Unique across instances. Used by the trigger's
    * `aria-controls` attribute.
    */
-  listboxId: string
+  popupId: string
 }
 
 const DEFAULT_PREFIX = 'llselect'
@@ -114,18 +114,18 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
     triggerClass: `${prefix}-trigger`,
     triggerContentClass: `${prefix}-trigger-content`,
     triggerArrowClass: `${prefix}-trigger-arrow`,
-    listboxClass: `${prefix}-listbox`,
+    popupClass: `${prefix}-popup`,
     optionClass: `${prefix}-option`,
     optionFocusedClass: `${prefix}-option-focused`,
     openClass: `${prefix}-open`,
     triggerId: `${uniq}-trigger`,
-    listboxId: `${uniq}-popup`,
+    popupId: `${uniq}-popup`,
   }
 }
 
 /**
  * Abstract base for all select variants. Owns DOM scaffolding, ARIA wiring,
- * positioning, keyboard navigation, lazy listbox rendering, and outside-click
+ * positioning, keyboard navigation, lazy popup rendering, and outside-click
  * handling. Subclasses (`LLSelectSingle`, `LLSelectMultiple`) own
  * chosen-state, decide what happens on option click, and customise the
  * trigger text via `renderTriggerContent`.
@@ -158,7 +158,7 @@ export abstract class LLSelectBase<T = unknown> {
    * when closed; positioned via inline styles by the positioner when open.
    * Lazily populated with option elements on open and cleared on close.
    */
-  public readonly listboxEl: HTMLElement
+  public readonly popupEl: HTMLElement
   /** Resolved class names and ids for this instance. */
   public readonly classIdMap: LLSelectClassIdMap
 
@@ -166,11 +166,11 @@ export abstract class LLSelectBase<T = unknown> {
   protected readonly settings: LLSelectBaseSettings<T>
   /** Current option list. Defensive copy of what `setOptions` was given. */
   protected options: T[] = []
-  /** Whether the listbox is currently open. */
+  /** Whether the popup is currently open. */
   protected isOpen = false
   /**
    * Index (into `options`) of the currently keyboard-focused option, or `-1`
-   * when nothing is focused (closed listbox, or no options).
+   * when nothing is focused (closed popup, or no options).
    */
   protected focusedIndex = -1
   private triggerArrowEl: HTMLElement
@@ -181,7 +181,7 @@ export abstract class LLSelectBase<T = unknown> {
 
   /**
    * @param targetEl - mount element. Becomes `rootEl`; its existing children
-   *   are wiped and replaced with the trigger + listbox structure. Pre-set
+   *   are wiped and replaced with the trigger + popup structure. Pre-set
    *   classes / id / data-* attributes on this element are preserved.
    * @param settings - optional partial settings. Missing fields use defaults
    *   ({@link LLSelectBaseSettings}).
@@ -200,7 +200,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.rootEl = targetEl
     this.rootEl.classList.add(this.classIdMap.rootClass)
     // Opt the select subtree out of browser scroll-anchoring. Without this,
-    // showing/hiding the listbox on first open after a page load can trigger
+    // showing/hiding the popup on first open after a page load can trigger
     // a window scroll as the browser tries to keep an anchor element in
     // place. The property excludes this element and all descendants from
     // being eligible anchor nodes.
@@ -210,17 +210,17 @@ export abstract class LLSelectBase<T = unknown> {
     this.triggerEl = this.buildTriggerEl()
     this.triggerContentEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerContentClass}`) as HTMLElement
     this.triggerArrowEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerArrowClass}`) as HTMLElement
-    this.listboxEl = this.buildListboxEl()
-    this.listboxEl.hidden = true
-    this.listboxEl.style.overflowY = 'auto'
-    this.rootEl.append(this.triggerEl, this.listboxEl)
+    this.popupEl = this.buildPopupEl()
+    this.popupEl.hidden = true
+    this.popupEl.style.overflowY = 'auto'
+    this.rootEl.append(this.triggerEl, this.popupEl)
 
     this.triggerEl.addEventListener('click', () => this.toggle())
     this.triggerEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
   }
 
   /**
-   * Open the listbox. Builds option elements lazily, attaches the positioner
+   * Open the popup. Builds option elements lazily, attaches the positioner
    * (which auto-closes if the trigger is scrolled out of view), wires the
    * outside-click handler, and moves keyboard focus into the option list.
    * No-op if already open.
@@ -231,10 +231,10 @@ export abstract class LLSelectBase<T = unknown> {
     this.triggerEl.setAttribute('aria-expanded', 'true')
     this.triggerEl.setAttribute('data-state', 'open')
     this.rootEl.classList.add(this.classIdMap.openClass)
-    this.listboxEl.hidden = false
+    this.popupEl.hidden = false
     this.refreshTriggerArrow()
-    this.renderListbox()
-    this.positioner = createPositioner(this.triggerEl, this.listboxEl, {
+    this.renderPopup()
+    this.positioner = createPositioner(this.triggerEl, this.popupEl, {
       onHide: () => this.close(),
     })
     this.attachOutsideClick()
@@ -243,7 +243,7 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
-   * Close the listbox. Detaches positioner and outside-click listener, clears
+   * Close the popup. Detaches positioner and outside-click listener, clears
    * the option DOM, and resets focused-option state. No-op if already closed.
    */
   public close(): void {
@@ -255,8 +255,8 @@ export abstract class LLSelectBase<T = unknown> {
     this.positioner?.detach()
     this.positioner = undefined
     this.detachOutsideClick()
-    this.listboxEl.replaceChildren()
-    this.listboxEl.hidden = true
+    this.popupEl.replaceChildren()
+    this.popupEl.hidden = true
     this.optionEls = []
     this.focusedEl = undefined
     this.focusedIndex = -1
@@ -281,20 +281,20 @@ export abstract class LLSelectBase<T = unknown> {
 
   /**
    * Replace the option list. The input is shallow-copied so external mutation
-   * does not affect the select. If the listbox is currently open it is
+   * does not affect the select. If the popup is currently open it is
    * re-rendered; otherwise the DOM is built lazily on the next `open()`.
    * Subclasses may reconcile chosen-state via {@link afterOptionsChange}
    * (e.g. single mode drops a chosen value that is no longer in the list).
    */
   public setOptions(options: T[]): void {
     this.options = options.slice()
-    if (this.isOpen) this.renderListbox()
+    if (this.isOpen) this.renderPopup()
     this.afterOptionsChange()
   }
 
-  /** Called once after the listbox finishes opening. Default no-op. */
+  /** Called once after the popup finishes opening. Default no-op. */
   protected onOpened(): void {}
-  /** Called once after the listbox finishes closing. Default no-op. */
+  /** Called once after the popup finishes closing. Default no-op. */
   protected onClosed(): void {}
   /**
    * Called after `setOptions` finishes. Override to reconcile state that
@@ -333,18 +333,18 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
-   * Rebuild the listbox option elements from the current `options`. Called
+   * Rebuild the popup option elements from the current `options`. Called
    * by `open()` and by `setOptions()` while open. Also clamps `focusedIndex`
    * if the option list shrank and re-applies focus visuals.
    */
-  protected renderListbox(): void {
-    this.listboxEl.replaceChildren()
+  protected renderPopup(): void {
+    this.popupEl.replaceChildren()
     this.optionEls = []
     this.focusedEl = undefined
     for (let i = 0; i < this.options.length; i++) {
       const el = this.createOptionEl(this.options[i]!, i)
       this.optionEls.push(el)
-      this.listboxEl.append(el)
+      this.popupEl.append(el)
     }
     this.positioner?.reposition()
     // Clamp focused index if options shrank, then re-apply focus visuals.
@@ -387,12 +387,12 @@ export abstract class LLSelectBase<T = unknown> {
   /**
    * Called when an option is activated (click or keyboard select). Default
    * no-op; subclasses implement their selection behaviour (single mode picks
-   * and closes, multiple mode toggles and keeps the listbox open).
+   * and closes, multiple mode toggles and keeps the popup open).
    */
   protected onOptionClick(_option: T): void {}
 
   /**
-   * Decide which option to focus when the listbox opens. Default focuses
+   * Decide which option to focus when the popup opens. Default focuses
    * the first option (or no-op if the list is empty). Override to focus the
    * currently chosen option, last-used option, etc.
    */
@@ -426,7 +426,7 @@ export abstract class LLSelectBase<T = unknown> {
       el.classList.add(this.classIdMap.optionFocusedClass)
       this.triggerEl.setAttribute('aria-activedescendant', el.id)
       this.focusedEl = el
-      ensureVisibleInScroll(el, this.listboxEl)
+      ensureVisibleInScroll(el, this.popupEl)
     } else {
       this.triggerEl.removeAttribute('aria-activedescendant')
     }
@@ -506,7 +506,7 @@ export abstract class LLSelectBase<T = unknown> {
     el.className = this.classIdMap.triggerClass
     el.setAttribute('role', 'combobox')
     el.setAttribute('tabindex', '0')
-    el.setAttribute('aria-controls', this.classIdMap.listboxId)
+    el.setAttribute('aria-controls', this.classIdMap.popupId)
     el.setAttribute('aria-expanded', 'false')
     el.setAttribute('aria-haspopup', 'listbox')
     el.setAttribute('data-state', 'closed')
@@ -519,10 +519,10 @@ export abstract class LLSelectBase<T = unknown> {
     return el
   }
 
-  private buildListboxEl(): HTMLElement {
+  private buildPopupEl(): HTMLElement {
     const el = document.createElement('div')
-    el.id = this.classIdMap.listboxId
-    el.className = this.classIdMap.listboxClass
+    el.id = this.classIdMap.popupId
+    el.className = this.classIdMap.popupClass
     el.setAttribute('role', 'listbox')
     el.setAttribute('tabindex', '-1')
     return el

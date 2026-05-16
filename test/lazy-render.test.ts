@@ -11,23 +11,23 @@ function mount(): HTMLElement {
 }
 
 function optionCount(sel: LLSelectSingle<string>): number {
-  return sel.listboxEl.querySelectorAll('[role="option"]').length
+  return sel.popupEl.querySelectorAll('[role="option"]').length
 }
 
-test('listbox has no option children when closed initially', () => {
+test('popup has no option children when closed initially', () => {
   const sel = new LLSelectSingle<string>(mount())
   sel.setOptions(['a', 'b', 'c'])
   assert.equal(optionCount(sel), 0)
 })
 
-test('listbox is populated on open', () => {
+test('popup is populated on open', () => {
   const sel = new LLSelectSingle<string>(mount())
   sel.setOptions(['a', 'b', 'c'])
   sel.open()
   assert.equal(optionCount(sel), 3)
 })
 
-test('listbox is cleared on close', () => {
+test('popup is cleared on close', () => {
   const sel = new LLSelectSingle<string>(mount())
   sel.setOptions(['a', 'b', 'c'])
   sel.open()
@@ -36,7 +36,7 @@ test('listbox is cleared on close', () => {
   assert.equal(optionCount(sel), 0)
 })
 
-test('listbox repopulates on reopen', () => {
+test('popup repopulates on reopen', () => {
   const sel = new LLSelectSingle<string>(mount())
   sel.setOptions(['a', 'b'])
   sel.open()
@@ -45,21 +45,21 @@ test('listbox repopulates on reopen', () => {
   assert.equal(optionCount(sel), 2)
 })
 
-test('setOptions while closed does not populate listbox', () => {
+test('setOptions while closed does not populate popup', () => {
   const sel = new LLSelectSingle<string>(mount())
   sel.setOptions(['a', 'b', 'c'])
   sel.setOptions(['x', 'y', 'z', 'w'])
   assert.equal(optionCount(sel), 0)
 })
 
-test('setOptions while open updates listbox immediately', () => {
+test('setOptions while open updates popup immediately', () => {
   const sel = new LLSelectSingle<string>(mount())
   sel.setOptions(['a', 'b'])
   sel.open()
   assert.equal(optionCount(sel), 2)
   sel.setOptions(['x', 'y', 'z'])
   assert.equal(optionCount(sel), 3)
-  const opts = sel.listboxEl.querySelectorAll('[role="option"]')
+  const opts = sel.popupEl.querySelectorAll('[role="option"]')
   assert.equal(opts[0]?.textContent, 'x')
   assert.equal(opts[2]?.textContent, 'z')
 })

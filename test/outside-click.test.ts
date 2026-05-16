@@ -23,7 +23,7 @@ test('pass-through (default): mousedown outside closes; click still triggers out
   sel.open()
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
 
-  // Mousedown on outside button -> closes listbox (pass-through uses mousedown).
+  // Mousedown on outside button -> closes popup (pass-through uses mousedown).
   fireMousedown(btn)
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
 
@@ -56,10 +56,10 @@ test('click on trigger itself does not trigger outside-close (pass-through)', ()
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
 })
 
-test('click on option in listbox does not trigger outside-close (pass-through)', () => {
+test('click on option in popup does not trigger outside-close (pass-through)', () => {
   const { sel } = mountWithButton()
   sel.open()
-  const firstOption = sel.listboxEl.querySelector<HTMLElement>('[role="option"]')!
+  const firstOption = sel.popupEl.querySelector<HTMLElement>('[role="option"]')!
   fireMousedown(firstOption)
   // mousedown alone does not select (we use click for selection), but it
   // should NOT close via outside-click logic either since it is inside.

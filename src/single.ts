@@ -27,7 +27,7 @@ export type LLSelectSingleSettingsInput<T> =
 
 /**
  * Single-selection select. Picking an option replaces any prior chosen value
- * and closes the listbox. Use `setChosen(undefined)` to clear the selection.
+ * and closes the popup. Use `setChosen(undefined)` to clear the selection.
  *
  * @typeParam T - option value type. Supply your own `compareFn` for
  *   non-primitive `T`.
@@ -70,7 +70,7 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
       : this.templateOption(this.chosen)
   }
 
-  /** Pick this option as the chosen value and close the listbox. */
+  /** Pick this option as the chosen value and close the popup. */
   protected override onOptionClick(option: T): void {
     this.setChosen(option)
     this.close()

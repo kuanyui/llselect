@@ -39,7 +39,7 @@ test('open renders one option element per option', () => {
   const sel = new LLSelectSingle<string>(mount())
   sel.setOptions(['x', 'y', 'z'])
   sel.open()
-  const opts = sel.listboxEl.querySelectorAll('[role="option"]')
+  const opts = sel.popupEl.querySelectorAll('[role="option"]')
   assert.equal(opts.length, 3)
   assert.equal(opts[0]?.textContent, 'x')
   assert.equal(opts[2]?.textContent, 'z')
@@ -56,12 +56,12 @@ test('clicking trigger toggles open state', () => {
   assert.ok(!sel.rootEl.classList.contains('llselect-open'))
 })
 
-test('clicking option selects it, closes listbox, fires onChange', () => {
+test('clicking option selects it, closes popup, fires onChange', () => {
   const fired: Array<string | undefined> = []
   const sel = new LLSelectSingle<string>(mount(), { onChange: v => fired.push(v) })
   sel.setOptions(['a', 'b', 'c'])
   sel.open()
-  const second = sel.listboxEl.querySelectorAll<HTMLElement>('[role="option"]')[1]
+  const second = sel.popupEl.querySelectorAll<HTMLElement>('[role="option"]')[1]
   assert.ok(second)
   second.click()
   assert.equal(sel.getChosen(), 'b')

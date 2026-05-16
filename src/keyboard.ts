@@ -6,9 +6,9 @@
  * implementation detail; never serialise them.
  */
 export enum LLSelectAction {
-  /** Open the listbox (no item activation). */
+  /** Open the popup (no item activation). */
   Open,
-  /** Close the listbox (no item activation). */
+  /** Close the popup (no item activation). */
   Close,
   /** Activate the currently focused option (select + maybe close). */
   Select,
@@ -30,7 +30,7 @@ const PAGE_SIZE = 10
 
 /**
  * Map a keydown event to a logical {@link LLSelectAction}, given whether the
- * listbox is currently open. Returns `undefined` if the key should be left
+ * popup is currently open. Returns `undefined` if the key should be left
  * alone (no preventDefault, no library reaction). Maps according to the
  * ARIA APG combobox pattern.
  */

@@ -101,7 +101,7 @@ function fireKey(target: HTMLElement, key: string, altKey = false): void {
 }
 
 function focusedLabel(sel: LLSelectSingle<string>): string | null {
-  const el = sel.listboxEl.querySelector(`.${sel.classIdMap.optionFocusedClass}`)
+  const el = sel.popupEl.querySelector(`.${sel.classIdMap.optionFocusedClass}`)
   return el ? el.textContent : null
 }
 
@@ -170,7 +170,7 @@ test('Escape closes without selecting', () => {
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
 })
 
-test('Alt+ArrowUp closes the listbox', () => {
+test('Alt+ArrowUp closes the popup', () => {
   const sel = mountSelect(['a', 'b'])
   sel.open()
   fireKey(sel.triggerEl, 'ArrowUp', true)

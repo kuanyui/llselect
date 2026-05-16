@@ -38,24 +38,24 @@ test('trigger has correct ARIA attributes', () => {
   assert.equal(cb.getAttribute('tabindex'), '0')
   assert.equal(cb.getAttribute('aria-expanded'), 'false')
   assert.equal(cb.getAttribute('aria-haspopup'), 'listbox')
-  assert.equal(cb.getAttribute('aria-controls'), inst.listboxEl.id)
+  assert.equal(cb.getAttribute('aria-controls'), inst.popupEl.id)
   assert.ok(cb.className.includes('llselect-trigger'))
 })
 
-test('listbox has correct ARIA attributes', () => {
+test('popup has correct ARIA attributes', () => {
   const inst = new TestSelect<string>(mount())
-  const lb = inst.listboxEl
+  const lb = inst.popupEl
   assert.equal(lb.getAttribute('role'), 'listbox')
   assert.equal(lb.getAttribute('tabindex'), '-1')
-  assert.ok(lb.className.includes('llselect-listbox'))
+  assert.ok(lb.className.includes('llselect-popup'))
 })
 
-test('trigger and listbox are children of rootEl in order', () => {
+test('trigger and popup are children of rootEl in order', () => {
   const inst = new TestSelect<string>(mount())
   const children = Array.from(inst.rootEl.children)
   assert.equal(children.length, 2)
   assert.equal(children[0], inst.triggerEl)
-  assert.equal(children[1], inst.listboxEl)
+  assert.equal(children[1], inst.popupEl)
 })
 
 test('IDs are unique across multiple instances', () => {
@@ -66,13 +66,13 @@ test('IDs are unique across multiple instances', () => {
   const ia = new TestSelect<string>(a)
   const ib = new TestSelect<string>(b)
   assert.notEqual(ia.triggerEl.id, ib.triggerEl.id)
-  assert.notEqual(ia.listboxEl.id, ib.listboxEl.id)
+  assert.notEqual(ia.popupEl.id, ib.popupEl.id)
 })
 
 test('custom cssClassPrefix is honored', () => {
   const inst = new TestSelect<string>(mount(), { cssClassPrefix: 'myprefix' })
   assert.ok(inst.rootEl.classList.contains('myprefix-root'))
   assert.ok(inst.triggerEl.className.includes('myprefix-trigger'))
-  assert.ok(inst.listboxEl.className.includes('myprefix-listbox'))
+  assert.ok(inst.popupEl.className.includes('myprefix-popup'))
   assert.ok(inst.triggerEl.id.startsWith('myprefix'))
 })

@@ -150,17 +150,17 @@ article { margin: 1.5rem 0 2rem 1rem; }
 
 /* Library controls position/top/left/width/maxHeight via inline styles,
    and visibility via the hidden attribute. CSS below is visual only. */
-.llselect-listbox {
+.llselect-popup {
   background: #fff;
   border: 1px solid #888;
   border-radius: 4px;
   z-index: 10;
 }
 
-.llselect-listbox[data-placement='above'] {
+.llselect-popup[data-placement='above'] {
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
 }
-.llselect-listbox[data-placement='below'] {
+.llselect-popup[data-placement='below'] {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
