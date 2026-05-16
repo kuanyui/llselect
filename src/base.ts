@@ -1,6 +1,6 @@
-// LLSelectBase: DOM scaffold + ARIA wiring shared by LLSelectSingle and
-// LLSelectMultiple. Holds no chosen-state, no open/close, no option rendering.
-// Those land in subclasses and later phases.
+// LLSelectBase: DOM scaffold, ARIA wiring, open/close state, options storage,
+// and shared rendering primitives for LLSelectSingle and LLSelectMultiple.
+// Subclasses own chosen-state and decide what happens on option click.
 
 export interface LLSelectBaseSettings<T> {
   cssClassPrefix: string
@@ -15,6 +15,7 @@ export interface LLSelectClassIdMap {
   comboboxClass: string
   listboxClass: string
   optionClass: string
+  openClass: string
   comboboxId: string
   listboxId: string
 }
@@ -35,6 +36,7 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
     comboboxClass: `${prefix}-combobox`,
     listboxClass: `${prefix}-listbox`,
     optionClass: `${prefix}-option`,
+    openClass: `${prefix}-open`,
     comboboxId: `${uniq}-combobox`,
     listboxId: `${uniq}-popup`,
   }
@@ -48,6 +50,7 @@ export abstract class LLSelectBase<T = unknown> {
 
   protected readonly settings: LLSelectBaseSettings<T>
   protected options: T[] = []
+  protected isOpen = false
 
   constructor(targetEl: HTMLElement, settings?: LLSelectBaseSettingsInput<T>) {
     this.settings = {
@@ -57,8 +60,7 @@ export abstract class LLSelectBase<T = unknown> {
     }
     this.classIdMap = makeClassIdMap(this.settings.cssClassPrefix)
 
-    // Strategy: keep the caller's element as root (preserves their id/refs);
-    // wipe its content and inject combobox + listbox children.
+    // Caller-passed element becomes root (preserves its id / external refs).
     this.rootEl = targetEl
     this.rootEl.classList.add(this.classIdMap.rootClass)
     this.rootEl.replaceChildren()
@@ -66,7 +68,73 @@ export abstract class LLSelectBase<T = unknown> {
     this.comboboxEl = this.buildComboboxEl()
     this.listboxEl = this.buildListboxEl()
     this.rootEl.append(this.comboboxEl, this.listboxEl)
+
+    this.comboboxEl.addEventListener('click', () => this.toggle())
   }
+
+  public open(): void {
+    if (this.isOpen) return
+    this.isOpen = true
+    this.comboboxEl.setAttribute('aria-expanded', 'true')
+    this.rootEl.classList.add(this.classIdMap.openClass)
+    this.onOpened()
+  }
+
+  public close(): void {
+    if (!this.isOpen) return
+    this.isOpen = false
+    this.comboboxEl.setAttribute('aria-expanded', 'false')
+    this.rootEl.classList.remove(this.classIdMap.openClass)
+    this.onClosed()
+  }
+
+  public toggle(): void {
+    if (this.isOpen) this.close()
+    else this.open()
+  }
+
+  public getOptions(): readonly T[] {
+    return this.options
+  }
+
+  public setOptions(options: T[]): void {
+    this.options = options.slice()
+    this.renderListbox()
+    this.afterOptionsChange()
+  }
+
+  // Subclass hooks. Default no-op so base remains instantiable in tests.
+  protected onOpened(): void {}
+  protected onClosed(): void {}
+  protected afterOptionsChange(): void {}
+
+  protected renderCombobox(): void {
+    this.comboboxEl.textContent = this.settings.placeholder
+  }
+
+  protected renderListbox(): void {
+    this.listboxEl.replaceChildren()
+    for (const option of this.options) {
+      this.listboxEl.append(this.createOptionEl(option))
+    }
+  }
+
+  protected createOptionEl(option: T): HTMLElement {
+    const el = document.createElement('div')
+    el.className = this.classIdMap.optionClass
+    el.setAttribute('role', 'option')
+    el.textContent = this.templateOption(option)
+    el.addEventListener('click', () => this.onOptionClick(option))
+    return el
+  }
+
+  // Override to change the rendered label for an option. Returned text is
+  // applied as textContent (safe). Subclass `createOptionEl` if HTML is needed.
+  protected templateOption(option: T): string {
+    return String(option)
+  }
+
+  protected onOptionClick(_option: T): void {}
 
   private buildComboboxEl(): HTMLElement {
     const el = document.createElement('div')
