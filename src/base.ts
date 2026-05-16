@@ -2,6 +2,8 @@
 // and shared rendering primitives for LLSelectSingle and LLSelectMultiple.
 // Subclasses own chosen-state and decide what happens on option click.
 
+import { createPositioner, type Positioner } from './positioning.js'
+
 export interface LLSelectBaseSettings<T> {
   cssClassPrefix: string
   placeholder: string
@@ -51,6 +53,7 @@ export abstract class LLSelectBase<T = unknown> {
   protected readonly settings: LLSelectBaseSettings<T>
   protected options: T[] = []
   protected isOpen = false
+  private positioner: Positioner | undefined
 
   constructor(targetEl: HTMLElement, settings?: LLSelectBaseSettingsInput<T>) {
     this.settings = {
@@ -67,6 +70,8 @@ export abstract class LLSelectBase<T = unknown> {
 
     this.comboboxEl = this.buildComboboxEl()
     this.listboxEl = this.buildListboxEl()
+    this.listboxEl.hidden = true
+    this.listboxEl.style.overflowY = 'auto'
     this.rootEl.append(this.comboboxEl, this.listboxEl)
 
     this.comboboxEl.addEventListener('click', () => this.toggle())
@@ -77,7 +82,9 @@ export abstract class LLSelectBase<T = unknown> {
     this.isOpen = true
     this.comboboxEl.setAttribute('aria-expanded', 'true')
     this.rootEl.classList.add(this.classIdMap.openClass)
+    this.listboxEl.hidden = false
     this.renderListbox()
+    this.positioner = createPositioner(this.comboboxEl, this.listboxEl)
     this.onOpened()
   }
 
@@ -86,7 +93,10 @@ export abstract class LLSelectBase<T = unknown> {
     this.isOpen = false
     this.comboboxEl.setAttribute('aria-expanded', 'false')
     this.rootEl.classList.remove(this.classIdMap.openClass)
+    this.positioner?.detach()
+    this.positioner = undefined
     this.listboxEl.replaceChildren()
+    this.listboxEl.hidden = true
     this.onClosed()
   }
 
@@ -119,6 +129,7 @@ export abstract class LLSelectBase<T = unknown> {
     for (const option of this.options) {
       this.listboxEl.append(this.createOptionEl(option))
     }
+    this.positioner?.reposition()
   }
 
   protected createOptionEl(option: T): HTMLElement {

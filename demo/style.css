@@ -56,23 +56,20 @@ section { margin: 2rem 0; }
   outline-offset: 1px;
 }
 
+/* Library controls position/top/left/width/maxHeight via inline styles,
+   and visibility via the hidden attribute. CSS below is visual only. */
 .llselect-listbox {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 2px;
   background: #fff;
   border: 1px solid #888;
   border-radius: 4px;
-  max-height: 14rem;
-  overflow-y: auto;
   z-index: 10;
 }
 
-.llselect-root.llselect-open .llselect-listbox {
-  display: block;
+.llselect-listbox[data-placement='above'] {
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+}
+.llselect-listbox[data-placement='below'] {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .llselect-option {
