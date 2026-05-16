@@ -9,14 +9,48 @@
 <body>
   <h1>llselect demo</h1>
   <p>Run <code>npm run build</code>, then <code>npm run serve</code>, and open <code>/demo/</code>.</p>
+  <p class="hint">
+    Phase 4 will test positioning: try the "near page bottom" select (should flip up)
+    and the one inside the scroll container (should reposition or close on scroll).
+  </p>
 
-  <h2>LLSelectSingle (strings)</h2>
-  <div id="mount-strings"></div>
-  <div class="out" id="out-strings">chosen: (none)</div>
+  <section>
+    <h2>Countries (74 options)</h2>
+    <div id="mount-countries"></div>
+    <div class="out" id="out-countries">chosen: (none)</div>
+  </section>
 
-  <h2>LLSelectSingle (objects with compareFn)</h2>
-  <div id="mount-objects"></div>
-  <div class="out" id="out-objects">chosen: (none)</div>
+  <section>
+    <h2>Users (40 options, custom template + compareFn)</h2>
+    <div id="mount-users"></div>
+    <div class="out" id="out-users">chosen: (none)</div>
+  </section>
+
+  <section>
+    <h2>Stress test (200 options)</h2>
+    <div id="mount-stress"></div>
+    <div class="out" id="out-stress">chosen: (none)</div>
+  </section>
+
+  <section>
+    <h2>Inside a scrollable container</h2>
+    <p class="hint">Open the dropdown, then scroll the gray box. Phase 4 should reposition (or close) the listbox.</p>
+    <div class="scroll-container">
+      <div class="scroll-spacer-top"></div>
+      <div id="mount-scroll"></div>
+      <div class="scroll-spacer-bottom"></div>
+    </div>
+    <div class="out" id="out-scroll">chosen: (none)</div>
+  </section>
+
+  <div class="page-filler"></div>
+
+  <section class="near-bottom">
+    <h2>Near page bottom (flip up)</h2>
+    <p class="hint">This select sits close to the page bottom; phase 4 should make its listbox open upward.</p>
+    <div id="mount-bottom"></div>
+    <div class="out" id="out-bottom">chosen: (none)</div>
+  </section>
 
   <script type="module" src="main.js"></script>
 </body>
