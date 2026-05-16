@@ -87,15 +87,15 @@
   </section>
 
   <section>
-    <h2>4. Indicator (dropdown arrow) variants</h2>
+    <h2>4. Arrow variants</h2>
     <p class="hint">
-      Library ships no indicator by default. Pass <code>renderIndicator</code>
+      Library ships no arrow by default. Pass <code>renderArrow</code>
       to add any element (SVG, &lt;i&gt; icon class, plain text, ...).
       All variants below use the same data binding; only the arrow differs.
     </p>
 
     <article>
-      <h3>4.1 No indicator (default)</h3>
+      <h3>4.1 No arrow (default)</h3>
       <div id="mount-ind-none"></div>
     </article>
 
@@ -106,13 +106,13 @@
         <code>aria-hidden="true"</code>. CSS rotates them on
         <code>[data-state="open"]</code>.
       </p>
-      <div class="indicator-row">
+      <div class="arrow-row">
         <div>
-          <label class="indicator-label"><code>chevronDownSvg()</code></label>
+          <label class="arrow-label"><code>chevronDownSvg()</code></label>
           <div id="mount-ind-chevron"></div>
         </div>
         <div>
-          <label class="indicator-label"><code>triangleDownSvg()</code></label>
+          <label class="arrow-label"><code>triangleDownSvg()</code></label>
           <div id="mount-ind-triangle"></div>
         </div>
       </div>
@@ -125,7 +125,7 @@
     </article>
 
     <article>
-      <h3>4.4 CSS-only triangle (no JS indicator)</h3>
+      <h3>4.4 CSS-only triangle (no JS arrow)</h3>
       <p class="hint">Pure CSS pseudo-element on <code>.llselect-combobox</code>. data-state drives rotation.</p>
       <div id="mount-ind-css"></div>
     </article>

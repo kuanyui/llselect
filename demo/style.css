@@ -45,13 +45,13 @@ article { margin: 1.5rem 0 2rem 1rem; }
   gap: 1rem;
 }
 
-.indicator-row {
+.arrow-row {
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
 }
 
-.indicator-label {
+.arrow-label {
   display: block;
   font-size: 0.85rem;
   color: #555;
@@ -116,18 +116,18 @@ article { margin: 1.5rem 0 2rem 1rem; }
   white-space: nowrap;
 }
 
-.llselect-combobox-indicator {
+.llselect-combobox-arrow {
   display: inline-flex;
   align-items: center;
   color: #666;
   transition: transform 0.15s;
 }
 
-.llselect-combobox-indicator:empty {
+.llselect-combobox-arrow:empty {
   display: none;
 }
 
-.llselect-combobox[data-state='open'] .llselect-combobox-indicator {
+.llselect-combobox[data-state='open'] .llselect-combobox-arrow {
   transform: rotate(180deg);
 }
 

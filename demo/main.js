@@ -85,10 +85,10 @@ const selBlock = new LLSelectSingle(
 )
 selBlock.setOptions(COUNTRIES)
 
-// 4.1 No indicator (default - lib does nothing)
+// 4.1 No arrow (default - lib does nothing)
 new LLSelectSingle(
   document.getElementById('mount-ind-none'),
-  { placeholder: 'No indicator' },
+  { placeholder: 'No arrow' },
 ).setOptions(COUNTRIES)
 
 // 4.2a chevronDownSvg
@@ -96,7 +96,7 @@ new LLSelectSingle(
   document.getElementById('mount-ind-chevron'),
   {
     placeholder: 'chevron',
-    renderIndicator: () => chevronDownSvg(),
+    renderArrow: () => chevronDownSvg(),
   },
 ).setOptions(COUNTRIES)
 
@@ -105,7 +105,7 @@ new LLSelectSingle(
   document.getElementById('mount-ind-triangle'),
   {
     placeholder: 'triangle',
-    renderIndicator: () => triangleDownSvg(),
+    renderArrow: () => triangleDownSvg(),
   },
 ).setOptions(COUNTRIES)
 
@@ -114,7 +114,7 @@ new LLSelectSingle(
   document.getElementById('mount-ind-mdi'),
   {
     placeholder: 'mdi icon',
-    renderIndicator: () => {
+    renderArrow: () => {
       const i = document.createElement('i')
       i.className = 'mdi mdi-chevron-down'
       return i
@@ -122,7 +122,8 @@ new LLSelectSingle(
   },
 ).setOptions(COUNTRIES)
 
-// 4.4 CSS-only triangle (no renderIndicator; CSS handles everything via data-state)
+// 4.4 CSS-only triangle (no renderArrow; CSS handles everything via data-state)
+// Lib does nothing in the arrow slot; the demo styles a ::after pseudo-element.
 new LLSelectSingle(
   document.getElementById('mount-ind-css'),
   { placeholder: 'CSS triangle (no JS)' },

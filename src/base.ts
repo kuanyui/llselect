@@ -23,12 +23,12 @@ import {
 export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
 
 /**
- * Function that produces the combobox's indicator element (e.g. a dropdown
- * arrow). Called by the library when the indicator may need to change -
- * including on every open/close - so the returned element can vary with
- * `isOpen`. Return `null` to render no indicator for that state.
+ * Function that produces the combobox's arrow element (typically a dropdown
+ * chevron or triangle). Called by the library when the arrow may need to
+ * change - including on every open/close - so the returned element can vary
+ * with `isOpen`. Return `null` to render no arrow for that state.
  */
-export type LLSelectIndicatorRenderer = (state: { isOpen: boolean }) => HTMLElement | SVGElement | null
+export type LLSelectArrowRenderer = (state: { isOpen: boolean }) => HTMLElement | SVGElement | null
 
 /**
  * Resolved (defaults applied) settings shared by all select variants.
@@ -48,10 +48,10 @@ export interface LLSelectBaseSettings<T> {
   /** See {@link LLSelectOutsideClickBehavior}. */
   outsideClickBehavior: LLSelectOutsideClickBehavior
   /**
-   * See {@link LLSelectIndicatorRenderer}. `null` (default) means the library
-   * adds nothing to the indicator slot.
+   * See {@link LLSelectArrowRenderer}. `null` (default) means the library
+   * adds nothing to the arrow slot.
    */
-  renderIndicator: LLSelectIndicatorRenderer | null
+  renderArrow: LLSelectArrowRenderer | null
 }
 
 /**
@@ -72,8 +72,8 @@ export interface LLSelectClassIdMap {
   comboboxClass: string
   /** Class on the inner span where content (text/tags) is rendered. */
   comboboxContentClass: string
-  /** Class on the inner span where the optional indicator icon lives. */
-  comboboxIndicatorClass: string
+  /** Class on the inner span where the optional dropdown arrow lives. */
+  comboboxArrowClass: string
   /** Class on `listboxEl` (the popup, `role="listbox"`). */
   listboxClass: string
   /** Class on every option element (`role="option"`) inside the listbox. */
@@ -113,7 +113,7 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
     rootClass: `${prefix}-root`,
     comboboxClass: `${prefix}-combobox`,
     comboboxContentClass: `${prefix}-combobox-content`,
-    comboboxIndicatorClass: `${prefix}-combobox-indicator`,
+    comboboxArrowClass: `${prefix}-combobox-arrow`,
     listboxClass: `${prefix}-listbox`,
     optionClass: `${prefix}-option`,
     optionFocusedClass: `${prefix}-option-focused`,
@@ -149,8 +149,8 @@ export abstract class LLSelectBase<T = unknown> {
   public readonly comboboxEl: HTMLElement
   /**
    * Inner span inside the combobox where text/tags are written.
-   * Subclasses' `renderContent` writes here so the sibling indicator slot
-   * is preserved across re-renders.
+   * Subclasses' `renderContent` writes here so the sibling arrow slot is
+   * preserved across re-renders.
    */
   public readonly contentEl: HTMLElement
   /**
@@ -173,7 +173,7 @@ export abstract class LLSelectBase<T = unknown> {
    * when nothing is focused (closed listbox, or no options).
    */
   protected focusedIndex = -1
-  private indicatorEl: HTMLElement
+  private arrowEl: HTMLElement
   private positioner: Positioner | undefined
   private optionEls: HTMLElement[] = []
   private focusedEl: HTMLElement | undefined
@@ -192,7 +192,7 @@ export abstract class LLSelectBase<T = unknown> {
       placeholder: settings?.placeholder ?? DEFAULT_PLACEHOLDER,
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
-      renderIndicator: settings?.renderIndicator ?? null,
+      renderArrow: settings?.renderArrow ?? null,
     }
     this.classIdMap = makeClassIdMap(this.settings.cssClassPrefix)
 
@@ -209,7 +209,7 @@ export abstract class LLSelectBase<T = unknown> {
 
     this.comboboxEl = this.buildComboboxEl()
     this.contentEl = this.comboboxEl.querySelector(`.${this.classIdMap.comboboxContentClass}`) as HTMLElement
-    this.indicatorEl = this.comboboxEl.querySelector(`.${this.classIdMap.comboboxIndicatorClass}`) as HTMLElement
+    this.arrowEl = this.comboboxEl.querySelector(`.${this.classIdMap.comboboxArrowClass}`) as HTMLElement
     this.listboxEl = this.buildListboxEl()
     this.listboxEl.hidden = true
     this.listboxEl.style.overflowY = 'auto'
@@ -232,7 +232,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.comboboxEl.setAttribute('data-state', 'open')
     this.rootEl.classList.add(this.classIdMap.openClass)
     this.listboxEl.hidden = false
-    this.refreshIndicator()
+    this.refreshArrow()
     this.renderListbox()
     this.positioner = createPositioner(this.comboboxEl, this.listboxEl, {
       onHide: () => this.close(),
@@ -261,7 +261,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.focusedEl = undefined
     this.focusedIndex = -1
     this.comboboxEl.removeAttribute('aria-activedescendant')
-    this.refreshIndicator()
+    this.refreshArrow()
     this.onClosed()
   }
 
@@ -305,31 +305,31 @@ export abstract class LLSelectBase<T = unknown> {
 
   /**
    * Orchestrator that re-renders both the combobox content slot and the
-   * indicator slot. Subclasses normally override {@link renderContent}, not
+   * arrow slot. Subclasses normally override {@link renderContent}, not
    * this. Call this from subclass code when both slots need to refresh
    * together (constructor, post-state-change, etc.).
    */
   protected renderCombobox(): void {
     this.renderContent()
-    this.refreshIndicator()
+    this.refreshArrow()
   }
 
   /**
    * Write the combobox's content slot. Override in subclasses to display the
    * chosen value(s); default writes the placeholder. Always write to
-   * `this.contentEl` (not `this.comboboxEl`) so the sibling indicator slot
-   * is preserved.
+   * `this.contentEl` (not `this.comboboxEl`) so the sibling arrow slot is
+   * preserved.
    */
   protected renderContent(): void {
     this.contentEl.textContent = this.settings.placeholder
   }
 
-  private refreshIndicator(): void {
-    this.indicatorEl.replaceChildren()
-    const renderer = this.settings.renderIndicator
+  private refreshArrow(): void {
+    this.arrowEl.replaceChildren()
+    const renderer = this.settings.renderArrow
     if (!renderer) return
     const el = renderer({ isOpen: this.isOpen })
-    if (el) this.indicatorEl.appendChild(el)
+    if (el) this.arrowEl.appendChild(el)
   }
 
   /**
@@ -510,12 +510,12 @@ export abstract class LLSelectBase<T = unknown> {
     el.setAttribute('aria-expanded', 'false')
     el.setAttribute('aria-haspopup', 'listbox')
     el.setAttribute('data-state', 'closed')
-    // Two child slots: content (text/tags) and indicator (optional icon).
+    // Two child slots: content (text/tags) and arrow (optional icon).
     const content = document.createElement('span')
     content.className = this.classIdMap.comboboxContentClass
-    const indicator = document.createElement('span')
-    indicator.className = this.classIdMap.comboboxIndicatorClass
-    el.append(content, indicator)
+    const arrow = document.createElement('span')
+    arrow.className = this.classIdMap.comboboxArrowClass
+    el.append(content, arrow)
     return el
   }
 

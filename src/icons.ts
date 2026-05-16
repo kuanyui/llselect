@@ -1,5 +1,5 @@
 // Opt-in icon helpers. None of these is used by the library by default; pass
-// them via `settings.renderIndicator` if you want a built-in dropdown arrow.
+// them via `settings.renderArrow` if you want a built-in dropdown arrow.
 // All paths use fill="currentColor" so they inherit the combobox text color
 // (light/dark themes "just work").
 
