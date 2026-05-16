@@ -9,45 +9,85 @@
 <body>
   <h1>llselect demo</h1>
   <p>Run <code>npm run build</code>, then <code>npm run serve</code>, and open <code>/demo/</code>.</p>
-  <p class="hint">
-    Phase 4 will test positioning: try the "near page bottom" select (should flip up)
-    and the one inside the scroll container (should reposition or close on scroll).
-  </p>
 
   <section>
-    <h2>Countries (74 options)</h2>
-    <div id="mount-countries"></div>
-    <div class="out" id="out-countries">chosen: (none)</div>
+    <h2>1. Basic usage</h2>
+
+    <article>
+      <h3>1.1 Strings</h3>
+      <p class="hint">Simple string-typed options.</p>
+      <div id="mount-countries"></div>
+      <div class="out" id="out-countries">chosen: (none)</div>
+    </article>
+
+    <article>
+      <h3>1.2 Objects (custom template + compareFn)</h3>
+      <p class="hint">Generic T = User object. <code>templateOption</code> overridden to render id + name + role.</p>
+      <div id="mount-users"></div>
+      <div class="out" id="out-users">chosen: (none)</div>
+    </article>
+
+    <article>
+      <h3>1.3 Stress test (200 options)</h3>
+      <p class="hint">Listbox scroll within clamped max-height. Keyboard PageDown/PageUp jump 10 at a time.</p>
+      <div id="mount-stress"></div>
+      <div class="out" id="out-stress">chosen: (none)</div>
+    </article>
   </section>
 
   <section>
-    <h2>Users (40 options, custom template + compareFn)</h2>
-    <div id="mount-users"></div>
-    <div class="out" id="out-users">chosen: (none)</div>
+    <h2>2. Positioning</h2>
+    <p class="hint">
+      Listbox uses <code>position: fixed</code>; tracks the combobox on scroll/resize.
+      Flips up when there is not enough room below.
+    </p>
+
+    <article>
+      <h3>2.1 Inside a scrollable container</h3>
+      <p class="hint">Open the dropdown, then scroll the gray box. Listbox should reposition.</p>
+      <div class="scroll-container">
+        <div class="scroll-spacer-top"></div>
+        <div id="mount-scroll"></div>
+        <div class="scroll-spacer-bottom"></div>
+      </div>
+      <div class="out" id="out-scroll">chosen: (none)</div>
+    </article>
   </section>
 
   <section>
-    <h2>Stress test (200 options)</h2>
-    <div id="mount-stress"></div>
-    <div class="out" id="out-stress">chosen: (none)</div>
-  </section>
+    <h2>3. Outside-click behavior</h2>
+    <p class="hint">
+      Open the dropdown, then click the outside button. The two modes differ in
+      whether the outside click also triggers its own action.
+    </p>
 
-  <section>
-    <h2>Inside a scrollable container</h2>
-    <p class="hint">Open the dropdown, then scroll the gray box. Phase 4 should reposition (or close) the listbox.</p>
-    <div class="scroll-container">
-      <div class="scroll-spacer-top"></div>
-      <div id="mount-scroll"></div>
-      <div class="scroll-spacer-bottom"></div>
-    </div>
-    <div class="out" id="out-scroll">chosen: (none)</div>
+    <article>
+      <h3>3.1 pass-through (default)</h3>
+      <p class="hint">Outside click closes the dropdown AND triggers the button. Count below should increment.</p>
+      <div class="row">
+        <div id="mount-pass"></div>
+        <button id="btn-pass" type="button">Outside button (clicks: 0)</button>
+      </div>
+    </article>
+
+    <article>
+      <h3>3.2 block</h3>
+      <p class="hint">Outside click closes the dropdown only; the button does NOT receive the click. Count below should stay 0.</p>
+      <div class="row">
+        <div id="mount-block"></div>
+        <button id="btn-block" type="button">Outside button (clicks: 0)</button>
+      </div>
+    </article>
   </section>
 
   <div class="page-filler"></div>
 
-  <section class="near-bottom">
-    <h2>Near page bottom (flip up)</h2>
-    <p class="hint">This select sits close to the page bottom; phase 4 should make its listbox open upward.</p>
+  <section>
+    <h2>4. Near page bottom (flip up)</h2>
+    <p class="hint">
+      After the spacer above, this select sits near the viewport bottom; the
+      listbox should open upward (look for <code>data-placement="above"</code> on the listbox).
+    </p>
     <div id="mount-bottom"></div>
     <div class="out" id="out-bottom">chosen: (none)</div>
   </section>

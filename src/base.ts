@@ -11,10 +11,19 @@ import {
   getUpdatedIndex,
 } from './keyboard.js'
 
+export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
+
 export interface LLSelectBaseSettings<T> {
   cssClassPrefix: string
   placeholder: string
   compareFn: (a: T, b: T) => boolean
+  // When the listbox is open and the user clicks outside the select:
+  // - 'pass-through' (default): close the listbox; the outside click still
+  //   triggers its normal action (button click, link, etc.).
+  // - 'block': close the listbox only; the outside click is blocked so no
+  //   underlying handlers / navigation fire. Avoids accidental side effects
+  //   when the user only intended to close the dropdown.
+  outsideClickBehavior: LLSelectOutsideClickBehavior
 }
 
 export type LLSelectBaseSettingsInput<T> = Partial<LLSelectBaseSettings<T>>
@@ -66,12 +75,14 @@ export abstract class LLSelectBase<T = unknown> {
   private positioner: Positioner | undefined
   private optionEls: HTMLElement[] = []
   private focusedEl: HTMLElement | undefined
+  private outsideHandler: ((ev: Event) => void) | undefined
 
   constructor(targetEl: HTMLElement, settings?: LLSelectBaseSettingsInput<T>) {
     this.settings = {
       cssClassPrefix: settings?.cssClassPrefix ?? DEFAULT_PREFIX,
       placeholder: settings?.placeholder ?? DEFAULT_PLACEHOLDER,
       compareFn: settings?.compareFn ?? defaultCompareFn,
+      outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
     }
     this.classIdMap = makeClassIdMap(this.settings.cssClassPrefix)
 
@@ -98,6 +109,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.listboxEl.hidden = false
     this.renderListbox()
     this.positioner = createPositioner(this.comboboxEl, this.listboxEl)
+    this.attachOutsideClick()
     this.focusInitial()
     this.onOpened()
   }
@@ -109,6 +121,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.rootEl.classList.remove(this.classIdMap.openClass)
     this.positioner?.detach()
     this.positioner = undefined
+    this.detachOutsideClick()
     this.listboxEl.replaceChildren()
     this.listboxEl.hidden = true
     this.optionEls = []
@@ -207,6 +220,43 @@ export abstract class LLSelectBase<T = unknown> {
     } else {
       this.comboboxEl.removeAttribute('aria-activedescendant')
     }
+  }
+
+  private attachOutsideClick(): void {
+    const mode = this.settings.outsideClickBehavior
+    if (mode === 'pass-through') {
+      // mousedown fires before mouseup/click - feels snappier; we do not
+      // preventDefault, so the outside click still triggers its own action.
+      this.outsideHandler = (ev: Event) => {
+        const t = ev.target
+        if (t instanceof Node && !this.rootEl.contains(t)) {
+          this.close()
+        }
+      }
+      document.addEventListener('mousedown', this.outsideHandler)
+    } else {
+      // capture phase so we run before the target's own listeners; swallow
+      // the click so the underlying button/link/etc. does not fire.
+      this.outsideHandler = (ev: Event) => {
+        const t = ev.target
+        if (t instanceof Node && !this.rootEl.contains(t)) {
+          ev.stopPropagation()
+          ev.preventDefault()
+          this.close()
+        }
+      }
+      document.addEventListener('click', this.outsideHandler, true)
+    }
+  }
+
+  private detachOutsideClick(): void {
+    if (!this.outsideHandler) return
+    if (this.settings.outsideClickBehavior === 'pass-through') {
+      document.removeEventListener('mousedown', this.outsideHandler)
+    } else {
+      document.removeEventListener('click', this.outsideHandler, true)
+    }
+    this.outsideHandler = undefined
   }
 
   private handleKeydown(ev: KeyboardEvent): void {
