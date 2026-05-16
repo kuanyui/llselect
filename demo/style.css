@@ -50,8 +50,8 @@ article { margin: 1.5rem 0 2rem 1rem; }
 
 pre[data-demo] {
   margin: 0;
-  background: #1e1e1e;
-  color: #d4d4d4;
+  background: #282c34;
+  color: #abb2bf;
   padding: 0.75rem 1rem;
   border-radius: 4px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
@@ -68,6 +68,13 @@ pre[data-demo] code {
   font-family: inherit;
   font-size: inherit;
 }
+
+/* Minimal JS syntax highlight (One Monokai). */
+.hl-comment { color: #676f7d; font-style: italic; }
+.hl-string  { color: #e6db74; }
+.hl-keyword { color: #f92672; }
+.hl-number  { color: #ae81ff; }
+.hl-func    { color: #a6e22e; }
 
 .hint { color: #666; font-size: 0.9rem; margin: 0.3rem 0; }
 
