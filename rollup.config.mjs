@@ -1,3 +1,5 @@
+// @ts-check
+
 import typescript from '@rollup/plugin-typescript'
 
 const tsPlugin = typescript({
@@ -9,7 +11,11 @@ const tsPlugin = typescript({
   }
 })
 
-export default {
+/**
+* https://rollupjs.org/command-line-interface/#config-intellisense
+* @type {import('rollup').RollupOptions}
+*/
+const options = {
   input: 'src/index.ts',
   output: [
     { file: 'dist/index.mjs', format: 'es', sourcemap: true },
@@ -24,3 +30,5 @@ export default {
   ],
   plugins: [tsPlugin]
 }
+
+export default options
