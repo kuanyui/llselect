@@ -8,6 +8,9 @@ export function setupDom(html = '<!doctype html><html><body></body></html>'): JS
     HTMLElement: dom.window.HTMLElement,
     Element: dom.window.Element,
     Node: dom.window.Node,
+    Event: dom.window.Event,
+    KeyboardEvent: dom.window.KeyboardEvent,
+    MouseEvent: dom.window.MouseEvent,
   })
   return dom
 }

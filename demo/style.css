@@ -80,3 +80,7 @@ section { margin: 2rem 0; }
 .llselect-option:hover {
   background: #eef4ff;
 }
+
+.llselect-option-focused {
+  background: #cce4ff;
+}

@@ -44,6 +44,20 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
     this.close()
   }
 
+  // On open, highlight the chosen option (if any) instead of the first.
+  protected override focusInitial(): void {
+    if (this.options.length === 0) return
+    const c = this.chosen
+    if (c !== undefined) {
+      const idx = this.options.findIndex(o => this.settings.compareFn(o, c))
+      if (idx >= 0) {
+        this.setFocusedIndex(idx)
+        return
+      }
+    }
+    this.setFocusedIndex(0)
+  }
+
   // Drop chosen if it is no longer in the options list.
   protected override afterOptionsChange(): void {
     const current = this.chosen

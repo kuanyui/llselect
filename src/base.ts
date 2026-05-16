@@ -1,8 +1,15 @@
 // LLSelectBase: DOM scaffold, ARIA wiring, open/close state, options storage,
-// and shared rendering primitives for LLSelectSingle and LLSelectMultiple.
-// Subclasses own chosen-state and decide what happens on option click.
+// keyboard navigation, and shared rendering primitives for LLSelectSingle and
+// LLSelectMultiple. Subclasses own chosen-state and decide what happens on
+// option click.
 
 import { createPositioner, type Positioner } from './positioning.js'
+import {
+  LLSelectAction,
+  ensureVisibleInScroll,
+  getActionFromKey,
+  getUpdatedIndex,
+} from './keyboard.js'
 
 export interface LLSelectBaseSettings<T> {
   cssClassPrefix: string
@@ -17,6 +24,7 @@ export interface LLSelectClassIdMap {
   comboboxClass: string
   listboxClass: string
   optionClass: string
+  optionFocusedClass: string
   openClass: string
   comboboxId: string
   listboxId: string
@@ -38,6 +46,7 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
     comboboxClass: `${prefix}-combobox`,
     listboxClass: `${prefix}-listbox`,
     optionClass: `${prefix}-option`,
+    optionFocusedClass: `${prefix}-option-focused`,
     openClass: `${prefix}-open`,
     comboboxId: `${uniq}-combobox`,
     listboxId: `${uniq}-popup`,
@@ -53,7 +62,10 @@ export abstract class LLSelectBase<T = unknown> {
   protected readonly settings: LLSelectBaseSettings<T>
   protected options: T[] = []
   protected isOpen = false
+  protected focusedIndex = -1
   private positioner: Positioner | undefined
+  private optionEls: HTMLElement[] = []
+  private focusedEl: HTMLElement | undefined
 
   constructor(targetEl: HTMLElement, settings?: LLSelectBaseSettingsInput<T>) {
     this.settings = {
@@ -75,6 +87,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.rootEl.append(this.comboboxEl, this.listboxEl)
 
     this.comboboxEl.addEventListener('click', () => this.toggle())
+    this.comboboxEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
   }
 
   public open(): void {
@@ -85,6 +98,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.listboxEl.hidden = false
     this.renderListbox()
     this.positioner = createPositioner(this.comboboxEl, this.listboxEl)
+    this.focusInitial()
     this.onOpened()
   }
 
@@ -97,6 +111,10 @@ export abstract class LLSelectBase<T = unknown> {
     this.positioner = undefined
     this.listboxEl.replaceChildren()
     this.listboxEl.hidden = true
+    this.optionEls = []
+    this.focusedEl = undefined
+    this.focusedIndex = -1
+    this.comboboxEl.removeAttribute('aria-activedescendant')
     this.onClosed()
   }
 
@@ -126,14 +144,24 @@ export abstract class LLSelectBase<T = unknown> {
 
   protected renderListbox(): void {
     this.listboxEl.replaceChildren()
-    for (const option of this.options) {
-      this.listboxEl.append(this.createOptionEl(option))
+    this.optionEls = []
+    this.focusedEl = undefined
+    for (let i = 0; i < this.options.length; i++) {
+      const el = this.createOptionEl(this.options[i]!, i)
+      this.optionEls.push(el)
+      this.listboxEl.append(el)
     }
     this.positioner?.reposition()
+    // Clamp focused index if options shrank, then re-apply focus visuals.
+    if (this.focusedIndex >= this.options.length) {
+      this.focusedIndex = this.options.length === 0 ? -1 : this.options.length - 1
+    }
+    this.applyFocus()
   }
 
-  protected createOptionEl(option: T): HTMLElement {
+  protected createOptionEl(option: T, index: number): HTMLElement {
     const el = document.createElement('div')
+    el.id = `${this.classIdMap.comboboxId}-opt${index}`
     el.className = this.classIdMap.optionClass
     el.setAttribute('role', 'option')
     el.textContent = this.templateOption(option)
@@ -148,6 +176,69 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   protected onOptionClick(_option: T): void {}
+
+  // First focused option when the listbox opens. Override in subclass (e.g.
+  // single mode focuses the chosen option if any).
+  protected focusInitial(): void {
+    if (this.options.length === 0) return
+    this.setFocusedIndex(0)
+  }
+
+  protected setFocusedIndex(index: number): void {
+    const max = this.options.length - 1
+    const clamped = Math.max(-1, Math.min(max, index))
+    if (clamped === this.focusedIndex) return
+    this.focusedIndex = clamped
+    this.applyFocus()
+  }
+
+  private applyFocus(): void {
+    if (this.focusedEl) {
+      this.focusedEl.classList.remove(this.classIdMap.optionFocusedClass)
+      this.focusedEl = undefined
+    }
+    const i = this.focusedIndex
+    if (i >= 0 && i < this.optionEls.length) {
+      const el = this.optionEls[i]!
+      el.classList.add(this.classIdMap.optionFocusedClass)
+      this.comboboxEl.setAttribute('aria-activedescendant', el.id)
+      this.focusedEl = el
+      ensureVisibleInScroll(el, this.listboxEl)
+    } else {
+      this.comboboxEl.removeAttribute('aria-activedescendant')
+    }
+  }
+
+  private handleKeydown(ev: KeyboardEvent): void {
+    const action = getActionFromKey(ev, this.isOpen)
+    if (action === undefined) return
+    ev.preventDefault()
+
+    switch (action) {
+      case LLSelectAction.Open:
+        this.open()
+        return
+      case LLSelectAction.Close:
+        this.close()
+        return
+      case LLSelectAction.Select:
+        if (this.focusedIndex >= 0 && this.focusedIndex < this.options.length) {
+          this.onOptionClick(this.options[this.focusedIndex]!)
+        }
+        return
+      case LLSelectAction.Next:
+      case LLSelectAction.Previous:
+      case LLSelectAction.GotoFirst:
+      case LLSelectAction.GotoLast:
+      case LLSelectAction.PageDown:
+      case LLSelectAction.PageUp: {
+        if (this.options.length === 0) return
+        const next = getUpdatedIndex(this.focusedIndex, this.options.length - 1, action)
+        this.setFocusedIndex(next)
+        return
+      }
+    }
+  }
 
   private buildComboboxEl(): HTMLElement {
     const el = document.createElement('div')
