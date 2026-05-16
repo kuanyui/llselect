@@ -1,0 +1,22 @@
+{
+  "name": "llselect",
+  "version": "0.0.1",
+  "description": "Low-level select",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/kuanyui/llselect.git"
+  },
+  "author": "kuanyui (ono ono)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://gitlab.com/kuanyui/llselect/issues"
+  },
+  "homepage": "https://gitlab.com/kuanyui/llselect#readme",
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
