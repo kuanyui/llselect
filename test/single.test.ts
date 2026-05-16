@@ -35,9 +35,10 @@ test('setChosen with same value does not fire onChange', () => {
   assert.deepEqual(fired, ['a'])
 })
 
-test('setOptions renders one option element per option', () => {
+test('open renders one option element per option', () => {
   const sel = new LLSelectSingle<string>(mount())
   sel.setOptions(['x', 'y', 'z'])
+  sel.open()
   const opts = sel.listboxEl.querySelectorAll('[role="option"]')
   assert.equal(opts.length, 3)
   assert.equal(opts[0]?.textContent, 'x')

@@ -77,6 +77,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.isOpen = true
     this.comboboxEl.setAttribute('aria-expanded', 'true')
     this.rootEl.classList.add(this.classIdMap.openClass)
+    this.renderListbox()
     this.onOpened()
   }
 
@@ -85,6 +86,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.isOpen = false
     this.comboboxEl.setAttribute('aria-expanded', 'false')
     this.rootEl.classList.remove(this.classIdMap.openClass)
+    this.listboxEl.replaceChildren()
     this.onClosed()
   }
 
@@ -99,7 +101,7 @@ export abstract class LLSelectBase<T = unknown> {
 
   public setOptions(options: T[]): void {
     this.options = options.slice()
-    this.renderListbox()
+    if (this.isOpen) this.renderListbox()
     this.afterOptionsChange()
   }
 
