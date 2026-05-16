@@ -4,47 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>llselect demo</title>
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 720px; margin: 0 auto; }
-    code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
-    h2 { margin-top: 2rem; }
-
-    /* Library ships zero CSS by design. This block is demo-only styling. */
-    .llselect-root {
-      position: relative;
-      display: inline-block;
-      min-width: 14rem;
-      font-family: system-ui, sans-serif;
-    }
-    .llselect-combobox {
-      padding: 0.4rem 0.7rem;
-      border: 1px solid #888;
-      border-radius: 4px;
-      background: #fff;
-      cursor: pointer;
-      user-select: none;
-    }
-    .llselect-combobox:focus { outline: 2px solid #4a90e2; outline-offset: 1px; }
-    .llselect-listbox {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      margin-top: 2px;
-      background: #fff;
-      border: 1px solid #888;
-      border-radius: 4px;
-      max-height: 14rem;
-      overflow-y: auto;
-      z-index: 10;
-    }
-    .llselect-root.llselect-open .llselect-listbox { display: block; }
-    .llselect-option { padding: 0.35rem 0.7rem; cursor: pointer; }
-    .llselect-option:hover { background: #eef4ff; }
-
-    .out { margin-top: 0.5rem; font-family: ui-monospace, monospace; color: #444; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <h1>llselect demo</h1>
@@ -58,38 +18,6 @@
   <div id="mount-objects"></div>
   <div class="out" id="out-objects">chosen: (none)</div>
 
-  <script type="module">
-    const { LLSelectSingle, LLSELECT_VERSION } = await import('../dist/index.mjs')
-    console.log('llselect v' + LLSELECT_VERSION)
-
-    const outStrings = document.getElementById('out-strings')
-    const selA = new LLSelectSingle(
-      document.getElementById('mount-strings'),
-      {
-        placeholder: 'Pick a fruit',
-        onChange: (v) => { outStrings.textContent = 'chosen: ' + JSON.stringify(v) }
-      }
-    )
-    selA.setOptions(['Apple', 'Banana', 'Cherry', 'Durian', 'Elderberry'])
-
-    const outObjects = document.getElementById('out-objects')
-    const users = [
-      { id: 1, name: 'Alice' },
-      { id: 2, name: 'Bob' },
-      { id: 3, name: 'Carol' },
-    ]
-    class UserSelect extends LLSelectSingle {
-      templateOption(user) { return `#${user.id} ${user.name}` }
-    }
-    const selB = new UserSelect(
-      document.getElementById('mount-objects'),
-      {
-        placeholder: 'Pick a user',
-        compareFn: (a, b) => a.id === b.id,
-        onChange: (v) => { outObjects.textContent = 'chosen: ' + JSON.stringify(v) }
-      }
-    )
-    selB.setOptions(users)
-  </script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
