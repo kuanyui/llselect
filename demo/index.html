@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>llselect demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 720px; margin: 0 auto; }
+    code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
+    #status { padding: 0.75rem 1rem; border-radius: 6px; background: #f4f4f4; }
+    #status.ok { background: #e6ffed; color: #064; }
+    #status.err { background: #ffe6e6; color: #800; }
+  </style>
+</head>
+<body>
+  <h1>llselect demo</h1>
+  <p>This page exists to verify scaffolding. Run <code>npm run build</code>, then serve the project root (e.g. <code>npm run serve</code>) and open <code>/demo/</code>.</p>
+  <div id="status">Loading...</div>
+
+  <script type="module">
+    const statusEl = document.getElementById('status')
+    try {
+      const { LLSELECT_VERSION } = await import('../dist/index.mjs')
+      statusEl.textContent = `Loaded llselect v${LLSELECT_VERSION}`
+      statusEl.classList.add('ok')
+    } catch (e) {
+      statusEl.textContent = `Failed to load: ${e.message}. Did you run \`npm run build\` first?`
+      statusEl.classList.add('err')
+      console.error(e)
+    }
+  </script>
+</body>
+</html>

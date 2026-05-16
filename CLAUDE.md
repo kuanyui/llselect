@@ -65,3 +65,11 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+## 5. Project-Specific Rules (llselect)
+
+- All source code, identifiers, file names, comments, and documentation are English only.
+- Use only the ASCII hyphen-minus character `-`. Do not use em dash, en dash, smart quotes, or other non-ASCII punctuation anywhere in code or docs.
+- Comments should be terse. Skip anything obvious from the code; only note non-obvious intent, invariants, or workarounds.
+- Browser target: roughly the last 5 years. Do not add polyfills, vendor prefixes, or workarounds for older versions.
+- TypeScript: write explicit, precise types. Do not use `any` unless genuinely unavoidable; when you must, add a short comment explaining why.

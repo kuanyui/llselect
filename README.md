@@ -8,6 +8,7 @@ This is not mean to provide a full-bundle select (such `select2.js`). This provi
 - Minimal, flexible, performance.
 - Always lazy render the DOM of `<option>`.
 - Native TypeScript support.
+- Customizable `select / option` HTML renderer function
 
 # Acknowledgement
 I had this idea since 2024 and wrote some drafts for this. But I have no time to implement this so the draft was abandoned.
