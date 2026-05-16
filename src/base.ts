@@ -11,42 +11,90 @@ import {
   getUpdatedIndex,
 } from './keyboard.js'
 
+/**
+ * What happens when the user clicks outside an open listbox.
+ *
+ * - `'pass-through'` (default): close the listbox; the outside click still
+ *   triggers its normal action (button click, link navigation, etc.).
+ * - `'block'`: close the listbox only; the outside click is swallowed so no
+ *   underlying handler or default action fires. Avoids accidental side
+ *   effects when the user only intended to dismiss the dropdown.
+ */
 export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
 
-// Called by the library to produce the combobox's indicator element (e.g. a
-// chevron arrow). Receives the current open/closed state so the renderer may
-// return different elements per state. Return null to render nothing.
+/**
+ * Function that produces the combobox's indicator element (e.g. a dropdown
+ * arrow). Called by the library when the indicator may need to change -
+ * including on every open/close - so the returned element can vary with
+ * `isOpen`. Return `null` to render no indicator for that state.
+ */
 export type LLSelectIndicatorRenderer = (state: { isOpen: boolean }) => HTMLElement | SVGElement | null
 
+/**
+ * Resolved (defaults applied) settings shared by all select variants.
+ * Subclasses (`LLSelectSingle`, `LLSelectMultiple`) extend this with their
+ * mode-specific options such as `onChange`.
+ */
 export interface LLSelectBaseSettings<T> {
+  /** Prefix used for every CSS class and DOM id the library generates. */
   cssClassPrefix: string
+  /** Text shown in the combobox when nothing is selected. */
   placeholder: string
+  /**
+   * Equality predicate for option values. Required for non-primitive `T`
+   * (the default uses `===`, which compares object references).
+   */
   compareFn: (a: T, b: T) => boolean
-  // When the listbox is open and the user clicks outside the select:
-  // - 'pass-through' (default): close the listbox; the outside click still
-  //   triggers its normal action (button click, link, etc.).
-  // - 'block': close the listbox only; the outside click is blocked so no
-  //   underlying handlers / navigation fire. Avoids accidental side effects
-  //   when the user only intended to close the dropdown.
+  /** See {@link LLSelectOutsideClickBehavior}. */
   outsideClickBehavior: LLSelectOutsideClickBehavior
-  // Optional renderer for the combobox's indicator slot (e.g. dropdown arrow).
-  // null (default) means no indicator. The library re-invokes this when open
-  // state changes so the returned element can vary with isOpen.
+  /**
+   * See {@link LLSelectIndicatorRenderer}. `null` (default) means the library
+   * adds nothing to the indicator slot.
+   */
   renderIndicator: LLSelectIndicatorRenderer | null
 }
 
+/**
+ * Constructor-time settings input - every field is optional and missing
+ * fields fall back to the library defaults.
+ */
 export type LLSelectBaseSettingsInput<T> = Partial<LLSelectBaseSettings<T>>
 
+/**
+ * Resolved CSS class names and DOM ids for one instance. Exposed on
+ * `instance.classIdMap` so callers can reuse them in their own CSS or query
+ * selectors instead of hard-coding the strings.
+ */
 export interface LLSelectClassIdMap {
+  /** Class on `rootEl` (the caller-passed mount element). */
   rootClass: string
+  /** Class on `comboboxEl` (the interactive trigger, `role="combobox"`). */
   comboboxClass: string
+  /** Class on the inner span where content (text/tags) is rendered. */
   comboboxContentClass: string
+  /** Class on the inner span where the optional indicator icon lives. */
   comboboxIndicatorClass: string
+  /** Class on `listboxEl` (the popup, `role="listbox"`). */
   listboxClass: string
+  /** Class on every option element (`role="option"`) inside the listbox. */
   optionClass: string
+  /**
+   * Extra class added to the currently keyboard-focused option element.
+   * Use this to style the focus highlight.
+   */
   optionFocusedClass: string
+  /**
+   * Class added to `rootEl` while the listbox is open. Use it as a CSS hook
+   * for open-state styling (also available as `[data-state='open']` on the
+   * combobox).
+   */
   openClass: string
+  /** DOM `id` of `comboboxEl`. Unique across instances. */
   comboboxId: string
+  /**
+   * DOM `id` of `listboxEl`. Unique across instances. Used by the combobox's
+   * `aria-controls` attribute.
+   */
   listboxId: string
 }
 
@@ -75,16 +123,55 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
   }
 }
 
+/**
+ * Abstract base for all select variants. Owns DOM scaffolding, ARIA wiring,
+ * positioning, keyboard navigation, lazy listbox rendering, and outside-click
+ * handling. Subclasses (`LLSelectSingle`, `LLSelectMultiple`) own
+ * chosen-state, decide what happens on option click, and customise the
+ * combobox text via `renderContent`.
+ *
+ * @typeParam T - option value type. Use `unknown` (default) only when you
+ *   intend to narrow inside templates / handlers; usually pass a concrete
+ *   type like `string` or your domain object.
+ */
 export abstract class LLSelectBase<T = unknown> {
+  /**
+   * The caller-passed mount element, now decorated as the select's root.
+   * Library does not replace this node, so the caller's original reference,
+   * id, and data-* attributes stay valid.
+   */
   public readonly rootEl: HTMLElement
+  /**
+   * The interactive trigger element (`role="combobox"`). Receives focus,
+   * click, and keydown events; carries `aria-expanded`, `aria-controls`,
+   * `aria-activedescendant`, and `data-state="open|closed"`.
+   */
   public readonly comboboxEl: HTMLElement
+  /**
+   * Inner span inside the combobox where text/tags are written.
+   * Subclasses' `renderContent` writes here so the sibling indicator slot
+   * is preserved across re-renders.
+   */
   public readonly contentEl: HTMLElement
+  /**
+   * The popup element (`role="listbox"`). Hidden via the `hidden` attribute
+   * when closed; positioned via inline styles by the positioner when open.
+   * Lazily populated with option elements on open and cleared on close.
+   */
   public readonly listboxEl: HTMLElement
+  /** Resolved class names and ids for this instance. */
   public readonly classIdMap: LLSelectClassIdMap
 
+  /** Resolved settings (defaults applied). */
   protected readonly settings: LLSelectBaseSettings<T>
+  /** Current option list. Defensive copy of what `setOptions` was given. */
   protected options: T[] = []
+  /** Whether the listbox is currently open. */
   protected isOpen = false
+  /**
+   * Index (into `options`) of the currently keyboard-focused option, or `-1`
+   * when nothing is focused (closed listbox, or no options).
+   */
   protected focusedIndex = -1
   private indicatorEl: HTMLElement
   private positioner: Positioner | undefined
@@ -92,6 +179,13 @@ export abstract class LLSelectBase<T = unknown> {
   private focusedEl: HTMLElement | undefined
   private outsideHandler: ((ev: Event) => void) | undefined
 
+  /**
+   * @param targetEl - mount element. Becomes `rootEl`; its existing children
+   *   are wiped and replaced with the combobox + listbox structure. Pre-set
+   *   classes / id / data-* attributes on this element are preserved.
+   * @param settings - optional partial settings. Missing fields use defaults
+   *   ({@link LLSelectBaseSettings}).
+   */
   constructor(targetEl: HTMLElement, settings?: LLSelectBaseSettingsInput<T>) {
     this.settings = {
       cssClassPrefix: settings?.cssClassPrefix ?? DEFAULT_PREFIX,
@@ -119,6 +213,12 @@ export abstract class LLSelectBase<T = unknown> {
     this.comboboxEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
   }
 
+  /**
+   * Open the listbox. Builds option elements lazily, attaches the positioner
+   * (which auto-closes if the combobox is scrolled out of view), wires the
+   * outside-click handler, and moves keyboard focus into the option list.
+   * No-op if already open.
+   */
   public open(): void {
     if (this.isOpen) return
     this.isOpen = true
@@ -136,6 +236,10 @@ export abstract class LLSelectBase<T = unknown> {
     this.onOpened()
   }
 
+  /**
+   * Close the listbox. Detaches positioner and outside-click listener, clears
+   * the option DOM, and resets focused-option state. No-op if already closed.
+   */
   public close(): void {
     if (!this.isOpen) return
     this.isOpen = false
@@ -155,35 +259,61 @@ export abstract class LLSelectBase<T = unknown> {
     this.onClosed()
   }
 
+  /** Open if closed, close if open. */
   public toggle(): void {
     if (this.isOpen) this.close()
     else this.open()
   }
 
+  /**
+   * Return the current option list. The returned array is read-only;
+   * mutating it has no effect on the select.
+   */
   public getOptions(): readonly T[] {
     return this.options
   }
 
+  /**
+   * Replace the option list. The input is shallow-copied so external mutation
+   * does not affect the select. If the listbox is currently open it is
+   * re-rendered; otherwise the DOM is built lazily on the next `open()`.
+   * Subclasses may reconcile chosen-state via {@link afterOptionsChange}
+   * (e.g. single mode drops a chosen value that is no longer in the list).
+   */
   public setOptions(options: T[]): void {
     this.options = options.slice()
     if (this.isOpen) this.renderListbox()
     this.afterOptionsChange()
   }
 
-  // Subclass hooks. Default no-op so base remains instantiable in tests.
+  /** Called once after the listbox finishes opening. Default no-op. */
   protected onOpened(): void {}
+  /** Called once after the listbox finishes closing. Default no-op. */
   protected onClosed(): void {}
+  /**
+   * Called after `setOptions` finishes. Override to reconcile state that
+   * depends on the option list (e.g. clear a chosen value that disappeared).
+   * Default no-op.
+   */
   protected afterOptionsChange(): void {}
 
-  // Orchestrator: writes content slot then refreshes the indicator slot.
-  // Subclasses override `renderContent`, not this.
+  /**
+   * Orchestrator that re-renders both the combobox content slot and the
+   * indicator slot. Subclasses normally override {@link renderContent}, not
+   * this. Call this from subclass code when both slots need to refresh
+   * together (constructor, post-state-change, etc.).
+   */
   protected renderCombobox(): void {
     this.renderContent()
     this.refreshIndicator()
   }
 
-  // Subclass overrides this to write the combobox text. Writes to contentEl
-  // so the sibling indicator slot is preserved.
+  /**
+   * Write the combobox's content slot. Override in subclasses to display the
+   * chosen value(s); default writes the placeholder. Always write to
+   * `this.contentEl` (not `this.comboboxEl`) so the sibling indicator slot
+   * is preserved.
+   */
   protected renderContent(): void {
     this.contentEl.textContent = this.settings.placeholder
   }
@@ -196,6 +326,11 @@ export abstract class LLSelectBase<T = unknown> {
     if (el) this.indicatorEl.appendChild(el)
   }
 
+  /**
+   * Rebuild the listbox option elements from the current `options`. Called
+   * by `open()` and by `setOptions()` while open. Also clamps `focusedIndex`
+   * if the option list shrank and re-applies focus visuals.
+   */
   protected renderListbox(): void {
     this.listboxEl.replaceChildren()
     this.optionEls = []
@@ -213,6 +348,16 @@ export abstract class LLSelectBase<T = unknown> {
     this.applyFocus()
   }
 
+  /**
+   * Build the DOM element for one option. Override if you need richer markup
+   * (e.g. icons, descriptions, HTML). The base implementation sets `id`,
+   * `role="option"`, a click handler, and writes `textContent` from
+   * {@link templateOption}.
+   *
+   * @param option - the option value
+   * @param index - index in `this.options`; used to build a stable id so
+   *   `aria-activedescendant` can point to this element across re-renders.
+   */
   protected createOptionEl(option: T, index: number): HTMLElement {
     const el = document.createElement('div')
     el.id = `${this.classIdMap.comboboxId}-opt${index}`
@@ -223,21 +368,39 @@ export abstract class LLSelectBase<T = unknown> {
     return el
   }
 
-  // Override to change the rendered label for an option. Returned text is
-  // applied as textContent (safe). Subclass `createOptionEl` if HTML is needed.
+  /**
+   * Map an option value to its display label. Default is `String(option)`,
+   * applied as `textContent` (HTML-safe). Override for custom formatting.
+   * If you need real HTML output, override {@link createOptionEl} instead
+   * and treat XSS yourself.
+   */
   protected templateOption(option: T): string {
     return String(option)
   }
 
+  /**
+   * Called when an option is activated (click or keyboard select). Default
+   * no-op; subclasses implement their selection behaviour (single mode picks
+   * and closes, multiple mode toggles and keeps the listbox open).
+   */
   protected onOptionClick(_option: T): void {}
 
-  // First focused option when the listbox opens. Override in subclass (e.g.
-  // single mode focuses the chosen option if any).
+  /**
+   * Decide which option to focus when the listbox opens. Default focuses
+   * the first option (or no-op if the list is empty). Override to focus the
+   * currently chosen option, last-used option, etc.
+   */
   protected focusInitial(): void {
     if (this.options.length === 0) return
     this.setFocusedIndex(0)
   }
 
+  /**
+   * Move keyboard focus to the option at `index`. The value is clamped to
+   * `[-1, options.length-1]`; pass `-1` to clear focus. Updates the focused
+   * class, `aria-activedescendant`, and scrolls the option into view. No-op
+   * if the clamped value equals the current focused index.
+   */
   protected setFocusedIndex(index: number): void {
     const max = this.options.length - 1
     const clamped = Math.max(-1, Math.min(max, index))

@@ -1,6 +1,7 @@
 // Positioner: places `floating` (listbox) relative to `anchor` (combobox).
 // Pure math is split into `computePosition` so it can be tested without layout.
 
+/** Minimal rect shape consumed by {@link computePosition}. */
 export interface AnchorRect {
   top: number
   left: number
@@ -10,19 +11,24 @@ export interface AnchorRect {
   height: number
 }
 
+/** Whether the floating element sits below or above the anchor. */
 export type Placement = 'below' | 'above'
 
+/** Input to the pure positioning calculation. */
 export interface PositionInput {
   anchorRect: AnchorRect
   viewportWidth: number
   viewportHeight: number
+  /** Measured height of the floating element. Pass 0 if unknown. */
   floatingHeight: number
 }
 
+/** Result of {@link computePosition}: coordinates and chosen placement. */
 export interface PositionResult {
   top: number
   left: number
   width: number
+  /** Maximum height the floating element may occupy. */
   maxHeight: number
   placement: Placement
 }
@@ -30,6 +36,14 @@ export interface PositionResult {
 const GAP = 4
 const VIEWPORT_PADDING = 8
 
+/**
+ * Compute where to place the floating element relative to the anchor.
+ *
+ * Prefers placing below; flips above when the floating element does not fit
+ * below and either fits above or has more room above. When neither side
+ * fits, picks the side with more space and clamps `maxHeight` accordingly.
+ * Width always equals the anchor's width.
+ */
 export function computePosition(input: PositionInput): PositionResult {
   const { anchorRect, viewportHeight, floatingHeight } = input
 
@@ -89,18 +103,42 @@ function isClippedByAncestor(anchor: HTMLElement, anchorRect: DOMRect): boolean 
   return false
 }
 
+/** Controls the lifecycle of an active positioner. */
 export interface Positioner {
+  /** Force a re-position now. Normally called automatically. */
   reposition(): void
+  /**
+   * Stop tracking and clear all inline styles + `data-placement` from the
+   * floating element. Idempotent. Call once when the floating element is
+   * dismissed.
+   */
   detach(): void
 }
 
+/** Options passed to {@link createPositioner}. */
 export interface PositionerOptions {
-  // Called when the anchor is fully outside the viewport. Typical use: close
-  // the floating element so it does not float orphaned without a visible
-  // trigger.
+  /**
+   * Called when the anchor becomes invisible (fully outside the viewport,
+   * or fully clipped by a scrollable ancestor). Typical use: close the
+   * floating element so it does not hang in space without a visible trigger.
+   */
   onHide?: () => void
 }
 
+/**
+ * Attach a positioner that keeps `floating` placed relative to `anchor`.
+ *
+ * Behavior: sets `floating` to `position: fixed`, listens to window scroll
+ * (capture phase, so any ancestor scroll is caught), window resize, and
+ * `ResizeObserver` on both elements. On every reposition: if the anchor is
+ * outside the viewport or clipped by a scrollable ancestor and `onHide` is
+ * provided, calls `onHide` and skips style updates. Otherwise applies the
+ * coordinates from {@link computePosition} and sets `data-placement` on
+ * `floating` for CSS hooks.
+ *
+ * Caller is responsible for calling `detach()` when the floating element is
+ * dismissed; otherwise listeners leak.
+ */
 export function createPositioner(
   anchor: HTMLElement,
   floating: HTMLElement,

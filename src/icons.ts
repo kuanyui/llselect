@@ -5,7 +5,9 @@
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
+/** Options accepted by the built-in icon helpers. */
 export interface IconOptions {
+  /** Width and height of the SVG in pixels. Default 16. */
   size?: number
 }
 
@@ -23,14 +25,16 @@ function makeSvg(viewBox: string, pathD: string, size: number): SVGElement {
   return svg
 }
 
-// Solid filled triangle pointing down. Sized to roughly match the chevron's
-// visual weight (the MDI arrow_drop_down path is much smaller within its
-// viewBox and looks underwhelming next to other 24x24 icons).
+/**
+ * Solid filled triangle pointing down. Sized to roughly match the chevron's
+ * visual weight (MDI's `arrow_drop_down` path occupies a small portion of
+ * its 24x24 viewBox and looks too small next to other icons).
+ */
 export function triangleDownSvg(opts: IconOptions = {}): SVGElement {
   return makeSvg('0 0 24 24', 'M4 8l8 10 8-10z', opts.size ?? 16)
 }
 
-// Material Design "expand_more" chevron.
+/** Material Design `expand_more` chevron pointing down (filled outline). */
 export function chevronDownSvg(opts: IconOptions = {}): SVGElement {
   return makeSvg(
     '0 0 24 24',
