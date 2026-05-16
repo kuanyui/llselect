@@ -68,12 +68,35 @@ export interface Positioner {
   detach(): void
 }
 
-export function createPositioner(anchor: HTMLElement, floating: HTMLElement): Positioner {
+export interface PositionerOptions {
+  // Called when the anchor is fully outside the viewport. Typical use: close
+  // the floating element so it does not float orphaned without a visible
+  // trigger.
+  onHide?: () => void
+}
+
+export function createPositioner(
+  anchor: HTMLElement,
+  floating: HTMLElement,
+  options?: PositionerOptions,
+): Positioner {
   let attached = true
 
   function reposition(): void {
     if (!attached) return
     const rect = anchor.getBoundingClientRect()
+    // Strict comparisons so an unsized anchor at (0,0,0,0) - common in jsdom
+    // or before layout - is treated as "in viewport, no rect yet" rather than
+    // "fully above/left of viewport".
+    const outOfViewport =
+      rect.bottom < 0 ||
+      rect.top > window.innerHeight ||
+      rect.right < 0 ||
+      rect.left > window.innerWidth
+    if (outOfViewport && options?.onHide) {
+      options.onHide()
+      return
+    }
     const result = computePosition({
       anchorRect: {
         top: rect.top,

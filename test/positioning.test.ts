@@ -153,3 +153,57 @@ test('listbox is hidden by default after construction', () => {
   const sel = new LLSelectSingle<string>(mount)
   assert.equal(sel.listboxEl.hidden, true)
 })
+
+test('positioner calls onHide when anchor is fully above viewport', () => {
+  setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  withMockedRect(anchor, { top: -100, left: 50, right: 250, bottom: -50, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  assert.equal(calls, 1)
+  p.detach()
+})
+
+test('positioner calls onHide when anchor is fully below viewport', () => {
+  setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  // jsdom default viewport height is 768; place anchor at top: 800
+  withMockedRect(anchor, { top: 800, left: 50, right: 250, bottom: 830, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  assert.equal(calls, 1)
+  p.detach()
+})
+
+test('positioner does NOT call onHide when anchor is in viewport', () => {
+  setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  withMockedRect(anchor, { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  assert.equal(calls, 0)
+  p.detach()
+})
+
+test('LLSelectSingle auto-closes when combobox scrolls fully out of viewport', () => {
+  setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
+  const mount = document.getElementById('mount')!
+  const sel = new LLSelectSingle<string>(mount)
+  sel.setOptions(['a', 'b'])
+
+  withMockedRect(sel.comboboxEl, { top: 100, left: 0, right: 200, bottom: 130, width: 200, height: 30 })
+  sel.open()
+  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'true')
+
+  // Anchor moves fully above the viewport (e.g. user scrolled it out of view).
+  withMockedRect(sel.comboboxEl, { top: -100, left: 0, right: 200, bottom: -70, width: 200, height: 30 })
+  window.dispatchEvent(new Event('scroll'))
+
+  assert.equal(sel.comboboxEl.getAttribute('aria-expanded'), 'false')
+})

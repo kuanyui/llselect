@@ -108,7 +108,9 @@ export abstract class LLSelectBase<T = unknown> {
     this.rootEl.classList.add(this.classIdMap.openClass)
     this.listboxEl.hidden = false
     this.renderListbox()
-    this.positioner = createPositioner(this.comboboxEl, this.listboxEl)
+    this.positioner = createPositioner(this.comboboxEl, this.listboxEl, {
+      onHide: () => this.close(),
+    })
     this.attachOutsideClick()
     this.focusInitial()
     this.onOpened()
