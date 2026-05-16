@@ -13,6 +13,11 @@ import {
 
 export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
 
+// Called by the library to produce the combobox's indicator element (e.g. a
+// chevron arrow). Receives the current open/closed state so the renderer may
+// return different elements per state. Return null to render nothing.
+export type LLSelectIndicatorRenderer = (state: { isOpen: boolean }) => HTMLElement | SVGElement | null
+
 export interface LLSelectBaseSettings<T> {
   cssClassPrefix: string
   placeholder: string
@@ -24,6 +29,10 @@ export interface LLSelectBaseSettings<T> {
   //   underlying handlers / navigation fire. Avoids accidental side effects
   //   when the user only intended to close the dropdown.
   outsideClickBehavior: LLSelectOutsideClickBehavior
+  // Optional renderer for the combobox's indicator slot (e.g. dropdown arrow).
+  // null (default) means no indicator. The library re-invokes this when open
+  // state changes so the returned element can vary with isOpen.
+  renderIndicator: LLSelectIndicatorRenderer | null
 }
 
 export type LLSelectBaseSettingsInput<T> = Partial<LLSelectBaseSettings<T>>
@@ -31,6 +40,8 @@ export type LLSelectBaseSettingsInput<T> = Partial<LLSelectBaseSettings<T>>
 export interface LLSelectClassIdMap {
   rootClass: string
   comboboxClass: string
+  comboboxContentClass: string
+  comboboxIndicatorClass: string
   listboxClass: string
   optionClass: string
   optionFocusedClass: string
@@ -53,6 +64,8 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
   return {
     rootClass: `${prefix}-root`,
     comboboxClass: `${prefix}-combobox`,
+    comboboxContentClass: `${prefix}-combobox-content`,
+    comboboxIndicatorClass: `${prefix}-combobox-indicator`,
     listboxClass: `${prefix}-listbox`,
     optionClass: `${prefix}-option`,
     optionFocusedClass: `${prefix}-option-focused`,
@@ -65,6 +78,7 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
 export abstract class LLSelectBase<T = unknown> {
   public readonly rootEl: HTMLElement
   public readonly comboboxEl: HTMLElement
+  public readonly contentEl: HTMLElement
   public readonly listboxEl: HTMLElement
   public readonly classIdMap: LLSelectClassIdMap
 
@@ -72,6 +86,7 @@ export abstract class LLSelectBase<T = unknown> {
   protected options: T[] = []
   protected isOpen = false
   protected focusedIndex = -1
+  private indicatorEl: HTMLElement
   private positioner: Positioner | undefined
   private optionEls: HTMLElement[] = []
   private focusedEl: HTMLElement | undefined
@@ -83,6 +98,7 @@ export abstract class LLSelectBase<T = unknown> {
       placeholder: settings?.placeholder ?? DEFAULT_PLACEHOLDER,
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
+      renderIndicator: settings?.renderIndicator ?? null,
     }
     this.classIdMap = makeClassIdMap(this.settings.cssClassPrefix)
 
@@ -92,6 +108,8 @@ export abstract class LLSelectBase<T = unknown> {
     this.rootEl.replaceChildren()
 
     this.comboboxEl = this.buildComboboxEl()
+    this.contentEl = this.comboboxEl.querySelector(`.${this.classIdMap.comboboxContentClass}`) as HTMLElement
+    this.indicatorEl = this.comboboxEl.querySelector(`.${this.classIdMap.comboboxIndicatorClass}`) as HTMLElement
     this.listboxEl = this.buildListboxEl()
     this.listboxEl.hidden = true
     this.listboxEl.style.overflowY = 'auto'
@@ -105,8 +123,10 @@ export abstract class LLSelectBase<T = unknown> {
     if (this.isOpen) return
     this.isOpen = true
     this.comboboxEl.setAttribute('aria-expanded', 'true')
+    this.comboboxEl.setAttribute('data-state', 'open')
     this.rootEl.classList.add(this.classIdMap.openClass)
     this.listboxEl.hidden = false
+    this.refreshIndicator()
     this.renderListbox()
     this.positioner = createPositioner(this.comboboxEl, this.listboxEl, {
       onHide: () => this.close(),
@@ -120,6 +140,7 @@ export abstract class LLSelectBase<T = unknown> {
     if (!this.isOpen) return
     this.isOpen = false
     this.comboboxEl.setAttribute('aria-expanded', 'false')
+    this.comboboxEl.setAttribute('data-state', 'closed')
     this.rootEl.classList.remove(this.classIdMap.openClass)
     this.positioner?.detach()
     this.positioner = undefined
@@ -130,6 +151,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.focusedEl = undefined
     this.focusedIndex = -1
     this.comboboxEl.removeAttribute('aria-activedescendant')
+    this.refreshIndicator()
     this.onClosed()
   }
 
@@ -153,8 +175,25 @@ export abstract class LLSelectBase<T = unknown> {
   protected onClosed(): void {}
   protected afterOptionsChange(): void {}
 
+  // Orchestrator: writes content slot then refreshes the indicator slot.
+  // Subclasses override `renderContent`, not this.
   protected renderCombobox(): void {
-    this.comboboxEl.textContent = this.settings.placeholder
+    this.renderContent()
+    this.refreshIndicator()
+  }
+
+  // Subclass overrides this to write the combobox text. Writes to contentEl
+  // so the sibling indicator slot is preserved.
+  protected renderContent(): void {
+    this.contentEl.textContent = this.settings.placeholder
+  }
+
+  private refreshIndicator(): void {
+    this.indicatorEl.replaceChildren()
+    const renderer = this.settings.renderIndicator
+    if (!renderer) return
+    const el = renderer({ isOpen: this.isOpen })
+    if (el) this.indicatorEl.appendChild(el)
   }
 
   protected renderListbox(): void {
@@ -301,6 +340,13 @@ export abstract class LLSelectBase<T = unknown> {
     el.setAttribute('aria-controls', this.classIdMap.listboxId)
     el.setAttribute('aria-expanded', 'false')
     el.setAttribute('aria-haspopup', 'listbox')
+    el.setAttribute('data-state', 'closed')
+    // Two child slots: content (text/tags) and indicator (optional icon).
+    const content = document.createElement('span')
+    content.className = this.classIdMap.comboboxContentClass
+    const indicator = document.createElement('span')
+    indicator.className = this.classIdMap.comboboxIndicatorClass
+    el.append(content, indicator)
     return el
   }
 

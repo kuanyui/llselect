@@ -3,6 +3,8 @@ export type {
   LLSelectBaseSettings,
   LLSelectBaseSettingsInput,
   LLSelectClassIdMap,
+  LLSelectIndicatorRenderer,
+  LLSelectOutsideClickBehavior,
 } from './base.js'
 
 export { LLSelectSingle } from './single.js'
@@ -10,5 +12,8 @@ export type {
   LLSelectSingleSettings,
   LLSelectSingleSettingsInput,
 } from './single.js'
+
+export { chevronDownSvg, triangleDownSvg } from './icons.js'
+export type { IconOptions } from './icons.js'
 
 export const LLSELECT_VERSION = '0.1.0'

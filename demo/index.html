@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>llselect demo</title>
   <link rel="stylesheet" href="style.css">
+  <!-- For 4.3 only: Material Design Icons font (external CDN, demo-only). -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
 </head>
 <body>
   <h1>llselect demo</h1>
@@ -84,10 +86,55 @@
     </article>
   </section>
 
+  <section>
+    <h2>4. Indicator (dropdown arrow) variants</h2>
+    <p class="hint">
+      Library ships no indicator by default. Pass <code>renderIndicator</code>
+      to add any element (SVG, &lt;i&gt; icon class, plain text, ...).
+      All variants below use the same data binding; only the arrow differs.
+    </p>
+
+    <article>
+      <h3>4.1 No indicator (default)</h3>
+      <div id="mount-ind-none"></div>
+    </article>
+
+    <article>
+      <h3>4.2 Built-in SVG helpers</h3>
+      <p class="hint">
+        Both return SVGElement with <code>fill="currentColor"</code> and
+        <code>aria-hidden="true"</code>. CSS rotates them on
+        <code>[data-state="open"]</code>.
+      </p>
+      <div class="indicator-row">
+        <div>
+          <label class="indicator-label"><code>chevronDownSvg()</code></label>
+          <div id="mount-ind-chevron"></div>
+        </div>
+        <div>
+          <label class="indicator-label"><code>triangleDownSvg()</code></label>
+          <div id="mount-ind-triangle"></div>
+        </div>
+      </div>
+    </article>
+
+    <article>
+      <h3>4.3 Material Design Icons (mdi)</h3>
+      <p class="hint">Just return an <code>&lt;i class="mdi mdi-..."&gt;</code>. No lib API needed.</p>
+      <div id="mount-ind-mdi"></div>
+    </article>
+
+    <article>
+      <h3>4.4 CSS-only triangle (no JS indicator)</h3>
+      <p class="hint">Pure CSS pseudo-element on <code>.llselect-combobox</code>. data-state drives rotation.</p>
+      <div id="mount-ind-css"></div>
+    </article>
+  </section>
+
   <div class="page-filler"></div>
 
   <section>
-    <h2>4. Near page bottom (flip up)</h2>
+    <h2>5. Near page bottom (flip up)</h2>
     <p class="hint">
       After the spacer above, this select sits near the viewport bottom; the
       listbox should open upward (look for <code>data-placement="above"</code> on the listbox).

@@ -1,4 +1,4 @@
-import { LLSelectSingle, LLSELECT_VERSION } from '../dist/index.mjs'
+import { LLSelectSingle, LLSELECT_VERSION, chevronDownSvg, triangleDownSvg } from '../dist/index.mjs'
 import { COUNTRIES, USERS, STRESS_ITEMS } from './data.js'
 
 console.log('llselect v' + LLSELECT_VERSION)
@@ -85,7 +85,50 @@ const selBlock = new LLSelectSingle(
 )
 selBlock.setOptions(COUNTRIES)
 
-// 4. Near page bottom (flip up)
+// 4.1 No indicator (default - lib does nothing)
+new LLSelectSingle(
+  document.getElementById('mount-ind-none'),
+  { placeholder: 'No indicator' },
+).setOptions(COUNTRIES)
+
+// 4.2a chevronDownSvg
+new LLSelectSingle(
+  document.getElementById('mount-ind-chevron'),
+  {
+    placeholder: 'chevron',
+    renderIndicator: () => chevronDownSvg(),
+  },
+).setOptions(COUNTRIES)
+
+// 4.2b triangleDownSvg
+new LLSelectSingle(
+  document.getElementById('mount-ind-triangle'),
+  {
+    placeholder: 'triangle',
+    renderIndicator: () => triangleDownSvg(),
+  },
+).setOptions(COUNTRIES)
+
+// 4.3 Material Design Icons
+new LLSelectSingle(
+  document.getElementById('mount-ind-mdi'),
+  {
+    placeholder: 'mdi icon',
+    renderIndicator: () => {
+      const i = document.createElement('i')
+      i.className = 'mdi mdi-chevron-down'
+      return i
+    },
+  },
+).setOptions(COUNTRIES)
+
+// 4.4 CSS-only triangle (no renderIndicator; CSS handles everything via data-state)
+new LLSelectSingle(
+  document.getElementById('mount-ind-css'),
+  { placeholder: 'CSS triangle (no JS)' },
+).setOptions(COUNTRIES)
+
+// 5. Near page bottom (flip up)
 const outBottom = document.getElementById('out-bottom')
 const selBottom = new LLSelectSingle(
   document.getElementById('mount-bottom'),

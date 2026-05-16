@@ -45,6 +45,19 @@ article { margin: 1.5rem 0 2rem 1rem; }
   gap: 1rem;
 }
 
+.indicator-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.indicator-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.25rem;
+}
+
 .row button {
   padding: 0.4rem 0.8rem;
   border: 1px solid #888;
@@ -78,6 +91,10 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 
 .llselect-combobox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   padding: 0.4rem 0.7rem;
   border: 1px solid #888;
   border-radius: 4px;
@@ -89,6 +106,46 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .llselect-combobox:focus {
   outline: 2px solid #4a90e2;
   outline-offset: 1px;
+}
+
+.llselect-combobox-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.llselect-combobox-indicator {
+  display: inline-flex;
+  align-items: center;
+  color: #666;
+  transition: transform 0.15s;
+}
+
+.llselect-combobox-indicator:empty {
+  display: none;
+}
+
+.llselect-combobox[data-state='open'] .llselect-combobox-indicator {
+  transform: rotate(180deg);
+}
+
+/* 4.4 CSS-only triangle - applied only to mount-ind-css to avoid clobbering others. */
+#mount-ind-css .llselect-combobox::after {
+  content: '';
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid currentColor;
+  transition: transform 0.15s;
+  color: #666;
+}
+
+#mount-ind-css .llselect-combobox[data-state='open']::after {
+  transform: rotate(180deg);
 }
 
 /* Library controls position/top/left/width/maxHeight via inline styles,

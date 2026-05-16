@@ -33,8 +33,8 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
     this.fireChange()
   }
 
-  protected override renderCombobox(): void {
-    this.comboboxEl.textContent = this.chosen === undefined
+  protected override renderContent(): void {
+    this.contentEl.textContent = this.chosen === undefined
       ? this.settings.placeholder
       : this.templateOption(this.chosen)
   }
