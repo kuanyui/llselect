@@ -26,10 +26,10 @@ export type LLSelectSingleSettingsInput<T> =
   & { onChange?: (chosen: T | undefined) => void }
 
 /**
- * Single-selection select. Picking an option replaces any prior chosen value
+ * Single-selection select. Picking an item replaces any prior chosen value
  * and closes the popup. Use `setChosen(undefined)` to clear the selection.
  *
- * @typeParam T - option value type. Supply your own `compareFn` for
+ * @typeParam T - item value type. Supply your own `compareFn` for
  *   non-primitive `T`.
  */
 export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
@@ -53,35 +53,35 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
    * Programmatically set the chosen value. Pass `undefined` to clear. Fires
    * `onChange` only when the value actually differs from the current chosen
    * (compared via `compareFn`). Accepts values that are not (yet) in the
-   * options list - this supports async data flows; if a later `setOptions`
-   * does not include the chosen value it will be dropped automatically.
+   * items list - this supports async data flows; if a later `setItems` does
+   * not include the chosen value it will be dropped automatically.
    */
-  public setChosen(option: T | undefined): void {
-    if (this.areEqual(option, this.chosen)) return
-    this.chosen = option
+  public setChosen(item: T | undefined): void {
+    if (this.areEqual(item, this.chosen)) return
+    this.chosen = item
     this.renderTrigger()
     this.fireChange()
   }
 
-  /** Renders the chosen option's label, or the placeholder when empty. */
+  /** Renders the chosen item's label, or the placeholder when empty. */
   protected override renderTriggerContent(): void {
     this.triggerContentEl.textContent = this.chosen === undefined
       ? this.settings.placeholder
-      : this.templateOption(this.chosen)
+      : this.templateItem(this.chosen)
   }
 
-  /** Pick this option as the chosen value and close the popup. */
-  protected override onOptionClick(option: T): void {
-    this.setChosen(option)
+  /** Pick this item as the chosen value and close the popup. */
+  protected override onItemClick(item: T): void {
+    this.setChosen(item)
     this.close()
   }
 
-  /** On open, highlight the currently chosen option (if any), else the first. */
+  /** On open, highlight the currently chosen item (if any), else the first. */
   protected override focusInitial(): void {
-    if (this.options.length === 0) return
+    if (this.items.length === 0) return
     const c = this.chosen
     if (c !== undefined) {
-      const idx = this.options.findIndex(o => this.settings.compareFn(o, c))
+      const idx = this.items.findIndex(o => this.settings.compareFn(o, c))
       if (idx >= 0) {
         this.setFocusedIndex(idx)
         return
@@ -90,11 +90,11 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
     this.setFocusedIndex(0)
   }
 
-  /** Drop the chosen value if `setOptions` removed it from the list. */
-  protected override afterOptionsChange(): void {
+  /** Drop the chosen value if `setItems` removed it from the list. */
+  protected override afterItemsChange(): void {
     const current = this.chosen
     if (current === undefined) return
-    const stillPresent = this.options.some(o => this.settings.compareFn(o, current))
+    const stillPresent = this.items.some(o => this.settings.compareFn(o, current))
     if (!stillPresent) {
       this.chosen = undefined
       this.renderTrigger()

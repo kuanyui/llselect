@@ -164,15 +164,15 @@ article { margin: 1.5rem 0 2rem 1rem; }
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.llselect-option {
+.llselect-item {
   padding: 0.35rem 0.7rem;
   cursor: pointer;
 }
 
-.llselect-option:hover {
+.llselect-item:hover {
   background: #eef4ff;
 }
 
-.llselect-option-focused {
+.llselect-item-focused {
   background: #cce4ff;
 }

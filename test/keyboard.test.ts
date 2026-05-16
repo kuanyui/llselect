@@ -91,7 +91,7 @@ function mountSelect(options: string[]): LLSelectSingle<string> {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
   const mount = document.getElementById('mount')!
   const sel = new LLSelectSingle<string>(mount)
-  sel.setOptions(options)
+  sel.setItems(options)
   return sel
 }
 
@@ -101,7 +101,7 @@ function fireKey(target: HTMLElement, key: string, altKey = false): void {
 }
 
 function focusedLabel(sel: LLSelectSingle<string>): string | null {
-  const el = sel.popupEl.querySelector(`.${sel.classIdMap.optionFocusedClass}`)
+  const el = sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)
   return el ? el.textContent : null
 }
 

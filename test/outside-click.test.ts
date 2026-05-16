@@ -10,7 +10,7 @@ function mountWithButton(): { sel: LLSelectSingle<string>; btn: HTMLButtonElemen
   const calls: number[] = []
   btn.addEventListener('click', () => { calls.push(1) })
   const sel = new LLSelectSingle<string>(mount)
-  sel.setOptions(['a', 'b'])
+  sel.setItems(['a', 'b'])
   return { sel, btn, calls }
 }
 
@@ -39,7 +39,7 @@ test('block: click outside closes; outside button does NOT receive click', () =>
   const calls: number[] = []
   btn.addEventListener('click', () => { calls.push(1) })
   const sel = new LLSelectSingle<string>(mount, { outsideClickBehavior: 'block' })
-  sel.setOptions(['a', 'b'])
+  sel.setItems(['a', 'b'])
   sel.open()
 
   // Click outside; consume mode swallows the click.
@@ -59,7 +59,7 @@ test('click on trigger itself does not trigger outside-close (pass-through)', ()
 test('click on option in popup does not trigger outside-close (pass-through)', () => {
   const { sel } = mountWithButton()
   sel.open()
-  const firstOption = sel.popupEl.querySelector<HTMLElement>('[role="option"]')!
+  const firstOption = sel.popupListEl.querySelector<HTMLElement>('[role="option"]')!
   fireMousedown(firstOption)
   // mousedown alone does not select (we use click for selection), but it
   // should NOT close via outside-click logic either since it is inside.

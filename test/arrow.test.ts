@@ -18,7 +18,7 @@ test('trigger starts with data-state="closed"', () => {
 
 test('trigger data-state toggles open/closed', () => {
   const sel = new LLSelectSingle<string>(mount())
-  sel.setOptions(['a'])
+  sel.setItems(['a'])
   sel.open()
   assert.equal(sel.triggerEl.getAttribute('data-state'), 'open')
   sel.close()
@@ -63,7 +63,7 @@ test('renderArrow is invoked with isOpen state on open/close', () => {
       return null
     },
   })
-  sel.setOptions(['a', 'b'])
+  sel.setItems(['a', 'b'])
   // calls so far: [false] from constructor refreshTriggerArrow
   sel.open()
   // open calls refreshTriggerArrow -> renderArrow with isOpen=true
@@ -82,7 +82,7 @@ test('renderArrow returning null leaves the slot empty', () => {
   const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')!
   assert.equal(arrow.children.length, 0)
   returnNull = false
-  sel.setOptions(['a'])
+  sel.setItems(['a'])
   sel.open()
   assert.equal(arrow.children.length, 1)
 })
@@ -96,7 +96,7 @@ test('triggerContentEl receives placeholder/chosen text (arrow slot preserved)',
       return el
     },
   })
-  sel.setOptions(['a'])
+  sel.setItems(['a'])
   sel.setChosen('a')
   assert.equal(sel.triggerContentEl.textContent, 'a')
   // Arrow slot must still be present after the content change.

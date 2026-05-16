@@ -12,12 +12,12 @@ const selCountries = new LLSelectSingle(
     onChange: (v) => { outCountries.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
-selCountries.setOptions(COUNTRIES)
+selCountries.setItems(COUNTRIES)
 
 // 1.2 Objects with custom template + compareFn
 const outUsers = document.getElementById('out-users')
 class UserSelect extends LLSelectSingle {
-  templateOption(user) { return `#${user.id} ${user.name} (${user.role})` }
+  templateItem(user) { return `#${user.id} ${user.name} (${user.role})` }
 }
 const selUsers = new UserSelect(
   document.getElementById('mount-users'),
@@ -27,7 +27,7 @@ const selUsers = new UserSelect(
     onChange: (v) => { outUsers.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
-selUsers.setOptions(USERS)
+selUsers.setItems(USERS)
 
 // 1.3 Stress test (200 options)
 const outStress = document.getElementById('out-stress')
@@ -38,7 +38,7 @@ const selStress = new LLSelectSingle(
     onChange: (v) => { outStress.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
-selStress.setOptions(STRESS_ITEMS)
+selStress.setItems(STRESS_ITEMS)
 
 // 2.1 Scrollable container
 const outScroll = document.getElementById('out-scroll')
@@ -49,7 +49,7 @@ const selScroll = new LLSelectSingle(
     onChange: (v) => { outScroll.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
-selScroll.setOptions(COUNTRIES)
+selScroll.setItems(COUNTRIES)
 // Position the select roughly in the middle of the container so scrolling
 // up clips the anchor below the container, and scrolling down clips it above.
 const scrollContainer = document.querySelector('.scroll-container')
@@ -67,7 +67,7 @@ const selPass = new LLSelectSingle(
   document.getElementById('mount-pass'),
   { placeholder: 'pass-through select' }  // default behavior
 )
-selPass.setOptions(COUNTRIES)
+selPass.setItems(COUNTRIES)
 
 // 3.2 Outside-click block
 let blockCount = 0
@@ -83,13 +83,13 @@ const selBlock = new LLSelectSingle(
     outsideClickBehavior: 'block',
   }
 )
-selBlock.setOptions(COUNTRIES)
+selBlock.setItems(COUNTRIES)
 
 // 4.1 No arrow (default - lib does nothing)
 new LLSelectSingle(
   document.getElementById('mount-ind-none'),
   { placeholder: 'No arrow' },
-).setOptions(COUNTRIES)
+).setItems(COUNTRIES)
 
 // 4.2a chevronDownSvg
 new LLSelectSingle(
@@ -98,7 +98,7 @@ new LLSelectSingle(
     placeholder: 'chevron',
     renderArrow: () => chevronDownSvg(),
   },
-).setOptions(COUNTRIES)
+).setItems(COUNTRIES)
 
 // 4.2b triangleDownSvg
 new LLSelectSingle(
@@ -107,7 +107,7 @@ new LLSelectSingle(
     placeholder: 'triangle',
     renderArrow: () => triangleDownSvg(),
   },
-).setOptions(COUNTRIES)
+).setItems(COUNTRIES)
 
 // 4.3 Material Design Icons
 new LLSelectSingle(
@@ -120,14 +120,14 @@ new LLSelectSingle(
       return i
     },
   },
-).setOptions(COUNTRIES)
+).setItems(COUNTRIES)
 
 // 4.4 CSS-only triangle (no renderArrow; CSS handles everything via data-state)
 // Lib does nothing in the arrow slot; the demo styles a ::after pseudo-element.
 new LLSelectSingle(
   document.getElementById('mount-ind-css'),
   { placeholder: 'CSS triangle (no JS)' },
-).setOptions(COUNTRIES)
+).setItems(COUNTRIES)
 
 // 5. Near page bottom (flip up)
 const outBottom = document.getElementById('out-bottom')
@@ -138,4 +138,4 @@ const selBottom = new LLSelectSingle(
     onChange: (v) => { outBottom.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
-selBottom.setOptions(COUNTRIES)
+selBottom.setItems(COUNTRIES)

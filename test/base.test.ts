@@ -38,16 +38,29 @@ test('trigger has correct ARIA attributes', () => {
   assert.equal(cb.getAttribute('tabindex'), '0')
   assert.equal(cb.getAttribute('aria-expanded'), 'false')
   assert.equal(cb.getAttribute('aria-haspopup'), 'listbox')
-  assert.equal(cb.getAttribute('aria-controls'), inst.popupEl.id)
+  assert.equal(cb.getAttribute('aria-controls'), inst.popupListEl.id)
   assert.ok(cb.className.includes('llselect-trigger'))
 })
 
-test('popup has correct ARIA attributes', () => {
+test('popup wrapper has no ARIA role', () => {
   const inst = new TestSelect<string>(mount())
-  const lb = inst.popupEl
+  assert.equal(inst.popupEl.getAttribute('role'), null)
+  assert.ok(inst.popupEl.className.includes('llselect-popup'))
+})
+
+test('popup list has correct ARIA attributes', () => {
+  const inst = new TestSelect<string>(mount())
+  const lb = inst.popupListEl
   assert.equal(lb.getAttribute('role'), 'listbox')
   assert.equal(lb.getAttribute('tabindex'), '-1')
-  assert.ok(lb.className.includes('llselect-popup'))
+  assert.ok(lb.className.includes('llselect-popup-list'))
+})
+
+test('popup list is the only child of popup wrapper initially', () => {
+  const inst = new TestSelect<string>(mount())
+  const popupChildren = Array.from(inst.popupEl.children)
+  assert.equal(popupChildren.length, 1)
+  assert.equal(popupChildren[0], inst.popupListEl)
 })
 
 test('trigger and popup are children of rootEl in order', () => {
@@ -66,7 +79,7 @@ test('IDs are unique across multiple instances', () => {
   const ia = new TestSelect<string>(a)
   const ib = new TestSelect<string>(b)
   assert.notEqual(ia.triggerEl.id, ib.triggerEl.id)
-  assert.notEqual(ia.popupEl.id, ib.popupEl.id)
+  assert.notEqual(ia.popupListEl.id, ib.popupListEl.id)
 })
 
 test('custom cssClassPrefix is honored', () => {

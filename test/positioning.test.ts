@@ -133,7 +133,7 @@ test('LLSelectSingle.open() applies positioner; close() removes it', () => {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
   const mount = document.getElementById('mount')!
   const sel = new LLSelectSingle<string>(mount)
-  sel.setOptions(['a', 'b'])
+  sel.setItems(['a', 'b'])
   withMockedRect(sel.triggerEl, { top: 0, left: 0, right: 200, bottom: 30, width: 200, height: 30 })
 
   sel.open()
@@ -245,7 +245,7 @@ test('LLSelectSingle auto-closes when trigger is scrolled out of its scroll cont
   withMockedRect(container, { top: 100, left: 0, right: 200, bottom: 300, width: 200, height: 200 })
 
   const sel = new LLSelectSingle<string>(mount)
-  sel.setOptions(['a', 'b'])
+  sel.setItems(['a', 'b'])
   withMockedRect(sel.triggerEl, { top: 150, left: 0, right: 200, bottom: 180, width: 200, height: 30 })
   sel.open()
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
@@ -261,7 +261,7 @@ test('LLSelectSingle auto-closes when trigger scrolls fully out of viewport', ()
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
   const mount = document.getElementById('mount')!
   const sel = new LLSelectSingle<string>(mount)
-  sel.setOptions(['a', 'b'])
+  sel.setItems(['a', 'b'])
 
   withMockedRect(sel.triggerEl, { top: 100, left: 0, right: 200, bottom: 130, width: 200, height: 30 })
   sel.open()

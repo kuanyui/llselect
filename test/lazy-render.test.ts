@@ -11,25 +11,25 @@ function mount(): HTMLElement {
 }
 
 function optionCount(sel: LLSelectSingle<string>): number {
-  return sel.popupEl.querySelectorAll('[role="option"]').length
+  return sel.popupListEl.querySelectorAll('[role="option"]').length
 }
 
 test('popup has no option children when closed initially', () => {
   const sel = new LLSelectSingle<string>(mount())
-  sel.setOptions(['a', 'b', 'c'])
+  sel.setItems(['a', 'b', 'c'])
   assert.equal(optionCount(sel), 0)
 })
 
 test('popup is populated on open', () => {
   const sel = new LLSelectSingle<string>(mount())
-  sel.setOptions(['a', 'b', 'c'])
+  sel.setItems(['a', 'b', 'c'])
   sel.open()
   assert.equal(optionCount(sel), 3)
 })
 
 test('popup is cleared on close', () => {
   const sel = new LLSelectSingle<string>(mount())
-  sel.setOptions(['a', 'b', 'c'])
+  sel.setItems(['a', 'b', 'c'])
   sel.open()
   assert.equal(optionCount(sel), 3)
   sel.close()
@@ -38,35 +38,35 @@ test('popup is cleared on close', () => {
 
 test('popup repopulates on reopen', () => {
   const sel = new LLSelectSingle<string>(mount())
-  sel.setOptions(['a', 'b'])
+  sel.setItems(['a', 'b'])
   sel.open()
   sel.close()
   sel.open()
   assert.equal(optionCount(sel), 2)
 })
 
-test('setOptions while closed does not populate popup', () => {
+test('setItems while closed does not populate popup', () => {
   const sel = new LLSelectSingle<string>(mount())
-  sel.setOptions(['a', 'b', 'c'])
-  sel.setOptions(['x', 'y', 'z', 'w'])
+  sel.setItems(['a', 'b', 'c'])
+  sel.setItems(['x', 'y', 'z', 'w'])
   assert.equal(optionCount(sel), 0)
 })
 
-test('setOptions while open updates popup immediately', () => {
+test('setItems while open updates popup immediately', () => {
   const sel = new LLSelectSingle<string>(mount())
-  sel.setOptions(['a', 'b'])
+  sel.setItems(['a', 'b'])
   sel.open()
   assert.equal(optionCount(sel), 2)
-  sel.setOptions(['x', 'y', 'z'])
+  sel.setItems(['x', 'y', 'z'])
   assert.equal(optionCount(sel), 3)
-  const opts = sel.popupEl.querySelectorAll('[role="option"]')
+  const opts = sel.popupListEl.querySelectorAll('[role="option"]')
   assert.equal(opts[0]?.textContent, 'x')
   assert.equal(opts[2]?.textContent, 'z')
 })
 
 test('repeated open is a no-op (no double rendering)', () => {
   const sel = new LLSelectSingle<string>(mount())
-  sel.setOptions(['a', 'b'])
+  sel.setItems(['a', 'b'])
   sel.open()
   sel.open()
   assert.equal(optionCount(sel), 2)

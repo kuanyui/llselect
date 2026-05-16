@@ -1,7 +1,7 @@
-// LLSelectBase: DOM scaffold, ARIA wiring, open/close state, options storage,
+// LLSelectBase: DOM scaffold, ARIA wiring, open/close state, item storage,
 // keyboard navigation, and shared rendering primitives for LLSelectSingle and
 // LLSelectMultiple. Subclasses own chosen-state and decide what happens on
-// option click.
+// item click.
 
 import { createPositioner, type Positioner } from './positioning.js'
 import {
@@ -41,7 +41,7 @@ export interface LLSelectBaseSettings<T> {
   /** Text shown in the trigger when nothing is selected. */
   placeholder: string
   /**
-   * Equality predicate for option values. Required for non-primitive `T`
+   * Equality predicate for item values. Required for non-primitive `T`
    * (the default uses `===`, which compares object references).
    */
   compareFn: (a: T, b: T) => boolean
@@ -74,15 +74,17 @@ export interface LLSelectClassIdMap {
   triggerContentClass: string
   /** Class on the inner span where the optional dropdown arrow lives. */
   triggerArrowClass: string
-  /** Class on `popupEl` (the popup, `role="listbox"`). */
+  /** Class on `popupEl` (the outer popup wrapper, no ARIA role). */
   popupClass: string
-  /** Class on every option element (`role="option"`) inside the popup. */
-  optionClass: string
+  /** Class on `popupListEl` (the inner element with `role="listbox"`). */
+  popupListClass: string
+  /** Class on every item element (`role="option"`) inside the popup list. */
+  itemClass: string
   /**
-   * Extra class added to the currently keyboard-focused option element.
+   * Extra class added to the currently keyboard-focused item element.
    * Use this to style the focus highlight.
    */
-  optionFocusedClass: string
+  itemFocusedClass: string
   /**
    * Class added to `rootEl` while the popup is open. Use it as a CSS hook
    * for open-state styling (also available as `[data-state='open']` on the
@@ -92,10 +94,10 @@ export interface LLSelectClassIdMap {
   /** DOM `id` of `triggerEl`. Unique across instances. */
   triggerId: string
   /**
-   * DOM `id` of `popupEl`. Unique across instances. Used by the trigger's
-   * `aria-controls` attribute.
+   * DOM `id` of `popupListEl` (the inner listbox). Unique across instances.
+   * Referenced by the trigger's `aria-controls` attribute.
    */
-  popupId: string
+  popupListId: string
 }
 
 const DEFAULT_PREFIX = 'llselect'
@@ -115,22 +117,23 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
     triggerContentClass: `${prefix}-trigger-content`,
     triggerArrowClass: `${prefix}-trigger-arrow`,
     popupClass: `${prefix}-popup`,
-    optionClass: `${prefix}-option`,
-    optionFocusedClass: `${prefix}-option-focused`,
+    popupListClass: `${prefix}-popup-list`,
+    itemClass: `${prefix}-item`,
+    itemFocusedClass: `${prefix}-item-focused`,
     openClass: `${prefix}-open`,
     triggerId: `${uniq}-trigger`,
-    popupId: `${uniq}-popup`,
+    popupListId: `${uniq}-popup-list`,
   }
 }
 
 /**
  * Abstract base for all select variants. Owns DOM scaffolding, ARIA wiring,
- * positioning, keyboard navigation, lazy popup rendering, and outside-click
- * handling. Subclasses (`LLSelectSingle`, `LLSelectMultiple`) own
- * chosen-state, decide what happens on option click, and customise the
+ * positioning, keyboard navigation, lazy popup-list rendering, and
+ * outside-click handling. Subclasses (`LLSelectSingle`, `LLSelectMultiple`)
+ * own chosen-state, decide what happens on item click, and customise the
  * trigger text via `renderTriggerContent`.
  *
- * @typeParam T - option value type. Use `unknown` (default) only when you
+ * @typeParam T - item value type. Use `unknown` (default) only when you
  *   intend to narrow inside templates / handlers; usually pass a concrete
  *   type like `string` or your domain object.
  */
@@ -149,33 +152,41 @@ export abstract class LLSelectBase<T = unknown> {
   public readonly triggerEl: HTMLElement
   /**
    * Inner span inside the trigger where text/tags are written.
-   * Subclasses' `renderTriggerContent` writes here so the sibling arrow slot is
-   * preserved across re-renders.
+   * Subclasses' `renderTriggerContent` writes here so the sibling arrow slot
+   * is preserved across re-renders.
    */
   public readonly triggerContentEl: HTMLElement
   /**
-   * The popup element (`role="listbox"`). Hidden via the `hidden` attribute
-   * when closed; positioned via inline styles by the positioner when open.
-   * Lazily populated with option elements on open and cleared on close.
+   * The outer popup wrapper. Has no ARIA role itself - it just hosts the
+   * popup chrome (future: filter input, toggle-all control) and the inner
+   * `popupListEl`. Hidden via the `hidden` attribute when closed; positioned
+   * via inline styles by the positioner when open.
    */
   public readonly popupEl: HTMLElement
+  /**
+   * The inner element with `role="listbox"`, holding the item children.
+   * Sits inside `popupEl` so siblings (filter input, toggle-all) can live
+   * above it without violating ARIA's "listbox children must be options"
+   * rule. The trigger's `aria-controls` points to this element.
+   */
+  public readonly popupListEl: HTMLElement
   /** Resolved class names and ids for this instance. */
   public readonly classIdMap: LLSelectClassIdMap
 
   /** Resolved settings (defaults applied). */
   protected readonly settings: LLSelectBaseSettings<T>
-  /** Current option list. Defensive copy of what `setOptions` was given. */
-  protected options: T[] = []
+  /** Current item list. Defensive copy of what `setItems` was given. */
+  protected items: T[] = []
   /** Whether the popup is currently open. */
   protected isOpen = false
   /**
-   * Index (into `options`) of the currently keyboard-focused option, or `-1`
-   * when nothing is focused (closed popup, or no options).
+   * Index (into `items`) of the currently keyboard-focused item, or `-1`
+   * when nothing is focused (closed popup, or no items).
    */
   protected focusedIndex = -1
   private triggerArrowEl: HTMLElement
   private positioner: Positioner | undefined
-  private optionEls: HTMLElement[] = []
+  private itemEls: HTMLElement[] = []
   private focusedEl: HTMLElement | undefined
   private outsideHandler: ((ev: Event) => void) | undefined
 
@@ -210,9 +221,19 @@ export abstract class LLSelectBase<T = unknown> {
     this.triggerEl = this.buildTriggerEl()
     this.triggerContentEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerContentClass}`) as HTMLElement
     this.triggerArrowEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerArrowClass}`) as HTMLElement
+
     this.popupEl = this.buildPopupEl()
+    this.popupListEl = this.buildPopupListEl()
+    this.popupEl.append(this.popupListEl)
     this.popupEl.hidden = true
-    this.popupEl.style.overflowY = 'auto'
+    // popup-list takes the remaining vertical space inside popup and scrolls
+    // when items overflow. `min-height: 0` lets flex actually shrink it.
+    // These are safe to set in the constructor because they have no effect
+    // while the parent is `display: none`.
+    this.popupListEl.style.flex = '1'
+    this.popupListEl.style.minHeight = '0'
+    this.popupListEl.style.overflowY = 'auto'
+
     this.rootEl.append(this.triggerEl, this.popupEl)
 
     this.triggerEl.addEventListener('click', () => this.toggle())
@@ -220,9 +241,9 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
-   * Open the popup. Builds option elements lazily, attaches the positioner
+   * Open the popup. Builds item elements lazily, attaches the positioner
    * (which auto-closes if the trigger is scrolled out of view), wires the
-   * outside-click handler, and moves keyboard focus into the option list.
+   * outside-click handler, and moves keyboard focus into the item list.
    * No-op if already open.
    */
   public open(): void {
@@ -231,9 +252,14 @@ export abstract class LLSelectBase<T = unknown> {
     this.triggerEl.setAttribute('aria-expanded', 'true')
     this.triggerEl.setAttribute('data-state', 'open')
     this.rootEl.classList.add(this.classIdMap.openClass)
+    // Layout (flex column) is applied only while open. Setting display
+    // inline at construction would override the `[hidden]` UA rule and
+    // leak the popup before first open.
+    this.popupEl.style.display = 'flex'
+    this.popupEl.style.flexDirection = 'column'
     this.popupEl.hidden = false
     this.refreshTriggerArrow()
-    this.renderPopup()
+    this.renderPopupList()
     this.positioner = createPositioner(this.triggerEl, this.popupEl, {
       onHide: () => this.close(),
     })
@@ -244,7 +270,7 @@ export abstract class LLSelectBase<T = unknown> {
 
   /**
    * Close the popup. Detaches positioner and outside-click listener, clears
-   * the option DOM, and resets focused-option state. No-op if already closed.
+   * the item DOM, and resets focused-item state. No-op if already closed.
    */
   public close(): void {
     if (!this.isOpen) return
@@ -255,9 +281,12 @@ export abstract class LLSelectBase<T = unknown> {
     this.positioner?.detach()
     this.positioner = undefined
     this.detachOutsideClick()
-    this.popupEl.replaceChildren()
+    this.popupListEl.replaceChildren()
     this.popupEl.hidden = true
-    this.optionEls = []
+    // Clear inline display so the `[hidden]` UA rule can hide the popup.
+    this.popupEl.style.display = ''
+    this.popupEl.style.flexDirection = ''
+    this.itemEls = []
     this.focusedEl = undefined
     this.focusedIndex = -1
     this.triggerEl.removeAttribute('aria-activedescendant')
@@ -272,24 +301,24 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
-   * Return the current option list. The returned array is read-only;
+   * Return the current item list. The returned array is read-only;
    * mutating it has no effect on the select.
    */
-  public getOptions(): readonly T[] {
-    return this.options
+  public getItems(): readonly T[] {
+    return this.items
   }
 
   /**
-   * Replace the option list. The input is shallow-copied so external mutation
+   * Replace the item list. The input is shallow-copied so external mutation
    * does not affect the select. If the popup is currently open it is
    * re-rendered; otherwise the DOM is built lazily on the next `open()`.
-   * Subclasses may reconcile chosen-state via {@link afterOptionsChange}
+   * Subclasses may reconcile chosen-state via {@link afterItemsChange}
    * (e.g. single mode drops a chosen value that is no longer in the list).
    */
-  public setOptions(options: T[]): void {
-    this.options = options.slice()
-    if (this.isOpen) this.renderPopup()
-    this.afterOptionsChange()
+  public setItems(items: T[]): void {
+    this.items = items.slice()
+    if (this.isOpen) this.renderPopupList()
+    this.afterItemsChange()
   }
 
   /** Called once after the popup finishes opening. Default no-op. */
@@ -297,16 +326,16 @@ export abstract class LLSelectBase<T = unknown> {
   /** Called once after the popup finishes closing. Default no-op. */
   protected onClosed(): void {}
   /**
-   * Called after `setOptions` finishes. Override to reconcile state that
-   * depends on the option list (e.g. clear a chosen value that disappeared).
+   * Called after `setItems` finishes. Override to reconcile state that
+   * depends on the item list (e.g. clear a chosen value that disappeared).
    * Default no-op.
    */
-  protected afterOptionsChange(): void {}
+  protected afterItemsChange(): void {}
 
   /**
    * Orchestrator that re-renders both the trigger's content slot and the
-   * arrow slot. Subclasses normally override {@link renderTriggerContent}, not
-   * this. Call this from subclass code when both slots need to refresh
+   * arrow slot. Subclasses normally override {@link renderTriggerContent},
+   * not this. Call this from subclass code when both slots need to refresh
    * together (constructor, post-state-change, etc.).
    */
   protected renderTrigger(): void {
@@ -317,8 +346,8 @@ export abstract class LLSelectBase<T = unknown> {
   /**
    * Write the trigger's content slot. Override in subclasses to display the
    * chosen value(s); default writes the placeholder. Always write to
-   * `this.triggerContentEl` (not `this.triggerEl`) so the sibling arrow slot is
-   * preserved.
+   * `this.triggerContentEl` (not `this.triggerEl`) so the sibling arrow slot
+   * is preserved.
    */
   protected renderTriggerContent(): void {
     this.triggerContentEl.textContent = this.settings.placeholder
@@ -333,82 +362,82 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
-   * Rebuild the popup option elements from the current `options`. Called
-   * by `open()` and by `setOptions()` while open. Also clamps `focusedIndex`
-   * if the option list shrank and re-applies focus visuals.
+   * Rebuild the popup-list item elements from the current `items`. Called
+   * by `open()` and by `setItems()` while open. Also clamps `focusedIndex`
+   * if the item list shrank and re-applies focus visuals.
    */
-  protected renderPopup(): void {
-    this.popupEl.replaceChildren()
-    this.optionEls = []
+  protected renderPopupList(): void {
+    this.popupListEl.replaceChildren()
+    this.itemEls = []
     this.focusedEl = undefined
-    for (let i = 0; i < this.options.length; i++) {
-      const el = this.createOptionEl(this.options[i]!, i)
-      this.optionEls.push(el)
-      this.popupEl.append(el)
+    for (let i = 0; i < this.items.length; i++) {
+      const el = this.createItemEl(this.items[i]!, i)
+      this.itemEls.push(el)
+      this.popupListEl.append(el)
     }
     this.positioner?.reposition()
-    // Clamp focused index if options shrank, then re-apply focus visuals.
-    if (this.focusedIndex >= this.options.length) {
-      this.focusedIndex = this.options.length === 0 ? -1 : this.options.length - 1
+    // Clamp focused index if items shrank, then re-apply focus visuals.
+    if (this.focusedIndex >= this.items.length) {
+      this.focusedIndex = this.items.length === 0 ? -1 : this.items.length - 1
     }
     this.applyFocus()
   }
 
   /**
-   * Build the DOM element for one option. Override if you need richer markup
+   * Build the DOM element for one item. Override if you need richer markup
    * (e.g. icons, descriptions, HTML). The base implementation sets `id`,
    * `role="option"`, a click handler, and writes `textContent` from
-   * {@link templateOption}.
+   * {@link templateItem}.
    *
-   * @param option - the option value
-   * @param index - index in `this.options`; used to build a stable id so
+   * @param item - the item value
+   * @param index - index in `this.items`; used to build a stable id so
    *   `aria-activedescendant` can point to this element across re-renders.
    */
-  protected createOptionEl(option: T, index: number): HTMLElement {
+  protected createItemEl(item: T, index: number): HTMLElement {
     const el = document.createElement('div')
-    el.id = `${this.classIdMap.triggerId}-opt${index}`
-    el.className = this.classIdMap.optionClass
+    el.id = `${this.classIdMap.triggerId}-item${index}`
+    el.className = this.classIdMap.itemClass
     el.setAttribute('role', 'option')
-    el.textContent = this.templateOption(option)
-    el.addEventListener('click', () => this.onOptionClick(option))
+    el.textContent = this.templateItem(item)
+    el.addEventListener('click', () => this.onItemClick(item))
     return el
   }
 
   /**
-   * Map an option value to its display label. Default is `String(option)`,
+   * Map an item value to its display label. Default is `String(item)`,
    * applied as `textContent` (HTML-safe). Override for custom formatting.
-   * If you need real HTML output, override {@link createOptionEl} instead
+   * If you need real HTML output, override {@link createItemEl} instead
    * and treat XSS yourself.
    */
-  protected templateOption(option: T): string {
-    return String(option)
+  protected templateItem(item: T): string {
+    return String(item)
   }
 
   /**
-   * Called when an option is activated (click or keyboard select). Default
+   * Called when an item is activated (click or keyboard select). Default
    * no-op; subclasses implement their selection behaviour (single mode picks
    * and closes, multiple mode toggles and keeps the popup open).
    */
-  protected onOptionClick(_option: T): void {}
+  protected onItemClick(_item: T): void {}
 
   /**
-   * Decide which option to focus when the popup opens. Default focuses
-   * the first option (or no-op if the list is empty). Override to focus the
-   * currently chosen option, last-used option, etc.
+   * Decide which item to focus when the popup opens. Default focuses the
+   * first item (or no-op if the list is empty). Override to focus the
+   * currently chosen item, last-used item, etc.
    */
   protected focusInitial(): void {
-    if (this.options.length === 0) return
+    if (this.items.length === 0) return
     this.setFocusedIndex(0)
   }
 
   /**
-   * Move keyboard focus to the option at `index`. The value is clamped to
-   * `[-1, options.length-1]`; pass `-1` to clear focus. Updates the focused
-   * class, `aria-activedescendant`, and scrolls the option into view. No-op
+   * Move keyboard focus to the item at `index`. The value is clamped to
+   * `[-1, items.length-1]`; pass `-1` to clear focus. Updates the focused
+   * class, `aria-activedescendant`, and scrolls the item into view. No-op
    * if the clamped value equals the current focused index.
    */
   protected setFocusedIndex(index: number): void {
-    const max = this.options.length - 1
+    const max = this.items.length - 1
     const clamped = Math.max(-1, Math.min(max, index))
     if (clamped === this.focusedIndex) return
     this.focusedIndex = clamped
@@ -417,16 +446,16 @@ export abstract class LLSelectBase<T = unknown> {
 
   private applyFocus(): void {
     if (this.focusedEl) {
-      this.focusedEl.classList.remove(this.classIdMap.optionFocusedClass)
+      this.focusedEl.classList.remove(this.classIdMap.itemFocusedClass)
       this.focusedEl = undefined
     }
     const i = this.focusedIndex
-    if (i >= 0 && i < this.optionEls.length) {
-      const el = this.optionEls[i]!
-      el.classList.add(this.classIdMap.optionFocusedClass)
+    if (i >= 0 && i < this.itemEls.length) {
+      const el = this.itemEls[i]!
+      el.classList.add(this.classIdMap.itemFocusedClass)
       this.triggerEl.setAttribute('aria-activedescendant', el.id)
       this.focusedEl = el
-      ensureVisibleInScroll(el, this.popupEl)
+      ensureVisibleInScroll(el, this.popupListEl)
     } else {
       this.triggerEl.removeAttribute('aria-activedescendant')
     }
@@ -482,8 +511,8 @@ export abstract class LLSelectBase<T = unknown> {
         this.close()
         return
       case LLSelectAction.Select:
-        if (this.focusedIndex >= 0 && this.focusedIndex < this.options.length) {
-          this.onOptionClick(this.options[this.focusedIndex]!)
+        if (this.focusedIndex >= 0 && this.focusedIndex < this.items.length) {
+          this.onItemClick(this.items[this.focusedIndex]!)
         }
         return
       case LLSelectAction.Next:
@@ -492,8 +521,8 @@ export abstract class LLSelectBase<T = unknown> {
       case LLSelectAction.GotoLast:
       case LLSelectAction.PageDown:
       case LLSelectAction.PageUp: {
-        if (this.options.length === 0) return
-        const next = getUpdatedIndex(this.focusedIndex, this.options.length - 1, action)
+        if (this.items.length === 0) return
+        const next = getUpdatedIndex(this.focusedIndex, this.items.length - 1, action)
         this.setFocusedIndex(next)
         return
       }
@@ -506,7 +535,7 @@ export abstract class LLSelectBase<T = unknown> {
     el.className = this.classIdMap.triggerClass
     el.setAttribute('role', 'combobox')
     el.setAttribute('tabindex', '0')
-    el.setAttribute('aria-controls', this.classIdMap.popupId)
+    el.setAttribute('aria-controls', this.classIdMap.popupListId)
     el.setAttribute('aria-expanded', 'false')
     el.setAttribute('aria-haspopup', 'listbox')
     el.setAttribute('data-state', 'closed')
@@ -519,10 +548,18 @@ export abstract class LLSelectBase<T = unknown> {
     return el
   }
 
+  /** Outer popup wrapper. No ARIA role; structural only. */
   private buildPopupEl(): HTMLElement {
     const el = document.createElement('div')
-    el.id = this.classIdMap.popupId
     el.className = this.classIdMap.popupClass
+    return el
+  }
+
+  /** Inner element with `role="listbox"`. Holds item children. */
+  private buildPopupListEl(): HTMLElement {
+    const el = document.createElement('div')
+    el.id = this.classIdMap.popupListId
+    el.className = this.classIdMap.popupListClass
     el.setAttribute('role', 'listbox')
     el.setAttribute('tabindex', '-1')
     return el
