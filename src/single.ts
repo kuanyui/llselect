@@ -64,8 +64,8 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
   }
 
   /** Renders the chosen option's label, or the placeholder when empty. */
-  protected override renderContent(): void {
-    this.contentEl.textContent = this.chosen === undefined
+  protected override renderTriggerContent(): void {
+    this.triggerContentEl.textContent = this.chosen === undefined
       ? this.settings.placeholder
       : this.templateOption(this.chosen)
   }

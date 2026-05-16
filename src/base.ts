@@ -128,7 +128,7 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
  * positioning, keyboard navigation, lazy listbox rendering, and outside-click
  * handling. Subclasses (`LLSelectSingle`, `LLSelectMultiple`) own
  * chosen-state, decide what happens on option click, and customise the
- * trigger text via `renderContent`.
+ * trigger text via `renderTriggerContent`.
  *
  * @typeParam T - option value type. Use `unknown` (default) only when you
  *   intend to narrow inside templates / handlers; usually pass a concrete
@@ -149,10 +149,10 @@ export abstract class LLSelectBase<T = unknown> {
   public readonly triggerEl: HTMLElement
   /**
    * Inner span inside the trigger where text/tags are written.
-   * Subclasses' `renderContent` writes here so the sibling arrow slot is
+   * Subclasses' `renderTriggerContent` writes here so the sibling arrow slot is
    * preserved across re-renders.
    */
-  public readonly contentEl: HTMLElement
+  public readonly triggerContentEl: HTMLElement
   /**
    * The popup element (`role="listbox"`). Hidden via the `hidden` attribute
    * when closed; positioned via inline styles by the positioner when open.
@@ -173,7 +173,7 @@ export abstract class LLSelectBase<T = unknown> {
    * when nothing is focused (closed listbox, or no options).
    */
   protected focusedIndex = -1
-  private arrowEl: HTMLElement
+  private triggerArrowEl: HTMLElement
   private positioner: Positioner | undefined
   private optionEls: HTMLElement[] = []
   private focusedEl: HTMLElement | undefined
@@ -208,8 +208,8 @@ export abstract class LLSelectBase<T = unknown> {
     this.rootEl.replaceChildren()
 
     this.triggerEl = this.buildTriggerEl()
-    this.contentEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerContentClass}`) as HTMLElement
-    this.arrowEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerArrowClass}`) as HTMLElement
+    this.triggerContentEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerContentClass}`) as HTMLElement
+    this.triggerArrowEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerArrowClass}`) as HTMLElement
     this.listboxEl = this.buildListboxEl()
     this.listboxEl.hidden = true
     this.listboxEl.style.overflowY = 'auto'
@@ -232,7 +232,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.triggerEl.setAttribute('data-state', 'open')
     this.rootEl.classList.add(this.classIdMap.openClass)
     this.listboxEl.hidden = false
-    this.refreshArrow()
+    this.refreshTriggerArrow()
     this.renderListbox()
     this.positioner = createPositioner(this.triggerEl, this.listboxEl, {
       onHide: () => this.close(),
@@ -261,7 +261,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.focusedEl = undefined
     this.focusedIndex = -1
     this.triggerEl.removeAttribute('aria-activedescendant')
-    this.refreshArrow()
+    this.refreshTriggerArrow()
     this.onClosed()
   }
 
@@ -305,31 +305,31 @@ export abstract class LLSelectBase<T = unknown> {
 
   /**
    * Orchestrator that re-renders both the trigger's content slot and the
-   * arrow slot. Subclasses normally override {@link renderContent}, not
+   * arrow slot. Subclasses normally override {@link renderTriggerContent}, not
    * this. Call this from subclass code when both slots need to refresh
    * together (constructor, post-state-change, etc.).
    */
   protected renderTrigger(): void {
-    this.renderContent()
-    this.refreshArrow()
+    this.renderTriggerContent()
+    this.refreshTriggerArrow()
   }
 
   /**
    * Write the trigger's content slot. Override in subclasses to display the
    * chosen value(s); default writes the placeholder. Always write to
-   * `this.contentEl` (not `this.triggerEl`) so the sibling arrow slot is
+   * `this.triggerContentEl` (not `this.triggerEl`) so the sibling arrow slot is
    * preserved.
    */
-  protected renderContent(): void {
-    this.contentEl.textContent = this.settings.placeholder
+  protected renderTriggerContent(): void {
+    this.triggerContentEl.textContent = this.settings.placeholder
   }
 
-  private refreshArrow(): void {
-    this.arrowEl.replaceChildren()
+  private refreshTriggerArrow(): void {
+    this.triggerArrowEl.replaceChildren()
     const renderer = this.settings.renderArrow
     if (!renderer) return
     const el = renderer({ isOpen: this.isOpen })
-    if (el) this.arrowEl.appendChild(el)
+    if (el) this.triggerArrowEl.appendChild(el)
   }
 
   /**

@@ -27,8 +27,8 @@ test('trigger data-state toggles open/closed', () => {
 
 test('trigger has content + arrow slots', () => {
   const sel = new LLSelectSingle<string>(mount())
-  assert.ok(sel.contentEl)
-  assert.ok(sel.contentEl.classList.contains('llselect-trigger-content'))
+  assert.ok(sel.triggerContentEl)
+  assert.ok(sel.triggerContentEl.classList.contains('llselect-trigger-content'))
   const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')
   assert.ok(arrow)
 })
@@ -64,11 +64,11 @@ test('renderArrow is invoked with isOpen state on open/close', () => {
     },
   })
   sel.setOptions(['a', 'b'])
-  // calls so far: [false] from constructor refreshArrow
+  // calls so far: [false] from constructor refreshTriggerArrow
   sel.open()
-  // open calls refreshArrow -> renderArrow with isOpen=true
+  // open calls refreshTriggerArrow -> renderArrow with isOpen=true
   sel.close()
-  // close calls refreshArrow -> renderArrow with isOpen=false
+  // close calls refreshTriggerArrow -> renderArrow with isOpen=false
   assert.deepEqual(calls, [false, true, false])
 })
 
@@ -87,7 +87,7 @@ test('renderArrow returning null leaves the slot empty', () => {
   assert.equal(arrow.children.length, 1)
 })
 
-test('contentEl receives placeholder/chosen text (arrow slot preserved)', () => {
+test('triggerContentEl receives placeholder/chosen text (arrow slot preserved)', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     renderArrow: () => {
       const el = document.createElement('span')
@@ -98,7 +98,7 @@ test('contentEl receives placeholder/chosen text (arrow slot preserved)', () => 
   })
   sel.setOptions(['a'])
   sel.setChosen('a')
-  assert.equal(sel.contentEl.textContent, 'a')
+  assert.equal(sel.triggerContentEl.textContent, 'a')
   // Arrow slot must still be present after the content change.
   assert.ok(sel.triggerEl.querySelector('.survive'))
 })
