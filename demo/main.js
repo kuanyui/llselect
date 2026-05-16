@@ -3,6 +3,37 @@ import { COUNTRIES, USERS, STRESS_ITEMS } from './data.js'
 
 console.log('llselect v' + LLSELECT_VERSION)
 
+// Theme picker: swap the visual theme and (for BS themes) load the matching
+// Bootstrap CSS from CDN. Bootstrap is intentionally NOT preloaded so its
+// reboot rules (e.g. its own `.row` flex-grid) do not affect non-BS themes.
+const themeLink = document.getElementById('theme-link')
+const themeSelect = document.getElementById('theme-select')
+const BS_CDN = {
+  'bootstrap-3': 'https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css',
+  'bootstrap-4': 'https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css',
+  'bootstrap-5': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
+}
+let bsLink = null
+
+function applyTheme(name) {
+  themeLink.href = `../dist/themes/${name}.css`
+  // Remove previous BS link (if any), then add the matching one.
+  if (bsLink) {
+    bsLink.remove()
+    bsLink = null
+  }
+  if (BS_CDN[name]) {
+    bsLink = document.createElement('link')
+    bsLink.rel = 'stylesheet'
+    bsLink.href = BS_CDN[name]
+    document.head.appendChild(bsLink)
+  }
+}
+
+themeSelect.addEventListener('change', () => applyTheme(themeSelect.value))
+// Apply initial selection (e.g. browser remembered last value).
+applyTheme(themeSelect.value)
+
 // 1.1 Strings
 const outCountries = document.getElementById('out-countries')
 const selCountries = new LLSelectSingle(

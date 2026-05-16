@@ -5,10 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>llselect demo</title>
   <link rel="stylesheet" href="style.css">
+  <!-- llselect visual theme. Swapped at runtime by the theme picker. -->
+  <link id="theme-link" rel="stylesheet" href="../dist/themes/vanilla.css">
   <!-- For 4.3 only: Material Design Icons font (external CDN, demo-only). -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+  <!-- Bootstrap CSS is loaded ONLY when a Bootstrap theme is picked
+       (see demo/main.js theme switcher). Required for `bootstrap-5.css` to
+       resolve its `var(--bs-*)` tokens; harmless even for BS3/BS4. -->
 </head>
 <body>
+  <div class="theme-picker">
+    <label for="theme-select">Theme:</label>
+    <select id="theme-select">
+      <option value="vanilla">Vanilla</option>
+      <option value="tailwind">Tailwind</option>
+      <option value="bootstrap-3">Bootstrap 3</option>
+      <option value="bootstrap-4">Bootstrap 4</option>
+      <option value="bootstrap-5">Bootstrap 5</option>
+    </select>
+  </div>
+
   <h1>llselect demo</h1>
   <p>Run <code>npm run build</code>, then <code>npm run serve</code>, and open <code>/demo/</code>.</p>
 
@@ -70,7 +86,7 @@
     <article>
       <h3>3.1 pass-through (default)</h3>
       <p class="hint">Outside click closes the dropdown AND triggers the button. Count below should increment.</p>
-      <div class="row">
+      <div class="demo-row">
         <div id="mount-pass"></div>
         <button id="btn-pass" type="button">Outside button (clicks: 0)</button>
       </div>
@@ -79,7 +95,7 @@
     <article>
       <h3>3.2 block</h3>
       <p class="hint">Outside click closes the dropdown only; the button does NOT receive the click. Count below should stay 0.</p>
-      <div class="row">
+      <div class="demo-row">
         <div id="mount-block"></div>
         <button id="btn-block" type="button">Outside button (clicks: 0)</button>
       </div>

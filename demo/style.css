@@ -1,3 +1,6 @@
+/* Demo-only layout. All llselect-* visual rules live in dist/themes/*.css
+   (loaded via <link> and swapped by the theme picker). */
+
 body {
   font-family: system-ui, sans-serif;
   padding: 2rem;
@@ -39,7 +42,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
   color: #444;
 }
 
-.row {
+.demo-row {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -58,7 +61,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
   margin-bottom: 0.25rem;
 }
 
-.row button {
+.demo-row button {
   padding: 0.4rem 0.8rem;
   border: 1px solid #888;
   border-radius: 4px;
@@ -81,57 +84,24 @@ article { margin: 1.5rem 0 2rem 1rem; }
 
 .page-filler { height: 80vh; }
 
-/* Library ships zero CSS by design. Everything below is demo-only styling. */
-
-.llselect-root {
-  position: relative;
-  display: inline-block;
-  min-width: 18rem;
-  font-family: system-ui, sans-serif;
-}
-
-.llselect-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.4rem 0.7rem;
-  border: 1px solid #888;
-  border-radius: 4px;
+.theme-picker {
+  position: sticky;
+  top: 0;
   background: #fff;
-  cursor: pointer;
-  user-select: none;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 1rem;
+  z-index: 100;
 }
 
-.llselect-trigger:focus {
-  outline: 2px solid #4a90e2;
-  outline-offset: 1px;
+.theme-picker label {
+  font-size: 0.9rem;
+  color: #555;
+  margin-right: 0.5rem;
 }
 
-.llselect-trigger-content {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.llselect-trigger-arrow {
-  display: inline-flex;
-  align-items: center;
-  color: #666;
-  transition: transform 0.15s;
-}
-
-.llselect-trigger-arrow:empty {
-  display: none;
-}
-
-.llselect-trigger[data-state='open'] .llselect-trigger-arrow {
-  transform: rotate(180deg);
-}
-
-/* 4.4 CSS-only triangle - applied only to mount-ind-css to avoid clobbering others. */
+/* 4.4 CSS-only arrow demo - this section deliberately bypasses the theme's
+   arrow slot and draws an arrow with a CSS triangle on a pseudo-element. */
 #mount-ind-css .llselect-trigger::after {
   content: '';
   display: inline-block;
@@ -142,37 +112,9 @@ article { margin: 1.5rem 0 2rem 1rem; }
   border-top: 5px solid currentColor;
   transition: transform 0.15s;
   color: #666;
+  margin-left: 0.4rem;
 }
 
 #mount-ind-css .llselect-trigger[data-state='open']::after {
   transform: rotate(180deg);
-}
-
-/* Library controls position/top/left/width/maxHeight via inline styles,
-   and visibility via the hidden attribute. CSS below is visual only. */
-.llselect-popup {
-  background: #fff;
-  border: 1px solid #888;
-  border-radius: 4px;
-  z-index: 10;
-}
-
-.llselect-popup[data-placement='above'] {
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
-}
-.llselect-popup[data-placement='below'] {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.llselect-item {
-  padding: 0.35rem 0.7rem;
-  cursor: pointer;
-}
-
-.llselect-item:hover {
-  background: #eef4ff;
-}
-
-.llselect-item-focused {
-  background: #cce4ff;
 }

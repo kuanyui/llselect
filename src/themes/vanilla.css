@@ -1,0 +1,86 @@
+/* llselect — vanilla theme: minimal sensible defaults, no framework. */
+
+.llselect-root {
+  position: relative;
+  display: inline-block;
+  min-width: 14rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.95rem;
+  color: #222;
+}
+
+/* --- trigger --------------------------------------------------- */
+
+.llselect-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid #888;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  user-select: none;
+  line-height: 1.4;
+}
+
+.llselect-trigger:focus,
+.llselect-trigger:focus-visible {
+  outline: 2px solid #4a90e2;
+  outline-offset: 1px;
+}
+
+.llselect-trigger-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.llselect-trigger-arrow {
+  display: inline-flex;
+  align-items: center;
+  color: #666;
+  transition: transform 0.15s;
+}
+
+.llselect-trigger-arrow:empty { display: none; }
+
+.llselect-trigger[data-state='open'] .llselect-trigger-arrow {
+  transform: rotate(180deg);
+}
+
+/* --- popup ----------------------------------------------------- */
+
+.llselect-popup {
+  background: #fff;
+  border: 1px solid #888;
+  border-radius: 4px;
+  z-index: 1000;
+}
+
+.llselect-popup[data-placement='above'] {
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.llselect-popup[data-placement='below'] {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* --- items ----------------------------------------------------- */
+
+.llselect-item {
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.llselect-item:hover {
+  background: #eef4ff;
+}
+
+.llselect-item-focused {
+  background: #cce4ff;
+}
