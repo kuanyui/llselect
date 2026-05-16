@@ -10,8 +10,7 @@
   <!-- For 4.3 only: Material Design Icons font (external CDN, demo-only). -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
   <!-- Bootstrap CSS is loaded ONLY when a Bootstrap theme is picked
-       (see demo/main.js theme switcher). Required for `bootstrap-5.css` to
-       resolve its `var(--bs-*)` tokens; harmless even for BS3/BS4. -->
+       (see demo/main.js theme switcher). -->
 </head>
 <body>
   <div class="theme-picker">
@@ -34,22 +33,37 @@
     <article>
       <h3>1.1 Strings</h3>
       <p class="hint">Simple string-typed options.</p>
-      <div id="mount-countries"></div>
-      <div class="out" id="out-countries">chosen: (none)</div>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-countries"></div>
+          <div class="out" id="out-countries">chosen: (none)</div>
+        </div>
+        <pre data-demo="1.1"><code></code></pre>
+      </div>
     </article>
 
     <article>
       <h3>1.2 Objects (custom template + compareFn)</h3>
       <p class="hint">Generic T = User object. <code>templateItem</code> overridden to render id + name + role.</p>
-      <div id="mount-users"></div>
-      <div class="out" id="out-users">chosen: (none)</div>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-users"></div>
+          <div class="out" id="out-users">chosen: (none)</div>
+        </div>
+        <pre data-demo="1.2"><code></code></pre>
+      </div>
     </article>
 
     <article>
       <h3>1.3 Stress test (200 options)</h3>
       <p class="hint">Listbox scroll within clamped max-height. Keyboard PageDown/PageUp jump 10 at a time.</p>
-      <div id="mount-stress"></div>
-      <div class="out" id="out-stress">chosen: (none)</div>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-stress"></div>
+          <div class="out" id="out-stress">chosen: (none)</div>
+        </div>
+        <pre data-demo="1.3"><code></code></pre>
+      </div>
     </article>
   </section>
 
@@ -67,12 +81,17 @@
         Scrolling clips the trigger above or below the container edge - the
         popup should auto-close in both cases.
       </p>
-      <div class="scroll-container">
-        <div class="scroll-spacer-top"></div>
-        <div id="mount-scroll"></div>
-        <div class="scroll-spacer-bottom"></div>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div class="scroll-container">
+            <div class="scroll-spacer-top"></div>
+            <div id="mount-scroll"></div>
+            <div class="scroll-spacer-bottom"></div>
+          </div>
+          <div class="out" id="out-scroll">chosen: (none)</div>
+        </div>
+        <pre data-demo="2.1"><code></code></pre>
       </div>
-      <div class="out" id="out-scroll">chosen: (none)</div>
     </article>
   </section>
 
@@ -86,18 +105,28 @@
     <article>
       <h3>3.1 pass-through (default)</h3>
       <p class="hint">Outside click closes the dropdown AND triggers the button. Count below should increment.</p>
-      <div class="demo-row">
-        <div id="mount-pass"></div>
-        <button id="btn-pass" type="button">Outside button (clicks: 0)</button>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div class="demo-row">
+            <div id="mount-pass"></div>
+            <button id="btn-pass" type="button">Outside button (clicks: 0)</button>
+          </div>
+        </div>
+        <pre data-demo="3.1"><code></code></pre>
       </div>
     </article>
 
     <article>
       <h3>3.2 block</h3>
       <p class="hint">Outside click closes the dropdown only; the button does NOT receive the click. Count below should stay 0.</p>
-      <div class="demo-row">
-        <div id="mount-block"></div>
-        <button id="btn-block" type="button">Outside button (clicks: 0)</button>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div class="demo-row">
+            <div id="mount-block"></div>
+            <button id="btn-block" type="button">Outside button (clicks: 0)</button>
+          </div>
+        </div>
+        <pre data-demo="3.2"><code></code></pre>
       </div>
     </article>
   </section>
@@ -112,7 +141,12 @@
 
     <article>
       <h3>4.1 No arrow (default)</h3>
-      <div id="mount-ind-none"></div>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-ind-none"></div>
+        </div>
+        <pre data-demo="4.1"><code></code></pre>
+      </div>
     </article>
 
     <article>
@@ -122,28 +156,43 @@
         <code>aria-hidden="true"</code>. CSS rotates them on
         <code>[data-state="open"]</code>.
       </p>
-      <div class="arrow-row">
-        <div>
-          <label class="arrow-label"><code>chevronDownSvg()</code></label>
-          <div id="mount-ind-chevron"></div>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div class="arrow-row">
+            <div>
+              <label class="arrow-label"><code>chevronDownSvg()</code></label>
+              <div id="mount-ind-chevron"></div>
+            </div>
+            <div>
+              <label class="arrow-label"><code>triangleDownSvg()</code></label>
+              <div id="mount-ind-triangle"></div>
+            </div>
+          </div>
         </div>
-        <div>
-          <label class="arrow-label"><code>triangleDownSvg()</code></label>
-          <div id="mount-ind-triangle"></div>
-        </div>
+        <pre data-demo="4.2"><code></code></pre>
       </div>
     </article>
 
     <article>
       <h3>4.3 Material Design Icons (mdi)</h3>
       <p class="hint">Just return an <code>&lt;i class="mdi mdi-..."&gt;</code>. No lib API needed.</p>
-      <div id="mount-ind-mdi"></div>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-ind-mdi"></div>
+        </div>
+        <pre data-demo="4.3"><code></code></pre>
+      </div>
     </article>
 
     <article>
       <h3>4.4 CSS-only triangle (no JS arrow)</h3>
       <p class="hint">Pure CSS pseudo-element on <code>.llselect-trigger</code>. data-state drives rotation.</p>
-      <div id="mount-ind-css"></div>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-ind-css"></div>
+        </div>
+        <pre data-demo="4.4"><code></code></pre>
+      </div>
     </article>
   </section>
 
@@ -155,8 +204,13 @@
       After the spacer above, this select sits near the viewport bottom; the
       popup should open upward (look for <code>data-placement="above"</code> on the popup).
     </p>
-    <div id="mount-bottom"></div>
-    <div class="out" id="out-bottom">chosen: (none)</div>
+    <div class="demo-split">
+      <div class="demo-pane">
+        <div id="mount-bottom"></div>
+        <div class="out" id="out-bottom">chosen: (none)</div>
+      </div>
+      <pre data-demo="5"><code></code></pre>
+    </div>
   </section>
 
   <script type="module" src="main.js"></script>

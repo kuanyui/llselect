@@ -17,7 +17,6 @@ let bsLink = null
 
 function applyTheme(name) {
   themeLink.href = `../dist/themes/${name}.css`
-  // Remove previous BS link (if any), then add the matching one.
   if (bsLink) {
     bsLink.remove()
     bsLink = null
@@ -31,10 +30,9 @@ function applyTheme(name) {
 }
 
 themeSelect.addEventListener('change', () => applyTheme(themeSelect.value))
-// Apply initial selection (e.g. browser remembered last value).
 applyTheme(themeSelect.value)
 
-// 1.1 Strings
+//#region 1.1
 const outCountries = document.getElementById('out-countries')
 const selCountries = new LLSelectSingle(
   document.getElementById('mount-countries'),
@@ -44,8 +42,9 @@ const selCountries = new LLSelectSingle(
   }
 )
 selCountries.setItems(COUNTRIES)
+//#endregion
 
-// 1.2 Objects with custom template + compareFn
+//#region 1.2
 const outUsers = document.getElementById('out-users')
 class UserSelect extends LLSelectSingle {
   templateItem(user) { return `#${user.id} ${user.name} (${user.role})` }
@@ -59,8 +58,9 @@ const selUsers = new UserSelect(
   }
 )
 selUsers.setItems(USERS)
+//#endregion
 
-// 1.3 Stress test (200 options)
+//#region 1.3
 const outStress = document.getElementById('out-stress')
 const selStress = new LLSelectSingle(
   document.getElementById('mount-stress'),
@@ -70,8 +70,9 @@ const selStress = new LLSelectSingle(
   }
 )
 selStress.setItems(STRESS_ITEMS)
+//#endregion
 
-// 2.1 Scrollable container
+//#region 2.1
 const outScroll = document.getElementById('out-scroll')
 const selScroll = new LLSelectSingle(
   document.getElementById('mount-scroll'),
@@ -81,13 +82,14 @@ const selScroll = new LLSelectSingle(
   }
 )
 selScroll.setItems(COUNTRIES)
+//#endregion
 // Position the select roughly in the middle of the container so scrolling
 // up clips the anchor below the container, and scrolling down clips it above.
 const scrollContainer = document.querySelector('.scroll-container')
 const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
 scrollContainer.scrollTop = 10 * rem
 
-// 3.1 Outside-click pass-through
+//#region 3.1
 let passCount = 0
 const btnPass = document.getElementById('btn-pass')
 btnPass.addEventListener('click', () => {
@@ -96,11 +98,12 @@ btnPass.addEventListener('click', () => {
 })
 const selPass = new LLSelectSingle(
   document.getElementById('mount-pass'),
-  { placeholder: 'pass-through select' }  // default behavior
+  { placeholder: 'pass-through select' }  // default outsideClickBehavior
 )
 selPass.setItems(COUNTRIES)
+//#endregion
 
-// 3.2 Outside-click block
+//#region 3.2
 let blockCount = 0
 const btnBlock = document.getElementById('btn-block')
 btnBlock.addEventListener('click', () => {
@@ -115,13 +118,16 @@ const selBlock = new LLSelectSingle(
   }
 )
 selBlock.setItems(COUNTRIES)
+//#endregion
 
-// 4.1 No arrow (default - lib does nothing)
+//#region 4.1
 new LLSelectSingle(
   document.getElementById('mount-ind-none'),
   { placeholder: 'No arrow' },
 ).setItems(COUNTRIES)
+//#endregion
 
+//#region 4.2
 // 4.2a chevronDownSvg
 new LLSelectSingle(
   document.getElementById('mount-ind-chevron'),
@@ -139,8 +145,9 @@ new LLSelectSingle(
     renderArrow: () => triangleDownSvg(),
   },
 ).setItems(COUNTRIES)
+//#endregion
 
-// 4.3 Material Design Icons
+//#region 4.3
 new LLSelectSingle(
   document.getElementById('mount-ind-mdi'),
   {
@@ -152,15 +159,17 @@ new LLSelectSingle(
     },
   },
 ).setItems(COUNTRIES)
+//#endregion
 
-// 4.4 CSS-only triangle (no renderArrow; CSS handles everything via data-state)
+//#region 4.4
 // Lib does nothing in the arrow slot; the demo styles a ::after pseudo-element.
 new LLSelectSingle(
   document.getElementById('mount-ind-css'),
   { placeholder: 'CSS triangle (no JS)' },
 ).setItems(COUNTRIES)
+//#endregion
 
-// 5. Near page bottom (flip up)
+//#region 5
 const outBottom = document.getElementById('out-bottom')
 const selBottom = new LLSelectSingle(
   document.getElementById('mount-bottom'),
@@ -170,3 +179,17 @@ const selBottom = new LLSelectSingle(
   }
 )
 selBottom.setItems(COUNTRIES)
+//#endregion
+
+// --- Inject demo snippets into <pre data-demo="X"><code></code></pre> -----
+// Self-extraction: fetch this file's source, locate `//#region NAME` ...
+// `//#endregion` blocks, and write each into the matching <code>.
+{
+  const src = await (await fetch(import.meta.url)).text()
+  const re = /\/\/#region\s+(\S+)\s*\n([\s\S]*?)\n\s*\/\/#endregion/g
+  let m
+  while ((m = re.exec(src)) !== null) {
+    const target = document.querySelector(`pre[data-demo="${m[1]}"] code`)
+    if (target) target.textContent = m[2]
+  }
+}

@@ -4,7 +4,7 @@
 body {
   font-family: system-ui, sans-serif;
   padding: 2rem;
-  max-width: 760px;
+  max-width: 1200px;
   margin: 0 auto;
   color: #222;
 }
@@ -33,6 +33,41 @@ h3 {
 
 section { margin: 2rem 0 3rem; }
 article { margin: 1.5rem 0 2rem 1rem; }
+
+.demo-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 800px) {
+  .demo-split { grid-template-columns: 1fr; }
+}
+
+.demo-pane { min-width: 0; }
+
+pre[data-demo] {
+  margin: 0;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  overflow: auto;
+  max-height: 24rem;
+}
+
+pre[data-demo] code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
 
 .hint { color: #666; font-size: 0.9rem; margin: 0.3rem 0; }
 
