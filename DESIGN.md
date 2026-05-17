@@ -39,9 +39,10 @@ llselect splits surface area by mutability:
 - **Settings** (constructor argument, frozen after): immutable configuration -
   `placeholder`, `compareFn`, `onChange`, `renderArrowFn`, `outsideClickBehavior`,
   `cssClassPrefix`. Behavior knobs.
-- **Methods** (mutate state, fire side effects): `setItems`, `setChosen`,
-  `toggleItem`, `open`, `close`, `rerender`. The data the component currently
-  holds, plus lifecycle actions.
+- **Methods** (mutate state, fire side effects): `setItems`,
+  `setChosenItem` (single) / `setChosenItems` + `toggleItem` (multi), `open`,
+  `close`, `rerender`. The data the component currently holds, plus lifecycle
+  actions.
 
 Never put mutable state (`items`, `chosen`, etc.) in settings as a
 "convenience". Dual write channels caused subtle bugs in select2 / choices.js
@@ -99,9 +100,20 @@ fills it". This keeps API surface tight and avoids feature creep.
 
 ## Rendering model
 
-- `setItems` / `setChosen` / `toggleItem` etc. trigger needed re-renders
-  automatically and fire `onChange` only when the value actually changed
-  (compared via `compareFn`).
+- State setters (`setItems`, `setChosenItem`, `setChosenItems`, `toggleItem`,
+  `selectAll`, ...) trigger the needed re-render automatically and fire
+  `onChange` only when the value actually changed (compared via `compareFn`).
+- **Render granularity matters at scale.** Rebuilding the whole popup list is
+  O(n) DOM work; for large lists that dominates. So:
+  - Bulk changes (replace the whole set, select/deselect all, `setItems`)
+    rebuild the list via `renderPopupList` / `rerender`.
+  - Single-item changes (multi-select `toggleItem`) use
+    `rerenderPopupListItem(item)`, which replaces just that one item's
+    element. DOM work stays O(1) regardless of list size, so toggling one
+    selection in a 10k-item list does not recreate 10k nodes. (The lookup to
+    find the item is O(n), but a comparison loop is negligible next to DOM
+    mutation + reflow.) This beats vdom frameworks, which must diff the whole
+    list on a state change.
 - External mutation of an item object's properties (e.g.
   `users[0].name = 'X'`) is **not** auto-detected. Call `rerender()` to
   reflect the change in the DOM. `rerender` is a pure visual refresh: it

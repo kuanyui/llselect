@@ -136,6 +136,27 @@ test('focusInitial on open with empty chosen focuses first item', () => {
   assert.equal(focused?.textContent, 'x')
 })
 
+test('toggleItem re-renders only the toggled item element, not the whole list', () => {
+  const sel = new LLSelectMultiple<string>(mount())
+  sel.setItems(['a', 'b', 'c'])
+  sel.open()
+  const before = sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')
+  const elA = before[0]!
+  const elB = before[1]!
+  const elC = before[2]!
+
+  sel.toggleItem('b')  // only 'b' changes
+
+  const after = sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')
+  // a and c elements are the SAME nodes (not recreated)
+  assert.equal(after[0], elA)
+  assert.equal(after[2], elC)
+  // b element was replaced
+  assert.notEqual(after[1], elB)
+  // and the new b reflects selection
+  assert.equal(after[1]?.getAttribute('aria-selected'), 'true')
+})
+
 test('object items work via compareFn', () => {
   interface Item { id: number; label: string }
   const sel = new LLSelectMultiple<Item>(mount(), {

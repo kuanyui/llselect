@@ -36,7 +36,11 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
 - [x] Element family: `trigger*` / `popup*`; `popupListEl` is the `role="listbox"`.
 - [x] Function-setting naming: `on*` for events, `*Fn` for other callbacks (see DESIGN.md).
 - [x] CSS themes shipped opt-in: vanilla, tailwind, bootstrap-3/4/5.
-- [x] `rerender()` for external mutation refresh.
+- [x] `rerender()` for external mutation refresh (trigger + popup list).
+- [x] `rerenderPopupListItem(item)` - O(1) single-item DOM update; multi-select
+      toggle uses it so flipping one selection in a 10k-item list does not
+      rebuild the whole list (verified by the 10k demo + a unit test that the
+      untouched items keep the same DOM nodes).
 
 ## Notes
 

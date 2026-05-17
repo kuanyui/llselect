@@ -1,5 +1,5 @@
 import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, chevronDownSvg, triangleDownSvg } from '../dist/index.mjs'
-import { COUNTRIES, USERS, STRESS_ITEMS } from './data.js'
+import { COUNTRIES, USERS, STRESS_ITEMS, HUGE_ITEMS } from './data.js'
 
 console.log('llselect v' + LLSELECT_VERSION)
 
@@ -181,6 +181,20 @@ const selMulti = new LLSelectMultiple(
   }
 )
 selMulti.setItems(COUNTRIES)
+//#endregion
+
+//#region 5.3
+const outMultiHuge = document.getElementById('out-multi-huge')
+const selMultiHuge = new LLSelectMultiple(
+  document.getElementById('mount-multi-huge'),
+  {
+    placeholder: 'Pick from 10,000 rows',
+    onChange: (chosen) => {
+      outMultiHuge.textContent = 'chosen: ' + chosen.length + ' items'
+    },
+  }
+)
+selMultiHuge.setItems(HUGE_ITEMS)
 //#endregion
 
 //#region 5.2

@@ -38,3 +38,7 @@ export const USERS = Array.from({ length: 40 }, (_, i) => {
 export const STRESS_ITEMS = Array.from({ length: 200 }, (_, i) => {
   return `Item ${String(i + 1).padStart(3, '0')}`
 })
+
+export const HUGE_ITEMS = Array.from({ length: 10000 }, (_, i) => {
+  return `Row ${String(i + 1).padStart(5, '0')}`
+})

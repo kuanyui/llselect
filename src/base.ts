@@ -406,6 +406,31 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
+   * Re-render a single item's element in place instead of rebuilding the
+   * whole popup list. The DOM work is O(1) regardless of list size, so
+   * flipping one selection in a 10k-item list does not recreate 10k nodes
+   * (the lookup to find the item is O(n), but that is a cheap comparison
+   * loop next to DOM mutation). No-op if the popup is closed or the item is
+   * not in the current list. Used by multi-select toggle.
+   */
+  protected rerenderPopupListItem(item: T): void {
+    if (!this.isOpen) { return }
+    const index = this.items.findIndex(i => this.settings.compareFn(i, item))
+    if (index < 0) { return }
+    const oldEl = this.itemEls[index]
+    if (oldEl === undefined) { return }
+    const newEl = this.createItemEl(this.items[index]!, index)
+    oldEl.replaceWith(newEl)
+    this.itemEls[index] = newEl
+    // Preserve focus visuals if the replaced element was the focused one.
+    if (this.focusedEl === oldEl) {
+      newEl.classList.add(this.classIdMap.itemFocusedClass)
+      this.triggerEl.setAttribute('aria-activedescendant', newEl.id)
+      this.focusedEl = newEl
+    }
+  }
+
+  /**
    * Build the DOM element for one item. Override if you need richer markup
    * (e.g. icons, descriptions, HTML). The base implementation sets `id`,
    * `role="option"`, a click handler, and writes `textContent` from

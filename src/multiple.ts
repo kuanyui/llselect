@@ -63,7 +63,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
     const next = items.slice()
     if (this.arraysEqual(next, this.chosenItems)) { return }
     this.chosenItems = next
-    this.reflectChosen()
+    this.rerender()
     this.fireChange()
   }
 
@@ -83,7 +83,10 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
     } else {
       this.chosenItems = [...this.chosenItems, item]
     }
-    this.reflectChosen()
+    // Only one item's selection changed: re-render the trigger (count) and
+    // that single item's element, not the whole list. O(1) DOM work.
+    this.renderTrigger()
+    this.rerenderPopupListItem(item)
     this.fireChange()
   }
 
@@ -91,7 +94,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
   public selectAll(): void {
     if (this.chosenItems.length === this.items.length && this.items.length > 0) { return }
     this.chosenItems = this.items.slice()
-    this.reflectChosen()
+    this.rerender()
     this.fireChange()
   }
 
@@ -99,7 +102,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
   public deselectAll(): void {
     if (this.chosenItems.length === 0) { return }
     this.chosenItems = []
-    this.reflectChosen()
+    this.rerender()
     this.fireChange()
   }
 
@@ -167,12 +170,6 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
       }
     }
     this.setFocusedIndex(0)
-  }
-
-  /** Re-render trigger + popup list (the latter only if open). */
-  private reflectChosen(): void {
-    this.renderTrigger()
-    if (this.isOpen) { this.renderPopupList() }
   }
 
   private arraysEqual(a: readonly T[], b: readonly T[]): boolean {
