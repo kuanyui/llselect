@@ -255,6 +255,7 @@ export abstract class LLSelectBase<T = unknown> {
    */
   public open(): void {
     if (this.isOpen) { return }
+    const restoreWindowScroll = this.captureWindowScroll()
     this.isOpen = true
     this.triggerEl.setAttribute('aria-expanded', 'true')
     this.triggerEl.setAttribute('data-state', 'open')
@@ -273,6 +274,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.attachOutsideClick()
     this.focusInitial()
     this.onOpened()
+    restoreWindowScroll()
   }
 
   /**
@@ -511,6 +513,31 @@ export abstract class LLSelectBase<T = unknown> {
       ensureVisibleInScroll(el, this.popupListEl)
     } else {
       this.triggerEl.removeAttribute('aria-activedescendant')
+    }
+  }
+
+  /**
+   * Snapshot the window scroll position and return a function that restores
+   * it. Opening the popup must never move the page, but Firefox auto-scrolls
+   * the active option of a multiselectable listbox into view at the document
+   * level when the popup is shown - even though the popup is `position: fixed`.
+   * The returned restore runs synchronously and once more on the next frame,
+   * since that accessibility scroll can land after the current layout flush.
+   * No-op when nothing actually scrolled, so it never fights real user
+   * scrolling (and stays silent under jsdom, which has no `window.scrollTo`).
+   */
+  private captureWindowScroll(): () => void {
+    const { scrollX, scrollY } = window
+    const restore = (): void => {
+      if (window.scrollX !== scrollX || window.scrollY !== scrollY) {
+        window.scrollTo(scrollX, scrollY)
+      }
+    }
+    return (): void => {
+      restore()
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(restore)
+      }
     }
   }
 
