@@ -301,6 +301,18 @@ export abstract class LLSelectBase<T = unknown> {
     this.onClosed()
   }
 
+  /**
+   * Force a DOM re-render from current state. Use this when external code
+   * mutates an item object's properties (e.g. `users[0].name = 'X'`) without
+   * replacing the items array - the library has no way to detect that on
+   * its own. Re-renders the trigger and (if open) the popup list. Does NOT
+   * fire `onChange`, does NOT run `afterItemsChange`. Pure visual refresh.
+   */
+  public rerender(): void {
+    this.renderTrigger()
+    if (this.isOpen) { this.renderPopupList() }
+  }
+
   /** Open if closed, close if open. */
   public toggle(): void {
     if (this.isOpen) {
