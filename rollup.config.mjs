@@ -1,6 +1,11 @@
 // @ts-check
 
+import { readdirSync, mkdirSync, copyFileSync } from 'node:fs'
+import { join } from 'node:path'
 import typescript from '@rollup/plugin-typescript'
+
+const THEMES_SRC = 'src/themes'
+const THEMES_DEST = 'dist/themes'
 
 const tsPlugin = typescript({
   tsconfig: './tsconfig.json',
@@ -10,6 +15,31 @@ const tsPlugin = typescript({
     sourceMap: true
   }
 })
+
+/**
+ * Copy src/themes/*.css into dist/themes after every (re)build, and register
+ * the theme files as watch inputs so `rollup -w` rebuilds when one changes.
+ * This folds the standalone `build:themes` npm step into the bundle so a
+ * single `npm run watch` keeps both the JS bundle and the CSS themes fresh.
+ * @returns {import('rollup').Plugin}
+ */
+function copyThemes() {
+  const themeFiles = () => readdirSync(THEMES_SRC).filter(f => f.endsWith('.css'))
+  return {
+    name: 'copy-themes',
+    buildStart() {
+      for (const f of themeFiles()) {
+        this.addWatchFile(join(THEMES_SRC, f))
+      }
+    },
+    writeBundle() {
+      mkdirSync(THEMES_DEST, { recursive: true })
+      for (const f of themeFiles()) {
+        copyFileSync(join(THEMES_SRC, f), join(THEMES_DEST, f))
+      }
+    }
+  }
+}
 
 /**
 * https://rollupjs.org/command-line-interface/#config-intellisense
@@ -28,7 +58,7 @@ const options = {
       sourcemap: true
     }
   ],
-  plugins: [tsPlugin]
+  plugins: [tsPlugin, copyThemes()]
 }
 
 export default options
