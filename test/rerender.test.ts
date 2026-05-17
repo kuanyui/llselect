@@ -25,7 +25,7 @@ test('rerender picks up trigger text after mutating chosen item (single)', () =>
   const user = { id: 1, name: 'Alice' }
   const sel = new ItemSelect(mount(), { compareFn: (a, b) => a.id === b.id })
   sel.setItems([user])
-  sel.setChosen(user)
+  sel.setChosenItem(user)
   assert.equal(sel.triggerContentEl.textContent, 'Alice')
 
   user.name = 'Alicia'
@@ -59,8 +59,8 @@ test('rerender does not fire onChange', () => {
   })
   const user = { id: 1, name: 'Alice' }
   sel.setItems([user])
-  sel.setChosen(user)
-  fired.length = 0  // reset after setChosen
+  sel.setChosenItem(user)
+  fired.length = 0  // reset after setChosenItem
   user.name = 'Alicia'
   sel.rerender()
   assert.deepEqual(fired, [])
@@ -81,7 +81,7 @@ test('rerender on closed popup updates trigger only (no DOM error)', () => {
   const user = { id: 1, name: 'X' }
   const sel = new ItemSelect(mount(), { compareFn: (a, b) => a.id === b.id })
   sel.setItems([user])
-  sel.setChosen(user)
+  sel.setChosenItem(user)
   // popup is closed
   user.name = 'Y'
   sel.rerender()

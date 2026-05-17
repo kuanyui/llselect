@@ -12,7 +12,7 @@ function mount(): HTMLElement {
 
 test('initial state: empty chosen, placeholder, no aria-selected items', () => {
   const sel = new LLSelectMultiple<string>(mount(), { placeholder: 'Pick' })
-  assert.deepEqual([...sel.getChosen()], [])
+  assert.deepEqual([...sel.getChosenItems()], [])
   assert.equal(sel.triggerContentEl.textContent, 'Pick')
 })
 
@@ -26,11 +26,11 @@ test('toggleItem adds and removes', () => {
   const sel = new LLSelectMultiple<string>(mount(), { onChange: v => fired.push([...v]) })
   sel.setItems(['a', 'b', 'c'])
   sel.toggleItem('b')
-  assert.deepEqual([...sel.getChosen()], ['b'])
+  assert.deepEqual([...sel.getChosenItems()], ['b'])
   sel.toggleItem('a')
-  assert.deepEqual([...sel.getChosen()], ['b', 'a'])
+  assert.deepEqual([...sel.getChosenItems()], ['b', 'a'])
   sel.toggleItem('b')
-  assert.deepEqual([...sel.getChosen()], ['a'])
+  assert.deepEqual([...sel.getChosenItems()], ['a'])
   assert.equal(fired.length, 3)
 })
 
@@ -42,13 +42,13 @@ test('isChosen reflects state', () => {
   assert.equal(sel.isChosen('b'), false)
 })
 
-test('setChosen replaces; onChange fires only when actually different', () => {
+test('setChosenItems replaces; onChange fires only when actually different', () => {
   const fired: Array<readonly string[]> = []
   const sel = new LLSelectMultiple<string>(mount(), { onChange: v => fired.push([...v]) })
   sel.setItems(['a', 'b', 'c'])
-  sel.setChosen(['a', 'c'])
-  sel.setChosen(['a', 'c'])  // same: no fire
-  assert.deepEqual([...sel.getChosen()], ['a', 'c'])
+  sel.setChosenItems(['a', 'c'])
+  sel.setChosenItems(['a', 'c'])  // same: no fire
+  assert.deepEqual([...sel.getChosenItems()], ['a', 'c'])
   assert.equal(fired.length, 1)
 })
 
@@ -56,13 +56,13 @@ test('selectAll / deselectAll / toggleAll', () => {
   const sel = new LLSelectMultiple<string>(mount())
   sel.setItems(['a', 'b', 'c'])
   sel.selectAll()
-  assert.deepEqual([...sel.getChosen()], ['a', 'b', 'c'])
+  assert.deepEqual([...sel.getChosenItems()], ['a', 'b', 'c'])
   sel.deselectAll()
-  assert.deepEqual([...sel.getChosen()], [])
+  assert.deepEqual([...sel.getChosenItems()], [])
   sel.toggleAll()
-  assert.deepEqual([...sel.getChosen()], ['a', 'b', 'c'])
+  assert.deepEqual([...sel.getChosenItems()], ['a', 'b', 'c'])
   sel.toggleAll()
-  assert.deepEqual([...sel.getChosen()], [])
+  assert.deepEqual([...sel.getChosenItems()], [])
 })
 
 test('trigger content: 0 → placeholder, partial → "n / m", full → "All n"', () => {
@@ -83,7 +83,7 @@ test('clicking item toggles and keeps popup open', () => {
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
   const first = sel.popupListEl.querySelector<HTMLElement>('[role="option"]')!
   first.click()
-  assert.deepEqual([...sel.getChosen()], ['a'])
+  assert.deepEqual([...sel.getChosenItems()], ['a'])
   // popup stays open
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
 })
@@ -112,10 +112,10 @@ test('setItems drops chosen entries no longer present, fires onChange', () => {
   const fired: Array<readonly string[]> = []
   const sel = new LLSelectMultiple<string>(mount(), { onChange: v => fired.push([...v]) })
   sel.setItems(['a', 'b', 'c'])
-  sel.setChosen(['a', 'b'])
+  sel.setChosenItems(['a', 'b'])
   sel.setItems(['b', 'c'])  // 'a' drops
-  assert.deepEqual([...sel.getChosen()], ['b'])
-  // fired: setChosen + afterItemsChange
+  assert.deepEqual([...sel.getChosenItems()], ['b'])
+  // fired: setChosenItems + afterItemsChange
   assert.equal(fired.length, 2)
 })
 

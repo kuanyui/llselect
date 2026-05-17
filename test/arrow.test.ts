@@ -97,7 +97,7 @@ test('triggerContentEl receives placeholder/chosen text (arrow slot preserved)',
     },
   })
   sel.setItems(['a'])
-  sel.setChosen('a')
+  sel.setChosenItem('a')
   assert.equal(sel.triggerContentEl.textContent, 'a')
   // Arrow slot must still be present after the content change.
   assert.ok(sel.triggerEl.querySelector('.survive'))

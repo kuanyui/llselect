@@ -13,25 +13,25 @@ function mount(): HTMLElement {
 test('initial state shows placeholder in trigger', () => {
   const sel = new LLSelectSingle<string>(mount(), { placeholder: 'Pick one' })
   assert.equal(sel.triggerEl.textContent, 'Pick one')
-  assert.equal(sel.getChosen(), undefined)
+  assert.equal(sel.getChosenItem(), undefined)
 })
 
-test('setChosen updates state, trigger label, and fires onChange', () => {
+test('setChosenItem updates state, trigger label, and fires onChange', () => {
   const fired: Array<string | undefined> = []
   const sel = new LLSelectSingle<string>(mount(), { onChange: v => fired.push(v) })
   sel.setItems(['a', 'b', 'c'])
-  sel.setChosen('b')
-  assert.equal(sel.getChosen(), 'b')
+  sel.setChosenItem('b')
+  assert.equal(sel.getChosenItem(), 'b')
   assert.equal(sel.triggerEl.textContent, 'b')
   assert.deepEqual(fired, ['b'])
 })
 
-test('setChosen with same value does not fire onChange', () => {
+test('setChosenItem with same value does not fire onChange', () => {
   const fired: Array<string | undefined> = []
   const sel = new LLSelectSingle<string>(mount(), { onChange: v => fired.push(v) })
   sel.setItems(['a', 'b'])
-  sel.setChosen('a')
-  sel.setChosen('a')
+  sel.setChosenItem('a')
+  sel.setChosenItem('a')
   assert.deepEqual(fired, ['a'])
 })
 
@@ -64,7 +64,7 @@ test('clicking option selects it, closes popup, fires onChange', () => {
   const second = sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')[1]
   assert.ok(second)
   second.click()
-  assert.equal(sel.getChosen(), 'b')
+  assert.equal(sel.getChosenItem(), 'b')
   assert.equal(sel.triggerEl.textContent, 'b')
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
   assert.deepEqual(fired, ['b'])
@@ -74,9 +74,9 @@ test('setItems drops chosen if no longer present, fires onChange(undefined)', ()
   const fired: Array<string | undefined> = []
   const sel = new LLSelectSingle<string>(mount(), { onChange: v => fired.push(v) })
   sel.setItems(['a', 'b'])
-  sel.setChosen('a')
+  sel.setChosenItem('a')
   sel.setItems(['b', 'c'])
-  assert.equal(sel.getChosen(), undefined)
+  assert.equal(sel.getChosenItem(), undefined)
   assert.equal(sel.triggerEl.textContent, 'Please select')
   assert.deepEqual(fired, ['a', undefined])
 })
@@ -85,9 +85,9 @@ test('setItems keeps chosen if still present', () => {
   const fired: Array<string | undefined> = []
   const sel = new LLSelectSingle<string>(mount(), { onChange: v => fired.push(v) })
   sel.setItems(['a', 'b'])
-  sel.setChosen('a')
+  sel.setChosenItem('a')
   sel.setItems(['a', 'c'])
-  assert.equal(sel.getChosen(), 'a')
+  assert.equal(sel.getChosenItem(), 'a')
   assert.deepEqual(fired, ['a'])
 })
 
@@ -102,8 +102,8 @@ test('compareFn enables object-typed options', () => {
   })
   sel.setItems(items)
   // Pass a fresh object with the same id; compareFn should consider it equal.
-  sel.setChosen({ id: 2, label: 'two' })
-  assert.equal(sel.getChosen()?.id, 2)
+  sel.setChosenItem({ id: 2, label: 'two' })
+  assert.equal(sel.getChosenItem()?.id, 2)
 })
 
 test('options array is defensively copied', () => {
@@ -114,13 +114,13 @@ test('options array is defensively copied', () => {
   assert.equal(sel.getItems().length, 2)
 })
 
-test('setChosen with undefined clears selection', () => {
+test('setChosenItem with undefined clears selection', () => {
   const fired: Array<string | undefined> = []
   const sel = new LLSelectSingle<string>(mount(), { onChange: v => fired.push(v) })
   sel.setItems(['a'])
-  sel.setChosen('a')
-  sel.setChosen(undefined)
-  assert.equal(sel.getChosen(), undefined)
+  sel.setChosenItem('a')
+  sel.setChosenItem(undefined)
+  assert.equal(sel.getChosenItem(), undefined)
   assert.equal(sel.triggerEl.textContent, 'Please select')
   assert.deepEqual(fired, ['a', undefined])
 })

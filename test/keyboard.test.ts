@@ -149,7 +149,7 @@ test('Enter selects focused option and closes', () => {
   sel.open()
   fireKey(sel.triggerEl, 'ArrowDown')
   fireKey(sel.triggerEl, 'Enter')
-  assert.equal(sel.getChosen(), 'b')
+  assert.equal(sel.getChosenItem(), 'b')
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
 })
 
@@ -158,7 +158,7 @@ test('Space selects focused option (same as Enter)', () => {
   sel.open()
   fireKey(sel.triggerEl, 'ArrowDown')
   fireKey(sel.triggerEl, ' ')
-  assert.equal(sel.getChosen(), 'b')
+  assert.equal(sel.getChosenItem(), 'b')
 })
 
 test('Escape closes without selecting', () => {
@@ -166,7 +166,7 @@ test('Escape closes without selecting', () => {
   sel.open()
   fireKey(sel.triggerEl, 'ArrowDown')
   fireKey(sel.triggerEl, 'Escape')
-  assert.equal(sel.getChosen(), undefined)
+  assert.equal(sel.getChosenItem(), undefined)
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
 })
 
@@ -200,7 +200,7 @@ test('PageDown jumps by 10 with clamp', () => {
 
 test('Single mode: opening highlights chosen option', () => {
   const sel = mountSelect(['a', 'b', 'c', 'd'])
-  sel.setChosen('c')
+  sel.setChosenItem('c')
   sel.open()
   assert.equal(focusedLabel(sel), 'c')
 })
@@ -224,7 +224,7 @@ test('Enter on closed select opens (does not select)', () => {
   const sel = mountSelect(['a', 'b', 'c'])
   fireKey(sel.triggerEl, 'Enter')
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
-  assert.equal(sel.getChosen(), undefined)
+  assert.equal(sel.getChosenItem(), undefined)
 })
 
 test('typing letters when closed does NOT open (phase 5: type-to-search comes later)', () => {
