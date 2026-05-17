@@ -1,5 +1,5 @@
 import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, chevronDownSvg, triangleDownSvg, checkboxSvg } from '../dist/index.mjs'
-import { COUNTRIES, USERS, STRESS_ITEMS, HUGE_ITEMS } from './data.js'
+import { COUNTRIES, USERS, HUGE_ITEMS } from './data.js'
 
 console.log('llselect v' + LLSELECT_VERSION)
 
@@ -58,18 +58,6 @@ const selUsers = new UserSelect(
   }
 )
 selUsers.setItems(USERS)
-//#endregion
-
-//#region 1.3
-const outStress = document.getElementById('out-stress')
-const selStress = new LLSelectSingle(
-  document.getElementById('mount-stress'),
-  {
-    placeholder: 'Pick an item (200 entries)',
-    onChange: (v) => { outStress.textContent = 'chosen: ' + JSON.stringify(v) },
-  }
-)
-selStress.setItems(STRESS_ITEMS)
 //#endregion
 
 //#region 2.1
@@ -205,7 +193,19 @@ const selMultiCheckbox = new CheckboxMultiSelect(
 selMultiCheckbox.setItems(COUNTRIES)
 //#endregion
 
-//#region 5.3
+//#region 6.1
+const outSingleHuge = document.getElementById('out-single-huge')
+const selSingleHuge = new LLSelectSingle(
+  document.getElementById('mount-single-huge'),
+  {
+    placeholder: 'Pick from 10,000 rows',
+    onChange: (v) => { outSingleHuge.textContent = 'chosen: ' + JSON.stringify(v) },
+  }
+)
+selSingleHuge.setItems(HUGE_ITEMS)
+//#endregion
+
+//#region 6.2
 const outMultiHuge = document.getElementById('out-multi-huge')
 const selMultiHuge = new LLSelectMultiple(
   document.getElementById('mount-multi-huge'),
@@ -239,7 +239,7 @@ document.getElementById('btn-toggle-all')
   .addEventListener('click', () => selMultiAll.toggleAll())
 //#endregion
 
-//#region 6
+//#region 7
 const outBottom = document.getElementById('out-bottom')
 const selBottom = new LLSelectSingle(
   document.getElementById('mount-bottom'),
