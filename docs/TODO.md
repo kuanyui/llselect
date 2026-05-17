@@ -15,9 +15,14 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
 - [x] **Phase 4** - positioning module (flip, scroll/resize tracking, auto-close on anchor occlusion)
 - [x] **Phase 5** - keyboard navigation (arrows / Home / End / PageUp-Dn / Enter / Esc, aria-activedescendant)
 - [x] **Phase 6** - `LLSelectMultiple` (toggle, selectAll/deselectAll/toggleAll, aria-selected, aria-multiselectable)
-- [ ] **Phase 7** - type-to-search (typing characters jumps focus to matching item)
-- [ ] **Phase 8** - `filterFn` + filter box (searchbox inside popup, above popup-list)
+- [ ] **Phase 7** - type-to-search (first-character typeahead on the input, works even when `readonly`)
+- [ ] **Phase 8** - `filterFn` + search input (combobox host moves to the input, trigger becomes a `button`; see `A11Y.md`)
 - [ ] **Phase 9** - optgroup support (`role="group"` + `role="presentation"` label, keyboard skips labels)
+
+A11Y model (decided, see `A11Y.md`): APG "combobox with list autocomplete" -
+focus on a single always-present input (readonly when filtering is off), list
+driven by `aria-activedescendant`, Tab leaves the widget (native-select-like),
+select-all is the first listbox `option`, Esc clears the filter then closes.
 
 ## API design decisions (open)
 
@@ -45,4 +50,5 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
 ## Notes
 
 - Architecture / naming rationale: see `DESIGN.md`.
-- Code style rules: see `CLAUDE.md`.
+- Keyboard / focus / ARIA behavior contract: see `A11Y.md`.
+- Code style rules: see `../CLAUDE.md`.

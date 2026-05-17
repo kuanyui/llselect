@@ -1,8 +1,9 @@
 # Design notes
 
 Architecture and API conventions for llselect. Code-style rules (braces,
-language, dash characters, etc.) live in `CLAUDE.md`; this file documents
-**what** to build and **why**, not how to write each line.
+language, dash characters, etc.) live in `../CLAUDE.md`; the keyboard / focus /
+ARIA behavior contract lives in `A11Y.md`. This file documents **what** to
+build and **why**, not how to write each line.
 
 ## API naming conventions
 
@@ -76,8 +77,12 @@ universally meaningful in the library's namespace.
 ARIA role attribute values (`"combobox"`, `"listbox"`, `"option"`, `"group"`,
 `"searchbox"`, `"checkbox"`) are spec strings and stay verbatim in
 `setAttribute` calls. JS-side names are independent and follow the rules
-above (e.g. our `role="combobox"` element is called `triggerEl`, our
-`role="listbox"` element is called `popupListEl`).
+above (e.g. our `role="listbox"` element is called `popupListEl`).
+
+The full keyboard / focus / ARIA behavior contract is in `A11Y.md`. Note the
+target model moves the `combobox` role onto the search input and demotes the
+trigger to a `button`; today's code still carries `role="combobox"` on
+`triggerEl` as a transitional state until the search input lands (Phase 8).
 
 ## Library scope
 
