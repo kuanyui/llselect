@@ -133,7 +133,7 @@ new LLSelectSingle(
   document.getElementById('mount-ind-chevron'),
   {
     placeholder: 'chevron',
-    renderArrow: () => chevronDownSvg(),
+    renderArrowFn: () => chevronDownSvg(),
   },
 ).setItems(COUNTRIES)
 
@@ -142,7 +142,7 @@ new LLSelectSingle(
   document.getElementById('mount-ind-triangle'),
   {
     placeholder: 'triangle',
-    renderArrow: () => triangleDownSvg(),
+    renderArrowFn: () => triangleDownSvg(),
   },
 ).setItems(COUNTRIES)
 //#endregion
@@ -152,7 +152,7 @@ new LLSelectSingle(
   document.getElementById('mount-ind-mdi'),
   {
     placeholder: 'mdi icon',
-    renderArrow: () => {
+    renderArrowFn: () => {
       const i = document.createElement('i')
       i.className = 'mdi mdi-chevron-down'
       return i

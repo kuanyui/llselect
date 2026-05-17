@@ -74,3 +74,4 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Browser target: roughly the last 5 years. Do not add polyfills, vendor prefixes, or workarounds for older versions.
 - TypeScript: write explicit, precise types. Do not use `any` unless genuinely unavoidable; when you must, add a short comment explaining why.
 - Always wrap the body of `if` / `else` / `while` / `for` / `do` in `{ }`, even when the body is a single statement, and even when written on the same line. Example: `if (x) { return }` not `if (x) return`. This avoids the "next line gets accidentally added but isn't actually in the body" class of bugs.
+- For API / architecture decisions (naming conventions, module boundaries, settings vs methods, ARIA mapping, etc.) see `DESIGN.md`. CLAUDE.md is style only.

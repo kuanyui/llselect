@@ -51,7 +51,7 @@ export interface LLSelectBaseSettings<T> {
    * See {@link LLSelectArrowRenderer}. `null` (default) means the library
    * adds nothing to the arrow slot.
    */
-  renderArrow: LLSelectArrowRenderer | null
+  renderArrowFn: LLSelectArrowRenderer | null
 }
 
 /**
@@ -203,7 +203,7 @@ export abstract class LLSelectBase<T = unknown> {
       placeholder: settings?.placeholder ?? DEFAULT_PLACEHOLDER,
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
-      renderArrow: settings?.renderArrow ?? null,
+      renderArrowFn: settings?.renderArrowFn ?? null,
     }
     this.classIdMap = makeClassIdMap(this.settings.cssClassPrefix)
 
@@ -377,7 +377,7 @@ export abstract class LLSelectBase<T = unknown> {
 
   private renderTriggerArrow(): void {
     this.triggerArrowEl.replaceChildren()
-    const renderer = this.settings.renderArrow
+    const renderer = this.settings.renderArrowFn
     if (!renderer) { return }
     const el = renderer({ isOpen: this.isOpen })
     if (el) { this.triggerArrowEl.appendChild(el) }
