@@ -265,7 +265,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.popupEl.style.display = 'flex'
     this.popupEl.style.flexDirection = 'column'
     this.popupEl.hidden = false
-    this.refreshTriggerArrow()
+    this.renderTriggerArrow()
     this.renderPopupList()
     this.positioner = createPositioner(this.triggerEl, this.popupEl, {
       onHide: () => this.close(),
@@ -297,7 +297,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.focusedEl = undefined
     this.focusedIndex = -1
     this.triggerEl.removeAttribute('aria-activedescendant')
-    this.refreshTriggerArrow()
+    this.renderTriggerArrow()
     this.onClosed()
   }
 
@@ -362,7 +362,7 @@ export abstract class LLSelectBase<T = unknown> {
    */
   protected renderTrigger(): void {
     this.renderTriggerContent()
-    this.refreshTriggerArrow()
+    this.renderTriggerArrow()
   }
 
   /**
@@ -375,7 +375,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.triggerContentEl.textContent = this.settings.placeholder
   }
 
-  private refreshTriggerArrow(): void {
+  private renderTriggerArrow(): void {
     this.triggerArrowEl.replaceChildren()
     const renderer = this.settings.renderArrow
     if (!renderer) { return }

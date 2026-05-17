@@ -64,11 +64,11 @@ test('renderArrow is invoked with isOpen state on open/close', () => {
     },
   })
   sel.setItems(['a', 'b'])
-  // calls so far: [false] from constructor refreshTriggerArrow
+  // calls so far: [false] from constructor renderTriggerArrow
   sel.open()
-  // open calls refreshTriggerArrow -> renderArrow with isOpen=true
+  // open calls renderTriggerArrow -> renderArrow with isOpen=true
   sel.close()
-  // close calls refreshTriggerArrow -> renderArrow with isOpen=false
+  // close calls renderTriggerArrow -> renderArrow with isOpen=false
   assert.deepEqual(calls, [false, true, false])
 })
 
