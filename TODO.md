@@ -1,0 +1,44 @@
+# TODO / Roadmap
+
+Version-controlled source of truth for llselect's remaining work. (The Claude
+Code harness keeps its own in-session task list, but that is session-local and
+not committed - this file is the durable record.)
+
+Status: `[ ]` todo, `[x]` done, `[~]` in progress.
+
+## Phases
+
+- [x] **Phase 0** - project scaffolding (rollup, tsc, node:test + jsdom, demo)
+- [x] **Phase 1** - `LLSelectBase` skeleton (DOM + ARIA + classIdMap)
+- [x] **Phase 2** - `LLSelectSingle` + click selection + onChange
+- [x] **Phase 3** - lazy render on open/close
+- [x] **Phase 4** - positioning module (flip, scroll/resize tracking, auto-close on anchor occlusion)
+- [x] **Phase 5** - keyboard navigation (arrows / Home / End / PageUp-Dn / Enter / Esc, aria-activedescendant)
+- [x] **Phase 6** - `LLSelectMultiple` (toggle, selectAll/deselectAll/toggleAll, aria-selected, aria-multiselectable)
+- [ ] **Phase 7** - type-to-search (typing characters jumps focus to matching item)
+- [ ] **Phase 8** - `filterFn` + filter box (searchbox inside popup, above popup-list)
+- [ ] **Phase 9** - optgroup support (`role="group"` + `role="presentation"` label, keyboard skips labels)
+
+## API design decisions (open)
+
+- [ ] **`renderTriggerContentFn` settings callback** - mirror the `renderArrowFn`
+      pattern. Signature `({ chosenItem(s), items }) => HTMLElement | string | null`.
+      Lets users customise trigger display (e.g. tag chips) without subclassing.
+      Single default = chosen item label / placeholder; multi default = count summary.
+- [ ] **`onChange` diff context** - decide whether to pass `previousChosenItem(s)`
+      alongside current, so users can compute added/removed without tracking.
+
+## Done decisions (for reference)
+
+- [x] Data API named `items` / `setItems` (not `options`) - break from native
+      `<select>` string-only semantics.
+- [x] Selection named `chosenItem` (single) / `chosenItems` (multi), not `value`.
+- [x] Element family: `trigger*` / `popup*`; `popupListEl` is the `role="listbox"`.
+- [x] Function-setting naming: `on*` for events, `*Fn` for other callbacks (see DESIGN.md).
+- [x] CSS themes shipped opt-in: vanilla, tailwind, bootstrap-3/4/5.
+- [x] `rerender()` for external mutation refresh.
+
+## Notes
+
+- Architecture / naming rationale: see `DESIGN.md`.
+- Code style rules: see `CLAUDE.md`.
