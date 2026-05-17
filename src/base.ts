@@ -406,7 +406,13 @@ export abstract class LLSelectBase<T = unknown> {
     el.className = this.classIdMap.itemClass
     el.setAttribute('role', 'option')
     el.textContent = this.templateItem(item)
-    el.addEventListener('click', () => this.onItemClick(item))
+    el.addEventListener('click', () => {
+      // Move focus to the clicked item before activating it. Without this,
+      // multi mode (which keeps the popup open) leaves the previous keyboard-
+      // focused item highlighted while a different item was just clicked.
+      this.setFocusedIndex(index)
+      this.onItemClick(item)
+    })
     return el
   }
 
