@@ -11,6 +11,7 @@ export function setupDom(html = '<!doctype html><html><body></body></html>'): JS
     Event: dom.window.Event,
     KeyboardEvent: dom.window.KeyboardEvent,
     MouseEvent: dom.window.MouseEvent,
+    FocusEvent: dom.window.FocusEvent,
   })
   return dom
 }

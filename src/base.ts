@@ -189,6 +189,7 @@ export abstract class LLSelectBase<T = unknown> {
   private itemEls: HTMLElement[] = []
   private focusedEl: HTMLElement | undefined
   private outsideHandler: ((ev: Event) => void) | undefined
+  private focusOutHandler: ((ev: FocusEvent) => void) | undefined
 
   /**
    * @param targetEl - mount element. Becomes `rootEl`; its existing children
@@ -272,6 +273,7 @@ export abstract class LLSelectBase<T = unknown> {
       onHide: () => this.close(),
     })
     this.attachOutsideClick()
+    this.attachFocusOut()
     this.focusInitial()
     this.onOpened()
     restoreWindowScroll()
@@ -290,6 +292,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.positioner?.detach()
     this.positioner = undefined
     this.detachOutsideClick()
+    this.detachFocusOut()
     this.popupListEl.replaceChildren()
     this.popupEl.hidden = true
     // Clear inline display so the `[hidden]` UA rule can hide the popup.
@@ -576,6 +579,29 @@ export abstract class LLSelectBase<T = unknown> {
       document.removeEventListener('click', this.outsideHandler, true)
     }
     this.outsideHandler = undefined
+  }
+
+  /**
+   * Close the popup when keyboard focus leaves the widget entirely (e.g. Tab
+   * away). `focusout` bubbles, so listening on `rootEl` catches focus leaving
+   * any descendant; `relatedTarget` is the element gaining focus (or `null`).
+   * The check is written against `rootEl.contains` rather than "the trigger
+   * lost focus" so a future in-popup control - search input, checkbox - keeps
+   * the popup open while it holds focus.
+   */
+  private attachFocusOut(): void {
+    this.focusOutHandler = (ev: FocusEvent): void => {
+      const next = ev.relatedTarget
+      if (next instanceof Node && this.rootEl.contains(next)) { return }
+      this.close()
+    }
+    this.rootEl.addEventListener('focusout', this.focusOutHandler)
+  }
+
+  private detachFocusOut(): void {
+    if (!this.focusOutHandler) { return }
+    this.rootEl.removeEventListener('focusout', this.focusOutHandler)
+    this.focusOutHandler = undefined
   }
 
   private handleKeydown(ev: KeyboardEvent): void {
