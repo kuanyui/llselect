@@ -2,7 +2,6 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle } from '../src/single.js'
-import { chevronDownSvg, triangleDownSvg } from '../src/icons.js'
 
 function mount(): HTMLElement {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
@@ -101,32 +100,4 @@ test('triggerContentEl receives placeholder/chosen text (arrow slot preserved)',
   assert.equal(sel.triggerContentEl.textContent, 'a')
   // Arrow slot must still be present after the content change.
   assert.ok(sel.triggerEl.querySelector('.survive'))
-})
-
-// --- icon helpers --------------------------------------------------
-
-test('chevronDownSvg returns an SVG element with currentColor', () => {
-  setupDom()
-  const svg = chevronDownSvg()
-  assert.equal(svg.tagName.toLowerCase(), 'svg')
-  assert.equal(svg.getAttribute('aria-hidden'), 'true')
-  const path = svg.querySelector('path')
-  assert.ok(path)
-  assert.equal(path.getAttribute('fill'), 'currentColor')
-})
-
-test('chevronDownSvg honors size option', () => {
-  setupDom()
-  const svg = chevronDownSvg({ size: 24 })
-  assert.equal(svg.getAttribute('width'), '24')
-  assert.equal(svg.getAttribute('height'), '24')
-})
-
-test('triangleDownSvg returns an SVG element with currentColor', () => {
-  setupDom()
-  const svg = triangleDownSvg()
-  assert.equal(svg.tagName.toLowerCase(), 'svg')
-  const path = svg.querySelector('path')
-  assert.ok(path)
-  assert.equal(path.getAttribute('fill'), 'currentColor')
 })

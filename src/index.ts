@@ -19,7 +19,16 @@ export type {
   LLSelectMultipleSettingsInput,
 } from './multiple.js'
 
-export { chevronDownSvg, triangleDownSvg } from './icons.js'
-export type { IconOptions } from './icons.js'
+export {
+  chevronDownSvg,
+  triangleDownSvg,
+  checkSvg,
+  checkboxSvg,
+} from './icons.js'
+export type {
+  IconOptions,
+  CheckboxState,
+  CheckboxIconOptions,
+} from './icons.js'
 
 export const LLSELECT_VERSION = '0.1.0'

@@ -1,4 +1,4 @@
-import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, chevronDownSvg, triangleDownSvg } from '../dist/index.mjs'
+import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, chevronDownSvg, triangleDownSvg, checkboxSvg } from '../dist/index.mjs'
 import { COUNTRIES, USERS, STRESS_ITEMS, HUGE_ITEMS } from './data.js'
 
 console.log('llselect v' + LLSELECT_VERSION)
@@ -181,6 +181,28 @@ const selMulti = new LLSelectMultiple(
   }
 )
 selMulti.setItems(COUNTRIES)
+//#endregion
+
+//#region 5.4
+const outMultiCheckbox = document.getElementById('out-multi-checkbox')
+class CheckboxMultiSelect extends LLSelectMultiple {
+  createItemEl(item, index) {
+    const el = super.createItemEl(item, index)  // sets text + role + aria-selected
+    const box = checkboxSvg({ state: this.isChosen(item) ? 'checked' : 'unchecked' })
+    el.prepend(box)
+    return el
+  }
+}
+const selMultiCheckbox = new CheckboxMultiSelect(
+  document.getElementById('mount-multi-checkbox'),
+  {
+    placeholder: 'Pick countries (checkboxes)',
+    onChange: (chosen) => {
+      outMultiCheckbox.textContent = 'chosen: ' + JSON.stringify(chosen)
+    },
+  }
+)
+selMultiCheckbox.setItems(COUNTRIES)
 //#endregion
 
 //#region 5.3

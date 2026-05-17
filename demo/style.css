@@ -230,6 +230,13 @@ pre[data-demo] code {
   z-index: 2000;
 }
 
+/* 5.4 checkbox items - align the prepended checkboxSvg with the label. */
+#mount-multi-checkbox .llselect-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 /* 4.4 CSS-only arrow demo - this section deliberately bypasses the theme's
    arrow slot and draws an arrow with a CSS triangle on a pseudo-element. */
 #mount-ind-css .llselect-trigger::after {

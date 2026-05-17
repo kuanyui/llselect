@@ -222,6 +222,22 @@
     </article>
 
     <article>
+      <h3>5.4 Checkbox items (built-in checkboxSvg)</h3>
+      <p class="hint">
+        Subclass <code>createItemEl</code> to prepend <code>checkboxSvg()</code>
+        reflecting <code>isChosen</code>. No mdi / FontAwesome needed. The
+        single-item rerender keeps each toggle's checkbox in sync.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-multi-checkbox"></div>
+          <div class="out" id="out-multi-checkbox">chosen: []</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="5.4"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
       <h3>5.3 Perf: 10,000 items</h3>
       <p class="hint">
         Toggling one checkbox re-renders only that single item element (O(1)
