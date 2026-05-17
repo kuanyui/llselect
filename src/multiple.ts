@@ -61,7 +61,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
    */
   public setChosen(chosen: T[]): void {
     const next = chosen.slice()
-    if (this.arraysEqual(next, this.chosen)) return
+    if (this.arraysEqual(next, this.chosen)) { return }
     this.chosen = next
     this.reflectChosen()
     this.fireChange()
@@ -89,7 +89,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
 
   /** Select every current item. No-op if already all selected. */
   public selectAll(): void {
-    if (this.chosen.length === this.items.length && this.items.length > 0) return
+    if (this.chosen.length === this.items.length && this.items.length > 0) { return }
     this.chosen = this.items.slice()
     this.reflectChosen()
     this.fireChange()
@@ -97,7 +97,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
 
   /** Clear the chosen set. No-op if already empty. */
   public deselectAll(): void {
-    if (this.chosen.length === 0) return
+    if (this.chosen.length === 0) { return }
     this.chosen = []
     this.reflectChosen()
     this.fireChange()
@@ -149,7 +149,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
     const filtered = this.chosen.filter(c =>
       this.items.some(item => this.settings.compareFn(item, c))
     )
-    if (filtered.length === this.chosen.length) return
+    if (filtered.length === this.chosen.length) { return }
     this.chosen = filtered
     this.renderTrigger()
     this.fireChange()
@@ -157,7 +157,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
 
   /** On open, focus the first chosen item if any, otherwise the first item. */
   protected override focusInitial(): void {
-    if (this.items.length === 0) return
+    if (this.items.length === 0) { return }
     const first = this.chosen[0]
     if (first !== undefined) {
       const idx = this.items.findIndex(i => this.settings.compareFn(i, first))
@@ -172,14 +172,14 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
   /** Re-render trigger + popup list (the latter only if open). */
   private reflectChosen(): void {
     this.renderTrigger()
-    if (this.isOpen) this.renderPopupList()
+    if (this.isOpen) { this.renderPopupList() }
   }
 
   private arraysEqual(a: readonly T[], b: readonly T[]): boolean {
-    if (a.length !== b.length) return false
+    if (a.length !== b.length) { return false }
     const eq = this.settings.compareFn
     for (let i = 0; i < a.length; i++) {
-      if (!eq(a[i]!, b[i]!)) return false
+      if (!eq(a[i]!, b[i]!)) { return false }
     }
     return true
   }

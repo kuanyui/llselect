@@ -44,15 +44,15 @@ export function getActionFromKey(ev: KeyboardEvent, isOpen: boolean): LLSelectAc
     return undefined
   }
 
-  if (key === 'Escape') return LLSelectAction.Close
-  if (key === 'ArrowUp' && altKey) return LLSelectAction.Close
-  if (key === 'Enter' || key === ' ') return LLSelectAction.Select
-  if (key === 'ArrowDown') return LLSelectAction.Next
-  if (key === 'ArrowUp') return LLSelectAction.Previous
-  if (key === 'Home') return LLSelectAction.GotoFirst
-  if (key === 'End') return LLSelectAction.GotoLast
-  if (key === 'PageDown') return LLSelectAction.PageDown
-  if (key === 'PageUp') return LLSelectAction.PageUp
+  if (key === 'Escape') { return LLSelectAction.Close }
+  if (key === 'ArrowUp' && altKey) { return LLSelectAction.Close }
+  if (key === 'Enter' || key === ' ') { return LLSelectAction.Select }
+  if (key === 'ArrowDown') { return LLSelectAction.Next }
+  if (key === 'ArrowUp') { return LLSelectAction.Previous }
+  if (key === 'Home') { return LLSelectAction.GotoFirst }
+  if (key === 'End') { return LLSelectAction.GotoLast }
+  if (key === 'PageDown') { return LLSelectAction.PageDown }
+  if (key === 'PageUp') { return LLSelectAction.PageUp }
   return undefined
 }
 
@@ -70,7 +70,7 @@ export function getUpdatedIndex(
   maxIndex: number,
   action: LLSelectAction,
 ): number {
-  if (maxIndex < 0) return -1
+  if (maxIndex < 0) { return -1 }
   switch (action) {
     case LLSelectAction.GotoFirst: return 0
     case LLSelectAction.GotoLast: return maxIndex

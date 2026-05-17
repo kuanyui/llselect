@@ -57,7 +57,7 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
    * not include the chosen value it will be dropped automatically.
    */
   public setChosen(item: T | undefined): void {
-    if (this.areEqual(item, this.chosen)) return
+    if (this.areEqual(item, this.chosen)) { return }
     this.chosen = item
     this.renderTrigger()
     this.fireChange()
@@ -78,7 +78,7 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
 
   /** On open, highlight the currently chosen item (if any), else the first. */
   protected override focusInitial(): void {
-    if (this.items.length === 0) return
+    if (this.items.length === 0) { return }
     const c = this.chosen
     if (c !== undefined) {
       const idx = this.items.findIndex(o => this.settings.compareFn(o, c))
@@ -93,7 +93,7 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
   /** Drop the chosen value if `setItems` removed it from the list. */
   protected override afterItemsChange(): void {
     const current = this.chosen
-    if (current === undefined) return
+    if (current === undefined) { return }
     const stillPresent = this.items.some(o => this.settings.compareFn(o, current))
     if (!stillPresent) {
       this.chosen = undefined
@@ -103,8 +103,8 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
   }
 
   private areEqual(a: T | undefined, b: T | undefined): boolean {
-    if (a === undefined && b === undefined) return true
-    if (a === undefined || b === undefined) return false
+    if (a === undefined && b === undefined) { return true }
+    if (a === undefined || b === undefined) { return false }
     return this.settings.compareFn(a, b)
   }
 

@@ -54,9 +54,13 @@ export function computePosition(input: PositionInput): PositionResult {
   const fitsAbove = floatingHeight <= spaceAbove
 
   let placement: Placement
-  if (fitsBelow) placement = 'below'
-  else if (fitsAbove) placement = 'above'
-  else placement = spaceAbove > spaceBelow ? 'above' : 'below'
+  if (fitsBelow) {
+    placement = 'below'
+  } else if (fitsAbove) {
+    placement = 'above'
+  } else {
+    placement = spaceAbove > spaceBelow ? 'above' : 'below'
+  }
 
   let top: number
   let maxHeight: number
@@ -147,7 +151,7 @@ export function createPositioner(
   let attached = true
 
   function reposition(): void {
-    if (!attached) return
+    if (!attached) { return }
     const rect = anchor.getBoundingClientRect()
     // Strict comparisons so an unsized anchor at (0,0,0,0) - common in jsdom
     // or before layout - is treated as "in viewport, no rect yet" rather than

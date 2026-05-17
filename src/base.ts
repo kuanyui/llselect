@@ -254,7 +254,7 @@ export abstract class LLSelectBase<T = unknown> {
    * No-op if already open.
    */
   public open(): void {
-    if (this.isOpen) return
+    if (this.isOpen) { return }
     this.isOpen = true
     this.triggerEl.setAttribute('aria-expanded', 'true')
     this.triggerEl.setAttribute('data-state', 'open')
@@ -280,7 +280,7 @@ export abstract class LLSelectBase<T = unknown> {
    * the item DOM, and resets focused-item state. No-op if already closed.
    */
   public close(): void {
-    if (!this.isOpen) return
+    if (!this.isOpen) { return }
     this.isOpen = false
     this.triggerEl.setAttribute('aria-expanded', 'false')
     this.triggerEl.setAttribute('data-state', 'closed')
@@ -303,8 +303,11 @@ export abstract class LLSelectBase<T = unknown> {
 
   /** Open if closed, close if open. */
   public toggle(): void {
-    if (this.isOpen) this.close()
-    else this.open()
+    if (this.isOpen) {
+      this.close()
+    } else {
+      this.open()
+    }
   }
 
   /**
@@ -324,7 +327,7 @@ export abstract class LLSelectBase<T = unknown> {
    */
   public setItems(items: T[]): void {
     this.items = items.slice()
-    if (this.isOpen) this.renderPopupList()
+    if (this.isOpen) { this.renderPopupList() }
     this.afterItemsChange()
   }
 
@@ -363,9 +366,9 @@ export abstract class LLSelectBase<T = unknown> {
   private refreshTriggerArrow(): void {
     this.triggerArrowEl.replaceChildren()
     const renderer = this.settings.renderArrow
-    if (!renderer) return
+    if (!renderer) { return }
     const el = renderer({ isOpen: this.isOpen })
-    if (el) this.triggerArrowEl.appendChild(el)
+    if (el) { this.triggerArrowEl.appendChild(el) }
   }
 
   /**
@@ -439,7 +442,7 @@ export abstract class LLSelectBase<T = unknown> {
    * currently chosen item, last-used item, etc.
    */
   protected focusInitial(): void {
-    if (this.items.length === 0) return
+    if (this.items.length === 0) { return }
     this.setFocusedIndex(0)
   }
 
@@ -452,7 +455,7 @@ export abstract class LLSelectBase<T = unknown> {
   protected setFocusedIndex(index: number): void {
     const max = this.items.length - 1
     const clamped = Math.max(-1, Math.min(max, index))
-    if (clamped === this.focusedIndex) return
+    if (clamped === this.focusedIndex) { return }
     this.focusedIndex = clamped
     this.applyFocus()
   }
@@ -502,7 +505,7 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   private detachOutsideClick(): void {
-    if (!this.outsideHandler) return
+    if (!this.outsideHandler) { return }
     if (this.settings.outsideClickBehavior === 'pass-through') {
       document.removeEventListener('mousedown', this.outsideHandler)
     } else {
@@ -513,7 +516,7 @@ export abstract class LLSelectBase<T = unknown> {
 
   private handleKeydown(ev: KeyboardEvent): void {
     const action = getActionFromKey(ev, this.isOpen)
-    if (action === undefined) return
+    if (action === undefined) { return }
     ev.preventDefault()
 
     switch (action) {
@@ -534,7 +537,7 @@ export abstract class LLSelectBase<T = unknown> {
       case LLSelectAction.GotoLast:
       case LLSelectAction.PageDown:
       case LLSelectAction.PageUp: {
-        if (this.items.length === 0) return
+        if (this.items.length === 0) { return }
         const next = getUpdatedIndex(this.focusedIndex, this.items.length - 1, action)
         this.setFocusedIndex(next)
         return
