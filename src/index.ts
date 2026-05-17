@@ -13,6 +13,12 @@ export type {
   LLSelectSingleSettingsInput,
 } from './single.js'
 
+export { LLSelectMultiple } from './multiple.js'
+export type {
+  LLSelectMultipleSettings,
+  LLSelectMultipleSettingsInput,
+} from './multiple.js'
+
 export { chevronDownSvg, triangleDownSvg } from './icons.js'
 export type { IconOptions } from './icons.js'
 

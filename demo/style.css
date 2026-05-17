@@ -48,6 +48,36 @@ article { margin: 1.5rem 0 2rem 1rem; }
 
 .demo-pane { min-width: 0; }
 
+.code-toggle { min-width: 0; }
+
+.code-toggle > summary {
+  cursor: pointer;
+  user-select: none;
+  display: block;
+  width: fit-content;
+  margin-left: auto;             /* push right without affecting siblings */
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #888;
+  border-radius: 4px;
+  background: #fafafa;
+  color: #444;
+  font-size: 0.9rem;
+  font-family: ui-monospace, monospace;
+  list-style: none;
+}
+
+.code-toggle > summary::-webkit-details-marker { display: none; }
+.code-toggle > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  transition: transform 0.15s;
+}
+.code-toggle[open] > summary::before { transform: rotate(90deg); }
+
+.code-toggle[open] > summary {
+  margin-bottom: 0.4rem;
+}
+
 pre[data-demo] {
   margin: 0;
   background: #282c34;

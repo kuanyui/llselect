@@ -98,3 +98,12 @@
   background-color: #2e6da4;
   color: #fff;
 }
+
+.llselect-item[aria-selected='true'] {
+  font-weight: 600;
+  color: #337ab7;
+}
+
+.llselect-item-focused[aria-selected='true'] {
+  color: #fff;
+}

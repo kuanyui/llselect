@@ -84,3 +84,8 @@
 .llselect-item-focused {
   background: #cce4ff;
 }
+
+.llselect-item[aria-selected='true'] {
+  font-weight: 600;
+  color: #1c4d8f;
+}

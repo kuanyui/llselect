@@ -103,3 +103,8 @@
 .llselect-item-focused:hover {
   background-color: color-mix(in srgb, var(--bs-primary, #0d6efd) 18%, transparent);
 }
+
+.llselect-item[aria-selected='true'] {
+  font-weight: 600;
+  color: var(--bs-primary, #0d6efd);
+}

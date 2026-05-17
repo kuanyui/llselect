@@ -107,3 +107,8 @@
   background-color: var(--color-blue-100, #dbeafe);
   color: var(--color-blue-700, #1d4ed8);
 }
+
+.llselect-item[aria-selected='true'] {
+  font-weight: 600;
+  color: var(--color-blue-600, #2563eb);
+}

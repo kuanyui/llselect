@@ -1,4 +1,4 @@
-import { LLSelectSingle, LLSELECT_VERSION, chevronDownSvg, triangleDownSvg } from '../dist/index.mjs'
+import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, chevronDownSvg, triangleDownSvg } from '../dist/index.mjs'
 import { COUNTRIES, USERS, STRESS_ITEMS } from './data.js'
 
 console.log('llselect v' + LLSELECT_VERSION)
@@ -169,7 +169,41 @@ new LLSelectSingle(
 ).setItems(COUNTRIES)
 //#endregion
 
-//#region 5
+//#region 5.1
+const outMulti = document.getElementById('out-multi')
+const selMulti = new LLSelectMultiple(
+  document.getElementById('mount-multi'),
+  {
+    placeholder: 'Pick countries',
+    onChange: (chosen) => {
+      outMulti.textContent = 'chosen: ' + JSON.stringify(chosen)
+    },
+  }
+)
+selMulti.setItems(COUNTRIES)
+//#endregion
+
+//#region 5.2
+const outMultiAll = document.getElementById('out-multi-all')
+const selMultiAll = new LLSelectMultiple(
+  document.getElementById('mount-multi-all'),
+  {
+    placeholder: 'Pick countries (with bulk actions)',
+    onChange: (chosen) => {
+      outMultiAll.textContent = 'chosen: ' + chosen.length + ' items'
+    },
+  }
+)
+selMultiAll.setItems(COUNTRIES)
+document.getElementById('btn-select-all')
+  .addEventListener('click', () => selMultiAll.selectAll())
+document.getElementById('btn-deselect-all')
+  .addEventListener('click', () => selMultiAll.deselectAll())
+document.getElementById('btn-toggle-all')
+  .addEventListener('click', () => selMultiAll.toggleAll())
+//#endregion
+
+//#region 6
 const outBottom = document.getElementById('out-bottom')
 const selBottom = new LLSelectSingle(
   document.getElementById('mount-bottom'),
