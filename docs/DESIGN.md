@@ -123,3 +123,28 @@ fills it". This keeps API surface tight and avoids feature creep.
   `users[0].name = 'X'`) is **not** auto-detected. Call `rerender()` to
   reflect the change in the DOM. `rerender` is a pure visual refresh: it
   does not fire `onChange` and does not run `afterItemsChange`.
+
+## Search box (Phase 8) architecture
+
+Locked decisions for the searchable variant. Keyboard / focus / ARIA contract
+is in `A11Y.md`.
+
+- **`<input>` is always built** into `popupEl` above `popupListEl`, even when
+  `searchable: false`. The non-searchable case carries the `hidden` attribute
+  (not `disabled`, not `readonly`). Cost: one unused element when not needed.
+  Benefit: future runtime toggle (select2-style `minimumResultsForSearch`,
+  setItems crossing a threshold, ...) is a CSS flip rather than a DOM rebuild.
+- **Focus host branches by current searchable state**, not by DOM existence:
+  - `searchable: true`: trigger becomes `role="button"`
+    (`aria-haspopup="listbox"`), focus moves to the input on open,
+    `aria-activedescendant` lives on the input.
+  - `searchable: false`: trigger stays `role="combobox"`, focus stays on the
+    trigger, `aria-activedescendant` lives on the trigger. Identical to the
+    pre-Phase-8 behaviour - non-search selects regress nowhere.
+- **No subclass split.** Search is a capability setting on the existing
+  `LLSelectSingle` / `LLSelectMultiple`. Subclassing per feature would
+  multiply combinatorially (search x optgroup x ...); a setting composes.
+- **Settings:** `searchable: boolean` (default `false`);
+  `filterFn: (item, query) => boolean | null` (default `null` =
+  case-insensitive substring on `templateItem`). IME-aware filtering
+  (composition-guarded) is part of the contract; see `A11Y.md`.

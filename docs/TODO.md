@@ -15,8 +15,11 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
 - [x] **Phase 4** - positioning module (flip, scroll/resize tracking, auto-close on anchor occlusion)
 - [x] **Phase 5** - keyboard navigation (arrows / Home / End / PageUp-Dn / Enter / Esc, aria-activedescendant)
 - [x] **Phase 6** - `LLSelectMultiple` (toggle, selectAll/deselectAll/toggleAll, aria-selected, aria-multiselectable)
-- [ ] **Phase 7** - type-to-search (first-character typeahead on the input, works even when `readonly`)
-- [ ] **Phase 8** - `filterFn` + search input (combobox host moves to the input, trigger becomes a `button`; see `A11Y.md`)
+- Phase 7 (native-style typeahead): **DROPPED**. Superseded by the search box.
+  Prefix typeahead maps keys to characters, so it is useless for CJK / IME
+  input; the search box (with IME-aware filtering) is the single "type to find"
+  mechanism.
+- [ ] **Phase 8** - `filterFn` + search input (combobox host moves to the input, trigger becomes a `button`; see `A11Y.md`). The only type-to-find path.
 - [ ] **Phase 9** - optgroup support (`role="group"` + `role="presentation"` label, keyboard skips labels)
 
 A11Y model (decided, see `A11Y.md`): APG "combobox with list autocomplete" -
