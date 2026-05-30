@@ -48,7 +48,7 @@
 
     <article>
       <h3>1.2 Objects (custom template + compareFn)</h3>
-      <p class="hint">Generic T = User object. <code>itemToString</code> overridden to render id + name + role.</p>
+      <p class="hint">Generic T = User object. <code>itemToStringFn</code> setting maps it to its display string (no subclass).</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-users"></div>
@@ -341,8 +341,8 @@
     <article>
       <h3>7.1 Single + searchable (default filter)</h3>
       <p class="hint">
-        Default <code>filterFn</code> is case-insensitive substring on
-        <code>itemToString(item)</code>.
+        Default <code>filterFn</code> is case-insensitive substring on the
+        item's <code>itemToStringFn</code> string.
       </p>
       <div class="demo-split">
         <div class="demo-pane">

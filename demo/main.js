@@ -46,14 +46,13 @@ selCountries.setItems(COUNTRIES)
 
 //#region 1.2
 const outUsers = document.getElementById('out-users')
-class UserSelect extends LLSelectSingle {
-  itemToString(user) { return `#${user.id} ${user.name} (${user.role})` }
-}
-const selUsers = new UserSelect(
+// No subclass: itemToStringFn maps the User object to its display string.
+const selUsers = new LLSelectSingle(
   document.getElementById('mount-users'),
   {
     placeholder: 'Pick a user',
     compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: (user) => `#${user.id} ${user.name} (${user.role})`,
     onChange: (v) => { outUsers.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
@@ -303,15 +302,13 @@ selSearchMulti.setItems(COUNTRIES)
 
 //#region 7.3
 const outSearchUsers = document.getElementById('out-search-users')
-class UserSearchSelect extends LLSelectSingle {
-  itemToString(u) { return `#${u.id} ${u.name} (${u.role})` }
-}
-const selSearchUsers = new UserSearchSelect(
+const selSearchUsers = new LLSelectSingle(
   document.getElementById('mount-search-users'),
   {
     placeholder: 'Search users by name OR role',
     searchable: true,
     compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: (u) => `#${u.id} ${u.name} (${u.role})`,
     // Default matches the visible label only. This custom fn lets the user
     // type a role ("admin") and find users by role, not just by name.
     filterFn: (u, q) => {
@@ -379,12 +376,11 @@ const PRODUCTS = [
   { name: 'Mocha', stock: 5 },
 ]
 const outDisItems = document.getElementById('out-disabled-items')
+// Text via itemToStringFn (no subclass). The createItemEl subclass is the
+// "escape hatch" - full element control - just to attach a why-disabled title.
 class ProductSelect extends LLSelectSingle {
-  itemToString(p) { return p.stock > 0 ? `${p.name} (${p.stock} left)` : `${p.name} - sold out` }
   createItemEl(p, i) {
     const el = super.createItemEl(p, i)
-    // The library leaves disabled items hoverable; the consumer attaches the
-    // tooltip (here a native title - or Tippy/Floating UI/etc).
     if (this.isItemDisabled(p)) { el.setAttribute('title', `${p.name} is out of stock`) }
     return el
   }
@@ -394,6 +390,7 @@ const selDisItems = new ProductSelect(
   {
     placeholder: 'Pick a drink',
     compareFn: (a, b) => a.name === b.name,
+    itemToStringFn: (p) => p.stock > 0 ? `${p.name} (${p.stock} left)` : `${p.name} - sold out`,
     itemDisabledFn: (p) => p.stock === 0,
     onChange: (v) => { outDisItems.textContent = 'chosen: ' + JSON.stringify(v) },
   }

@@ -83,24 +83,23 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
     this.fireChange()
   }
 
-  /** Renders the chosen item's label, or the placeholder when empty. */
+  /**
+   * Trigger content.
+   * - `renderTriggerContentFn` first; `null` / unset falls to the default.
+   * - Default: the chosen item's string, or the placeholder when empty.
+   */
   protected override renderTriggerContent(): void {
     const empty = this.chosenItem === undefined
+    this.triggerEl.setAttribute('data-empty', empty ? 'true' : 'false')
+    const fn = this.renderTriggerContentFn
+    const custom = fn ? fn({ chosenItem: this.chosenItem, items: this.getItems() }) : null
+    if (custom !== null) {
+      this.applyTriggerContent(custom)
+      return
+    }
     this.triggerContentEl.textContent = empty
       ? this.settings.placeholder
-      : this.effectiveItemToString(this.chosenItem!)
-    this.triggerEl.setAttribute('data-empty', empty ? 'true' : 'false')
-  }
-
-  /** Apply `renderTriggerContentFn` if it yields content; else fall back. */
-  protected override applyTriggerContentSetting(): boolean {
-    const fn = this.renderTriggerContentFn
-    if (!fn) { return false }
-    const result = fn({ chosenItem: this.chosenItem, items: this.getItems() })
-    if (result === null) { return false }
-    this.applyTriggerContent(result)
-    this.triggerEl.setAttribute('data-empty', this.chosenItem === undefined ? 'true' : 'false')
-    return true
+      : this.itemToString(this.chosenItem!)
   }
 
   /** Pick this item as the chosen item and close the popup. */

@@ -55,7 +55,9 @@ test('default filter matches against the itemToStringFn label', () => {
   assert.deepEqual(labels, ['Bob'])
 })
 
-test('itemToStringFn (setting) wins over a subclass itemToString override', () => {
+test('a subclass itemToString override replaces the setting (override wins)', () => {
+  // Extension surface: overriding the method replaces the default (which reads
+  // the setting). The library calls itemToString directly, so the override wins.
   class Derived extends LLSelectSingle<User> {
     protected override itemToString(u: User): string { return `derived-${u.id}` }
   }
@@ -65,7 +67,7 @@ test('itemToStringFn (setting) wins over a subclass itemToString override', () =
   })
   sel.setItems([{ id: 1, name: 'Ann' }])
   sel.open()
-  assert.equal(options(sel)[0]!.textContent, 'fn-1') // setting wins, not 'derived-1'
+  assert.equal(options(sel)[0]!.textContent, 'derived-1') // override wins, not 'fn-1'
 })
 
 test('without the setting, a subclass itemToString override is used (back-compat)', () => {
@@ -134,7 +136,8 @@ test('data-empty reflects selection even when renderTriggerContentFn is used', (
   assert.equal(sel.triggerEl.getAttribute('data-empty'), 'false')
 })
 
-test('renderTriggerContentFn (setting) wins over a subclass renderTriggerContent override', () => {
+test('a subclass renderTriggerContent override replaces the setting (override wins)', () => {
+  // Override replaces the default that reads renderTriggerContentFn, so it wins.
   class Derived extends LLSelectSingle<string> {
     protected override renderTriggerContent(): void {
       this.triggerContentEl.textContent = 'DERIVED'
@@ -143,5 +146,5 @@ test('renderTriggerContentFn (setting) wins over a subclass renderTriggerContent
   const sel = new Derived(mount(), { renderTriggerContentFn: () => 'FROM-FN' })
   sel.setItems(['a'])
   sel.setChosenItem('a')
-  assert.equal(sel.triggerContentEl.textContent, 'FROM-FN') // setting wins
+  assert.equal(sel.triggerContentEl.textContent, 'DERIVED') // override wins
 })

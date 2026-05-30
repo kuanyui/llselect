@@ -51,8 +51,9 @@ filter then closes; filtering is IME-aware (composition-guarded).
       before `renderTriggerContent`, so the per-instance setting wins over a
       subclass override (see DESIGN.md "Customization without subclassing").
 - [x] **`itemToStringFn` settings callback** - DONE. `(item) => string` base
-      setting; the no-subclass equivalent of overriding `itemToString`. Resolved
-      via `effectiveItemToString` (setting wins over a subclass override).
+      setting; read by the `itemToString` method's default (no subclass needed).
+      Overriding `itemToString` replaces it (override wins; settings configure,
+      overriding extends - see DESIGN.md "Customization without subclassing").
 - [ ] **`onChange` diff context** - decide whether to pass `previousChosenItem(s)`
       alongside current, so users can compute added/removed without tracking.
 

@@ -51,24 +51,24 @@ that we deliberately avoid.
 
 ### Customization without subclassing
 
-Display hooks exist as BOTH a protected method (subclass) AND a function setting
-(no subclass), so the common cases need no `extends`:
+Two layers, not two competing mechanisms:
 
-- `itemToString(item)` method  <->  `itemToStringFn(item)` setting - item label.
-- `renderTriggerContent()` method  <->  `renderTriggerContentFn(ctx)` setting -
-  trigger display (e.g. tag chips). `ctx` is variant-specific (`chosenItem` for
-  single, `chosenItems` for multi); return a string / element, or `null` to fall
-  back to the default.
+- **Settings configure; subclassing extends.** A normal user configures one
+  instance via `*Fn` settings (no `extends`). Subclassing is for *extending* the
+  library - a new select type, a framework wrapper, a core behavior change.
+- **Each customization point is a `protected` method whose default reads its
+  `*Fn` setting.** The library calls the method directly:
+  - `itemToString(item)` - default `= itemToStringFn(item) ?? String(item)`.
+  - `renderTriggerContent()` (single / multiple) - default reads
+    `renderTriggerContentFn(ctx)` first, else the variant's label / count. `ctx`
+    is variant-specific (`chosenItem` for single, `chosenItems` for multi).
+- **Override = replace.** Overriding the method replaces its default (setting
+  included); the override wins, by plain OO. There is no resolver forcing the
+  setting to win - that machinery was removed, it fought the low-level design.
+  An extender who still wants the setting reads it / calls `super`.
 
-Precedence: the **setting wins over a method override**. The library never calls
-the overridable method directly - it goes through a resolver (`effectiveItemToString`
-for labels, `applyTriggerContentSetting` for trigger content) that checks the
-setting first. So a per-instance setting beats a class default even when a
-subclass overrode the method - passing `itemToStringFn` to `new DerivedSelect()`
-is never silently ignored just because the subclass overrode `itemToString`. This
-makes the settings reliable for "use without subclassing" (and for framework
-wrappers built on a subclass). Subclassing stays the route for behavior with no
-setting equivalent (e.g. `onItemClick`).
+So: configure with settings (the common path); override `protected` methods only
+when extending. The two coexist with no precedence fight.
 
 ### Element family naming
 

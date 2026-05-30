@@ -146,6 +146,14 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
   protected override renderTriggerContent(): void {
     const n = this.chosenItems.length
     const total = this.items.length
+    this.triggerEl.setAttribute('data-empty', n === 0 ? 'true' : 'false')
+    // renderTriggerContentFn first; null / unset falls to the count summary.
+    const fn = this.renderTriggerContentFn
+    const custom = fn ? fn({ chosenItems: this.getChosenItems(), items: this.getItems() }) : null
+    if (custom !== null) {
+      this.applyTriggerContent(custom)
+      return
+    }
     if (n === 0) {
       this.triggerContentEl.textContent = this.settings.placeholder
     } else if (n === total && total > 0) {
@@ -153,18 +161,6 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
     } else {
       this.triggerContentEl.textContent = `${n} / ${total} selected`
     }
-    this.triggerEl.setAttribute('data-empty', n === 0 ? 'true' : 'false')
-  }
-
-  /** Apply `renderTriggerContentFn` if it yields content; else fall back. */
-  protected override applyTriggerContentSetting(): boolean {
-    const fn = this.renderTriggerContentFn
-    if (!fn) { return false }
-    const result = fn({ chosenItems: this.getChosenItems(), items: this.getItems() })
-    if (result === null) { return false }
-    this.applyTriggerContent(result)
-    this.triggerEl.setAttribute('data-empty', this.getChosenItems().length === 0 ? 'true' : 'false')
-    return true
   }
 
   /** Toggle on click. Multi mode keeps the popup open. */

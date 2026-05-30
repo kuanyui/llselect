@@ -94,13 +94,11 @@ export interface LLSelectBaseSettings<T> {
    */
   focusableWhenDisabled: boolean
   /**
-   * Maps an item to its display label without subclassing - the setting
-   * equivalent of overriding {@link itemToString}. `null` (default) falls back
-   * to the `itemToString` method (whose own default is `String(item)`). When
-   * set, it takes precedence over a subclass's `itemToString` override: the
-   * library resolves labels through {@link effectiveItemToString}, which checks this
-   * setting first, so a per-instance setting beats a class default. For HTML
-   * content (icons etc.) override `createItemEl` instead.
+   * Item -> display string, without subclassing.
+   * - `null` (default) = `String(item)`.
+   * - Read by the `itemToString` method's default; used for list text, the
+   *   single trigger label, and the default filter.
+   * - For HTML content (icons etc.), subclass `createItemEl`.
    */
   itemToStringFn: ((item: T) => string) | null
   /**
@@ -561,25 +559,11 @@ export abstract class LLSelectBase<T = unknown> {
    * together (constructor, post-state-change, etc.).
    */
   protected renderTrigger(): void {
-    // The per-instance renderTriggerContentFn setting (single / multiple) is
-    // checked first, so it wins over a subclass's renderTriggerContent override.
-    if (!this.applyTriggerContentSetting()) {
-      this.renderTriggerContent()
-    }
+    this.renderTriggerContent()
     this.renderTriggerArrow()
   }
 
-  /**
-   * Variant hook: if a `renderTriggerContentFn` setting produces content, apply
-   * it (and `data-empty`) and return true; else return false so the default
-   * {@link renderTriggerContent} runs. Base has no such setting; single /
-   * multiple override this.
-   */
-  protected applyTriggerContentSetting(): boolean {
-    return false
-  }
-
-  /** Write resolved trigger content (string or element) into the content slot. */
+  /** Write trigger content (string or element) into the content slot. */
   protected applyTriggerContent(content: HTMLElement | string): void {
     if (typeof content === 'string') {
       this.triggerContentEl.textContent = content
@@ -670,7 +654,7 @@ export abstract class LLSelectBase<T = unknown> {
     el.id = `${this.classIdMap.triggerId}-item${index}`
     el.className = this.classIdMap.itemClass
     el.setAttribute('role', 'option')
-    el.textContent = this.effectiveItemToString(item)
+    el.textContent = this.itemToString(item)
     // No `title` attribute by default: items wrap (themes default), so the
     // full label is already visible and a tooltip is redundant. Adding
     // `title` would also fight third-party tooltip libraries (Tippy etc.).
@@ -694,26 +678,15 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
-   * Map an item value to its display label. Default is `String(item)`,
-   * applied as `textContent` (HTML-safe). Override for custom formatting.
-   * If you need real HTML output, override {@link createItemEl} instead
-   * and treat XSS yourself.
+   * Map an item to its display string. The library calls this everywhere it
+   * needs an item's text: list rows, the single trigger label, default filter.
+   * - Default reads the `itemToStringFn` setting, else `String(item)`.
+   * - Configure via `itemToStringFn` (no subclass needed).
+   * - Override only when extending (a new select type); your override replaces
+   *   the default. For HTML content, subclass `createItemEl`.
    */
   protected itemToString(item: T): string {
-    return String(item)
-  }
-
-  /**
-   * The item's display string.
-   * - Uses the `itemToStringFn` setting if set, else the `itemToString` method.
-   * - Called internally wherever a label is needed: list items, the single
-   *   trigger, and the default filter.
-   * - Customise via `itemToStringFn`; do not override this getter.
-   */
-  protected effectiveItemToString(item: T): string {
-    return this.settings.itemToStringFn
-      ? this.settings.itemToStringFn(item)
-      : this.itemToString(item)
+    return this.settings.itemToStringFn ? this.settings.itemToStringFn(item) : String(item)
   }
 
   /** Whether `item` is disabled per `itemDisabledFn` (false when unset). */
@@ -1010,7 +983,7 @@ export abstract class LLSelectBase<T = unknown> {
   private matchesQuery(item: T, query: string): boolean {
     const fn = this.settings.filterFn
     if (fn) { return fn(item, query) }
-    return this.effectiveItemToString(item).toLowerCase().includes(query.toLowerCase())
+    return this.itemToString(item).toLowerCase().includes(query.toLowerCase())
   }
 
   /**
