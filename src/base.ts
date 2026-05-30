@@ -76,6 +76,22 @@ export interface LLSelectBaseSettings<T> {
    *   clamps when the natural width would overflow the viewport.
    */
   popupWidthPolicy: WidthPolicy
+  /**
+   * Predicate deciding whether an individual item is disabled. `null` (default)
+   * = nothing disabled. A disabled item is not selectable (click / Enter) and is
+   * skipped by keyboard nav; it keeps `role="option"` plus `aria-disabled`.
+   * Re-evaluated on every render (never cached). For a generic `T` this is the
+   * only way to mark items - the library cannot read a `disabled` field off an
+   * unknown type. See `docs/DESIGN.md`.
+   */
+  itemDisabledFn: ((item: T) => boolean) | null
+  /**
+   * When the control is disabled via `setDisabled(true)`, whether the trigger
+   * stays in the tab order (`tabindex="0"`). `false` (default) takes it out
+   * (`-1`). Set `true` so keyboard / AT users can focus the disabled control to
+   * read a "why disabled" tooltip.
+   */
+  focusableWhenDisabled: boolean
 }
 
 /**
@@ -109,6 +125,11 @@ export interface LLSelectClassIdMap {
    * Use this to style the focus highlight.
    */
   itemFocusedClass: string
+  /**
+   * Class added to a disabled item element (which also carries
+   * `aria-disabled="true"`). A stable hook for styling / tooltip targeting.
+   */
+  itemDisabledClass: string
   /**
    * Class added to `rootEl` while the popup is open. Use it as a CSS hook
    * for open-state styling (also available as `[data-state='open']` on the
@@ -148,6 +169,7 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
     popupListClass: `${prefix}-popup-list`,
     itemClass: `${prefix}-item`,
     itemFocusedClass: `${prefix}-item-focused`,
+    itemDisabledClass: `${prefix}-item-disabled`,
     openClass: `${prefix}-open`,
     triggerId: `${uniq}-trigger`,
     popupListId: `${uniq}-popup-list`,
@@ -214,6 +236,8 @@ export abstract class LLSelectBase<T = unknown> {
    * when nothing is focused (closed popup, or no items).
    */
   protected focusedIndex = -1
+  /** Control-level disabled state (whole select); toggled via `setDisabled`. */
+  private disabled = false
   private triggerArrowEl: HTMLElement
   private positioner: Positioner | undefined
   private itemEls: HTMLElement[] = []
@@ -258,6 +282,8 @@ export abstract class LLSelectBase<T = unknown> {
       searchable: settings?.searchable ?? false,
       filterFn: settings?.filterFn ?? null,
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'match-trigger',
+      itemDisabledFn: settings?.itemDisabledFn ?? null,
+      focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
     }
     this.classIdMap = makeClassIdMap(this.settings.cssClassPrefix)
 
@@ -323,7 +349,7 @@ export abstract class LLSelectBase<T = unknown> {
    * No-op if already open.
    */
   public open(): void {
-    if (this.isOpen) { return }
+    if (this.isOpen || this.disabled) { return }
     const restoreWindowScroll = this.captureWindowScroll()
     this.isOpen = true
     this.triggerEl.setAttribute('aria-expanded', 'true')
@@ -452,6 +478,39 @@ export abstract class LLSelectBase<T = unknown> {
     this.afterItemsChange()
   }
 
+  /**
+   * Enable or disable the whole control. Disabled: the trigger gets
+   * `aria-disabled` + `data-disabled` (never the native `disabled` attribute,
+   * which would suppress the hover / focus events a tooltip needs), opening is
+   * blocked, an open popup closes, and the trigger leaves the tab order unless
+   * `focusableWhenDisabled` is set. Stored as state, mirroring `setItems` /
+   * `setChosenItems` (this design keeps mutable state out of settings).
+   */
+  public setDisabled(value: boolean): void {
+    if (this.disabled === value) { return }
+    this.disabled = value
+    if (value && this.isOpen) { this.close() }
+    this.renderTriggerDisabled()
+  }
+
+  /** Whether the whole control is disabled. */
+  public isDisabled(): boolean {
+    return this.disabled
+  }
+
+  /** Reflect `this.disabled` onto the trigger's ARIA / data / tabindex. */
+  private renderTriggerDisabled(): void {
+    if (this.disabled) {
+      this.triggerEl.setAttribute('aria-disabled', 'true')
+      this.triggerEl.setAttribute('data-disabled', 'true')
+      this.triggerEl.setAttribute('tabindex', this.settings.focusableWhenDisabled ? '0' : '-1')
+    } else {
+      this.triggerEl.removeAttribute('aria-disabled')
+      this.triggerEl.setAttribute('data-disabled', 'false')
+      this.triggerEl.setAttribute('tabindex', '0')
+    }
+  }
+
   /** Called once after the popup finishes opening. Default no-op. */
   protected onOpened(): void {}
   /** Called once after the popup finishes closing. Default no-op. */
@@ -561,13 +620,21 @@ export abstract class LLSelectBase<T = unknown> {
     // full label is already visible and a tooltip is redundant. Adding
     // `title` would also fight third-party tooltip libraries (Tippy etc.).
     // Users who opt into ellipsis-on-items pick their own tooltip mechanism.
-    el.addEventListener('click', () => {
-      // Move focus to the clicked item before activating it. Without this,
-      // multi mode (which keeps the popup open) leaves the previous keyboard-
-      // focused item highlighted while a different item was just clicked.
-      this.setFocusedIndex(index)
-      this.onItemClick(item)
-    })
+    if (this.isItemDisabled(item)) {
+      // `aria-disabled` (never native `disabled`) keeps the item perceivable and
+      // hoverable for a "why disabled" tooltip. No click handler -> not
+      // selectable; keyboard nav skips it too.
+      el.setAttribute('aria-disabled', 'true')
+      el.classList.add(this.classIdMap.itemDisabledClass)
+    } else {
+      el.addEventListener('click', () => {
+        // Move focus to the clicked item before activating it. Without this,
+        // multi mode (which keeps the popup open) leaves the previous keyboard-
+        // focused item highlighted while a different item was just clicked.
+        this.setFocusedIndex(index)
+        this.onItemClick(item)
+      })
+    }
     return el
   }
 
@@ -579,6 +646,39 @@ export abstract class LLSelectBase<T = unknown> {
    */
   protected templateItem(item: T): string {
     return String(item)
+  }
+
+  /** Whether `item` is disabled per `itemDisabledFn` (false when unset). */
+  protected isItemDisabled(item: T): boolean {
+    return this.settings.itemDisabledFn ? this.settings.itemDisabledFn(item) : false
+  }
+
+  /**
+   * First enabled index scanning from `start` (inclusive) by `step` (+1 / -1).
+   * Returns -1 if no enabled item lies in that direction. Used to skip disabled
+   * items during keyboard nav and initial focus.
+   */
+  protected scanEnabledIndex(start: number, step: number, list: readonly T[]): number {
+    for (let i = start; i >= 0 && i < list.length; i += step) {
+      if (!this.isItemDisabled(list[i]!)) { return i }
+    }
+    return -1
+  }
+
+  /**
+   * Resolve a nav target index to the nearest enabled item. Arrows / Home / End
+   * stay put when no enabled item lies in the travel direction; Page falls back
+   * to the opposite direction so it lands as far as it can.
+   */
+  private nextEnabledForAction(target: number, action: LLSelectAction, list: readonly T[]): number {
+    const forward = action === LLSelectAction.Next
+      || action === LLSelectAction.GotoFirst
+      || action === LLSelectAction.PageDown
+    const primary = this.scanEnabledIndex(target, forward ? 1 : -1, list)
+    if (primary >= 0) { return primary }
+    if (action === LLSelectAction.PageDown) { return this.scanEnabledIndex(target, -1, list) }
+    if (action === LLSelectAction.PageUp) { return this.scanEnabledIndex(target, 1, list) }
+    return -1
   }
 
   /**
@@ -594,8 +694,8 @@ export abstract class LLSelectBase<T = unknown> {
    * currently chosen item, last-used item, etc.
    */
   protected focusInitial(): void {
-    if (this.visibleItems().length === 0) { return }
-    this.setFocusedIndex(0)
+    const first = this.scanEnabledIndex(0, 1, this.visibleItems())
+    if (first >= 0) { this.setFocusedIndex(first) }
   }
 
   /**
@@ -738,6 +838,7 @@ export abstract class LLSelectBase<T = unknown> {
   private handleKeydown(ev: KeyboardEvent): void {
     // Leave the keys to the IME while composing.
     if (ev.isComposing || this.composing) { return }
+    if (this.disabled) { return }
     const inText = ev.currentTarget === this.searchInputEl
     const action = getActionFromKey(ev, this.isOpen, inText)
     if (action === undefined) { return }
@@ -760,7 +861,9 @@ export abstract class LLSelectBase<T = unknown> {
       case LLSelectAction.Select: {
         const list = this.visibleItems()
         if (this.focusedIndex >= 0 && this.focusedIndex < list.length) {
-          this.onItemClick(list[this.focusedIndex]!)
+          const item = list[this.focusedIndex]!
+          // Defensive: nav never lands on a disabled item, but guard anyway.
+          if (!this.isItemDisabled(item)) { this.onItemClick(item) }
         }
         return
       }
@@ -772,8 +875,9 @@ export abstract class LLSelectBase<T = unknown> {
       case LLSelectAction.PageUp: {
         const list = this.visibleItems()
         if (list.length === 0) { return }
-        const next = getUpdatedIndex(this.focusedIndex, list.length - 1, action)
-        this.setFocusedIndex(next)
+        const target = getUpdatedIndex(this.focusedIndex, list.length - 1, action)
+        const found = this.nextEnabledForAction(target, action, list)
+        if (found >= 0) { this.setFocusedIndex(found) }
         return
       }
     }
@@ -791,6 +895,7 @@ export abstract class LLSelectBase<T = unknown> {
     el.setAttribute('aria-expanded', 'false')
     el.setAttribute('aria-haspopup', 'listbox')
     el.setAttribute('data-state', 'closed')
+    el.setAttribute('data-disabled', 'false')
     // Two child slots: content (text/tags) and arrow (optional icon).
     const content = document.createElement('span')
     content.className = this.classIdMap.triggerContentClass

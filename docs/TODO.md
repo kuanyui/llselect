@@ -20,7 +20,19 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
   input; the search box (with IME-aware filtering) is the single "type to find"
   mechanism.
 - [x] **Phase 8** - `filterFn` + search input (combobox host moves to the input, trigger becomes a `button`; see `A11Y.md`). The only type-to-find path.
-- [ ] **Phase 9** - optgroup support (`role="group"` + `role="presentation"` label, keyboard skips labels)
+- [x] **Phase 9** - `disabled` support. Control-level `setDisabled()` /
+      `isDisabled()` + `focusableWhenDisabled` (whole select: cannot open,
+      trigger out of tab order, `aria-disabled`); item-level `itemDisabledFn`
+      predicate (per-item: not selectable, skipped by keyboard nav,
+      `aria-disabled`, selection retained, bulk ops skip it). Always
+      `aria-disabled`, never native `disabled`. Contract in `DESIGN.md` /
+      `A11Y.md`; design research in `optgroup-research.md`. Group-level disabled
+      deferred to Phase 10 (layers on item-level).
+- [ ] **Phase 10** - optgroup support (`role="group"` + `role="presentation"`
+      label, keyboard skips labels). **PARKED**. A disabled group layers on the
+      Phase 9 item-level `disabled` (now done). Design research (how native /
+      select2 / choices / react-select / MUI / Downshift model it, and the
+      leading `groupLabelFn` direction) is recorded in `optgroup-research.md`.
 
 A11Y model (locked, see `A11Y.md`): two ARIA modes picked by `searchable`.
 `searchable: true` uses APG "Combobox with list autocomplete" (focus on the

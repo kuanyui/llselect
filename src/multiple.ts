@@ -90,29 +90,28 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
     this.fireChange()
   }
 
-  /** Choose every current item. No-op if already all chosen. */
+  /**
+   * Choose every enabled item. Already-chosen disabled items are preserved
+   * (they cannot be toggled through the UI, so bulk ops leave them as-is).
+   * Fires `onChange` only when the set actually changes.
+   */
   public chooseAll(): void {
-    if (this.chosenItems.length === this.items.length && this.items.length > 0) { return }
-    this.chosenItems = this.items.slice()
-    this.rerender()
-    this.fireChange()
+    this.setChosenItems(this.items.filter(it => !this.isItemDisabled(it) || this.isChosen(it)))
   }
 
-  /** Clear the chosen-items set. No-op if already empty. */
+  /**
+   * Clear enabled choices. Already-chosen disabled items are preserved (not
+   * togglable through the UI). Fires `onChange` only when the set changes.
+   */
   public unchooseAll(): void {
-    if (this.chosenItems.length === 0) { return }
-    this.chosenItems = []
-    this.rerender()
-    this.fireChange()
+    this.setChosenItems(this.chosenItems.filter(c => this.isItemDisabled(c)))
   }
 
-  /** Toggle between "all chosen" and "none chosen". */
+  /** Toggle between "all enabled chosen" and "none chosen". Ignores disabled. */
   public toggleAll(): void {
-    if (this.chosenItems.length === this.items.length && this.items.length > 0) {
-      this.unchooseAll()
-    } else {
-      this.chooseAll()
-    }
+    const enabled = this.items.filter(it => !this.isItemDisabled(it))
+    const allChosen = enabled.length > 0 && enabled.every(it => this.isChosen(it))
+    if (allChosen) { this.unchooseAll() } else { this.chooseAll() }
   }
 
   /**
@@ -159,18 +158,22 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
     this.fireChange()
   }
 
-  /** On open, focus the first chosen item if any, otherwise the first item. */
+  /**
+   * On open, focus the first chosen item (if present and enabled), otherwise
+   * the first enabled item. Indices are into `visibleItems()`.
+   */
   protected override focusInitial(): void {
-    if (this.items.length === 0) { return }
-    const first = this.chosenItems[0]
-    if (first !== undefined) {
-      const idx = this.items.findIndex(i => this.settings.compareFn(i, first))
-      if (idx >= 0) {
+    const list = this.visibleItems()
+    const firstChosen = this.chosenItems[0]
+    if (firstChosen !== undefined) {
+      const idx = list.findIndex(i => this.settings.compareFn(i, firstChosen))
+      if (idx >= 0 && !this.isItemDisabled(list[idx]!)) {
         this.setFocusedIndex(idx)
         return
       }
     }
-    this.setFocusedIndex(0)
+    const first = this.scanEnabledIndex(0, 1, list)
+    if (first >= 0) { this.setFocusedIndex(first) }
   }
 
   private arraysEqual(a: readonly T[], b: readonly T[]): boolean {

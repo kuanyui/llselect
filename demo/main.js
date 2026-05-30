@@ -370,7 +370,71 @@ document.getElementById('btn-toggle-all')
   .addEventListener('click', () => selMultiAll.toggleAll())
 //#endregion
 
-//#region 9
+//#region 9.1
+const PRODUCTS = [
+  { name: 'Espresso', stock: 8 },
+  { name: 'Cappuccino', stock: 0 },
+  { name: 'Latte', stock: 3 },
+  { name: 'Flat White', stock: 0 },
+  { name: 'Mocha', stock: 5 },
+]
+const outDisItems = document.getElementById('out-disabled-items')
+class ProductSelect extends LLSelectSingle {
+  templateItem(p) { return p.stock > 0 ? `${p.name} (${p.stock} left)` : `${p.name} - sold out` }
+  createItemEl(p, i) {
+    const el = super.createItemEl(p, i)
+    // The library leaves disabled items hoverable; the consumer attaches the
+    // tooltip (here a native title - or Tippy/Floating UI/etc).
+    if (this.isItemDisabled(p)) { el.setAttribute('title', `${p.name} is out of stock`) }
+    return el
+  }
+}
+const selDisItems = new ProductSelect(
+  document.getElementById('mount-disabled-items'),
+  {
+    placeholder: 'Pick a drink',
+    compareFn: (a, b) => a.name === b.name,
+    itemDisabledFn: (p) => p.stock === 0,
+    onChange: (v) => { outDisItems.textContent = 'chosen: ' + JSON.stringify(v) },
+  }
+)
+selDisItems.setItems(PRODUCTS)
+//#endregion
+
+//#region 9.2
+const outDisCtrl = document.getElementById('out-disabled-ctrl')
+const selDisCtrl = new LLSelectSingle(
+  document.getElementById('mount-disabled-ctrl'),
+  {
+    placeholder: 'Pick a country',
+    onChange: (v) => { outDisCtrl.textContent = 'chosen: ' + JSON.stringify(v) },
+  }
+)
+selDisCtrl.setItems(COUNTRIES)
+const btnToggleDisabled = document.getElementById('btn-toggle-disabled')
+btnToggleDisabled.addEventListener('click', () => {
+  const next = !selDisCtrl.isDisabled()
+  selDisCtrl.setDisabled(next)
+  btnToggleDisabled.textContent = next ? 'Enable' : 'Disable'
+  // Consumer-owned tooltip on the disabled trigger - native disabled can't.
+  if (next) {
+    selDisCtrl.triggerEl.setAttribute('title', 'Disabled until you finish step 1')
+  } else {
+    selDisCtrl.triggerEl.removeAttribute('title')
+  }
+})
+
+// Constructed disabled, but kept Tab-focusable so AT users can read the tooltip.
+const selDisFocusable = new LLSelectSingle(
+  document.getElementById('mount-disabled-focusable'),
+  { placeholder: 'Disabled (focusable)', focusableWhenDisabled: true }
+)
+selDisFocusable.setItems(COUNTRIES)
+selDisFocusable.setDisabled(true)
+selDisFocusable.triggerEl.setAttribute('title', 'Disabled, but Tab can still reach me')
+//#endregion
+
+//#region 10
 const outBottom = document.getElementById('out-bottom')
 const selBottom = new LLSelectSingle(
   document.getElementById('mount-bottom'),

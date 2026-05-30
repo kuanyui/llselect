@@ -77,18 +77,22 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
     this.close()
   }
 
-  /** On open, highlight the currently chosen item (if any), else the first. */
+  /**
+   * On open, highlight the chosen item (if present and enabled), else the first
+   * enabled item. Indices are into `visibleItems()` (the rendered list).
+   */
   protected override focusInitial(): void {
-    if (this.items.length === 0) { return }
+    const list = this.visibleItems()
     const c = this.chosenItem
     if (c !== undefined) {
-      const idx = this.items.findIndex(o => this.settings.compareFn(o, c))
-      if (idx >= 0) {
+      const idx = list.findIndex(o => this.settings.compareFn(o, c))
+      if (idx >= 0 && !this.isItemDisabled(list[idx]!)) {
         this.setFocusedIndex(idx)
         return
       }
     }
-    this.setFocusedIndex(0)
+    const first = this.scanEnabledIndex(0, 1, list)
+    if (first >= 0) { this.setFocusedIndex(first) }
   }
 
   /** Drop the chosen item if `setItems` removed it from the list. */

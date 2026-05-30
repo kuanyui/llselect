@@ -149,6 +149,72 @@ is in `A11Y.md`.
   case-insensitive substring on `templateItem`). IME-aware filtering
   (composition-guarded) is part of the contract; see `A11Y.md`.
 
+## Disabled (Phase 9)
+
+Two independent axes, modelled differently on purpose.
+
+- **Control-level** (the whole select): runtime *state*, set imperatively.
+  - `setDisabled(boolean)` + `isDisabled(): boolean`. Whole-control disabled is
+    universally a boolean (a `disabled` prop in React libs; a method like
+    choices.js `.disable()` / select2 in vanilla ones) - never a predicate. The
+    method form matches both those vanilla libs and llselect's own state-via-
+    method pattern. NOT a setting - disabled is mutable state like `items` /
+    `chosenItems`, and this design keeps mutable state out of settings. Default
+    enabled; to start disabled, call `setDisabled(true)` after construction.
+  - `focusableWhenDisabled: boolean` setting (default `false`) - the only knob;
+    controls whether a disabled trigger stays in the tab order.
+  - Disabled trigger: `aria-disabled="true"`, `data-disabled="true"`, `tabindex`
+    = `focusableWhenDisabled ? 0 : -1`. `open()` / `toggle()` / keyboard are
+    no-ops; an open popup is closed by `setDisabled(true)`.
+
+- **Item-level** (individual options): derived *property*, read declaratively.
+  - `itemDisabledFn: (item: T) => boolean | null` setting (default `null` =
+    nothing disabled). Matches react-select `isOptionDisabled` / MUI Autocomplete
+    `getOptionDisabled` - the flat-generic-options libraries closest to llselect.
+    A predicate is the only generic-`T` option: the data-field approach (native /
+    Ant / choices / select2 carry `disabled` ON the option) needs the option to
+    be an object with a known field, which is impossible when `T` is unknown.
+    `protected isItemDisabled(item): boolean` is the internal helper (also for
+    subclasses overriding `createItemEl`); not public. NO `setItemsDisabled`: a
+    predicate subsumes it (it can read an external set and you call `rerender()`),
+    keeps a single source of truth, avoids reconciling a disabled-set across
+    `setItems`, and is faster - item identity is `compareFn`-based, so a
+    maintained set is O(n*d) membership vs the predicate's O(1) property read.
+    Evaluated once per item per render, never cached across renders (avoids
+    react-select's stale-disabled-between-renders bug).
+  - Disabled item: `aria-disabled="true"`, `.llselect-item-disabled` class, no
+    click selection - selection is truly blocked, not merely `aria-disabled`
+    (avoids MUI's disabled-options-still-selectable bug) - and skipped by
+    keyboard nav (arrows / Home / End / Page land on the nearest enabled item; if
+    none in the travel direction, focus stays).
+
+Why the asymmetry (method for control, predicate for item): control-disabled is
+an app decision not derivable from any item, and is universally a plain boolean;
+item-disabled is typically intrinsic to the item (out-of-stock, no permission)
+and, for a generic-`T` flat-options library, can only be asked via a predicate -
+exactly what react-select and MUI Autocomplete do.
+
+Cross-cutting:
+
+- **Never the native `disabled` attribute - always `aria-disabled`.** Native
+  `disabled` suppresses pointer + focus events, which blocks the hover / focus
+  tooltip that would explain *why* a control is disabled. A custom control keeps
+  the element perceivable. The library only exposes hooks (`aria-disabled` /
+  `data-disabled` / `.llselect-item-disabled`); it never ships or wires a
+  reason / tooltip itself (that would fight tooltip libraries' own
+  `aria-describedby`).
+- **Themes** convey disabled with `cursor: not-allowed` + opacity, never
+  `pointer-events: none` (which would re-block hover tooltips).
+- **Selection retention:** an already-chosen item that becomes disabled stays
+  chosen (matches native: disabling a selected `<option>` keeps it selected).
+  `setChosenItem(s)` is unrestricted - programmatic selection ignores disabled.
+- **Bulk ops skip disabled:** `chooseAll` chooses every *enabled* item and
+  preserves any already-chosen disabled item; `unchooseAll` clears enabled
+  choices and preserves disabled-chosen; `toggleAll` compares only enabled items.
+
+Group-level disabled (a disabled optgroup disabling its items) is deferred to
+Phase 10; it layers on item-level disabled. See `optgroup-research.md`.
+
 ## Popup width policy
 
 Locked: the positioner sets `popupEl.style.width` to the trigger's measured

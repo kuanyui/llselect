@@ -128,3 +128,21 @@
   border-color: #80bdff;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
+
+/* --- disabled (Phase 9) ---------------------------------------- */
+/* aria-disabled + data-disabled, never native `disabled`. Keep pointer
+   events alive (no `pointer-events: none`) so hover/focus tooltips work. */
+
+.llselect-trigger[data-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.llselect-item-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.llselect-item-disabled:hover {
+  background: none;
+}

@@ -425,10 +425,56 @@
     </article>
   </section>
 
+  <section>
+    <h2>9. Disabled</h2>
+    <p class="hint">
+      Always <code>aria-disabled</code>, never the native <code>disabled</code>
+      attribute - so a disabled trigger / item stays hoverable and you can attach
+      a tooltip explaining <em>why</em> it is disabled. Native
+      <code>&lt;select&gt;</code> / <code>&lt;option disabled&gt;</code> make that
+      impossible because they suppress pointer events.
+    </p>
+
+    <article>
+      <h3>9.1 Item-level (<code>itemDisabledFn</code>) + hover tooltip</h3>
+      <p class="hint">
+        Out-of-stock drinks are disabled: not selectable, skipped by arrow keys,
+        but still hoverable. Hover a greyed-out item to see its "why" tooltip.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-disabled-items"></div>
+          <div class="out" id="out-disabled-items">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="9.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>9.2 Control-level (<code>setDisabled</code>) + <code>focusableWhenDisabled</code></h3>
+      <p class="hint">
+        The first control toggles with the button and leaves the tab order when
+        disabled (default). The second is constructed disabled with
+        <code>focusableWhenDisabled: true</code>, so Tab still reaches it and a
+        keyboard user can read its tooltip. Hover either disabled trigger.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-disabled-ctrl"></div>
+          <button id="btn-toggle-disabled" type="button">Disable</button>
+          <div class="out" id="out-disabled-ctrl">chosen: (none)</div>
+          <div id="mount-disabled-focusable" style="margin-top:0.7rem"></div>
+          <div class="out">^ disabled + <code>focusableWhenDisabled: true</code> (press Tab to reach it)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="9.2"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
+
   <div class="page-filler"></div>
 
   <section>
-    <h2>9. Near page bottom (flip up)</h2>
+    <h2>10. Near page bottom (flip up)</h2>
     <p class="hint">
       After the spacer above, this select sits near the viewport bottom; the
       popup should open upward (look for <code>data-placement="above"</code> on the popup).
@@ -438,7 +484,7 @@
         <div id="mount-bottom"></div>
         <div class="out" id="out-bottom">chosen: (none)</div>
       </div>
-      <details class="code-toggle"><summary>code</summary><pre data-demo="9"><code></code></pre></details>
+      <details class="code-toggle"><summary>code</summary><pre data-demo="10"><code></code></pre></details>
     </div>
   </section>
 

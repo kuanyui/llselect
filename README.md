@@ -19,6 +19,7 @@ This is not mean to provide a full-bundle select (such `select2.js`). This provi
 4. Explicit
   - Explicit better than implicit - API names are long but no surprise nor ambiguity.
   - Single-select and multiple-select are handled by separate classes to avoid ambiguous / too-complicated / over-abstraction API (e.g. use the same `T[]` to model single / multiple select).
+  - Improve some terrible UI/UX anti-pattern in legacy `<select>` (ex: replace `disabled` with `aria-disabled` to let it still able to accept mouse hover event, for example, show the reasons of disabling in hovering tooltip)
 
 ## Limitations
 - **No sanitizer is provided by default. Please use `DOMPurify` by yourself.**
