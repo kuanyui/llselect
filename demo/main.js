@@ -363,9 +363,9 @@ const selMultiAll = new LLSelectMultiple(
 )
 selMultiAll.setItems(COUNTRIES)
 document.getElementById('btn-select-all')
-  .addEventListener('click', () => selMultiAll.selectAll())
+  .addEventListener('click', () => selMultiAll.chooseAll())
 document.getElementById('btn-deselect-all')
-  .addEventListener('click', () => selMultiAll.deselectAll())
+  .addEventListener('click', () => selMultiAll.unchooseAll())
 document.getElementById('btn-toggle-all')
   .addEventListener('click', () => selMultiAll.toggleAll())
 //#endregion

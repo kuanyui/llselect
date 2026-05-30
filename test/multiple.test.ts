@@ -62,12 +62,12 @@ test('setChosenItems replaces; onChange fires only when actually different', () 
   assert.equal(fired.length, 1)
 })
 
-test('selectAll / deselectAll / toggleAll', () => {
+test('chooseAll / unchooseAll / toggleAll', () => {
   const sel = new LLSelectMultiple<string>(mount())
   sel.setItems(['a', 'b', 'c'])
-  sel.selectAll()
+  sel.chooseAll()
   assert.deepEqual([...sel.getChosenItems()], ['a', 'b', 'c'])
-  sel.deselectAll()
+  sel.unchooseAll()
   assert.deepEqual([...sel.getChosenItems()], [])
   sel.toggleAll()
   assert.deepEqual([...sel.getChosenItems()], ['a', 'b', 'c'])

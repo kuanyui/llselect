@@ -14,7 +14,7 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
 - [x] **Phase 3** - lazy render on open/close
 - [x] **Phase 4** - positioning module (flip, scroll/resize tracking, auto-close on anchor occlusion)
 - [x] **Phase 5** - keyboard navigation (arrows / Home / End / PageUp-Dn / Enter / Esc, aria-activedescendant)
-- [x] **Phase 6** - `LLSelectMultiple` (toggle, selectAll/deselectAll/toggleAll, aria-selected, aria-multiselectable)
+- [x] **Phase 6** - `LLSelectMultiple` (toggle, chooseAll/unchooseAll/toggleAll, aria-selected, aria-multiselectable)
 - Phase 7 (native-style typeahead): **DROPPED**. Superseded by the search box.
   Prefix typeahead maps keys to characters, so it is useless for CJK / IME
   input; the search box (with IME-aware filtering) is the single "type to find"

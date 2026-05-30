@@ -188,6 +188,19 @@ function measureNaturalWidth(el: HTMLElement): number {
 }
 
 /**
+ * Return the currently visible viewport size. On mobile, `window.innerHeight`
+ * reports the layout viewport (often larger than the actually-visible area
+ * when a URL bar or virtual keyboard takes part of the screen). Using
+ * `visualViewport` when present gives the real visible area, so the popup's
+ * `maxHeight` clamps to what the user can actually see.
+ */
+function getVisibleViewport(): { width: number; height: number } {
+  const vv = window.visualViewport
+  if (vv) { return { width: vv.width, height: vv.height } }
+  return { width: window.innerWidth, height: window.innerHeight }
+}
+
+/**
  * Attach a positioner that keeps `floating` placed relative to `anchor`.
  *
  * Behavior: sets `floating` to `position: fixed`, listens to window scroll
@@ -212,14 +225,15 @@ export function createPositioner(
   function reposition(): void {
     if (!attached) { return }
     const rect = anchor.getBoundingClientRect()
+    const { width: viewportWidth, height: viewportHeight } = getVisibleViewport()
     // Strict comparisons so an unsized anchor at (0,0,0,0) - common in jsdom
     // or before layout - is treated as "in viewport, no rect yet" rather than
     // "fully above/left of viewport".
     const outOfViewport =
       rect.bottom < 0 ||
-      rect.top > window.innerHeight ||
+      rect.top > viewportHeight ||
       rect.right < 0 ||
-      rect.left > window.innerWidth
+      rect.left > viewportWidth
     if ((outOfViewport || isClippedByAncestor(anchor, rect)) && options?.onHide) {
       options.onHide()
       return
@@ -236,8 +250,8 @@ export function createPositioner(
         width: rect.width,
         height: rect.height,
       },
-      viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight,
+      viewportWidth,
+      viewportHeight,
       floatingHeight: floating.offsetHeight,
       widthPolicy,
       floatingNaturalWidth,
@@ -256,6 +270,16 @@ export function createPositioner(
   // Capture phase catches scrolls inside any ancestor scrollable container.
   window.addEventListener('scroll', onScroll, { passive: true, capture: true })
   window.addEventListener('resize', onResize)
+  // Mobile: URL bar showing/hiding and virtual keyboard appearing change the
+  // visual viewport without firing window resize. Listen to visualViewport
+  // RESIZE only so we re-clamp maxHeight to the actually-visible area. We
+  // deliberately do NOT listen to `visualViewport.scroll`: that fires during
+  // pinch-pan and during the URL-bar collapse animation. The popup is
+  // `position: fixed` (layout-viewport-anchored) so the trigger and the popup
+  // pan together and no reposition is needed; listening would just cause the
+  // popup to bounce during the URL-bar animation (observed on Firefox Android).
+  const vv = window.visualViewport
+  vv?.addEventListener('resize', onResize)
 
   let ro: ResizeObserver | undefined
   if (typeof ResizeObserver !== 'undefined') {
@@ -272,6 +296,7 @@ export function createPositioner(
       attached = false
       window.removeEventListener('scroll', onScroll, true)
       window.removeEventListener('resize', onResize)
+      vv?.removeEventListener('resize', onResize)
       ro?.disconnect()
       floating.style.position = ''
       floating.style.top = ''

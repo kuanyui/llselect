@@ -90,8 +90,8 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
     this.fireChange()
   }
 
-  /** Select every current item. No-op if already all selected. */
-  public selectAll(): void {
+  /** Choose every current item. No-op if already all chosen. */
+  public chooseAll(): void {
     if (this.chosenItems.length === this.items.length && this.items.length > 0) { return }
     this.chosenItems = this.items.slice()
     this.rerender()
@@ -99,19 +99,19 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
   }
 
   /** Clear the chosen-items set. No-op if already empty. */
-  public deselectAll(): void {
+  public unchooseAll(): void {
     if (this.chosenItems.length === 0) { return }
     this.chosenItems = []
     this.rerender()
     this.fireChange()
   }
 
-  /** Toggle between "all selected" and "none selected". */
+  /** Toggle between "all chosen" and "none chosen". */
   public toggleAll(): void {
     if (this.chosenItems.length === this.items.length && this.items.length > 0) {
-      this.deselectAll()
+      this.unchooseAll()
     } else {
-      this.selectAll()
+      this.chooseAll()
     }
   }
 

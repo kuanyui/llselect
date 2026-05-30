@@ -106,7 +106,7 @@ fills it". This keeps API surface tight and avoids feature creep.
 ## Rendering model
 
 - State setters (`setItems`, `setChosenItem`, `setChosenItems`, `toggleItem`,
-  `selectAll`, ...) trigger the needed re-render automatically and fire
+  `chooseAll`, ...) trigger the needed re-render automatically and fire
   `onChange` only when the value actually changed (compared via `compareFn`).
 - **Render granularity matters at scale.** Rebuilding the whole popup list is
   O(n) DOM work; for large lists that dominates. So:

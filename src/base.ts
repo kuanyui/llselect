@@ -335,9 +335,16 @@ export abstract class LLSelectBase<T = unknown> {
       this.searchInputEl.setAttribute('aria-expanded', 'true')
       this.applyFilter()
     }
-    // Layout (flex column) is applied only while open. Setting display
-    // inline at construction would override the `[hidden]` UA rule and
-    // leak the popup before first open.
+    // `position: fixed` MUST be set before `hidden = false`. Otherwise the
+    // popup is briefly an in-flow `display: flex` block while `renderPopupList`
+    // appends its items, which inflates document height by the popup's
+    // natural height; browsers can then run scroll-anchoring / URL-bar
+    // resize before the positioner takes over and shift window scroll, even
+    // though captureWindowScroll restores it at the end.
+    // (Layout / display can only be set while open: setting them in the
+    // constructor would override the `[hidden]` UA rule and leak the popup
+    // before first open.)
+    this.popupEl.style.position = 'fixed'
     this.popupEl.style.display = 'flex'
     this.popupEl.style.flexDirection = 'column'
     this.popupEl.hidden = false
@@ -386,7 +393,11 @@ export abstract class LLSelectBase<T = unknown> {
     this.detachFocusOut()
     this.popupListEl.replaceChildren()
     this.popupEl.hidden = true
-    // Clear inline display so the `[hidden]` UA rule can hide the popup.
+    // Clear inline display + position so the `[hidden]` UA rule can hide the
+    // popup cleanly. (Position was set in open() to keep the popup out of
+    // flow before the positioner attached; positioner.detach() also clears
+    // it, but be explicit and symmetric with what open() set.)
+    this.popupEl.style.position = ''
     this.popupEl.style.display = ''
     this.popupEl.style.flexDirection = ''
     this.itemEls = []
