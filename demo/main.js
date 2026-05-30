@@ -232,19 +232,22 @@ selLongEllipsis.setChosenItem(LONG_NAMES[0])
 //#endregion
 
 //#region 6.1
-// No demo CSS, no subclass. Library does not constrain widths, so the
-// preselected long label expands the trigger to its natural width and
-// overflows the layout - that overflow IS the demonstration.
+// No demo CSS, no subclass. Library does not constrain widths, so picking
+// the long label below expands the trigger past the demo pane (and possibly
+// the page) - that overflow IS the demonstration. We deliberately do NOT
+// preselect the long entry: pre-overflowing on page load triggers a
+// first-open scroll quirk on Firefox Android (browser does odd layout
+// bookkeeping when the page has horizontal overflow from the very first
+// paint). User picks the long entry themselves; the lesson is the same.
 const outLongNoConstraint = document.getElementById('out-long-noconstraint')
 const selLongNoConstraint = new LLSelectSingle(
   document.getElementById('mount-long-noconstraint'),
   {
-    placeholder: 'Pick a country',
+    placeholder: 'Pick a country - try the long sentence',
     onChange: (v) => { outLongNoConstraint.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
 selLongNoConstraint.setItems(LONG_NAMES)
-selLongNoConstraint.setChosenItem(LONG_NAMES[0])
 //#endregion
 
 //#region 6.4

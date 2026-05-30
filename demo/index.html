@@ -256,11 +256,13 @@
     <article>
       <h3>6.1 No CSS width (baseline): trigger expands to fit, ellipsis never triggers</h3>
       <p class="hint">
-        <strong>Demo CSS:</strong> none. The chosen long label expands the
-        trigger to its natural width and overflows the demo pane (and
-        possibly the page) - this is the policy in action: the library does
-        not constrain anything. Tidy layout is the caller's CSS job; the
-        next demos add CSS to bring this under control.
+        <strong>Demo CSS:</strong> none. Pick the long sentence in the list -
+        the trigger expands to its natural width and overflows the demo pane
+        (and possibly the page). This is the policy in action: the library
+        does not constrain anything. Tidy layout is the caller's CSS job;
+        the next demos add CSS to bring this under control. (The long entry
+        is intentionally NOT preselected: pre-overflowing the page on first
+        paint triggers a Firefox Android scroll quirk.)
       </p>
       <div class="demo-split">
         <div class="demo-pane">
