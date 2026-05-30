@@ -11,13 +11,51 @@ This is not mean to provide a full-bundle select (such `select2.js`). This provi
 - Customizable HTML renderer function.
 - Search input.
 
+# Customization: settings or subclassing?
+
+Rule of thumb: **settings configure one instance; subclassing extends the library.**
+
+Quick test: "Am I making a new, named, reusable kind of select?"
+- No, I just want this one dropdown to look / behave some way -> **settings**.
+- Yes -> **subclass**.
+
+## Settings (the common path - no subclass needed)
+
+| You want to customize | Setting |
+|---|---|
+| Item display text | `itemToStringFn` |
+| Trigger content (e.g. tag chips) | `renderTriggerContentFn` |
+| Disable individual items | `itemDisabledFn` |
+| Search matching | `filterFn` |
+| Equality for object items | `compareFn` |
+| Dropdown arrow | `renderArrowFn` |
+| Events | `onChange`, `onOpen`, `onClose` |
+
+```js
+const sel = new LLSelectSingle(el, {
+  itemToStringFn: (u) => `#${u.id} ${u.name}`,
+  itemDisabledFn: (u) => !u.active,
+  onChange: (u) => console.log('chosen:', u),
+})
+```
+
+## Subclassing (extending the library)
+
+Subclass only when settings cannot express it:
+
+1. **A new select kind** - new public API / state / interaction (e.g. a TreeSelect).
+2. **A framework wrapper** - e.g. `class VueLLSelect extends LLSelectSingle` for lifecycle glue. This is the main reason llselect is "low-level".
+3. **Core behavior with no setting** - e.g. replace `onItemClick` semantics, or take full control of the item element via `createItemEl` (rich HTML, icons).
+
+How the two layers coexist: every customization point is a `protected` method whose default reads its `*Fn` setting. Overriding the method replaces that default - your override wins, plain OO, no hidden precedence. Rationale: `docs/DESIGN.md`.
+
 # Design Decisions
 ## Principles
 1. Minimal - No external JS / CSS dependency. Auditable.
 2. Performance - blazing fast.
 3. Flexible
   - Easy to integrate into existing project / library / style.
-  - Customize via (i) inheriting class, or (ii) pass ad-hoc arguments settings.
+  - Settings configure one instance; subclassing extends the library. (See "Customization" above.)
 4. Explicit
   - Explicit better than implicit - API names are long but no surprise nor ambiguity.
   - Single-select and multiple-select are handled by separate classes to avoid ambiguous / too-complicated / over-abstraction API (e.g. use the same `T[]` to model single / multiple select).

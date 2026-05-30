@@ -49,8 +49,9 @@ Never put mutable state (`items`, `chosen`, etc.) in settings as a
 "convenience". Dual write channels caused subtle bugs in select2 / choices.js
 that we deliberately avoid.
 
-### Customization without subclassing
+### Customization model: settings configure, subclassing extends
 
+User-facing guide (when to pick which, with examples): README "Customization".
 Two layers, not two competing mechanisms:
 
 - **Settings configure; subclassing extends.** A normal user configures one
