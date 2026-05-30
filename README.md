@@ -34,9 +34,16 @@ Now with Claude Code, I try to finish this with it.
 
 ## LLM Disclosures
 
-This project heavily rely on LLM agent. >= 99% main working codes are directly written by LLM.
+This project heavily relys on LLM agent. >= 99% main working codes are directly written by LLM.
 
-I review all modifications via `git diff` before `git commit` as possible as I can. I tried to provide an usable software, but **I still cannot provide any warranty.**
+### So you are just a fucking idiot vibe coder? what on Earth were you responsible for in this project, if LLM has done so much?
+1. I review all modifications via `git diff` before `git commit` as possible as I can, to avoid some obvious anti-patterns, or bad-smelling codes.
+2. I
+  - correct unreasonable APIs according to my development experiences, trying to avoid some painful APIs and anti-patterns which are common among existed select UI component libraries.
+  - do technical decisions,
+  - test on real browsers and OS (Firefox / Chromium, Linux / Android) and decide UI/UX details,
+
+I tried to provide an usable software, but **I still cannot provide any warranty.**
 
 # License
 Copyright © 2024, 2026 kuanyui (ono ono)
