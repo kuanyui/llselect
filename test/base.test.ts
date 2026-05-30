@@ -75,6 +75,16 @@ test('trigger and popup are children of rootEl in order', () => {
   assert.equal(children[1], inst.popupEl)
 })
 
+test('item elements do NOT carry a `title` attribute by default (avoids fighting third-party tooltip libs)', () => {
+  const inst = new TestSelect<string>(mount())
+  inst.setItems(['short', 'a very long label that may get truncated in narrow popups'])
+  inst.open()
+  const items = inst.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')
+  assert.equal(items.length, 2)
+  assert.equal(items[0]!.hasAttribute('title'), false)
+  assert.equal(items[1]!.hasAttribute('title'), false)
+})
+
 test('IDs are unique across multiple instances', () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
   const a = document.getElementById('a')

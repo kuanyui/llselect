@@ -533,6 +533,10 @@ export abstract class LLSelectBase<T = unknown> {
     el.className = this.classIdMap.itemClass
     el.setAttribute('role', 'option')
     el.textContent = this.templateItem(item)
+    // No `title` attribute by default: items wrap (themes default), so the
+    // full label is already visible and a tooltip is redundant. Adding
+    // `title` would also fight third-party tooltip libraries (Tippy etc.).
+    // Users who opt into ellipsis-on-items pick their own tooltip mechanism.
     el.addEventListener('click', () => {
       // Move focus to the clicked item before activating it. Without this,
       // multi mode (which keeps the popup open) leaves the previous keyboard-

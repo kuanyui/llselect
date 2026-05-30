@@ -237,6 +237,22 @@ pre[data-demo] code {
   gap: 0.4rem;
 }
 
+/* 6.1 + 6.2 long-items demos: constrain the trigger width so the chosen text
+   actually overflows (otherwise `inline-block` on `.llselect-root` would grow
+   to fit content and ellipsis would never trigger). */
+#mount-long-wrap,
+#mount-long-ellipsis {
+  max-width: 18rem;
+}
+
+/* 6.2 ellipsis opt-in for long items - scoped to this mount only so other
+   demos keep the default wrap behavior. The library never applies this. */
+#mount-long-ellipsis .llselect-item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* 4.4 CSS-only arrow demo - this section deliberately bypasses the theme's
    arrow slot and draws an arrow with a CSS triangle on a pseudo-element. */
 #mount-ind-css .llselect-trigger::after {

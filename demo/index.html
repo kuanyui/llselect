@@ -245,7 +245,68 @@
   </section>
 
   <section>
-    <h2>6. Search (filter)</h2>
+    <h2>6. Width policy: trigger and popup</h2>
+    <p class="hint">
+      The library never sets widths. Trigger width comes from your CSS; popup
+      always matches trigger; chosen text in trigger ellipsizes; long labels
+      in popup wrap. Full rationale: <code>docs/DESIGN.md</code> &rarr;
+      "Popup width policy".
+    </p>
+
+    <article>
+      <h3>6.1 Constrained trigger: long labels wrap; trigger ellipsizes the chosen text</h3>
+      <p class="hint">
+        <strong>Demo CSS:</strong> <code>#mount-long-wrap { max-width: 18rem }</code>.
+        Longest label preselected, so trigger shows <code>...</code> on load.
+        Open the popup - long labels wrap to multiple lines.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-long-wrap"></div>
+          <div class="out" id="out-long-wrap">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="6.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>6.2 Constrained trigger + opt-in ellipsis on labels</h3>
+      <p class="hint">
+        <strong>Demo CSS:</strong> same <code>max-width: 18rem</code>, plus
+        <code>#mount-long-ellipsis .llselect-item { text-overflow: ellipsis }</code>.
+        Library does not auto-add <code>title</code> (would fight Tippy /
+        Floating UI / etc.); this demo uses the simplest tooltip - a subclass
+        setting <code>el.title</code>.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-long-ellipsis"></div>
+          <div class="out" id="out-long-ellipsis">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="6.2"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>6.3 No CSS width: trigger expands to fit, ellipsis never triggers</h3>
+      <p class="hint">
+        <strong>Demo CSS:</strong> none. The chosen long label expands the
+        trigger to its natural width and overflows the demo pane (and
+        possibly the page) - this is the policy in action: the library does
+        not constrain anything. Tidy layout is the caller's CSS job.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-long-noconstraint"></div>
+          <div class="out" id="out-long-noconstraint">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="6.3"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h2>7. Search (filter)</h2>
     <p class="hint">
       Set <code>searchable: true</code> to add a filter input inside the popup.
       Trigger becomes <code>role="button"</code>, the input becomes
@@ -256,7 +317,7 @@
     </p>
 
     <article>
-      <h3>6.1 Single + searchable (default filter)</h3>
+      <h3>7.1 Single + searchable (default filter)</h3>
       <p class="hint">
         Default <code>filterFn</code> is case-insensitive substring on
         <code>templateItem(item)</code>.
@@ -266,12 +327,12 @@
           <div id="mount-search-single"></div>
           <div class="out" id="out-search-single">chosen: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="6.1"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="7.1"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>6.2 Multi + searchable + checkboxes</h3>
+      <h3>7.2 Multi + searchable + checkboxes</h3>
       <p class="hint">
         Filtering does not change the chosen set: a chosen item hidden by the
         current query stays chosen and reappears when cleared.
@@ -281,12 +342,12 @@
           <div id="mount-search-multi"></div>
           <div class="out" id="out-search-multi">chosen: []</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="6.2"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="7.2"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>6.3 Custom <code>filterFn</code> (match name OR role)</h3>
+      <h3>7.3 Custom <code>filterFn</code> (match name OR role)</h3>
       <p class="hint">
         User objects with both <code>name</code> and <code>role</code> fields.
         Default substring would only see the rendered label; a custom
@@ -297,13 +358,13 @@
           <div id="mount-search-users"></div>
           <div class="out" id="out-search-users">chosen: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="6.3"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="7.3"><code></code></pre></details>
       </div>
     </article>
   </section>
 
   <section>
-    <h2>7. Performance (10,000 items)</h2>
+    <h2>8. Performance (10,000 items)</h2>
     <p class="hint">
       Standalone stress demos: one single-select and one multi-select, each
       over 10,000 rows. Kept apart from the feature sections so open/close
@@ -311,7 +372,7 @@
     </p>
 
     <article>
-      <h3>7.1 Single-select</h3>
+      <h3>8.1 Single-select</h3>
       <p class="hint">
         Lazy render builds the option DOM on open and clears it on close, so a
         huge list stays cheap.
@@ -321,12 +382,12 @@
           <div id="mount-single-huge"></div>
           <div class="out" id="out-single-huge">chosen: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="7.1"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="8.1"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>7.2 Multi-select</h3>
+      <h3>8.2 Multi-select</h3>
       <p class="hint">
         Toggling one checkbox re-renders only that single item element (O(1)
         DOM), not the whole 10k list. Open it, then click items rapidly -
@@ -337,7 +398,7 @@
           <div id="mount-multi-huge"></div>
           <div class="out" id="out-multi-huge">chosen: 0 items</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="7.2"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="8.2"><code></code></pre></details>
       </div>
     </article>
   </section>
@@ -345,7 +406,7 @@
   <div class="page-filler"></div>
 
   <section>
-    <h2>8. Near page bottom (flip up)</h2>
+    <h2>9. Near page bottom (flip up)</h2>
     <p class="hint">
       After the spacer above, this select sits near the viewport bottom; the
       popup should open upward (look for <code>data-placement="above"</code> on the popup).
@@ -355,7 +416,7 @@
         <div id="mount-bottom"></div>
         <div class="out" id="out-bottom">chosen: (none)</div>
       </div>
-      <details class="code-toggle"><summary>code</summary><pre data-demo="8"><code></code></pre></details>
+      <details class="code-toggle"><summary>code</summary><pre data-demo="9"><code></code></pre></details>
     </div>
   </section>
 

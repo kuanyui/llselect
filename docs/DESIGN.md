@@ -179,8 +179,18 @@ Captured here so future width / overflow discussions have a shared reference.
 3. **Long-text full-fidelity by default.** Items wrap rather than truncate, so
    no information is hidden behind a hover tooltip.
 4. **Users opt in to other policies via their own CSS** - e.g. set
-   `.llselect-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }`
-   plus a `title` attribute in `createItemEl` for hover preview. The library
-   does not add an API setting for this until a real need emerges; if
-   popup-grows-to-content is genuinely wanted later, a setting
-   `popupWidthPolicy: 'anchor' | 'auto'` would gate the positioner.
+   `.llselect-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }`.
+   The library deliberately does NOT auto-set a `title` attribute on items
+   so it never fights third-party tooltip libraries (Tippy / Floating UI /
+   etc.). Users who pick ellipsis-on-items pick their own tooltip mechanism
+   (subclass adding `el.title`, or a custom tooltip lib, or none at all).
+   The library does not add an API setting for the width policy itself
+   until a real need emerges; if popup-grows-to-content is genuinely wanted
+   later, a setting `popupWidthPolicy: 'anchor' | 'auto'` would gate the
+   positioner.
+
+The trigger ellipsizes its chosen-text by default in every shipped theme
+(`.llselect-trigger-content { white-space: nowrap; overflow: hidden;
+text-overflow: ellipsis; }`). This is non-negotiable in the default themes
+because a wrapping trigger looks broken; user themes can override if they
+genuinely want a multi-line trigger.

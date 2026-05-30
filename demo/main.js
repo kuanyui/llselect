@@ -1,5 +1,5 @@
 import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, chevronDownSvg, triangleDownSvg, checkboxSvg } from '../dist/index.mjs'
-import { COUNTRIES, USERS, HUGE_ITEMS } from './data.js'
+import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES } from './data.js'
 
 console.log('llselect v' + LLSELECT_VERSION)
 
@@ -194,6 +194,60 @@ selMultiCheckbox.setItems(COUNTRIES)
 //#endregion
 
 //#region 6.1
+const outLongWrap = document.getElementById('out-long-wrap')
+const selLongWrap = new LLSelectSingle(
+  document.getElementById('mount-long-wrap'),
+  {
+    placeholder: 'Pick a country',
+    onChange: (v) => { outLongWrap.textContent = 'chosen: ' + JSON.stringify(v) },
+  }
+)
+selLongWrap.setItems(LONG_NAMES)
+selLongWrap.setChosenItem(LONG_NAMES[0])  // preselect the longest entry so trigger ellipsis is visible on load
+//#endregion
+
+//#region 6.2
+// Same data as 6.1, plus:
+//  - scoped CSS in demo/style.css gives this instance ellipsis on items.
+//  - a subclass adds `title` so hover reveals the full text. (The library
+//    deliberately does NOT add `title` automatically, so users can plug in
+//    Tippy / Floating UI / their own tooltip lib without conflict.)
+class EllipsisSingle extends LLSelectSingle {
+  createItemEl(item, index) {
+    const el = super.createItemEl(item, index)
+    el.title = this.templateItem(item)
+    return el
+  }
+}
+const outLongEllipsis = document.getElementById('out-long-ellipsis')
+const selLongEllipsis = new EllipsisSingle(
+  document.getElementById('mount-long-ellipsis'),
+  {
+    placeholder: 'Pick a country',
+    onChange: (v) => { outLongEllipsis.textContent = 'chosen: ' + JSON.stringify(v) },
+  }
+)
+selLongEllipsis.setItems(LONG_NAMES)
+selLongEllipsis.setChosenItem(LONG_NAMES[0])
+//#endregion
+
+//#region 6.3
+// No demo CSS, no subclass. Library does not constrain widths, so the
+// preselected long label expands the trigger to its natural width and
+// overflows the layout - that overflow IS the demonstration.
+const outLongNoConstraint = document.getElementById('out-long-noconstraint')
+const selLongNoConstraint = new LLSelectSingle(
+  document.getElementById('mount-long-noconstraint'),
+  {
+    placeholder: 'Pick a country',
+    onChange: (v) => { outLongNoConstraint.textContent = 'chosen: ' + JSON.stringify(v) },
+  }
+)
+selLongNoConstraint.setItems(LONG_NAMES)
+selLongNoConstraint.setChosenItem(LONG_NAMES[0])
+//#endregion
+
+//#region 7.1
 const outSearchSingle = document.getElementById('out-search-single')
 const selSearchSingle = new LLSelectSingle(
   document.getElementById('mount-search-single'),
@@ -206,7 +260,7 @@ const selSearchSingle = new LLSelectSingle(
 selSearchSingle.setItems(COUNTRIES)
 //#endregion
 
-//#region 6.2
+//#region 7.2
 const outSearchMulti = document.getElementById('out-search-multi')
 class SearchCheckboxMulti extends LLSelectMultiple {
   createItemEl(item, index) {
@@ -228,7 +282,7 @@ const selSearchMulti = new SearchCheckboxMulti(
 selSearchMulti.setItems(COUNTRIES)
 //#endregion
 
-//#region 6.3
+//#region 7.3
 const outSearchUsers = document.getElementById('out-search-users')
 class UserSearchSelect extends LLSelectSingle {
   templateItem(u) { return `#${u.id} ${u.name} (${u.role})` }
@@ -251,7 +305,7 @@ const selSearchUsers = new UserSearchSelect(
 selSearchUsers.setItems(USERS)
 //#endregion
 
-//#region 7.1
+//#region 8.1
 const outSingleHuge = document.getElementById('out-single-huge')
 const selSingleHuge = new LLSelectSingle(
   document.getElementById('mount-single-huge'),
@@ -263,7 +317,7 @@ const selSingleHuge = new LLSelectSingle(
 selSingleHuge.setItems(HUGE_ITEMS)
 //#endregion
 
-//#region 7.2
+//#region 8.2
 const outMultiHuge = document.getElementById('out-multi-huge')
 const selMultiHuge = new LLSelectMultiple(
   document.getElementById('mount-multi-huge'),
@@ -297,7 +351,7 @@ document.getElementById('btn-toggle-all')
   .addEventListener('click', () => selMultiAll.toggleAll())
 //#endregion
 
-//#region 8
+//#region 9
 const outBottom = document.getElementById('out-bottom')
 const selBottom = new LLSelectSingle(
   document.getElementById('mount-bottom'),
