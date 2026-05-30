@@ -89,3 +89,19 @@
   font-weight: 600;
   color: #1c4d8f;
 }
+
+/* --- search input (Phase 8) ------------------------------------ */
+
+.llselect-search-input {
+  flex: none;
+  margin: 0.3rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font: inherit;
+  outline: none;
+}
+
+.llselect-search-input:focus {
+  border-color: #4a90e2;
+}

@@ -52,6 +52,19 @@ export interface LLSelectBaseSettings<T> {
    * adds nothing to the arrow slot.
    */
   renderArrowFn: LLSelectArrowRenderer | null
+  /**
+   * Whether the popup includes a search input. `false` (default) keeps the
+   * trigger as `role="combobox"` and the (always-built) input is `hidden`.
+   * `true` makes the trigger `role="button"` and moves focus to the input on
+   * open. See `docs/A11Y.md` and `docs/DESIGN.md`.
+   */
+  searchable: boolean
+  /**
+   * Predicate used by the search input. `null` (default) means the built-in
+   * case-insensitive substring match against `templateItem(item)`. Pass a
+   * custom function for fuzzy / domain-specific matching.
+   */
+  filterFn: ((item: T, query: string) => boolean) | null
 }
 
 /**
@@ -98,6 +111,10 @@ export interface LLSelectClassIdMap {
    * Referenced by the trigger's `aria-controls` attribute.
    */
   popupListId: string
+  /** Class on the search input element inside the popup. */
+  searchInputClass: string
+  /** DOM `id` of the search input. Unique across instances. */
+  searchInputId: string
 }
 
 const DEFAULT_PREFIX = 'llselect'
@@ -123,6 +140,8 @@ function makeClassIdMap(prefix: string): LLSelectClassIdMap {
     openClass: `${prefix}-open`,
     triggerId: `${uniq}-trigger`,
     popupListId: `${uniq}-popup-list`,
+    searchInputClass: `${prefix}-search-input`,
+    searchInputId: `${uniq}-search-input`,
   }
 }
 
@@ -190,6 +209,20 @@ export abstract class LLSelectBase<T = unknown> {
   private focusedEl: HTMLElement | undefined
   private outsideHandler: ((ev: Event) => void) | undefined
   private focusOutHandler: ((ev: FocusEvent) => void) | undefined
+  /**
+   * Element that owns `aria-activedescendant` and receives keydown for option
+   * navigation. Equals the search input when `searchable: true`, else the
+   * trigger. Set once in the constructor.
+   */
+  private comboboxEl!: HTMLElement
+  /**
+   * Search input element. Always built into the popup DOM. When
+   * `searchable: false` it is kept `hidden` and never wired up.
+   */
+  private searchInputEl!: HTMLInputElement
+  private query = ''
+  private filteredItems: T[] | undefined
+  private composing = false
 
   /**
    * @param targetEl - mount element. Becomes `rootEl`; its existing children
@@ -205,6 +238,8 @@ export abstract class LLSelectBase<T = unknown> {
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
       renderArrowFn: settings?.renderArrowFn ?? null,
+      searchable: settings?.searchable ?? false,
+      filterFn: settings?.filterFn ?? null,
     }
     this.classIdMap = makeClassIdMap(this.settings.cssClassPrefix)
 
@@ -225,8 +260,17 @@ export abstract class LLSelectBase<T = unknown> {
 
     this.popupEl = this.buildPopupEl()
     this.popupListEl = this.buildPopupListEl()
-    this.popupEl.append(this.popupListEl)
+    this.searchInputEl = this.buildSearchInputEl()
+    // input always built; non-searchable keeps it `hidden`. Search box must
+    // sit above the listbox: listbox children must be options only.
+    this.popupEl.append(this.searchInputEl, this.popupListEl)
     this.popupEl.hidden = true
+    if (this.settings.searchable) {
+      this.comboboxEl = this.searchInputEl
+    } else {
+      this.searchInputEl.hidden = true
+      this.comboboxEl = this.triggerEl
+    }
     // Force border-box on the popup elements so the positioner's max-height
     // calculation stays correct regardless of the host page's box-sizing
     // setting. Without this, themes with non-zero padding/border on the
@@ -246,6 +290,12 @@ export abstract class LLSelectBase<T = unknown> {
 
     this.triggerEl.addEventListener('click', () => this.toggle())
     this.triggerEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
+    if (this.settings.searchable) {
+      this.searchInputEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
+      this.searchInputEl.addEventListener('input', () => this.onSearchInput())
+      this.searchInputEl.addEventListener('compositionstart', () => { this.composing = true })
+      this.searchInputEl.addEventListener('compositionend', () => { this.composing = false; this.onSearchInput() })
+    }
   }
 
   /**
@@ -261,6 +311,12 @@ export abstract class LLSelectBase<T = unknown> {
     this.triggerEl.setAttribute('aria-expanded', 'true')
     this.triggerEl.setAttribute('data-state', 'open')
     this.rootEl.classList.add(this.classIdMap.openClass)
+    if (this.settings.searchable) {
+      this.query = ''
+      this.searchInputEl.value = ''
+      this.searchInputEl.setAttribute('aria-expanded', 'true')
+      this.applyFilter()
+    }
     // Layout (flex column) is applied only while open. Setting display
     // inline at construction would override the `[hidden]` UA rule and
     // leak the popup before first open.
@@ -276,19 +332,35 @@ export abstract class LLSelectBase<T = unknown> {
     this.attachFocusOut()
     this.focusInitial()
     this.onOpened()
+    if (this.settings.searchable) {
+      this.searchInputEl.focus({ preventScroll: true })
+    }
     restoreWindowScroll()
   }
 
   /**
    * Close the popup. Detaches positioner and outside-click listener, clears
    * the item DOM, and resets focused-item state. No-op if already closed.
+   *
+   * Focus return is decided automatically: when `searchable: true` and DOM
+   * focus is still on the search input at the moment of close (Esc on empty
+   * filter, single-select pick, click on non-focusable area outside), focus
+   * is returned to the trigger. Tab-away and outside clicks on focusable
+   * elements have already moved focus elsewhere, so we leave it alone.
    */
   public close(): void {
     if (!this.isOpen) { return }
+    const shouldReturnFocus = this.settings.searchable && document.activeElement === this.searchInputEl
     this.isOpen = false
     this.triggerEl.setAttribute('aria-expanded', 'false')
     this.triggerEl.setAttribute('data-state', 'closed')
     this.rootEl.classList.remove(this.classIdMap.openClass)
+    if (this.settings.searchable) {
+      this.searchInputEl.setAttribute('aria-expanded', 'false')
+      this.searchInputEl.value = ''
+      this.query = ''
+      this.filteredItems = undefined
+    }
     this.positioner?.detach()
     this.positioner = undefined
     this.detachOutsideClick()
@@ -301,9 +373,10 @@ export abstract class LLSelectBase<T = unknown> {
     this.itemEls = []
     this.focusedEl = undefined
     this.focusedIndex = -1
-    this.triggerEl.removeAttribute('aria-activedescendant')
+    this.comboboxEl.removeAttribute('aria-activedescendant')
     this.renderTriggerArrow()
     this.onClosed()
+    if (shouldReturnFocus) { this.triggerEl.focus({ preventScroll: true }) }
   }
 
   /**
@@ -344,6 +417,7 @@ export abstract class LLSelectBase<T = unknown> {
    */
   public setItems(items: T[]): void {
     this.items = items.slice()
+    if (this.settings.searchable) { this.applyFilter() }
     if (this.isOpen) { this.renderPopupList() }
     this.afterItemsChange()
   }
@@ -397,15 +471,16 @@ export abstract class LLSelectBase<T = unknown> {
     this.popupListEl.replaceChildren()
     this.itemEls = []
     this.focusedEl = undefined
-    for (let i = 0; i < this.items.length; i++) {
-      const el = this.createItemEl(this.items[i]!, i)
+    const list = this.visibleItems()
+    for (let i = 0; i < list.length; i++) {
+      const el = this.createItemEl(list[i]!, i)
       this.itemEls.push(el)
       this.popupListEl.append(el)
     }
     this.positioner?.reposition()
-    // Clamp focused index if items shrank, then re-apply focus visuals.
-    if (this.focusedIndex >= this.items.length) {
-      this.focusedIndex = this.items.length === 0 ? -1 : this.items.length - 1
+    // Clamp focused index if the visible list shrank, then re-apply visuals.
+    if (this.focusedIndex >= list.length) {
+      this.focusedIndex = list.length === 0 ? -1 : list.length - 1
     }
     this.applyFocus()
   }
@@ -420,17 +495,18 @@ export abstract class LLSelectBase<T = unknown> {
    */
   protected rerenderPopupListItem(item: T): void {
     if (!this.isOpen) { return }
-    const index = this.items.findIndex(i => this.settings.compareFn(i, item))
+    const list = this.visibleItems()
+    const index = list.findIndex(i => this.settings.compareFn(i, item))
     if (index < 0) { return }
     const oldEl = this.itemEls[index]
     if (oldEl === undefined) { return }
-    const newEl = this.createItemEl(this.items[index]!, index)
+    const newEl = this.createItemEl(list[index]!, index)
     oldEl.replaceWith(newEl)
     this.itemEls[index] = newEl
     // Preserve focus visuals if the replaced element was the focused one.
     if (this.focusedEl === oldEl) {
       newEl.classList.add(this.classIdMap.itemFocusedClass)
-      this.triggerEl.setAttribute('aria-activedescendant', newEl.id)
+      this.comboboxEl.setAttribute('aria-activedescendant', newEl.id)
       this.focusedEl = newEl
     }
   }
@@ -484,7 +560,7 @@ export abstract class LLSelectBase<T = unknown> {
    * currently chosen item, last-used item, etc.
    */
   protected focusInitial(): void {
-    if (this.items.length === 0) { return }
+    if (this.visibleItems().length === 0) { return }
     this.setFocusedIndex(0)
   }
 
@@ -495,7 +571,7 @@ export abstract class LLSelectBase<T = unknown> {
    * if the clamped value equals the current focused index.
    */
   protected setFocusedIndex(index: number): void {
-    const max = this.items.length - 1
+    const max = this.visibleItems().length - 1
     const clamped = Math.max(-1, Math.min(max, index))
     if (clamped === this.focusedIndex) { return }
     this.focusedIndex = clamped
@@ -511,11 +587,11 @@ export abstract class LLSelectBase<T = unknown> {
     if (i >= 0 && i < this.itemEls.length) {
       const el = this.itemEls[i]!
       el.classList.add(this.classIdMap.itemFocusedClass)
-      this.triggerEl.setAttribute('aria-activedescendant', el.id)
+      this.comboboxEl.setAttribute('aria-activedescendant', el.id)
       this.focusedEl = el
       ensureVisibleInScroll(el, this.popupListEl)
     } else {
-      this.triggerEl.removeAttribute('aria-activedescendant')
+      this.comboboxEl.removeAttribute('aria-activedescendant')
     }
   }
 
@@ -605,7 +681,10 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   private handleKeydown(ev: KeyboardEvent): void {
-    const action = getActionFromKey(ev, this.isOpen)
+    // Leave the keys to the IME while composing.
+    if (ev.isComposing || this.composing) { return }
+    const inText = ev.currentTarget === this.searchInputEl
+    const action = getActionFromKey(ev, this.isOpen, inText)
     if (action === undefined) { return }
     ev.preventDefault()
 
@@ -614,21 +693,31 @@ export abstract class LLSelectBase<T = unknown> {
         this.open()
         return
       case LLSelectAction.Close:
+        // Esc two-stage when searchable: clear the filter first; only close
+        // when the filter is already empty. Closing returns focus to trigger.
+        if (this.settings.searchable && this.query !== '') {
+          this.searchInputEl.value = ''
+          this.onSearchInput()
+          return
+        }
         this.close()
         return
-      case LLSelectAction.Select:
-        if (this.focusedIndex >= 0 && this.focusedIndex < this.items.length) {
-          this.onItemClick(this.items[this.focusedIndex]!)
+      case LLSelectAction.Select: {
+        const list = this.visibleItems()
+        if (this.focusedIndex >= 0 && this.focusedIndex < list.length) {
+          this.onItemClick(list[this.focusedIndex]!)
         }
         return
+      }
       case LLSelectAction.Next:
       case LLSelectAction.Previous:
       case LLSelectAction.GotoFirst:
       case LLSelectAction.GotoLast:
       case LLSelectAction.PageDown:
       case LLSelectAction.PageUp: {
-        if (this.items.length === 0) { return }
-        const next = getUpdatedIndex(this.focusedIndex, this.items.length - 1, action)
+        const list = this.visibleItems()
+        if (list.length === 0) { return }
+        const next = getUpdatedIndex(this.focusedIndex, list.length - 1, action)
         this.setFocusedIndex(next)
         return
       }
@@ -639,7 +728,9 @@ export abstract class LLSelectBase<T = unknown> {
     const el = document.createElement('div')
     el.id = this.classIdMap.triggerId
     el.className = this.classIdMap.triggerClass
-    el.setAttribute('role', 'combobox')
+    // Searchable: trigger is a button that opens a popup containing a
+    // combobox+listbox. Non-searchable: trigger is itself the combobox.
+    el.setAttribute('role', this.settings.searchable ? 'button' : 'combobox')
     el.setAttribute('tabindex', '0')
     el.setAttribute('aria-controls', this.classIdMap.popupListId)
     el.setAttribute('aria-expanded', 'false')
@@ -652,6 +743,70 @@ export abstract class LLSelectBase<T = unknown> {
     arrow.className = this.classIdMap.triggerArrowClass
     el.append(content, arrow)
     return el
+  }
+
+  /**
+   * The search input lives inside the popup, above the listbox. Always built
+   * (`hidden` when `searchable: false`) so a future runtime toggle is a CSS
+   * flip rather than a DOM rebuild. See `docs/DESIGN.md`.
+   */
+  private buildSearchInputEl(): HTMLInputElement {
+    const el = document.createElement('input')
+    el.type = 'text'
+    el.id = this.classIdMap.searchInputId
+    el.className = this.classIdMap.searchInputClass
+    el.setAttribute('role', 'combobox')
+    el.setAttribute('aria-controls', this.classIdMap.popupListId)
+    el.setAttribute('aria-expanded', 'false')
+    el.setAttribute('aria-autocomplete', 'list')
+    el.setAttribute('autocomplete', 'off')
+    el.setAttribute('autocapitalize', 'off')
+    el.setAttribute('spellcheck', 'false')
+    return el
+  }
+
+  /**
+   * Items currently displayed in the popup. Equals `items` when not
+   * searchable or when no filter is active; equals the filtered subset when
+   * the user has typed in the search input. Subclasses may read this when
+   * they need the visible list (e.g. for selection-by-index).
+   */
+  protected visibleItems(): T[] {
+    return this.filteredItems ?? this.items
+  }
+
+  /**
+   * Per-item match predicate for the search input. Uses `settings.filterFn`
+   * when provided; otherwise case-insensitive substring on `templateItem`.
+   */
+  private matchesQuery(item: T, query: string): boolean {
+    const fn = this.settings.filterFn
+    if (fn) { return fn(item, query) }
+    return this.templateItem(item).toLowerCase().includes(query.toLowerCase())
+  }
+
+  /**
+   * Recompute `filteredItems` from current `items` and `query`. No-op when
+   * `searchable: false` (filtering is never used).
+   */
+  private applyFilter(): void {
+    if (!this.settings.searchable) { return }
+    const q = this.query
+    this.filteredItems = q === '' ? this.items.slice() : this.items.filter(it => this.matchesQuery(it, q))
+  }
+
+  /**
+   * Input event on the search field: re-filter, re-render the list, move the
+   * active option to the first match. IME composition is guarded - we wait
+   * for `compositionend` and filter once with the composed text.
+   */
+  private onSearchInput(): void {
+    if (this.composing) { return }
+    this.query = this.searchInputEl.value
+    this.applyFilter()
+    this.focusedIndex = -1
+    this.renderPopupList()
+    this.setFocusedIndex(0)
   }
 
   /** Outer popup wrapper. No ARIA role; structural only. */

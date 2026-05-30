@@ -56,11 +56,15 @@ test('popup list has correct ARIA attributes', () => {
   assert.ok(lb.className.includes('llselect-popup-list'))
 })
 
-test('popup list is the only child of popup wrapper initially', () => {
+test('popup contains the (hidden) search input and the popup list, in order', () => {
   const inst = new TestSelect<string>(mount())
-  const popupChildren = Array.from(inst.popupEl.children)
-  assert.equal(popupChildren.length, 1)
-  assert.equal(popupChildren[0], inst.popupListEl)
+  const popupChildren = Array.from(inst.popupEl.children) as HTMLElement[]
+  assert.equal(popupChildren.length, 2)
+  // The search input is always built (see docs/DESIGN.md) but `hidden` when
+  // `searchable: false`. The listbox follows it.
+  assert.equal(popupChildren[0]!.tagName, 'INPUT')
+  assert.equal(popupChildren[0]!.hidden, true)
+  assert.equal(popupChildren[1], inst.popupListEl)
 })
 
 test('trigger and popup are children of rootEl in order', () => {

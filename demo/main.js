@@ -194,6 +194,64 @@ selMultiCheckbox.setItems(COUNTRIES)
 //#endregion
 
 //#region 6.1
+const outSearchSingle = document.getElementById('out-search-single')
+const selSearchSingle = new LLSelectSingle(
+  document.getElementById('mount-search-single'),
+  {
+    placeholder: 'Pick a country',
+    searchable: true,
+    onChange: (v) => { outSearchSingle.textContent = 'chosen: ' + JSON.stringify(v) },
+  }
+)
+selSearchSingle.setItems(COUNTRIES)
+//#endregion
+
+//#region 6.2
+const outSearchMulti = document.getElementById('out-search-multi')
+class SearchCheckboxMulti extends LLSelectMultiple {
+  createItemEl(item, index) {
+    const el = super.createItemEl(item, index)
+    el.prepend(checkboxSvg({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
+    return el
+  }
+}
+const selSearchMulti = new SearchCheckboxMulti(
+  document.getElementById('mount-search-multi'),
+  {
+    placeholder: 'Pick countries',
+    searchable: true,
+    onChange: (chosen) => {
+      outSearchMulti.textContent = 'chosen: ' + JSON.stringify(chosen)
+    },
+  }
+)
+selSearchMulti.setItems(COUNTRIES)
+//#endregion
+
+//#region 6.3
+const outSearchUsers = document.getElementById('out-search-users')
+class UserSearchSelect extends LLSelectSingle {
+  templateItem(u) { return `#${u.id} ${u.name} (${u.role})` }
+}
+const selSearchUsers = new UserSearchSelect(
+  document.getElementById('mount-search-users'),
+  {
+    placeholder: 'Search users by name OR role',
+    searchable: true,
+    compareFn: (a, b) => a.id === b.id,
+    // Default matches the visible label only. This custom fn lets the user
+    // type a role ("admin") and find users by role, not just by name.
+    filterFn: (u, q) => {
+      const needle = q.toLowerCase()
+      return u.name.toLowerCase().includes(needle) || u.role.toLowerCase().includes(needle)
+    },
+    onChange: (v) => { outSearchUsers.textContent = 'chosen: ' + JSON.stringify(v) },
+  }
+)
+selSearchUsers.setItems(USERS)
+//#endregion
+
+//#region 7.1
 const outSingleHuge = document.getElementById('out-single-huge')
 const selSingleHuge = new LLSelectSingle(
   document.getElementById('mount-single-huge'),
@@ -205,7 +263,7 @@ const selSingleHuge = new LLSelectSingle(
 selSingleHuge.setItems(HUGE_ITEMS)
 //#endregion
 
-//#region 6.2
+//#region 7.2
 const outMultiHuge = document.getElementById('out-multi-huge')
 const selMultiHuge = new LLSelectMultiple(
   document.getElementById('mount-multi-huge'),
@@ -239,7 +297,7 @@ document.getElementById('btn-toggle-all')
   .addEventListener('click', () => selMultiAll.toggleAll())
 //#endregion
 
-//#region 7
+//#region 8
 const outBottom = document.getElementById('out-bottom')
 const selBottom = new LLSelectSingle(
   document.getElementById('mount-bottom'),
