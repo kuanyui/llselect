@@ -33,8 +33,17 @@ const PAGE_SIZE = 10
  * popup is currently open. Returns `undefined` if the key should be left
  * alone (no preventDefault, no library reaction). Maps according to the
  * ARIA APG combobox pattern.
+ *
+ * @param inTextInput - true when focus is in the editable search input. There,
+ *   Space must type a space and Home/End must move the text caret, so those
+ *   keys are NOT mapped to selection / first-last navigation. Selection is
+ *   Enter only; option navigation is the arrow / page keys.
  */
-export function getActionFromKey(ev: KeyboardEvent, isOpen: boolean): LLSelectAction | undefined {
+export function getActionFromKey(
+  ev: KeyboardEvent,
+  isOpen: boolean,
+  inTextInput = false,
+): LLSelectAction | undefined {
   const { key, altKey } = ev
 
   if (!isOpen) {
@@ -46,11 +55,12 @@ export function getActionFromKey(ev: KeyboardEvent, isOpen: boolean): LLSelectAc
 
   if (key === 'Escape') { return LLSelectAction.Close }
   if (key === 'ArrowUp' && altKey) { return LLSelectAction.Close }
-  if (key === 'Enter' || key === ' ') { return LLSelectAction.Select }
+  if (key === 'Enter') { return LLSelectAction.Select }
+  if (key === ' ' && !inTextInput) { return LLSelectAction.Select }
   if (key === 'ArrowDown') { return LLSelectAction.Next }
   if (key === 'ArrowUp') { return LLSelectAction.Previous }
-  if (key === 'Home') { return LLSelectAction.GotoFirst }
-  if (key === 'End') { return LLSelectAction.GotoLast }
+  if (key === 'Home' && !inTextInput) { return LLSelectAction.GotoFirst }
+  if (key === 'End' && !inTextInput) { return LLSelectAction.GotoLast }
   if (key === 'PageDown') { return LLSelectAction.PageDown }
   if (key === 'PageUp') { return LLSelectAction.PageUp }
   return undefined

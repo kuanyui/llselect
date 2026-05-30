@@ -54,6 +54,25 @@ test('open: PageUp/PageDown -> PageUp/PageDown', () => {
   assert.equal(getActionFromKey(makeEvent('PageDown'), true), LLSelectAction.PageDown)
 })
 
+// --- getActionFromKey (open, focus in the search text input) -------
+
+test('open + inTextInput: Space is left alone (types a space), Enter still selects', () => {
+  assert.equal(getActionFromKey(makeEvent(' '), true, true), undefined)
+  assert.equal(getActionFromKey(makeEvent('Enter'), true, true), LLSelectAction.Select)
+})
+
+test('open + inTextInput: Home/End are left alone (caret), arrows/page still navigate', () => {
+  assert.equal(getActionFromKey(makeEvent('Home'), true, true), undefined)
+  assert.equal(getActionFromKey(makeEvent('End'), true, true), undefined)
+  assert.equal(getActionFromKey(makeEvent('ArrowDown'), true, true), LLSelectAction.Next)
+  assert.equal(getActionFromKey(makeEvent('ArrowUp'), true, true), LLSelectAction.Previous)
+  assert.equal(getActionFromKey(makeEvent('PageDown'), true, true), LLSelectAction.PageDown)
+})
+
+test('open + inTextInput: Escape still closes', () => {
+  assert.equal(getActionFromKey(makeEvent('Escape'), true, true), LLSelectAction.Close)
+})
+
 // --- getUpdatedIndex -----------------------------------------------
 
 test('getUpdatedIndex Next clamps at maxIndex', () => {
