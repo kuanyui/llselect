@@ -103,6 +103,18 @@ export interface LLSelectBaseSettings<T> {
    * content (icons etc.) override `createItemEl` instead.
    */
   templateItemFn: ((item: T) => string) | null
+  /**
+   * Fired right after the popup opens. A no-op `open()` (already open, or a
+   * disabled control) does not fire it. Fires in ADDITION to the protected
+   * `onOpened` hook - the setting is for consumers, the hook for subclasses;
+   * both run. `null` (default) = nothing.
+   */
+  onOpen: (() => void) | null
+  /**
+   * Fired right after the popup closes. A no-op `close()` does not fire it.
+   * Additive with the protected `onClosed` hook, like {@link onOpen}.
+   */
+  onClose: (() => void) | null
 }
 
 /**
@@ -296,6 +308,8 @@ export abstract class LLSelectBase<T = unknown> {
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
       templateItemFn: settings?.templateItemFn ?? null,
+      onOpen: settings?.onOpen ?? null,
+      onClose: settings?.onClose ?? null,
     }
     this.classIdMap = makeClassIdMap(this.settings.cssClassPrefix)
 
@@ -396,6 +410,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.attachFocusOut()
     this.focusInitial()
     this.onOpened()
+    this.settings.onOpen?.()
     if (this.settings.searchable) {
       this.searchInputEl.focus({ preventScroll: true })
     }
@@ -444,6 +459,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.comboboxEl.removeAttribute('aria-activedescendant')
     this.renderTriggerArrow()
     this.onClosed()
+    this.settings.onClose?.()
     if (shouldReturnFocus) { this.triggerEl.focus({ preventScroll: true }) }
   }
 
@@ -523,9 +539,13 @@ export abstract class LLSelectBase<T = unknown> {
     }
   }
 
-  /** Called once after the popup finishes opening. Default no-op. */
+  /**
+   * Subclass hook: called once after the popup finishes opening. Default no-op.
+   * The `onOpen` setting fires alongside this (both run) - hook for subclass
+   * logic, setting for consumer notification.
+   */
   protected onOpened(): void {}
-  /** Called once after the popup finishes closing. Default no-op. */
+  /** Subclass hook: called once after the popup finishes closing. Pairs with the `onClose` setting (both run). */
   protected onClosed(): void {}
   /**
    * Called after `setItems` finishes. Override to reconcile state that

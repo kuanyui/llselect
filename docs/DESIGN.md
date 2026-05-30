@@ -15,7 +15,7 @@ at a glance how the library will use the function. The marker is part of the
 
 | Category | Marker | Example |
 |---|---|---|
-| Event callback | `on*` prefix | `onChange`, future `onOpen` |
+| Event callback | `on*` prefix | `onChange`, `onOpen`, `onClose` |
 | Other function (comparator, renderer, transformer) | `*Fn` suffix | `compareFn`, `renderArrowFn` |
 
 Rationale:
