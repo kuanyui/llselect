@@ -88,7 +88,7 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
     const empty = this.chosenItem === undefined
     this.triggerContentEl.textContent = empty
       ? this.settings.placeholder
-      : this.resolveItemLabel(this.chosenItem!)
+      : this.effectiveItemToString(this.chosenItem!)
     this.triggerEl.setAttribute('data-empty', empty ? 'true' : 'false')
   }
 

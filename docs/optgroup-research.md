@@ -78,7 +78,7 @@ per-group metadata (disabled group, group icon) is wanted before locking this.
   offsetParent); nesting items inside group containers can break it. Switch to a
   `getBoundingClientRect`-delta computation so it is correct regardless of theme
   CSS.
-- Label customization: start with a plain string (like `templateItem`); add a
+- Label customization: start with a plain string (like `itemToString`); add a
   `renderGroupLabelFn` later if needed (cf. react-select `formatGroupLabel`,
   MUI `renderGroup`, which also receive the group's items for count badges).
 - Group disabled: a disabled group disables all its items - layers on top of

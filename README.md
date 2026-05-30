@@ -15,7 +15,9 @@ This is not mean to provide a full-bundle select (such `select2.js`). This provi
 ## Principles
 1. Minimal - No external JS / CSS dependency. Auditable.
 2. Performance - blazing fast.
-3. Flexible - Easy to integrate into existing project / library / style.
+3. Flexible
+  - Easy to integrate into existing project / library / style.
+  - Customize via (i) inheriting class, or (ii) pass ad-hoc arguments settings.
 4. Explicit
   - Explicit better than implicit - API names are long but no surprise nor ambiguity.
   - Single-select and multiple-select are handled by separate classes to avoid ambiguous / too-complicated / over-abstraction API (e.g. use the same `T[]` to model single / multiple select).

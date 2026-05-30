@@ -50,9 +50,9 @@ filter then closes; filtering is IME-aware (composition-guarded).
       trigger display (tag chips) without subclassing; `null` = default. Resolved
       before `renderTriggerContent`, so the per-instance setting wins over a
       subclass override (see DESIGN.md "Customization without subclassing").
-- [x] **`templateItemFn` settings callback** - DONE. `(item) => string` base
-      setting; the no-subclass equivalent of overriding `templateItem`. Resolved
-      via `resolveItemLabel` (setting wins over a subclass override).
+- [x] **`itemToStringFn` settings callback** - DONE. `(item) => string` base
+      setting; the no-subclass equivalent of overriding `itemToString`. Resolved
+      via `effectiveItemToString` (setting wins over a subclass override).
 - [ ] **`onChange` diff context** - decide whether to pass `previousChosenItem(s)`
       alongside current, so users can compute added/removed without tracking.
 

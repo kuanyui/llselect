@@ -17,12 +17,12 @@ function options(sel: { popupListEl: HTMLElement }): HTMLElement[] {
   return Array.from(sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]'))
 }
 
-// --- templateItemFn ----------------------------------------------------------
+// --- itemToStringFn ----------------------------------------------------------
 
-test('templateItemFn customizes item label without subclassing', () => {
+test('itemToStringFn customizes item label without subclassing', () => {
   const sel = new LLSelectSingle<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
-    templateItemFn: u => `#${u.id} ${u.name}`,
+    itemToStringFn: u => `#${u.id} ${u.name}`,
   })
   sel.setItems([{ id: 1, name: 'Ann' }, { id: 2, name: 'Bob' }])
   sel.open()
@@ -30,21 +30,21 @@ test('templateItemFn customizes item label without subclassing', () => {
   assert.equal(options(sel)[1]!.textContent, '#2 Bob')
 })
 
-test('templateItemFn customizes the chosen label in the trigger (single)', () => {
+test('itemToStringFn customizes the chosen label in the trigger (single)', () => {
   const sel = new LLSelectSingle<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
-    templateItemFn: u => u.name,
+    itemToStringFn: u => u.name,
   })
   sel.setItems([{ id: 1, name: 'Ann' }])
   sel.setChosenItem({ id: 1, name: 'Ann' })
   assert.equal(sel.triggerContentEl.textContent, 'Ann')
 })
 
-test('default filter matches against the templateItemFn label', () => {
+test('default filter matches against the itemToStringFn label', () => {
   const sel = new LLSelectSingle<User>(mount(), {
     searchable: true,
     compareFn: (a, b) => a.id === b.id,
-    templateItemFn: u => u.name,
+    itemToStringFn: u => u.name,
   })
   sel.setItems([{ id: 1, name: 'Ann' }, { id: 2, name: 'Bob' }])
   sel.open()
@@ -55,22 +55,22 @@ test('default filter matches against the templateItemFn label', () => {
   assert.deepEqual(labels, ['Bob'])
 })
 
-test('templateItemFn (setting) wins over a subclass templateItem override', () => {
+test('itemToStringFn (setting) wins over a subclass itemToString override', () => {
   class Derived extends LLSelectSingle<User> {
-    protected override templateItem(u: User): string { return `derived-${u.id}` }
+    protected override itemToString(u: User): string { return `derived-${u.id}` }
   }
   const sel = new Derived(mount(), {
     compareFn: (a, b) => a.id === b.id,
-    templateItemFn: u => `fn-${u.id}`,
+    itemToStringFn: u => `fn-${u.id}`,
   })
   sel.setItems([{ id: 1, name: 'Ann' }])
   sel.open()
   assert.equal(options(sel)[0]!.textContent, 'fn-1') // setting wins, not 'derived-1'
 })
 
-test('without the setting, a subclass templateItem override is used (back-compat)', () => {
+test('without the setting, a subclass itemToString override is used (back-compat)', () => {
   class Derived extends LLSelectSingle<User> {
-    protected override templateItem(u: User): string { return `derived-${u.id}` }
+    protected override itemToString(u: User): string { return `derived-${u.id}` }
   }
   const sel = new Derived(mount(), { compareFn: (a, b) => a.id === b.id })
   sel.setItems([{ id: 1, name: 'Ann' }])

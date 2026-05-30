@@ -14,11 +14,11 @@ function mount(): HTMLElement {
 interface Item { id: number; name: string }
 
 class ItemSelect extends LLSelectSingle<Item> {
-  override templateItem(item: Item): string { return item.name }
+  override itemToString(item: Item): string { return item.name }
 }
 
 class ItemMultiSelect extends LLSelectMultiple<Item> {
-  override templateItem(item: Item): string { return item.name }
+  override itemToString(item: Item): string { return item.name }
 }
 
 test('rerender picks up trigger text after mutating chosen item (single)', () => {

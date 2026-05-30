@@ -1,6 +1,6 @@
 // Opt-in icon helpers. None of these is used by the library by default; pass
 // the arrow ones via `settings.renderArrowFn`, or use the check / checkbox
-// ones inside a custom item renderer (override `createItemEl` / `templateItem`)
+// ones inside a custom item renderer (override `createItemEl` / `itemToString`)
 // so people who do not want to pull in mdi / FontAwesome still get sensible
 // built-ins. All paths use fill="currentColor" so they inherit the
 // surrounding text color (light/dark themes "just work"). Paths are from

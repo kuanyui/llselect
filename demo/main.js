@@ -47,7 +47,7 @@ selCountries.setItems(COUNTRIES)
 //#region 1.2
 const outUsers = document.getElementById('out-users')
 class UserSelect extends LLSelectSingle {
-  templateItem(user) { return `#${user.id} ${user.name} (${user.role})` }
+  itemToString(user) { return `#${user.id} ${user.name} (${user.role})` }
 }
 const selUsers = new UserSelect(
   document.getElementById('mount-users'),
@@ -215,7 +215,7 @@ selLongWrap.setChosenItem(LONG_NAMES[0])  // preselect the longest entry so trig
 class EllipsisSingle extends LLSelectSingle {
   createItemEl(item, index) {
     const el = super.createItemEl(item, index)
-    el.title = this.templateItem(item)
+    el.title = this.itemToString(item)
     return el
   }
 }
@@ -304,7 +304,7 @@ selSearchMulti.setItems(COUNTRIES)
 //#region 7.3
 const outSearchUsers = document.getElementById('out-search-users')
 class UserSearchSelect extends LLSelectSingle {
-  templateItem(u) { return `#${u.id} ${u.name} (${u.role})` }
+  itemToString(u) { return `#${u.id} ${u.name} (${u.role})` }
 }
 const selSearchUsers = new UserSearchSelect(
   document.getElementById('mount-search-users'),
@@ -380,7 +380,7 @@ const PRODUCTS = [
 ]
 const outDisItems = document.getElementById('out-disabled-items')
 class ProductSelect extends LLSelectSingle {
-  templateItem(p) { return p.stock > 0 ? `${p.name} (${p.stock} left)` : `${p.name} - sold out` }
+  itemToString(p) { return p.stock > 0 ? `${p.name} (${p.stock} left)` : `${p.name} - sold out` }
   createItemEl(p, i) {
     const el = super.createItemEl(p, i)
     // The library leaves disabled items hoverable; the consumer attaches the

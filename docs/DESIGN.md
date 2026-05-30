@@ -54,18 +54,18 @@ that we deliberately avoid.
 Display hooks exist as BOTH a protected method (subclass) AND a function setting
 (no subclass), so the common cases need no `extends`:
 
-- `templateItem(item)` method  <->  `templateItemFn(item)` setting - item label.
+- `itemToString(item)` method  <->  `itemToStringFn(item)` setting - item label.
 - `renderTriggerContent()` method  <->  `renderTriggerContentFn(ctx)` setting -
   trigger display (e.g. tag chips). `ctx` is variant-specific (`chosenItem` for
   single, `chosenItems` for multi); return a string / element, or `null` to fall
   back to the default.
 
 Precedence: the **setting wins over a method override**. The library never calls
-the overridable method directly - it goes through a resolver (`resolveItemLabel`
+the overridable method directly - it goes through a resolver (`effectiveItemToString`
 for labels, `applyTriggerContentSetting` for trigger content) that checks the
 setting first. So a per-instance setting beats a class default even when a
-subclass overrode the method - passing `templateItemFn` to `new DerivedSelect()`
-is never silently ignored just because the subclass overrode `templateItem`. This
+subclass overrode the method - passing `itemToStringFn` to `new DerivedSelect()`
+is never silently ignored just because the subclass overrode `itemToString`. This
 makes the settings reliable for "use without subclassing" (and for framework
 wrappers built on a subclass). Subclassing stays the route for behavior with no
 setting equivalent (e.g. `onItemClick`).
@@ -116,7 +116,7 @@ llselect is a **low-level** select library. It provides:
 It does **not** provide:
 
 - Default visual styling (themes are opt-in, shipped separately)
-- Item content beyond the configured `templateItem` (no built-in icon /
+- Item content beyond the configured `itemToString` (no built-in icon /
   description / avatar slots inside items)
 - Built-in tag chips in the multi-select trigger (the `renderTriggerContentFn`
   setting is the hook to build them yourself)
@@ -167,7 +167,7 @@ is in `A11Y.md`.
   multiply combinatorially (search x optgroup x ...); a setting composes.
 - **Settings:** `searchable: boolean` (default `false`);
   `filterFn: (item, query) => boolean | null` (default `null` =
-  case-insensitive substring on `templateItem`). IME-aware filtering
+  case-insensitive substring on `itemToString`). IME-aware filtering
   (composition-guarded) is part of the contract; see `A11Y.md`.
 
 ## Disabled (Phase 9)

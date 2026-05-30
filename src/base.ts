@@ -62,7 +62,7 @@ export interface LLSelectBaseSettings<T> {
   /**
    * Predicate used by the search input. `null` (default) means the built-in
    * case-insensitive substring match against the item's resolved label
-   * (`templateItemFn` / `templateItem`). Pass a custom function for fuzzy /
+   * (`itemToStringFn` / `itemToString`). Pass a custom function for fuzzy /
    * domain-specific matching.
    */
   filterFn: ((item: T, query: string) => boolean) | null
@@ -95,14 +95,14 @@ export interface LLSelectBaseSettings<T> {
   focusableWhenDisabled: boolean
   /**
    * Maps an item to its display label without subclassing - the setting
-   * equivalent of overriding {@link templateItem}. `null` (default) falls back
-   * to the `templateItem` method (whose own default is `String(item)`). When
-   * set, it takes precedence over a subclass's `templateItem` override: the
-   * library resolves labels through {@link resolveItemLabel}, which checks this
+   * equivalent of overriding {@link itemToString}. `null` (default) falls back
+   * to the `itemToString` method (whose own default is `String(item)`). When
+   * set, it takes precedence over a subclass's `itemToString` override: the
+   * library resolves labels through {@link effectiveItemToString}, which checks this
    * setting first, so a per-instance setting beats a class default. For HTML
    * content (icons etc.) override `createItemEl` instead.
    */
-  templateItemFn: ((item: T) => string) | null
+  itemToStringFn: ((item: T) => string) | null
   /**
    * Fired right after the popup opens. A no-op `open()` (already open, or a
    * disabled control) does not fire it. Fires in ADDITION to the protected
@@ -307,7 +307,7 @@ export abstract class LLSelectBase<T = unknown> {
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'match-trigger',
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
-      templateItemFn: settings?.templateItemFn ?? null,
+      itemToStringFn: settings?.itemToStringFn ?? null,
       onOpen: settings?.onOpen ?? null,
       onClose: settings?.onClose ?? null,
     }
@@ -659,7 +659,7 @@ export abstract class LLSelectBase<T = unknown> {
    * Build the DOM element for one item. Override if you need richer markup
    * (e.g. icons, descriptions, HTML). The base implementation sets `id`,
    * `role="option"`, a click handler, and writes `textContent` from
-   * {@link templateItem}.
+   * {@link itemToString}.
    *
    * @param item - the item value
    * @param index - index in `this.items`; used to build a stable id so
@@ -670,7 +670,7 @@ export abstract class LLSelectBase<T = unknown> {
     el.id = `${this.classIdMap.triggerId}-item${index}`
     el.className = this.classIdMap.itemClass
     el.setAttribute('role', 'option')
-    el.textContent = this.resolveItemLabel(item)
+    el.textContent = this.effectiveItemToString(item)
     // No `title` attribute by default: items wrap (themes default), so the
     // full label is already visible and a tooltip is redundant. Adding
     // `title` would also fight third-party tooltip libraries (Tippy etc.).
@@ -699,20 +699,21 @@ export abstract class LLSelectBase<T = unknown> {
    * If you need real HTML output, override {@link createItemEl} instead
    * and treat XSS yourself.
    */
-  protected templateItem(item: T): string {
+  protected itemToString(item: T): string {
     return String(item)
   }
 
   /**
-   * Resolve an item's display label. Prefers the per-instance `templateItemFn`
-   * setting; falls back to the (subclass-overridable) {@link templateItem}. The
-   * library calls THIS internally everywhere it needs a label, so `templateItemFn`
-   * always wins over a subclass override (per-instance setting beats class default).
+   * The item's display string.
+   * - Uses the `itemToStringFn` setting if set, else the `itemToString` method.
+   * - Called internally wherever a label is needed: list items, the single
+   *   trigger, and the default filter.
+   * - Customise via `itemToStringFn`; do not override this getter.
    */
-  protected resolveItemLabel(item: T): string {
-    return this.settings.templateItemFn
-      ? this.settings.templateItemFn(item)
-      : this.templateItem(item)
+  protected effectiveItemToString(item: T): string {
+    return this.settings.itemToStringFn
+      ? this.settings.itemToStringFn(item)
+      : this.itemToString(item)
   }
 
   /** Whether `item` is disabled per `itemDisabledFn` (false when unset). */
@@ -1004,12 +1005,12 @@ export abstract class LLSelectBase<T = unknown> {
 
   /**
    * Per-item match predicate for the search input. Uses `settings.filterFn`
-   * when provided; otherwise case-insensitive substring on `templateItem`.
+   * when provided; otherwise case-insensitive substring on `itemToString`.
    */
   private matchesQuery(item: T, query: string): boolean {
     const fn = this.settings.filterFn
     if (fn) { return fn(item, query) }
-    return this.resolveItemLabel(item).toLowerCase().includes(query.toLowerCase())
+    return this.effectiveItemToString(item).toLowerCase().includes(query.toLowerCase())
   }
 
   /**
