@@ -49,6 +49,27 @@ Never put mutable state (`items`, `chosen`, etc.) in settings as a
 "convenience". Dual write channels caused subtle bugs in select2 / choices.js
 that we deliberately avoid.
 
+### Customization without subclassing
+
+Display hooks exist as BOTH a protected method (subclass) AND a function setting
+(no subclass), so the common cases need no `extends`:
+
+- `templateItem(item)` method  <->  `templateItemFn(item)` setting - item label.
+- `renderTriggerContent()` method  <->  `renderTriggerContentFn(ctx)` setting -
+  trigger display (e.g. tag chips). `ctx` is variant-specific (`chosenItem` for
+  single, `chosenItems` for multi); return a string / element, or `null` to fall
+  back to the default.
+
+Precedence: the **setting wins over a method override**. The library never calls
+the overridable method directly - it goes through a resolver (`resolveItemLabel`
+for labels, `applyTriggerContentSetting` for trigger content) that checks the
+setting first. So a per-instance setting beats a class default even when a
+subclass overrode the method - passing `templateItemFn` to `new DerivedSelect()`
+is never silently ignored just because the subclass overrode `templateItem`. This
+makes the settings reliable for "use without subclassing" (and for framework
+wrappers built on a subclass). Subclassing stays the route for behavior with no
+setting equivalent (e.g. `onItemClick`).
+
 ### Element family naming
 
 Element refs and the CSS classes that style them share a prefix so the
@@ -97,8 +118,8 @@ It does **not** provide:
 - Default visual styling (themes are opt-in, shipped separately)
 - Item content beyond the configured `templateItem` (no built-in icon /
   description / avatar slots inside items)
-- Tag chips in multi-select trigger (user customises via subclass /
-  future `renderTriggerContentFn`)
+- Built-in tag chips in the multi-select trigger (the `renderTriggerContentFn`
+  setting is the hook to build them yourself)
 
 When in doubt, the answer is "lib provides a structural slot; the user
 fills it". This keeps API surface tight and avoids feature creep.

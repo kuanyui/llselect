@@ -4,6 +4,12 @@ import {
   type LLSelectBaseSettingsInput,
 } from './base.js'
 
+/** Context passed to {@link LLSelectMultipleSettings.renderTriggerContentFn}. */
+export interface LLSelectMultipleTriggerContext<T> {
+  chosenItems: readonly T[]
+  items: readonly T[]
+}
+
 /**
  * Resolved settings for {@link LLSelectMultiple}. Extends the base settings
  * with the multi-mode `onChange` callback (chosen items is an array).
@@ -15,6 +21,14 @@ export interface LLSelectMultipleSettings<T> extends LLSelectBaseSettings<T> {
    * (element-wise compared via `compareFn`, order-sensitive).
    */
   onChange: (chosenItems: readonly T[]) => void
+  /**
+   * Render the trigger's content without subclassing - the setting equivalent
+   * of overriding `renderTriggerContent`. Receives the chosen items + items;
+   * return a string / element to display (e.g. tag chips), or `null` to use the
+   * default count summary. Checked before `renderTriggerContent`, so it wins
+   * over a subclass override.
+   */
+  renderTriggerContentFn?: (ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | string | null
 }
 
 /**
@@ -22,7 +36,10 @@ export interface LLSelectMultipleSettings<T> extends LLSelectBaseSettings<T> {
  */
 export type LLSelectMultipleSettingsInput<T> =
   & LLSelectBaseSettingsInput<T>
-  & { onChange?: (chosenItems: readonly T[]) => void }
+  & {
+    onChange?: (chosenItems: readonly T[]) => void
+    renderTriggerContentFn?: (ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | string | null
+  }
 
 /**
  * Multi-selection select. Clicking an item toggles its membership in the
@@ -31,8 +48,8 @@ export type LLSelectMultipleSettingsInput<T> =
  * `aria-multiselectable="true"`.
  *
  * Default trigger display is a count summary ("3 / 10 selected" / "All N
- * selected" / placeholder when empty). Subclass `renderTriggerContent`
- * to customise (e.g. tag chips).
+ * selected" / placeholder when empty). Pass `renderTriggerContentFn` (or
+ * subclass `renderTriggerContent`) to customise (e.g. tag chips).
  *
  * @typeParam T - item type.
  */
@@ -41,10 +58,14 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
   protected chosenItems: T[] = []
   /** Optional change callback supplied via settings. */
   protected onChange: ((chosenItems: readonly T[]) => void) | undefined
+  /** Optional trigger-content renderer supplied via settings. */
+  protected renderTriggerContentFn:
+    ((ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | string | null) | undefined
 
   constructor(targetEl: HTMLElement, settings?: LLSelectMultipleSettingsInput<T>) {
     super(targetEl, settings)
     this.onChange = settings?.onChange
+    this.renderTriggerContentFn = settings?.renderTriggerContentFn
     this.popupListEl.setAttribute('aria-multiselectable', 'true')
     this.renderTrigger()
   }
@@ -115,7 +136,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
   }
 
   /**
-   * Default trigger label: count summary. Override (or pass a future
+   * Default trigger label: count summary. Override (or pass the
    * `renderTriggerContentFn` setting) to display tags / custom HTML / etc.
    *
    * - 0 chosen: placeholder
@@ -133,6 +154,17 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
       this.triggerContentEl.textContent = `${n} / ${total} selected`
     }
     this.triggerEl.setAttribute('data-empty', n === 0 ? 'true' : 'false')
+  }
+
+  /** Apply `renderTriggerContentFn` if it yields content; else fall back. */
+  protected override applyTriggerContentSetting(): boolean {
+    const fn = this.renderTriggerContentFn
+    if (!fn) { return false }
+    const result = fn({ chosenItems: this.getChosenItems(), items: this.getItems() })
+    if (result === null) { return false }
+    this.applyTriggerContent(result)
+    this.triggerEl.setAttribute('data-empty', this.getChosenItems().length === 0 ? 'true' : 'false')
+    return true
   }
 
   /** Toggle on click. Multi mode keeps the popup open. */

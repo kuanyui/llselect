@@ -11,12 +11,14 @@ export { LLSelectSingle } from './single.js'
 export type {
   LLSelectSingleSettings,
   LLSelectSingleSettingsInput,
+  LLSelectSingleTriggerContext,
 } from './single.js'
 
 export { LLSelectMultiple } from './multiple.js'
 export type {
   LLSelectMultipleSettings,
   LLSelectMultipleSettingsInput,
+  LLSelectMultipleTriggerContext,
 } from './multiple.js'
 
 export {

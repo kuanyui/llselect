@@ -61,8 +61,9 @@ export interface LLSelectBaseSettings<T> {
   searchable: boolean
   /**
    * Predicate used by the search input. `null` (default) means the built-in
-   * case-insensitive substring match against `templateItem(item)`. Pass a
-   * custom function for fuzzy / domain-specific matching.
+   * case-insensitive substring match against the item's resolved label
+   * (`templateItemFn` / `templateItem`). Pass a custom function for fuzzy /
+   * domain-specific matching.
    */
   filterFn: ((item: T, query: string) => boolean) | null
   /**
@@ -92,6 +93,16 @@ export interface LLSelectBaseSettings<T> {
    * read a "why disabled" tooltip.
    */
   focusableWhenDisabled: boolean
+  /**
+   * Maps an item to its display label without subclassing - the setting
+   * equivalent of overriding {@link templateItem}. `null` (default) falls back
+   * to the `templateItem` method (whose own default is `String(item)`). When
+   * set, it takes precedence over a subclass's `templateItem` override: the
+   * library resolves labels through {@link resolveItemLabel}, which checks this
+   * setting first, so a per-instance setting beats a class default. For HTML
+   * content (icons etc.) override `createItemEl` instead.
+   */
+  templateItemFn: ((item: T) => string) | null
 }
 
 /**
@@ -284,6 +295,7 @@ export abstract class LLSelectBase<T = unknown> {
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'match-trigger',
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
+      templateItemFn: settings?.templateItemFn ?? null,
     }
     this.classIdMap = makeClassIdMap(this.settings.cssClassPrefix)
 
@@ -529,8 +541,31 @@ export abstract class LLSelectBase<T = unknown> {
    * together (constructor, post-state-change, etc.).
    */
   protected renderTrigger(): void {
-    this.renderTriggerContent()
+    // The per-instance renderTriggerContentFn setting (single / multiple) is
+    // checked first, so it wins over a subclass's renderTriggerContent override.
+    if (!this.applyTriggerContentSetting()) {
+      this.renderTriggerContent()
+    }
     this.renderTriggerArrow()
+  }
+
+  /**
+   * Variant hook: if a `renderTriggerContentFn` setting produces content, apply
+   * it (and `data-empty`) and return true; else return false so the default
+   * {@link renderTriggerContent} runs. Base has no such setting; single /
+   * multiple override this.
+   */
+  protected applyTriggerContentSetting(): boolean {
+    return false
+  }
+
+  /** Write resolved trigger content (string or element) into the content slot. */
+  protected applyTriggerContent(content: HTMLElement | string): void {
+    if (typeof content === 'string') {
+      this.triggerContentEl.textContent = content
+    } else {
+      this.triggerContentEl.replaceChildren(content)
+    }
   }
 
   /**
@@ -615,7 +650,7 @@ export abstract class LLSelectBase<T = unknown> {
     el.id = `${this.classIdMap.triggerId}-item${index}`
     el.className = this.classIdMap.itemClass
     el.setAttribute('role', 'option')
-    el.textContent = this.templateItem(item)
+    el.textContent = this.resolveItemLabel(item)
     // No `title` attribute by default: items wrap (themes default), so the
     // full label is already visible and a tooltip is redundant. Adding
     // `title` would also fight third-party tooltip libraries (Tippy etc.).
@@ -646,6 +681,18 @@ export abstract class LLSelectBase<T = unknown> {
    */
   protected templateItem(item: T): string {
     return String(item)
+  }
+
+  /**
+   * Resolve an item's display label. Prefers the per-instance `templateItemFn`
+   * setting; falls back to the (subclass-overridable) {@link templateItem}. The
+   * library calls THIS internally everywhere it needs a label, so `templateItemFn`
+   * always wins over a subclass override (per-instance setting beats class default).
+   */
+  protected resolveItemLabel(item: T): string {
+    return this.settings.templateItemFn
+      ? this.settings.templateItemFn(item)
+      : this.templateItem(item)
   }
 
   /** Whether `item` is disabled per `itemDisabledFn` (false when unset). */
@@ -942,7 +989,7 @@ export abstract class LLSelectBase<T = unknown> {
   private matchesQuery(item: T, query: string): boolean {
     const fn = this.settings.filterFn
     if (fn) { return fn(item, query) }
-    return this.templateItem(item).toLowerCase().includes(query.toLowerCase())
+    return this.resolveItemLabel(item).toLowerCase().includes(query.toLowerCase())
   }
 
   /**
