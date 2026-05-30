@@ -266,6 +266,69 @@ test('positioner does NOT call onHide when anchor is in viewport', () => {
   p.detach()
 })
 
+test('positioner does NOT call onHide when a virtual keyboard shrinks only the visual viewport', () => {
+  const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  // Simulate the on-screen keyboard: visual viewport height drops to 400 while
+  // the layout viewport (window.innerHeight, jsdom default 768) is unchanged.
+  Object.defineProperty(dom.window, 'visualViewport', {
+    configurable: true,
+    value: { width: 1024, height: 400, addEventListener() {}, removeEventListener() {} },
+  })
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  // top 500 is inside the 768 layout viewport but below the 400 visual viewport.
+  withMockedRect(anchor, { top: 500, left: 50, right: 250, bottom: 530, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  // Anchor still visible -> no close...
+  assert.equal(calls, 0)
+  // ...but the visual viewport still drives placement: no room below 400, so
+  // the popup flips above (proves maxHeight/placement use the visible area).
+  assert.equal(floating.getAttribute('data-placement'), 'above')
+  p.detach()
+})
+
+test('positioner auto-closes on scroll but NOT on resize (virtual keyboard)', () => {
+  const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  // Start in-viewport so the initial reposition does not close.
+  withMockedRect(anchor, { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  assert.equal(calls, 0)
+
+  // Trigger now sits below the layout viewport (jsdom innerHeight 768).
+  withMockedRect(anchor, { top: 900, left: 50, right: 250, bottom: 930, width: 200, height: 30 })
+  // A resize (virtual keyboard / URL bar / rotation) must NOT close: it changes
+  // available space, it does not mean the user scrolled the trigger away.
+  dom.window.dispatchEvent(new dom.window.Event('resize'))
+  assert.equal(calls, 0)
+  // A genuine scroll that took the trigger out of view MUST close.
+  dom.window.dispatchEvent(new dom.window.Event('scroll'))
+  assert.equal(calls, 1)
+  p.detach()
+})
+
+test('public reposition() never auto-closes, even when the anchor is out of view', () => {
+  setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  withMockedRect(anchor, { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  assert.equal(calls, 0)
+  // Trigger now out of view (e.g. keyboard pushed it). A list re-render after a
+  // search keystroke calls positioner.reposition() - it must NOT dismiss.
+  withMockedRect(anchor, { top: 900, left: 50, right: 250, bottom: 930, width: 200, height: 30 })
+  p.reposition()
+  assert.equal(calls, 0)
+  p.detach()
+})
+
 test('positioner calls onHide when anchor is clipped above a scroll container', () => {
   setupDom('<!doctype html><html><body><div id="container" style="overflow-y:auto;height:200px;"><div id="anchor"></div></div><div id="floating"></div></body></html>')
   const container = document.getElementById('container')!

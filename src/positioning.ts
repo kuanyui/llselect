@@ -162,8 +162,8 @@ export interface Positioner {
 /** Options passed to {@link createPositioner}. */
 export interface PositionerOptions {
   /**
-   * Called when the anchor becomes invisible (fully outside the viewport,
-   * or fully clipped by a scrollable ancestor). Typical use: close the
+   * Called when the anchor becomes invisible (fully outside the layout
+   * viewport, or fully clipped by a scrollable ancestor). Typical use: close the
    * floating element so it does not hang in space without a visible trigger.
    */
   onHide?: () => void
@@ -206,7 +206,7 @@ function getVisibleViewport(): { width: number; height: number } {
  * Behavior: sets `floating` to `position: fixed`, listens to window scroll
  * (capture phase, so any ancestor scroll is caught), window resize, and
  * `ResizeObserver` on both elements. On every reposition: if the anchor is
- * outside the viewport or clipped by a scrollable ancestor and `onHide` is
+ * outside the layout viewport or clipped by a scrollable ancestor and `onHide` is
  * provided, calls `onHide` and skips style updates. Otherwise applies the
  * coordinates from {@link computePosition} and sets `data-placement` on
  * `floating` for CSS hooks.
@@ -222,19 +222,29 @@ export function createPositioner(
   let attached = true
   const widthPolicy: WidthPolicy = options?.widthPolicy ?? 'match-trigger'
 
-  function reposition(): void {
+  // `allowHide`: whether this reposition may invoke `onHide` (auto-close).
+  // Only scroll-driven repositions (and the initial placement) close the popup
+  // when the anchor leaves view; resize-driven ones never do - see onResize.
+  function reposition(allowHide: boolean): void {
     if (!attached) { return }
     const rect = anchor.getBoundingClientRect()
     const { width: viewportWidth, height: viewportHeight } = getVisibleViewport()
+    // Visibility test uses the LAYOUT viewport (window.innerWidth/Height), NOT
+    // the visual viewport. A virtual keyboard / URL bar shrinks the visual
+    // viewport from the bottom without scrolling the anchor away, while
+    // getBoundingClientRect reports layout-viewport coords - comparing the two
+    // spaces would treat a lower-screen anchor as "scrolled out" and close the
+    // popup the instant the keyboard opens. The visual viewport still drives
+    // computePosition below (maxHeight clamps to the actually-visible area).
     // Strict comparisons so an unsized anchor at (0,0,0,0) - common in jsdom
     // or before layout - is treated as "in viewport, no rect yet" rather than
     // "fully above/left of viewport".
     const outOfViewport =
       rect.bottom < 0 ||
-      rect.top > viewportHeight ||
+      rect.top > window.innerHeight ||
       rect.right < 0 ||
-      rect.left > viewportWidth
-    if ((outOfViewport || isClippedByAncestor(anchor, rect)) && options?.onHide) {
+      rect.left > window.innerWidth
+    if (allowHide && (outOfViewport || isClippedByAncestor(anchor, rect)) && options?.onHide) {
       options.onHide()
       return
     }
@@ -264,8 +274,14 @@ export function createPositioner(
     floating.setAttribute('data-placement', result.placement)
   }
 
-  const onScroll = (): void => reposition()
-  const onResize = (): void => reposition()
+  // Scroll = the anchor moving through the viewport: honor onHide so a popup
+  // whose trigger scrolled away is dismissed.
+  const onScroll = (): void => reposition(true)
+  // Resize-class events (window resize, visualViewport resize from a virtual
+  // keyboard / URL bar, element resize) change available space but do NOT mean
+  // the user scrolled the trigger away. Reposition / re-clamp only, never close
+  // - otherwise opening the on-screen keyboard would instantly dismiss the popup.
+  const onResize = (): void => reposition(false)
 
   // Capture phase catches scrolls inside any ancestor scrollable container.
   window.addEventListener('scroll', onScroll, { passive: true, capture: true })
@@ -283,15 +299,18 @@ export function createPositioner(
 
   let ro: ResizeObserver | undefined
   if (typeof ResizeObserver !== 'undefined') {
-    ro = new ResizeObserver(reposition)
+    ro = new ResizeObserver(() => reposition(false))
     ro.observe(anchor)
     ro.observe(floating)
   }
 
-  reposition()
+  reposition(true)
 
   return {
-    reposition,
+    // Public re-place: never auto-closes. Called after list re-renders (incl.
+    // every search keystroke), where dismissing would be wrong - especially on
+    // mobile with the keyboard open. Dismissal is a scroll-only decision.
+    reposition: () => reposition(false),
     detach(): void {
       attached = false
       window.removeEventListener('scroll', onScroll, true)
