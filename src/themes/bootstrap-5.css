@@ -55,6 +55,10 @@
   white-space: nowrap;
 }
 
+.llselect-trigger[data-empty='true'] .llselect-trigger-content {
+  color: var(--bs-secondary-color, #6c757d);
+}
+
 .llselect-trigger-arrow {
   display: inline-flex;
   align-items: center;

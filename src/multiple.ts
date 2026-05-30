@@ -133,6 +133,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
     } else {
       this.triggerContentEl.textContent = `${n} / ${total} selected`
     }
+    this.triggerEl.setAttribute('data-empty', n === 0 ? 'true' : 'false')
   }
 
   /** Toggle on click. Multi mode keeps the popup open. */

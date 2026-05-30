@@ -48,6 +48,10 @@
   white-space: nowrap;
 }
 
+.llselect-trigger[data-empty='true'] .llselect-trigger-content {
+  color: #6c757d;
+}
+
 .llselect-trigger-arrow {
   display: inline-flex;
   align-items: center;

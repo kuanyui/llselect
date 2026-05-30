@@ -26,6 +26,17 @@ test('setChosenItem updates state, trigger label, and fires onChange', () => {
   assert.deepEqual(fired, ['b'])
 })
 
+test('data-empty attribute toggles between placeholder and chosen state (single)', () => {
+  const sel = new LLSelectSingle<string>(mount())
+  // Nothing chosen on construction -> placeholder shown -> data-empty='true'.
+  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'true')
+  sel.setItems(['a', 'b'])
+  sel.setChosenItem('a')
+  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'false')
+  sel.setChosenItem(undefined)
+  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'true')
+})
+
 test('setChosenItem with same value does not fire onChange', () => {
   const fired: Array<string | undefined> = []
   const sel = new LLSelectSingle<string>(mount(), { onChange: v => fired.push(v) })

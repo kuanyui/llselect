@@ -64,9 +64,11 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
 
   /** Renders the chosen item's label, or the placeholder when empty. */
   protected override renderTriggerContent(): void {
-    this.triggerContentEl.textContent = this.chosenItem === undefined
+    const empty = this.chosenItem === undefined
+    this.triggerContentEl.textContent = empty
       ? this.settings.placeholder
-      : this.templateItem(this.chosenItem)
+      : this.templateItem(this.chosenItem!)
+    this.triggerEl.setAttribute('data-empty', empty ? 'true' : 'false')
   }
 
   /** Pick this item as the chosen item and close the popup. */

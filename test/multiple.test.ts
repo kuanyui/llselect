@@ -16,6 +16,16 @@ test('initial state: empty chosen, placeholder, no aria-selected items', () => {
   assert.equal(sel.triggerContentEl.textContent, 'Pick')
 })
 
+test('data-empty attribute toggles between placeholder and chosen state (multi)', () => {
+  const sel = new LLSelectMultiple<string>(mount())
+  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'true')
+  sel.setItems(['a', 'b'])
+  sel.toggleItem('a')
+  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'false')
+  sel.toggleItem('a')
+  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'true')
+})
+
 test('popup list has aria-multiselectable="true"', () => {
   const sel = new LLSelectMultiple<string>(mount())
   assert.equal(sel.popupListEl.getAttribute('aria-multiselectable'), 'true')
