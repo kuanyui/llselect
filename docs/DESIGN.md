@@ -148,3 +148,39 @@ is in `A11Y.md`.
   `filterFn: (item, query) => boolean | null` (default `null` =
   case-insensitive substring on `templateItem`). IME-aware filtering
   (composition-guarded) is part of the contract; see `A11Y.md`.
+
+## Popup width policy
+
+Locked: the positioner sets `popupEl.style.width` to the trigger's measured
+width on every reposition (`positioning.ts`). Long items wrap (themes default
+to `white-space: normal`); long chosen text in the trigger is ellipsized
+(`overflow: hidden; text-overflow: ellipsis` on `.llselect-trigger-content`).
+
+### Empirical baselines
+
+Tested 2026 against the native control and select2 on Firefox + Chromium.
+Captured here so future width / overflow discussions have a shared reference.
+
+| implementation | trigger width | popup width vs trigger | long items in popup | long chosen in trigger |
+|---|---|---|---|---|
+| native `<select>`, no CSS width | grows to fit widest item | Chromium: = trigger, can overflow viewport (popup escapes). Firefox: popup content gets trimmed (render anomaly observed). | n/a (trigger is already wide) | n/a |
+| native `<select>`, CSS width set | fixed by CSS, overflow clipped (no ellipsis) | Chromium: independent of trigger, can overflow viewport. Firefox: popup content gets trimmed. | n/a / depends on browser | clipped |
+| select2, no CSS width | grows to fit widest item | matches trigger (with an internal JS cap around ~1021px; appears built-in) | wrap; trigger gets ellipsis if wider than the cap | n/a / ellipsis past cap |
+| select2, CSS width set | fixed by CSS, overflow ellipsized | matches trigger | wrap (potentially many lines) | ellipsis |
+| **llselect** | fixed by CSS only - library never auto-fits to widest item | always = trigger width (positioner inline `width`) | wrap (default theme) | ellipsis (default theme) |
+
+### Rationale
+
+1. **Predictable.** Trigger width is whatever the user's CSS says it is; the
+   library never measures items and never auto-resizes the trigger or the
+   popup. No "popup randomly wide because one row is long" surprise.
+2. **No viewport-overflow surprise.** Because popup matches trigger, the popup
+   never sticks out horizontally past the trigger's footprint.
+3. **Long-text full-fidelity by default.** Items wrap rather than truncate, so
+   no information is hidden behind a hover tooltip.
+4. **Users opt in to other policies via their own CSS** - e.g. set
+   `.llselect-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }`
+   plus a `title` attribute in `createItemEl` for hover preview. The library
+   does not add an API setting for this until a real need emerges; if
+   popup-grows-to-content is genuinely wanted later, a setting
+   `popupWidthPolicy: 'anchor' | 'auto'` would gate the positioner.

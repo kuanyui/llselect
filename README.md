@@ -5,17 +5,38 @@ A JavaScript library to replace HTML native `<select>`.
 This is not mean to provide a full-bundle select (such `select2.js`). This provide a minimal but flexible library which implement `<select>` in JavaScript, which you can easily wrap & integrate it into your existing UI library / framework / style.
 
 # Features
-- Minimal, flexible, performance.
-- Always lazy render the DOM of `<option>`.
+- Lazy rendering: the DOM of items list is rendered only when the popup open.
+- Do not rely on native `<select>` to store data. (so you can directly use `number` or any type of JS value as data model, without type-casting hell anymore)
 - Native TypeScript support.
-- Customizable `select / option` HTML renderer function
+- Customizable HTML renderer function.
+- Search input.
 
-# Acknowledgement
+# Design Decisions
+## Principles
+1. Minimal - No external JS / CSS dependency. Auditable.
+2. Performance - blazing fast.
+3. Flexible - Easy to integrate into existing project / library / style.
+4. Explicit
+  - Explicit better than implicit - API names are long but no surprise nor ambiguity.
+  - Single-select and multiple-select are handled by separate classes to avoid ambiguous / too-complicated / over-abstraction API (e.g. use the same `T[]` to model single / multiple select).
+
+## Limitations
+- **No sanitizer is provided by default. Please use `DOMPurify` by yourself.**
+- No asynchronize data fetching API. Please do it by yourself.
+- No virtual scroll. That's too complicated; `llselect` is merely meant to be a replacement of native `<select>`.
+- No "alphabet suffix searching" (like native `<select>`) because this is totally unusable for eastern-Asia languages. If you really want search, please use `searchable` option.
+- Legacy browser is not handled.
+
+# Acknowledgment
 I had this idea since 2024 and wrote some drafts for this. But I have no time to implement this so the draft was abandoned.
 
 Now with Claude Code, I try to finish this with it.
 
-This project heavily rely on LLM agent.
+## LLM Disclosures
+
+This project heavily rely on LLM agent. >= 99% main working codes are directly written by LLM.
+
+I review all modifications via `git diff` before `git commit` as possible as I can. I tried to provide an usable software, but **I still cannot provide any warranty.**
 
 # License
 Copyright © 2024, 2026 kuanyui (ono ono)
