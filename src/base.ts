@@ -210,6 +210,12 @@ export abstract class LLSelectBase<T = unknown> {
   private outsideHandler: ((ev: Event) => void) | undefined
   private focusOutHandler: ((ev: FocusEvent) => void) | undefined
   /**
+   * Block-mode only. Suppresses the browser's default focus shift on outside
+   * mousedown so the focusout-close path cannot race ahead of the click
+   * capture and detach it before the click fires.
+   */
+  private blockMouseDownHandler: ((ev: Event) => void) | undefined
+  /**
    * Element that owns `aria-activedescendant` and receives keydown for option
    * navigation. Equals the search input when `searchable: true`, else the
    * trigger. Set once in the constructor.
@@ -633,6 +639,22 @@ export abstract class LLSelectBase<T = unknown> {
       }
       document.addEventListener('mousedown', this.outsideHandler)
     } else {
+      // 'block' needs TWO listeners because of an event-ordering race with
+      // the focusout-close path:
+      //   mousedown outside -> browser shifts focus to the clicked target ->
+      //   focusout fires on trigger -> focusOutHandler closes the popup ->
+      //   detachOutsideClick removes the click capture below -> click then
+      //   reaches the target and fires its own handler (regression).
+      // The mousedown capture below preventDefaults the focus shift on
+      // outside mousedowns, so no focusout fires and the click capture stays
+      // attached long enough to swallow the click.
+      this.blockMouseDownHandler = (ev: Event) => {
+        const t = ev.target
+        if (t instanceof Node && !this.rootEl.contains(t)) {
+          ev.preventDefault()
+        }
+      }
+      document.addEventListener('mousedown', this.blockMouseDownHandler, true)
       // capture phase so we run before the target's own listeners; swallow
       // the click so the underlying button/link/etc. does not fire.
       this.outsideHandler = (ev: Event) => {
@@ -648,13 +670,18 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   private detachOutsideClick(): void {
-    if (!this.outsideHandler) { return }
-    if (this.settings.outsideClickBehavior === 'pass-through') {
-      document.removeEventListener('mousedown', this.outsideHandler)
-    } else {
-      document.removeEventListener('click', this.outsideHandler, true)
+    if (this.outsideHandler) {
+      if (this.settings.outsideClickBehavior === 'pass-through') {
+        document.removeEventListener('mousedown', this.outsideHandler)
+      } else {
+        document.removeEventListener('click', this.outsideHandler, true)
+      }
+      this.outsideHandler = undefined
     }
-    this.outsideHandler = undefined
+    if (this.blockMouseDownHandler) {
+      document.removeEventListener('mousedown', this.blockMouseDownHandler, true)
+      this.blockMouseDownHandler = undefined
+    }
   }
 
   /**

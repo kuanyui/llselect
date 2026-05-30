@@ -48,6 +48,38 @@ test('block: click outside closes; outside button does NOT receive click', () =>
   assert.deepEqual(calls, [])
 })
 
+test('block: focus shifting on mousedown before click does not unhook the block (regression)', () => {
+  // Real-browser order is: mousedown -> browser focus shift -> focusout on
+  // the previously-focused element -> mouseup -> click. Without the
+  // mousedown blocker, focusout would close the popup (and detach the click
+  // capture handler) BEFORE click fires, letting the outside button receive
+  // the click. The previous block test missed this because `btn.click()` in
+  // jsdom does not perform the focus shift step. Here we drive the sequence
+  // explicitly: dispatch mousedown, simulate the focus shift only if the
+  // browser would have done it (i.e. mousedown was not preventDefaulted),
+  // then click.
+  setupDom('<!doctype html><html><body><div id="mount"></div><button id="other">click me</button></body></html>')
+  const mount = document.getElementById('mount')!
+  const btn = document.getElementById('other') as HTMLButtonElement
+  const calls: number[] = []
+  btn.addEventListener('click', () => { calls.push(1) })
+  const sel = new LLSelectSingle<string>(mount, { outsideClickBehavior: 'block' })
+  sel.setItems(['a', 'b'])
+  sel.triggerEl.focus()
+  sel.open()
+
+  const md = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+  btn.dispatchEvent(md)
+  if (!md.defaultPrevented) {
+    // The browser would have shifted focus and fired focusout. Simulate that.
+    sel.triggerEl.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: btn }))
+  }
+  btn.click()
+
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
+  assert.deepEqual(calls, [])
+})
+
 test('click on trigger itself does not trigger outside-close (pass-through)', () => {
   const { sel } = mountWithButton()
   sel.open()
