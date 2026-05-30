@@ -19,13 +19,17 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
   Prefix typeahead maps keys to characters, so it is useless for CJK / IME
   input; the search box (with IME-aware filtering) is the single "type to find"
   mechanism.
-- [ ] **Phase 8** - `filterFn` + search input (combobox host moves to the input, trigger becomes a `button`; see `A11Y.md`). The only type-to-find path.
+- [x] **Phase 8** - `filterFn` + search input (combobox host moves to the input, trigger becomes a `button`; see `A11Y.md`). The only type-to-find path.
 - [ ] **Phase 9** - optgroup support (`role="group"` + `role="presentation"` label, keyboard skips labels)
 
-A11Y model (decided, see `A11Y.md`): APG "combobox with list autocomplete" -
-focus on a single always-present input (readonly when filtering is off), list
-driven by `aria-activedescendant`, Tab leaves the widget (native-select-like),
-select-all is the first listbox `option`, Esc clears the filter then closes.
+A11Y model (locked, see `A11Y.md`): two ARIA modes picked by `searchable`.
+`searchable: true` uses APG "Combobox with list autocomplete" (focus on the
+search input, `aria-activedescendant` on the input, trigger is a `button`).
+`searchable: false` keeps APG "Combobox (select-only)" (focus on the trigger,
+trigger keeps `role="combobox"`). The input is always built into the DOM, just
+`hidden` when off, so a future runtime toggle (e.g. `minimumResultsForSearch`)
+is a CSS flip rather than a DOM rebuild. Tab leaves the widget; Esc clears the
+filter then closes; filtering is IME-aware (composition-guarded).
 
 ## API design decisions (open)
 
