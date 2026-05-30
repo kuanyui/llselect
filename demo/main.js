@@ -193,7 +193,7 @@ const selMultiCheckbox = new CheckboxMultiSelect(
 selMultiCheckbox.setItems(COUNTRIES)
 //#endregion
 
-//#region 6.1
+//#region 6.2
 const outLongWrap = document.getElementById('out-long-wrap')
 const selLongWrap = new LLSelectSingle(
   document.getElementById('mount-long-wrap'),
@@ -206,8 +206,8 @@ selLongWrap.setItems(LONG_NAMES)
 selLongWrap.setChosenItem(LONG_NAMES[0])  // preselect the longest entry so trigger ellipsis is visible on load
 //#endregion
 
-//#region 6.2
-// Same data as 6.1, plus:
+//#region 6.3
+// Builds on 6.2 (constrained trigger), plus:
 //  - scoped CSS in demo/style.css gives this instance ellipsis on items.
 //  - a subclass adds `title` so hover reveals the full text. (The library
 //    deliberately does NOT add `title` automatically, so users can plug in
@@ -231,7 +231,7 @@ selLongEllipsis.setItems(LONG_NAMES)
 selLongEllipsis.setChosenItem(LONG_NAMES[0])
 //#endregion
 
-//#region 6.3
+//#region 6.1
 // No demo CSS, no subclass. Library does not constrain widths, so the
 // preselected long label expands the trigger to its natural width and
 // overflows the layout - that overflow IS the demonstration.
@@ -245,6 +245,22 @@ const selLongNoConstraint = new LLSelectSingle(
 )
 selLongNoConstraint.setItems(LONG_NAMES)
 selLongNoConstraint.setChosenItem(LONG_NAMES[0])
+//#endregion
+
+//#region 6.4
+// Trigger constrained the same way as 6.1, but popup uses `fit-content` so
+// it grows to fit the widest label and can be wider than the trigger.
+const outLongFitContent = document.getElementById('out-long-fitcontent')
+const selLongFitContent = new LLSelectSingle(
+  document.getElementById('mount-long-fitcontent'),
+  {
+    placeholder: 'Pick a country',
+    popupWidthPolicy: 'fit-content',
+    onChange: (v) => { outLongFitContent.textContent = 'chosen: ' + JSON.stringify(v) },
+  }
+)
+selLongFitContent.setItems(LONG_NAMES)
+selLongFitContent.setChosenItem(LONG_NAMES[0])
 //#endregion
 
 //#region 7.1

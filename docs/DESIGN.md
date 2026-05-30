@@ -184,10 +184,14 @@ Captured here so future width / overflow discussions have a shared reference.
    so it never fights third-party tooltip libraries (Tippy / Floating UI /
    etc.). Users who pick ellipsis-on-items pick their own tooltip mechanism
    (subclass adding `el.title`, or a custom tooltip lib, or none at all).
-   The library does not add an API setting for the width policy itself
-   until a real need emerges; if popup-grows-to-content is genuinely wanted
-   later, a setting `popupWidthPolicy: 'anchor' | 'auto'` would gate the
-   positioner.
+5. **Popup-only width opt-in is available via setting**
+   `popupWidthPolicy: 'match-trigger' | 'fit-content'` (default `'match-trigger'`).
+   `'fit-content'` lets the popup grow to its content's natural width; if
+   the popup would overflow the viewport's right edge it shifts left
+   automatically (so `popup.x` can become smaller than `trigger.x`), and the
+   popup's width is clamped to `viewport - 2 * VIEWPORT_PADDING`. The
+   setting NEVER touches the trigger's width - that stays entirely
+   CSS-driven.
 
 The trigger ellipsizes its chosen-text by default in every shipped theme
 (`.llselect-trigger-content { white-space: nowrap; overflow: hidden;

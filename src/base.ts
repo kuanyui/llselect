@@ -3,7 +3,7 @@
 // LLSelectMultiple. Subclasses own chosen-state and decide what happens on
 // item click.
 
-import { createPositioner, type Positioner } from './positioning.js'
+import { createPositioner, type Positioner, type WidthPolicy } from './positioning.js'
 import {
   LLSelectAction,
   ensureVisibleInScroll,
@@ -65,6 +65,17 @@ export interface LLSelectBaseSettings<T> {
    * custom function for fuzzy / domain-specific matching.
    */
   filterFn: ((item: T, query: string) => boolean) | null
+  /**
+   * How the popup decides its width. Does NOT affect the trigger - trigger
+   * width is always whatever your CSS says.
+   *
+   * - `'match-trigger'` (default): popup width equals trigger width; long
+   *   labels wrap inside the popup.
+   * - `'fit-content'`: popup width grows to its own content (items, search
+   *   input, ...). May be wider than trigger. Auto-shifts left and width-
+   *   clamps when the natural width would overflow the viewport.
+   */
+  popupWidthPolicy: WidthPolicy
 }
 
 /**
@@ -246,6 +257,7 @@ export abstract class LLSelectBase<T = unknown> {
       renderArrowFn: settings?.renderArrowFn ?? null,
       searchable: settings?.searchable ?? false,
       filterFn: settings?.filterFn ?? null,
+      popupWidthPolicy: settings?.popupWidthPolicy ?? 'match-trigger',
     }
     this.classIdMap = makeClassIdMap(this.settings.cssClassPrefix)
 
@@ -333,6 +345,7 @@ export abstract class LLSelectBase<T = unknown> {
     this.renderPopupList()
     this.positioner = createPositioner(this.triggerEl, this.popupEl, {
       onHide: () => this.close(),
+      widthPolicy: this.settings.popupWidthPolicy,
     })
     this.attachOutsideClick()
     this.attachFocusOut()

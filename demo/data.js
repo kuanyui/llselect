@@ -43,10 +43,11 @@ export const HUGE_ITEMS = Array.from({ length: 10000 }, (_, i) => {
   return `Row ${String(i + 1).padStart(5, '0')}`
 })
 
-// Mixed short / very long labels for the trigger-overflow demos (section 6).
+// Mixed short / very long labels for the width-policy demos (section 6).
 // [0] is intentionally absurdly long so the default-chosen entry overflows
 // the constrained trigger and forces ellipsis to be visible without any
-// manual interaction.
+// manual interaction. Enough total entries that the popup gets a visible
+// vertical scrollbar in the default theme.
 export const LONG_NAMES = [
   'A really really really really long sentence that absolutely will not fit in any reasonably-sized trigger box, no matter how wide your monitor happens to be today',
   'Japan',
@@ -57,4 +58,15 @@ export const LONG_NAMES = [
   'United States of America',
   'Czech Republic (officially Czechia since 2016)',
   'Democratic Republic of the Congo',
+  'Argentine Republic',
+  'Bolivarian Republic of Venezuela',
+  'Eastern Republic of Uruguay',
+  'Hellenic Republic',
+  'Independent State of Papua New Guinea',
+  'Italian Republic',
+  'Kingdom of Saudi Arabia',
+  'Plurinational State of Bolivia',
+  'Republic of South Africa',
+  'Saint Vincent and the Grenadines',
+  'Trinidad and Tobago',
 ]

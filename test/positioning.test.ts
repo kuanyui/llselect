@@ -85,6 +85,81 @@ test('computePosition maxHeight is non-negative even in tiny viewport', () => {
   assert.ok(r.maxHeight >= 0)
 })
 
+// --- widthPolicy: 'fit-content' ------------------------------------
+
+test('fit-content: width = max(anchor, natural) when it fits within the viewport', () => {
+  const r = computePosition({
+    anchorRect: { ...ANCHOR_AT_TOP, width: 200, left: 50, right: 250 },
+    viewportWidth: 1024,
+    viewportHeight: 768,
+    floatingHeight: 200,
+    widthPolicy: 'fit-content',
+    floatingNaturalWidth: 500,
+  })
+  assert.equal(r.width, 500)
+  // popup fits to the right (left=50 + width=500 = 550, well under viewport)
+  assert.equal(r.left, 50)
+})
+
+test('fit-content: never shrinks below anchor width even if natural width is smaller', () => {
+  const r = computePosition({
+    anchorRect: { ...ANCHOR_AT_TOP, width: 300, left: 50, right: 350 },
+    viewportWidth: 1024,
+    viewportHeight: 768,
+    floatingHeight: 200,
+    widthPolicy: 'fit-content',
+    floatingNaturalWidth: 120,
+  })
+  assert.equal(r.width, 300)
+})
+
+test('fit-content: shifts left when popup would overflow the viewport right edge', () => {
+  // anchor near right edge: left=800, viewport=1024.
+  // natural=300 -> popup wants 800..1100, overflow by 84 (>1024-8).
+  // shift so right edge sits at 1024 - 8 = 1016 -> left = 716.
+  const r = computePosition({
+    anchorRect: { top: 100, bottom: 130, left: 800, right: 900, width: 100, height: 30 },
+    viewportWidth: 1024,
+    viewportHeight: 768,
+    floatingHeight: 200,
+    widthPolicy: 'fit-content',
+    floatingNaturalWidth: 300,
+  })
+  assert.equal(r.width, 300)
+  assert.equal(r.left, 1024 - 8 - 300)  // 716
+  assert.ok(r.left < 800)  // popup.x is now smaller than anchor.left
+})
+
+test('fit-content: clamps width to viewport - 2*padding when natural is larger', () => {
+  // viewport=400, max allowed = 400 - 16 = 384. natural=2000 -> clamp 384.
+  const r = computePosition({
+    anchorRect: { top: 100, bottom: 130, left: 50, right: 150, width: 100, height: 30 },
+    viewportWidth: 400,
+    viewportHeight: 600,
+    floatingHeight: 200,
+    widthPolicy: 'fit-content',
+    floatingNaturalWidth: 2000,
+  })
+  assert.equal(r.width, 384)
+  // Width fills viewport (minus margins). Left edge is clamped to left margin (8).
+  assert.equal(r.left, 8)
+})
+
+test('match-trigger remains the explicit default behavior (no horizontal shift)', () => {
+  // Anchor near right edge with `match-trigger` should NOT shift left;
+  // popup stays the same width as the trigger.
+  const r = computePosition({
+    anchorRect: { top: 100, bottom: 130, left: 900, right: 1000, width: 100, height: 30 },
+    viewportWidth: 1024,
+    viewportHeight: 768,
+    floatingHeight: 200,
+    widthPolicy: 'match-trigger',
+    floatingNaturalWidth: 999,  // ignored for match-trigger
+  })
+  assert.equal(r.width, 100)
+  assert.equal(r.left, 900)
+})
+
 function withMockedRect(el: HTMLElement, rect: Partial<AnchorRect>): void {
   const full: AnchorRect = {
     top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, ...rect,

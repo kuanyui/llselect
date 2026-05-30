@@ -254,7 +254,25 @@
     </p>
 
     <article>
-      <h3>6.1 Constrained trigger: long labels wrap; trigger ellipsizes the chosen text</h3>
+      <h3>6.1 No CSS width (baseline): trigger expands to fit, ellipsis never triggers</h3>
+      <p class="hint">
+        <strong>Demo CSS:</strong> none. The chosen long label expands the
+        trigger to its natural width and overflows the demo pane (and
+        possibly the page) - this is the policy in action: the library does
+        not constrain anything. Tidy layout is the caller's CSS job; the
+        next demos add CSS to bring this under control.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-long-noconstraint"></div>
+          <div class="out" id="out-long-noconstraint">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="6.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>6.2 Constrained trigger: long labels wrap; trigger ellipsizes the chosen text</h3>
       <p class="hint">
         <strong>Demo CSS:</strong> <code>#mount-long-wrap { max-width: 18rem }</code>.
         Longest label preselected, so trigger shows <code>...</code> on load.
@@ -265,12 +283,12 @@
           <div id="mount-long-wrap"></div>
           <div class="out" id="out-long-wrap">chosen: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="6.1"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="6.2"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>6.2 Constrained trigger + opt-in ellipsis on labels</h3>
+      <h3>6.3 Constrained trigger + opt-in ellipsis on labels</h3>
       <p class="hint">
         <strong>Demo CSS:</strong> same <code>max-width: 18rem</code>, plus
         <code>#mount-long-ellipsis .llselect-item { text-overflow: ellipsis }</code>.
@@ -283,24 +301,26 @@
           <div id="mount-long-ellipsis"></div>
           <div class="out" id="out-long-ellipsis">chosen: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="6.2"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="6.3"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>6.3 No CSS width: trigger expands to fit, ellipsis never triggers</h3>
+      <h3>6.4 <code>popupWidthPolicy: 'fit-content'</code>: popup grows beyond trigger</h3>
       <p class="hint">
-        <strong>Demo CSS:</strong> none. The chosen long label expands the
-        trigger to its natural width and overflows the demo pane (and
-        possibly the page) - this is the policy in action: the library does
-        not constrain anything. Tidy layout is the caller's CSS job.
+        <strong>Demo CSS:</strong> <code>#mount-long-fitcontent { max-width: 18rem }</code>
+        (same as 6.2). Trigger is still constrained and ellipsizes, but the
+        popup uses <code>popupWidthPolicy: 'fit-content'</code> so it expands to
+        the widest label. If the trigger is near the viewport's right edge,
+        the popup auto-shifts left (its <code>x</code> can drop below the
+        trigger's), and width clamps to the viewport.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
-          <div id="mount-long-noconstraint"></div>
-          <div class="out" id="out-long-noconstraint">chosen: (none)</div>
+          <div id="mount-long-fitcontent"></div>
+          <div class="out" id="out-long-fitcontent">chosen: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="6.3"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="6.4"><code></code></pre></details>
       </div>
     </article>
   </section>

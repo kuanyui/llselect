@@ -14,6 +14,12 @@ export interface AnchorRect {
 /** Whether the floating element sits below or above the anchor. */
 export type Placement = 'below' | 'above'
 
+/**
+ * How the floating element decides its width. See `LLSelectBaseSettings`
+ * (`popupWidthPolicy` field) for the user-facing contract.
+ */
+export type WidthPolicy = 'match-trigger' | 'fit-content'
+
 /** Input to the pure positioning calculation. */
 export interface PositionInput {
   anchorRect: AnchorRect
@@ -21,6 +27,13 @@ export interface PositionInput {
   viewportHeight: number
   /** Measured height of the floating element. Pass 0 if unknown. */
   floatingHeight: number
+  /** Width policy. Optional; default `'match-trigger'`. */
+  widthPolicy?: WidthPolicy
+  /**
+   * Floating element's natural (max-content) width in px. Only consulted when
+   * `widthPolicy === 'fit-content'`. Default `0`.
+   */
+  floatingNaturalWidth?: number
 }
 
 /** Result of {@link computePosition}: coordinates and chosen placement. */
@@ -39,13 +52,27 @@ const VIEWPORT_PADDING = 8
 /**
  * Compute where to place the floating element relative to the anchor.
  *
- * Prefers placing below; flips above when the floating element does not fit
- * below and either fits above or has more room above. When neither side
- * fits, picks the side with more space and clamps `maxHeight` accordingly.
- * Width always equals the anchor's width.
+ * Vertical: prefers placing below; flips above when it does not fit below and
+ * either fits above or has more room above. When neither side fits, picks the
+ * side with more space and clamps `maxHeight` accordingly.
+ *
+ * Horizontal: `widthPolicy === 'match-trigger'` (default) returns
+ * `width = anchor.width` and `left = anchor.left` (no collision handling -
+ * popup is the same width as trigger). `widthPolicy === 'fit-content'`
+ * returns `width = max(anchor.width, floatingNaturalWidth)`, clamps to
+ * `viewport - 2 * VIEWPORT_PADDING`, and shifts `left` so the popup never
+ * crosses the viewport's right or left margin - so `left` may end up smaller
+ * than `anchor.left`.
  */
 export function computePosition(input: PositionInput): PositionResult {
-  const { anchorRect, viewportHeight, floatingHeight } = input
+  const {
+    anchorRect,
+    viewportWidth,
+    viewportHeight,
+    floatingHeight,
+    widthPolicy = 'match-trigger',
+    floatingNaturalWidth = 0,
+  } = input
 
   const spaceBelow = viewportHeight - anchorRect.bottom - GAP - VIEWPORT_PADDING
   const spaceAbove = anchorRect.top - GAP - VIEWPORT_PADDING
@@ -72,13 +99,26 @@ export function computePosition(input: PositionInput): PositionResult {
     top = anchorRect.top - GAP - Math.min(floatingHeight, maxHeight)
   }
 
-  return {
-    top,
-    left: anchorRect.left,
-    width: anchorRect.width,
-    maxHeight,
-    placement,
+  let width: number
+  let left: number
+  if (widthPolicy === 'match-trigger') {
+    width = anchorRect.width
+    left = anchorRect.left
+  } else {
+    const desiredWidth = Math.max(anchorRect.width, floatingNaturalWidth)
+    const maxAvailable = viewportWidth - 2 * VIEWPORT_PADDING
+    width = Math.min(desiredWidth, Math.max(0, maxAvailable))
+    left = anchorRect.left
+    const rightEdge = viewportWidth - VIEWPORT_PADDING
+    if (left + width > rightEdge) {
+      left = rightEdge - width
+    }
+    if (left < VIEWPORT_PADDING) {
+      left = VIEWPORT_PADDING
+    }
   }
+
+  return { top, left, width, maxHeight, placement }
 }
 
 // Walk ancestors and check whether any clipping ancestor (overflow != visible)
@@ -127,6 +167,24 @@ export interface PositionerOptions {
    * floating element so it does not hang in space without a visible trigger.
    */
   onHide?: () => void
+  /**
+   * Width policy. Default `'match-trigger'` (preserve the pre-existing
+   * behaviour of `width = anchor.width`).
+   */
+  widthPolicy?: WidthPolicy
+}
+
+/**
+ * Measure the floating element's max-content (natural) width by briefly
+ * setting `width: max-content` and reading `offsetWidth`. Restores the prior
+ * inline width before returning. Used only in `'fit-content'` mode.
+ */
+function measureNaturalWidth(el: HTMLElement): number {
+  const prev = el.style.width
+  el.style.width = 'max-content'
+  const w = el.offsetWidth
+  el.style.width = prev
+  return w
 }
 
 /**
@@ -149,6 +207,7 @@ export function createPositioner(
   options?: PositionerOptions,
 ): Positioner {
   let attached = true
+  const widthPolicy: WidthPolicy = options?.widthPolicy ?? 'match-trigger'
 
   function reposition(): void {
     if (!attached) { return }
@@ -165,6 +224,9 @@ export function createPositioner(
       options.onHide()
       return
     }
+    const floatingNaturalWidth = widthPolicy === 'fit-content'
+      ? measureNaturalWidth(floating)
+      : 0
     const result = computePosition({
       anchorRect: {
         top: rect.top,
@@ -177,6 +239,8 @@ export function createPositioner(
       viewportWidth: window.innerWidth,
       viewportHeight: window.innerHeight,
       floatingHeight: floating.offsetHeight,
+      widthPolicy,
+      floatingNaturalWidth,
     })
     floating.style.position = 'fixed'
     floating.style.top = `${result.top}px`

@@ -237,11 +237,14 @@ pre[data-demo] code {
   gap: 0.4rem;
 }
 
-/* 6.1 + 6.2 long-items demos: constrain the trigger width so the chosen text
-   actually overflows (otherwise `inline-block` on `.llselect-root` would grow
-   to fit content and ellipsis would never trigger). */
+/* 6.1 / 6.2 / 6.4 width-policy demos: constrain the trigger width so the
+   chosen text actually overflows (otherwise `inline-block` on
+   `.llselect-root` would grow to fit content and ellipsis would never
+   trigger). 6.3 deliberately omits this constraint to show the unconstrained
+   behavior. */
 #mount-long-wrap,
-#mount-long-ellipsis {
+#mount-long-ellipsis,
+#mount-long-fitcontent {
   max-width: 18rem;
 }
 
