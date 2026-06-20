@@ -155,7 +155,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
     const fn = this.renderTriggerContentFn
     const custom = fn ? fn({ chosenItems: this.getChosenItems(), items: this.getItems() }) : null
     if (custom !== null) {
-      this.applyTriggerContent(custom)
+      this.commitTriggerContentReturnedByRenderer(custom)
       return
     }
     if (n === 0) {

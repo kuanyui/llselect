@@ -99,7 +99,7 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
     const fn = this.renderTriggerContentFn
     const custom = fn ? fn({ chosenItem: this.chosenItem, items: this.getItems() }) : null
     if (custom !== null) {
-      this.applyTriggerContent(custom)
+      this.commitTriggerContentReturnedByRenderer(custom)
       return
     }
     this.triggerContentEl.textContent = empty

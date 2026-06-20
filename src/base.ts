@@ -602,8 +602,20 @@ export abstract class LLSelectBase<T = unknown> {
     this.renderTriggerArrow()
   }
 
-  /** Write trigger content (string or element) into the content slot. */
-  protected applyTriggerContent(content: HTMLElement | string): void {
+  /**
+   * Take the content the `renderTriggerContentFn` renderer returned and put it
+   * into the DOM: write it into the trigger's content container
+   * (`triggerContentEl`), replacing whatever was there.
+   * - `string` -> set as `textContent` (plain text, NOT parsed as HTML);
+   * - `HTMLElement` -> inserted as-is via `replaceChildren`; you own the node.
+   * Only the content slot is touched; the sibling arrow slot is left intact.
+   *
+   * Called only by `renderTriggerContent` (in `LLSelectSingle` /
+   * `LLSelectMultiple`), and only when `renderTriggerContentFn` returned a
+   * non-null value. The default text paths (placeholder / `itemToString` /
+   * count summary) write `textContent` directly and never reach here.
+   */
+  protected commitTriggerContentReturnedByRenderer(content: HTMLElement | string): void {
     if (typeof content === 'string') {
       this.triggerContentEl.textContent = content
     } else {
