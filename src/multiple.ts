@@ -23,10 +23,14 @@ export interface LLSelectMultipleSettings<T> extends LLSelectBaseSettings<T> {
   onChange: (chosenItems: readonly T[]) => void
   /**
    * Render the trigger's content without subclassing - the setting equivalent
-   * of overriding `renderTriggerContent`. Receives the chosen items + items;
-   * return a string / element to display (e.g. tag chips), or `null` to use the
-   * default count summary. Checked before `renderTriggerContent`, so it wins
-   * over a subclass override.
+   * of overriding `renderTriggerContent`. Receives the chosen items + items.
+   * Return value (same convention as `renderItemContentFn`):
+   * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this for
+   *   real markup such as tag chips.
+   * - `string` - set as `textContent`, i.e. PLAIN TEXT, NOT parsed as HTML; any
+   *   tags in it would show literally. Build an element if you want markup.
+   * - `null` - use the default count summary.
+   * Checked before `renderTriggerContent`, so it wins over a subclass override.
    */
   renderTriggerContentFn?: (ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | string | null
 }

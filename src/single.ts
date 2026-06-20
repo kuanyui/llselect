@@ -23,10 +23,15 @@ export interface LLSelectSingleSettings<T> extends LLSelectBaseSettings<T> {
   onChange: (chosenItem: T | undefined) => void
   /**
    * Render the trigger's content without subclassing - the setting equivalent
-   * of overriding `renderTriggerContent`. Receives the chosen item + items;
-   * return a string / element to display, or `null` to use the default (chosen
-   * label / placeholder). Checked before `renderTriggerContent`, so it wins
-   * over a subclass override.
+   * of overriding `renderTriggerContent`. Receives the chosen item + items.
+   * Return value (same convention as `renderItemContentFn`):
+   * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this when
+   *   you need real markup (icon + text, etc.).
+   * - `string` - set as `textContent`, i.e. PLAIN TEXT, NOT parsed as HTML; any
+   *   tags in it would show literally. Build an element if you want markup.
+   * - `null` - use the default (chosen item's `itemToString`, or the placeholder
+   *   when nothing is chosen).
+   * Checked before `renderTriggerContent`, so it wins over a subclass override.
    */
   renderTriggerContentFn?: (ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | string | null
 }
