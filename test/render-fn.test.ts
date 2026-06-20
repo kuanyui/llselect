@@ -148,3 +148,101 @@ test('a subclass renderTriggerContent override replaces the setting (override wi
   sel.setChosenItem('a')
   assert.equal(sel.triggerContentEl.textContent, 'DERIVED') // override wins
 })
+
+// --- renderItemContentFn -----------------------------------------------------
+
+test('renderItemContentFn (element) fills the option; aria-label comes from itemToString', () => {
+  const sel = new LLSelectSingle<User>(mount(), {
+    compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: u => u.name,
+    renderItemContentFn: u => {
+      const span = document.createElement('span')
+      span.className = 'rich'
+      span.textContent = `[${u.name}]`
+      return span
+    },
+  })
+  sel.setItems([{ id: 1, name: 'Ann' }])
+  sel.open()
+  const opt = options(sel)[0]!
+  assert.equal(opt.querySelector('.rich')!.textContent, '[Ann]') // visible content
+  assert.equal(opt.getAttribute('aria-label'), 'Ann') // accessible name pinned to itemToString
+})
+
+test('renderItemContentFn (string) sets textContent and aria-label from itemToString', () => {
+  const sel = new LLSelectSingle<User>(mount(), {
+    compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: u => u.name,
+    renderItemContentFn: u => `<<${u.name}>>`,
+  })
+  sel.setItems([{ id: 1, name: 'Ann' }])
+  sel.open()
+  const opt = options(sel)[0]!
+  assert.equal(opt.textContent, '<<Ann>>')
+  assert.equal(opt.getAttribute('aria-label'), 'Ann')
+})
+
+test('renderItemContentFn returning null falls back to plain text, no aria-label', () => {
+  const sel = new LLSelectSingle<User>(mount(), {
+    compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: u => u.name,
+    renderItemContentFn: () => null,
+  })
+  sel.setItems([{ id: 1, name: 'Ann' }])
+  sel.open()
+  const opt = options(sel)[0]!
+  assert.equal(opt.textContent, 'Ann')
+  assert.equal(opt.getAttribute('aria-label'), null) // plain text is its own accessible name
+})
+
+test('without renderItemContentFn, options are plain text with no aria-label (back-compat)', () => {
+  const sel = new LLSelectSingle<User>(mount(), {
+    compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: u => u.name,
+  })
+  sel.setItems([{ id: 1, name: 'Ann' }])
+  sel.open()
+  const opt = options(sel)[0]!
+  assert.equal(opt.textContent, 'Ann')
+  assert.equal(opt.getAttribute('aria-label'), null)
+})
+
+test('multiple: option shell keeps aria-selected alongside the custom content + aria-label', () => {
+  const sel = new LLSelectMultiple<User>(mount(), {
+    compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: u => u.name,
+    renderItemContentFn: u => {
+      const span = document.createElement('span')
+      span.className = 'rich'
+      span.textContent = u.name
+      return span
+    },
+  })
+  sel.setItems([{ id: 1, name: 'Ann' }, { id: 2, name: 'Bob' }])
+  sel.setChosenItems([{ id: 1, name: 'Ann' }])
+  sel.open()
+  const opt = options(sel)[0]!
+  assert.ok(opt.querySelector('.rich')) // custom content present
+  assert.equal(opt.getAttribute('aria-label'), 'Ann') // base shell
+  assert.equal(opt.getAttribute('aria-selected'), 'true') // multiple shell, on top
+})
+
+test('rerenderPopupListItem re-runs renderItemContentFn (single-item update keeps rich content)', () => {
+  const sel = new LLSelectMultiple<User>(mount(), {
+    compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: u => u.name,
+    renderItemContentFn: u => {
+      const span = document.createElement('span')
+      span.className = 'rich'
+      span.textContent = u.name
+      return span
+    },
+  })
+  sel.setItems([{ id: 1, name: 'Ann' }, { id: 2, name: 'Bob' }])
+  sel.open()
+  sel.toggleItem({ id: 1, name: 'Ann' }) // toggles -> O(1) rerender of that row
+  const opt = options(sel)[0]!
+  assert.ok(opt.querySelector('.rich')) // rich content survives single-item rerender
+  assert.equal(opt.getAttribute('aria-selected'), 'true')
+  assert.equal(opt.getAttribute('aria-label'), 'Ann')
+})

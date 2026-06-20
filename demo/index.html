@@ -471,10 +471,56 @@
     </article>
   </section>
 
+  <section>
+    <h2>10. Customized renderer functions</h2>
+    <p class="hint">
+      Customize what each option renders via <code>renderItemContentFn</code>
+      (no subclass). It fills the option's VISIBLE content only; the library
+      keeps the option shell + ARIA and pins each option's <code>aria-label</code>
+      to <code>itemToString</code>, so you write zero <code>aria-*</code> and a
+      screen reader announces the plain label, not the decorative icon.
+    </p>
+
+    <article>
+      <h3>10.1 Single (icon + label rows)</h3>
+      <p class="hint">
+        Each row is an mdi icon + label. Inspect an option to see the
+        <code>role="option"</code> + <code>aria-label</code> the library added.
+        The trigger stays plain text (no auto-projection); give it an icon by
+        writing your own <code>renderTriggerContentFn</code>.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-rich-single"></div>
+          <div class="out" id="out-rich-single">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="10.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>10.2 Multiple (icon + label rows)</h3>
+      <p class="hint">
+        Same <code>renderItemContentFn</code> on a multiple: the option shell
+        carries <code>aria-selected</code> on top of the auto
+        <code>aria-label</code>, so AT announces "Python, selected" while the row
+        shows the icon. Compare with 5.4 (checkbox), which does the same via a
+        <code>createItemEl</code> subclass - the setting needs no subclass.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-rich-multi"></div>
+          <div class="out" id="out-rich-multi">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="10.2"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
+
   <div class="page-filler"></div>
 
   <section>
-    <h2>10. Near page bottom (flip up)</h2>
+    <h2>11. Near page bottom (flip up)</h2>
     <p class="hint">
       After the spacer above, this select sits near the viewport bottom; the
       popup should open upward (look for <code>data-placement="above"</code> on the popup).
@@ -484,7 +530,7 @@
         <div id="mount-bottom"></div>
         <div class="out" id="out-bottom">chosen: (none)</div>
       </div>
-      <details class="code-toggle"><summary>code</summary><pre data-demo="10"><code></code></pre></details>
+      <details class="code-toggle"><summary>code</summary><pre data-demo="11"><code></code></pre></details>
     </div>
   </section>
 

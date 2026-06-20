@@ -237,6 +237,13 @@ pre[data-demo] code {
   gap: 0.4rem;
 }
 
+/* 10.1 / 10.2 rich item content - icon + label row (used in the list rows). */
+.lang-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* 6.1 / 6.2 / 6.4 width-policy demos: constrain the trigger width so the
    chosen text actually overflows (otherwise `inline-block` on
    `.llselect-root` would grow to fit content and ellipsis would never

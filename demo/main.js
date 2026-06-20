@@ -1,5 +1,5 @@
 import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, chevronDownSvg, triangleDownSvg, checkboxSvg } from '../dist/index.mjs'
-import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES } from './data.js'
+import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, LANGUAGES } from './data.js'
 
 console.log('llselect v' + LLSELECT_VERSION)
 
@@ -57,6 +57,35 @@ const selUsers = new LLSelectSingle(
   }
 )
 selUsers.setItems(USERS)
+//#endregion
+
+//#region 10.1
+// renderItemContentFn fills each option's VISIBLE content (icon + label), no
+// subclass. The library still owns the option shell + aria: it pins each
+// option's aria-label to itemToString (the icon never reaches a screen reader),
+// so you write zero aria-*. The trigger stays plain text here - to give it an
+// icon too, write your own renderTriggerContentFn (there is no auto-projection).
+function languageRow(lang) {
+  const row = document.createElement('span')
+  row.className = 'lang-row'
+  const icon = document.createElement('i')
+  icon.className = `mdi mdi-${lang.icon}`
+  icon.setAttribute('aria-hidden', 'true')  // decorative; aria-label covers the name
+  row.append(icon, document.createTextNode(lang.name))
+  return row
+}
+const outRichSingle = document.getElementById('out-rich-single')
+const selRichSingle = new LLSelectSingle(
+  document.getElementById('mount-rich-single'),
+  {
+    placeholder: 'Pick a language',
+    compareFn: (a, b) => a.name === b.name,
+    itemToStringFn: (lang) => lang.name,      // accessible name + search text
+    renderItemContentFn: languageRow,         // visible content only
+    onChange: (v) => { outRichSingle.textContent = 'chosen: ' + (v ? v.name : '(none)') },
+  }
+)
+selRichSingle.setItems(LANGUAGES)
 //#endregion
 
 //#region 2.1
@@ -190,6 +219,26 @@ const selMultiCheckbox = new CheckboxMultiSelect(
   }
 )
 selMultiCheckbox.setItems(COUNTRIES)
+//#endregion
+
+//#region 10.2
+// Same renderItemContentFn, now on a multiple. The library adds aria-selected
+// to each option shell on top of the auto aria-label, so AT announces e.g.
+// "Python, selected" while the row shows the mdi icon. Reuses languageRow (1.3).
+const outRichMulti = document.getElementById('out-rich-multi')
+const selRichMulti = new LLSelectMultiple(
+  document.getElementById('mount-rich-multi'),
+  {
+    placeholder: 'Pick languages',
+    compareFn: (a, b) => a.name === b.name,
+    itemToStringFn: (lang) => lang.name,
+    renderItemContentFn: languageRow,
+    onChange: (chosen) => {
+      outRichMulti.textContent = 'chosen: ' + chosen.map((l) => l.name).join(', ')
+    },
+  }
+)
+selRichMulti.setItems(LANGUAGES)
 //#endregion
 
 //#region 6.2
@@ -431,7 +480,7 @@ selDisFocusable.setDisabled(true)
 selDisFocusable.triggerEl.setAttribute('title', 'Disabled, but Tab can still reach me')
 //#endregion
 
-//#region 10
+//#region 11
 const outBottom = document.getElementById('out-bottom')
 const selBottom = new LLSelectSingle(
   document.getElementById('mount-bottom'),

@@ -98,9 +98,38 @@ export interface LLSelectBaseSettings<T> {
    * - `null` (default) = `String(item)`.
    * - Read by the `itemToString` method's default; used for list text, the
    *   single trigger label, and the default filter.
-   * - For HTML content (icons etc.), subclass `createItemEl`.
+   * - For rich content (icons etc.), pass `renderItemContentFn`.
    */
   itemToStringFn: ((item: T) => string) | null
+  /**
+   * Item -> the rich visual content of its list row, without subclassing.
+   * - `null` (default) = plain text from `itemToString`.
+   * - Return an HTMLElement (inserted as-is; caller owns it) or a string (set
+   *   as `textContent`, which does not parse markup). `null` falls back to the
+   *   plain-text default.
+   * - Fills the VISIBLE content only. You never touch `aria-*`: when this
+   *   returns non-null the library sets the option's `aria-label` from
+   *   `itemToString`, so the accessible name + search text stay owned by
+   *   `itemToString` no matter what you render (icon-only, reordered, ...).
+   *   To make the spoken/searched text differ from the visible content, set the
+   *   two independently: `itemToStringFn` for the name/search,
+   *   `renderItemContentFn` for the look.
+   * - For full control of the option element (tag / wiring), subclass
+   *   `createItemEl` instead.
+   *
+   * @example
+   *   // List shows an icon + label; screen readers announce just the label.
+   *   itemToStringFn: (lang) => lang.name,
+   *   renderItemContentFn: (lang) => {
+   *     const row = document.createElement('span')
+   *     const icon = document.createElement('i')
+   *     icon.className = `mdi mdi-${lang.icon}`
+   *     icon.setAttribute('aria-hidden', 'true') // decorative
+   *     row.append(icon, lang.name)
+   *     return row
+   *   }
+   */
+  renderItemContentFn: ((item: T) => HTMLElement | string | null) | null
   /**
    * Fired right after the popup opens. A no-op `open()` (already open, or a
    * disabled control) does not fire it. Fires in ADDITION to the protected
@@ -306,6 +335,7 @@ export abstract class LLSelectBase<T = unknown> {
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
       itemToStringFn: settings?.itemToStringFn ?? null,
+      renderItemContentFn: settings?.renderItemContentFn ?? null,
       onOpen: settings?.onOpen ?? null,
       onClose: settings?.onClose ?? null,
     }
@@ -640,10 +670,14 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
-   * Build the DOM element for one item. Override if you need richer markup
-   * (e.g. icons, descriptions, HTML). The base implementation sets `id`,
-   * `role="option"`, a click handler, and writes `textContent` from
-   * {@link itemToString}.
+   * Build the DOM element for one item. The base implementation sets `id`,
+   * `role="option"`, a click handler, and fills the visible content via
+   * {@link renderItemContent} (which reads `renderItemContentFn`), falling
+   * back to `textContent` from {@link itemToString}. When the content is
+   * custom (non-null), the option's `aria-label` is set from `itemToString`
+   * so the accessible name stays the plain label. For one-off rich content
+   * (icons etc.) prefer the `renderItemContentFn` setting; override this only
+   * to control the whole element (tag, extra wiring).
    *
    * @param item - the item value
    * @param index - index in `this.items`; used to build a stable id so
@@ -654,7 +688,21 @@ export abstract class LLSelectBase<T = unknown> {
     el.id = `${this.classIdMap.triggerId}-item${index}`
     el.className = this.classIdMap.itemClass
     el.setAttribute('role', 'option')
-    el.textContent = this.itemToString(item)
+    const content = this.renderItemContent(item)
+    if (content === null) {
+      el.textContent = this.itemToString(item)
+    } else {
+      // Custom content fills the visuals only. The accessible name + search
+      // text always come from itemToString, so pin aria-label to it: stays
+      // consistent with the plain-text branch (textContent === itemToString)
+      // and the caller never touches aria-* themselves.
+      el.setAttribute('aria-label', this.itemToString(item))
+      if (typeof content === 'string') {
+        el.textContent = content
+      } else {
+        el.appendChild(content)
+      }
+    }
     // No `title` attribute by default: items wrap (themes default), so the
     // full label is already visible and a tooltip is redundant. Adding
     // `title` would also fight third-party tooltip libraries (Tippy etc.).
@@ -687,6 +735,16 @@ export abstract class LLSelectBase<T = unknown> {
    */
   protected itemToString(item: T): string {
     return this.settings.itemToStringFn ? this.settings.itemToStringFn(item) : String(item)
+  }
+
+  /**
+   * Item -> the visible content of its list row (icon + label etc.).
+   * - Default reads `renderItemContentFn`, else `null` so `createItemEl` uses
+   *   the plain-text default from `itemToString`.
+   * - Override only when extending; for one-off rich content pass the setting.
+   */
+  protected renderItemContent(item: T): HTMLElement | string | null {
+    return this.settings.renderItemContentFn ? this.settings.renderItemContentFn(item) : null
   }
 
   /** Whether `item` is disabled per `itemDisabledFn` (false when unset). */

@@ -70,3 +70,20 @@ export const LONG_NAMES = [
   'Saint Vincent and the Grenadines',
   'Trinidad and Tobago',
 ]
+
+// Object items for the rich item-content demos (1.3 / 5.5): each carries an
+// mdi icon name plus a display name.
+export const LANGUAGES = [
+  { name: 'JavaScript', icon: 'language-javascript' },
+  { name: 'TypeScript', icon: 'language-typescript' },
+  { name: 'Python', icon: 'language-python' },
+  { name: 'Rust', icon: 'language-rust' },
+  { name: 'Go', icon: 'language-go' },
+  { name: 'Ruby', icon: 'language-ruby' },
+  { name: 'Java', icon: 'language-java' },
+  { name: 'C++', icon: 'language-cpp' },
+  { name: 'C#', icon: 'language-csharp' },
+  { name: 'PHP', icon: 'language-php' },
+  { name: 'Swift', icon: 'language-swift' },
+  { name: 'Kotlin', icon: 'language-kotlin' },
+]
