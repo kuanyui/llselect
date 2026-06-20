@@ -41,8 +41,12 @@ export interface LLSelectBaseSettings<T> {
   /** Text shown in the trigger when nothing is selected. */
   placeholder: string
   /**
-   * Equality predicate for item values. Required for non-primitive `T`
-   * (the default uses `===`, which compares object references).
+   * Equality predicate for item values - return `true` when `a` and `b` are the
+   * same item.
+   * - Required for non-primitive `T` (the default `===` compares references).
+   * - Used for selection, dedup, and matching the chosen item back to the list.
+   * - Symmetric: do not depend on which argument is the candidate vs the
+   *   existing item.
    */
   compareFn: (a: T, b: T) => boolean
   /** See {@link LLSelectOutsideClickBehavior}. */
@@ -60,10 +64,14 @@ export interface LLSelectBaseSettings<T> {
    */
   searchable: boolean
   /**
-   * Predicate used by the search input. `null` (default) means the built-in
-   * case-insensitive substring match against the item's resolved label
-   * (`itemToStringFn` / `itemToString`). Pass a custom function for fuzzy /
-   * domain-specific matching.
+   * Predicate used by the search input; return `true` to keep the item.
+   * `null` (default) means the built-in case-insensitive substring match
+   * against the item's resolved label (`itemToStringFn` / `itemToString`).
+   * Pass a custom function for fuzzy / domain-specific matching.
+   * - `query` is the RAW input value: not trimmed and not lower-cased. Normalize
+   *   it yourself (the built-in lower-cases both sides; it does not trim).
+   * - Not called while the query is empty (an empty box shows every item), but a
+   *   whitespace-only query (e.g. `"  "`) does call it.
    */
   filterFn: ((item: T, query: string) => boolean) | null
   /**
@@ -97,7 +105,8 @@ export interface LLSelectBaseSettings<T> {
    * Item -> display string, without subclassing.
    * - `null` (default) = `String(item)`.
    * - Read by the `itemToString` method's default; used for list text, the
-   *   single trigger label, and the default filter.
+   *   single trigger label, the option's accessible name, and the default
+   *   filter. Inserted as `textContent` (plain text, NOT parsed as HTML).
    * - For rich content (icons etc.), pass `renderItemContentFn`.
    */
   itemToStringFn: ((item: T) => string) | null
