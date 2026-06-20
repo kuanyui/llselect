@@ -515,30 +515,21 @@ selBottom.setItems(COUNTRIES)
   if (target) target.innerHTML = highlightJs(dataSrc)
 }
 
-// Auto table of contents: id every section + article from its heading, then
-// fill the sticky #toc nav. Keeps the TOC in sync as demos are added/removed.
+// Auto table of contents: id every section from its <h2>, then fill the sticky
+// #toc nav (top-level sections only). Stays in sync as demos are added/removed.
 {
   const toc = document.getElementById('toc')
   const panel = document.getElementById('toc-panel')
   const slugify = (t) => t.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-  const addLink = (text, id, cls) => {
-    const a = document.createElement('a')
-    a.href = `#${id}`
-    a.textContent = text
-    a.className = cls
-    a.addEventListener('click', () => { panel.open = false })
-    toc.appendChild(a)
-  }
   document.querySelectorAll('section').forEach((sec) => {
     const h2 = sec.querySelector('h2')
     if (!h2) { return }
     sec.id = slugify(h2.textContent)
-    addLink(h2.textContent, sec.id, 'toc-h2')
-    sec.querySelectorAll('article > h3').forEach((h3) => {
-      const article = h3.closest('article')
-      article.id = slugify(h3.textContent)
-      addLink(h3.textContent, article.id, 'toc-h3')
-    })
+    const a = document.createElement('a')
+    a.href = `#${sec.id}`
+    a.textContent = h2.textContent
+    a.addEventListener('click', () => { panel.open = false })
+    toc.appendChild(a)
   })
 }
 
