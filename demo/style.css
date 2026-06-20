@@ -281,3 +281,57 @@ pre[data-demo] code {
 #mount-ind-css .llselect-trigger[data-state='open']::after {
   transform: rotate(180deg);
 }
+
+/* Table of contents in the sticky bar (auto-filled by main.js). */
+html { scroll-behavior: smooth; }
+section, article { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
+
+#toc-panel {
+  position: relative;
+  font-size: 0.85rem;
+}
+#toc-panel > summary {
+  cursor: pointer;
+  user-select: none;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #888;
+  border-radius: 4px;
+  background: #fafafa;
+  color: #333;
+  list-style: none;
+}
+#toc-panel > summary::-webkit-details-marker { display: none; }
+#toc-panel > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  transition: transform 0.15s;
+}
+#toc-panel[open] > summary::before { transform: rotate(90deg); }
+#toc-panel[open] > #toc {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  width: min(24rem, 90vw);
+  max-height: 70vh;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.4rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
+}
+#toc a {
+  display: block;
+  padding: 0.25rem 0.5rem;
+  color: #2456a6;
+  text-decoration: none;
+  border-radius: 3px;
+}
+#toc a:hover { background: #eef3fb; }
+#toc .toc-h3 {
+  padding-left: 1.5rem;
+  font-size: 0.92em;
+  color: #555;
+}
