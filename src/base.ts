@@ -422,7 +422,7 @@ export abstract class LLSelectBase<T = unknown> {
       this.query = ''
       this.searchInputEl.value = ''
       this.searchInputEl.setAttribute('aria-expanded', 'true')
-      this.applyFilter()
+      this.recomputeFilteredItems()
     }
     // `position: fixed` MUST be set before `hidden = false`. Otherwise the
     // popup is briefly an in-flow `display: flex` block while `renderPopupList`
@@ -538,7 +538,7 @@ export abstract class LLSelectBase<T = unknown> {
    */
   public setItems(items: T[]): void {
     this.items = items.slice()
-    if (this.settings.searchable) { this.applyFilter() }
+    if (this.settings.searchable) { this.recomputeFilteredItems() }
     if (this.isOpen) { this.renderPopupList() }
     this.afterItemsChange()
   }
@@ -661,7 +661,7 @@ export abstract class LLSelectBase<T = unknown> {
     if (this.focusedIndex >= list.length) {
       this.focusedIndex = list.length === 0 ? -1 : list.length - 1
     }
-    this.applyFocus()
+    this.syncFocusedIndexToDom()
   }
 
   /**
@@ -829,10 +829,18 @@ export abstract class LLSelectBase<T = unknown> {
     const clamped = Math.max(-1, Math.min(max, index))
     if (clamped === this.focusedIndex) { return }
     this.focusedIndex = clamped
-    this.applyFocus()
+    this.syncFocusedIndexToDom()
   }
 
-  private applyFocus(): void {
+  /**
+   * Make the DOM reflect `focusedIndex`: move the focused class onto the focused
+   * item element, point `aria-activedescendant` at it, and scroll it into view;
+   * when `focusedIndex` is -1 or out of range, clear the class and the attribute.
+   * Reads `itemEls`, so it only has an effect while the popup is open (the list
+   * exists). Called after `focusedIndex` changes (`setFocusedIndex`) and after
+   * the list is rebuilt (`renderPopupList`).
+   */
+  private syncFocusedIndexToDom(): void {
     if (this.focusedEl) {
       this.focusedEl.classList.remove(this.classIdMap.itemFocusedClass)
       this.focusedEl = undefined
@@ -1066,10 +1074,12 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
-   * Recompute `filteredItems` from current `items` and `query`. No-op when
-   * `searchable: false` (filtering is never used).
+   * Recompute `filteredItems` from the current `items` and `query`. Pure state
+   * update: does NOT touch the DOM (the caller re-renders the list separately).
+   * No-op when `searchable: false`; an empty query keeps every item. Called from
+   * `open()`, from `setItems()`, and on each search-input event.
    */
-  private applyFilter(): void {
+  private recomputeFilteredItems(): void {
     if (!this.settings.searchable) { return }
     const q = this.query
     this.filteredItems = q === '' ? this.items.slice() : this.items.filter(it => this.matchesQuery(it, q))
@@ -1083,7 +1093,7 @@ export abstract class LLSelectBase<T = unknown> {
   private onSearchInput(): void {
     if (this.composing) { return }
     this.query = this.searchInputEl.value
-    this.applyFilter()
+    this.recomputeFilteredItems()
     this.focusedIndex = -1
     this.renderPopupList()
     this.setFocusedIndex(0)
