@@ -488,10 +488,10 @@
     <article>
       <h3>10.1 Single (icon + label rows)</h3>
       <p class="hint">
-        Each row is an mdi icon + label. Inspect an option to see the
+        Each row is a colored mdi icon + label. Inspect an option to see the
         <code>role="option"</code> + <code>aria-label</code> the library added.
-        The trigger stays plain text (no auto-projection); give it an icon by
-        writing your own <code>renderTriggerContentFn</code>.
+        There is no auto-projection; the trigger mirrors the chosen row only
+        because we pass the same renderer to <code>renderTriggerContentFn</code>.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
