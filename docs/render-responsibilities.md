@@ -1,8 +1,9 @@
 # render*() responsibilities (refactor proposal)
 
-> STATUS: under discussion, nothing applied. Split out of `naming-conventions.md`
-> because whether `render*` carries a Dom suffix depends on the decision here, so
-> the two files interact. Naming is the more urgent track; this is the structural one.
+> STATUS: DECIDED = (iii). Bodies stay as-is; `render*` is a DOM-touching exception
+> (no Dom suffix) with a fixed docstring one-liner. (ii) is kept on file as a future
+> experiment. Split out of `naming-conventions.md`; the two interact (render* is
+> unsuffixed either way).
 
 ## The question
 
@@ -106,6 +107,16 @@ are NOT refactored.
   `ToDom`, which (iii) drops). They keep `renderTrigger` / `renderTriggerContent` /
   `renderTriggerArrow` / `renderPopupList`.
 
+### Docstring rule for render* (under iii)
+
+Every `render*` method's docstring opens with this fixed one-liner (swap `<X>` for trigger /
+popup list / arrow slot):
+
+> High-level render of `<X>`'s DOM from state; not a low-level `*ToDom`/`*El` primitive.
+
+It labels render* as high-level at every call site - the thing an explicit exception (vs a
+mechanical suffix) gives up - so the docstring carries that signal instead.
+
 ## Assessment
 
 (ii) is "zero naming exceptions" but pays with single-use primitives (over-abstraction):
@@ -124,6 +135,9 @@ explicit exception and avoids the abstraction. Recommendation: (iii).
 Both viable options end with `render*` UNSUFFIXED, so naming can proceed on that assumption;
 the only thing pending is whether bodies get refactored (ii) or not (iii).
 
-## Open
+## Decided
 
-Decide (ii) vs (iii). Recommendation: (iii).
+(iii). Bodies unchanged; `render*` joins the naming exception list (no Dom suffix) and gets
+the fixed docstring one-liner above. (ii) stays documented as a future experiment: every
+per-method extraction is listed, all new helpers are internal/protected (no public API
+change), and the 183 tests cover the behavior, so splitting later is local and safe.
