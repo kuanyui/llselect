@@ -72,7 +72,7 @@ Fixed docstring one-liner for every `render*` (swap `<X>`):
 | base.ts     | module-fn | `makeClassIdMap`                         | `createClassIdMap`                                                     |
 | icons.ts    | module-fn | `makeSvg`                                | `createSvgEl`                                                          |
 | base.ts     | private   | `renderTriggerDisabled`                  | `syncDisabledStateToDom`                                               |
-| base.ts     | private   | `onSearchInput`                          | `handleSearchInput`                                                    |
+| base.ts     | private   | `onSearchInput`                          | `handleSearchInputEvent`                                                    |
 | base.ts     | protected | `commitTriggerContentReturnedByRenderer` | `commitTriggerContentToDom`                                            |
 | base.ts     | protected | `scanEnabledIndex`                       | `findNextEnabledIndex`                                                 |
 | base.ts     | protected | `visibleItems`                           | `getVisibleItems`                                                      |
