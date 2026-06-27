@@ -206,6 +206,21 @@ new LLSelectSingle(
 ).setItems(COUNTRIES)
 //#endregion
 
+//#region 4.5
+// Arrow and clear are separate trigger slots, so they show together: a chevron
+// arrow plus a clearable x. Preselect so the x is visible on load.
+const selArrowClear = new LLSelectSingle(
+  document.getElementById('mount-arrow-clear'),
+  {
+    placeholder: 'Pick a country',
+    createArrowElFn: () => createChevronDownSvgEl(),
+    clearable: true,
+  },
+)
+selArrowClear.setItems(COUNTRIES)
+selArrowClear.setChosenItem('Japan')
+//#endregion
+
 //#region 5.1
 const outMulti = document.getElementById('out-multi')
 const selMulti = new LLSelectMultiple(
