@@ -28,20 +28,20 @@ primitives and touch no DOM directly - so they carry no suffix because they do n
 
 ## 2. Verb vocabulary
 
-| Verb / shape                                                             | Meaning                                                             |
-|--------------------------------------------------------------------------|---------------------------------------------------------------------|
-| `create<X>El` / `create<X>`                                              | build + return a DOM element / a non-DOM object                     |
-| `replace<X>ElInDom()`                                                    | swap an existing element for a fresh one                            |
-| `commit<X>ToDom(content)`                                                | write the GIVEN content into a container                            |
-| `sync<X>ToDom()`                                                         | mirror one `this.*` state field onto attrs/class/scroll             |
-| `render*`                                                                | pure ORCHESTRATOR: compute + call primitives; DOM-free body         |
-| `recompute*`/`compute*`/`get*`/`find*`                                   | recompute state / derive / read / search, returns                   |
-| `set*`                                                                   | set a state field                                                   |
-| `attach*`/`detach*`/`handle*`                                            | listeners / DOM-event handling                                      |
-| `on*`                                                                    | settings event OR subclass hook ONLY                                |
-| `itemTo*`                                                                | pure item->value mapping, no DOM: `itemToString`, `itemToContentEl` |
-| `is*`/`are*`/`matches*`/`fire*`/`focus*`/`measure*`/`capture*`/`ensure*` | auxiliaries                                                         |
-| `choose*`/`unchoose*`/`toggle*` / `open`/`close`/`toggle`                | domain ops                                                          |
+| Verb / shape                                                             | Meaning                                                                 |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| `create<X>El` / `create<X>`                                              | build + return a DOM element / a non-DOM object                         |
+| `replace<X>ElInDom()`                                                    | swap an existing element for a fresh one                                |
+| `commit<X>ToDom(content)`                                                | write the GIVEN content into a container                                |
+| `sync<X>ToDom()`                                                         | mirror one `this.*` state field onto attrs/class/scroll                 |
+| `render*`                                                                | pure ORCHESTRATOR: compute + call primitives; DOM-free body             |
+| `recompute*`/`compute*`/`get*`/`find*`                                   | recompute state / derive / read / search, returns                       |
+| `set*`                                                                   | set a state field                                                       |
+| `attach*`/`detach*`/`handle*`                                            | listeners / DOM-event handling                                          |
+| `on*`                                                                    | settings event OR subclass hook ONLY                                    |
+| `itemTo*`                                                                | pure item->value mapping, no DOM: `itemToString`, `createItemContentEl` |
+| `is*`/`are*`/`matches*`/`fire*`/`focus*`/`measure*`/`capture*`/`ensure*` | auxiliaries                                                             |
+| `choose*`/`unchoose*`/`toggle*` / `open`/`close`/`toggle`                | domain ops                                                              |
 
 Banned: `apply*`, `build*`, `make*`, and any `*ToDom` on a `render*` (render* are DOM-free now).
 
@@ -50,42 +50,46 @@ Banned: `apply*`, `build*`, `make*`, and any `*ToDom` on a `render*` (render* ar
 
 ## 3. Settings callbacks
 
-- item-level mapping `itemTo*Fn`: `itemToStringFn`, `itemToContentElFn`.
-- predicate `*Fn`: `compareFn`, `filterFn`, `itemDisabledFn`.
-- event `on*`: `onChange`, `onOpen`, `onClose`.
-- trigger render-prop (input is state/ctx, NOT an item) - see 4b OPEN.
+By RETURN TYPE (behaviour, not input):
+- returns `boolean` -> predicate `*Fn`: `compareFn`, `filterFn`, `itemDisabledFn`.
+- returns `string` -> `itemTo*Fn` mapping: `itemToStringFn`.
+- returns an element -> `create*ElFn`: `createItemContentElFn`, `createArrowElFn`, `createTriggerContentElFn`.
+- fires an event -> `on*`: `onChange`, `onOpen`, `onClose`.
 - RULE (CLAUDE.md): any callback whose type includes `null` documents what `null` does.
 
 ## 4. Every method / setting
 
 ### 4a. Rename - DECIDED
 
-| Vis          | Before                                   | After                                                             |
-|--------------|------------------------------------------|-------------------------------------------------------------------|
-| protected    | `renderItemContent`                      | `itemToContentEl`                                                 |
-| setting      | `renderItemContentFn`                    | `itemToContentElFn` (narrowed to `(item) => HTMLElement \| null`) |
-| private      | `buildTriggerEl`                         | `createTriggerEl`                                                 |
-| private      | `buildSearchInputEl`                     | `createSearchInputEl`                                             |
-| private      | `buildPopupEl`                           | `createPopupEl`                                                   |
-| private      | `buildPopupListEl`                       | `createPopupListEl`                                               |
-| mod-fn       | `makeClassIdMap`                         | `createClassIdMap`                                                |
-| mod-fn       | `makeSvg`                                | `createSvgEl`                                                     |
-| private      | `renderTriggerDisabled`                  | `syncDisabledStateToDom`                                          |
-| private      | `onSearchInput`                          | `handleSearchInputEvent`                                          |
-| protected    | `commitTriggerContentReturnedByRenderer` | `commitTriggerContentToDom`                                       |
-| protected    | `scanEnabledIndex`                       | `findNextEnabledIndex`                                            |
-| protected    | `visibleItems`                           | `getVisibleItems`                                                 |
-| protected    | `rerenderPopupListItem`                  | `replacePopupListItemElInDom`                                     |
-| protected x3 | `afterItemsChange`                       | `onItemsChanged`                                                  |
-| public       | `triangleDownSvg`                        | `createTriangleDownSvgEl`                                         |
-| public       | `chevronDownSvg`                         | `createChevronDownSvgEl`                                          |
-| public       | `checkSvg`                               | `createCheckSvgEl`                                                |
-| public       | `checkboxSvg`                            | `createCheckboxSvgEl`                                             |
+| Vis          | Before                                   | After                                                                 |
+| ------------ | ---------------------------------------- | --------------------------------------------------------------------- |
+| protected    | `renderItemContent`                      | `createItemContentEl`                                                 |
+| setting      | `renderItemContentFn`                    | `createItemContentElFn` (narrowed to `(item) => HTMLElement \| null`) |
+| private      | `buildTriggerEl`                         | `createTriggerEl`                                                     |
+| private      | `buildSearchInputEl`                     | `createSearchInputEl`                                                 |
+| private      | `buildPopupEl`                           | `createPopupEl`                                                       |
+| private      | `buildPopupListEl`                       | `createPopupListEl`                                                   |
+| mod-fn       | `makeClassIdMap`                         | `createClassIdMap`                                                    |
+| mod-fn       | `makeSvg`                                | `createSvgEl`                                                         |
+| private      | `renderTriggerDisabled`                  | `syncDisabledStateToDom`                                              |
+| private      | `onSearchInput`                          | `handleSearchInputEvent`                                              |
+| protected    | `commitTriggerContentReturnedByRenderer` | `commitTriggerContentToDom`                                           |
+| protected    | `scanEnabledIndex`                       | `findNextEnabledIndex`                                                |
+| protected    | `visibleItems`                           | `getVisibleItems`                                                     |
+| protected    | `rerenderPopupListItem`                  | `replacePopupListItemElInDom`                                         |
+| protected x3 | `afterItemsChange`                       | `onItemsChanged`                                                      |
+| public       | `triangleDownSvg`                        | `createTriangleDownSvgEl`                                             |
+| public       | `chevronDownSvg`                         | `createChevronDownSvgEl`                                              |
+| public       | `checkSvg`                               | `createCheckSvgEl`                                                    |
+| public       | `checkboxSvg`                            | `createCheckboxSvgEl`                                                 |
+| setting      | `renderArrowFn`                          | `createArrowElFn`                                                     |
+| setting      | `renderTriggerContentFn`                 | `createTriggerContentElFn` (narrowed to element-only)                 |
+| type         | `LLSelectArrowRenderer`                  | `LLSelectCreateArrowElFn`                                             |
 
-### 4a-new. (ii) refactor ADDS these primitives
+### 4a-new. (ii) refactor **adds** these primitives
 
 | Vis       | Name                  | Signature                                     | Does what (+ null)                                          |
-|-----------|-----------------------|-----------------------------------------------|-------------------------------------------------------------|
+| --------- | --------------------- | --------------------------------------------- | ----------------------------------------------------------- |
 | private   | `commitArrowElToDom`  | `(el: HTMLElement\|SVGElement\|null) => void` | clear arrow slot + place el; `null` = clear only (no arrow) |
 | protected | `commitItemElsToDom`  | `(els: HTMLElement[]) => void`                | clear list + append all                                     |
 | protected | `syncEmptyStateToDom` | `() => void`                                  | write `data-empty` from `isEmpty()`                         |
@@ -93,8 +97,6 @@ Banned: `apply*`, `build*`, `make*`, and any `*ToDom` on a `render*` (render* ar
 
 ### 4b. OPEN - need your call
 
-- SETTINGS `renderArrowFn` / `renderTriggerContentFn`: keep as render-prop (distinct from
-  method `render*` by the `Fn` suffix), or rename? (I lean: keep.)
 - per-callback `null` docstrings: write the `null` meaning into each (mechanical follow-up).
 
 ### 4c. Keep (names unchanged)
@@ -102,7 +104,7 @@ Banned: `apply*`, `build*`, `make*`, and any `*ToDom` on a `render*` (render* ar
 `render*` keep their names; their BODIES are refactored to pure orchestrators (ii).
 
 | File            | Vis       | Method                                | Class                  |
-|-----------------|-----------|---------------------------------------|------------------------|
+| --------------- | --------- | ------------------------------------- | ---------------------- |
 | base            | protected | `renderTrigger`                       | render-orch (body->ii) |
 | base            | protected | `renderTriggerContent` (+2 overrides) | render-orch (body->ii) |
 | base            | private   | `renderTriggerArrow`                  | render-orch (body->ii) |
@@ -157,13 +159,12 @@ Banned: `apply*`, `build*`, `make*`, and any `*ToDom` on a `render*` (render* ar
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator
-(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; `itemTo*`
-mapping family (`itemToContentEl(Fn)`); `build*`/`make*`/`apply*` banned. Still OPEN: only 4b.
+(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Still OPEN: only 4b.
 
 ## 6. Phasing
 
 1. private renames (zero API impact) + private (ii) primitive (`commitArrowElToDom`).
-2. protected: `itemToContentEl`, `create*El` family, `getVisibleItems`,
+2. protected: `createItemContentEl`, `create*El` family, `getVisibleItems`,
    `replacePopupListItemElInDom`, `findNextEnabledIndex`, `onItemsChanged`, the protected
    (ii) primitives, render* body refactor.
-3. public / settings: `create*SvgEl` factories, `itemToContentElFn`, 4b once decided.
+3. public / settings: `create*SvgEl` factories, `createItemContentElFn`, 4b once decided.
