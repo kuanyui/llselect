@@ -85,8 +85,8 @@ popupEl             .llselect-popup
   popupListEl       .llselect-popup-list
                     .llselect-item
                     .llselect-item-focused
-                    .llselect-group        (phase 9)
-                    .llselect-group-label  (phase 9)
+                    .llselect-group        (phase 10)
+                    .llselect-group-label  (phase 10)
 ```
 
 Direct children of a major family get the family's prefix
@@ -234,8 +234,142 @@ Cross-cutting:
   preserves any already-chosen disabled item; `unchooseAll` clears enabled
   choices and preserves disabled-chosen; `toggleAll` compares only enabled items.
 
-Group-level disabled (a disabled optgroup disabling its items) is deferred to
-Phase 10; it layers on item-level disabled. See `optgroup-research.md`.
+Group-level disabled (a disabled optgroup disabling its items) is specified in
+"Optgroup (Phase 10)" below; it layers on this item-level disabled.
+
+## Optgroup (Phase 10)
+
+Decided: grouping is a **derived projection of the flat `items` list**, not a
+nested data structure. `items` stays `T[]`; a setting maps each item to a group
+*key*, and the group's label + disabled state are derived from that key. Design
+research (how native / select2 / choices / react-select / MUI / Downshift model
+it) is in `optgroup-research.md`.
+
+### Data model: flat + derived, mirroring the item layer
+
+Rejected: a nested shape (`(T | { label, items: T[] })[]` or a second
+`setGroups()` channel). Chosen: flat items + `*Fn`s that derive the group. The
+group layer is a **complete mirror of the item layer** - same four concerns,
+same shapes:
+
+| concern  | item layer               | group layer                             |
+|---|---|---|
+| identity | `T`                      | `GK` (grouping key; class `<T, GK = string>`) |
+| equality | `compareFn(a, b)`        | `groupKeyCompareFn(a, b)`               |
+| display  | `itemToStringFn(item)`   | `groupKeyToLabelFn(key)`                |
+| disabled | `itemDisabledFn(item)`   | `groupDisabledFn(key)`                  |
+
+Why this shape, in this codebase specifically:
+
+- **Single source of truth.** `items` stays the only data channel. A nested
+  shape is a second write channel - exactly the select2 / choices.js dual-write
+  pattern this project already rejects ("Settings vs methods" above).
+- **Identity, not display, drives behavior.** `itemDisabledFn` takes the item
+  `T` (identity), never `itemToString(item)` (display). Grouping obeys the same
+  rule: membership and group-disabled are keyed on `GK`; the human label is a
+  separate `GK -> string` projection. So renaming a label (i18n) never changes
+  which items group together or which group is disabled.
+- **`GK` is fully generic, mirroring `T`.** The class is `<T, GK = string>`; the
+  default leaves every existing `LLSelect*<T>` call unchanged. A number / object
+  key is allowed exactly as `T` is - equality is asked via `groupKeyCompareFn`
+  (default strict `===`), the same way `compareFn` handles arbitrary `T`. This
+  dodges the hard-coded-string-key trap where widening the key type later would
+  be a breaking change.
+- **`GK` never touches the DOM.** Group containers get an index-based id
+  (`-group${index}`, like items' `-item${index}`); visible text / `aria-label`
+  come from `groupKeyToLabelFn`, disabled state from a computed boolean. So an
+  object key needs no `String(key)` serialization anywhere.
+- **Settings compose; no subclass split.** Same reasoning as the search box: a
+  capability that combines with others (search x optgroup x ...) must be a
+  setting, not a subclass, or the class count multiplies.
+- **Nested's unique wins are out of scope.** A nested shape is only strictly
+  needed for empty groups (a header with no items), one item in multiple groups,
+  or group order decoupled from item order. Native `<select>` supports none of
+  these and neither do we ("Library scope"), so we give up nothing real.
+
+Honest cost (accepted): grouping requires the data to be pre-sorted by group
+(see contiguous-run below); llselect does not reorder items to gather groups.
+
+### Settings
+
+All live on `LLSelectBaseSettings<T, GK>` (single + multiple; `GK = string`
+default). Named by return type per the callback convention ("Function-typed
+settings"; `naming-conventions.md` s3). Each `null` documented per CLAUDE.md:
+
+- `itemToGroupKeyFn: ((item: T) => GK | null) | null` (default `null`). The one
+  setting that turns grouping on; returns the key of the group an item belongs
+  to. Two distinct `null`s:
+  - **setting `null`** (default): grouping off entirely - flat list, no headers,
+    zero behavior change from today.
+  - **fn returns `null`** for an item: that item is in no group and renders
+    ungrouped (like an `<option>` outside any `<optgroup>`); consecutive
+    ungrouped items are not gathered into one group.
+  Backed by `protected itemToGroupKey(item)` (Customization model: override to
+  replace).
+- `groupKeyCompareFn: ((a: GK, b: GK) => boolean) | null` (default `null` =
+  strict `===`). Decides whether two adjacent items share a group (see
+  contiguous-run). Mirrors `compareFn`; only worth setting when `GK` is an object
+  without usable reference identity.
+- `groupKeyToLabelFn: ((groupKey: GK) => string) | null` (default `null` =
+  `String(groupKey)`). The `GK -> display text` projection; the i18n seam. Backed
+  by `protected groupKeyToLabel(key)`.
+- `groupDisabledFn: ((groupKey: GK) => boolean) | null` (default `null` = no
+  group disabled). `true` = every item in that group is treated as disabled.
+  Backed by `protected isGroupDisabled(key)`.
+- Deferred: `createGroupLabelContentElFn: ((groupKey, itemsInGroup) => HTMLElement | null)`
+  for a custom header (icon, count badge; cf. react-select `formatGroupLabel`,
+  MUI `renderGroup`). Not in the first cut - start with a plain string label.
+  Named `create*ElFn` (returns an element) when it lands.
+
+### Grouping semantic (contiguous-run)
+
+Consecutive visible items whose keys are equal (per `groupKeyCompareFn`) form one
+group; a differing key opens a new section header. Items whose key is `null` are
+ungrouped. This preserves `getVisibleItems()` order and the
+`itemEls[i] <-> getVisibleItems()[i]` index alignment exactly. The known trap
+(same as MUI's `groupBy`): if the data is not sorted by group, a key that
+reappears after a gap produces a second header for the same group. The render
+pass detects an already-closed key reappearing and `console.warn`s once - it does
+not reorder the data (caller's responsibility) and does not otherwise change
+behavior.
+
+### Interaction with existing machinery
+
+- **Keyboard / index alignment: free.** Group headers are NOT added to
+  `itemEls`, so `getVisibleItems()` stays a flat `T[]` and keyboard nav skips
+  headers with no extra logic.
+- **Filtering: composes for free.** Filter the flat list first, regroup the
+  survivors at render; a group whose every item was filtered out emits no header
+  (empty groups vanish).
+- **Disabled layering.** `isItemDisabled(item)` also returns `true` when the
+  item's group is disabled (`isGroupDisabled(itemToGroupKey(item))`) - so every
+  existing item-disabled behavior (no click selection, keyboard skip,
+  `aria-disabled`, selection retention, bulk-op skipping) covers group-disabled
+  automatically, with no new code paths. This is the layering the Phase 9 design
+  deferred here.
+- **Render granularity unchanged.** Toggling one item's selection does not change
+  its group membership, so multi-select `replacePopupListItemElInDom` stays O(1)
+  DOM work; the group structure is untouched.
+
+### ARIA
+
+Matches the APG grouped-listbox example. Each group is a container
+`role="group"` with `aria-label` set to `groupKeyToLabelFn(key)`; the visible
+label element carries `.llselect-group-label` and `aria-hidden="true"` (its text
+is already the group's accessible name via `aria-label`, so it must not be
+announced twice). A disabled group's container gets `aria-disabled="true"` +
+`data-disabled`. Full keyboard / focus contract goes into `A11Y.md` when Phase 10
+is implemented.
+
+### Implementation note (verify at build time)
+
+`ensureVisibleInScroll` (keyboard.ts) currently uses `offsetTop` relative to the
+offset parent; nesting options inside group containers changes the offset parent
+and breaks it. Switch to a `getBoundingClientRect`-delta computation so it is
+correct regardless of theme CSS. `getBoundingClientRect` forces synchronous
+layout and this runs on every keyboard move and post-filter `setFocusedIndex(0)`,
+so measure it on the 10k demo for layout thrashing before locking the approach -
+this is the one unknown that reasoning cannot settle (see `optgroup-research.md`).
 
 ## Popup width policy
 

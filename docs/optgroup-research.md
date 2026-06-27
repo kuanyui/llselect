@@ -1,12 +1,12 @@
-# Optgroup / option grouping - research notes (PARKED)
+# Optgroup / option grouping - research notes (DECIDED)
 
-Status: **research only, not implemented.** Phase 10 (optgroup support) is parked
-behind Phase 9 (`disabled`), because the hardest part of grouping - a disabled
-*group* - is meaningless until item-level and control-level `disabled` exist.
-Resume this after `disabled` lands. See `TODO.md`.
-
-This file records how the native control and the main libraries model grouping,
-so the eventual API decision is grounded rather than guessed.
+Status: **API decided; not yet implemented.** The design is locked in DESIGN.md
+"Optgroup (Phase 10)": flat `items` + a generic group key `GK` mirroring the item
+layer (`itemToGroupKeyFn` / `groupKeyCompareFn` / `groupKeyToLabelFn` /
+`groupDisabledFn`), no nested structure. This file is kept as the research trail
+behind that decision - how the native control and the main libraries model
+grouping, so the choice is grounded rather than guessed. (It was parked behind
+Phase 9 `disabled`, now done, which is what the disabled-group layering needed.)
 
 ## How the ecosystem models grouping
 
@@ -44,7 +44,18 @@ Three distinct patterns:
    `<optgroup>` or those libraries, and the only one that cleanly carries
    per-group metadata (a disabled group, a group icon).
 
-## Leading direction (to confirm when we resume)
+## Leading direction (CONFIRMED)
+
+> Post-decision update: this direction was adopted, with one refinement past the
+> single `groupLabelFn` sketched here. The final API separates the group's *key*
+> (identity) from its *label* (display) and makes the key a generic type `GK`
+> (class `<T, GK = string>`), mirroring how the item layer separates `T` /
+> `compareFn` / `itemToStringFn`. Shipped names (naming-conventions.md s3, by
+> return type): `itemToGroupKeyFn` (item -> GK), `groupKeyCompareFn` (key
+> equality, default `===`), `groupKeyToLabelFn` (GK -> string display / i18n),
+> `groupDisabledFn` (predicate on the key), deferred `createGroupLabelContentElFn`
+> (custom header element). The "Open tension" below is resolved - see its note.
+> Canonical spec: DESIGN.md "Optgroup (Phase 10)".
 
 `groupLabelFn?: (item: T) => string | null` - flat items, grouping derived at
 render time. Rationale:
@@ -65,6 +76,15 @@ Open tension: a nested structure is more native-familiar and is the clean way to
 carry per-group metadata. That advantage is currently moot because llselect has
 no `disabled` concept yet - which is why `disabled` goes first. Revisit whether
 per-group metadata (disabled group, group icon) is wanted before locking this.
+
+> RESOLVED: per-group metadata is carried by parallel `*Fn` settings
+> (`groupDisabledFn` now; `createGroupLabelContentElFn` later) instead of a
+> nested object - consistent with how item-level disabled is already a predicate,
+> and it keeps `items` a single flat channel (DESIGN.md "Settings vs methods"
+> rejects the dual-write channel a nested shape reintroduces). Nested's only
+> irreplaceable wins (empty groups, one item in many groups, group order
+> decoupled from item order) are all outside llselect's scope (native `<select>`
+> does none), so nothing real is lost. Full rationale: DESIGN.md.
 
 ## Design sketch for when we resume (not decided)
 

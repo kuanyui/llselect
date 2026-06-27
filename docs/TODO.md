@@ -31,11 +31,18 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
       `aria-disabled`, never native `disabled`. Contract in `DESIGN.md` /
       `A11Y.md`; design research in `optgroup-research.md`. Group-level disabled
       deferred to Phase 10 (layers on item-level).
-- [ ] **Phase 10** - optgroup support (`role="group"` + `role="presentation"`
-      label, keyboard skips labels). **PARKED**. A disabled group layers on the
-      Phase 9 item-level `disabled` (now done). Design research (how native /
-      select2 / choices / react-select / MUI / Downshift model it, and the
-      leading `groupLabelFn` direction) is recorded in `optgroup-research.md`.
+- [ ] **Phase 10** - optgroup support. **API DECIDED, not yet implemented** (see
+      DESIGN.md "Optgroup (Phase 10)"). Grouping is a derived projection of the
+      flat `items` list, not a nested structure. The group layer mirrors the item
+      layer on a generic key `GK` (class `<T, GK = string>`): `itemToGroupKeyFn:
+      (item) => GK | null` (contiguous-run; keys compared by `groupKeyCompareFn`,
+      default `===`) + `groupKeyToLabelFn: (key) => string` (display / i18n seam)
+      + `groupDisabledFn: (key) => boolean` (layers on the now-done Phase 9
+      item-level `disabled`). `GK` never touches the DOM (group id is
+      index-based). ARIA `role="group"` + `aria-label`, header `aria-hidden`,
+      keyboard skips headers (they never enter `itemEls`). One build-time unknown
+      to measure: `ensureVisibleInScroll` must move off `offsetTop` (forced-reflow
+      cost on the 10k demo). Design trail: `optgroup-research.md`.
 
 A11Y model (locked, see `A11Y.md`): two ARIA modes picked by `searchable`.
 `searchable: true` uses APG "Combobox with list autocomplete" (focus on the
