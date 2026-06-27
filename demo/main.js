@@ -59,14 +59,14 @@ const selUsers = new LLSelectSingle(
 selUsers.setItems(USERS)
 //#endregion
 
-//#region 10.1
+//#region 11.1
 // createItemContentElFn fills each option's VISIBLE content (colored icon +
 // label), no subclass. The library owns the option shell + aria: it pins each
 // option's aria-label to itemToString (the icon never reaches a screen reader),
 // so you write zero aria-*. There is no auto-projection - the trigger mirrors
-// the chosen row only because we pass the same languageRow to
-// createTriggerContentElFn below.
-function languageRow(lang) {
+// the chosen row only because we pass the same createLanguageRowEl to
+// createTriggerContentElFn below. Named create*El per naming-conventions.md.
+function createLanguageRowEl(lang) {
   const row = document.createElement('span')
   row.className = 'lang-row'
   const icon = document.createElement('i')
@@ -83,8 +83,8 @@ const selRichSingle = new LLSelectSingle(
     placeholder: 'Pick a language',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (lang) => lang.name,      // accessible name + search text
-    createItemContentElFn: languageRow,         // visible content in the list
-    createTriggerContentElFn: (ctx) => ctx.chosenItem ? languageRow(ctx.chosenItem) : null,
+    createItemContentElFn: createLanguageRowEl,         // visible content in the list
+    createTriggerContentElFn: (ctx) => ctx.chosenItem ? createLanguageRowEl(ctx.chosenItem) : null,
     onChange: (v) => { outRichSingle.textContent = 'chosen: ' + (v ? v.name : '(none)') },
   }
 )
@@ -224,10 +224,10 @@ const selMultiCheckbox = new CheckboxMultiSelect(
 selMultiCheckbox.setItems(COUNTRIES)
 //#endregion
 
-//#region 10.2
+//#region 11.2
 // Same createItemContentElFn, now on a multiple. The library adds aria-selected
 // to each option shell on top of the auto aria-label, so AT announces e.g.
-// "Python, selected" while the row shows the mdi icon. Reuses languageRow (10.1).
+// "Python, selected" while the row shows the mdi icon. Reuses createLanguageRowEl (11.1).
 const outRichMulti = document.getElementById('out-rich-multi')
 const selRichMulti = new LLSelectMultiple(
   document.getElementById('mount-rich-multi'),
@@ -235,7 +235,7 @@ const selRichMulti = new LLSelectMultiple(
     placeholder: 'Pick languages',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (lang) => lang.name,
-    createItemContentElFn: languageRow,
+    createItemContentElFn: createLanguageRowEl,
     onChange: (chosen) => {
       outRichMulti.textContent = 'chosen: ' + chosen.map((l) => l.name).join(', ')
     },
@@ -483,7 +483,7 @@ selDisFocusable.setDisabled(true)
 selDisFocusable.triggerEl.setAttribute('title', 'Disabled, but Tab can still reach me')
 //#endregion
 
-//#region 11.1
+//#region 10.1
 // Optgroup: flat items + itemToGroupKeyFn. Items are pre-sorted by category;
 // contiguous same-key items form one group. The key is the identity; the label
 // is a separate projection (here key === label, so groupKeyToLabelFn is omitted).
@@ -501,7 +501,7 @@ const selGroup = new LLSelectSingle(
 selGroup.setItems(GROUPED_FOODS)
 //#endregion
 
-//#region 11.2
+//#region 10.2
 // Group-level disabled + searchable. groupDisabledFn disables a whole group
 // (layers on item-level disabled): its items are not selectable, skipped by
 // keyboard, aria-disabled. Filtering regroups survivors; empty groups vanish.
@@ -527,6 +527,18 @@ selGroupDisabled.setItems(GROUPED_FOODS)
 // count needs no external bookkeeping. The header's accessible name stays the
 // plain groupKeyToLabel; the icon is aria-hidden.
 const CATEGORY_ICON = { Fruit: 'food-apple', Vegetable: 'carrot', Dairy: 'cheese', Nuts: 'peanut' }
+// Named create*El per naming-conventions.md (returns an element), like createLanguageRowEl.
+function createCategoryHeaderEl(category, items) {
+  const row = document.createElement('span')
+  row.className = 'group-head'
+  const icon = document.createElement('i')
+  icon.className = `mdi mdi-${CATEGORY_ICON[category] || 'shape'}`
+  icon.setAttribute('aria-hidden', 'true')
+  const text = document.createElement('span')
+  text.textContent = `${category} (${items.length})`
+  row.append(icon, text)
+  return row
+}
 const selGroupRich = new LLSelectSingle(
   document.getElementById('mount-group-rich'),
   {
@@ -534,17 +546,7 @@ const selGroupRich = new LLSelectSingle(
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (f) => f.name,
     itemToGroupKeyFn: (f) => f.category,
-    createGroupLabelContentElFn: (cat, items) => {
-      const row = document.createElement('span')
-      row.className = 'group-head'
-      const icon = document.createElement('i')
-      icon.className = `mdi mdi-${CATEGORY_ICON[cat] || 'shape'}`
-      icon.setAttribute('aria-hidden', 'true')
-      const text = document.createElement('span')
-      text.textContent = `${cat} (${items.length})`
-      row.append(icon, text)
-      return row
-    },
+    createGroupLabelContentElFn: createCategoryHeaderEl,
   }
 )
 selGroupRich.setItems(GROUPED_FOODS)

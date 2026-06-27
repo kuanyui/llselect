@@ -476,17 +476,62 @@
   </section>
 
   <section>
-    <h2>10. Customized renderer functions</h2>
+    <h2>10. Optgroup / grouping</h2>
+    <p class="hint">
+      Grouping is a derived projection of the flat <code>items</code> list:
+      <code>itemToGroupKeyFn</code> maps each item to a group key (contiguous
+      same-key items form one group; data must be pre-sorted by group). The key
+      is the identity; <code>groupKeyToLabelFn</code> is a separate display
+      projection (the i18n seam). Group headers are <code>role="group"</code>
+      with an <code>aria-hidden</code> label; keyboard nav skips them. Custom
+      header content is in 11.3. See <code>docs/DESIGN.md</code> &rarr;
+      "Optgroup (Phase 10)".
+    </p>
+
+    <article>
+      <h3>10.1 Basic grouping (single)</h3>
+      <p class="hint">Foods grouped by category. Open it - each category shows a header above its items.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-group"></div>
+          <div class="out" id="out-group">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="10.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>10.2 Group-level disabled + searchable (multiple)</h3>
+      <p class="hint">
+        <code>groupDisabledFn</code> disables the whole Dairy group (layers on
+        item-level disabled): not selectable, skipped by keyboard, aria-disabled,
+        but still hoverable. Type to filter - survivors regroup and now-empty
+        groups disappear.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-group-disabled"></div>
+          <div class="out" id="out-group-disabled">chosen: </div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="10.2"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h2>11. Customized renderer functions</h2>
     <p class="hint">
       Customize what each option renders via <code>createItemContentElFn</code>
       (no subclass). It fills the option's VISIBLE content only; the library
       keeps the option shell + ARIA and pins each option's <code>aria-label</code>
       to <code>itemToString</code>, so you write zero <code>aria-*</code> and a
-      screen reader announces the plain label, not the decorative icon.
+      screen reader announces the plain label, not the decorative icon. Group
+      headers customize the same way via <code>createGroupLabelContentElFn</code>
+      (11.3).
     </p>
 
     <article>
-      <h3>10.1 Single (icon + label rows)</h3>
+      <h3>11.1 Single (icon + label rows)</h3>
       <p class="hint">
         Each row is a colored mdi icon + label. Inspect an option to see the
         <code>role="option"</code> + <code>aria-label</code> the library added.
@@ -498,12 +543,12 @@
           <div id="mount-rich-single"></div>
           <div class="out" id="out-rich-single">chosen: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="10.1"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="11.1"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>10.2 Multiple (icon + label rows)</h3>
+      <h3>11.2 Multiple (icon + label rows)</h3>
       <p class="hint">
         Same <code>createItemContentElFn</code> on a multiple: the option shell
         carries <code>aria-selected</code> on top of the auto
@@ -515,48 +560,6 @@
         <div class="demo-pane">
           <div id="mount-rich-multi"></div>
           <div class="out" id="out-rich-multi">chosen: (none)</div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="10.2"><code></code></pre></details>
-      </div>
-    </article>
-  </section>
-
-  <section>
-    <h2>11. Optgroup / grouping</h2>
-    <p class="hint">
-      Grouping is a derived projection of the flat <code>items</code> list:
-      <code>itemToGroupKeyFn</code> maps each item to a group key (contiguous
-      same-key items form one group; data must be pre-sorted by group). The key
-      is the identity; <code>groupKeyToLabelFn</code> is a separate display
-      projection (the i18n seam). Group headers are <code>role="group"</code>
-      with an <code>aria-hidden</code> label; keyboard nav skips them. See
-      <code>docs/DESIGN.md</code> &rarr; "Optgroup (Phase 10)".
-    </p>
-
-    <article>
-      <h3>11.1 Basic grouping (single)</h3>
-      <p class="hint">Foods grouped by category. Open it - each category shows a header above its items.</p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-group"></div>
-          <div class="out" id="out-group">chosen: (none)</div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="11.1"><code></code></pre></details>
-      </div>
-    </article>
-
-    <article>
-      <h3>11.2 Group-level disabled + searchable (multiple)</h3>
-      <p class="hint">
-        <code>groupDisabledFn</code> disables the whole Dairy group (layers on
-        item-level disabled): not selectable, skipped by keyboard, aria-disabled,
-        but still hoverable. Type to filter - survivors regroup and now-empty
-        groups disappear.
-      </p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-group-disabled"></div>
-          <div class="out" id="out-group-disabled">chosen: </div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="11.2"><code></code></pre></details>
       </div>
