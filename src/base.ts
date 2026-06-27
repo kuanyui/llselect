@@ -169,6 +169,18 @@ export interface LLSelectBaseSettings<T, GK = string> {
    */
   groupDisabledFn: ((groupKey: GK) => boolean) | null
   /**
+   * Group header -> its visible content ELEMENT (icon / count badge / rich
+   * markup), without subclassing. Mirrors `createItemContentElFn`.
+   * - Return an `HTMLElement` and the library inserts it as the header's visible
+   *   content; the group's accessible name stays `groupKeyToLabel` (on the
+   *   container `aria-label`) and the label element stays `aria-hidden`.
+   * - `null` (default, or returned for a group) = plain text from
+   *   `groupKeyToLabel`.
+   * - `itemsInGroup` is the group's items, so you can render "Fruits (4)" or a
+   *   summary without recomputing the grouping.
+   */
+  createGroupLabelContentElFn: ((groupKey: GK, itemsInGroup: readonly T[]) => HTMLElement | null) | null
+  /**
    * Fired right after the popup opens. A no-op `open()` (already open, or a
    * disabled control) does not fire it. Fires in ADDITION to the protected
    * `onOpened` hook - the setting is for consumers, the hook for subclasses;
@@ -283,9 +295,9 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
  * group (header + its item elements). Computed from the flat visible list;
  * group headers never enter `itemEls`, so index alignment is preserved.
  */
-type PopupListSegment =
+type PopupListSegment<T, GK> =
   | { readonly group: false; readonly el: HTMLElement }
-  | { readonly group: true; readonly label: string; readonly disabled: boolean; readonly index: number; readonly els: HTMLElement[] }
+  | { readonly group: true; readonly key: GK; readonly index: number; readonly items: T[]; readonly els: HTMLElement[] }
 
 /**
  * Abstract base for all select variants. Owns DOM scaffolding, ARIA wiring,
@@ -399,6 +411,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       groupKeyCompareFn: settings?.groupKeyCompareFn ?? null,
       groupKeyToLabelFn: settings?.groupKeyToLabelFn ?? null,
       groupDisabledFn: settings?.groupDisabledFn ?? null,
+      createGroupLabelContentElFn: settings?.createGroupLabelContentElFn ?? null,
       onOpen: settings?.onOpen ?? null,
       onClose: settings?.onClose ?? null,
     }
@@ -759,11 +772,11 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * free. `console.warn`s once per non-contiguous key reappearance (unsorted
    * data would otherwise emit a duplicate header for the same group).
    */
-  private computePopupSegments(list: T[], els: HTMLElement[]): PopupListSegment[] {
+  private computePopupSegments(list: T[], els: HTMLElement[]): PopupListSegment<T, GK>[] {
     const keyOf = this.settings.itemToGroupKeyFn
-    if (!keyOf) { return els.map((el): PopupListSegment => ({ group: false, el })) }
+    if (!keyOf) { return els.map((el): PopupListSegment<T, GK> => ({ group: false, el })) }
     const keyEq = this.settings.groupKeyCompareFn ?? ((a: GK, b: GK) => a === b)
-    const segments: PopupListSegment[] = []
+    const segments: PopupListSegment<T, GK>[] = []
     const closedKeys: GK[] = []
     let groupIndex = 0
     let i = 0
@@ -774,11 +787,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
         i += 1
         continue
       }
+      const groupItems: T[] = [list[i]!]
       const groupEls: HTMLElement[] = [els[i]!]
       let j = i + 1
       while (j < list.length) {
         const next = keyOf(list[j]!)
         if (next === null || !keyEq(key, next)) { break }
+        groupItems.push(list[j]!)
         groupEls.push(els[j]!)
         j += 1
       }
@@ -786,13 +801,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
         console.warn('llselect: group key reappears non-contiguously; sort items by group to avoid a duplicate header.', key)
       }
       closedKeys.push(key)
-      segments.push({
-        group: true,
-        label: this.groupKeyToLabel(key),
-        disabled: this.isGroupDisabled(key),
-        index: groupIndex,
-        els: groupEls,
-      })
+      segments.push({ group: true, key, index: groupIndex, items: groupItems, els: groupEls })
       groupIndex += 1
       i = j
     }
@@ -800,34 +809,63 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /** Replace every popup-list child with the rendered segments (items + group containers). */
-  private commitPopupSegmentsToDom(segments: PopupListSegment[]): void {
+  private commitPopupSegmentsToDom(segments: PopupListSegment<T, GK>[]): void {
     const children = segments.map(seg =>
-      seg.group ? this.createGroupEl(seg.label, seg.disabled, seg.index, seg.els) : seg.el,
+      seg.group ? this.createGroupEl(seg.key, seg.index, seg.items, seg.els) : seg.el,
     )
     this.popupListEl.replaceChildren(...children)
   }
 
   /**
-   * Build a detached group container: `role="group"` named by the label, an
-   * `aria-hidden` visible label element, then the group's item elements.
-   * `aria-disabled` + `data-disabled` when the group is disabled.
+   * Build a detached group container: `role="group"` named by `groupKeyToLabel`,
+   * an `aria-hidden` visible label element, then the group's item elements. The
+   * label content comes from `createGroupLabelContentEl` (rich header) when
+   * non-null, else the plain label text. `aria-disabled` + `data-disabled` when
+   * the group is disabled. Override for full control of the group element
+   * (mirrors `createItemEl`).
+   *
+   * @param key - the group's key
+   * @param index - group index in the current render; builds a stable id
+   * @param items - the group's items (for rich content / counts)
+   * @param itemEls - the group's already-built option elements
    */
-  private createGroupEl(label: string, disabled: boolean, index: number, itemEls: HTMLElement[]): HTMLElement {
+  protected createGroupEl(key: GK, index: number, items: readonly T[], itemEls: HTMLElement[]): HTMLElement {
+    const label = this.groupKeyToLabel(key)
     const group = document.createElement('div')
     group.id = `${this.classIdMap.triggerId}-group${index}`
     group.className = this.classIdMap.groupClass
     group.setAttribute('role', 'group')
     group.setAttribute('aria-label', label)
-    if (disabled) {
+    if (this.isGroupDisabled(key)) {
       group.setAttribute('aria-disabled', 'true')
       group.setAttribute('data-disabled', 'true')
     }
     const labelEl = document.createElement('div')
     labelEl.className = this.classIdMap.groupLabelClass
     labelEl.setAttribute('aria-hidden', 'true')
-    labelEl.textContent = label
+    const content = this.createGroupLabelContentEl(key, items)
+    if (content === null) {
+      labelEl.textContent = label
+    } else {
+      labelEl.appendChild(content)
+    }
     group.append(labelEl, ...itemEls)
     return group
+  }
+
+  /**
+   * Group header -> its visible content element (icon / count badge / rich
+   * markup). Mirrors `createItemContentEl`.
+   * - Default reads `createGroupLabelContentElFn`, else `null` so `createGroupEl`
+   *   uses plain text from `groupKeyToLabel`.
+   * - The group's accessible name stays `groupKeyToLabel` (container `aria-label`);
+   *   this fills only the visible, `aria-hidden` label content.
+   * - Override only when extending; for one-off rich headers pass the setting.
+   */
+  protected createGroupLabelContentEl(key: GK, itemsInGroup: readonly T[]): HTMLElement | null {
+    return this.settings.createGroupLabelContentElFn
+      ? this.settings.createGroupLabelContentElFn(key, itemsInGroup)
+      : null
   }
 
   /**

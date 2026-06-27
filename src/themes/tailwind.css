@@ -1,4 +1,4 @@
-/* llselect — Tailwind CSS theme. Uses Tailwind v4 CSS custom properties
+/* llselect - Tailwind CSS theme. Uses Tailwind v4 CSS custom properties
    (`--color-*`) so users on v4 get their actual palette; falls back to the
    default Tailwind values so this file works standalone on v3 or with no
    Tailwind installed at all. */

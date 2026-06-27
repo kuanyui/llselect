@@ -533,6 +533,35 @@ const selGroupDisabled = new LLSelectMultiple(
 selGroupDisabled.setItems(GROUPED_FOODS)
 //#endregion
 
+//#region 12.3
+// Rich group header via createGroupLabelContentElFn (mirrors createItemContentElFn):
+// an icon + a live count badge. itemsInGroup gives the group's items, so the
+// count needs no external bookkeeping. The header's accessible name stays the
+// plain groupKeyToLabel; the icon is aria-hidden.
+const CATEGORY_ICON = { Fruit: 'food-apple', Vegetable: 'carrot', Dairy: 'cheese', Nuts: 'peanut' }
+const selGroupRich = new LLSelectSingle(
+  document.getElementById('mount-group-rich'),
+  {
+    placeholder: 'Pick a food',
+    compareFn: (a, b) => a.name === b.name,
+    itemToStringFn: (f) => f.name,
+    itemToGroupKeyFn: (f) => f.category,
+    createGroupLabelContentElFn: (cat, items) => {
+      const row = document.createElement('span')
+      row.className = 'group-head'
+      const icon = document.createElement('i')
+      icon.className = `mdi mdi-${CATEGORY_ICON[cat] || 'shape'}`
+      icon.setAttribute('aria-hidden', 'true')
+      const text = document.createElement('span')
+      text.textContent = `${cat} (${items.length})`
+      row.append(icon, text)
+      return row
+    },
+  }
+)
+selGroupRich.setItems(GROUPED_FOODS)
+//#endregion
+
 // --- Inject demo snippets into <pre data-demo="X"><code></code></pre> -----
 // Self-extraction: fetch this file's source, locate `//#region NAME` ...
 // `//#endregion` blocks, and write each into the matching <code>.

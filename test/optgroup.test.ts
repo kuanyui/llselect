@@ -226,3 +226,54 @@ test('filtering regroups survivors and drops now-empty groups', () => {
   assert.equal(groupEls(sel).length, 1) // only group a survives
   assert.equal(groupEls(sel)[0]!.getAttribute('aria-label'), 'a')
 })
+
+// --- rich header content (mirrors createItemContentElFn) ---------------------
+
+test('createGroupLabelContentElFn fills the header; container aria-label stays plain text', () => {
+  const sel = new LLSelectSingle<string>(mount(), {
+    itemToGroupKeyFn: (s) => s[0]!,
+    groupKeyToLabelFn: (k) => k.toUpperCase(),
+    createGroupLabelContentElFn: (key, items) => {
+      const span = document.createElement('span')
+      span.className = 'rich'
+      span.textContent = `${key.toUpperCase()} (${items.length})` // uses itemsInGroup
+      return span
+    },
+  })
+  sel.setItems(['apple', 'avocado', 'banana'])
+  sel.open()
+  const group = groupEls(sel).find((g) => g.getAttribute('aria-label') === 'A')!
+  assert.equal(group.getAttribute('aria-label'), 'A') // plain groupKeyToLabel, not the rich node
+  const label = group.querySelector<HTMLElement>(`.${sel.classIdMap.groupLabelClass}`)!
+  assert.equal(label.getAttribute('aria-hidden'), 'true')
+  const rich = label.querySelector<HTMLElement>('.rich')!
+  assert.ok(rich)
+  assert.equal(rich.textContent, 'A (2)') // apple + avocado
+})
+
+test('createGroupLabelContentElFn returning null falls back to the plain label', () => {
+  const sel = new LLSelectSingle<string>(mount(), {
+    itemToGroupKeyFn: (s) => s[0]!,
+    createGroupLabelContentElFn: () => null,
+  })
+  sel.setItems(['apple', 'banana'])
+  sel.open()
+  const label = sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.groupLabelClass}`)!
+  assert.equal(label.textContent, 'a')
+  assert.equal(label.children.length, 0)
+})
+
+test('createGroupEl can be overridden for full control of the group element', () => {
+  class CustomGroup extends LLSelectSingle<string> {
+    protected override createGroupEl(key: string, index: number, items: readonly string[], itemEls: HTMLElement[]): HTMLElement {
+      const el = super.createGroupEl(key, index, items, itemEls)
+      el.setAttribute('data-count', String(items.length))
+      return el
+    }
+  }
+  const sel = new CustomGroup(mount(), { itemToGroupKeyFn: (s) => s[0]! })
+  sel.setItems(['apple', 'avocado', 'banana'])
+  sel.open()
+  const group = groupEls(sel).find((g) => g.getAttribute('aria-label') === 'a')!
+  assert.equal(group.getAttribute('data-count'), '2')
+})

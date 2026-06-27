@@ -1,12 +1,12 @@
 # Method naming conventions
 
-> STATUS: APPLIED to src/ + test/ + demo/ (npm test green: 182; npm run build green). Covers
-> every method/function in src/ (~80). Private names matter least, but docstrings stay clear.
+> STATUS: APPLIED to src/ + test/ + demo/ (npm test green: 196; npm run build green). Covers
+> every method/function in src/, incl. Phase 10 optgroup (s4d). Private names matter least, but docstrings stay clear.
 > render* responsibility: APPLIED=(ii) - see render-responsibilities.md (render* are pure
 > orchestrators with DOM-free bodies).
 >
 > FORMAT: maintain with LOCAL EDITS only, never a full rewrite (rewrites drift the structure).
-> Tables are pipe-aligned; sections are numbered (§1-§6). Keep both.
+> Tables are pipe-aligned; sections are numbered (s1-s6). Keep both.
 
 ## 1. The mechanical rule
 
@@ -52,8 +52,12 @@ Banned: `apply*`, `build*`, `make*`, and any `*ToDom` on a `render*` (render* ar
 ## 3. Settings callbacks
 
 By RETURN TYPE (behaviour, not input):
-- returns `boolean` -> predicate `*Fn`: `compareFn`, `filterFn`, `itemDisabledFn`.
-- returns `string` -> `itemTo*Fn` mapping: `itemToStringFn`.
+- returns `boolean` -> predicate `*Fn`: `compareFn`, `filterFn`, `itemDisabledFn`,
+  `groupKeyCompareFn`, `groupDisabledFn`.
+- maps one input to a value -> `<source>To<target>Fn`: `itemToStringFn` (item->string),
+  `itemToGroupKeyFn` (item->key), `groupKeyToLabelFn` (key->string). `itemTo*Fn` is the
+  common case; name the actual source when it is not the item, and the target is the
+  return type (`*Key`, `*Label`, `*String`), not necessarily `string`.
 - returns an element -> `create*ElFn`: `createItemContentElFn`, `createArrowElFn`, `createTriggerContentElFn`.
 - fires an event -> `on*`: `onChange`, `onOpen`, `onClose`.
 - RULE (CLAUDE.md): any callback whose type includes `null` documents what `null` does.
@@ -160,6 +164,35 @@ By RETURN TYPE (behaviour, not input):
 | multiple        | private   | `arraysEqual`                         | predicate              |
 | single+multiple | private   | `fireChange`                          | fire                   |
 | base            | mod-fn    | `defaultCompareFn`                    | value                  |
+
+### 4d. Phase 10 (optgroup) additions
+
+Settings (s3 by return type). All are `| null` and document their `null` (s4b:
+grouping off / `===` identity / `String(key)` label / no group disabled):
+
+| Vis     | Name                | Signature                   | s3 category     |
+| ------- | ------------------- | --------------------------- | --------------- |
+| setting | `itemToGroupKeyFn`  | `(item: T) => GK \| null`   | map item->key   |
+| setting | `groupKeyCompareFn` | `(a: GK, b: GK) => boolean` | predicate       |
+| setting | `groupKeyToLabelFn` | `(key: GK) => string`       | map key->string |
+| setting | `groupDisabledFn`   | `(key: GK) => boolean`      | predicate       |
+| setting | `createGroupLabelContentElFn` | `(key: GK, items: readonly T[]) => HTMLElement \| null` | `create*ElFn` |
+
+Methods / type:
+
+| Vis       | Name                       | Convention                                      |
+| --------- | -------------------------- | ----------------------------------------------- |
+| protected | `itemToGroupKey`           | `itemTo*` - pure item->key, no DOM              |
+| protected | `groupKeyToLabel`          | `<src>To<dst>` - pure key->string, no DOM       |
+| protected | `isGroupDisabled`          | `is*` predicate auxiliary                       |
+| private   | `computePopupSegments`     | `compute*` - derive render segments, no DOM     |
+| private   | `commitPopupSegmentsToDom` | `commit*ToDom` - write segments into popup list |
+| protected | `createGroupEl`            | `create*El` - group container build (override for full control) |
+| protected | `createGroupLabelContentEl`| `create*El` - rich header content (mirrors `createItemContentEl`) |
+| (type)    | `PopupListSegment`         | descriptive noun for the render-segment union   |
+
+`classIdMap` gained `groupClass` / `groupLabelClass` (mirrors the `itemClass`
+family). No code rename was needed - every name already obeys s1-s3.
 
 ## 5. Decisions log
 

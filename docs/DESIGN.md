@@ -256,7 +256,9 @@ same shapes:
 |---|---|---|
 | identity | `T`                      | `GK` (grouping key; class `<T, GK = string>`) |
 | equality | `compareFn(a, b)`        | `groupKeyCompareFn(a, b)`               |
-| display  | `itemToStringFn(item)`   | `groupKeyToLabelFn(key)`                |
+| display (text) | `itemToStringFn(item)` | `groupKeyToLabelFn(key)`             |
+| display (rich) | `createItemContentElFn(item)` | `createGroupLabelContentElFn(key, items)` |
+| full control (subclass) | `createItemEl` (protected) | `createGroupEl` (protected) |
 | disabled | `itemDisabledFn(item)`   | `groupDisabledFn(key)`                  |
 
 Why this shape, in this codebase specifically:
@@ -276,8 +278,9 @@ Why this shape, in this codebase specifically:
   dodges the hard-coded-string-key trap where widening the key type later would
   be a breaking change.
 - **`GK` never touches the DOM.** Group containers get an index-based id
-  (`-group${index}`, like items' `-item${index}`); visible text / `aria-label`
-  come from `groupKeyToLabelFn`, disabled state from a computed boolean. So an
+  (`-group${index}`, like items' `-item${index}`); the `aria-label` comes from
+  `groupKeyToLabelFn` (visible content optionally from `createGroupLabelContentElFn`),
+  disabled state from a computed boolean. So an
   object key needs no `String(key)` serialization anywhere.
 - **Settings compose; no subclass split.** Same reasoning as the search box: a
   capability that combines with others (search x optgroup x ...) must be a
@@ -316,10 +319,18 @@ settings"; `naming-conventions.md` s3). Each `null` documented per CLAUDE.md:
 - `groupDisabledFn: ((groupKey: GK) => boolean) | null` (default `null` = no
   group disabled). `true` = every item in that group is treated as disabled.
   Backed by `protected isGroupDisabled(key)`.
-- Deferred: `createGroupLabelContentElFn: ((groupKey, itemsInGroup) => HTMLElement | null)`
-  for a custom header (icon, count badge; cf. react-select `formatGroupLabel`,
-  MUI `renderGroup`). Not in the first cut - start with a plain string label.
-  Named `create*ElFn` (returns an element) when it lands.
+- `createGroupLabelContentElFn: ((groupKey: GK, itemsInGroup: readonly T[]) => HTMLElement | null) | null`
+  (default `null`). The rich-header seam, mirroring `createItemContentElFn`: fills the
+  header's visible content (icon, count badge; cf. react-select `formatGroupLabel`,
+  MUI `renderGroup`). `null` (setting or returned) = plain text from `groupKeyToLabel`.
+  The accessible name stays `groupKeyToLabel` (container `aria-label`); the label
+  element stays `aria-hidden`. `itemsInGroup` (the group's items) is what makes
+  counts / summaries possible without recomputing the grouping. Backed by `protected
+  createGroupLabelContentEl(key, itemsInGroup)`.
+
+The full-control escape hatch mirrors `createItemEl`: `protected createGroupEl(key,
+index, items, itemEls)` builds the whole group container (id, `role="group"`,
+`aria-label`, label element, items) and is overridable for a custom group element.
 
 ### Grouping semantic (contiguous-run)
 
