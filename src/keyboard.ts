@@ -96,15 +96,22 @@ export function getUpdatedIndex(
  * Scroll `scrollParent` just enough so `child` is fully visible. No-op if
  * `child` is already in view. Adjusts `scrollTop` directly rather than using
  * `scrollIntoView`, so the page (window) does not scroll alongside.
+ *
+ * Uses viewport-rect deltas, NOT `offsetTop`: `offsetTop` is relative to the
+ * offset parent, which a theme could change by making a group container
+ * `position: relative` (optgroup), silently breaking the math. Rect deltas are
+ * correct regardless of nesting / theme CSS. `clientTop` / `clientHeight`
+ * exclude the parent's border so a bordered list stays exact. Measured to cost
+ * the same as the old `offsetTop` path (see docs/DESIGN.md "Optgroup").
  */
 export function ensureVisibleInScroll(child: HTMLElement, scrollParent: HTMLElement): void {
-  const childTop = child.offsetTop
-  const childBottom = childTop + child.offsetHeight
-  const parentTop = scrollParent.scrollTop
-  const parentBottom = parentTop + scrollParent.clientHeight
-  if (childTop < parentTop) {
-    scrollParent.scrollTop = childTop
-  } else if (childBottom > parentBottom) {
-    scrollParent.scrollTop = childBottom - scrollParent.clientHeight
+  const c = child.getBoundingClientRect()
+  const p = scrollParent.getBoundingClientRect()
+  const viewTop = p.top + scrollParent.clientTop
+  const viewBottom = viewTop + scrollParent.clientHeight
+  if (c.top < viewTop) {
+    scrollParent.scrollTop -= viewTop - c.top
+  } else if (c.bottom > viewBottom) {
+    scrollParent.scrollTop += c.bottom - viewBottom
   }
 }

@@ -358,18 +358,18 @@ Matches the APG grouped-listbox example. Each group is a container
 label element carries `.llselect-group-label` and `aria-hidden="true"` (its text
 is already the group's accessible name via `aria-label`, so it must not be
 announced twice). A disabled group's container gets `aria-disabled="true"` +
-`data-disabled`. Full keyboard / focus contract goes into `A11Y.md` when Phase 10
-is implemented.
+`data-disabled`. The keyboard / focus contract is in `A11Y.md` ("Grouping").
 
-### Implementation note (verify at build time)
+### Implementation note (resolved)
 
-`ensureVisibleInScroll` (keyboard.ts) currently uses `offsetTop` relative to the
-offset parent; nesting options inside group containers changes the offset parent
-and breaks it. Switch to a `getBoundingClientRect`-delta computation so it is
-correct regardless of theme CSS. `getBoundingClientRect` forces synchronous
-layout and this runs on every keyboard move and post-filter `setFocusedIndex(0)`,
-so measure it on the 10k demo for layout thrashing before locking the approach -
-this is the one unknown that reasoning cannot settle (see `optgroup-research.md`).
+`ensureVisibleInScroll` (keyboard.ts) uses `getBoundingClientRect`-delta math
+(offsetParent-independent), NOT `offsetTop`, so it stays correct when items nest
+inside group containers regardless of theme CSS - including a `position:
+relative` group. Measured on a 10k list in Firefox + Chromium
+(`demo/bench-reflow.html`): rect and offsetTop cost the same per keyboard move
+(< 0.15% of a 60fps frame), and offsetTop was confirmed correct ONLY while groups
+stay `position: static` (289575px off once a group is positioned) - exactly the
+theme fragility rect removes at zero cost.
 
 ## Popup width policy
 

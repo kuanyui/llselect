@@ -1,5 +1,5 @@
 import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, createChevronDownSvgEl, createTriangleDownSvgEl, createCheckboxSvgEl } from '../dist/index.mjs'
-import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES } from './data.js'
+import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS } from './data.js'
 
 console.log('llselect v' + LLSELECT_VERSION)
 
@@ -493,6 +493,44 @@ const selBottom = new LLSelectSingle(
   }
 )
 selBottom.setItems(COUNTRIES)
+//#endregion
+
+//#region 12.1
+// Optgroup: flat items + itemToGroupKeyFn. Items are pre-sorted by category;
+// contiguous same-key items form one group. The key is the identity; the label
+// is a separate projection (here key === label, so groupKeyToLabelFn is omitted).
+const outGroup = document.getElementById('out-group')
+const selGroup = new LLSelectSingle(
+  document.getElementById('mount-group'),
+  {
+    placeholder: 'Pick a food',
+    compareFn: (a, b) => a.name === b.name,
+    itemToStringFn: (f) => f.name,
+    itemToGroupKeyFn: (f) => f.category,
+    onChange: (v) => { outGroup.textContent = 'chosen: ' + (v ? `${v.name} (${v.category})` : '(none)') },
+  }
+)
+selGroup.setItems(GROUPED_FOODS)
+//#endregion
+
+//#region 12.2
+// Group-level disabled + searchable. groupDisabledFn disables a whole group
+// (layers on item-level disabled): its items are not selectable, skipped by
+// keyboard, aria-disabled. Filtering regroups survivors; empty groups vanish.
+const outGroupDisabled = document.getElementById('out-group-disabled')
+const selGroupDisabled = new LLSelectMultiple(
+  document.getElementById('mount-group-disabled'),
+  {
+    placeholder: 'Pick foods (Dairy group disabled)',
+    searchable: true,
+    compareFn: (a, b) => a.name === b.name,
+    itemToStringFn: (f) => f.name,
+    itemToGroupKeyFn: (f) => f.category,
+    groupDisabledFn: (cat) => cat === 'Dairy',
+    onChange: (chosen) => { outGroupDisabled.textContent = 'chosen: ' + chosen.map((f) => f.name).join(', ') },
+  }
+)
+selGroupDisabled.setItems(GROUPED_FOODS)
 //#endregion
 
 // --- Inject demo snippets into <pre data-demo="X"><code></code></pre> -----

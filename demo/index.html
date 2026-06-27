@@ -521,6 +521,48 @@
     </article>
   </section>
 
+  <section>
+    <h2>12. Optgroup / grouping</h2>
+    <p class="hint">
+      Grouping is a derived projection of the flat <code>items</code> list:
+      <code>itemToGroupKeyFn</code> maps each item to a group key (contiguous
+      same-key items form one group; data must be pre-sorted by group). The key
+      is the identity; <code>groupKeyToLabelFn</code> is a separate display
+      projection (the i18n seam). Group headers are <code>role="group"</code>
+      with an <code>aria-hidden</code> label; keyboard nav skips them. See
+      <code>docs/DESIGN.md</code> &rarr; "Optgroup (Phase 10)".
+    </p>
+
+    <article>
+      <h3>12.1 Basic grouping (single)</h3>
+      <p class="hint">Foods grouped by category. Open it - each category shows a header above its items.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-group"></div>
+          <div class="out" id="out-group">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="12.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>12.2 Group-level disabled + searchable (multiple)</h3>
+      <p class="hint">
+        <code>groupDisabledFn</code> disables the whole Dairy group (layers on
+        item-level disabled): not selectable, skipped by keyboard, aria-disabled,
+        but still hoverable. Type to filter - survivors regroup and now-empty
+        groups disappear.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-group-disabled"></div>
+          <div class="out" id="out-group-disabled">chosen: </div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="12.2"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
+
   <div class="page-filler"></div>
 
   <section>

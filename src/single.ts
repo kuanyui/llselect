@@ -14,7 +14,7 @@ export interface LLSelectSingleTriggerContext<T> {
   items: readonly T[]
 }
 
-export interface LLSelectSingleSettings<T> extends LLSelectBaseSettings<T> {
+export interface LLSelectSingleSettings<T, GK = string> extends LLSelectBaseSettings<T, GK> {
   /**
    * Fired when the chosen item actually changes (compared via `compareFn`).
    * `undefined` means "no selection". Does NOT fire on construction nor on
@@ -38,8 +38,8 @@ export interface LLSelectSingleSettings<T> extends LLSelectBaseSettings<T> {
  * Constructor-time settings input for {@link LLSelectSingle}.
  * Every field is optional; missing fields use defaults.
  */
-export type LLSelectSingleSettingsInput<T> =
-  & LLSelectBaseSettingsInput<T>
+export type LLSelectSingleSettingsInput<T, GK = string> =
+  & LLSelectBaseSettingsInput<T, GK>
   & {
     onChange?: (chosenItem: T | undefined) => void
     createTriggerContentElFn?: (ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | null
@@ -51,7 +51,7 @@ export type LLSelectSingleSettingsInput<T> =
  *
  * @typeParam T - item type. Supply your own `compareFn` for non-primitive `T`.
  */
-export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
+export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK> {
   /** Currently chosen item, or `undefined` if none. */
   protected chosenItem: T | undefined = undefined
   /** Optional change callback supplied via settings. */
@@ -60,7 +60,7 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
   protected createTriggerContentElFn:
     ((ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | null) | undefined
 
-  constructor(targetEl: HTMLElement, settings?: LLSelectSingleSettingsInput<T>) {
+  constructor(targetEl: HTMLElement, settings?: LLSelectSingleSettingsInput<T, GK>) {
     super(targetEl, settings)
     this.onChange = settings?.onChange
     this.createTriggerContentElFn = settings?.createTriggerContentElFn

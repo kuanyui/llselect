@@ -14,7 +14,7 @@ export interface LLSelectMultipleTriggerContext<T> {
  * Resolved settings for {@link LLSelectMultiple}. Extends the base settings
  * with the multi-mode `onChange` callback (chosen items is an array).
  */
-export interface LLSelectMultipleSettings<T> extends LLSelectBaseSettings<T> {
+export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSettings<T, GK> {
   /**
    * Fired when the chosen-items set actually changes. Does NOT fire on
    * construction nor on a setter call that yields an equivalent set
@@ -36,8 +36,8 @@ export interface LLSelectMultipleSettings<T> extends LLSelectBaseSettings<T> {
 /**
  * Constructor-time settings input for {@link LLSelectMultiple}.
  */
-export type LLSelectMultipleSettingsInput<T> =
-  & LLSelectBaseSettingsInput<T>
+export type LLSelectMultipleSettingsInput<T, GK = string> =
+  & LLSelectBaseSettingsInput<T, GK>
   & {
     onChange?: (chosenItems: readonly T[]) => void
     createTriggerContentElFn?: (ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null
@@ -55,7 +55,7 @@ export type LLSelectMultipleSettingsInput<T> =
  *
  * @typeParam T - item type.
  */
-export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
+export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, GK> {
   /** Currently chosen items, in insertion order. */
   protected chosenItems: T[] = []
   /** Optional change callback supplied via settings. */
@@ -64,7 +64,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
   protected createTriggerContentElFn:
     ((ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null) | undefined
 
-  constructor(targetEl: HTMLElement, settings?: LLSelectMultipleSettingsInput<T>) {
+  constructor(targetEl: HTMLElement, settings?: LLSelectMultipleSettingsInput<T, GK>) {
     super(targetEl, settings)
     this.onChange = settings?.onChange
     this.createTriggerContentElFn = settings?.createTriggerContentElFn

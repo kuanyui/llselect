@@ -94,6 +94,24 @@
   color: #1c4d8f;
 }
 
+/* --- groups (Phase 10) ----------------------------------------- */
+/* Header is static by default. The scroll math is offsetParent-independent
+   (keyboard.ts uses rect deltas), so a theme MAY make this `position: sticky;
+   top: 0` for a pinned header. */
+
+.llselect-group-label {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  background: #f5f5f5;
+}
+
+.llselect-group[data-disabled='true'] .llselect-group-label {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* --- search input (Phase 8) ------------------------------------ */
 
 .llselect-search-input {

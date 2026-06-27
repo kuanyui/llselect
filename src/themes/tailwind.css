@@ -117,6 +117,23 @@
   color: var(--color-blue-600, #2563eb);
 }
 
+/* --- groups (Phase 10) ---------------------------------------- */
+/* Static header by default; rect-based scroll math (keyboard.ts) is
+   offsetParent-independent, so a theme MAY make this `position: sticky; top:0`. */
+
+.llselect-group-label {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;             /* text-xs */
+  font-weight: 600;
+  color: var(--color-slate-500, #64748b);
+  background-color: var(--color-slate-50, #f8fafc);
+}
+
+.llselect-group[data-disabled='true'] .llselect-group-label {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* --- search input (Phase 8) ------------------------------------ */
 
 .llselect-search-input {

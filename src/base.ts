@@ -35,7 +35,7 @@ export type LLSelectCreateArrowElFn = (state: { isOpen: boolean }) => HTMLElemen
  * Subclasses (`LLSelectSingle`, `LLSelectMultiple`) extend this with their
  * mode-specific options such as `onChange`.
  */
-export interface LLSelectBaseSettings<T> {
+export interface LLSelectBaseSettings<T, GK = string> {
   /** Prefix used for every CSS class and DOM id the library generates. */
   cssClassPrefix: string
   /** Text shown in the trigger when nothing is selected. */
@@ -141,6 +141,34 @@ export interface LLSelectBaseSettings<T> {
    */
   createItemContentElFn: ((item: T) => HTMLElement | null) | null
   /**
+   * Item -> its group's key (identity), enabling optgroup rendering.
+   * - `null` (setting, default): grouping off - flat list, no headers.
+   * - fn returns `null`: this item is in no group; renders ungrouped.
+   * - Contiguous items with an equal key (per `groupKeyCompareFn`) form one
+   *   group, so the data must be pre-sorted by group. See `docs/DESIGN.md`.
+   */
+  itemToGroupKeyFn: ((item: T) => GK | null) | null
+  /**
+   * Equality for two group keys; decides whether adjacent items share a group.
+   * - `null` (default) = strict `===` (right for string / number keys).
+   * - Supply only when `GK` is an object without usable reference identity.
+   * - Mirrors `compareFn`, one level up.
+   */
+  groupKeyCompareFn: ((a: GK, b: GK) => boolean) | null
+  /**
+   * Group key -> the header's display text. The i18n seam: keep keys stable,
+   * translate here.
+   * - `null` (default) = `String(groupKey)`.
+   */
+  groupKeyToLabelFn: ((groupKey: GK) => string) | null
+  /**
+   * Predicate: is this whole group disabled?
+   * - `null` (default) = no group disabled.
+   * - `true` = every item in the group is treated as disabled (layers on top of
+   *   `itemDisabledFn`).
+   */
+  groupDisabledFn: ((groupKey: GK) => boolean) | null
+  /**
    * Fired right after the popup opens. A no-op `open()` (already open, or a
    * disabled control) does not fire it. Fires in ADDITION to the protected
    * `onOpened` hook - the setting is for consumers, the hook for subclasses;
@@ -158,7 +186,7 @@ export interface LLSelectBaseSettings<T> {
  * Constructor-time settings input - every field is optional and missing
  * fields fall back to the library defaults.
  */
-export type LLSelectBaseSettingsInput<T> = Partial<LLSelectBaseSettings<T>>
+export type LLSelectBaseSettingsInput<T, GK = string> = Partial<LLSelectBaseSettings<T, GK>>
 
 /**
  * Resolved CSS class names and DOM ids for one instance. Exposed on
@@ -190,6 +218,16 @@ export interface LLSelectClassIdMap {
    * `aria-disabled="true"`). A stable hook for styling / tooltip targeting.
    */
   itemDisabledClass: string
+  /**
+   * Class on a group container (`role="group"`). A disabled group's container
+   * also carries `aria-disabled="true"` + `data-disabled="true"`.
+   */
+  groupClass: string
+  /**
+   * Class on the visible group label element (`aria-hidden`), inside the group
+   * container above its items. A hook for styling / sticky headers.
+   */
+  groupLabelClass: string
   /**
    * Class added to `rootEl` while the popup is open. Use it as a CSS hook
    * for open-state styling (also available as `[data-state='open']` on the
@@ -230,6 +268,8 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     itemClass: `${prefix}-item`,
     itemFocusedClass: `${prefix}-item-focused`,
     itemDisabledClass: `${prefix}-item-disabled`,
+    groupClass: `${prefix}-group`,
+    groupLabelClass: `${prefix}-group-label`,
     openClass: `${prefix}-open`,
     triggerId: `${uniq}-trigger`,
     popupListId: `${uniq}-popup-list`,
@@ -237,6 +277,15 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     searchInputId: `${uniq}-search-input`,
   }
 }
+
+/**
+ * One run in the rendered popup list: a single ungrouped item element, or a
+ * group (header + its item elements). Computed from the flat visible list;
+ * group headers never enter `itemEls`, so index alignment is preserved.
+ */
+type PopupListSegment =
+  | { readonly group: false; readonly el: HTMLElement }
+  | { readonly group: true; readonly label: string; readonly disabled: boolean; readonly index: number; readonly els: HTMLElement[] }
 
 /**
  * Abstract base for all select variants. Owns DOM scaffolding, ARIA wiring,
@@ -249,7 +298,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
  *   intend to narrow inside templates / handlers; usually pass a concrete
  *   type like `string` or your domain object.
  */
-export abstract class LLSelectBase<T = unknown> {
+export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * The caller-passed mount element, now decorated as the select's root.
    * Library does not replace this node, so the caller's original reference,
@@ -286,7 +335,7 @@ export abstract class LLSelectBase<T = unknown> {
   public readonly classIdMap: LLSelectClassIdMap
 
   /** Resolved settings (defaults applied). */
-  protected readonly settings: LLSelectBaseSettings<T>
+  protected readonly settings: LLSelectBaseSettings<T, GK>
   /** Current item list. Defensive copy of what `setItems` was given. */
   protected items: T[] = []
   /** Whether the popup is currently open. */
@@ -332,7 +381,7 @@ export abstract class LLSelectBase<T = unknown> {
    * @param settings - optional partial settings. Missing fields use defaults
    *   ({@link LLSelectBaseSettings}).
    */
-  constructor(targetEl: HTMLElement, settings?: LLSelectBaseSettingsInput<T>) {
+  constructor(targetEl: HTMLElement, settings?: LLSelectBaseSettingsInput<T, GK>) {
     this.settings = {
       cssClassPrefix: settings?.cssClassPrefix ?? DEFAULT_PREFIX,
       placeholder: settings?.placeholder ?? DEFAULT_PLACEHOLDER,
@@ -346,6 +395,10 @@ export abstract class LLSelectBase<T = unknown> {
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
       itemToStringFn: settings?.itemToStringFn ?? null,
       createItemContentElFn: settings?.createItemContentElFn ?? null,
+      itemToGroupKeyFn: settings?.itemToGroupKeyFn ?? null,
+      groupKeyCompareFn: settings?.groupKeyCompareFn ?? null,
+      groupKeyToLabelFn: settings?.groupKeyToLabelFn ?? null,
+      groupDisabledFn: settings?.groupDisabledFn ?? null,
       onOpen: settings?.onOpen ?? null,
       onClose: settings?.onClose ?? null,
     }
@@ -678,17 +731,18 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
-   * Orchestrator: composes `createItemEl` (build) + `commitItemElsToDom`
-   * (write) to rebuild the popup list from `getVisibleItems()`; touches no DOM
-   * directly. Called by `open()` and by `setItems()` while open. Also clamps
-   * `focusedIndex` if the list shrank and re-applies focus visuals.
+   * Orchestrator: composes `createItemEl` (build) + `computePopupSegments` +
+   * `commitPopupSegmentsToDom` (write) to rebuild the popup list from
+   * `getVisibleItems()`; touches no DOM directly. Called by `open()` and by
+   * `setItems()` while open. Also clamps `focusedIndex` if the list shrank and
+   * re-applies focus visuals.
    */
   protected renderPopupList(): void {
     const list = this.getVisibleItems()
     const els = list.map((item, i) => this.createItemEl(item, i))
     this.itemEls = els
     this.focusedEl = undefined
-    this.commitItemElsToDom(els)
+    this.commitPopupSegmentsToDom(this.computePopupSegments(list, els))
     this.positioner?.reposition()
     // Clamp focused index if the visible list shrank, then re-apply visuals.
     if (this.focusedIndex >= list.length) {
@@ -697,9 +751,83 @@ export abstract class LLSelectBase<T = unknown> {
     this.syncFocusedIndexToDom()
   }
 
-  /** Replace every popup-list child with the freshly built item elements. */
-  private commitItemElsToDom(els: HTMLElement[]): void {
-    this.popupListEl.replaceChildren(...els)
+  /**
+   * Split the flat visible list into render segments: ungrouped item elements
+   * and contiguous same-key groups. Pure computation - reads the group settings,
+   * touches no DOM. Group headers are NOT added to `itemEls`, so `itemEls[i]`
+   * stays aligned with `getVisibleItems()[i]` and keyboard nav skips headers for
+   * free. `console.warn`s once per non-contiguous key reappearance (unsorted
+   * data would otherwise emit a duplicate header for the same group).
+   */
+  private computePopupSegments(list: T[], els: HTMLElement[]): PopupListSegment[] {
+    const keyOf = this.settings.itemToGroupKeyFn
+    if (!keyOf) { return els.map((el): PopupListSegment => ({ group: false, el })) }
+    const keyEq = this.settings.groupKeyCompareFn ?? ((a: GK, b: GK) => a === b)
+    const segments: PopupListSegment[] = []
+    const closedKeys: GK[] = []
+    let groupIndex = 0
+    let i = 0
+    while (i < list.length) {
+      const key = keyOf(list[i]!)
+      if (key === null) {
+        segments.push({ group: false, el: els[i]! })
+        i += 1
+        continue
+      }
+      const groupEls: HTMLElement[] = [els[i]!]
+      let j = i + 1
+      while (j < list.length) {
+        const next = keyOf(list[j]!)
+        if (next === null || !keyEq(key, next)) { break }
+        groupEls.push(els[j]!)
+        j += 1
+      }
+      if (closedKeys.some(k => keyEq(k, key))) {
+        console.warn('llselect: group key reappears non-contiguously; sort items by group to avoid a duplicate header.', key)
+      }
+      closedKeys.push(key)
+      segments.push({
+        group: true,
+        label: this.groupKeyToLabel(key),
+        disabled: this.isGroupDisabled(key),
+        index: groupIndex,
+        els: groupEls,
+      })
+      groupIndex += 1
+      i = j
+    }
+    return segments
+  }
+
+  /** Replace every popup-list child with the rendered segments (items + group containers). */
+  private commitPopupSegmentsToDom(segments: PopupListSegment[]): void {
+    const children = segments.map(seg =>
+      seg.group ? this.createGroupEl(seg.label, seg.disabled, seg.index, seg.els) : seg.el,
+    )
+    this.popupListEl.replaceChildren(...children)
+  }
+
+  /**
+   * Build a detached group container: `role="group"` named by the label, an
+   * `aria-hidden` visible label element, then the group's item elements.
+   * `aria-disabled` + `data-disabled` when the group is disabled.
+   */
+  private createGroupEl(label: string, disabled: boolean, index: number, itemEls: HTMLElement[]): HTMLElement {
+    const group = document.createElement('div')
+    group.id = `${this.classIdMap.triggerId}-group${index}`
+    group.className = this.classIdMap.groupClass
+    group.setAttribute('role', 'group')
+    group.setAttribute('aria-label', label)
+    if (disabled) {
+      group.setAttribute('aria-disabled', 'true')
+      group.setAttribute('data-disabled', 'true')
+    }
+    const labelEl = document.createElement('div')
+    labelEl.className = this.classIdMap.groupLabelClass
+    labelEl.setAttribute('aria-hidden', 'true')
+    labelEl.textContent = label
+    group.append(labelEl, ...itemEls)
+    return group
   }
 
   /**
@@ -802,9 +930,38 @@ export abstract class LLSelectBase<T = unknown> {
     return this.settings.createItemContentElFn ? this.settings.createItemContentElFn(item) : null
   }
 
-  /** Whether `item` is disabled per `itemDisabledFn` (false when unset). */
+  /**
+   * Whether `item` is disabled - by `itemDisabledFn`, or because its group is
+   * disabled (`groupDisabledFn`). Group-disabled layers on top, so every
+   * item-disabled behavior (no selection, keyboard skip, aria) covers grouped
+   * items with no extra code. False when neither applies.
+   */
   protected isItemDisabled(item: T): boolean {
-    return this.settings.itemDisabledFn ? this.settings.itemDisabledFn(item) : false
+    if (this.settings.itemDisabledFn && this.settings.itemDisabledFn(item)) { return true }
+    const key = this.itemToGroupKey(item)
+    return key !== null && this.isGroupDisabled(key)
+  }
+
+  /**
+   * Map an item to its group key, or `null` when it belongs to no group.
+   * - Default reads `itemToGroupKeyFn`, else `null` (grouping off).
+   * - Override only when extending; configure via the setting.
+   */
+  protected itemToGroupKey(item: T): GK | null {
+    return this.settings.itemToGroupKeyFn ? this.settings.itemToGroupKeyFn(item) : null
+  }
+
+  /**
+   * Map a group key to its header display text.
+   * - Default reads `groupKeyToLabelFn`, else `String(key)`.
+   */
+  protected groupKeyToLabel(key: GK): string {
+    return this.settings.groupKeyToLabelFn ? this.settings.groupKeyToLabelFn(key) : String(key)
+  }
+
+  /** Whether the whole group `key` is disabled per `groupDisabledFn` (false when unset). */
+  protected isGroupDisabled(key: GK): boolean {
+    return this.settings.groupDisabledFn ? this.settings.groupDisabledFn(key) : false
   }
 
   /**

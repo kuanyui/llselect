@@ -87,3 +87,21 @@ export const PROGRAMMING_LANGUAGES = [
   { name: 'Swift', icon: 'language-swift', color: '#fa7343' },
   { name: 'Kotlin', icon: 'language-kotlin', color: '#7f52ff' },
 ]
+
+// Grouped items for the optgroup demos (section 12). Pre-sorted by category:
+// contiguous-run grouping needs items sharing a group to be adjacent.
+export const GROUPED_FOODS = [
+  { name: 'Apple', category: 'Fruit' },
+  { name: 'Banana', category: 'Fruit' },
+  { name: 'Cherry', category: 'Fruit' },
+  { name: 'Mango', category: 'Fruit' },
+  { name: 'Carrot', category: 'Vegetable' },
+  { name: 'Broccoli', category: 'Vegetable' },
+  { name: 'Spinach', category: 'Vegetable' },
+  { name: 'Cheddar', category: 'Dairy' },
+  { name: 'Yogurt', category: 'Dairy' },
+  { name: 'Butter', category: 'Dairy' },
+  { name: 'Almond', category: 'Nuts' },
+  { name: 'Walnut', category: 'Nuts' },
+  { name: 'Cashew', category: 'Nuts' },
+]

@@ -113,6 +113,23 @@
   color: var(--bs-primary, #0d6efd);
 }
 
+/* --- groups (Phase 10, matches .dropdown-header look) --------- */
+/* Static header by default; rect-based scroll math (keyboard.ts) allows a
+   theme to make it `position: sticky; top: 0`. */
+
+.llselect-group-label {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--bs-secondary-color, #6c757d);
+  background-color: var(--bs-tertiary-bg, #f8f9fa);
+}
+
+.llselect-group[data-disabled='true'] .llselect-group-label {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* --- search input (Phase 8) ------------------------------------ */
 
 .llselect-search-input {
