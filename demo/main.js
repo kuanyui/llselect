@@ -483,19 +483,7 @@ selDisFocusable.setDisabled(true)
 selDisFocusable.triggerEl.setAttribute('title', 'Disabled, but Tab can still reach me')
 //#endregion
 
-//#region 11
-const outBottom = document.getElementById('out-bottom')
-const selBottom = new LLSelectSingle(
-  document.getElementById('mount-bottom'),
-  {
-    placeholder: 'Pick a country (near page bottom)',
-    onChange: (v) => { outBottom.textContent = 'chosen: ' + JSON.stringify(v) },
-  }
-)
-selBottom.setItems(COUNTRIES)
-//#endregion
-
-//#region 12.1
+//#region 11.1
 // Optgroup: flat items + itemToGroupKeyFn. Items are pre-sorted by category;
 // contiguous same-key items form one group. The key is the identity; the label
 // is a separate projection (here key === label, so groupKeyToLabelFn is omitted).
@@ -513,7 +501,7 @@ const selGroup = new LLSelectSingle(
 selGroup.setItems(GROUPED_FOODS)
 //#endregion
 
-//#region 12.2
+//#region 11.2
 // Group-level disabled + searchable. groupDisabledFn disables a whole group
 // (layers on item-level disabled): its items are not selectable, skipped by
 // keyboard, aria-disabled. Filtering regroups survivors; empty groups vanish.
@@ -533,7 +521,7 @@ const selGroupDisabled = new LLSelectMultiple(
 selGroupDisabled.setItems(GROUPED_FOODS)
 //#endregion
 
-//#region 12.3
+//#region 11.3
 // Rich group header via createGroupLabelContentElFn (mirrors createItemContentElFn):
 // an icon + a live count badge. itemsInGroup gives the group's items, so the
 // count needs no external bookkeeping. The header's accessible name stays the

@@ -522,7 +522,7 @@
   </section>
 
   <section>
-    <h2>12. Optgroup / grouping</h2>
+    <h2>11. Optgroup / grouping</h2>
     <p class="hint">
       Grouping is a derived projection of the flat <code>items</code> list:
       <code>itemToGroupKeyFn</code> maps each item to a group key (contiguous
@@ -534,19 +534,19 @@
     </p>
 
     <article>
-      <h3>12.1 Basic grouping (single)</h3>
+      <h3>11.1 Basic grouping (single)</h3>
       <p class="hint">Foods grouped by category. Open it - each category shows a header above its items.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-group"></div>
           <div class="out" id="out-group">chosen: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="12.1"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="11.1"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>12.2 Group-level disabled + searchable (multiple)</h3>
+      <h3>11.2 Group-level disabled + searchable (multiple)</h3>
       <p class="hint">
         <code>groupDisabledFn</code> disables the whole Dairy group (layers on
         item-level disabled): not selectable, skipped by keyboard, aria-disabled,
@@ -558,12 +558,12 @@
           <div id="mount-group-disabled"></div>
           <div class="out" id="out-group-disabled">chosen: </div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="12.2"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="11.2"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>12.3 Rich group header (icon + count badge)</h3>
+      <h3>11.3 Rich group header (icon + count badge)</h3>
       <p class="hint">
         <code>createGroupLabelContentElFn</code> fills the header's visible
         content (icon + a <code>(n)</code> count from <code>itemsInGroup</code>),
@@ -575,26 +575,9 @@
         <div class="demo-pane">
           <div id="mount-group-rich"></div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="12.3"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="11.3"><code></code></pre></details>
       </div>
     </article>
-  </section>
-
-  <div class="page-filler"></div>
-
-  <section>
-    <h2>11. Near page bottom (flip up)</h2>
-    <p class="hint">
-      After the spacer above, this select sits near the viewport bottom; the
-      popup should open upward (look for <code>data-placement="above"</code> on the popup).
-    </p>
-    <div class="demo-split">
-      <div class="demo-pane">
-        <div id="mount-bottom"></div>
-        <div class="out" id="out-bottom">chosen: (none)</div>
-      </div>
-      <details class="code-toggle"><summary>code</summary><pre data-demo="11"><code></code></pre></details>
-    </div>
   </section>
 
   <script type="module" src="main.js"></script>
