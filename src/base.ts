@@ -240,6 +240,12 @@ export interface LLSelectClassIdMap {
    * container above its items. A hook for styling / sticky headers.
    */
   groupLabelClass: string
+  /** Class on the tag-list container in `triggerDisplay: 'tags'` mode (multi). */
+  tagsClass: string
+  /** Class on one tag chip (`triggerDisplay: 'tags'`). */
+  tagClass: string
+  /** Class on a tag's remove (x) button; `aria-label` names the item, `tabindex="-1"`. */
+  tagRemoveClass: string
   /**
    * Class added to `rootEl` while the popup is open. Use it as a CSS hook
    * for open-state styling (also available as `[data-state='open']` on the
@@ -282,6 +288,9 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     itemDisabledClass: `${prefix}-item-disabled`,
     groupClass: `${prefix}-group`,
     groupLabelClass: `${prefix}-group-label`,
+    tagsClass: `${prefix}-tags`,
+    tagClass: `${prefix}-tag`,
+    tagRemoveClass: `${prefix}-tag-remove`,
     openClass: `${prefix}-open`,
     triggerId: `${uniq}-trigger`,
     popupListId: `${uniq}-popup-list`,

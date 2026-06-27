@@ -44,6 +44,18 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
       `getBoundingClientRect` deltas (measured equal-cost vs `offsetTop`; robust
       to a positioned group). Themes ship `.llselect-group-label` styling. Spec:
       DESIGN.md "Optgroup (Phase 10)"; research: `optgroup-research.md`.
+- [x] **Phase 11** - tags display. **DONE.** `LLSelectMultiple` +
+      `triggerDisplay: 'count' | 'tags'` - a capability on the body, not a subclass
+      (composes with searchable / optgroup, same rule as searchable). `'tags'`
+      renders one removable chip per chosen item; `createTagContentElFn: (item) =>
+      HTMLElement | null` fills a chip's content (mirrors `createItemContentElFn`;
+      `createTriggerContentElFn` still takes over the whole trigger). Remove button
+      is `<button aria-label="Remove <label>" tabindex="-1">`, click
+      `stopPropagation` + `toggleItem` (select2-style MVP; keyboard removes via the
+      popup). Protected chain `createTagsEl` / `createTagEl` / `createTagContentEl`.
+      Themes ship `.llselect-tag*` (x via CSS `\00d7`). Spec: DESIGN.md "Tags
+      (triggerDisplay)"; A11Y.md "Tags". Future: focusable-remove flag (A11Y open
+      questions).
 
 A11Y model (locked, see `A11Y.md`): two ARIA modes picked by `searchable`.
 `searchable: true` uses APG "Combobox with list autocomplete" (focus on the

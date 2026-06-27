@@ -119,8 +119,9 @@ It does **not** provide:
 - Default visual styling (themes are opt-in, shipped separately)
 - Item content beyond the configured `itemToString` (no built-in icon /
   description / avatar slots inside items)
-- Built-in tag chips in the multi-select trigger (the `renderTriggerContentFn`
-  setting is the hook to build them yourself)
+- Arbitrary trigger markup out of the box - the built-in multi-select displays
+  are `'count'` and `'tags'` (`triggerDisplay`); `createTriggerContentElFn` takes
+  over the trigger entirely. See "Tags (triggerDisplay)".
 
 When in doubt, the answer is "lib provides a structural slot; the user
 fills it". This keeps API surface tight and avoids feature creep.
@@ -381,6 +382,54 @@ relative` group. Measured on a 10k list in Firefox + Chromium
 (< 0.15% of a 60fps frame), and offsetTop was confirmed correct ONLY while groups
 stay `position: static` (289575px off once a group is positioned) - exactly the
 theme fragility rect removes at zero cost.
+
+## Tags (triggerDisplay)
+
+`LLSelectMultiple` shows chosen items two ways, picked by the `triggerDisplay`
+setting: `'count'` (default, a "3 / 10 selected" summary) or `'tags'` (one
+removable chip per chosen item). Tags is a capability ON `LLSelectMultiple`, not a
+subclass - same rule as searchable.
+
+### Why on LLSelectMultiple, not a subclass
+
+- **Not a new kind of select** - still a multi-select, just a different trigger
+  display. `renderTriggerContent` already owns the trigger's look (it renders the
+  count summary); tags is another branch of it, not a new type.
+- **Capability = setting** (DESIGN "Search box"): tags must combine with searchable
+  / optgroup; a subclass would explode into `LLSelectTags` x `LLSelectSearchable`
+  x ... A setting composes.
+- **Single has no tags** (one chip is meaningless), so it lives on Multiple, not
+  Base.
+
+### Two-layer content, mirroring the item layer
+
+The overlap with `createTriggerContentElFn` is resolved the same way item / group
+content is - two granularities:
+
+| granularity | item | trigger-tags |
+|---|---|---|
+| take over the whole element | `createItemEl` | `createTriggerContentElFn` (whole trigger) |
+| fill only the visible content | `createItemContentElFn` | `createTagContentElFn` (one chip) |
+
+- Precedence: `createTriggerContentElFn` (full control) > `triggerDisplay: 'tags'`
+  > `'count'`. Same as `createItemEl` over `createItemContentEl`.
+- `createTagContentElFn: (item) => HTMLElement | null` fills one chip's visible
+  content; the library owns the chip container, remove button, and aria. `null` =
+  plain `itemToString`.
+- Protected chain (each overridable): `renderTriggerContent` -> `createTagsEl`
+  (chip strip) -> `createTagEl(item)` (one chip: content + x button) ->
+  `createTagContentEl(item)` (reads the setting).
+
+### Remove button + ARIA (select2-style MVP)
+
+Each chip's remove control is `<button aria-label="Remove <itemToString>"
+tabindex="-1">`; its click `stopPropagation`s (so it never toggles the popup) then
+calls `toggleItem`, which re-renders the trigger. `tabindex="-1"` keeps it out of
+the tab order - keyboard users remove via the popup (deselect), matching select2.
+Full chip keyboard nav (grid pattern) is deferred: APG has no standalone tag/token
+pattern and it would fight the combobox `aria-activedescendant` model. See A11Y.md
+"Tags". The x glyph is CSS (`.llselect-tag-remove::before { content: '\00d7' }`) so
+the button stays empty (accessible name = `aria-label`) and the theme owns the look.
 
 ## Popup width policy
 

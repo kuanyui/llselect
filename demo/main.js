@@ -419,6 +419,25 @@ document.getElementById('btn-toggle-all')
   .addEventListener('click', () => selMultiAll.toggleAll())
 //#endregion
 
+//#region 5.3
+// triggerDisplay: 'tags' shows each chosen item as a removable chip. The x
+// button removes it (toggleItem); the library owns the chip + x + aria +
+// tabindex. Composes with searchable. createTagContentElFn (unused here) would
+// fill each chip's content, mirroring createItemContentElFn.
+const outTags = document.getElementById('out-tags')
+const selTags = new LLSelectMultiple(
+  document.getElementById('mount-tags'),
+  {
+    placeholder: 'Pick countries',
+    triggerDisplay: 'tags',
+    searchable: true,
+    onChange: (chosen) => { outTags.textContent = 'chosen: ' + chosen.join(', ') },
+  }
+)
+selTags.setItems(COUNTRIES)
+selTags.setChosenItems(['Japan', 'Brazil', 'Canada'])
+//#endregion
+
 //#region 9.1
 const PRODUCTS = [
   { name: 'Espresso', stock: 8 },

@@ -165,3 +165,50 @@
 .llselect-item-disabled:hover {
   background: none;
 }
+
+/* --- tags (triggerDisplay: 'tags') --------------------------- */
+/* :has lets the trigger content wrap for chips (nowrap+ellipsis otherwise). */
+
+.llselect-trigger-content:has(.llselect-tags) {
+  white-space: normal;
+  overflow: visible;
+}
+
+.llselect-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.llselect-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 3px 1px 8px;
+  background-color: #337ab7;
+  color: #fff;
+  border-radius: 3px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.llselect-tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: #fff;
+  opacity: 0.8;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+
+.llselect-tag-remove::before { content: '\00d7'; font-size: 15px; }
+
+.llselect-tag-remove:hover { opacity: 1; }

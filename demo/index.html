@@ -246,6 +246,25 @@
         <details class="code-toggle"><summary>code</summary><pre data-demo="5.2"><code></code></pre></details>
       </div>
     </article>
+
+    <article>
+      <h3>5.3 Tags display (removable chips)</h3>
+      <p class="hint">
+        <code>triggerDisplay: 'tags'</code> shows each chosen item as a chip with
+        a remove (x) button. The library owns the chip, the x button, its
+        <code>aria-label</code> and <code>tabindex="-1"</code> - you write none of
+        it. Composes with <code>searchable</code>; per-chip content is
+        customizable via <code>createTagContentElFn</code> (mirrors
+        <code>createItemContentElFn</code>).
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-tags"></div>
+          <div class="out" id="out-tags">chosen: </div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="5.3"><code></code></pre></details>
+      </div>
+    </article>
   </section>
 
   <section>

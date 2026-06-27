@@ -194,6 +194,25 @@ Methods / type:
 `classIdMap` gained `groupClass` / `groupLabelClass` (mirrors the `itemClass`
 family). No code rename was needed - every name already obeys s1-s3.
 
+### 4e. Tags (triggerDisplay) additions
+
+Settings on `LLSelectMultipleSettings` (s3 by return type):
+
+| Vis     | Name                   | Signature                          | s3            |
+| ------- | ---------------------- | ---------------------------------- | ------------- |
+| setting | `triggerDisplay`       | `'count' \| 'tags'`                | value (enum)  |
+| setting | `createTagContentElFn` | `(item: T) => HTMLElement \| null` | `create*ElFn` |
+
+Methods (protected, overridable):
+
+| Name                 | Convention                                           |
+| -------------------- | ---------------------------------------------------- |
+| `createTagsEl`       | `create*El` - the chip strip                         |
+| `createTagEl`        | `create*El` - one chip (content + remove button)     |
+| `createTagContentEl` | `create*El` - one chip's content (reads the setting) |
+
+`classIdMap` gained `tagsClass` / `tagClass` / `tagRemoveClass`. All obey s1-s3.
+
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator

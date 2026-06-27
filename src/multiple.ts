@@ -31,6 +31,23 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * Checked before `renderTriggerContent`, so it wins over a subclass override.
    */
   createTriggerContentElFn?: (ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null
+  /**
+   * Trigger display mode.
+   * - `'count'` (default): a summary like "3 / 10 selected".
+   * - `'tags'`: one removable chip per chosen item; its x button removes it.
+   * `createTriggerContentElFn` overrides both (full control wins).
+   */
+  triggerDisplay?: 'count' | 'tags'
+  /**
+   * Item -> the visible content ELEMENT of its tag chip in `'tags'` mode,
+   * without subclassing. Mirrors `createItemContentElFn` (the chip is to the
+   * trigger what the option content is to the row):
+   * - Return an `HTMLElement` and the library inserts it as the chip's content;
+   *   the library still owns the chip container + the remove (x) button + aria.
+   * - `null` (default, or returned for an item) = plain text from `itemToString`.
+   * The remove button's accessible name is `"Remove <itemToString>"`.
+   */
+  createTagContentElFn?: (item: T) => HTMLElement | null
 }
 
 /**
@@ -41,6 +58,8 @@ export type LLSelectMultipleSettingsInput<T, GK = string> =
   & {
     onChange?: (chosenItems: readonly T[]) => void
     createTriggerContentElFn?: (ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null
+    triggerDisplay?: 'count' | 'tags'
+    createTagContentElFn?: (item: T) => HTMLElement | null
   }
 
 /**
@@ -63,11 +82,17 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   /** Optional trigger-content renderer supplied via settings. */
   protected createTriggerContentElFn:
     ((ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null) | undefined
+  /** Trigger display mode: count summary (default) or removable tag chips. */
+  protected triggerDisplay: 'count' | 'tags'
+  /** Optional per-chip content renderer for `'tags'` mode (mirrors createItemContentElFn). */
+  protected createTagContentElFn: ((item: T) => HTMLElement | null) | undefined
 
   constructor(targetEl: HTMLElement, settings?: LLSelectMultipleSettingsInput<T, GK>) {
     super(targetEl, settings)
     this.onChange = settings?.onChange
     this.createTriggerContentElFn = settings?.createTriggerContentElFn
+    this.triggerDisplay = settings?.triggerDisplay ?? 'count'
+    this.createTagContentElFn = settings?.createTagContentElFn
     this.popupListEl.setAttribute('aria-multiselectable', 'true')
     this.renderTrigger()
   }
@@ -154,6 +179,10 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       this.commitTriggerContentToDom(custom)
       return
     }
+    if (this.triggerDisplay === 'tags' && this.chosenItems.length > 0) {
+      this.commitTriggerContentToDom(this.createTagsEl())
+      return
+    }
     const n = this.chosenItems.length
     const total = this.items.length
     const text = n === 0
@@ -162,6 +191,52 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
         ? `All ${n} selected`
         : `${n} / ${total} selected`
     this.commitTriggerContentToDom(text)
+  }
+
+  /**
+   * Build the tag-list element for `'tags'` mode: one chip per chosen item.
+   * Override for full control of the chip strip (the trigger-level equivalent
+   * of overriding `createItemEl`).
+   */
+  protected createTagsEl(): HTMLElement {
+    const wrap = document.createElement('span')
+    wrap.className = this.classIdMap.tagsClass
+    for (const item of this.chosenItems) {
+      wrap.appendChild(this.createTagEl(item))
+    }
+    return wrap
+  }
+
+  /**
+   * Build one removable tag chip: its content (from `createTagContentEl`, else
+   * plain `itemToString`) plus a remove (x) button. The button is
+   * `tabindex="-1"` with `aria-label="Remove <label>"`; clicking it removes the
+   * item via `toggleItem` and stops propagation so it never opens the popup.
+   */
+  protected createTagEl(item: T): HTMLElement {
+    const tag = document.createElement('span')
+    tag.className = this.classIdMap.tagClass
+    tag.appendChild(this.createTagContentEl(item) ?? document.createTextNode(this.itemToString(item)))
+    const remove = document.createElement('button')
+    remove.type = 'button'
+    remove.className = this.classIdMap.tagRemoveClass
+    remove.tabIndex = -1
+    remove.setAttribute('aria-label', `Remove ${this.itemToString(item)}`)
+    remove.addEventListener('click', (ev) => {
+      ev.stopPropagation()
+      this.toggleItem(item)
+    })
+    tag.appendChild(remove)
+    return tag
+  }
+
+  /**
+   * Per-chip visible content in `'tags'` mode. Mirrors `createItemContentEl`.
+   * Default reads `createTagContentElFn`, else `null` so `createTagEl` falls
+   * back to plain text from `itemToString`.
+   */
+  protected createTagContentEl(item: T): HTMLElement | null {
+    return this.createTagContentElFn ? this.createTagContentElFn(item) : null
   }
 
   /** No selection iff the chosen set is empty. Drives the trigger's `data-empty`. */
