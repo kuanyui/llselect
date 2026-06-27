@@ -1,9 +1,9 @@
 # render*() responsibilities
 
-> STATUS: DECIDED = (ii). Every `render*` method is a PURE ORCHESTRATOR - it computes
+> STATUS: APPLIED = (ii). Every `render*` method is a PURE ORCHESTRATOR - it computes
 > content/elements and calls the low-level primitives, and touches NO DOM directly. So each
 > `render*` is unsuffixed AND genuinely DOM-free in its body. (iii) is recorded at the bottom
-> as NOT TAKEN. Bodies are refactored when the renames land (see naming-conventions.md s6).
+> as NOT TAKEN. Bodies refactored in src/ (base + single + multiple); npm test green (182).
 
 ## The decision (ii)
 
@@ -37,7 +37,7 @@ private renderTriggerArrow(): void {
 }
 // AFTER
 private renderTriggerArrow(): void {
-  const el = this.settings.renderArrowFn?.({ isOpen: this.isOpen }) ?? null
+  const el = this.settings.createArrowElFn?.({ isOpen: this.isOpen }) ?? null
   this.commitArrowElToDom(el)
 }
 private commitArrowElToDom(el: HTMLElement | SVGElement | null): void {

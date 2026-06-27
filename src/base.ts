@@ -28,7 +28,7 @@ export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
  * change - including on every open/close - so the returned element can vary
  * with `isOpen`. Return `null` to render no arrow for that state.
  */
-export type LLSelectArrowRenderer = (state: { isOpen: boolean }) => HTMLElement | SVGElement | null
+export type LLSelectCreateArrowElFn = (state: { isOpen: boolean }) => HTMLElement | SVGElement | null
 
 /**
  * Resolved (defaults applied) settings shared by all select variants.
@@ -52,10 +52,10 @@ export interface LLSelectBaseSettings<T> {
   /** See {@link LLSelectOutsideClickBehavior}. */
   outsideClickBehavior: LLSelectOutsideClickBehavior
   /**
-   * See {@link LLSelectArrowRenderer}. `null` (default) means the library
+   * See {@link LLSelectCreateArrowElFn}. `null` (default) means the library
    * adds nothing to the arrow slot.
    */
-  renderArrowFn: LLSelectArrowRenderer | null
+  createArrowElFn: LLSelectCreateArrowElFn | null
   /**
    * Whether the popup includes a search input. `false` (default) keeps the
    * trigger as `role="combobox"` and the (always-built) input is `hidden`.
@@ -107,29 +107,30 @@ export interface LLSelectBaseSettings<T> {
    * - Read by the `itemToString` method's default; used for list text, the
    *   single trigger label, the option's accessible name, and the default
    *   filter. Inserted as `textContent` (plain text, NOT parsed as HTML).
-   * - For rich content (icons etc.), pass `renderItemContentFn`.
+   * - For rich content (icons etc.), pass `createItemContentElFn`.
    */
   itemToStringFn: ((item: T) => string) | null
   /**
-   * Item -> the rich visual content of its list row, without subclassing.
-   * - `null` (default) = plain text from `itemToString`.
-   * - Return an HTMLElement (inserted as-is; caller owns it) or a string (set
-   *   as `textContent`, which does not parse markup). `null` falls back to the
-   *   plain-text default.
+   * Item -> the visible content ELEMENT of its list row, without subclassing.
+   * - Return an `HTMLElement` and the library inserts it as-is (you own the
+   *   node); it becomes the row's visible content.
+   * - `null` = plain `textContent` from `itemToString`. This is the default,
+   *   both when the setting is unset and when your function returns `null` for
+   *   a particular item.
    * - Fills the VISIBLE content only. You never touch `aria-*`: when this
-   *   returns non-null the library sets the option's `aria-label` from
+   *   returns an element the library sets the option's `aria-label` from
    *   `itemToString`, so the accessible name + search text stay owned by
    *   `itemToString` no matter what you render (icon-only, reordered, ...).
    *   To make the spoken/searched text differ from the visible content, set the
    *   two independently: `itemToStringFn` for the name/search,
-   *   `renderItemContentFn` for the look.
+   *   `createItemContentElFn` for the look.
    * - For full control of the option element (tag / wiring), subclass
    *   `createItemEl` instead.
    *
    * @example
    *   // List shows an icon + label; screen readers announce just the label.
    *   itemToStringFn: (lang) => lang.name,
-   *   renderItemContentFn: (lang) => {
+   *   createItemContentElFn: (lang) => {
    *     const row = document.createElement('span')
    *     const icon = document.createElement('i')
    *     icon.className = `mdi mdi-${lang.icon}`
@@ -138,7 +139,7 @@ export interface LLSelectBaseSettings<T> {
    *     return row
    *   }
    */
-  renderItemContentFn: ((item: T) => HTMLElement | string | null) | null
+  createItemContentElFn: ((item: T) => HTMLElement | null) | null
   /**
    * Fired right after the popup opens. A no-op `open()` (already open, or a
    * disabled control) does not fire it. Fires in ADDITION to the protected
@@ -217,7 +218,7 @@ function defaultCompareFn<T>(a: T, b: T): boolean {
   return a === b
 }
 
-function makeClassIdMap(prefix: string): LLSelectClassIdMap {
+function createClassIdMap(prefix: string): LLSelectClassIdMap {
   const uniq = `${prefix}${++instanceCounter}`
   return {
     rootClass: `${prefix}-root`,
@@ -337,18 +338,18 @@ export abstract class LLSelectBase<T = unknown> {
       placeholder: settings?.placeholder ?? DEFAULT_PLACEHOLDER,
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
-      renderArrowFn: settings?.renderArrowFn ?? null,
+      createArrowElFn: settings?.createArrowElFn ?? null,
       searchable: settings?.searchable ?? false,
       filterFn: settings?.filterFn ?? null,
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'match-trigger',
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
       itemToStringFn: settings?.itemToStringFn ?? null,
-      renderItemContentFn: settings?.renderItemContentFn ?? null,
+      createItemContentElFn: settings?.createItemContentElFn ?? null,
       onOpen: settings?.onOpen ?? null,
       onClose: settings?.onClose ?? null,
     }
-    this.classIdMap = makeClassIdMap(this.settings.cssClassPrefix)
+    this.classIdMap = createClassIdMap(this.settings.cssClassPrefix)
 
     // Caller-passed element becomes root (preserves its id / external refs).
     this.rootEl = targetEl
@@ -361,13 +362,13 @@ export abstract class LLSelectBase<T = unknown> {
     this.rootEl.style.overflowAnchor = 'none'
     this.rootEl.replaceChildren()
 
-    this.triggerEl = this.buildTriggerEl()
+    this.triggerEl = this.createTriggerEl()
     this.triggerContentEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerContentClass}`) as HTMLElement
     this.triggerArrowEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerArrowClass}`) as HTMLElement
 
-    this.popupEl = this.buildPopupEl()
-    this.popupListEl = this.buildPopupListEl()
-    this.searchInputEl = this.buildSearchInputEl()
+    this.popupEl = this.createPopupEl()
+    this.popupListEl = this.createPopupListEl()
+    this.searchInputEl = this.createSearchInputEl()
     // input always built; non-searchable keeps it `hidden`. Search box must
     // sit above the listbox: listbox children must be options only.
     this.popupEl.append(this.searchInputEl, this.popupListEl)
@@ -399,9 +400,9 @@ export abstract class LLSelectBase<T = unknown> {
     this.triggerEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
     if (this.settings.searchable) {
       this.searchInputEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
-      this.searchInputEl.addEventListener('input', () => this.onSearchInput())
+      this.searchInputEl.addEventListener('input', () => this.handleSearchInputEvent())
       this.searchInputEl.addEventListener('compositionstart', () => { this.composing = true })
-      this.searchInputEl.addEventListener('compositionend', () => { this.composing = false; this.onSearchInput() })
+      this.searchInputEl.addEventListener('compositionend', () => { this.composing = false; this.handleSearchInputEvent() })
     }
   }
 
@@ -505,7 +506,7 @@ export abstract class LLSelectBase<T = unknown> {
    * mutates an item object's properties (e.g. `users[0].name = 'X'`) without
    * replacing the items array - the library has no way to detect that on
    * its own. Re-renders the trigger and (if open) the popup list. Does NOT
-   * fire `onChange`, does NOT run `afterItemsChange`. Pure visual refresh.
+   * fire `onChange`, does NOT run `onItemsChanged`. Pure visual refresh.
    */
   public rerender(): void {
     this.renderTrigger()
@@ -533,14 +534,14 @@ export abstract class LLSelectBase<T = unknown> {
    * Replace the item list. The input is shallow-copied so external mutation
    * does not affect the select. If the popup is currently open it is
    * re-rendered; otherwise the DOM is built lazily on the next `open()`.
-   * Subclasses may reconcile chosen-state via {@link afterItemsChange}
+   * Subclasses may reconcile chosen-state via {@link onItemsChanged}
    * (e.g. single mode drops a chosen value that is no longer in the list).
    */
   public setItems(items: T[]): void {
     this.items = items.slice()
     if (this.settings.searchable) { this.recomputeFilteredItems() }
     if (this.isOpen) { this.renderPopupList() }
-    this.afterItemsChange()
+    this.onItemsChanged()
   }
 
   /**
@@ -555,7 +556,7 @@ export abstract class LLSelectBase<T = unknown> {
     if (this.disabled === value) { return }
     this.disabled = value
     if (value && this.isOpen) { this.close() }
-    this.renderTriggerDisabled()
+    this.syncDisabledStateToDom()
   }
 
   /** Whether the whole control is disabled. */
@@ -564,7 +565,7 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /** Reflect `this.disabled` onto the trigger's ARIA / data / tabindex. */
-  private renderTriggerDisabled(): void {
+  private syncDisabledStateToDom(): void {
     if (this.disabled) {
       this.triggerEl.setAttribute('aria-disabled', 'true')
       this.triggerEl.setAttribute('data-disabled', 'true')
@@ -589,7 +590,7 @@ export abstract class LLSelectBase<T = unknown> {
    * depends on the item list (e.g. clear a chosen value that disappeared).
    * Default no-op.
    */
-  protected afterItemsChange(): void {}
+  protected onItemsChanged(): void {}
 
   /**
    * Orchestrator that re-renders both the trigger's content slot and the
@@ -603,19 +604,17 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
-   * Take the content the `renderTriggerContentFn` renderer returned and put it
-   * into the DOM: write it into the trigger's content container
-   * (`triggerContentEl`), replacing whatever was there.
-   * - `string` -> set as `textContent` (plain text, NOT parsed as HTML);
-   * - `HTMLElement` -> inserted as-is via `replaceChildren`; you own the node.
-   * Only the content slot is touched; the sibling arrow slot is left intact.
-   *
-   * Called only by `renderTriggerContent` (in `LLSelectSingle` /
-   * `LLSelectMultiple`), and only when `renderTriggerContentFn` returned a
-   * non-null value. The default text paths (placeholder / `itemToString` /
-   * count summary) write `textContent` directly and never reach here.
+   * Write the trigger's content slot (`triggerContentEl`), replacing whatever
+   * was there; the sibling arrow slot is untouched. The single DOM-writing
+   * primitive behind every `renderTriggerContent` path.
+   * - `string` -> set as `textContent` (plain text, NOT parsed as HTML). Used
+   *   for the default placeholder / `itemToString` label / count summary.
+   * - `HTMLElement` -> inserted as-is via `replaceChildren`; caller owns the
+   *   node. Used for whatever the `createTriggerContentElFn` setting returned.
+   * Called by `renderTriggerContent` - the base default and the `LLSelectSingle`
+   * / `LLSelectMultiple` overrides.
    */
-  protected commitTriggerContentReturnedByRenderer(content: HTMLElement | string): void {
+  protected commitTriggerContentToDom(content: HTMLElement | string): void {
     if (typeof content === 'string') {
       this.triggerContentEl.textContent = content
     } else {
@@ -624,44 +623,81 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
-   * Write the trigger's content slot. Override in subclasses to display the
-   * chosen value(s); default writes the placeholder. Always write to
-   * `this.triggerContentEl` (not `this.triggerEl`) so the sibling arrow slot
-   * is preserved.
+   * Mirror the empty/filled state onto the trigger's `data-empty` attribute
+   * (`"true"` when `isEmpty()`, else `"false"`). A CSS / AT styling hook,
+   * independent of the rendered content. Called by the subclass
+   * `renderTriggerContent` overrides.
    */
-  protected renderTriggerContent(): void {
-    this.triggerContentEl.textContent = this.settings.placeholder
+  protected syncEmptyStateToDom(): void {
+    this.triggerEl.setAttribute('data-empty', this.isEmpty() ? 'true' : 'false')
   }
 
+  /**
+   * Whether the control currently has no selection (drives `data-empty`).
+   * Base default is always `true` (the base trigger only shows the
+   * placeholder); `LLSelectSingle` / `LLSelectMultiple` override it.
+   */
+  protected isEmpty(): boolean {
+    return true
+  }
+
+  /**
+   * Orchestrator: composes the `*ToDom` primitives to (re)build the trigger's
+   * content slot from state; touches no DOM directly. Override in subclasses to
+   * display the chosen value(s); this base default commits the placeholder and
+   * the empty flag. Always write via `commitTriggerContentToDom` (content) and
+   * `syncEmptyStateToDom` (the `data-empty` flag), never `triggerContentEl`
+   * directly, so the sibling arrow slot is always preserved.
+   */
+  protected renderTriggerContent(): void {
+    this.syncEmptyStateToDom()
+    this.commitTriggerContentToDom(this.settings.placeholder)
+  }
+
+  /**
+   * Orchestrator: composes the `*ToDom` / `*El` primitives to (re)build the
+   * trigger's arrow slot from state; touches no DOM directly. Calls the
+   * `createArrowElFn` setting with the current `isOpen` and commits whatever it
+   * returns (including `null` -> no arrow for this state).
+   */
   private renderTriggerArrow(): void {
+    const el = this.settings.createArrowElFn?.({ isOpen: this.isOpen }) ?? null
+    this.commitArrowElToDom(el)
+  }
+
+  /**
+   * Write the trigger's arrow slot: clear it, then append `el` if non-null.
+   * - `el = null`: clear only, leaving the slot empty (no arrow this state).
+   * The sole mutator of the arrow slot; called by `renderTriggerArrow`.
+   */
+  private commitArrowElToDom(el: HTMLElement | SVGElement | null): void {
     this.triggerArrowEl.replaceChildren()
-    const renderer = this.settings.renderArrowFn
-    if (!renderer) { return }
-    const el = renderer({ isOpen: this.isOpen })
     if (el) { this.triggerArrowEl.appendChild(el) }
   }
 
   /**
-   * Rebuild the popup-list item elements from the current `items`. Called
-   * by `open()` and by `setItems()` while open. Also clamps `focusedIndex`
-   * if the item list shrank and re-applies focus visuals.
+   * Orchestrator: composes `createItemEl` (build) + `commitItemElsToDom`
+   * (write) to rebuild the popup list from `getVisibleItems()`; touches no DOM
+   * directly. Called by `open()` and by `setItems()` while open. Also clamps
+   * `focusedIndex` if the list shrank and re-applies focus visuals.
    */
   protected renderPopupList(): void {
-    this.popupListEl.replaceChildren()
-    this.itemEls = []
+    const list = this.getVisibleItems()
+    const els = list.map((item, i) => this.createItemEl(item, i))
+    this.itemEls = els
     this.focusedEl = undefined
-    const list = this.visibleItems()
-    for (let i = 0; i < list.length; i++) {
-      const el = this.createItemEl(list[i]!, i)
-      this.itemEls.push(el)
-      this.popupListEl.append(el)
-    }
+    this.commitItemElsToDom(els)
     this.positioner?.reposition()
     // Clamp focused index if the visible list shrank, then re-apply visuals.
     if (this.focusedIndex >= list.length) {
       this.focusedIndex = list.length === 0 ? -1 : list.length - 1
     }
     this.syncFocusedIndexToDom()
+  }
+
+  /** Replace every popup-list child with the freshly built item elements. */
+  private commitItemElsToDom(els: HTMLElement[]): void {
+    this.popupListEl.replaceChildren(...els)
   }
 
   /**
@@ -672,9 +708,9 @@ export abstract class LLSelectBase<T = unknown> {
    * loop next to DOM mutation). No-op if the popup is closed or the item is
    * not in the current list. Used by multi-select toggle.
    */
-  protected rerenderPopupListItem(item: T): void {
+  protected replacePopupListItemElInDom(item: T): void {
     if (!this.isOpen) { return }
-    const list = this.visibleItems()
+    const list = this.getVisibleItems()
     const index = list.findIndex(i => this.settings.compareFn(i, item))
     if (index < 0) { return }
     const oldEl = this.itemEls[index]
@@ -693,11 +729,11 @@ export abstract class LLSelectBase<T = unknown> {
   /**
    * Build the DOM element for one item. The base implementation sets `id`,
    * `role="option"`, a click handler, and fills the visible content via
-   * {@link renderItemContent} (which reads `renderItemContentFn`), falling
+   * {@link createItemContentEl} (which reads `createItemContentElFn`), falling
    * back to `textContent` from {@link itemToString}. When the content is
    * custom (non-null), the option's `aria-label` is set from `itemToString`
    * so the accessible name stays the plain label. For one-off rich content
-   * (icons etc.) prefer the `renderItemContentFn` setting; override this only
+   * (icons etc.) prefer the `createItemContentElFn` setting; override this only
    * to control the whole element (tag, extra wiring).
    *
    * @param item - the item value
@@ -709,7 +745,7 @@ export abstract class LLSelectBase<T = unknown> {
     el.id = `${this.classIdMap.triggerId}-item${index}`
     el.className = this.classIdMap.itemClass
     el.setAttribute('role', 'option')
-    const content = this.renderItemContent(item)
+    const content = this.createItemContentEl(item)
     if (content === null) {
       el.textContent = this.itemToString(item)
     } else {
@@ -718,11 +754,7 @@ export abstract class LLSelectBase<T = unknown> {
       // consistent with the plain-text branch (textContent === itemToString)
       // and the caller never touches aria-* themselves.
       el.setAttribute('aria-label', this.itemToString(item))
-      if (typeof content === 'string') {
-        el.textContent = content
-      } else {
-        el.appendChild(content)
-      }
+      el.appendChild(content)
     }
     // No `title` attribute by default: items wrap (themes default), so the
     // full label is already visible and a tooltip is redundant. Adding
@@ -760,12 +792,12 @@ export abstract class LLSelectBase<T = unknown> {
 
   /**
    * Item -> the visible content of its list row (icon + label etc.).
-   * - Default reads `renderItemContentFn`, else `null` so `createItemEl` uses
+   * - Default reads `createItemContentElFn`, else `null` so `createItemEl` uses
    *   the plain-text default from `itemToString`.
    * - Override only when extending; for one-off rich content pass the setting.
    */
-  protected renderItemContent(item: T): HTMLElement | string | null {
-    return this.settings.renderItemContentFn ? this.settings.renderItemContentFn(item) : null
+  protected createItemContentEl(item: T): HTMLElement | null {
+    return this.settings.createItemContentElFn ? this.settings.createItemContentElFn(item) : null
   }
 
   /** Whether `item` is disabled per `itemDisabledFn` (false when unset). */
@@ -778,7 +810,7 @@ export abstract class LLSelectBase<T = unknown> {
    * Returns -1 if no enabled item lies in that direction. Used to skip disabled
    * items during keyboard nav and initial focus.
    */
-  protected scanEnabledIndex(start: number, step: number, list: readonly T[]): number {
+  protected findNextEnabledIndex(start: number, step: number, list: readonly T[]): number {
     for (let i = start; i >= 0 && i < list.length; i += step) {
       if (!this.isItemDisabled(list[i]!)) { return i }
     }
@@ -794,10 +826,10 @@ export abstract class LLSelectBase<T = unknown> {
     const forward = action === LLSelectAction.Next
       || action === LLSelectAction.GotoFirst
       || action === LLSelectAction.PageDown
-    const primary = this.scanEnabledIndex(target, forward ? 1 : -1, list)
+    const primary = this.findNextEnabledIndex(target, forward ? 1 : -1, list)
     if (primary >= 0) { return primary }
-    if (action === LLSelectAction.PageDown) { return this.scanEnabledIndex(target, -1, list) }
-    if (action === LLSelectAction.PageUp) { return this.scanEnabledIndex(target, 1, list) }
+    if (action === LLSelectAction.PageDown) { return this.findNextEnabledIndex(target, -1, list) }
+    if (action === LLSelectAction.PageUp) { return this.findNextEnabledIndex(target, 1, list) }
     return -1
   }
 
@@ -814,7 +846,7 @@ export abstract class LLSelectBase<T = unknown> {
    * currently chosen item, last-used item, etc.
    */
   protected focusInitial(): void {
-    const first = this.scanEnabledIndex(0, 1, this.visibleItems())
+    const first = this.findNextEnabledIndex(0, 1, this.getVisibleItems())
     if (first >= 0) { this.setFocusedIndex(first) }
   }
 
@@ -825,7 +857,7 @@ export abstract class LLSelectBase<T = unknown> {
    * if the clamped value equals the current focused index.
    */
   protected setFocusedIndex(index: number): void {
-    const max = this.visibleItems().length - 1
+    const max = this.getVisibleItems().length - 1
     const clamped = Math.max(-1, Math.min(max, index))
     if (clamped === this.focusedIndex) { return }
     this.focusedIndex = clamped
@@ -981,13 +1013,13 @@ export abstract class LLSelectBase<T = unknown> {
         // when the filter is already empty. Closing returns focus to trigger.
         if (this.settings.searchable && this.query !== '') {
           this.searchInputEl.value = ''
-          this.onSearchInput()
+          this.handleSearchInputEvent()
           return
         }
         this.close()
         return
       case LLSelectAction.Select: {
-        const list = this.visibleItems()
+        const list = this.getVisibleItems()
         if (this.focusedIndex >= 0 && this.focusedIndex < list.length) {
           const item = list[this.focusedIndex]!
           // Defensive: nav never lands on a disabled item, but guard anyway.
@@ -1001,7 +1033,7 @@ export abstract class LLSelectBase<T = unknown> {
       case LLSelectAction.GotoLast:
       case LLSelectAction.PageDown:
       case LLSelectAction.PageUp: {
-        const list = this.visibleItems()
+        const list = this.getVisibleItems()
         if (list.length === 0) { return }
         const target = getUpdatedIndex(this.focusedIndex, list.length - 1, action)
         const found = this.nextEnabledForAction(target, action, list)
@@ -1011,7 +1043,7 @@ export abstract class LLSelectBase<T = unknown> {
     }
   }
 
-  private buildTriggerEl(): HTMLElement {
+  private createTriggerEl(): HTMLElement {
     const el = document.createElement('div')
     el.id = this.classIdMap.triggerId
     el.className = this.classIdMap.triggerClass
@@ -1038,7 +1070,7 @@ export abstract class LLSelectBase<T = unknown> {
    * (`hidden` when `searchable: false`) so a future runtime toggle is a CSS
    * flip rather than a DOM rebuild. See `docs/DESIGN.md`.
    */
-  private buildSearchInputEl(): HTMLInputElement {
+  private createSearchInputEl(): HTMLInputElement {
     const el = document.createElement('input')
     el.type = 'text'
     el.id = this.classIdMap.searchInputId
@@ -1059,7 +1091,7 @@ export abstract class LLSelectBase<T = unknown> {
    * the user has typed in the search input. Subclasses may read this when
    * they need the visible list (e.g. for selection-by-index).
    */
-  protected visibleItems(): T[] {
+  protected getVisibleItems(): T[] {
     return this.filteredItems ?? this.items
   }
 
@@ -1090,7 +1122,7 @@ export abstract class LLSelectBase<T = unknown> {
    * active option to the first match. IME composition is guarded - we wait
    * for `compositionend` and filter once with the composed text.
    */
-  private onSearchInput(): void {
+  private handleSearchInputEvent(): void {
     if (this.composing) { return }
     this.query = this.searchInputEl.value
     this.recomputeFilteredItems()
@@ -1100,14 +1132,14 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /** Outer popup wrapper. No ARIA role; structural only. */
-  private buildPopupEl(): HTMLElement {
+  private createPopupEl(): HTMLElement {
     const el = document.createElement('div')
     el.className = this.classIdMap.popupClass
     return el
   }
 
   /** Inner element with `role="listbox"`. Holds item children. */
-  private buildPopupListEl(): HTMLElement {
+  private createPopupListEl(): HTMLElement {
     const el = document.createElement('div')
     el.id = this.classIdMap.popupListId
     el.className = this.classIdMap.popupListClass

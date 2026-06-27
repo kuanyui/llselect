@@ -8,7 +8,7 @@ import {
  * Resolved settings for {@link LLSelectSingle}. Extends the base settings
  * with the single-mode `onChange` callback.
  */
-/** Context passed to {@link LLSelectSingleSettings.renderTriggerContentFn}. */
+/** Context passed to {@link LLSelectSingleSettings.createTriggerContentElFn}. */
 export interface LLSelectSingleTriggerContext<T> {
   chosenItem: T | undefined
   items: readonly T[]
@@ -22,18 +22,16 @@ export interface LLSelectSingleSettings<T> extends LLSelectBaseSettings<T> {
    */
   onChange: (chosenItem: T | undefined) => void
   /**
-   * Render the trigger's content without subclassing - the setting equivalent
-   * of overriding `renderTriggerContent`. Receives the chosen item + items.
-   * Return value (same convention as `renderItemContentFn`):
-   * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this when
-   *   you need real markup (icon + text, etc.).
-   * - `string` - set as `textContent`, i.e. PLAIN TEXT, NOT parsed as HTML; any
-   *   tags in it would show literally. Build an element if you want markup.
-   * - `null` - use the default (chosen item's `itemToString`, or the placeholder
-   *   when nothing is chosen).
+   * Render the trigger's content ELEMENT without subclassing - the setting
+   * equivalent of overriding `renderTriggerContent`. Receives the chosen item
+   * + items (same convention as `createItemContentElFn`):
+   * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this for
+   *   real markup (icon + text, etc.).
+   * - `null` - use the default: the chosen item's `itemToString`, or the
+   *   placeholder when nothing is chosen.
    * Checked before `renderTriggerContent`, so it wins over a subclass override.
    */
-  renderTriggerContentFn?: (ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | string | null
+  createTriggerContentElFn?: (ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | null
 }
 
 /**
@@ -44,7 +42,7 @@ export type LLSelectSingleSettingsInput<T> =
   & LLSelectBaseSettingsInput<T>
   & {
     onChange?: (chosenItem: T | undefined) => void
-    renderTriggerContentFn?: (ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | string | null
+    createTriggerContentElFn?: (ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | null
   }
 
 /**
@@ -59,13 +57,13 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
   /** Optional change callback supplied via settings. */
   protected onChange: ((chosenItem: T | undefined) => void) | undefined
   /** Optional trigger-content renderer supplied via settings. */
-  protected renderTriggerContentFn:
-    ((ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | string | null) | undefined
+  protected createTriggerContentElFn:
+    ((ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | null) | undefined
 
   constructor(targetEl: HTMLElement, settings?: LLSelectSingleSettingsInput<T>) {
     super(targetEl, settings)
     this.onChange = settings?.onChange
-    this.renderTriggerContentFn = settings?.renderTriggerContentFn
+    this.createTriggerContentElFn = settings?.createTriggerContentElFn
     this.renderTrigger()
   }
 
@@ -89,22 +87,26 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
   }
 
   /**
-   * Trigger content.
-   * - `renderTriggerContentFn` first; `null` / unset falls to the default.
+   * Orchestrator: composes `syncEmptyStateToDom` + `commitTriggerContentToDom`
+   * to (re)build the trigger from state; touches no DOM directly.
+   * - `createTriggerContentElFn` first; `null` / unset falls to the default.
    * - Default: the chosen item's string, or the placeholder when empty.
    */
   protected override renderTriggerContent(): void {
-    const empty = this.chosenItem === undefined
-    this.triggerEl.setAttribute('data-empty', empty ? 'true' : 'false')
-    const fn = this.renderTriggerContentFn
-    const custom = fn ? fn({ chosenItem: this.chosenItem, items: this.getItems() }) : null
+    this.syncEmptyStateToDom()
+    const custom = this.createTriggerContentElFn?.({ chosenItem: this.chosenItem, items: this.getItems() }) ?? null
     if (custom !== null) {
-      this.commitTriggerContentReturnedByRenderer(custom)
+      this.commitTriggerContentToDom(custom)
       return
     }
-    this.triggerContentEl.textContent = empty
-      ? this.settings.placeholder
-      : this.itemToString(this.chosenItem!)
+    this.commitTriggerContentToDom(
+      this.chosenItem === undefined ? this.settings.placeholder : this.itemToString(this.chosenItem!),
+    )
+  }
+
+  /** No selection iff `chosenItem` is unset. Drives the trigger's `data-empty`. */
+  protected override isEmpty(): boolean {
+    return this.chosenItem === undefined
   }
 
   /** Pick this item as the chosen item and close the popup. */
@@ -115,10 +117,10 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
 
   /**
    * On open, highlight the chosen item (if present and enabled), else the first
-   * enabled item. Indices are into `visibleItems()` (the rendered list).
+   * enabled item. Indices are into `getVisibleItems()` (the rendered list).
    */
   protected override focusInitial(): void {
-    const list = this.visibleItems()
+    const list = this.getVisibleItems()
     const c = this.chosenItem
     if (c !== undefined) {
       const idx = list.findIndex(o => this.settings.compareFn(o, c))
@@ -127,12 +129,12 @@ export class LLSelectSingle<T = unknown> extends LLSelectBase<T> {
         return
       }
     }
-    const first = this.scanEnabledIndex(0, 1, list)
+    const first = this.findNextEnabledIndex(0, 1, list)
     if (first >= 0) { this.setFocusedIndex(first) }
   }
 
   /** Drop the chosen item if `setItems` removed it from the list. */
-  protected override afterItemsChange(): void {
+  protected override onItemsChanged(): void {
     const current = this.chosenItem
     if (current === undefined) { return }
     const stillPresent = this.items.some(o => this.settings.compareFn(o, current))

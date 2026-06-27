@@ -125,7 +125,7 @@ test('setItems drops chosen entries no longer present, fires onChange', () => {
   sel.setChosenItems(['a', 'b'])
   sel.setItems(['b', 'c'])  // 'a' drops
   assert.deepEqual([...sel.getChosenItems()], ['b'])
-  // fired: setChosenItems + afterItemsChange
+  // fired: setChosenItems + onItemsChanged
   assert.equal(fired.length, 2)
 })
 

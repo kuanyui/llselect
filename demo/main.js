@@ -1,4 +1,4 @@
-import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, chevronDownSvg, triangleDownSvg, checkboxSvg } from '../dist/index.mjs'
+import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, createChevronDownSvgEl, createTriangleDownSvgEl, createCheckboxSvgEl } from '../dist/index.mjs'
 import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES } from './data.js'
 
 console.log('llselect v' + LLSELECT_VERSION)
@@ -60,12 +60,12 @@ selUsers.setItems(USERS)
 //#endregion
 
 //#region 10.1
-// renderItemContentFn fills each option's VISIBLE content (colored icon +
+// createItemContentElFn fills each option's VISIBLE content (colored icon +
 // label), no subclass. The library owns the option shell + aria: it pins each
 // option's aria-label to itemToString (the icon never reaches a screen reader),
 // so you write zero aria-*. There is no auto-projection - the trigger mirrors
 // the chosen row only because we pass the same languageRow to
-// renderTriggerContentFn below.
+// createTriggerContentElFn below.
 function languageRow(lang) {
   const row = document.createElement('span')
   row.className = 'lang-row'
@@ -83,8 +83,8 @@ const selRichSingle = new LLSelectSingle(
     placeholder: 'Pick a language',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (lang) => lang.name,      // accessible name + search text
-    renderItemContentFn: languageRow,         // visible content in the list
-    renderTriggerContentFn: (ctx) => ctx.chosenItem ? languageRow(ctx.chosenItem) : null,
+    createItemContentElFn: languageRow,         // visible content in the list
+    createTriggerContentElFn: (ctx) => ctx.chosenItem ? languageRow(ctx.chosenItem) : null,
     onChange: (v) => { outRichSingle.textContent = 'chosen: ' + (v ? v.name : '(none)') },
   }
 )
@@ -147,21 +147,21 @@ new LLSelectSingle(
 //#endregion
 
 //#region 4.2
-// 4.2a chevronDownSvg
+// 4.2a createChevronDownSvgEl
 new LLSelectSingle(
   document.getElementById('mount-ind-chevron'),
   {
     placeholder: 'chevron',
-    renderArrowFn: () => chevronDownSvg(),
+    createArrowElFn: () => createChevronDownSvgEl(),
   },
 ).setItems(COUNTRIES)
 
-// 4.2b triangleDownSvg
+// 4.2b createTriangleDownSvgEl
 new LLSelectSingle(
   document.getElementById('mount-ind-triangle'),
   {
     placeholder: 'triangle',
-    renderArrowFn: () => triangleDownSvg(),
+    createArrowElFn: () => createTriangleDownSvgEl(),
   },
 ).setItems(COUNTRIES)
 //#endregion
@@ -171,7 +171,7 @@ new LLSelectSingle(
   document.getElementById('mount-ind-mdi'),
   {
     placeholder: 'mdi icon',
-    renderArrowFn: () => {
+    createArrowElFn: () => {
       const i = document.createElement('i')
       i.className = 'mdi mdi-chevron-down'
       return i
@@ -207,7 +207,7 @@ const outMultiCheckbox = document.getElementById('out-multi-checkbox')
 class CheckboxMultiSelect extends LLSelectMultiple {
   createItemEl(item, index) {
     const el = super.createItemEl(item, index)  // sets text + role + aria-selected
-    const box = checkboxSvg({ state: this.isChosen(item) ? 'checked' : 'unchecked' })
+    const box = createCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' })
     el.prepend(box)
     return el
   }
@@ -225,7 +225,7 @@ selMultiCheckbox.setItems(COUNTRIES)
 //#endregion
 
 //#region 10.2
-// Same renderItemContentFn, now on a multiple. The library adds aria-selected
+// Same createItemContentElFn, now on a multiple. The library adds aria-selected
 // to each option shell on top of the auto aria-label, so AT announces e.g.
 // "Python, selected" while the row shows the mdi icon. Reuses languageRow (10.1).
 const outRichMulti = document.getElementById('out-rich-multi')
@@ -235,7 +235,7 @@ const selRichMulti = new LLSelectMultiple(
     placeholder: 'Pick languages',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (lang) => lang.name,
-    renderItemContentFn: languageRow,
+    createItemContentElFn: languageRow,
     onChange: (chosen) => {
       outRichMulti.textContent = 'chosen: ' + chosen.map((l) => l.name).join(', ')
     },
@@ -335,7 +335,7 @@ const outSearchMulti = document.getElementById('out-search-multi')
 class SearchCheckboxMulti extends LLSelectMultiple {
   createItemEl(item, index) {
     const el = super.createItemEl(item, index)
-    el.prepend(checkboxSvg({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
+    el.prepend(createCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
     return el
   }
 }

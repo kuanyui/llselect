@@ -32,16 +32,16 @@ test('trigger has content + arrow slots', () => {
   assert.ok(arrow)
 })
 
-test('renderArrowFn default null: arrow slot is empty', () => {
+test('createArrowElFn default null: arrow slot is empty', () => {
   const sel = new LLSelectSingle<string>(mount())
   const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')
   assert.ok(arrow)
   assert.equal(arrow.children.length, 0)
 })
 
-test('renderArrowFn returning an element appends it to the arrow slot', () => {
+test('createArrowElFn returning an element appends it to the arrow slot', () => {
   const sel = new LLSelectSingle<string>(mount(), {
-    renderArrowFn: () => {
+    createArrowElFn: () => {
       const el = document.createElement('span')
       el.id = 'my-arrow'
       el.textContent = '▼'  // black down-pointing triangle
@@ -54,10 +54,10 @@ test('renderArrowFn returning an element appends it to the arrow slot', () => {
   assert.equal(arrow.querySelector('#my-arrow')?.textContent, '▼')
 })
 
-test('renderArrowFn is invoked with isOpen state on open/close', () => {
+test('createArrowElFn is invoked with isOpen state on open/close', () => {
   const calls: Array<boolean> = []
   const sel = new LLSelectSingle<string>(mount(), {
-    renderArrowFn: ({ isOpen }) => {
+    createArrowElFn: ({ isOpen }) => {
       calls.push(isOpen)
       return null
     },
@@ -65,16 +65,16 @@ test('renderArrowFn is invoked with isOpen state on open/close', () => {
   sel.setItems(['a', 'b'])
   // calls so far: [false] from constructor renderTriggerArrow
   sel.open()
-  // open calls renderTriggerArrow -> renderArrowFn with isOpen=true
+  // open calls renderTriggerArrow -> createArrowElFn with isOpen=true
   sel.close()
-  // close calls renderTriggerArrow -> renderArrowFn with isOpen=false
+  // close calls renderTriggerArrow -> createArrowElFn with isOpen=false
   assert.deepEqual(calls, [false, true, false])
 })
 
-test('renderArrowFn returning null leaves the slot empty', () => {
+test('createArrowElFn returning null leaves the slot empty', () => {
   let returnNull = true
   const sel = new LLSelectSingle<string>(mount(), {
-    renderArrowFn: () => {
+    createArrowElFn: () => {
       return returnNull ? null : document.createElement('span')
     },
   })
@@ -88,7 +88,7 @@ test('renderArrowFn returning null leaves the slot empty', () => {
 
 test('triggerContentEl receives placeholder/chosen text (arrow slot preserved)', () => {
   const sel = new LLSelectSingle<string>(mount(), {
-    renderArrowFn: () => {
+    createArrowElFn: () => {
       const el = document.createElement('span')
       el.className = 'survive'
       el.textContent = 'x'

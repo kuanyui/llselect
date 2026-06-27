@@ -1,8 +1,9 @@
 # Method naming conventions
 
-> STATUS: PROPOSAL, under discussion. Covers every method/function in src/ (~80). Private
-> names matter least, but docstrings stay clear. render* responsibility: DECIDED=(ii) - see
-> render-responsibilities.md (render* are pure orchestrators with DOM-free bodies).
+> STATUS: APPLIED to src/ + test/ + demo/ (npm test green: 182; npm run build green). Covers
+> every method/function in src/ (~80). Private names matter least, but docstrings stay clear.
+> render* responsibility: APPLIED=(ii) - see render-responsibilities.md (render* are pure
+> orchestrators with DOM-free bodies).
 >
 > FORMAT: maintain with LOCAL EDITS only, never a full rewrite (rewrites drift the structure).
 > Tables are pipe-aligned; sections are numbered (§1-§6). Keep both.
@@ -59,7 +60,7 @@ By RETURN TYPE (behaviour, not input):
 
 ## 4. Every method / setting
 
-### 4a. Rename - DECIDED
+### 4a. Rename - DONE (applied to code)
 
 | Vis          | Before                                   | After                                                                 |
 | ------------ | ---------------------------------------- | --------------------------------------------------------------------- |
@@ -91,13 +92,16 @@ By RETURN TYPE (behaviour, not input):
 | Vis       | Name                  | Signature                                     | Does what (+ null)                                          |
 | --------- | --------------------- | --------------------------------------------- | ----------------------------------------------------------- |
 | private   | `commitArrowElToDom`  | `(el: HTMLElement\|SVGElement\|null) => void` | clear arrow slot + place el; `null` = clear only (no arrow) |
-| protected | `commitItemElsToDom`  | `(els: HTMLElement[]) => void`                | clear list + append all                                     |
+| private   | `commitItemElsToDom`  | `(els: HTMLElement[]) => void`                | clear list + append all (no subclass need -> private)       |
 | protected | `syncEmptyStateToDom` | `() => void`                                  | write `data-empty` from `isEmpty()`                         |
 | protected | `isEmpty`             | `() => boolean`                               | nothing chosen? (single/multiple override)                  |
 
-### 4b. OPEN - need your call
+### 4b. DONE - per-callback `null` docstrings
 
-- per-callback `null` docstrings: write the `null` meaning into each (mechanical follow-up).
+- Each `null`-typed callback now documents its `null`: `createItemContentElFn` -> `null` =
+  plain text from `itemToString`; `createTriggerContentElFn` -> `null` = default label;
+  `createArrowElFn` -> `null` = no arrow this state. `filterFn` / `itemDisabledFn` /
+  `itemToStringFn` / `onOpen` / `onClose` already stated theirs.
 
 ### 4c. Keep (names unchanged)
 
@@ -159,9 +163,11 @@ By RETURN TYPE (behaviour, not input):
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator
-(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Still OPEN: only 4b.
+(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code.
 
 ## 6. Phasing
+
+DONE - all three phases applied (npm test green: 182; npm run build green).
 
 1. private renames (zero API impact) + private (ii) primitive (`commitArrowElToDom`).
 2. protected: `createItemContentEl`, `create*El` family, `getVisibleItems`,

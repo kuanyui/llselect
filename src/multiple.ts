@@ -4,7 +4,7 @@ import {
   type LLSelectBaseSettingsInput,
 } from './base.js'
 
-/** Context passed to {@link LLSelectMultipleSettings.renderTriggerContentFn}. */
+/** Context passed to {@link LLSelectMultipleSettings.createTriggerContentElFn}. */
 export interface LLSelectMultipleTriggerContext<T> {
   chosenItems: readonly T[]
   items: readonly T[]
@@ -22,17 +22,15 @@ export interface LLSelectMultipleSettings<T> extends LLSelectBaseSettings<T> {
    */
   onChange: (chosenItems: readonly T[]) => void
   /**
-   * Render the trigger's content without subclassing - the setting equivalent
-   * of overriding `renderTriggerContent`. Receives the chosen items + items.
-   * Return value (same convention as `renderItemContentFn`):
+   * Render the trigger's content ELEMENT without subclassing - the setting
+   * equivalent of overriding `renderTriggerContent`. Receives the chosen items
+   * + items (same convention as `createItemContentElFn`):
    * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this for
    *   real markup such as tag chips.
-   * - `string` - set as `textContent`, i.e. PLAIN TEXT, NOT parsed as HTML; any
-   *   tags in it would show literally. Build an element if you want markup.
    * - `null` - use the default count summary.
    * Checked before `renderTriggerContent`, so it wins over a subclass override.
    */
-  renderTriggerContentFn?: (ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | string | null
+  createTriggerContentElFn?: (ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null
 }
 
 /**
@@ -42,7 +40,7 @@ export type LLSelectMultipleSettingsInput<T> =
   & LLSelectBaseSettingsInput<T>
   & {
     onChange?: (chosenItems: readonly T[]) => void
-    renderTriggerContentFn?: (ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | string | null
+    createTriggerContentElFn?: (ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null
   }
 
 /**
@@ -52,7 +50,7 @@ export type LLSelectMultipleSettingsInput<T> =
  * `aria-multiselectable="true"`.
  *
  * Default trigger display is a count summary ("3 / 10 selected" / "All N
- * selected" / placeholder when empty). Pass `renderTriggerContentFn` (or
+ * selected" / placeholder when empty). Pass `createTriggerContentElFn` (or
  * subclass `renderTriggerContent`) to customise (e.g. tag chips).
  *
  * @typeParam T - item type.
@@ -63,13 +61,13 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
   /** Optional change callback supplied via settings. */
   protected onChange: ((chosenItems: readonly T[]) => void) | undefined
   /** Optional trigger-content renderer supplied via settings. */
-  protected renderTriggerContentFn:
-    ((ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | string | null) | undefined
+  protected createTriggerContentElFn:
+    ((ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null) | undefined
 
   constructor(targetEl: HTMLElement, settings?: LLSelectMultipleSettingsInput<T>) {
     super(targetEl, settings)
     this.onChange = settings?.onChange
-    this.renderTriggerContentFn = settings?.renderTriggerContentFn
+    this.createTriggerContentElFn = settings?.createTriggerContentElFn
     this.popupListEl.setAttribute('aria-multiselectable', 'true')
     this.renderTrigger()
   }
@@ -111,7 +109,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
     // Only one item's selection changed: re-render the trigger (count) and
     // that single item's element, not the whole list. O(1) DOM work.
     this.renderTrigger()
-    this.rerenderPopupListItem(item)
+    this.replacePopupListItemElInDom(item)
     this.fireChange()
   }
 
@@ -140,31 +138,35 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
   }
 
   /**
-   * Default trigger label: count summary. Override (or pass the
-   * `renderTriggerContentFn` setting) to display tags / custom HTML / etc.
+   * Orchestrator: composes `syncEmptyStateToDom` + `commitTriggerContentToDom`
+   * to (re)build the trigger from state; touches no DOM directly. Default label
+   * is a count summary; override (or pass the `createTriggerContentElFn`
+   * setting) to display tags / custom markup / etc.
    *
    * - 0 chosen: placeholder
    * - 0 < n < total: `"n / total selected"`
    * - n === total > 0: `"All n selected"`
    */
   protected override renderTriggerContent(): void {
-    const n = this.chosenItems.length
-    const total = this.items.length
-    this.triggerEl.setAttribute('data-empty', n === 0 ? 'true' : 'false')
-    // renderTriggerContentFn first; null / unset falls to the count summary.
-    const fn = this.renderTriggerContentFn
-    const custom = fn ? fn({ chosenItems: this.getChosenItems(), items: this.getItems() }) : null
+    this.syncEmptyStateToDom()
+    const custom = this.createTriggerContentElFn?.({ chosenItems: this.getChosenItems(), items: this.getItems() }) ?? null
     if (custom !== null) {
-      this.commitTriggerContentReturnedByRenderer(custom)
+      this.commitTriggerContentToDom(custom)
       return
     }
-    if (n === 0) {
-      this.triggerContentEl.textContent = this.settings.placeholder
-    } else if (n === total && total > 0) {
-      this.triggerContentEl.textContent = `All ${n} selected`
-    } else {
-      this.triggerContentEl.textContent = `${n} / ${total} selected`
-    }
+    const n = this.chosenItems.length
+    const total = this.items.length
+    const text = n === 0
+      ? this.settings.placeholder
+      : n === total && total > 0
+        ? `All ${n} selected`
+        : `${n} / ${total} selected`
+    this.commitTriggerContentToDom(text)
+  }
+
+  /** No selection iff the chosen set is empty. Drives the trigger's `data-empty`. */
+  protected override isEmpty(): boolean {
+    return this.chosenItems.length === 0
   }
 
   /** Toggle on click. Multi mode keeps the popup open. */
@@ -180,7 +182,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
   }
 
   /** Drop chosen entries that disappeared from the new items list. */
-  protected override afterItemsChange(): void {
+  protected override onItemsChanged(): void {
     const filtered = this.chosenItems.filter(c =>
       this.items.some(item => this.settings.compareFn(item, c))
     )
@@ -192,10 +194,10 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
 
   /**
    * On open, focus the first chosen item (if present and enabled), otherwise
-   * the first enabled item. Indices are into `visibleItems()`.
+   * the first enabled item. Indices are into `getVisibleItems()`.
    */
   protected override focusInitial(): void {
-    const list = this.visibleItems()
+    const list = this.getVisibleItems()
     const firstChosen = this.chosenItems[0]
     if (firstChosen !== undefined) {
       const idx = list.findIndex(i => this.settings.compareFn(i, firstChosen))
@@ -204,7 +206,7 @@ export class LLSelectMultiple<T = unknown> extends LLSelectBase<T> {
         return
       }
     }
-    const first = this.scanEnabledIndex(0, 1, list)
+    const first = this.findNextEnabledIndex(0, 1, list)
     if (first >= 0) { this.setFocusedIndex(first) }
   }
 

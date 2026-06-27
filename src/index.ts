@@ -3,7 +3,7 @@ export type {
   LLSelectBaseSettings,
   LLSelectBaseSettingsInput,
   LLSelectClassIdMap,
-  LLSelectArrowRenderer,
+  LLSelectCreateArrowElFn,
   LLSelectOutsideClickBehavior,
 } from './base.js'
 
@@ -22,10 +22,10 @@ export type {
 } from './multiple.js'
 
 export {
-  chevronDownSvg,
-  triangleDownSvg,
-  checkSvg,
-  checkboxSvg,
+  createChevronDownSvgEl,
+  createTriangleDownSvgEl,
+  createCheckSvgEl,
+  createCheckboxSvgEl,
 } from './icons.js'
 export type {
   IconOptions,

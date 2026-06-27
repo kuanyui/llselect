@@ -80,11 +80,16 @@ test('without the setting, a subclass itemToString override is used (back-compat
   assert.equal(options(sel)[0]!.textContent, 'derived-1')
 })
 
-// --- renderTriggerContentFn --------------------------------------------------
+// --- createTriggerContentElFn --------------------------------------------------
 
-test('renderTriggerContentFn (string) sets the trigger content (single)', () => {
+test('createTriggerContentElFn (element) drives the trigger, varying by chosenItem (single)', () => {
+  const make = (text: string): HTMLElement => {
+    const span = document.createElement('span')
+    span.textContent = text
+    return span
+  }
   const sel = new LLSelectSingle<string>(mount(), {
-    renderTriggerContentFn: ({ chosenItem }) => chosenItem ? `>> ${chosenItem}` : 'pick one',
+    createTriggerContentElFn: ({ chosenItem }) => make(chosenItem ? `>> ${chosenItem}` : 'pick one'),
   })
   sel.setItems(['a'])
   assert.equal(sel.triggerContentEl.textContent, 'pick one')
@@ -92,9 +97,9 @@ test('renderTriggerContentFn (string) sets the trigger content (single)', () => 
   assert.equal(sel.triggerContentEl.textContent, '>> a')
 })
 
-test('renderTriggerContentFn can return an element', () => {
+test('createTriggerContentElFn can return an element', () => {
   const sel = new LLSelectSingle<string>(mount(), {
-    renderTriggerContentFn: ({ chosenItem }) => {
+    createTriggerContentElFn: ({ chosenItem }) => {
       const span = document.createElement('span')
       span.className = 'tag'
       span.textContent = chosenItem ?? 'none'
@@ -108,10 +113,10 @@ test('renderTriggerContentFn can return an element', () => {
   assert.equal(tag!.textContent, 'a')
 })
 
-test('renderTriggerContentFn returning null falls back to the default', () => {
+test('createTriggerContentElFn returning null falls back to the default', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     placeholder: 'PH',
-    renderTriggerContentFn: () => null,
+    createTriggerContentElFn: () => null,
   })
   sel.setItems(['a'])
   assert.equal(sel.triggerContentEl.textContent, 'PH') // default placeholder
@@ -119,17 +124,27 @@ test('renderTriggerContentFn returning null falls back to the default', () => {
   assert.equal(sel.triggerContentEl.textContent, 'a') // default chosen label
 })
 
-test('multiple renderTriggerContentFn receives chosenItems', () => {
+test('multiple createTriggerContentElFn receives chosenItems', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
-    renderTriggerContentFn: ({ chosenItems, items }) => `${chosenItems.length}/${items.length} picked`,
+    createTriggerContentElFn: ({ chosenItems, items }) => {
+      const span = document.createElement('span')
+      span.textContent = `${chosenItems.length}/${items.length} picked`
+      return span
+    },
   })
   sel.setItems(['a', 'b', 'c'])
   sel.setChosenItems(['a', 'b'])
   assert.equal(sel.triggerContentEl.textContent, '2/3 picked')
 })
 
-test('data-empty reflects selection even when renderTriggerContentFn is used', () => {
-  const sel = new LLSelectSingle<string>(mount(), { renderTriggerContentFn: () => 'X' })
+test('data-empty reflects selection even when createTriggerContentElFn is used', () => {
+  const sel = new LLSelectSingle<string>(mount(), {
+    createTriggerContentElFn: () => {
+      const s = document.createElement('span')
+      s.textContent = 'X'
+      return s
+    },
+  })
   sel.setItems(['a'])
   assert.equal(sel.triggerEl.getAttribute('data-empty'), 'true') // nothing chosen
   sel.setChosenItem('a')
@@ -137,25 +152,31 @@ test('data-empty reflects selection even when renderTriggerContentFn is used', (
 })
 
 test('a subclass renderTriggerContent override replaces the setting (override wins)', () => {
-  // Override replaces the default that reads renderTriggerContentFn, so it wins.
+  // Override replaces the default that reads createTriggerContentElFn, so it wins.
   class Derived extends LLSelectSingle<string> {
     protected override renderTriggerContent(): void {
       this.triggerContentEl.textContent = 'DERIVED'
     }
   }
-  const sel = new Derived(mount(), { renderTriggerContentFn: () => 'FROM-FN' })
+  const sel = new Derived(mount(), {
+    createTriggerContentElFn: () => {
+      const s = document.createElement('span')
+      s.textContent = 'FROM-FN'
+      return s
+    },
+  })
   sel.setItems(['a'])
   sel.setChosenItem('a')
   assert.equal(sel.triggerContentEl.textContent, 'DERIVED') // override wins
 })
 
-// --- renderItemContentFn -----------------------------------------------------
+// --- createItemContentElFn -----------------------------------------------------
 
-test('renderItemContentFn (element) fills the option; aria-label comes from itemToString', () => {
+test('createItemContentElFn (element) fills the option; aria-label comes from itemToString', () => {
   const sel = new LLSelectSingle<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: u => u.name,
-    renderItemContentFn: u => {
+    createItemContentElFn: u => {
       const span = document.createElement('span')
       span.className = 'rich'
       span.textContent = `[${u.name}]`
@@ -169,24 +190,11 @@ test('renderItemContentFn (element) fills the option; aria-label comes from item
   assert.equal(opt.getAttribute('aria-label'), 'Ann') // accessible name pinned to itemToString
 })
 
-test('renderItemContentFn (string) sets textContent and aria-label from itemToString', () => {
+test('createItemContentElFn returning null falls back to plain text, no aria-label', () => {
   const sel = new LLSelectSingle<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: u => u.name,
-    renderItemContentFn: u => `<<${u.name}>>`,
-  })
-  sel.setItems([{ id: 1, name: 'Ann' }])
-  sel.open()
-  const opt = options(sel)[0]!
-  assert.equal(opt.textContent, '<<Ann>>')
-  assert.equal(opt.getAttribute('aria-label'), 'Ann')
-})
-
-test('renderItemContentFn returning null falls back to plain text, no aria-label', () => {
-  const sel = new LLSelectSingle<User>(mount(), {
-    compareFn: (a, b) => a.id === b.id,
-    itemToStringFn: u => u.name,
-    renderItemContentFn: () => null,
+    createItemContentElFn: () => null,
   })
   sel.setItems([{ id: 1, name: 'Ann' }])
   sel.open()
@@ -195,7 +203,7 @@ test('renderItemContentFn returning null falls back to plain text, no aria-label
   assert.equal(opt.getAttribute('aria-label'), null) // plain text is its own accessible name
 })
 
-test('without renderItemContentFn, options are plain text with no aria-label (back-compat)', () => {
+test('without createItemContentElFn, options are plain text with no aria-label (back-compat)', () => {
   const sel = new LLSelectSingle<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: u => u.name,
@@ -211,7 +219,7 @@ test('multiple: option shell keeps aria-selected alongside the custom content + 
   const sel = new LLSelectMultiple<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: u => u.name,
-    renderItemContentFn: u => {
+    createItemContentElFn: u => {
       const span = document.createElement('span')
       span.className = 'rich'
       span.textContent = u.name
@@ -227,11 +235,11 @@ test('multiple: option shell keeps aria-selected alongside the custom content + 
   assert.equal(opt.getAttribute('aria-selected'), 'true') // multiple shell, on top
 })
 
-test('rerenderPopupListItem re-runs renderItemContentFn (single-item update keeps rich content)', () => {
+test('replacePopupListItemElInDom re-runs createItemContentElFn (single-item update keeps rich content)', () => {
   const sel = new LLSelectMultiple<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: u => u.name,
-    renderItemContentFn: u => {
+    createItemContentElFn: u => {
       const span = document.createElement('span')
       span.className = 'rich'
       span.textContent = u.name

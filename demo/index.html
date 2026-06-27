@@ -131,7 +131,7 @@
   <section>
     <h2>4. Arrow variants</h2>
     <p class="hint">
-      Library ships no arrow by default. Pass <code>renderArrowFn</code>
+      Library ships no arrow by default. Pass <code>createArrowElFn</code>
       to add any element (SVG, &lt;i&gt; icon class, plain text, ...).
       All variants below use the same data binding; only the arrow differs.
     </p>
@@ -157,11 +157,11 @@
         <div class="demo-pane">
           <div class="arrow-row">
             <div>
-              <label class="arrow-label"><code>chevronDownSvg()</code></label>
+              <label class="arrow-label"><code>createChevronDownSvgEl()</code></label>
               <div id="mount-ind-chevron"></div>
             </div>
             <div>
-              <label class="arrow-label"><code>triangleDownSvg()</code></label>
+              <label class="arrow-label"><code>createTriangleDownSvgEl()</code></label>
               <div id="mount-ind-triangle"></div>
             </div>
           </div>
@@ -215,9 +215,9 @@
     </article>
 
     <article>
-      <h3>5.4 Checkbox items (built-in checkboxSvg)</h3>
+      <h3>5.4 Checkbox items (built-in createCheckboxSvgEl)</h3>
       <p class="hint">
-        Subclass <code>createItemEl</code> to prepend <code>checkboxSvg()</code>
+        Subclass <code>createItemEl</code> to prepend <code>createCheckboxSvgEl()</code>
         reflecting <code>isChosen</code>. No mdi / FontAwesome needed. The
         single-item rerender keeps each toggle's checkbox in sync.
       </p>
@@ -478,7 +478,7 @@
   <section>
     <h2>10. Customized renderer functions</h2>
     <p class="hint">
-      Customize what each option renders via <code>renderItemContentFn</code>
+      Customize what each option renders via <code>createItemContentElFn</code>
       (no subclass). It fills the option's VISIBLE content only; the library
       keeps the option shell + ARIA and pins each option's <code>aria-label</code>
       to <code>itemToString</code>, so you write zero <code>aria-*</code> and a
@@ -491,7 +491,7 @@
         Each row is a colored mdi icon + label. Inspect an option to see the
         <code>role="option"</code> + <code>aria-label</code> the library added.
         There is no auto-projection; the trigger mirrors the chosen row only
-        because we pass the same renderer to <code>renderTriggerContentFn</code>.
+        because we pass the same renderer to <code>createTriggerContentElFn</code>.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -505,7 +505,7 @@
     <article>
       <h3>10.2 Multiple (icon + label rows)</h3>
       <p class="hint">
-        Same <code>renderItemContentFn</code> on a multiple: the option shell
+        Same <code>createItemContentElFn</code> on a multiple: the option shell
         carries <code>aria-selected</code> on top of the auto
         <code>aria-label</code>, so AT announces "Python, selected" while the row
         shows the icon. Compare with 5.4 (checkbox), which does the same via a

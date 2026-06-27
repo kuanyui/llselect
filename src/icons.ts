@@ -1,5 +1,5 @@
 // Opt-in icon helpers. None of these is used by the library by default; pass
-// the arrow ones via `settings.renderArrowFn`, or use the check / checkbox
+// the arrow ones via `settings.createArrowElFn`, or use the check / checkbox
 // ones inside a custom item renderer (override `createItemEl` / `itemToString`)
 // so people who do not want to pull in mdi / FontAwesome still get sensible
 // built-ins. All paths use fill="currentColor" so they inherit the
@@ -14,7 +14,7 @@ export interface IconOptions {
   size?: number
 }
 
-function makeSvg(viewBox: string, pathD: string, size: number): SVGElement {
+function createSvgEl(viewBox: string, pathD: string, size: number): SVGElement {
   const svg = document.createElementNS(SVG_NS, 'svg')
   svg.setAttribute('width', String(size))
   svg.setAttribute('height', String(size))
@@ -33,13 +33,13 @@ function makeSvg(viewBox: string, pathD: string, size: number): SVGElement {
  * visual weight (MDI's `arrow_drop_down` path occupies a small portion of
  * its 24x24 viewBox and looks too small next to other icons).
  */
-export function triangleDownSvg(opts: IconOptions = {}): SVGElement {
-  return makeSvg('0 0 24 24', 'M4 8l8 10 8-10z', opts.size ?? 16)
+export function createTriangleDownSvgEl(opts: IconOptions = {}): SVGElement {
+  return createSvgEl('0 0 24 24', 'M4 8l8 10 8-10z', opts.size ?? 16)
 }
 
 /** Material Design `expand_more` chevron pointing down (filled outline). */
-export function chevronDownSvg(opts: IconOptions = {}): SVGElement {
-  return makeSvg(
+export function createChevronDownSvgEl(opts: IconOptions = {}): SVGElement {
+  return createSvgEl(
     '0 0 24 24',
     'M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z',
     opts.size ?? 16,
@@ -50,15 +50,15 @@ export function chevronDownSvg(opts: IconOptions = {}): SVGElement {
  * Standalone checkmark (no box). Useful as a "selected" indicator in single
  * mode, or as a lightweight chosen marker in multi mode.
  */
-export function checkSvg(opts: IconOptions = {}): SVGElement {
-  return makeSvg(
+export function createCheckSvgEl(opts: IconOptions = {}): SVGElement {
+  return createSvgEl(
     '0 0 24 24',
     'M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z',
     opts.size ?? 16,
   )
 }
 
-/** Visual state of a {@link checkboxSvg}. `indeterminate` is the "mixed" / */
+/** Visual state of a {@link createCheckboxSvgEl}. `indeterminate` is the "mixed" / */
 /** partial state used by a select-all control (`aria-checked="mixed"`). */
 export type CheckboxState = 'unchecked' | 'checked' | 'indeterminate'
 
@@ -85,7 +85,7 @@ export interface CheckboxIconOptions extends IconOptions {
  * control. Decorative only (`aria-hidden`); the real state is carried by
  * `aria-selected` on the item or `aria-checked` on the control.
  */
-export function checkboxSvg(opts: CheckboxIconOptions = {}): SVGElement {
+export function createCheckboxSvgEl(opts: CheckboxIconOptions = {}): SVGElement {
   const state = opts.state ?? 'unchecked'
-  return makeSvg('0 0 24 24', CHECKBOX_PATHS[state], opts.size ?? 16)
+  return createSvgEl('0 0 24 24', CHECKBOX_PATHS[state], opts.size ?? 16)
 }
