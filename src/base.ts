@@ -502,11 +502,12 @@ export abstract class LLSelectBase<T = unknown> {
   }
 
   /**
-   * Force a DOM re-render from current state. Use this when external code
-   * mutates an item object's properties (e.g. `users[0].name = 'X'`) without
-   * replacing the items array - the library has no way to detect that on
-   * its own. Re-renders the trigger and (if open) the popup list. Does NOT
-   * fire `onChange`, does NOT run `onItemsChanged`. Pure visual refresh.
+   * Orchestrator: composes `renderTrigger` + `renderPopupList` (the latter only
+   * while open) to rebuild from current state; touches no DOM directly. Use this
+   * when external code mutates an item object's properties (e.g.
+   * `users[0].name = 'X'`) without replacing the items array - the library has
+   * no way to detect that on its own. Does NOT fire `onChange`, does NOT run
+   * `onItemsChanged`. Pure visual refresh.
    */
   public rerender(): void {
     this.renderTrigger()
@@ -593,10 +594,11 @@ export abstract class LLSelectBase<T = unknown> {
   protected onItemsChanged(): void {}
 
   /**
-   * Orchestrator that re-renders both the trigger's content slot and the
-   * arrow slot. Subclasses normally override {@link renderTriggerContent},
-   * not this. Call this from subclass code when both slots need to refresh
-   * together (constructor, post-state-change, etc.).
+   * Orchestrator: composes `renderTriggerContent` + `renderTriggerArrow` to
+   * (re)build the whole trigger from state; touches no DOM directly. Subclasses
+   * normally override {@link renderTriggerContent}, not this. Call this from
+   * subclass code when both slots need to refresh together (constructor,
+   * post-state-change, etc.).
    */
   protected renderTrigger(): void {
     this.renderTriggerContent()
@@ -822,7 +824,7 @@ export abstract class LLSelectBase<T = unknown> {
    * stay put when no enabled item lies in the travel direction; Page falls back
    * to the opposite direction so it lands as far as it can.
    */
-  private nextEnabledForAction(target: number, action: LLSelectAction, list: readonly T[]): number {
+  private findEnabledIndexForAction(target: number, action: LLSelectAction, list: readonly T[]): number {
     const forward = action === LLSelectAction.Next
       || action === LLSelectAction.GotoFirst
       || action === LLSelectAction.PageDown
@@ -1036,7 +1038,7 @@ export abstract class LLSelectBase<T = unknown> {
         const list = this.getVisibleItems()
         if (list.length === 0) { return }
         const target = getUpdatedIndex(this.focusedIndex, list.length - 1, action)
-        const found = this.nextEnabledForAction(target, action, list)
+        const found = this.findEnabledIndexForAction(target, action, list)
         if (found >= 0) { this.setFocusedIndex(found) }
         return
       }

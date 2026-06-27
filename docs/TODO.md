@@ -61,12 +61,16 @@ filter then closes; filtering is IME-aware (composition-guarded).
       fired after the popup opens / closes (no-op open/close does not fire). Run
       ADDITIVELY with the protected `onOpened` / `onClosed` hooks (both run) - the
       setting is for consumers, the hook for subclasses.
-- [ ] **`renderItemContentFn` settings callback** - the no-subclass path for rich
-      item content (icon / checkbox / multi-line HTML). Library keeps the option
-      element + wiring; the fn fills the content (`(item, ctx) => HTMLElement |
-      string | null`). Until added, rich items need a `createItemEl` subclass
-      (the escape hatch). Decide escape-hatch shape: keep `createItemEl` subclass,
-      or add a `decorateItemFn(el, item)` setting.
+- [x] **`createItemContentElFn` settings callback** - DONE (shipped as
+      `createItemContentElFn`, renamed from the planned `renderItemContentFn`; see
+      naming-conventions.md s4a). The no-subclass path for rich item content (icon /
+      checkbox / multi-line HTML): the library keeps the option element + wiring, the
+      fn fills the content. Signature narrowed to `(item) => HTMLElement | null`
+      (element-only; no `ctx`, no `string`); `null` = plain text from `itemToString`.
+      Read by the `createItemContentEl` method's default (override to replace).
+- [ ] **rich-item escape-hatch shape** - still open. Subclassing `createItemEl` is the
+      current escape hatch for full control of the item element; decide whether to also
+      add a `decorateItemFn(el, item)` setting, or keep the subclass-only path.
 - [ ] **`onChange` diff context** - decide whether to pass `previousChosenItem(s)`
       alongside current, so users can compute added/removed without tracking.
 
@@ -87,13 +91,23 @@ filter then closes; filtering is IME-aware (composition-guarded).
 - [x] Function-setting naming: `on*` for events, `*Fn` for other callbacks (see DESIGN.md).
 - [x] CSS themes shipped opt-in: vanilla, tailwind, bootstrap-3/4/5.
 - [x] `rerender()` for external mutation refresh (trigger + popup list).
-- [x] `rerenderPopupListItem(item)` - O(1) single-item DOM update; multi-select
+- [x] `replacePopupListItemElInDom(item)` - O(1) single-item DOM update; multi-select
       toggle uses it so flipping one selection in a 10k-item list does not
       rebuild the whole list (verified by the 10k demo + a unit test that the
       untouched items keep the same DOM nodes).
+- [x] **`render*` refactored to pure orchestrators** - each `render*` computes then
+      calls the `*ToDom` / `*El` primitives and touches no DOM in its own body; DOM
+      writes live in the suffixed primitives (`commit*ToDom`, `create*El`, `*ElInDom`).
+      See render-responsibilities.md.
+- [x] **Method naming conventions applied across src/ (~80 methods)** - `*El` /
+      `*ToDom` / `*ElInDom` suffixes mark what touches the DOM; `create*El` = detached
+      build; settings callbacks named by return type (`create*ElFn` = element,
+      `itemTo*Fn` = string, `on*` = event). See naming-conventions.md.
 
 ## Notes
 
 - Architecture / naming rationale: see `DESIGN.md`.
 - Keyboard / focus / ARIA behavior contract: see `A11Y.md`.
+- Method naming conventions (suffixes, callback naming): see `naming-conventions.md`.
+- `render*` orchestrator vs `*ToDom` / `*El` primitive split: see `render-responsibilities.md`.
 - Code style rules: see `../CLAUDE.md`.

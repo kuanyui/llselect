@@ -40,7 +40,7 @@ primitives and touch no DOM directly - so they carry no suffix because they do n
 | `set*`                                                                   | set a state field                                                       |
 | `attach*`/`detach*`/`handle*`                                            | listeners / DOM-event handling                                          |
 | `on*`                                                                    | settings event OR subclass hook ONLY                                    |
-| `itemTo*`                                                                | pure item->value mapping, no DOM: `itemToString`, `createItemContentEl` |
+| `itemTo*`                                                                | pure item->string mapping, no DOM: `itemToString`                       |
 | `is*`/`are*`/`matches*`/`fire*`/`focus*`/`measure*`/`capture*`/`ensure*` | auxiliaries                                                             |
 | `choose*`/`unchoose*`/`toggle*` / `open`/`close`/`toggle`                | domain ops                                                              |
 
@@ -86,6 +86,7 @@ By RETURN TYPE (behaviour, not input):
 | setting      | `renderArrowFn`                          | `createArrowElFn`                                                     |
 | setting      | `renderTriggerContentFn`                 | `createTriggerContentElFn` (narrowed to element-only)                 |
 | type         | `LLSelectArrowRenderer`                  | `LLSelectCreateArrowElFn`                                             |
+| private      | `nextEnabledForAction`                   | `findEnabledIndexForAction`                                           |
 
 ### 4a-new. (ii) refactor **adds** these primitives
 
@@ -163,7 +164,7 @@ By RETURN TYPE (behaviour, not input):
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator
-(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code.
+(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix).
 
 ## 6. Phasing
 
