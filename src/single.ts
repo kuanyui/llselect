@@ -115,6 +115,11 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
     this.close()
   }
 
+  /** Clear button empties the single selection to `undefined`. */
+  protected override clearSelection(): void {
+    this.setChosenItem(undefined)
+  }
+
   /**
    * On open, highlight the chosen item (if present and enabled), else the first
    * enabled item. Indices are into `getVisibleItems()` (the rendered list).

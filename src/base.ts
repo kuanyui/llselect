@@ -57,6 +57,21 @@ export interface LLSelectBaseSettings<T, GK = string> {
    */
   createArrowElFn: LLSelectCreateArrowElFn | null
   /**
+   * Whether the trigger shows a clear (x) button that empties the selection.
+   * `false` (default). The button sits in its OWN trigger slot (like the arrow,
+   * so it never collides with `createTriggerContentElFn`), is `tabindex="-1"` with
+   * an `aria-label`, and is hidden via `data-empty` when nothing is selected.
+   * Clearing goes through the normal setters, so `onChange` fires with the empty
+   * value (`undefined` / `[]`).
+   */
+  clearable: boolean
+  /**
+   * Content ELEMENT of the clear button (its x icon), mirroring `createArrowElFn`.
+   * `null` (default) = the theme's CSS glyph. The library always owns the button,
+   * its click (clears + stops propagation) and aria; this only fills the icon.
+   */
+  createClearElFn: (() => HTMLElement | SVGElement | null) | null
+  /**
    * Whether the popup includes a search input. `false` (default) keeps the
    * trigger as `role="combobox"` and the (always-built) input is `hidden`.
    * `true` makes the trigger `role="button"` and moves focus to the input on
@@ -214,6 +229,8 @@ export interface LLSelectClassIdMap {
   triggerContentClass: string
   /** Class on the inner span where the optional dropdown arrow lives. */
   triggerArrowClass: string
+  /** Class on the clear (x) button slot in the trigger (`clearable`). */
+  clearClass: string
   /** Class on `popupEl` (the outer popup wrapper, no ARIA role). */
   popupClass: string
   /** Class on `popupListEl` (the inner element with `role="listbox"`). */
@@ -281,6 +298,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     triggerClass: `${prefix}-trigger`,
     triggerContentClass: `${prefix}-trigger-content`,
     triggerArrowClass: `${prefix}-trigger-arrow`,
+    clearClass: `${prefix}-clear`,
     popupClass: `${prefix}-popup`,
     popupListClass: `${prefix}-popup-list`,
     itemClass: `${prefix}-item`,
@@ -409,6 +427,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
       createArrowElFn: settings?.createArrowElFn ?? null,
+      clearable: settings?.clearable ?? false,
+      createClearElFn: settings?.createClearElFn ?? null,
       searchable: settings?.searchable ?? false,
       filterFn: settings?.filterFn ?? null,
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'match-trigger',
@@ -1262,14 +1282,45 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     el.setAttribute('aria-haspopup', 'listbox')
     el.setAttribute('data-state', 'closed')
     el.setAttribute('data-disabled', 'false')
-    // Two child slots: content (text/tags) and arrow (optional icon).
+    // Child slots: content (text/tags), optional clear button, arrow. Clear and
+    // arrow are own slots so they never collide with createTriggerContentElFn.
     const content = document.createElement('span')
     content.className = this.classIdMap.triggerContentClass
+    el.append(content)
+    if (this.settings.clearable) { el.append(this.createClearEl()) }
     const arrow = document.createElement('span')
     arrow.className = this.classIdMap.triggerArrowClass
-    el.append(content, arrow)
+    el.append(arrow)
     return el
   }
+
+  /**
+   * Build the clear (x) button for the `clearable` trigger slot. The library owns
+   * the button + its click (stops propagation so it never toggles the popup, then
+   * `clearSelection`) + `aria-label`; `createClearElFn` optionally fills the icon,
+   * else the theme's CSS glyph. The theme hides it via `data-empty` when empty.
+   */
+  protected createClearEl(): HTMLElement {
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.className = this.classIdMap.clearClass
+    btn.tabIndex = -1
+    btn.setAttribute('aria-label', 'Clear selection')
+    const icon = this.settings.createClearElFn?.() ?? null
+    if (icon !== null) { btn.appendChild(icon) }
+    btn.addEventListener('click', (ev) => {
+      ev.stopPropagation()
+      this.clearSelection()
+    })
+    return btn
+  }
+
+  /**
+   * Empty the selection (invoked by the clear button). Base is a no-op; single
+   * clears to `undefined`, multiple to `[]`. Goes through the normal setters, so
+   * `onChange` fires with the empty value.
+   */
+  protected clearSelection(): void {}
 
   /**
    * The search input lives inside the popup, above the listbox. Always built

@@ -195,3 +195,29 @@
   background: #cce0ff;
   color: #1c3a5e;
 }
+
+/* --- clear button (clearable) ---------------------------------- */
+/* :empty::before draws the x only when createClearElFn gave no icon. */
+
+.llselect-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+
+.llselect-clear:empty::before { content: '\00d7'; font-size: 1.2em; }
+
+.llselect-clear:hover { color: #333; background: #eee; }
+
+.llselect-trigger[data-empty='true'] .llselect-clear { display: none; }

@@ -431,6 +431,35 @@ pattern and it would fight the combobox `aria-activedescendant` model. See A11Y.
 "Tags". The x glyph is CSS (`.llselect-tag-remove::before { content: '\00d7' }`) so
 the button stays empty (accessible name = `aria-label`) and the theme owns the look.
 
+## Clear button (clearable)
+
+`clearable: boolean` (default false) shows an x button that empties the selection.
+It lives in its OWN trigger slot, next to the arrow:
+
+    triggerEl > [ triggerContentEl | clearEl (.llselect-clear) | triggerArrowEl ]
+
+### Own slot = no collision with createTriggerContentElFn
+
+Same trick as the arrow: clear and arrow are separate slots, so
+`createTriggerContentElFn` (which only replaces the content slot) never touches
+them. This is why the arrow never needed conflict resolution - it was never in the
+content slot - and clear copies that exactly.
+
+### What the library owns vs what you fill
+
+- Library owns: the `<button>`, its click (`stopPropagation` so it never toggles
+  the popup, then `clearSelection`), `aria-label="Clear selection"`,
+  `tabindex="-1"`, and hide-when-empty (theme hides it under
+  `.llselect-trigger[data-empty='true']`).
+- You optionally fill the icon via `createClearElFn: () => HTMLElement |
+  SVGElement | null` (mirrors `createArrowElFn`); `null` = theme CSS glyph
+  (`.llselect-clear:empty::before { content: '\00d7' }`).
+- `protected clearSelection()`: base no-op; single -> `setChosenItem(undefined)`,
+  multiple -> `setChosenItems([])`. Both go through the normal setters, so
+  `onChange` fires with the empty value - no separate `onClear`. Clear means "back
+  to empty / placeholder", not "back to some default option" (do that yourself in
+  `onChange` if wanted).
+
 ## Popup width policy
 
 Locked: the positioner sets `popupEl.style.width` to the trigger's measured

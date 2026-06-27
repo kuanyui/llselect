@@ -210,3 +210,29 @@
 .llselect-tag-remove::before { content: '\00d7'; font-size: 1.15em; }
 
 .llselect-tag-remove:hover { opacity: 1; }
+
+/* --- clear button (clearable) -------------------------------- */
+/* :empty::before draws the x only when createClearElFn gave no icon. */
+
+.llselect-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
+  padding: 0;
+  border: none;
+  border-radius: 0.2rem;
+  background: transparent;
+  color: #6c757d;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+
+.llselect-clear:empty::before { content: '\00d7'; font-size: 1.2em; }
+
+.llselect-clear:hover { color: #212529; background-color: #f8f9fa; }
+
+.llselect-trigger[data-empty='true'] .llselect-clear { display: none; }

@@ -56,6 +56,14 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
       Themes ship `.llselect-tag*` (x via CSS `\00d7`). Spec: DESIGN.md "Tags
       (triggerDisplay)"; A11Y.md "Tags". Future: focusable-remove flag (A11Y open
       questions).
+- [x] **Phase 12** - clear button. **DONE.** `clearable: boolean` (base setting)
+      shows an x button in its own trigger slot (like the arrow, so no collision
+      with `createTriggerContentElFn`); `createClearElFn` fills the icon (mirrors
+      `createArrowElFn`), else theme CSS `\00d7`. Library owns click
+      (`stopPropagation` + `clearSelection`), `aria-label`, `tabindex="-1"`, and
+      `data-empty` hide-when-empty. `protected clearSelection()`: single ->
+      `undefined`, multiple -> `[]`, both through the normal setters so `onChange`
+      fires the empty value (no `onClear`). Spec: DESIGN.md "Clear button".
 
 A11Y model (locked, see `A11Y.md`): two ARIA modes picked by `searchable`.
 `searchable: true` uses APG "Combobox with list autocomplete" (focus on the
@@ -93,6 +101,10 @@ filter then closes; filtering is IME-aware (composition-guarded).
       add a `decorateItemFn(el, item)` setting, or keep the subclass-only path.
 - [ ] **`onChange` diff context** - decide whether to pass `previousChosenItem(s)`
       alongside current, so users can compute added/removed without tracking.
+- [ ] **RTL support** - not handled yet. Clear / arrow slot order, tag chip flow,
+      and paddings should move to CSS logical properties + `dir` awareness (the
+      clear button's "right side" becomes left in RTL). Cross-cutting across all
+      themes + positioning; do it as one pass, not per-feature.
 
 ## Done decisions (for reference)
 

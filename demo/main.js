@@ -59,6 +59,24 @@ const selUsers = new LLSelectSingle(
 selUsers.setItems(USERS)
 //#endregion
 
+//#region 1.3
+// clearable: true adds an x button in the trigger (its own slot, so it composes
+// with content / arrow / tags). Clicking it clears to undefined and fires
+// onChange(undefined). createClearElFn (unused here) swaps the x icon, like
+// createArrowElFn.
+const outClearable = document.getElementById('out-clearable')
+const selClearable = new LLSelectSingle(
+  document.getElementById('mount-clearable'),
+  {
+    placeholder: 'Pick a country',
+    clearable: true,
+    onChange: (v) => { outClearable.textContent = 'chosen: ' + JSON.stringify(v) },
+  }
+)
+selClearable.setItems(COUNTRIES)
+selClearable.setChosenItem('Japan')
+//#endregion
+
 //#region 11.1
 // createItemContentElFn fills each option's VISIBLE content (colored icon +
 // label), no subclass. The library owns the option shell + aria: it pins each

@@ -213,6 +213,24 @@ Methods (protected, overridable):
 
 `classIdMap` gained `tagsClass` / `tagClass` / `tagRemoveClass`. All obey s1-s3.
 
+### 4f. Clear button (clearable) additions
+
+Settings on `LLSelectBaseSettings` (s3 by return type):
+
+| Vis     | Name              | Signature                                  | s3            |
+| ------- | ----------------- | ------------------------------------------ | ------------- |
+| setting | `clearable`       | `boolean`                                  | value (flag)  |
+| setting | `createClearElFn` | `() => HTMLElement \| SVGElement \| null`  | `create*ElFn` |
+
+Methods (protected, overridable):
+
+| Name             | Convention                                          |
+| ---------------- | --------------------------------------------------- |
+| `createClearEl`  | `create*El` - the clear button (library owns click) |
+| `clearSelection` | domain op - empty the selection (single / multiple) |
+
+`classIdMap` gained `clearClass`. All obey s1-s3.
+
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator

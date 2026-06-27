@@ -249,6 +249,11 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     this.toggleItem(item)
   }
 
+  /** Clear button empties the chosen-items set to `[]`. */
+  protected override clearSelection(): void {
+    this.setChosenItems([])
+  }
+
   /** Mark each item with `aria-selected` reflecting its chosen state. */
   protected override createItemEl(item: T, index: number): HTMLElement {
     const el = super.createItemEl(item, index)
