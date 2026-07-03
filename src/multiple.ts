@@ -1,7 +1,6 @@
 import {
   LLSelectBase,
   type LLSelectBaseSettings,
-  type LLSelectBaseSettingsInput,
 } from './base.js'
 
 /** Context passed to {@link LLSelectMultipleSettings.createTriggerContentElFn}. */
@@ -11,43 +10,47 @@ export interface LLSelectMultipleTriggerContext<T> {
 }
 
 /**
- * Resolved settings for {@link LLSelectMultiple}. Extends the base settings
- * with the multi-mode `onChange` callback (chosen items is an array).
+ * Resolved (defaults applied) settings for {@link LLSelectMultiple}: the base
+ * settings plus the multi-mode fields - the runtime type of `this.settings`,
+ * one bag built complete in the constructor.
  */
 export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSettings<T, GK> {
   /**
    * Fired when the chosen-items set actually changes. Does NOT fire on
    * construction nor on a setter call that yields an equivalent set
    * (element-wise compared via `compareFn`, order-sensitive).
+   * `null` (default) = no listener.
    */
-  onChange: (chosenItems: readonly T[]) => void
+  onChange: ((chosenItems: readonly T[]) => void) | null
   /**
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen items
    * + items (same convention as `createItemContentElFn`):
    * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this for
    *   real markup such as tag chips.
-   * - `null` - use the default count summary.
+   * - fn returns `null` - use the default for this render (count summary / tags).
+   * - setting is `null` (default) - always use that default rendering.
    * Checked before `renderTriggerContent`, so it wins over a subclass override.
    */
-  createTriggerContentElFn?: (ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null
+  createTriggerContentElFn: ((ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null) | null
   /**
    * Trigger display mode.
    * - `'count'` (default): a summary like "3 / 10 selected".
    * - `'tags'`: one removable chip per chosen item; its x button removes it.
    * `createTriggerContentElFn` overrides both (full control wins).
    */
-  triggerDisplay?: 'count' | 'tags'
+  triggerDisplay: 'count' | 'tags'
   /**
    * Item -> the visible content ELEMENT of its tag chip in `'tags'` mode,
    * without subclassing. Mirrors `createItemContentElFn` (the chip is to the
    * trigger what the option content is to the row):
    * - Return an `HTMLElement` and the library inserts it as the chip's content;
    *   the library still owns the chip container + the remove (x) button + aria.
-   * - `null` (default, or returned for an item) = plain text from `itemToString`.
+   * - `null` (setting default, or returned for an item) = plain text from
+   *   `itemToString`.
    * The remove button's accessible name is `"Remove <itemToString>"`.
    */
-  createTagContentElFn?: (item: T) => HTMLElement | null
+  createTagContentElFn: ((item: T) => HTMLElement | null) | null
   /**
    * Icon ELEMENT of each tag's remove (x) button in `'tags'` mode, mirroring
    * `createClearElFn` (the clear button's icon hook). The library always owns the
@@ -55,24 +58,17 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * the `aria-label="Remove <itemToString>"` accessible name; this only fills the
    * decorative icon.
    * - Return an `HTMLElement` / `SVGElement`: appended inside the button as its icon.
-   * - `null` (default, or returned for an item): no icon - the theme draws the x
-   *   via its CSS glyph (`.llselect-tag-remove:empty::before`).
+   * - `null` (setting default, or returned for an item): no icon - the theme
+   *   draws the x via its CSS glyph (`.llselect-tag-remove:empty::before`).
    */
-  createTagRemoveElFn?: (item: T) => HTMLElement | SVGElement | null
+  createTagRemoveElFn: ((item: T) => HTMLElement | SVGElement | null) | null
 }
 
 /**
  * Constructor-time settings input for {@link LLSelectMultiple}.
+ * Every field is optional; missing fields use defaults.
  */
-export type LLSelectMultipleSettingsInput<T, GK = string> =
-  & LLSelectBaseSettingsInput<T, GK>
-  & {
-    onChange?: (chosenItems: readonly T[]) => void
-    createTriggerContentElFn?: (ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null
-    triggerDisplay?: 'count' | 'tags'
-    createTagContentElFn?: (item: T) => HTMLElement | null
-    createTagRemoveElFn?: (item: T) => HTMLElement | SVGElement | null
-  }
+export type LLSelectMultipleSettingsInput<T, GK = string> = Partial<LLSelectMultipleSettings<T, GK>>
 
 /**
  * Multi-selection select. Clicking an item toggles its membership in the
@@ -89,25 +85,21 @@ export type LLSelectMultipleSettingsInput<T, GK = string> =
 export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, GK> {
   /** Currently chosen items, in insertion order. */
   protected chosenItems: T[] = []
-  /** Optional change callback supplied via settings. */
-  protected onChange: ((chosenItems: readonly T[]) => void) | undefined
-  /** Optional trigger-content renderer supplied via settings. */
-  protected createTriggerContentElFn:
-    ((ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null) | undefined
-  /** Trigger display mode: count summary (default) or removable tag chips. */
-  protected triggerDisplay: 'count' | 'tags'
-  /** Optional per-chip content renderer for `'tags'` mode (mirrors createItemContentElFn). */
-  protected createTagContentElFn: ((item: T) => HTMLElement | null) | undefined
-  /** Optional per-chip remove-button icon for `'tags'` mode (mirrors createClearElFn). */
-  protected createTagRemoveElFn: ((item: T) => HTMLElement | SVGElement | null) | undefined
+  /**
+   * Re-type only (`declare` emits no field): the multi-mode fields are passed,
+   * resolved, through `super()`, so the bag is complete before any base
+   * construction code runs.
+   */
+  protected declare readonly settings: LLSelectMultipleSettings<T, GK>
 
   constructor(targetEl: HTMLElement, settings?: LLSelectMultipleSettingsInput<T, GK>) {
-    super(targetEl, settings)
-    this.onChange = settings?.onChange
-    this.createTriggerContentElFn = settings?.createTriggerContentElFn
-    this.triggerDisplay = settings?.triggerDisplay ?? 'count'
-    this.createTagContentElFn = settings?.createTagContentElFn
-    this.createTagRemoveElFn = settings?.createTagRemoveElFn
+    super(targetEl, settings, {
+      onChange: settings?.onChange ?? null,
+      createTriggerContentElFn: settings?.createTriggerContentElFn ?? null,
+      triggerDisplay: settings?.triggerDisplay ?? 'count',
+      createTagContentElFn: settings?.createTagContentElFn ?? null,
+      createTagRemoveElFn: settings?.createTagRemoveElFn ?? null,
+    } satisfies Omit<LLSelectMultipleSettings<T, GK>, keyof LLSelectBaseSettings<T, GK>>)
     this.popupListEl.setAttribute('aria-multiselectable', 'true')
     this.renderTrigger()
   }
@@ -189,12 +181,12 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    */
   protected override renderTriggerContent(): void {
     this.syncEmptyStateToDom()
-    const custom = this.createTriggerContentElFn?.({ chosenItems: this.getChosenItems(), items: this.getItems() }) ?? null
+    const custom = this.settings.createTriggerContentElFn?.({ chosenItems: this.getChosenItems(), items: this.getItems() }) ?? null
     if (custom !== null) {
       this.commitTriggerContentToDom(custom)
       return
     }
-    if (this.triggerDisplay === 'tags' && this.chosenItems.length > 0) {
+    if (this.settings.triggerDisplay === 'tags' && this.chosenItems.length > 0) {
       this.commitTriggerContentToDom(this.createTagsEl())
       return
     }
@@ -256,7 +248,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     btn.className = this.classIdMap.tagRemoveClass
     btn.tabIndex = -1
     btn.setAttribute('aria-label', `Remove ${this.itemToString(item)}`)
-    const icon = this.createTagRemoveElFn?.(item) ?? null
+    const icon = this.settings.createTagRemoveElFn?.(item) ?? null
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
@@ -271,7 +263,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * back to plain text from `itemToString`.
    */
   protected createTagContentEl(item: T): HTMLElement | null {
-    return this.createTagContentElFn ? this.createTagContentElFn(item) : null
+    return this.settings.createTagContentElFn ? this.settings.createTagContentElFn(item) : null
   }
 
   /** No selection iff the chosen set is empty. Drives the trigger's `data-empty`. */
@@ -335,6 +327,6 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   private fireChange(): void {
-    this.onChange?.(this.chosenItems)
+    this.settings.onChange?.(this.chosenItems)
   }
 }

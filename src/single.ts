@@ -1,49 +1,45 @@
 import {
   LLSelectBase,
   type LLSelectBaseSettings,
-  type LLSelectBaseSettingsInput,
 } from './base.js'
 
-/**
- * Resolved settings for {@link LLSelectSingle}. Extends the base settings
- * with the single-mode `onChange` callback.
- */
 /** Context passed to {@link LLSelectSingleSettings.createTriggerContentElFn}. */
 export interface LLSelectSingleTriggerContext<T> {
   chosenItem: T | undefined
   items: readonly T[]
 }
 
+/**
+ * Resolved (defaults applied) settings for {@link LLSelectSingle}: the base
+ * settings plus the single-mode fields - the runtime type of `this.settings`,
+ * one bag built complete in the constructor.
+ */
 export interface LLSelectSingleSettings<T, GK = string> extends LLSelectBaseSettings<T, GK> {
   /**
    * Fired when the chosen item actually changes (compared via `compareFn`).
    * `undefined` means "no selection". Does NOT fire on construction nor on
-   * `setChosenItem` with an equivalent item.
+   * `setChosenItem` with an equivalent item. `null` (default) = no listener.
    */
-  onChange: (chosenItem: T | undefined) => void
+  onChange: ((chosenItem: T | undefined) => void) | null
   /**
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen item
    * + items (same convention as `createItemContentElFn`):
    * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this for
    *   real markup (icon + text, etc.).
-   * - `null` - use the default: the chosen item's `itemToString`, or the
-   *   placeholder when nothing is chosen.
+   * - fn returns `null` - use the default for this render: the chosen item's
+   *   `itemToString`, or the placeholder when nothing is chosen.
+   * - setting is `null` (default) - always use that default rendering.
    * Checked before `renderTriggerContent`, so it wins over a subclass override.
    */
-  createTriggerContentElFn?: (ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | null
+  createTriggerContentElFn: ((ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | null) | null
 }
 
 /**
  * Constructor-time settings input for {@link LLSelectSingle}.
  * Every field is optional; missing fields use defaults.
  */
-export type LLSelectSingleSettingsInput<T, GK = string> =
-  & LLSelectBaseSettingsInput<T, GK>
-  & {
-    onChange?: (chosenItem: T | undefined) => void
-    createTriggerContentElFn?: (ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | null
-  }
+export type LLSelectSingleSettingsInput<T, GK = string> = Partial<LLSelectSingleSettings<T, GK>>
 
 /**
  * Single-selection select. Picking an item replaces any prior chosen item
@@ -54,16 +50,18 @@ export type LLSelectSingleSettingsInput<T, GK = string> =
 export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK> {
   /** Currently chosen item, or `undefined` if none. */
   protected chosenItem: T | undefined = undefined
-  /** Optional change callback supplied via settings. */
-  protected onChange: ((chosenItem: T | undefined) => void) | undefined
-  /** Optional trigger-content renderer supplied via settings. */
-  protected createTriggerContentElFn:
-    ((ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | null) | undefined
+  /**
+   * Re-type only (`declare` emits no field): the single-mode fields are passed,
+   * resolved, through `super()`, so the bag is complete before any base
+   * construction code runs.
+   */
+  protected declare readonly settings: LLSelectSingleSettings<T, GK>
 
   constructor(targetEl: HTMLElement, settings?: LLSelectSingleSettingsInput<T, GK>) {
-    super(targetEl, settings)
-    this.onChange = settings?.onChange
-    this.createTriggerContentElFn = settings?.createTriggerContentElFn
+    super(targetEl, settings, {
+      onChange: settings?.onChange ?? null,
+      createTriggerContentElFn: settings?.createTriggerContentElFn ?? null,
+    } satisfies Omit<LLSelectSingleSettings<T, GK>, keyof LLSelectBaseSettings<T, GK>>)
     this.renderTrigger()
   }
 
@@ -94,7 +92,7 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
    */
   protected override renderTriggerContent(): void {
     this.syncEmptyStateToDom()
-    const custom = this.createTriggerContentElFn?.({ chosenItem: this.chosenItem, items: this.getItems() }) ?? null
+    const custom = this.settings.createTriggerContentElFn?.({ chosenItem: this.chosenItem, items: this.getItems() }) ?? null
     if (custom !== null) {
       this.commitTriggerContentToDom(custom)
       return
@@ -157,6 +155,6 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
   }
 
   private fireChange(): void {
-    this.onChange?.(this.chosenItem)
+    this.settings.onChange?.(this.chosenItem)
   }
 }

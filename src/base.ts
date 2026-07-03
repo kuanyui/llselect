@@ -373,7 +373,12 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /** Resolved class names and ids for this instance. */
   public readonly classIdMap: LLSelectClassIdMap
 
-  /** Resolved settings (defaults applied). */
+  /**
+   * Resolved settings (defaults applied) - ONE bag for the whole hierarchy.
+   * Subclasses that extend the settings pass their resolved fields through the
+   * constructor's `subclassSettings` param and re-type this field with
+   * `declare` (see `LLSelectSingle` / `LLSelectMultiple`).
+   */
   protected readonly settings: LLSelectBaseSettings<T, GK>
   /** Current item list. Defensive copy of what `setItems` was given. */
   protected items: T[] = []
@@ -419,8 +424,17 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    *   classes / id / data-* attributes on this element are preserved.
    * @param settings - optional partial settings. Missing fields use defaults
    *   ({@link LLSelectBaseSettings}).
+   * @param subclassSettings - for subclasses that EXTEND the settings bag: their
+   *   own fields, already resolved (defaults applied). Merged into
+   *   `this.settings` right here, so the bag is complete before any base
+   *   construction code (e.g. `createClearEl` via `createTriggerEl`) can read
+   *   it. Pair with a `declare` re-type of `settings` in the subclass.
    */
-  constructor(targetEl: HTMLElement, settings?: LLSelectBaseSettingsInput<T, GK>) {
+  constructor(
+    targetEl: HTMLElement,
+    settings?: LLSelectBaseSettingsInput<T, GK>,
+    subclassSettings?: Record<string, unknown>,
+  ) {
     this.settings = {
       cssClassPrefix: settings?.cssClassPrefix ?? DEFAULT_PREFIX,
       placeholder: settings?.placeholder ?? DEFAULT_PLACEHOLDER,
@@ -443,7 +457,11 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       createGroupLabelContentElFn: settings?.createGroupLabelContentElFn ?? null,
       onOpen: settings?.onOpen ?? null,
       onClose: settings?.onClose ?? null,
-    }
+      // Sole settings cast: the subclass spread widens the literal's type past
+      // what TS can reconcile with the base type; the extras themselves are
+      // `satisfies`-checked at each subclass call site.
+      ...subclassSettings,
+    } as LLSelectBaseSettings<T, GK>
     this.classIdMap = createClassIdMap(this.settings.cssClassPrefix)
 
     // Caller-passed element becomes root (preserves its id / external refs).

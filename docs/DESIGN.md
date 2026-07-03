@@ -49,6 +49,17 @@ Never put mutable state (`items`, `chosen`, etc.) in settings as a
 "convenience". Dual write channels caused subtle bugs in select2 / choices.js
 that we deliberately avoid.
 
+At runtime there is ONE resolved settings bag: `this.settings` holds base +
+variant fields, defaults applied, with `null` (never `undefined`) uniformly
+meaning "not set". A variant that adds settings resolves its own fields and
+passes them through `super(..., subclassSettings)` - the base constructor
+merges them so the bag is complete before any construction code (e.g.
+`createClearEl`) can read it - and re-types the field with `declare`. No
+variant setting lives in a loose instance field, and the exported
+`LLSelect*Settings` types describe the actual runtime object. The bag is
+frozen by convention, not `Object.freeze` - the library never mutates it after
+construction, but extenders stay free to hang extra data on it.
+
 ### Customization model: settings configure, subclassing extends
 
 User-facing guide (when to pick which, with examples): README "Customization".
