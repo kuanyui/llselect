@@ -415,10 +415,12 @@ content is - two granularities:
   > `'count'`. Same as `createItemEl` over `createItemContentEl`.
 - `createTagContentElFn: (item) => HTMLElement | null` fills one chip's visible
   content; the library owns the chip container, remove button, and aria. `null` =
-  plain `itemToString`.
+  plain `itemToString`. The remove button's icon is separately fillable via
+  `createTagRemoveElFn` (see "Remove button" below).
 - Protected chain (each overridable): `renderTriggerContent` -> `createTagsEl`
-  (chip strip) -> `createTagEl(item)` (one chip: content + x button) ->
-  `createTagContentEl(item)` (reads the setting).
+  (chip strip) -> `createTagEl(item)` (one chip; assembles content + remove) ->
+  `createTagContentEl(item)` / `createTagRemoveEl(item)` (each fills one half and
+  reads its `*Fn` setting).
 
 ### Remove button + ARIA (select2-style MVP)
 
@@ -428,8 +430,13 @@ calls `toggleItem`, which re-renders the trigger. `tabindex="-1"` keeps it out o
 the tab order - keyboard users remove via the popup (deselect), matching select2.
 Full chip keyboard nav (grid pattern) is deferred: APG has no standalone tag/token
 pattern and it would fight the combobox `aria-activedescendant` model. See A11Y.md
-"Tags". The x glyph is CSS (`.llselect-tag-remove::before { content: '\00d7' }`) so
-the button stays empty (accessible name = `aria-label`) and the theme owns the look.
+"Tags". By default the button is empty and the x is a CSS glyph
+(`.llselect-tag-remove:empty::before { content: '\00d7' }`), so the theme owns the
+look and the accessible name stays the `aria-label`. `createTagRemoveElFn: (item)
+=> HTMLElement | SVGElement | null` optionally fills a custom icon (mirrors the
+clear button's `createClearElFn`; the icon is decorative, never the accessible
+name); `protected createTagRemoveEl(item)` builds the whole button and is the
+full-control override, mirroring `createClearEl`.
 
 ## Clear button (clearable)
 

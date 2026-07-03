@@ -52,7 +52,9 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
       `createTriggerContentElFn` still takes over the whole trigger). Remove button
       is `<button aria-label="Remove <label>" tabindex="-1">`, click
       `stopPropagation` + `toggleItem` (select2-style MVP; keyboard removes via the
-      popup). Protected chain `createTagsEl` / `createTagEl` / `createTagContentEl`.
+      popup). Protected chain `createTagsEl` / `createTagEl` / `createTagContentEl`
+      / `createTagRemoveEl` (remove button; `createTagRemoveElFn` swaps its icon,
+      mirroring `createClearElFn`).
       Themes ship `.llselect-tag*` (x via CSS `\00d7`). Spec: DESIGN.md "Tags
       (triggerDisplay)"; A11Y.md "Tags". Future: focusable-remove flag (A11Y open
       questions).

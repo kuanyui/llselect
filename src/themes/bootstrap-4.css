@@ -207,7 +207,7 @@
   line-height: 1;
 }
 
-.llselect-tag-remove::before { content: '\00d7'; font-size: 1.15em; }
+.llselect-tag-remove:empty::before { content: '\00d7'; font-size: 1.15em; }
 
 .llselect-tag-remove:hover { opacity: 1; }
 

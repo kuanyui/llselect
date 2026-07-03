@@ -88,6 +88,49 @@ test('createTagContentElFn returning null falls back to plain itemToString text'
   assert.equal(tags(sel)[0]!.querySelector('b'), null)
 })
 
+test('createTagRemoveElFn fills the remove-button icon; library still owns click + aria', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    triggerDisplay: 'tags',
+    createTagRemoveElFn: (item) => {
+      const i = document.createElement('i')
+      i.className = `x-${item}`
+      return i
+    },
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a', 'b'])
+  const btn = removeBtn(sel) // first chip ('a')
+  assert.ok(btn.querySelector('.x-a')) // icon filled, receives the item
+  assert.equal(btn.getAttribute('aria-label'), 'Remove a') // aria still library-owned
+  assert.equal(btn.getAttribute('tabindex'), '-1')
+  btn.click() // still removes via toggleItem
+  assert.deepEqual([...sel.getChosenItems()], ['b'])
+})
+
+test('createTagRemoveElFn returning null leaves the button empty (theme CSS glyph draws the x)', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    triggerDisplay: 'tags',
+    createTagRemoveElFn: () => null,
+  })
+  sel.setItems(['a'])
+  sel.setChosenItems(['a'])
+  assert.equal(removeBtn(sel).children.length, 0)
+})
+
+test('createTagRemoveEl can be overridden for full control of the remove button', () => {
+  class CustomRemove extends LLSelectMultiple<string> {
+    protected override createTagRemoveEl(item: string): HTMLElement {
+      const el = super.createTagRemoveEl(item)
+      el.setAttribute('data-remove', item)
+      return el
+    }
+  }
+  const sel = new CustomRemove(mount(), { triggerDisplay: 'tags' })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a', 'b'])
+  assert.equal(removeBtn(sel).getAttribute('data-remove'), 'a')
+})
+
 test('tags mode with an empty selection shows the placeholder, not chips', () => {
   const sel = new LLSelectMultiple<string>(mount(), { triggerDisplay: 'tags', placeholder: 'Pick' })
   sel.setItems(['a', 'b'])

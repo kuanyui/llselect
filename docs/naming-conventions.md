@@ -1,6 +1,6 @@
 # Method naming conventions
 
-> STATUS: APPLIED to src/ + test/ + demo/ (npm test green: 196; npm run build green). Covers
+> STATUS: APPLIED to src/ + test/ + demo/ (npm test green: 219; npm run build green). Covers
 > every method/function in src/, incl. Phase 10 optgroup (s4d). Private names matter least, but docstrings stay clear.
 > render* responsibility: APPLIED=(ii) - see render-responsibilities.md (render* are pure
 > orchestrators with DOM-free bodies).
@@ -198,18 +198,20 @@ family). No code rename was needed - every name already obeys s1-s3.
 
 Settings on `LLSelectMultipleSettings` (s3 by return type):
 
-| Vis     | Name                   | Signature                          | s3            |
-| ------- | ---------------------- | ---------------------------------- | ------------- |
-| setting | `triggerDisplay`       | `'count' \| 'tags'`                | value (enum)  |
-| setting | `createTagContentElFn` | `(item: T) => HTMLElement \| null` | `create*ElFn` |
+| Vis     | Name                   | Signature                                        | s3            |
+| ------- | ---------------------- | ------------------------------------------------ | ------------- |
+| setting | `triggerDisplay`       | `'count' \| 'tags'`                              | value (enum)  |
+| setting | `createTagContentElFn` | `(item: T) => HTMLElement \| null`               | `create*ElFn` |
+| setting | `createTagRemoveElFn`  | `(item: T) => HTMLElement \| SVGElement \| null` | `create*ElFn` |
 
 Methods (protected, overridable):
 
-| Name                 | Convention                                           |
-| -------------------- | ---------------------------------------------------- |
-| `createTagsEl`       | `create*El` - the chip strip                         |
-| `createTagEl`        | `create*El` - one chip (content + remove button)     |
-| `createTagContentEl` | `create*El` - one chip's content (reads the setting) |
+| Name                 | Convention                                                 |
+| -------------------- | ---------------------------------------------------------- |
+| `createTagsEl`       | `create*El` - the chip strip                               |
+| `createTagEl`        | `create*El` - one chip (assembles content + remove)        |
+| `createTagContentEl` | `create*El` - one chip's content (reads the setting)       |
+| `createTagRemoveEl`  | `create*El` - one chip's remove button (reads the setting) |
 
 `classIdMap` gained `tagsClass` / `tagClass` / `tagRemoveClass`. All obey s1-s3.
 

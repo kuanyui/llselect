@@ -456,7 +456,8 @@ document.getElementById('btn-toggle-all')
 // triggerDisplay: 'tags' shows each chosen item as a removable chip. The x
 // button removes it (toggleItem); the library owns the chip + x + aria +
 // tabindex. Composes with searchable. createTagContentElFn (unused here) would
-// fill each chip's content, mirroring createItemContentElFn.
+// fill each chip's content, mirroring createItemContentElFn; createTagRemoveElFn
+// likewise swaps the remove-button icon, mirroring createClearElFn.
 const outTags = document.getElementById('out-tags')
 const selTags = new LLSelectMultiple(
   document.getElementById('mount-tags'),
