@@ -627,6 +627,7 @@ function createI18nSelects(packName) {
     searchable: true,
     clearable: true,
     triggerDisplay: 'tags',
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
     texts,
     onChange: (chosen) => { outI18n.textContent = 'chosen: ' + chosen.join(', ') },
   })
@@ -634,6 +635,7 @@ function createI18nSelects(packName) {
   const countSel = new LLSelectMultiple(document.getElementById('mount-i18n-count'), {
     searchable: true,
     clearable: true,
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
     texts,
   })
   countSel.setItems(COUNTRIES)
