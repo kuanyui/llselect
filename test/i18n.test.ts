@@ -27,6 +27,8 @@ test('a whole language pack applies to every chrome string (zhTW)', () => {
     texts: zhTW,
   })
   sel.setItems(['a', 'b', 'c'])
+  // No `placeholder` passed -> the pack's localized trigger default shows.
+  assert.equal(sel.triggerContentEl.textContent, zhTW.triggerPlaceholder)
   sel.setChosenItems(['a', 'b'])
   const input = sel.popupEl.querySelector('input')!
   assert.equal(input.getAttribute('aria-label'), zhTW.searchInputAriaLabel)
@@ -44,6 +46,15 @@ test('the count summary comes from the pack (ja)', () => {
   assert.equal(sel.triggerContentEl.textContent, ja.triggerCountSummary(1, 3))
   sel.setChosenItems(['a', 'b', 'c'])
   assert.equal(sel.triggerContentEl.textContent, ja.triggerCountSummary(3, 3))
+})
+
+test('an explicit placeholder setting (app copy) wins over the pack default', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    placeholder: 'Pick some',
+    texts: zhTW,
+  })
+  sel.setItems(['a', 'b'])
+  assert.equal(sel.triggerContentEl.textContent, 'Pick some')
 })
 
 test('a pack composes with per-key overrides (spread order wins)', () => {

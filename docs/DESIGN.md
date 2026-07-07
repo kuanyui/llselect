@@ -150,9 +150,12 @@ Per-`T` control stays on the protected methods (e.g.
 `itemToTagRemoveButtonAriaLabel`). Key naming rules: naming-conventions.md
 s7a.4.
 
-`placeholder` is deliberately NOT in `texts`: it is app copy (like an HTML
-input's placeholder), not chrome, so language packs never set it (select2
-precedent - its language files do not translate placeholders either).
+The `placeholder` SETTING stays app copy - an explicit value always wins and
+packs never set it. But its library DEFAULT (`'Please select'`) is chrome, so
+it lives in `texts` as `triggerPlaceholder` and localizes with the pack;
+resolution is `settings.placeholder ?? texts.triggerPlaceholder`. (select2 has
+no such key only because it ships no default placeholder at all; llselect
+does, so the default must be translatable.)
 
 Language packs are pure data under `llselect/i18n` (`en` / `ja` / `zhTW`):
 opt-in, tree-shakeable, zero behavior, so bundling translations does not

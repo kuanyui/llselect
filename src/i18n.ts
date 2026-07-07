@@ -14,6 +14,7 @@ export type { LLSelectTexts } from './texts.js'
 
 /** Japanese texts. */
 export const ja: LLSelectTexts = {
+  triggerPlaceholder: '選択してください',
   searchInputAriaLabel: '検索',
   searchInputPlaceholder: '絞り込み（Escでクリア）',
   triggerClearButtonAriaLabel: '選択をクリア',
@@ -24,6 +25,7 @@ export const ja: LLSelectTexts = {
 
 /** Traditional Chinese (Taiwan) texts. */
 export const zhTW: LLSelectTexts = {
+  triggerPlaceholder: '請選擇',
   searchInputAriaLabel: '搜尋',
   searchInputPlaceholder: '篩選（按 Esc 清除）',
   triggerClearButtonAriaLabel: '清除選擇',

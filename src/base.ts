@@ -39,7 +39,11 @@ export type LLSelectCreateTriggerArrowContentElFn = (state: { isOpen: boolean })
 export interface LLSelectBaseSettings<T, GK = string> {
   /** Prefix used for every CSS class and DOM id the library generates. */
   cssClassPrefix: string
-  /** Text shown in the trigger when nothing is selected. */
+  /**
+   * Text shown in the trigger when nothing is selected. App copy: an explicit
+   * value always wins; when unset, the locale default
+   * `texts.triggerPlaceholder` is used (`'Please select'` in English).
+   */
   placeholder: string
   /**
    * Equality predicate for item values - return `true` when `a` and `b` are the
@@ -303,7 +307,6 @@ export interface LLSelectClassIdMap {
 }
 
 const DEFAULT_PREFIX = 'llselect'
-const DEFAULT_PLACEHOLDER = 'Please select'
 
 let instanceCounter = 0
 
@@ -455,16 +458,20 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     settings?: LLSelectBaseSettingsInput<T, GK>,
     subclassSettings?: Record<string, unknown>,
   ) {
+    // Texts resolve first: the placeholder's library default is localized
+    // chrome (texts.triggerPlaceholder), while an explicit `placeholder` is
+    // app copy and wins.
+    const texts: LLSelectTexts = { ...DEFAULT_TEXTS, ...settings?.texts }
     this.settings = {
       cssClassPrefix: settings?.cssClassPrefix ?? DEFAULT_PREFIX,
-      placeholder: settings?.placeholder ?? DEFAULT_PLACEHOLDER,
+      placeholder: settings?.placeholder ?? texts.triggerPlaceholder,
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
       createTriggerArrowContentElFn: settings?.createTriggerArrowContentElFn ?? null,
       clearable: settings?.clearable ?? false,
       createTriggerClearButtonContentElFn: settings?.createTriggerClearButtonContentElFn ?? null,
       searchable: settings?.searchable ?? false,
-      texts: { ...DEFAULT_TEXTS, ...settings?.texts },
+      texts,
       filterFn: settings?.filterFn ?? null,
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'match-trigger',
       itemDisabledFn: settings?.itemDisabledFn ?? null,
