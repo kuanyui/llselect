@@ -164,7 +164,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       methods / classIdMap / CSS classes / themes / demo / docs. Also adds the
       two thin content methods (`createTriggerClearButtonContentEl` /
       `createTagRemoveButtonContentEl`) completing the law.
-- [ ] **R17 - texts bag.** New `src/texts.ts`: `LLSelectTexts` (message-id
+- [x] **R17 - texts bag.** New `src/texts.ts`: `LLSelectTexts` (message-id
       keys per s7a.4) + `en` (the defaults, single source). Base setting
       `texts` (input `Partial<LLSelectTexts>`, resolved vs `en`); R1's flat
       string settings fold in; the multi count summary reads

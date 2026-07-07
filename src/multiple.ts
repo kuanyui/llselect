@@ -1,6 +1,7 @@
 import {
   LLSelectBase,
   type LLSelectBaseSettings,
+  type LLSelectSettingsInputOf,
 } from './base.js'
 
 /**
@@ -56,9 +57,9 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    *   the library still owns the chip container + the remove (x) button + aria.
    * - `null` (setting default, or returned for an item) = plain text from
    *   `itemToString`.
-   * - The remove button's accessible name comes from `itemToTagRemoveLabel`
-   *   (default `Remove <itemToString>`) - that is what AT is guaranteed to
-   *   announce. The chip is a generic `<span>` (ARIA prohibits naming it), so
+   * - The remove button's accessible name comes from
+   *   `itemToTagRemoveButtonAriaLabel` (default `Remove <itemToString>`) -
+   *   that is what AT is guaranteed to announce. The chip is a generic `<span>` (ARIA prohibits naming it), so
    *   for icon-only content include your own (visually hidden) text if the
    *   chip should be announced as more than its remove button. See
    *   `docs/A11Y.md` "Tags".
@@ -68,26 +69,20 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * Icon ELEMENT of each tag's remove (x) button in `'tags'` mode, mirroring
    * `createTriggerClearButtonContentElFn` (the clear button's icon hook). The library always owns the
    * button, its click (removes the item + `stopPropagation`), `tabindex="-1"`, and
-   * the `aria-label` accessible name (from `itemToTagRemoveLabel`); this only
-   * fills the decorative icon.
+   * the `aria-label` accessible name (from `itemToTagRemoveButtonAriaLabel`);
+   * this only fills the decorative icon.
    * - Return an `HTMLElement` / `SVGElement`: appended inside the button as its icon.
    * - `null` (setting default, or returned for an item): no icon - the theme
    *   draws the x via its CSS glyph (`.llselect-tag-remove-button:empty::before`).
    */
   createTagRemoveButtonContentElFn: ((item: T) => HTMLElement | SVGElement | null) | null
-  /**
-   * Item -> its remove button's accessible name (`aria-label`) in `'tags'`
-   * mode. The i18n seam for the removal announcement.
-   * - `null` (default) = `Remove <itemToString(item)>`.
-   */
-  itemToTagRemoveLabelFn: ((item: T) => string) | null
 }
 
 /**
  * Constructor-time settings input for {@link LLSelectMultiple}.
  * Every field is optional; missing fields use defaults.
  */
-export type LLSelectMultipleSettingsInput<T, GK = string> = Partial<LLSelectMultipleSettings<T, GK>>
+export type LLSelectMultipleSettingsInput<T, GK = string> = LLSelectSettingsInputOf<LLSelectMultipleSettings<T, GK>>
 
 /**
  * Multi-selection select. Clicking an item toggles its membership in the
@@ -118,7 +113,6 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       triggerDisplay: settings?.triggerDisplay ?? 'count',
       createTagContentElFn: settings?.createTagContentElFn ?? null,
       createTagRemoveButtonContentElFn: settings?.createTagRemoveButtonContentElFn ?? null,
-      itemToTagRemoveLabelFn: settings?.itemToTagRemoveLabelFn ?? null,
     } satisfies Omit<LLSelectMultipleSettings<T, GK>, keyof LLSelectBaseSettings<T, GK>>)
     this.popupListEl.setAttribute('aria-multiselectable', 'true')
     this.renderTrigger()
@@ -195,9 +189,9 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * is a count summary; override (or pass the `createTriggerContentElFn`
    * setting) to display tags / custom markup / etc.
    *
-   * - 0 chosen: placeholder
-   * - 0 < n < total: `"n / total selected"`
-   * - n === total > 0: `"All n selected"`
+   * - 0 chosen: `placeholder`
+   * - n > 0: `texts.triggerCountSummary(n, total)` (English default:
+   *   `"n / total selected"`, or `"All n selected"` when all are chosen)
    */
   protected override renderTriggerContent(): void {
     this.syncEmptyStateToDom()
@@ -210,14 +204,10 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       this.commitTriggerContentToDom(this.createTagsEl())
       return
     }
-    const n = this.chosenItems.length
-    const total = this.items.length
-    const text = n === 0
+    const chosenCount = this.chosenItems.length
+    this.commitTriggerContentToDom(chosenCount === 0
       ? this.settings.placeholder
-      : n === total && total > 0
-        ? `All ${n} selected`
-        : `${n} / ${total} selected`
-    this.commitTriggerContentToDom(text)
+      : this.settings.texts.triggerCountSummary(chosenCount, this.items.length))
   }
 
   /**
@@ -258,7 +248,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   /**
    * Build one chip's remove (x) button. The library owns the button + its click
    * (`stopPropagation` so it never toggles the popup, then `toggleItem`) +
-   * `tabindex="-1"` + `aria-label` (from `itemToTagRemoveLabel`);
+   * `tabindex="-1"` + `aria-label` (from `itemToTagRemoveButtonAriaLabel`);
    * `createTagRemoveButtonContentElFn` optionally fills the icon, else the theme's CSS glyph.
    * Mirrors the clear button's `createTriggerClearButtonEl`. Override for full control of
    * the button element.
@@ -268,7 +258,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     btn.type = 'button'
     btn.className = this.classIdMap.tagRemoveButtonClass
     btn.tabIndex = -1
-    btn.setAttribute('aria-label', this.itemToTagRemoveLabel(item))
+    btn.setAttribute('aria-label', this.itemToTagRemoveButtonAriaLabel(item))
     const icon = this.createTagRemoveButtonContentEl(item)
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
@@ -302,13 +292,12 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
 
   /**
    * Item -> its remove button's accessible name in `'tags'` mode.
-   * - Default reads `itemToTagRemoveLabelFn`, else `Remove <itemToString(item)>`.
-   * - Override only when extending; configure via the setting.
+   * - Default: `texts.tagRemoveButtonAriaLabel(itemToString(item))`.
+   * - Override only when extending (e.g. a name from another item field);
+   *   per-locale text goes through the `texts` setting.
    */
-  protected itemToTagRemoveLabel(item: T): string {
-    return this.settings.itemToTagRemoveLabelFn
-      ? this.settings.itemToTagRemoveLabelFn(item)
-      : `Remove ${this.itemToString(item)}`
+  protected itemToTagRemoveButtonAriaLabel(item: T): string {
+    return this.settings.texts.tagRemoveButtonAriaLabel(this.itemToString(item))
   }
 
   /** No selection iff the chosen set is empty. Drives the trigger's `data-empty`. */

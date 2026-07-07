@@ -70,15 +70,21 @@ test('search input has a default accessible name and no placeholder', () => {
   assert.equal(input.hasAttribute('placeholder'), false)
 })
 
-test('searchInputAriaLabel / searchInputPlaceholder settings are applied', () => {
+test('texts.searchInputAriaLabel / searchInputPlaceholder are applied; other keys keep defaults', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     searchable: true,
-    searchInputAriaLabel: 'Find a country',
-    searchInputPlaceholder: 'Type to filter',
+    clearable: true,
+    texts: {
+      searchInputAriaLabel: 'Find a country',
+      searchInputPlaceholder: 'Type to filter',
+    },
   })
   const input = searchInput(sel)
   assert.equal(input.getAttribute('aria-label'), 'Find a country')
   assert.equal(input.placeholder, 'Type to filter')
+  // Partial texts merge: unspecified keys fall back to the English defaults.
+  const clearBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  assert.equal(clearBtn.getAttribute('aria-label'), 'Clear selection')
 })
 
 // --- filtering ----------------------------------------------------------

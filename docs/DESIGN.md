@@ -138,6 +138,28 @@ It does **not** provide:
 When in doubt, the answer is "lib provides a structural slot; the user
 fills it". This keeps API surface tight and avoids feature creep.
 
+## Texts (i18n)
+
+All chrome strings (AT labels + generated text) live in ONE base setting
+`texts` (`src/texts.ts`): input is `Partial<LLSelectTexts>`, resolved against
+the English defaults (`en` - the same object the `llselect/i18n` subpath
+exports). Static strings are plain strings; parameterized messages are
+functions taking RESOLVED primitives (`itemLabel: string`, counts) - never
+`T` - so a language pack can implement them without knowing the item type.
+Per-`T` control stays on the protected methods (e.g.
+`itemToTagRemoveButtonAriaLabel`). Key naming rules: naming-conventions.md
+s7a.4.
+
+`placeholder` is deliberately NOT in `texts`: it is app copy (like an HTML
+input's placeholder), not chrome, so language packs never set it (select2
+precedent - its language files do not translate placeholders either).
+
+Language packs are pure data under `llselect/i18n` (`en` / `ja` / `zhTW`):
+opt-in, tree-shakeable, zero behavior, so bundling translations does not
+violate "low-level". `i18n.ts` inlines only the tiny `texts.ts` module, never
+`base.ts`, and the main bundle carries only `en`. Usage: `texts: zhTW`, or a
+per-key override on top: `texts: { ...zhTW, searchInputPlaceholder: '...' }`.
+
 ## Rendering model
 
 - State setters (`setItems`, `setChosenItem`, `setChosenItems`, `toggleItem`,
@@ -182,9 +204,9 @@ is in `A11Y.md`.
 - **Settings:** `searchable: boolean` (default `false`);
   `filterFn: ((item, query) => boolean) | null` (default `null` =
   case-insensitive substring on `itemToString`);
-  `searchInputAriaLabel: string` (default `'Search'` - the input's accessible
-  name; it has no visible label) and `searchInputPlaceholder: string | null`
-  (default `null` = none) - the AT-string / i18n seams. IME-aware filtering
+  `texts.searchInputAriaLabel` (default `'Search'` - the input's accessible
+  name; it has no visible label) and `texts.searchInputPlaceholder`
+  (default `null` = none) - see "Texts (i18n)" below. IME-aware filtering
   (composition-guarded) is part of the contract; see `A11Y.md`.
 
 ## Disabled (Phase 9)
@@ -440,7 +462,9 @@ content is - two granularities:
 ### Remove button + ARIA (select2-style MVP)
 
 Each chip's remove control is `<button aria-label="Remove <itemToString>"
-tabindex="-1">`; its click `stopPropagation`s (so it never toggles the popup) then
+tabindex="-1">` (label text from `texts.tagRemoveButtonAriaLabel`, via
+`itemToTagRemoveButtonAriaLabel`); its click `stopPropagation`s (so it never
+toggles the popup) then
 calls `toggleItem`, which re-renders the trigger. `tabindex="-1"` keeps it out of
 the tab order - keyboard users remove via the popup (deselect), matching select2.
 Full chip keyboard nav (grid pattern) is deferred: APG has no standalone tag/token

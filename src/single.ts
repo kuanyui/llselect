@@ -1,6 +1,7 @@
 import {
   LLSelectBase,
   type LLSelectBaseSettings,
+  type LLSelectSettingsInputOf,
 } from './base.js'
 
 /** Context passed to {@link LLSelectSingleSettings.createTriggerContentElFn}. */
@@ -39,7 +40,7 @@ export interface LLSelectSingleSettings<T, GK = string> extends LLSelectBaseSett
  * Constructor-time settings input for {@link LLSelectSingle}.
  * Every field is optional; missing fields use defaults.
  */
-export type LLSelectSingleSettingsInput<T, GK = string> = Partial<LLSelectSingleSettings<T, GK>>
+export type LLSelectSingleSettingsInput<T, GK = string> = LLSelectSettingsInputOf<LLSelectSingleSettings<T, GK>>
 
 /**
  * Single-selection select. Picking an item replaces any prior chosen item

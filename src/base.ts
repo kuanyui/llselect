@@ -10,6 +10,7 @@ import {
   getActionFromKey,
   getUpdatedIndex,
 } from './keyboard.js'
+import { en as DEFAULT_TEXTS, type LLSelectTexts } from './texts.js'
 
 /**
  * What happens when the user clicks outside an open popup.
@@ -72,11 +73,6 @@ export interface LLSelectBaseSettings<T, GK = string> {
    */
   createTriggerClearButtonContentElFn: (() => HTMLElement | SVGElement | null) | null
   /**
-   * Accessible name (`aria-label`) of the clear (x) button. Default
-   * `'Clear selection'`. An i18n seam - set per locale.
-   */
-  clearButtonAriaLabel: string
-  /**
    * Whether the popup includes a search input. `false` (default) keeps the
    * trigger as `role="combobox"` and the (always-built) input is `hidden`.
    * `true` makes the trigger `role="button"` and moves focus to the input on
@@ -84,15 +80,14 @@ export interface LLSelectBaseSettings<T, GK = string> {
    */
   searchable: boolean
   /**
-   * Accessible name (`aria-label`) of the search input. The input has no
-   * visible label, so screen readers rely on this. Default `'Search'`. An
-   * i18n seam - set per locale.
+   * Chrome strings (AT labels + generated text) - the i18n seam. Resolved
+   * against English: pass a language pack whole (`texts: zhTW` from
+   * `llselect/i18n`) or override single keys
+   * (`texts: { ...zhTW, searchInputPlaceholder: '...' }`).
+   * Key-by-key contract (incl. what `null` means where allowed):
+   * {@link LLSelectTexts}.
    */
-  searchInputAriaLabel: string
-  /**
-   * Placeholder text of the search input. `null` (default) = no placeholder.
-   */
-  searchInputPlaceholder: string | null
+  texts: LLSelectTexts
   /**
    * Predicate used by the search input; return `true` to keep the item.
    * `null` (default) means the built-in case-insensitive substring match
@@ -225,10 +220,20 @@ export interface LLSelectBaseSettings<T, GK = string> {
 }
 
 /**
+ * Constructor input for a resolved settings bag `S`: every field optional,
+ * and `texts` accepts a PARTIAL texts object (missing keys fall back to
+ * English). Shared by the base / single / multiple `*SettingsInput` types;
+ * use it for a subclass wrapper that extends the settings bag.
+ */
+export type LLSelectSettingsInputOf<S extends { texts: LLSelectTexts }> =
+  & Partial<Omit<S, 'texts'>>
+  & { texts?: Partial<LLSelectTexts> }
+
+/**
  * Constructor-time settings input - every field is optional and missing
  * fields fall back to the library defaults.
  */
-export type LLSelectBaseSettingsInput<T, GK = string> = Partial<LLSelectBaseSettings<T, GK>>
+export type LLSelectBaseSettingsInput<T, GK = string> = LLSelectSettingsInputOf<LLSelectBaseSettings<T, GK>>
 
 /**
  * Resolved CSS class names and DOM ids for one instance. Exposed on
@@ -299,8 +304,6 @@ export interface LLSelectClassIdMap {
 
 const DEFAULT_PREFIX = 'llselect'
 const DEFAULT_PLACEHOLDER = 'Please select'
-const DEFAULT_SEARCH_INPUT_ARIA_LABEL = 'Search'
-const DEFAULT_CLEAR_BUTTON_ARIA_LABEL = 'Clear selection'
 
 let instanceCounter = 0
 
@@ -460,10 +463,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       createTriggerArrowContentElFn: settings?.createTriggerArrowContentElFn ?? null,
       clearable: settings?.clearable ?? false,
       createTriggerClearButtonContentElFn: settings?.createTriggerClearButtonContentElFn ?? null,
-      clearButtonAriaLabel: settings?.clearButtonAriaLabel ?? DEFAULT_CLEAR_BUTTON_ARIA_LABEL,
       searchable: settings?.searchable ?? false,
-      searchInputAriaLabel: settings?.searchInputAriaLabel ?? DEFAULT_SEARCH_INPUT_ARIA_LABEL,
-      searchInputPlaceholder: settings?.searchInputPlaceholder ?? null,
+      texts: { ...DEFAULT_TEXTS, ...settings?.texts },
       filterFn: settings?.filterFn ?? null,
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'match-trigger',
       itemDisabledFn: settings?.itemDisabledFn ?? null,
@@ -1357,7 +1358,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * Build the clear (x) button for the `clearable` trigger slot. The library owns
    * the button + its click (stops propagation so it never toggles the popup, then
-   * `clearSelection`) + `aria-label` (text from `clearButtonAriaLabel`);
+   * `clearSelection`) + `aria-label` (text from `texts.triggerClearButtonAriaLabel`);
    * `createTriggerClearButtonContentElFn` optionally fills the icon,
    * else the theme's CSS glyph. The theme hides it via `data-empty` when empty.
    */
@@ -1366,7 +1367,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     btn.type = 'button'
     btn.className = this.classIdMap.triggerClearButtonClass
     btn.tabIndex = -1
-    btn.setAttribute('aria-label', this.settings.clearButtonAriaLabel)
+    btn.setAttribute('aria-label', this.settings.texts.triggerClearButtonAriaLabel)
     const icon = this.createTriggerClearButtonContentEl()
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
@@ -1413,9 +1414,9 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     el.setAttribute('autocapitalize', 'off')
     el.setAttribute('spellcheck', 'false')
     // The input has no visible label; its accessible name is required.
-    el.setAttribute('aria-label', this.settings.searchInputAriaLabel)
-    if (this.settings.searchInputPlaceholder !== null) {
-      el.placeholder = this.settings.searchInputPlaceholder
+    el.setAttribute('aria-label', this.settings.texts.searchInputAriaLabel)
+    if (this.settings.texts.searchInputPlaceholder !== null) {
+      el.placeholder = this.settings.texts.searchInputPlaceholder
     }
     return el
   }
