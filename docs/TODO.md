@@ -297,9 +297,17 @@ Ruled, no code change:
       fn fills the content. Signature narrowed to `(item) => HTMLElement | null`
       (element-only; no `ctx`, no `string`); `null` = plain text from `itemToString`.
       Read by the `createItemContentEl` method's default (override to replace).
-- [ ] **rich-item escape-hatch shape** - still open. Subclassing `createItemEl` is the
-      current escape hatch for full control of the item element; decide whether to also
-      add a `decorateItemFn(el, item)` setting, or keep the subclass-only path.
+- [x] **rich-item escape-hatch shape** - RULED: CLOSED, subclass-only stays
+      (no `decorateItemFn(el, item)` setting). Rationale: the need is rare
+      (one demo scenario - `title` tooltips - across the whole surface), it
+      would be a third path fully overlapped by the `createItemEl` override
+      (functionally identical: same element, same direct mutation, only the
+      class boilerplate differs), and its shape is the risky direction - the
+      library's finished output handed over for mutation, where broken
+      `aria-*` / `id` / wiring cannot be defended against. The brainstorm doc
+      flagged exactly this as over-engineering. Escape hatch remains:
+      `class X extends ... { createItemEl(item, i) { const el =
+      super.createItemEl(item, i); ...; return el } }` (demo 6.3 / 9.1).
 - [x] **`onChange` diff context** - RULED: pass the previous value as a
       SECOND parameter (R27): single
       `onChange(chosenItem, previousChosenItem)`, multiple
