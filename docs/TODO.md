@@ -110,7 +110,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       `onClose`/`onClosed` are pairs; `onChange` has no sibling. Add base
       `protected onChosenChanged()` (default no-op), fired by single/multiple
       `fireChange` before the setting (hook first, matching `open()`).
-- [ ] **R5 - export every user-reachable type.** Re-export `WidthPolicy` and
+- [x] **R5 - export every user-reachable type.** Re-export `WidthPolicy` and
       `Placement` from the package root (referenced by the public
       `popupWidthPolicy` setting / `data-placement` attribute); add + export
       `LLSelectTriggerDisplay = 'count' | 'tags'` (same treatment as

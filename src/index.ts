@@ -19,7 +19,12 @@ export type {
   LLSelectMultipleSettings,
   LLSelectMultipleSettingsInput,
   LLSelectMultipleTriggerContext,
+  LLSelectTriggerDisplay,
 } from './multiple.js'
+
+// Types observable through public settings / DOM attributes: importable,
+// never infer-only (`popupWidthPolicy` setting; `data-placement` attribute).
+export type { WidthPolicy, Placement } from './positioning.js'
 
 export {
   createChevronDownSvgEl,

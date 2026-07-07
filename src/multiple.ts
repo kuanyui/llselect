@@ -3,6 +3,14 @@ import {
   type LLSelectBaseSettings,
 } from './base.js'
 
+/**
+ * Trigger display mode of {@link LLSelectMultiple}.
+ * - `'count'`: a text summary like "3 / 10 selected".
+ * - `'tags'`: one removable chip per chosen item.
+ * See {@link LLSelectMultipleSettings.triggerDisplay}.
+ */
+export type LLSelectTriggerDisplay = 'count' | 'tags'
+
 /** Context passed to {@link LLSelectMultipleSettings.createTriggerContentElFn}. */
 export interface LLSelectMultipleTriggerContext<T> {
   chosenItems: readonly T[]
@@ -39,7 +47,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * - `'tags'`: one removable chip per chosen item; its x button removes it.
    * `createTriggerContentElFn` overrides both (full control wins).
    */
-  triggerDisplay: 'count' | 'tags'
+  triggerDisplay: LLSelectTriggerDisplay
   /**
    * Item -> the visible content ELEMENT of its tag chip in `'tags'` mode,
    * without subclassing. Mirrors `createItemContentElFn` (the chip is to the
