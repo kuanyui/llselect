@@ -279,6 +279,12 @@ export interface LLSelectClassIdMap {
    * the (empty) listbox when the visible item list has zero entries.
    */
   popupListNoResultsClass: string
+  /**
+   * Class on the select-all leading row (`LLSelectMultiple`, `selectAllRow`
+   * setting). Also carries `itemClass` plus `data-chosen-state="none|some|all"`
+   * for the tri-state visual.
+   */
+  selectAllRowClass: string
   /** Class on every item element (`role="option"`) inside the popup list. */
   itemClass: string
   /**
@@ -345,6 +351,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     popupClass: `${prefix}-popup`,
     popupListClass: `${prefix}-popup-list`,
     popupListNoResultsClass: `${prefix}-popup-list-no-results`,
+    selectAllRowClass: `${prefix}-select-all-row`,
     itemClass: `${prefix}-item`,
     itemFocusedClass: `${prefix}-item-focused`,
     itemDisabledClass: `${prefix}-item-disabled`,
@@ -439,6 +446,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   private positioner: Positioner | undefined
   private itemEls: HTMLElement[] = []
   private focusedEl: HTMLElement | undefined
+  /**
+   * The leading row element (`LLSelectMultiple`'s select-all) for the current
+   * render, or `undefined` when absent. Never part of `itemEls`.
+   */
+  private leadingRowEl: HTMLElement | undefined
+  /** Whether keyboard focus sits on the leading row (mutually exclusive with an item focus). */
+  private leadingRowFocused = false
   private outsideHandler: ((ev: Event) => void) | undefined
   private focusOutHandler: ((ev: FocusEvent) => void) | undefined
   /**
@@ -708,6 +722,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.itemEls = []
     this.focusedEl = undefined
     this.focusedIndex = -1
+    this.leadingRowEl = undefined
+    this.leadingRowFocused = false
     this.comboboxEl.removeAttribute('aria-activedescendant')
     this.renderTriggerArrow()
     this.onClosed()
@@ -953,6 +969,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     const els = list.map((item, i) => this.createItemEl(item, i))
     this.itemEls = els
     this.focusedEl = undefined
+    this.leadingRowEl = this.createPopupListLeadingRowEl() ?? undefined
+    if (!this.leadingRowEl) { this.leadingRowFocused = false }
     this.commitPopupSegmentsToDom(this.computePopupSegments(list, els))
     this.syncPopupListNoResultsToDom()
     this.positioner?.reposition()
@@ -1007,11 +1025,12 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     return segments
   }
 
-  /** Replace every popup-list child with the rendered segments (items + group containers). */
+  /** Replace every popup-list child with the leading row (when present) + the rendered segments. */
   private commitPopupSegmentsToDom(segments: PopupListSegment<T, GK>[]): void {
     const children = segments.map(seg =>
       seg.group ? this.createGroupEl(seg.key, seg.index, seg.items, seg.els) : seg.el,
     )
+    if (this.leadingRowEl) { children.unshift(this.leadingRowEl) }
     this.popupListEl.replaceChildren(...children)
   }
 
@@ -1238,6 +1257,22 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   protected onItemClick(_item: T): void {}
 
   /**
+   * Optional non-item `role="option"` row pinned at the TOP of the listbox:
+   * inside the arrow-key ring (ArrowUp from the first item reaches it, Home
+   * lands on it, up-actions clamp there) but never inside `itemEls`, so the
+   * `itemEls[i] <-> getVisibleItems()[i]` alignment is untouched. Rebuilt on
+   * every `renderPopupList`. Base default: `null` = no leading row.
+   * `LLSelectMultiple` builds its select-all row here (`selectAllRow` setting).
+   */
+  protected createPopupListLeadingRowEl(): HTMLElement | null { return null }
+
+  /**
+   * Subclass hook: the leading row was activated - Enter while it is focused
+   * (subclasses also wire their row's click handler to this). Default no-op.
+   */
+  protected onLeadingRowActivated(): void {}
+
+  /**
    * Decide which item to focus when the popup opens. Default focuses the
    * first item (or no-op if the list is empty). Override to focus the
    * currently chosen item, last-used item, etc.
@@ -1256,9 +1291,47 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   protected setFocusedIndex(index: number): void {
     const max = this.getVisibleItems().length - 1
     const clamped = Math.max(-1, Math.min(max, index))
-    if (clamped === this.focusedIndex) { return }
+    if (clamped === this.focusedIndex && !this.leadingRowFocused) { return }
+    this.leadingRowFocused = false
     this.focusedIndex = clamped
     this.syncFocusedIndexToDom()
+  }
+
+  /**
+   * Move keyboard focus onto the leading row (no-op when none is rendered).
+   * The item focus is cleared (`focusedIndex` becomes -1). Protected so a
+   * subclass can wire its leading row's click to focus-then-activate,
+   * mirroring how item clicks call `setFocusedIndex` before `onItemClick`.
+   */
+  protected focusLeadingRow(): void {
+    if (!this.leadingRowEl || this.leadingRowFocused) { return }
+    this.leadingRowFocused = true
+    this.focusedIndex = -1
+    this.syncFocusedIndexToDom()
+  }
+
+  /**
+   * Rebuild the leading row in place (tri-state / label refresh) without
+   * touching the item elements - O(1) DOM work, mirroring
+   * `replacePopupListItemElInDom`. Falls back to a full `renderPopupList`
+   * when the row becomes inapplicable (builder returns `null`). No-op while
+   * closed or when no leading row is rendered.
+   */
+  protected replaceLeadingRowElInDom(): void {
+    if (!this.isOpen || !this.leadingRowEl) { return }
+    const next = this.createPopupListLeadingRowEl()
+    if (next === null) {
+      this.renderPopupList()
+      return
+    }
+    const old = this.leadingRowEl
+    old.replaceWith(next)
+    this.leadingRowEl = next
+    if (this.focusedEl === old) {
+      next.classList.add(this.classIdMap.itemFocusedClass)
+      this.comboboxEl.setAttribute('aria-activedescendant', next.id)
+      this.focusedEl = next
+    }
   }
 
   /**
@@ -1273,6 +1346,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     if (this.focusedEl) {
       this.focusedEl.classList.remove(this.classIdMap.itemFocusedClass)
       this.focusedEl = undefined
+    }
+    if (this.leadingRowFocused && this.leadingRowEl) {
+      this.leadingRowEl.classList.add(this.classIdMap.itemFocusedClass)
+      this.comboboxEl.setAttribute('aria-activedescendant', this.leadingRowEl.id)
+      this.focusedEl = this.leadingRowEl
+      ensureVisibleInScroll(this.leadingRowEl, this.popupListEl)
+      return
     }
     const i = this.focusedIndex
     if (i >= 0 && i < this.itemEls.length) {
@@ -1417,6 +1497,10 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
         this.close()
         return
       case LLSelectAction.Select: {
+        if (this.leadingRowFocused) {
+          this.onLeadingRowActivated()
+          return
+        }
         const list = this.getVisibleItems()
         if (this.focusedIndex >= 0 && this.focusedIndex < list.length) {
           const item = list[this.focusedIndex]!
@@ -1433,8 +1517,30 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       case LLSelectAction.PageUp: {
         const list = this.getVisibleItems()
         if (list.length === 0) { return }
+        if (this.leadingRowFocused) {
+          // On the leading row (ring top): only downward actions move; treat
+          // the row as position -1 so Next lands on the first enabled item.
+          if (action === LLSelectAction.Next || action === LLSelectAction.PageDown || action === LLSelectAction.GotoLast) {
+            const target = getUpdatedIndex(-1, list.length - 1, action)
+            const found = this.findEnabledIndexForAction(target, action, list)
+            if (found >= 0) { this.setFocusedIndex(found) }
+          }
+          return
+        }
+        // Home lands on the leading row when present (topmost of the ring).
+        if (action === LLSelectAction.GotoFirst && this.leadingRowEl) {
+          this.focusLeadingRow()
+          return
+        }
         const target = getUpdatedIndex(this.focusedIndex, list.length - 1, action)
         const found = this.findEnabledIndexForAction(target, action, list)
+        // An up-action that cannot move (already at the topmost enabled item)
+        // continues onto the leading row.
+        const upAction = action === LLSelectAction.Previous || action === LLSelectAction.PageUp
+        if (this.leadingRowEl && upAction && (found < 0 || found === this.focusedIndex)) {
+          this.focusLeadingRow()
+          return
+        }
         if (found >= 0) { this.setFocusedIndex(found) }
         return
       }

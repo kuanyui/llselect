@@ -300,6 +300,26 @@
         <details class="code-toggle"><summary>code</summary><pre data-demo="5.3"><code></code></pre></details>
       </div>
     </article>
+
+    <article>
+      <h3>5.5 Select-all row (tri-state, filtered scope)</h3>
+      <p class="hint">
+        <code>selectAllRow: true</code> pins a tri-state select-all row as the
+        first option (ArrowUp from the first item or Home reach it; Enter
+        toggles). It acts on the VISIBLE enabled subset: type a filter, then
+        activate the row - only the matches toggle, hidden choices are
+        preserved. The icon comes from the theme's
+        <code>data-chosen-state</code> hook, the counting label from
+        <code>texts.selectAllRowLabel</code>.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-select-all"></div>
+          <div class="out" id="out-select-all">chosen: 0 items</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="5.5"><code></code></pre></details>
+      </div>
+    </article>
   </section>
 
   <section>

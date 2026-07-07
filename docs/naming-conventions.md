@@ -262,6 +262,7 @@ parameterized messages take resolved primitives, never `T`:
 | `triggerClearButtonAriaLabel` | `string`                                              |
 | `tagRemoveButtonAriaLabel`    | `(itemLabel: string) => string`                       |
 | `triggerCountSummary`         | `(chosenCount: number, totalCount: number) => string` |
+| `selectAllRowLabel`           | `(chosenCount: number, totalCount: number) => string` |
 
 `tagRemoveButtonAriaLabel` is backed by `protected
 itemToTagRemoveButtonAriaLabel(item)` (`itemTo*`, mirrors `itemToString`);
@@ -276,7 +277,7 @@ their real (minimal) BCP 47 tags (`'zh-TW'`) for `navigator.language` lookup.
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator
-(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). Consistency-review follow-up (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createTriggerArrowContentEl(state)` reading `createTriggerArrowContentElFn` (mirrors the clear button's content method); `renderTriggerArrow` stays a private orchestrator and `commitTriggerArrowContentElToDom` a private primitive. (Names shown post-s7b.) R20 added private `computeSearchActive` (compute*) + `syncSearchModeToDom` (sync*ToDom). R26 added public `destroy` (domain lifecycle op, industry-standard name; joins `open`/`close`/`toggle` on the DOM-touching exception list).
+(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). Consistency-review follow-up (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createTriggerArrowContentEl(state)` reading `createTriggerArrowContentElFn` (mirrors the clear button's content method); `renderTriggerArrow` stays a private orchestrator and `commitTriggerArrowContentElToDom` a private primitive. (Names shown post-s7b.) R20 added private `computeSearchActive` (compute*) + `syncSearchModeToDom` (sync*ToDom). R26 added public `destroy` (domain lifecycle op, industry-standard name; joins `open`/`close`/`toggle` on the DOM-touching exception list). R29 (Phase 13) added base protected `createPopupListLeadingRowEl` (create*El), `onLeadingRowActivated` (on-hook), `focusLeadingRow` (focus*), `replaceLeadingRowElInDom` (replace*ElInDom); multi flag setting `selectAllRow`; classIdMap `selectAllRowClass`.
 
 ## 6. Phasing
 

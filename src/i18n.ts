@@ -25,6 +25,7 @@ export const ja: LLSelectTexts = {
   tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel}を削除`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `全${chosenCount}件を選択` : `${totalCount}件中${chosenCount}件を選択`,
+  selectAllRowLabel: (chosenCount, totalCount) => `すべて選択（${chosenCount} / ${totalCount}）`,
 }
 
 /** Traditional Chinese (Taiwan) texts. */
@@ -37,6 +38,7 @@ export const zhTW: LLSelectTexts = {
   tagRemoveButtonAriaLabel: (itemLabel) => `移除 ${itemLabel}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `已選全部 ${chosenCount} 項` : `已選 ${chosenCount} / ${totalCount} 項`,
+  selectAllRowLabel: (chosenCount, totalCount) => `全選（${chosenCount} / ${totalCount}）`,
 }
 
 /** Arabic texts (RTL). */
@@ -49,6 +51,7 @@ export const ar: LLSelectTexts = {
   tagRemoveButtonAriaLabel: (itemLabel) => `إزالة ${itemLabel}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `تم اختيار الكل (${chosenCount})` : `تم اختيار ${chosenCount} من ${totalCount}`,
+  selectAllRowLabel: (chosenCount, totalCount) => `تحديد الكل (${chosenCount} من ${totalCount})`,
 }
 
 /** Hebrew texts (RTL). */
@@ -61,6 +64,7 @@ export const he: LLSelectTexts = {
   tagRemoveButtonAriaLabel: (itemLabel) => `הסר ${itemLabel}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `נבחרו כל ${chosenCount}` : `נבחרו ${chosenCount} מתוך ${totalCount}`,
+  selectAllRowLabel: (chosenCount, totalCount) => `בחר הכל (${chosenCount} מתוך ${totalCount})`,
 }
 
 /**
