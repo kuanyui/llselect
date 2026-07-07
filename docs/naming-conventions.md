@@ -97,7 +97,7 @@ By RETURN TYPE (behaviour, not input):
 | Vis       | Name                  | Signature                                     | Does what (+ null)                                          |
 | --------- | --------------------- | --------------------------------------------- | ----------------------------------------------------------- |
 | private   | `commitArrowElToDom`  | `(el: HTMLElement\|SVGElement\|null) => void` | clear arrow slot + place el; `null` = clear only (no arrow) |
-| private   | `commitItemElsToDom`  | `(els: HTMLElement[]) => void`                | clear list + append all (no subclass need -> private)       |
+| private   | `commitItemElsToDom`  | `(els: HTMLElement[]) => void`                | clear list + append all (superseded in Phase 10 by `commitPopupSegmentsToDom`, s4d) |
 | protected | `syncEmptyStateToDom` | `() => void`                                  | write `data-empty` from `isEmpty()`                         |
 | protected | `isEmpty`             | `() => boolean`                               | nothing chosen? (single/multiple override)                  |
 

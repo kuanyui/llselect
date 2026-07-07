@@ -4,6 +4,11 @@
 > content/elements and calls the low-level primitives, and touches NO DOM directly. So each
 > `render*` is unsuffixed AND genuinely DOM-free in its body. (iii) is recorded at the bottom
 > as NOT TAKEN. Bodies refactored in src/ (base + single + multiple); npm test green (182).
+>
+> Phase 10 update: `renderPopupList` now composes `computePopupSegments` +
+> `commitPopupSegmentsToDom` (group containers); `commitItemElsToDom` was superseded and no
+> longer exists. The (ii) model itself is unchanged. Code samples below are the decision-time
+> record (pre-Phase-10, pre-s4a setting names); do not copy them as current API.
 
 ## The decision (ii)
 
@@ -18,11 +23,12 @@ suffix -> that is the actual write" - knowable from the name, without reading th
 | ------------------------------------------- | -------------------------------------------- | -------------------------------------------------------------- |
 | `renderTriggerContent` (base + 2 overrides) | `textContent` + `setAttribute('data-empty')` | `commitTriggerContentToDom(content)` + `syncEmptyStateToDom()` |
 | `renderTriggerArrow`                        | `replaceChildren()` + `appendChild(el)`      | `commitArrowElToDom(el)`                                       |
-| `renderPopupList`                           | `replaceChildren()` + `append` loop          | `createItemEl()` xN + `commitItemElsToDom(els)`                |
+| `renderPopupList`                           | `replaceChildren()` + `append` loop          | `createItemEl()` xN + `commitItemElsToDom(els)` (Phase 10: -> `computePopupSegments` + `commitPopupSegmentsToDom`) |
 | `renderTrigger`, `rerender`                 | already pure orchestrators                   | unchanged                                                      |
 
-New primitives this adds: `commitArrowElToDom`, `commitItemElsToDom`, `syncEmptyStateToDom`,
-`isEmpty` (signatures live in naming-conventions.md).
+New primitives this adds: `commitArrowElToDom`, `commitItemElsToDom` (superseded in Phase 10
+by `commitPopupSegmentsToDom`), `syncEmptyStateToDom`, `isEmpty` (signatures live in
+naming-conventions.md).
 
 ## before / after
 
@@ -79,6 +85,5 @@ over-abstraction, under that priority.
 
 ## Open
 
-None here - `render*` responsibility is settled. The only naming still open is the
-arrow/trigger render-prop SETTINGS (`renderArrowFn` / `renderTriggerContentFn`), tracked in
-naming-conventions.md s4b.
+None - `render*` responsibility is settled, and the arrow / trigger settings shipped renamed
+as `createArrowElFn` / `createTriggerContentElFn` (naming-conventions.md s4a/s4b, both DONE).

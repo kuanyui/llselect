@@ -133,7 +133,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       `replacePopupListItemElInDom`; rewrite DESIGN.md's outdated
       "transitional role=combobox until Phase 8" note (Phase 8 shipped; both
       trigger-role modes are final by design).
-- [ ] **R9 - render-responsibilities.md / naming-conventions.md reflect
+- [x] **R9 - render-responsibilities.md / naming-conventions.md reflect
       Phase 10.** `commitItemElsToDom` no longer exists (superseded by
       `computePopupSegments` + `commitPopupSegmentsToDom`); annotate the
       renderPopupList example as the pre-Phase-10 decision-time record; close
