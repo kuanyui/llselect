@@ -473,6 +473,24 @@ selTags.setItems(COUNTRIES)
 selTags.setChosenItems(['Japan', 'Brazil', 'Canada'])
 //#endregion
 
+//#region 5.5
+// Select-all row: opt-in, tri-state (data-chosen-state drives the theme's
+// icon), acting on the VISIBLE enabled subset - filter first, then activate
+// the row: only the matches toggle, hidden choices are preserved. The public
+// chooseAll/unchooseAll/toggleAll keep their whole-list semantics.
+const outSelectAll = document.getElementById('out-select-all')
+const selSelectAll = new LLSelectMultiple(
+  document.getElementById('mount-select-all'),
+  {
+    placeholder: 'Pick countries',
+    searchable: true,
+    selectAllRow: true,
+    onChange: (chosen) => { outSelectAll.textContent = 'chosen: ' + chosen.length + ' items' },
+  }
+)
+selSelectAll.setItems(COUNTRIES)
+//#endregion
+
 //#region 9.1
 const PRODUCTS = [
   { name: 'Espresso', stock: 8 },

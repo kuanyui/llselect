@@ -67,7 +67,7 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
       `undefined`, multiple -> `[]`, both through the normal setters so `onChange`
       fires the empty value (no `onClear`). Spec: DESIGN.md "Clear button".
 
-- [~] **Phase 13 - select-all row** (multi). RULED: build it; scope = the
+- [x] **Phase 13 - select-all row** (multi). RULED: build it; scope = the
       FILTERED (visible) enabled subset. A11Y contract as locked in A11Y.md:
       first `role="option"` row of the listbox (inside the arrow-key ring, no
       extra tab stop), tri-state conveyed visually + through the accessible
@@ -233,7 +233,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
 - [x] **R28 - no-results message** (per the ruling above): base element +
       sync primitive, `texts.popupListNoResults` in all packs, classIdMap +
       themes, A11Y.md Filtering note, tests.
-- [ ] **R29 - Phase 13 select-all row** (per the Phase 13 plan above):
+- [x] **R29 - Phase 13 select-all row** (per the Phase 13 plan above):
       setting, texts key, render + tri-state sync, keyboard ring extension
       (separate focus flag; Home lands on the row), visible-scope toggle
       logic, themes, demo, A11Y.md status flip, tests.

@@ -48,6 +48,12 @@ export interface LLSelectTexts {
    * `chosenCount > 0` (an empty selection shows `placeholder` instead).
    */
   triggerCountSummary: (chosenCount: number, totalCount: number) => string
+  /**
+   * Label (visible text + accessible name) of the multi select-all row
+   * (`selectAllRow` setting). Counts refer to the VISIBLE enabled subset the
+   * row acts on.
+   */
+  selectAllRowLabel: (chosenCount: number, totalCount: number) => string
 }
 
 /** English texts - the library default. */
@@ -60,4 +66,5 @@ export const en: LLSelectTexts = {
   tagRemoveButtonAriaLabel: (itemLabel) => `Remove ${itemLabel}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `All ${chosenCount} selected` : `${chosenCount} / ${totalCount} selected`,
+  selectAllRowLabel: (chosenCount, totalCount) => `Select all (${chosenCount} of ${totalCount})`,
 }

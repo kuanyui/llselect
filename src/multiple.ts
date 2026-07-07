@@ -78,6 +78,16 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    *   draws the x via its CSS glyph (`.llselect-tag-remove-button:empty::before`).
    */
   createTagRemoveButtonContentElFn: ((item: T) => HTMLElement | SVGElement | null) | null
+  /**
+   * Whether the popup shows a select-all row as the FIRST option of the
+   * listbox (`false` default). Tri-state (none / some / all chosen, via the
+   * `data-chosen-state` attribute themes draw + the accessible name from
+   * `texts.selectAllRowLabel`); Enter / click toggles. Acts on the VISIBLE
+   * enabled subset (the filtered list while a search query is active) - the
+   * public `chooseAll` / `unchooseAll` / `toggleAll` keep their whole-list
+   * semantics. See `docs/A11Y.md` "Select-all".
+   */
+  selectAllRow: boolean
 }
 
 /**
@@ -115,6 +125,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       triggerDisplay: settings?.triggerDisplay ?? 'count',
       createTagContentElFn: settings?.createTagContentElFn ?? null,
       createTagRemoveButtonContentElFn: settings?.createTagRemoveButtonContentElFn ?? null,
+      selectAllRow: settings?.selectAllRow ?? false,
     } satisfies Omit<LLSelectMultipleSettings<T, GK>, keyof LLSelectBaseSettings<T, GK>>)
     this.popupListEl.setAttribute('aria-multiselectable', 'true')
     this.renderTrigger()
@@ -156,10 +167,12 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     } else {
       this.chosenItems = [...previous, item]
     }
-    // Only one item's selection changed: re-render the trigger (count) and
-    // that single item's element, not the whole list. O(1) DOM work.
+    // Only one item's selection changed: re-render the trigger (count),
+    // that single item's element, and the select-all row's tri-state (when
+    // present) - not the whole list. O(1) DOM work.
     this.renderTrigger()
     this.replacePopupListItemElInDom(item)
+    this.replaceLeadingRowElInDom()
     this.fireChange(previous)
   }
 
@@ -317,6 +330,55 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   /** Clear button empties the chosen-items set to `[]`. */
   protected override clearSelection(): void {
     this.setChosenItems([])
+  }
+
+  /**
+   * Build the select-all row (`selectAllRow` setting) as the listbox's
+   * leading `role="option"` row: `data-chosen-state="none|some|all"` (themes
+   * draw the tri-state icon from it), `aria-selected` only when ALL visible
+   * enabled items are chosen, accessible name + visible text from
+   * `texts.selectAllRowLabel(chosenCount, totalCount)` over the visible
+   * enabled subset. `null` when the setting is off or nothing is actionable.
+   */
+  protected override createPopupListLeadingRowEl(): HTMLElement | null {
+    if (!this.settings.selectAllRow) { return null }
+    const actionable = this.getVisibleItems().filter(i => !this.isItemDisabled(i))
+    if (actionable.length === 0) { return null }
+    const chosenCount = actionable.filter(i => this.isChosen(i)).length
+    const state = chosenCount === 0 ? 'none' : chosenCount === actionable.length ? 'all' : 'some'
+    const el = document.createElement('div')
+    el.id = `${this.classIdMap.popupListId}-select-all`
+    el.className = `${this.classIdMap.itemClass} ${this.classIdMap.selectAllRowClass}`
+    el.setAttribute('role', 'option')
+    el.setAttribute('data-chosen-state', state)
+    // ARIA option has no `mixed`: the indeterminate state is conveyed by the
+    // visual (data-chosen-state) + the counting accessible name only.
+    el.setAttribute('aria-selected', String(state === 'all'))
+    el.textContent = this.settings.texts.selectAllRowLabel(chosenCount, actionable.length)
+    el.addEventListener('click', () => {
+      // Focus-then-activate, mirroring the item click wiring.
+      this.focusLeadingRow()
+      this.onLeadingRowActivated()
+    })
+    return el
+  }
+
+  /**
+   * Activate the select-all row: when every visible enabled item is chosen,
+   * unchoose exactly those; otherwise add the missing ones. Choices outside
+   * the visible subset (filtered-out or disabled) are preserved either way.
+   */
+  protected override onLeadingRowActivated(): void {
+    const actionable = this.getVisibleItems().filter(i => !this.isItemDisabled(i))
+    if (actionable.length === 0) { return }
+    const allChosen = actionable.every(i => this.isChosen(i))
+    if (allChosen) {
+      this.setChosenItems(this.chosenItems.filter(c =>
+        !actionable.some(v => this.settings.compareFn(v, c))))
+    } else {
+      const additions = actionable.filter(v => !this.isChosen(v))
+      this.setChosenItems([...this.chosenItems, ...additions])
+    }
   }
 
   /** Mark each item with `aria-selected` reflecting its chosen state. */
