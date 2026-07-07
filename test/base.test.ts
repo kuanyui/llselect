@@ -85,6 +85,32 @@ test('item elements do NOT carry a `title` attribute by default (avoids fighting
   assert.equal(items[1]!.hasAttribute('title'), false)
 })
 
+test('destroy while OPEN detaches the document listeners and empties the mount', () => {
+  const target = mount()
+  const closes: number[] = []
+  const inst = new TestSelect<string>(target, { onClose: () => closes.push(1) })
+  inst.setItems(['a', 'b'])
+  inst.open()
+  inst.destroy()
+  assert.deepEqual(closes, [1]) // destroy closed the popup once
+  assert.equal(target.children.length, 0)
+  assert.equal(target.classList.contains('llselect-root'), false)
+  assert.equal(target.style.overflowAnchor, '')
+  // The outside-click listener must be gone: an outside mousedown neither
+  // throws nor re-fires onClose.
+  document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+  assert.deepEqual(closes, [1])
+})
+
+test('destroy is idempotent and safe on a closed instance', () => {
+  const target = mount()
+  const inst = new TestSelect<string>(target)
+  inst.setItems(['a'])
+  inst.destroy()
+  inst.destroy() // second call: no throw, still clean
+  assert.equal(target.children.length, 0)
+})
+
 test('IDs are unique across multiple instances', () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
   const a = document.getElementById('a')

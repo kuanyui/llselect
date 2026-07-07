@@ -42,8 +42,9 @@ llselect splits surface area by mutability:
   `cssClassPrefix`. Behavior knobs.
 - **Methods** (mutate state, fire side effects): `setItems`,
   `setChosenItem` (single) / `setChosenItems` + `toggleItem` (multi), `open`,
-  `close`, `rerender`. The data the component currently holds, plus lifecycle
-  actions.
+  `close`, `rerender`, `destroy` (tear-down; REQUIRED before discarding an
+  instance that might be open, e.g. a framework wrapper's unmount). The data
+  the component currently holds, plus lifecycle actions.
 
 Never put mutable state (`items`, `chosen`, etc.) in settings as a
 "convenience". Dual write channels caused subtle bugs in select2 / choices.js

@@ -224,7 +224,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       inherit-the-environment model); items become a mixed-direction list
       (Latin + Arabic + Hebrew labels, incl. weak characters) to show what
       bidi does and does not solve.
-- [ ] **R26 - `destroy()`** (per the ruling above): base public method;
+- [x] **R26 - `destroy()`** (per the ruling above): base public method;
       tests (open-discard leak path, idempotence); README framework-wrapper
       note; DESIGN "Settings vs methods" method list.
 - [ ] **R27 - `onChange` previous param** (per the ruling above): single +
