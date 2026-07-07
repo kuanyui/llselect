@@ -170,7 +170,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       string settings fold in; the multi count summary reads
       `texts.triggerCountSummary(chosenCount, totalCount)` (called only when
       chosenCount > 0; 0 shows `placeholder`).
-- [ ] **R18 - `llselect/i18n` subpath.** `src/i18n.ts` re-exports `en` and
+- [x] **R18 - `llselect/i18n` subpath.** `src/i18n.ts` re-exports `en` and
       adds `ja` / `zhTW` (pure data; only inlines texts.ts, never base).
       Rollup config array (second entry -> dist/i18n.*), package.json
       `exports["./i18n"]`. CLAUDE.md gains the i18n non-ASCII exemption;
