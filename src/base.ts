@@ -37,7 +37,12 @@ export type LLSelectCreateTriggerArrowContentElFn = (state: { isOpen: boolean })
  * mode-specific options such as `onChange`.
  */
 export interface LLSelectBaseSettings<T, GK = string> {
-  /** Prefix used for every CSS class and DOM id the library generates. */
+  /**
+   * Prefix used for every CSS class and DOM id the library generates
+   * (default `'llselect'`). NOTE: the shipped themes target the default
+   * prefix only - a custom prefix means bringing your own CSS. Reference the
+   * resolved names via `instance.classIdMap` instead of hardcoding strings.
+   */
   cssClassPrefix: string
   /**
    * Text shown in the trigger when nothing is selected. App copy: an explicit
