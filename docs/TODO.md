@@ -150,7 +150,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       the `createTagContentElFn` docstring.
 - [x] **R11 - merge icons.ts `CheckboxState` JSDoc** (split into two comment
       blocks; tools show only the second half).
-- [ ] **R12 - version single-source guard.** `LLSELECT_VERSION` and
+- [x] **R12 - version single-source guard.** `LLSELECT_VERSION` and
       package.json `version` can drift; add a smoke test asserting they
       match.
 - [ ] **R13 - item/group DOM ids hang off `popupListId`, not `triggerId`.**
