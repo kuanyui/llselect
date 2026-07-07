@@ -77,8 +77,15 @@ const CHECKBOX_PATHS: Record<CheckboxState, string> = {
 }
 
 export interface CheckboxIconOptions extends IconOptions {
-  /** Which checkbox state to draw. Default `'unchecked'`. */
-  state?: CheckboxState
+  /**
+   * Which checkbox state to draw. Accepts the icon vocabulary
+   * (`'unchecked' | 'checked' | 'indeterminate'`) or, as a convenience, the
+   * select-all row's chosen-state vocabulary (`'none'` -> unchecked,
+   * `'some'` -> indeterminate, `'all'` -> checked), so
+   * `createSelectAllRowContentElFn` can pass its state straight through.
+   * Default `'unchecked'`.
+   */
+  state?: CheckboxState | 'none' | 'some' | 'all'
 }
 
 /**
@@ -88,6 +95,8 @@ export interface CheckboxIconOptions extends IconOptions {
  * `aria-selected` on the item or `aria-checked` on the control.
  */
 export function createCheckboxSvgEl(opts: CheckboxIconOptions = {}): SVGElement {
-  const state = opts.state ?? 'unchecked'
+  const raw = opts.state ?? 'unchecked'
+  const state: CheckboxState =
+    raw === 'none' ? 'unchecked' : raw === 'some' ? 'indeterminate' : raw === 'all' ? 'checked' : raw
   return createSvgEl('0 0 24 24', CHECKBOX_PATHS[state], opts.size ?? 16)
 }
