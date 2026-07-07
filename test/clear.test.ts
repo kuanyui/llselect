@@ -81,6 +81,14 @@ test('createClearElFn fills the icon; library still owns click + aria', () => {
   assert.equal(sel.getChosenItem(), undefined)
 })
 
+test('clearButtonAriaLabel customizes the clear button accessible name', () => {
+  const sel = new LLSelectSingle<string>(mount(), {
+    clearable: true,
+    clearButtonAriaLabel: 'Reset choice',
+  })
+  assert.equal(clearBtn(sel)!.getAttribute('aria-label'), 'Reset choice')
+})
+
 test('clear coexists with a custom trigger content (own slot, no collision)', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     clearable: true,

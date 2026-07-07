@@ -180,8 +180,11 @@ is in `A11Y.md`.
   `LLSelectSingle` / `LLSelectMultiple`. Subclassing per feature would
   multiply combinatorially (search x optgroup x ...); a setting composes.
 - **Settings:** `searchable: boolean` (default `false`);
-  `filterFn: (item, query) => boolean | null` (default `null` =
-  case-insensitive substring on `itemToString`). IME-aware filtering
+  `filterFn: ((item, query) => boolean) | null` (default `null` =
+  case-insensitive substring on `itemToString`);
+  `searchInputAriaLabel: string` (default `'Search'` - the input's accessible
+  name; it has no visible label) and `searchInputPlaceholder: string | null`
+  (default `null` = none) - the AT-string / i18n seams. IME-aware filtering
   (composition-guarded) is part of the contract; see `A11Y.md`.
 
 ## Disabled (Phase 9)

@@ -56,20 +56,27 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    *   the library still owns the chip container + the remove (x) button + aria.
    * - `null` (setting default, or returned for an item) = plain text from
    *   `itemToString`.
-   * The remove button's accessible name is `"Remove <itemToString>"`.
+   * The remove button's accessible name comes from `itemToTagRemoveLabel`
+   * (default `Remove <itemToString>`).
    */
   createTagContentElFn: ((item: T) => HTMLElement | null) | null
   /**
    * Icon ELEMENT of each tag's remove (x) button in `'tags'` mode, mirroring
    * `createClearElFn` (the clear button's icon hook). The library always owns the
    * button, its click (removes the item + `stopPropagation`), `tabindex="-1"`, and
-   * the `aria-label="Remove <itemToString>"` accessible name; this only fills the
-   * decorative icon.
+   * the `aria-label` accessible name (from `itemToTagRemoveLabel`); this only
+   * fills the decorative icon.
    * - Return an `HTMLElement` / `SVGElement`: appended inside the button as its icon.
    * - `null` (setting default, or returned for an item): no icon - the theme
    *   draws the x via its CSS glyph (`.llselect-tag-remove:empty::before`).
    */
   createTagRemoveElFn: ((item: T) => HTMLElement | SVGElement | null) | null
+  /**
+   * Item -> its remove button's accessible name (`aria-label`) in `'tags'`
+   * mode. The i18n seam for the removal announcement.
+   * - `null` (default) = `Remove <itemToString(item)>`.
+   */
+  itemToTagRemoveLabelFn: ((item: T) => string) | null
 }
 
 /**
@@ -107,6 +114,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       triggerDisplay: settings?.triggerDisplay ?? 'count',
       createTagContentElFn: settings?.createTagContentElFn ?? null,
       createTagRemoveElFn: settings?.createTagRemoveElFn ?? null,
+      itemToTagRemoveLabelFn: settings?.itemToTagRemoveLabelFn ?? null,
     } satisfies Omit<LLSelectMultipleSettings<T, GK>, keyof LLSelectBaseSettings<T, GK>>)
     this.popupListEl.setAttribute('aria-multiselectable', 'true')
     this.renderTrigger()
@@ -246,16 +254,17 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   /**
    * Build one chip's remove (x) button. The library owns the button + its click
    * (`stopPropagation` so it never toggles the popup, then `toggleItem`) +
-   * `tabindex="-1"` + `aria-label="Remove <itemToString>"`; `createTagRemoveElFn`
-   * optionally fills the icon, else the theme's CSS glyph. Mirrors the clear
-   * button's `createClearEl`. Override for full control of the button element.
+   * `tabindex="-1"` + `aria-label` (from `itemToTagRemoveLabel`);
+   * `createTagRemoveElFn` optionally fills the icon, else the theme's CSS glyph.
+   * Mirrors the clear button's `createClearEl`. Override for full control of
+   * the button element.
    */
   protected createTagRemoveEl(item: T): HTMLElement {
     const btn = document.createElement('button')
     btn.type = 'button'
     btn.className = this.classIdMap.tagRemoveClass
     btn.tabIndex = -1
-    btn.setAttribute('aria-label', `Remove ${this.itemToString(item)}`)
+    btn.setAttribute('aria-label', this.itemToTagRemoveLabel(item))
     const icon = this.settings.createTagRemoveElFn?.(item) ?? null
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
@@ -272,6 +281,17 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    */
   protected createTagContentEl(item: T): HTMLElement | null {
     return this.settings.createTagContentElFn ? this.settings.createTagContentElFn(item) : null
+  }
+
+  /**
+   * Item -> its remove button's accessible name in `'tags'` mode.
+   * - Default reads `itemToTagRemoveLabelFn`, else `Remove <itemToString(item)>`.
+   * - Override only when extending; configure via the setting.
+   */
+  protected itemToTagRemoveLabel(item: T): string {
+    return this.settings.itemToTagRemoveLabelFn
+      ? this.settings.itemToTagRemoveLabelFn(item)
+      : `Remove ${this.itemToString(item)}`
   }
 
   /** No selection iff the chosen set is empty. Drives the trigger's `data-empty`. */
