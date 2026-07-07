@@ -62,8 +62,8 @@ selUsers.setItems(USERS)
 //#region 1.3
 // clearable: true adds an x button in the trigger (its own slot, so it composes
 // with content / arrow / tags). Clicking it clears to undefined and fires
-// onChange(undefined). createClearElFn (unused here) swaps the x icon, like
-// createArrowElFn.
+// onChange(undefined). createTriggerClearButtonContentElFn (unused here) swaps the x icon, like
+// createTriggerArrowContentElFn.
 const outClearable = document.getElementById('out-clearable')
 const selClearable = new LLSelectSingle(
   document.getElementById('mount-clearable'),
@@ -170,7 +170,7 @@ new LLSelectSingle(
   document.getElementById('mount-ind-chevron'),
   {
     placeholder: 'chevron',
-    createArrowElFn: () => createChevronDownSvgEl(),
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
   },
 ).setItems(COUNTRIES)
 
@@ -179,7 +179,7 @@ new LLSelectSingle(
   document.getElementById('mount-ind-triangle'),
   {
     placeholder: 'triangle',
-    createArrowElFn: () => createTriangleDownSvgEl(),
+    createTriggerArrowContentElFn: () => createTriangleDownSvgEl(),
   },
 ).setItems(COUNTRIES)
 //#endregion
@@ -189,7 +189,7 @@ new LLSelectSingle(
   document.getElementById('mount-ind-mdi'),
   {
     placeholder: 'mdi icon',
-    createArrowElFn: () => {
+    createTriggerArrowContentElFn: () => {
       const i = document.createElement('i')
       i.className = 'mdi mdi-chevron-down'
       return i
@@ -213,7 +213,7 @@ const selArrowClear = new LLSelectSingle(
   document.getElementById('mount-arrow-clear'),
   {
     placeholder: 'Pick a country',
-    createArrowElFn: () => createChevronDownSvgEl(),
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
     clearable: true,
   },
 )
@@ -456,8 +456,8 @@ document.getElementById('btn-toggle-all')
 // triggerDisplay: 'tags' shows each chosen item as a removable chip. The x
 // button removes it (toggleItem); the library owns the chip + x + aria +
 // tabindex. Composes with searchable. createTagContentElFn (unused here) would
-// fill each chip's content, mirroring createItemContentElFn; createTagRemoveElFn
-// likewise swaps the remove-button icon, mirroring createClearElFn.
+// fill each chip's content, mirroring createItemContentElFn; createTagRemoveButtonContentElFn
+// likewise swaps the remove-button icon, mirroring createTriggerClearButtonContentElFn.
 const outTags = document.getElementById('out-tags')
 const selTags = new LLSelectMultiple(
   document.getElementById('mount-tags'),

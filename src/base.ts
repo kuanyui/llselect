@@ -28,7 +28,7 @@ export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
  * change - including on every open/close - so the returned element can vary
  * with `isOpen`. Return `null` to render no arrow for that state.
  */
-export type LLSelectCreateArrowElFn = (state: { isOpen: boolean }) => HTMLElement | SVGElement | null
+export type LLSelectCreateTriggerArrowContentElFn = (state: { isOpen: boolean }) => HTMLElement | SVGElement | null
 
 /**
  * Resolved (defaults applied) settings shared by all select variants.
@@ -52,10 +52,10 @@ export interface LLSelectBaseSettings<T, GK = string> {
   /** See {@link LLSelectOutsideClickBehavior}. */
   outsideClickBehavior: LLSelectOutsideClickBehavior
   /**
-   * See {@link LLSelectCreateArrowElFn}. `null` (default) means the library
+   * See {@link LLSelectCreateTriggerArrowContentElFn}. `null` (default) means the library
    * adds nothing to the arrow slot.
    */
-  createArrowElFn: LLSelectCreateArrowElFn | null
+  createTriggerArrowContentElFn: LLSelectCreateTriggerArrowContentElFn | null
   /**
    * Whether the trigger shows a clear (x) button that empties the selection.
    * `false` (default). The button sits in its OWN trigger slot (like the arrow,
@@ -66,11 +66,11 @@ export interface LLSelectBaseSettings<T, GK = string> {
    */
   clearable: boolean
   /**
-   * Content ELEMENT of the clear button (its x icon), mirroring `createArrowElFn`.
+   * Content ELEMENT of the clear button (its x icon), mirroring `createTriggerArrowContentElFn`.
    * `null` (default) = the theme's CSS glyph. The library always owns the button,
    * its click (clears + stops propagation) and aria; this only fills the icon.
    */
-  createClearElFn: (() => HTMLElement | SVGElement | null) | null
+  createTriggerClearButtonContentElFn: (() => HTMLElement | SVGElement | null) | null
   /**
    * Accessible name (`aria-label`) of the clear (x) button. Default
    * `'Clear selection'`. An i18n seam - set per locale.
@@ -245,7 +245,7 @@ export interface LLSelectClassIdMap {
   /** Class on the inner span where the optional dropdown arrow lives. */
   triggerArrowClass: string
   /** Class on the clear (x) button slot in the trigger (`clearable`). */
-  clearClass: string
+  triggerClearButtonClass: string
   /** Class on `popupEl` (the outer popup wrapper, no ARIA role). */
   popupClass: string
   /** Class on `popupListEl` (the inner element with `role="listbox"`). */
@@ -277,7 +277,7 @@ export interface LLSelectClassIdMap {
   /** Class on one tag chip (`triggerDisplay: 'tags'`). */
   tagClass: string
   /** Class on a tag's remove (x) button; `aria-label` names the item, `tabindex="-1"`. */
-  tagRemoveClass: string
+  tagRemoveButtonClass: string
   /**
    * Class added to `rootEl` while the popup is open. Use it as a CSS hook
    * for open-state styling (also available as `[data-state='open']` on the
@@ -315,7 +315,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     triggerClass: `${prefix}-trigger`,
     triggerContentClass: `${prefix}-trigger-content`,
     triggerArrowClass: `${prefix}-trigger-arrow`,
-    clearClass: `${prefix}-clear`,
+    triggerClearButtonClass: `${prefix}-trigger-clear-button`,
     popupClass: `${prefix}-popup`,
     popupListClass: `${prefix}-popup-list`,
     itemClass: `${prefix}-item`,
@@ -325,7 +325,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     groupLabelClass: `${prefix}-group-label`,
     tagsClass: `${prefix}-tags`,
     tagClass: `${prefix}-tag`,
-    tagRemoveClass: `${prefix}-tag-remove`,
+    tagRemoveButtonClass: `${prefix}-tag-remove-button`,
     openClass: `${prefix}-open`,
     triggerId: `${uniq}-trigger`,
     popupListId: `${uniq}-popup-list`,
@@ -444,7 +444,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @param subclassSettings - for subclasses that EXTEND the settings bag: their
    *   own fields, already resolved (defaults applied). Merged into
    *   `this.settings` right here, so the bag is complete before any base
-   *   construction code (e.g. `createClearEl` via `createTriggerEl`) can read
+   *   construction code (e.g. `createTriggerClearButtonEl` via `createTriggerEl`) can read
    *   it. Pair with a `declare` re-type of `settings` in the subclass.
    */
   constructor(
@@ -457,9 +457,9 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       placeholder: settings?.placeholder ?? DEFAULT_PLACEHOLDER,
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
-      createArrowElFn: settings?.createArrowElFn ?? null,
+      createTriggerArrowContentElFn: settings?.createTriggerArrowContentElFn ?? null,
       clearable: settings?.clearable ?? false,
-      createClearElFn: settings?.createClearElFn ?? null,
+      createTriggerClearButtonContentElFn: settings?.createTriggerClearButtonContentElFn ?? null,
       clearButtonAriaLabel: settings?.clearButtonAriaLabel ?? DEFAULT_CLEAR_BUTTON_ARIA_LABEL,
       searchable: settings?.searchable ?? false,
       searchInputAriaLabel: settings?.searchInputAriaLabel ?? DEFAULT_SEARCH_INPUT_ARIA_LABEL,
@@ -803,22 +803,22 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * Orchestrator: composes the `*ToDom` / `*El` primitives to (re)build the
    * trigger's arrow slot from state; touches no DOM directly. Calls
-   * `createArrowEl` with the current `isOpen` and commits whatever it returns
+   * `createTriggerArrowContentEl` with the current `isOpen` and commits whatever it returns
    * (including `null` -> no arrow for this state).
    */
   private renderTriggerArrow(): void {
-    this.commitArrowElToDom(this.createArrowEl({ isOpen: this.isOpen }))
+    this.commitTriggerArrowContentElToDom(this.createTriggerArrowContentEl({ isOpen: this.isOpen }))
   }
 
   /**
    * Trigger arrow element for the given open state.
-   * - Default reads `createArrowElFn`; `null` (setting unset, or returned for
+   * - Default reads `createTriggerArrowContentElFn`; `null` (setting unset, or returned for
    *   a state) = no arrow for that state.
    * - Override only when extending; for one-off arrows pass the setting.
-   *   Mirrors `createClearEl` / `createItemContentEl`.
+   *   Mirrors `createTriggerClearButtonEl` / `createItemContentEl`.
    */
-  protected createArrowEl(state: { isOpen: boolean }): HTMLElement | SVGElement | null {
-    return this.settings.createArrowElFn ? this.settings.createArrowElFn(state) : null
+  protected createTriggerArrowContentEl(state: { isOpen: boolean }): HTMLElement | SVGElement | null {
+    return this.settings.createTriggerArrowContentElFn ? this.settings.createTriggerArrowContentElFn(state) : null
   }
 
   /**
@@ -826,7 +826,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * - `el = null`: clear only, leaving the slot empty (no arrow this state).
    * The sole mutator of the arrow slot; called by `renderTriggerArrow`.
    */
-  private commitArrowElToDom(el: HTMLElement | SVGElement | null): void {
+  private commitTriggerArrowContentElToDom(el: HTMLElement | SVGElement | null): void {
     this.triggerArrowEl.replaceChildren()
     if (el) { this.triggerArrowEl.appendChild(el) }
   }
@@ -1347,7 +1347,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     const content = document.createElement('span')
     content.className = this.classIdMap.triggerContentClass
     el.append(content)
-    if (this.settings.clearable) { el.append(this.createClearEl()) }
+    if (this.settings.clearable) { el.append(this.createTriggerClearButtonEl()) }
     const arrow = document.createElement('span')
     arrow.className = this.classIdMap.triggerArrowClass
     el.append(arrow)
@@ -1358,22 +1358,34 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Build the clear (x) button for the `clearable` trigger slot. The library owns
    * the button + its click (stops propagation so it never toggles the popup, then
    * `clearSelection`) + `aria-label` (text from `clearButtonAriaLabel`);
-   * `createClearElFn` optionally fills the icon,
+   * `createTriggerClearButtonContentElFn` optionally fills the icon,
    * else the theme's CSS glyph. The theme hides it via `data-empty` when empty.
    */
-  protected createClearEl(): HTMLElement {
+  protected createTriggerClearButtonEl(): HTMLElement {
     const btn = document.createElement('button')
     btn.type = 'button'
-    btn.className = this.classIdMap.clearClass
+    btn.className = this.classIdMap.triggerClearButtonClass
     btn.tabIndex = -1
     btn.setAttribute('aria-label', this.settings.clearButtonAriaLabel)
-    const icon = this.settings.createClearElFn?.() ?? null
+    const icon = this.createTriggerClearButtonContentEl()
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
       this.clearSelection()
     })
     return btn
+  }
+
+  /**
+   * Clear button's visible content (its x icon).
+   * - Default reads `createTriggerClearButtonContentElFn`; `null` (setting
+   *   unset, or returned) = no icon - the theme's CSS glyph draws the x.
+   * - Override only when extending; for one-off icons pass the setting.
+   */
+  protected createTriggerClearButtonContentEl(): HTMLElement | SVGElement | null {
+    return this.settings.createTriggerClearButtonContentElFn
+      ? this.settings.createTriggerClearButtonContentElFn()
+      : null
   }
 
   /**

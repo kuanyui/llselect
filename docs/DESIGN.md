@@ -16,7 +16,7 @@ at a glance how the library will use the function. The marker is part of the
 | Category | Marker | Example |
 |---|---|---|
 | Event callback | `on*` prefix | `onChange`, `onOpen`, `onClose` |
-| Other function (comparator, renderer, transformer) | `*Fn` suffix | `compareFn`, `createArrowElFn` |
+| Other function (comparator, renderer, transformer) | `*Fn` suffix | `compareFn`, `createTriggerArrowContentElFn` |
 
 Rationale:
 
@@ -38,7 +38,7 @@ Apply this rule to all new function-typed settings.
 llselect splits surface area by mutability:
 
 - **Settings** (constructor argument, frozen after): immutable configuration -
-  `placeholder`, `compareFn`, `onChange`, `createArrowElFn`, `outsideClickBehavior`,
+  `placeholder`, `compareFn`, `onChange`, `createTriggerArrowContentElFn`, `outsideClickBehavior`,
   `cssClassPrefix`. Behavior knobs.
 - **Methods** (mutate state, fire side effects): `setItems`,
   `setChosenItem` (single) / `setChosenItems` + `toggleItem` (multi), `open`,
@@ -54,7 +54,7 @@ variant fields, defaults applied, with `null` (never `undefined`) uniformly
 meaning "not set". A variant that adds settings resolves its own fields and
 passes them through `super(..., subclassSettings)` - the base constructor
 merges them so the bag is complete before any construction code (e.g.
-`createClearEl`) can read it - and re-types the field with `declare`. No
+`createTriggerClearButtonEl`) can read it - and re-types the field with `declare`. No
 variant setting lives in a loose instance field, and the exported
 `LLSelect*Settings` types describe the actual runtime object. The bag is
 frozen by convention, not `Object.freeze` - the library never mutates it after
@@ -431,10 +431,10 @@ content is - two granularities:
 - `createTagContentElFn: (item) => HTMLElement | null` fills one chip's visible
   content; the library owns the chip container, remove button, and aria. `null` =
   plain `itemToString`. The remove button's icon is separately fillable via
-  `createTagRemoveElFn` (see "Remove button" below).
+  `createTagRemoveButtonContentElFn` (see "Remove button" below).
 - Protected chain (each overridable): `renderTriggerContent` -> `createTagsEl`
   (chip strip) -> `createTagEl(item)` (one chip; assembles content + remove) ->
-  `createTagContentEl(item)` / `createTagRemoveEl(item)` (each fills one half and
+  `createTagContentEl(item)` / `createTagRemoveButtonEl(item)` (each fills one half and
   reads its `*Fn` setting).
 
 ### Remove button + ARIA (select2-style MVP)
@@ -446,19 +446,19 @@ the tab order - keyboard users remove via the popup (deselect), matching select2
 Full chip keyboard nav (grid pattern) is deferred: APG has no standalone tag/token
 pattern and it would fight the combobox `aria-activedescendant` model. See A11Y.md
 "Tags". By default the button is empty and the x is a CSS glyph
-(`.llselect-tag-remove:empty::before { content: '\00d7' }`), so the theme owns the
-look and the accessible name stays the `aria-label`. `createTagRemoveElFn: (item)
+(`.llselect-tag-remove-button:empty::before { content: '\00d7' }`), so the theme owns the
+look and the accessible name stays the `aria-label`. `createTagRemoveButtonContentElFn: (item)
 => HTMLElement | SVGElement | null` optionally fills a custom icon (mirrors the
-clear button's `createClearElFn`; the icon is decorative, never the accessible
-name); `protected createTagRemoveEl(item)` builds the whole button and is the
-full-control override, mirroring `createClearEl`.
+clear button's `createTriggerClearButtonContentElFn`; the icon is decorative, never the accessible
+name); `protected createTagRemoveButtonEl(item)` builds the whole button and is the
+full-control override, mirroring `createTriggerClearButtonEl`.
 
 ## Clear button (clearable)
 
 `clearable: boolean` (default false) shows an x button that empties the selection.
 It lives in its OWN trigger slot, next to the arrow:
 
-    triggerEl > [ triggerContentEl | clearEl (.llselect-clear) | triggerArrowEl ]
+    triggerEl > [ triggerContentEl | clearEl (.llselect-trigger-clear-button) | triggerArrowEl ]
 
 ### Own slot = no collision with createTriggerContentElFn
 
@@ -473,9 +473,9 @@ content slot - and clear copies that exactly.
   the popup, then `clearSelection`), `aria-label="Clear selection"`,
   `tabindex="-1"`, and hide-when-empty (theme hides it under
   `.llselect-trigger[data-empty='true']`).
-- You optionally fill the icon via `createClearElFn: () => HTMLElement |
-  SVGElement | null` (mirrors `createArrowElFn`); `null` = theme CSS glyph
-  (`.llselect-clear:empty::before { content: '\00d7' }`).
+- You optionally fill the icon via `createTriggerClearButtonContentElFn: () => HTMLElement |
+  SVGElement | null` (mirrors `createTriggerArrowContentElFn`); `null` = theme CSS glyph
+  (`.llselect-trigger-clear-button:empty::before { content: '\00d7' }`).
 - `protected clearSelection()`: base no-op; single -> `setChosenItem(undefined)`,
   multiple -> `setChosenItems([])`. Both go through the normal setters, so
   `onChange` fires with the empty value - no separate `onClear`. Clear means "back

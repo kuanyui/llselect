@@ -32,16 +32,16 @@ test('trigger has content + arrow slots', () => {
   assert.ok(arrow)
 })
 
-test('createArrowElFn default null: arrow slot is empty', () => {
+test('createTriggerArrowContentElFn default null: arrow slot is empty', () => {
   const sel = new LLSelectSingle<string>(mount())
   const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')
   assert.ok(arrow)
   assert.equal(arrow.children.length, 0)
 })
 
-test('createArrowElFn returning an element appends it to the arrow slot', () => {
+test('createTriggerArrowContentElFn returning an element appends it to the arrow slot', () => {
   const sel = new LLSelectSingle<string>(mount(), {
-    createArrowElFn: () => {
+    createTriggerArrowContentElFn: () => {
       const el = document.createElement('span')
       el.id = 'my-arrow'
       el.textContent = '▼'  // black down-pointing triangle
@@ -54,10 +54,10 @@ test('createArrowElFn returning an element appends it to the arrow slot', () => 
   assert.equal(arrow.querySelector('#my-arrow')?.textContent, '▼')
 })
 
-test('createArrowElFn is invoked with isOpen state on open/close', () => {
+test('createTriggerArrowContentElFn is invoked with isOpen state on open/close', () => {
   const calls: Array<boolean> = []
   const sel = new LLSelectSingle<string>(mount(), {
-    createArrowElFn: ({ isOpen }) => {
+    createTriggerArrowContentElFn: ({ isOpen }) => {
       calls.push(isOpen)
       return null
     },
@@ -65,16 +65,16 @@ test('createArrowElFn is invoked with isOpen state on open/close', () => {
   sel.setItems(['a', 'b'])
   // calls so far: [false] from constructor renderTriggerArrow
   sel.open()
-  // open calls renderTriggerArrow -> createArrowElFn with isOpen=true
+  // open calls renderTriggerArrow -> createTriggerArrowContentElFn with isOpen=true
   sel.close()
-  // close calls renderTriggerArrow -> createArrowElFn with isOpen=false
+  // close calls renderTriggerArrow -> createTriggerArrowContentElFn with isOpen=false
   assert.deepEqual(calls, [false, true, false])
 })
 
-test('createArrowElFn returning null leaves the slot empty', () => {
+test('createTriggerArrowContentElFn returning null leaves the slot empty', () => {
   let returnNull = true
   const sel = new LLSelectSingle<string>(mount(), {
-    createArrowElFn: () => {
+    createTriggerArrowContentElFn: () => {
       return returnNull ? null : document.createElement('span')
     },
   })
@@ -86,16 +86,16 @@ test('createArrowElFn returning null leaves the slot empty', () => {
   assert.equal(arrow.children.length, 1)
 })
 
-test('a subclass createArrowEl override replaces the setting (override wins)', () => {
+test('a subclass createTriggerArrowContentEl override replaces the setting (override wins)', () => {
   class Derived extends LLSelectSingle<string> {
-    protected override createArrowEl(): HTMLElement | null {
+    protected override createTriggerArrowContentEl(): HTMLElement | null {
       const el = document.createElement('span')
       el.className = 'derived-arrow'
       return el
     }
   }
   const sel = new Derived(mount(), {
-    createArrowElFn: () => {
+    createTriggerArrowContentElFn: () => {
       const el = document.createElement('span')
       el.className = 'fn-arrow'
       return el
@@ -108,7 +108,7 @@ test('a subclass createArrowEl override replaces the setting (override wins)', (
 
 test('triggerContentEl receives placeholder/chosen text (arrow slot preserved)', () => {
   const sel = new LLSelectSingle<string>(mount(), {
-    createArrowElFn: () => {
+    createTriggerArrowContentElFn: () => {
       const el = document.createElement('span')
       el.className = 'survive'
       el.textContent = 'x'

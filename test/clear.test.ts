@@ -12,8 +12,8 @@ function mount(): HTMLElement {
   return document.getElementById('mount')!
 }
 
-function clearBtn(sel: { triggerEl: HTMLElement; classIdMap: { clearClass: string } }): HTMLButtonElement | null {
-  return sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.clearClass}`)
+function clearBtn(sel: { triggerEl: HTMLElement; classIdMap: { triggerClearButtonClass: string } }): HTMLButtonElement | null {
+  return sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)
 }
 
 test('clearable builds a clear button; default off builds none', () => {
@@ -62,10 +62,10 @@ test('clicking clear does not open the popup (stopPropagation)', () => {
   assert.equal(sel.popupEl.hidden, true)
 })
 
-test('createClearElFn fills the icon; library still owns click + aria', () => {
+test('createTriggerClearButtonContentElFn fills the icon; library still owns click + aria', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     clearable: true,
-    createClearElFn: () => {
+    createTriggerClearButtonContentElFn: () => {
       const i = document.createElement('i')
       i.className = 'my-x'
       return i
@@ -87,6 +87,27 @@ test('clearButtonAriaLabel customizes the clear button accessible name', () => {
     clearButtonAriaLabel: 'Reset choice',
   })
   assert.equal(clearBtn(sel)!.getAttribute('aria-label'), 'Reset choice')
+})
+
+test('a subclass createTriggerClearButtonContentEl override replaces the setting (override wins)', () => {
+  class Derived extends LLSelectSingle<string> {
+    protected override createTriggerClearButtonContentEl(): HTMLElement | null {
+      const i = document.createElement('i')
+      i.className = 'derived-x'
+      return i
+    }
+  }
+  const sel = new Derived(mount(), {
+    clearable: true,
+    createTriggerClearButtonContentElFn: () => {
+      const i = document.createElement('i')
+      i.className = 'fn-x'
+      return i
+    },
+  })
+  const btn = clearBtn(sel)!
+  assert.ok(btn.querySelector('.derived-x')) // override wins
+  assert.equal(btn.querySelector('.fn-x'), null)
 })
 
 test('clear coexists with a custom trigger content (own slot, no collision)', () => {

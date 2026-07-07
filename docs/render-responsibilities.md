@@ -43,7 +43,7 @@ private renderTriggerArrow(): void {
 }
 // AFTER
 private renderTriggerArrow(): void {
-  const el = this.settings.createArrowElFn?.({ isOpen: this.isOpen }) ?? null
+  const el = this.settings.createTriggerArrowContentElFn?.({ isOpen: this.isOpen }) ?? null
   this.commitArrowElToDom(el)
 }
 private commitArrowElToDom(el: HTMLElement | SVGElement | null): void {
@@ -86,4 +86,4 @@ over-abstraction, under that priority.
 ## Open
 
 None - `render*` responsibility is settled, and the arrow / trigger settings shipped renamed
-as `createArrowElFn` / `createTriggerContentElFn` (naming-conventions.md s4a/s4b, both DONE).
+as `createTriggerArrowContentElFn` / `createTriggerContentElFn` (naming-conventions.md s4a/s4b, both DONE).

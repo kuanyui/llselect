@@ -58,13 +58,18 @@ By RETURN TYPE (behaviour, not input):
   `itemToGroupKeyFn` (item->key), `groupKeyToLabelFn` (key->string). `itemTo*Fn` is the
   common case; name the actual source when it is not the item, and the target is the
   return type (`*Key`, `*Label`, `*String`), not necessarily `string`.
-- returns an element -> `create*ElFn`: `createItemContentElFn`, `createArrowElFn`, `createTriggerContentElFn`.
+- returns an element -> `create*ElFn`: `createItemContentElFn`, `createTriggerArrowContentElFn`, `createTriggerContentElFn`.
 - fires an event -> `on*`: `onChange`, `onOpen`, `onClose`.
 - RULE (CLAUDE.md): any callback whose type includes `null` documents what `null` does.
 
 ## 4. Every method / setting
 
 ### 4a. Rename - DONE (applied to code)
+
+> Three After-names were later renamed AGAIN by the precision audit (s7b):
+> `createArrowElFn` -> `createTriggerArrowContentElFn`, `LLSelectCreateArrowElFn` ->
+> `LLSelectCreateTriggerArrowContentElFn`, `commitArrowElToDom` (4a-new) ->
+> `commitTriggerArrowContentElToDom`.
 
 | Vis          | Before                                   | After                                                                 |
 | ------------ | ---------------------------------------- | --------------------------------------------------------------------- |
@@ -199,40 +204,42 @@ family). No code rename was needed - every name already obeys s1-s3.
 
 Settings on `LLSelectMultipleSettings` (s3 by return type):
 
-| Vis     | Name                   | Signature                                        | s3            |
-| ------- | ---------------------- | ------------------------------------------------ | ------------- |
-| setting | `triggerDisplay`       | `'count' \| 'tags'`                              | value (enum)  |
-| setting | `createTagContentElFn` | `(item: T) => HTMLElement \| null`               | `create*ElFn` |
-| setting | `createTagRemoveElFn`  | `(item: T) => HTMLElement \| SVGElement \| null` | `create*ElFn` |
+| Vis     | Name                               | Signature                                        | s3            |
+| ------- | ---------------------------------- | ------------------------------------------------ | ------------- |
+| setting | `triggerDisplay`                   | `'count' \| 'tags'`                              | value (enum)  |
+| setting | `createTagContentElFn`             | `(item: T) => HTMLElement \| null`               | `create*ElFn` |
+| setting | `createTagRemoveButtonContentElFn` | `(item: T) => HTMLElement \| SVGElement \| null` | `create*ElFn` |
 
 Methods (protected, overridable):
 
-| Name                 | Convention                                                 |
-| -------------------- | ---------------------------------------------------------- |
-| `createTagsEl`       | `create*El` - the chip strip                               |
-| `createTagEl`        | `create*El` - one chip (assembles content + remove)        |
-| `createTagContentEl` | `create*El` - one chip's content (reads the setting)       |
-| `createTagRemoveEl`  | `create*El` - one chip's remove button (reads the setting) |
+| Name                             | Convention                                                     |
+| -------------------------------- | -------------------------------------------------------------- |
+| `createTagsEl`                   | `create*El` - the chip strip                                   |
+| `createTagEl`                    | `create*El` - one chip (assembles content + remove button)     |
+| `createTagContentEl`             | `create*El` - one chip's content (reads the setting)           |
+| `createTagRemoveButtonEl`        | `create*El` - one chip's whole remove button (wiring + aria)   |
+| `createTagRemoveButtonContentEl` | `create*El` - the remove button's icon (reads the setting)     |
 
-`classIdMap` gained `tagsClass` / `tagClass` / `tagRemoveClass`. All obey s1-s3.
+`classIdMap` gained `tagsClass` / `tagClass` / `tagRemoveButtonClass`. All obey s1-s3 + s7.
 
 ### 4f. Clear button (clearable) additions
 
 Settings on `LLSelectBaseSettings` (s3 by return type):
 
-| Vis     | Name              | Signature                                  | s3            |
-| ------- | ----------------- | ------------------------------------------ | ------------- |
-| setting | `clearable`       | `boolean`                                  | value (flag)  |
-| setting | `createClearElFn` | `() => HTMLElement \| SVGElement \| null`  | `create*ElFn` |
+| Vis     | Name                                  | Signature                                 | s3            |
+| ------- | ------------------------------------- | ----------------------------------------- | ------------- |
+| setting | `clearable`                           | `boolean`                                 | value (flag)  |
+| setting | `createTriggerClearButtonContentElFn` | `() => HTMLElement \| SVGElement \| null` | `create*ElFn` |
 
 Methods (protected, overridable):
 
-| Name             | Convention                                          |
-| ---------------- | --------------------------------------------------- |
-| `createClearEl`  | `create*El` - the clear button (library owns click) |
-| `clearSelection` | domain op - empty the selection (single / multiple) |
+| Name                                | Convention                                                  |
+| ----------------------------------- | ----------------------------------------------------------- |
+| `createTriggerClearButtonEl`        | `create*El` - the whole clear button (wiring + aria)        |
+| `createTriggerClearButtonContentEl` | `create*El` - the clear button's icon (reads the setting)   |
+| `clearSelection`                    | domain op - empty the selection (single / multiple)         |
 
-`classIdMap` gained `clearClass`. All obey s1-s3.
+`classIdMap` gained `triggerClearButtonClass`. All obey s1-s3 + s7.
 
 ### 4g. AT-string settings (i18n mechanism)
 
@@ -253,7 +260,7 @@ Every user/AT-visible string is a setting (flat, per house style; a grouped
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator
-(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). Consistency-review follow-up (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createArrowEl(state)` reading `createArrowElFn` (mirrors `createClearEl`); `renderTriggerArrow` stays a private orchestrator and `commitArrowElToDom` a private primitive.
+(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). Consistency-review follow-up (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createTriggerArrowContentEl(state)` reading `createTriggerArrowContentElFn` (mirrors the clear button's content method); `renderTriggerArrow` stays a private orchestrator and `commitTriggerArrowContentElToDom` a private primitive. (Names shown post-s7b.)
 
 ## 6. Phasing
 
