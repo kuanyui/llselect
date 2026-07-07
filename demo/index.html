@@ -312,10 +312,11 @@
         activate the row - only the matches toggle, hidden choices are
         preserved. This demo fills the row via
         <code>createSelectAllRowContentElFn</code> with a tri-state SVG
-        checkbox (<code>createCheckboxSvgEl</code>); without that hook, themes
-        draw a text glyph from the <code>data-chosen-state</code> attribute.
-        The accessible name stays the counting
-        <code>texts.selectAllRowLabel</code> either way.
+        checkbox (<code>createCheckboxSvgEl</code>) and gives the ITEMS the
+        same checkbox treatment (5.4's subclass pattern) for one consistent
+        visual language; without the hook, themes draw a text glyph from the
+        <code>data-chosen-state</code> attribute. The accessible name stays
+        the counting <code>texts.selectAllRowLabel</code> either way.
       </p>
       <div class="demo-split">
         <div class="demo-pane">

@@ -481,8 +481,18 @@ selTags.setChosenItems(['Japan', 'Brazil', 'Canada'])
 // with a tri-state SVG checkbox (createCheckboxSvgEl) + the library's own
 // counting label (en pack); without the hook, themes draw a text glyph from
 // data-chosen-state. The accessible name stays texts.selectAllRowLabel.
+// The ITEMS get the same visual language - a subclass prepends a checkbox
+// reflecting isChosen (same pattern as 5.4) - so the row and the items read
+// as one consistent list.
+class SelectAllCheckboxMulti extends LLSelectMultiple {
+  createItemEl(item, index) {
+    const el = super.createItemEl(item, index)
+    el.prepend(createCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
+    return el
+  }
+}
 const outSelectAll = document.getElementById('out-select-all')
-const selSelectAll = new LLSelectMultiple(
+const selSelectAll = new SelectAllCheckboxMulti(
   document.getElementById('mount-select-all'),
   {
     placeholder: 'Pick countries',
