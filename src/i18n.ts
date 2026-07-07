@@ -6,6 +6,9 @@
 //
 // Typography: zh-TW strings put a space between CJK and half-width characters
 // (Pangu spacing); ja strings follow Japanese convention (no such spacing).
+// ar / he strings are RTL; embedded Latin runs ("Esc") reorder via the Unicode
+// Bidi Algorithm. TRANSLATION STATUS: ar / he are LLM-drafted - have a native
+// speaker review them before a release.
 
 import { en, type LLSelectTexts } from './texts.js'
 
@@ -34,6 +37,28 @@ export const zhTW: LLSelectTexts = {
     chosenCount === totalCount ? `已選全部 ${chosenCount} 項` : `已選 ${chosenCount} / ${totalCount} 項`,
 }
 
+/** Arabic texts (RTL). */
+export const ar: LLSelectTexts = {
+  triggerPlaceholder: 'الرجاء الاختيار',
+  searchInputAriaLabel: 'بحث',
+  searchInputPlaceholder: 'تصفية (Esc للمسح)',
+  triggerClearButtonAriaLabel: 'مسح التحديد',
+  tagRemoveButtonAriaLabel: (itemLabel) => `إزالة ${itemLabel}`,
+  triggerCountSummary: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `تم اختيار الكل (${chosenCount})` : `تم اختيار ${chosenCount} من ${totalCount}`,
+}
+
+/** Hebrew texts (RTL). */
+export const he: LLSelectTexts = {
+  triggerPlaceholder: 'נא לבחור',
+  searchInputAriaLabel: 'חיפוש',
+  searchInputPlaceholder: 'סינון (Esc לניקוי)',
+  triggerClearButtonAriaLabel: 'נקה בחירה',
+  tagRemoveButtonAriaLabel: (itemLabel) => `הסר ${itemLabel}`,
+  triggerCountSummary: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `נבחרו כל ${chosenCount}` : `נבחרו ${chosenCount} מתוך ${totalCount}`,
+}
+
 /**
  * All packs keyed by their BCP 47 tag, for `navigator.language`-style lookup.
  * - Tags are the MINIMAL sufficient form (BCP 47 / CLDR convention): `ja` and
@@ -46,7 +71,9 @@ export const zhTW: LLSelectTexts = {
  *   `textsByLocale[tag] ?? textsByLocale[tag.split('-')[0]!] ?? en`.
  */
 export const textsByLocale: Record<string, LLSelectTexts> = {
+  ar,
   en,
+  he,
   ja,
   'zh-TW': zhTW,
 }
