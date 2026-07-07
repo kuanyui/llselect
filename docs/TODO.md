@@ -385,6 +385,8 @@ Ruled, no code change:
 ## Notes
 
 - Architecture / naming rationale: see `DESIGN.md`.
+- Pre-publish full API review (findings + dispositions): see
+  `review-release-candidate.md`.
 - Keyboard / focus / ARIA behavior contract: see `A11Y.md`.
 - Method naming conventions (suffixes, callback naming): see `naming-conventions.md`.
 - `render*` orchestrator vs `*ToDom` / `*El` primitive split: see `render-responsibilities.md`.
