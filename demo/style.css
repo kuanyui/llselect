@@ -230,8 +230,9 @@ pre[data-demo] code {
   z-index: 2000;
 }
 
-/* 5.4 checkbox items - align the prepended createCheckboxSvgEl with the label. */
-#mount-multi-checkbox .llselect-item {
+/* 5.4 / 5.5 checkbox items - align the prepended createCheckboxSvgEl with the label. */
+#mount-multi-checkbox .llselect-item,
+#mount-select-all .llselect-item {
   display: flex;
   align-items: center;
   gap: 0.4rem;
