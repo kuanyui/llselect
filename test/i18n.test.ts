@@ -30,6 +30,7 @@ test('a whole language pack applies to every chrome string (zhTW)', () => {
   sel.setChosenItems(['a', 'b'])
   const input = sel.popupEl.querySelector('input')!
   assert.equal(input.getAttribute('aria-label'), zhTW.searchInputAriaLabel)
+  assert.equal(input.placeholder, zhTW.searchInputPlaceholder)
   const clearBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.triggerClearButtonClass}`)!
   assert.equal(clearBtn.getAttribute('aria-label'), zhTW.triggerClearButtonAriaLabel)
   const removeBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.tagRemoveButtonClass}`)!

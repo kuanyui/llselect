@@ -18,7 +18,11 @@ export interface LLSelectTexts {
    * label, so screen readers rely on this).
    */
   searchInputAriaLabel: string
-  /** Placeholder text of the search input. `null` = no placeholder. */
+  /**
+   * Placeholder text of the search input. Also teaches the Esc behavior
+   * (first Esc clears the filter). `null` = no placeholder (pass
+   * `texts: { searchInputPlaceholder: null }` to remove the default).
+   */
   searchInputPlaceholder: string | null
   /** Accessible name (`aria-label`) of the trigger's clear (x) button (`clearable`). */
   triggerClearButtonAriaLabel: string
@@ -37,7 +41,7 @@ export interface LLSelectTexts {
 /** English texts - the library default. */
 export const en: LLSelectTexts = {
   searchInputAriaLabel: 'Search',
-  searchInputPlaceholder: null,
+  searchInputPlaceholder: 'Filter (Esc to clear)',
   triggerClearButtonAriaLabel: 'Clear selection',
   tagRemoveButtonAriaLabel: (itemLabel) => `Remove ${itemLabel}`,
   triggerCountSummary: (chosenCount, totalCount) =>
