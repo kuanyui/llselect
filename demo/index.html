@@ -635,6 +635,27 @@
         <details class="code-toggle"><summary>code</summary><pre data-demo="11.3"><code></code></pre></details>
       </div>
     </article>
+
+    <article>
+      <h3>11.4 Tags with rich chip content (icon + label)</h3>
+      <p class="hint">
+        The same renderer as 11.1 feeds <code>createTagContentElFn</code>: the
+        chip is to the trigger what the option content is to the row, so ONE
+        <code>create*El</code> function serves list rows AND chips. The
+        library keeps the chip shell, the remove button and its
+        <code>aria-label</code> (still <code>itemToString</code>-based).
+        <code>createTagRemoveButtonContentElFn</code> swaps the remove icon
+        (an mdi icon here); leave it unset and the theme's CSS glyph
+        (<code>:empty::before</code>) draws the x instead.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-tag-icons"></div>
+          <div class="out" id="out-tag-icons">chosen: TypeScript, Rust</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="11.4"><code></code></pre></details>
+      </div>
+    </article>
   </section>
 
   <section>
