@@ -189,7 +189,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  padding: 0.05rem 0.15rem 0.05rem 0.5rem;
+  /* Logical: mirrors under dir="rtl" (text side start, x-button side end). */
+  padding-block: 0.05rem;
+  padding-inline: 0.5rem 0.15rem;
   background-color: var(--color-blue-50, #eff6ff);
   color: var(--color-blue-700, #1d4ed8);
   border-radius: 0.25rem;

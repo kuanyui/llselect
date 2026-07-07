@@ -165,7 +165,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  padding: 0.05rem 0.15rem 0.05rem 0.4rem;
+  /* Logical: mirrors under dir="rtl" (text side start, x-button side end). */
+  padding-block: 0.05rem;
+  padding-inline: 0.4rem 0.15rem;
   background: #eee;
   border: 1px solid #ddd;
   border-radius: 3px;
