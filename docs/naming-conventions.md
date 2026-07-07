@@ -267,9 +267,8 @@ DONE - all three phases applied (npm test green: 182; npm run build green).
 
 ## 7. Precision audit - element nouns, Container-Content law, texts keys
 
-> STATUS: PROPOSED - this section is the plan; code / CSS / docs not yet
-> renamed. Apply only after the OPEN rulings (7d) are settled. Applies ON TOP
-> of s1-s4.
+> STATUS: RULED (Button-system; long names accepted) - rename in progress
+> (TODO.md R16-R19). Applies ON TOP of s1-s4.
 
 ### 7a. New rules
 
@@ -343,15 +342,12 @@ string; never `all` - that is the bulk-action word).
 | `triggerDisplay`                             | already family-prefixed                                                                                                        |
 | keyboard / positioning / icons module fns    | audited, all conform to s1-s3                                                                                                  |
 
-### 7d. OPEN rulings
+### 7d. Rulings
 
-- **Button-system vs -er-system.** 7b uses `tagRemoveButton` /
-  `triggerClearButton` (RECOMMENDED: both ARE `<button>`s; one uniform rule;
-  natural English; and the -er system has no good form for clear - `Cleaner` /
-  `Clearer` are both broken). The user's earlier ruling said `tagRemover`; if
-  that stands, the clear side has no consistent -er counterpart and rule 7a.1
-  must be rewritten around `-er` nominalization instead.
-- **Long-name acceptance.** The law yields e.g.
-  `createTriggerClearButtonContentElFn` (33 chars). CLAUDE.md s5 explicitly
-  prefers explicit over brief; confirm the length is acceptable before the
-  rename lands everywhere (settings, docs, themes, demo).
+- **Button-system RULED IN** (`tagRemoveButton` / `triggerClearButton`): both
+  ARE `<button>`s; one uniform rule; natural English (`<verb> button`).
+  Supersedes the earlier `tagRemover` lean - the -er system has no usable form
+  for clear (`Cleaner` / `Clearer` both broken).
+- **Long names RULED ACCEPTABLE** (e.g. `createTriggerClearButtonContentElFn`):
+  explicit beats brief - the reader must never have to guess a word or go grep
+  the docs for what a name means.
