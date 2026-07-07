@@ -16,7 +16,7 @@ at a glance how the library will use the function. The marker is part of the
 | Category | Marker | Example |
 |---|---|---|
 | Event callback | `on*` prefix | `onChange`, `onOpen`, `onClose` |
-| Other function (comparator, renderer, transformer) | `*Fn` suffix | `compareFn`, `renderArrowFn` |
+| Other function (comparator, renderer, transformer) | `*Fn` suffix | `compareFn`, `createArrowElFn` |
 
 Rationale:
 
@@ -38,7 +38,7 @@ Apply this rule to all new function-typed settings.
 llselect splits surface area by mutability:
 
 - **Settings** (constructor argument, frozen after): immutable configuration -
-  `placeholder`, `compareFn`, `onChange`, `renderArrowFn`, `outsideClickBehavior`,
+  `placeholder`, `compareFn`, `onChange`, `createArrowElFn`, `outsideClickBehavior`,
   `cssClassPrefix`. Behavior knobs.
 - **Methods** (mutate state, fire side effects): `setItems`,
   `setChosenItem` (single) / `setChosenItems` + `toggleItem` (multi), `open`,
@@ -72,7 +72,7 @@ Two layers, not two competing mechanisms:
   `*Fn` setting.** The library calls the method directly:
   - `itemToString(item)` - default `= itemToStringFn(item) ?? String(item)`.
   - `renderTriggerContent()` (single / multiple) - default reads
-    `renderTriggerContentFn(ctx)` first, else the variant's label / count. `ctx`
+    `createTriggerContentElFn(ctx)` first, else the variant's label / count. `ctx`
     is variant-specific (`chosenItem` for single, `chosenItems` for multi).
 - **Override = replace.** Overriding the method replaces its default (setting
   included); the override wins, by plain OO. There is no resolver forcing the
@@ -112,10 +112,11 @@ ARIA role attribute values (`"combobox"`, `"listbox"`, `"option"`, `"group"`,
 `setAttribute` calls. JS-side names are independent and follow the rules
 above (e.g. our `role="listbox"` element is called `popupListEl`).
 
-The full keyboard / focus / ARIA behavior contract is in `A11Y.md`. Note the
-target model moves the `combobox` role onto the search input and demotes the
-trigger to a `button`; today's code still carries `role="combobox"` on
-`triggerEl` as a transitional state until the search input lands (Phase 8).
+The full keyboard / focus / ARIA behavior contract is in `A11Y.md`. The
+`combobox` role sits on the search input when `searchable: true` (the trigger
+demotes to a `button`); with `searchable: false` the trigger itself is the
+`role="combobox"` host. Both modes shipped with Phase 8 and are final by
+design, not transitional.
 
 ## Library scope
 
@@ -147,7 +148,7 @@ fills it". This keeps API surface tight and avoids feature creep.
   - Bulk changes (replace the whole set, select/deselect all, `setItems`)
     rebuild the list via `renderPopupList` / `rerender`.
   - Single-item changes (multi-select `toggleItem`) use
-    `rerenderPopupListItem(item)`, which replaces just that one item's
+    `replacePopupListItemElInDom(item)`, which replaces just that one item's
     element. DOM work stays O(1) regardless of list size, so toggling one
     selection in a 10k-item list does not recreate 10k nodes. (The lookup to
     find the item is O(n), but a comparison loop is negligible next to DOM

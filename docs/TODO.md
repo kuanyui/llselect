@@ -127,7 +127,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       re-filtering, and re-render. The supported efficient in-place path is
       mutating item OBJECTS + `rerender()` (documented); `setItems` is already
       an O(n) copy, unavoidable for structural change.
-- [ ] **R8 - fix stale API names in README / DESIGN.md / TODO.md.**
+- [x] **R8 - fix stale API names in README / DESIGN.md / TODO.md.**
       `renderTriggerContentFn` -> `createTriggerContentElFn`,
       `renderArrowFn` -> `createArrowElFn`, `rerenderPopupListItem` ->
       `replacePopupListItemElInDom`; rewrite DESIGN.md's outdated
@@ -194,8 +194,11 @@ Ruled, no code change:
 
 ## API design decisions (open)
 
-- [x] **`renderTriggerContentFn` settings callback** - DONE. `(ctx) => HTMLElement
-      | string | null` on single / multiple (variant-specific `ctx`). Customise
+- [x] **`createTriggerContentElFn` (trigger) settings callback** - DONE (planned
+      as `renderTriggerContentFn`, shipped renamed and narrowed to element-only;
+      naming-conventions.md s4a).
+      `(ctx) => HTMLElement | null` on single / multiple (variant-specific
+      `ctx`). Customise
       trigger display (tag chips) without subclassing; `null` = default. Read by
       `renderTriggerContent`'s default; overriding `renderTriggerContent` replaces
       it (override wins). See DESIGN.md "Customization model".
