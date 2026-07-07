@@ -117,7 +117,6 @@
    plain item class, so hover / focused styling comes from there. */
 
 .llselect-select-all-row {
-  font-weight: 600;
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
