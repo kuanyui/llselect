@@ -106,7 +106,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       `renderTriggerArrow` stays a private orchestrator and
       `commitArrowElToDom` a private primitive. Closes the gap vs DESIGN.md's
       "every customization point is a protected method" model.
-- [ ] **R4 - pair `onChange` with a protected hook.** `onOpen`/`onOpened` and
+- [x] **R4 - pair `onChange` with a protected hook.** `onOpen`/`onOpened` and
       `onClose`/`onClosed` are pairs; `onChange` has no sibling. Add base
       `protected onChosenChanged()` (default no-op), fired by single/multiple
       `fireChange` before the setting (hook first, matching `open()`).

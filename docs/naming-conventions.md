@@ -156,6 +156,7 @@ By RETURN TYPE (behaviour, not input):
 | base            | private   | `captureWindowScroll`                 | capture                |
 | base            | protected | `onOpened`                            | on (hook)              |
 | base            | protected | `onClosed`                            | on (hook)              |
+| base            | protected | `onChosenChanged`                     | on (hook)              |
 | base            | protected | `onItemClick` (+2 overrides)          | on (hook)              |
 | base            | public    | `open`                                | domain                 |
 | base            | public    | `close`                               | domain                 |

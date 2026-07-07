@@ -335,6 +335,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   private fireChange(): void {
+    this.onChosenChanged()
     this.settings.onChange?.(this.chosenItems)
   }
 }

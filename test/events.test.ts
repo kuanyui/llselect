@@ -49,6 +49,19 @@ test('onOpen setting fires alongside (not instead of) a subclass onOpened hook',
   assert.deepEqual(log, ['hook', 'setting']) // both run, hook first
 })
 
+test('onChosenChanged hook fires before the onChange setting; both run', () => {
+  const log: string[] = []
+  class Derived extends LLSelectSingle<string> {
+    protected override onChosenChanged(): void { log.push('hook') }
+  }
+  const sel = new Derived(mount(), { onChange: () => log.push('setting') })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItem('a')
+  assert.deepEqual(log, ['hook', 'setting']) // both run, hook first
+  sel.setChosenItem('a') // equivalent value -> no actual change -> neither fires
+  assert.deepEqual(log, ['hook', 'setting'])
+})
+
 test('a disabled control does not fire onOpen', () => {
   let opens = 0
   const sel = new LLSelectSingle<string>(mount(), { onOpen: () => { opens++ } })
