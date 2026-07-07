@@ -920,7 +920,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   protected createGroupEl(key: GK, index: number, items: readonly T[], itemEls: HTMLElement[]): HTMLElement {
     const label = this.groupKeyToLabel(key)
     const group = document.createElement('div')
-    group.id = `${this.classIdMap.triggerId}-group${index}`
+    group.id = `${this.classIdMap.popupListId}-group${index}`
     group.className = this.classIdMap.groupClass
     group.setAttribute('role', 'group')
     group.setAttribute('aria-label', label)
@@ -998,7 +998,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    */
   protected createItemEl(item: T, index: number): HTMLElement {
     const el = document.createElement('div')
-    el.id = `${this.classIdMap.triggerId}-item${index}`
+    // Ids hang off the listbox id: options belong to the listbox, not the trigger.
+    el.id = `${this.classIdMap.popupListId}-item${index}`
     el.className = this.classIdMap.itemClass
     el.setAttribute('role', 'option')
     const content = this.createItemContentEl(item)

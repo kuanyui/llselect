@@ -153,7 +153,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
 - [x] **R12 - version single-source guard.** `LLSELECT_VERSION` and
       package.json `version` can drift; add a smoke test asserting they
       match.
-- [ ] **R13 - item/group DOM ids hang off `popupListId`, not `triggerId`.**
+- [x] **R13 - item/group DOM ids hang off `popupListId`, not `triggerId`.**
       `llselect1-trigger-item3` reads as the trigger's child; options live in
       the listbox. Ids are opaque (no test / consumer contract on the
       format), so the change is safe.
