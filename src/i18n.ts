@@ -7,9 +7,9 @@
 // Typography: zh-TW strings put a space between CJK and half-width characters
 // (Pangu spacing); ja strings follow Japanese convention (no such spacing).
 
-import type { LLSelectTexts } from './texts.js'
+import { en, type LLSelectTexts } from './texts.js'
 
-export { en } from './texts.js'
+export { en }
 export type { LLSelectTexts } from './texts.js'
 
 /** Japanese texts. */
@@ -32,4 +32,21 @@ export const zhTW: LLSelectTexts = {
   tagRemoveButtonAriaLabel: (itemLabel) => `移除 ${itemLabel}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `已選全部 ${chosenCount} 項` : `已選 ${chosenCount} / ${totalCount} 項`,
+}
+
+/**
+ * All packs keyed by their BCP 47 tag, for `navigator.language`-style lookup.
+ * - Tags are the MINIMAL sufficient form (BCP 47 / CLDR convention): `ja` and
+ *   `en` carry no region (the strings are not region-specific); `zh-TW` must
+ *   (Traditional vs Simplified differ entirely). Named exports stay camelCase
+ *   (`zhTW`) only because `-` is illegal in a JS identifier.
+ * - Browsers may report longer or different tags (`en-GB`, `ja-JP`,
+ *   `zh-Hant-TW`), so negotiate instead of indexing blindly - e.g. try the
+ *   full tag, then the base language, then fall back:
+ *   `textsByLocale[tag] ?? textsByLocale[tag.split('-')[0]!] ?? en`.
+ */
+export const textsByLocale: Record<string, LLSelectTexts> = {
+  en,
+  ja,
+  'zh-TW': zhTW,
 }
