@@ -689,6 +689,17 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
+   * Resolved chrome strings (English defaults + the `texts` setting merged).
+   * Reuse the library's translations in your own UI - e.g. a tooltip on a tag
+   * remove button: `sel.getTexts().tagRemoveButtonAriaLabel(label)` - instead
+   * of maintaining a second translation source. Live object, treat as
+   * immutable (same contract as `getItems`).
+   */
+  public getTexts(): Readonly<LLSelectTexts> {
+    return this.settings.texts
+  }
+
+  /**
    * Replace the item list. The input is shallow-copied so external mutation
    * does not affect the select. If the popup is currently open it is
    * re-rendered; otherwise the DOM is built lazily on the next `open()`.
