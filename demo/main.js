@@ -501,9 +501,9 @@ const selSelectAll = new SelectAllCheckboxMulti(
     createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
       const row = document.createElement('span')
       row.className = 'lang-row' // inline-flex + gap (demo CSS)
-      const iconState = chosenState === 'all' ? 'checked' : chosenState === 'some' ? 'indeterminate' : 'unchecked'
       row.append(
-        createCheckboxSvgEl({ state: iconState }),
+        // The icon helper accepts the chosen-state vocabulary directly.
+        createCheckboxSvgEl({ state: chosenState }),
         en.selectAllRowLabel(chosenCount, totalCount), // reuse the library's translation
       )
       return row

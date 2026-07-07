@@ -49,6 +49,15 @@ test('createCheckboxSvgEl draws different paths per state', () => {
   assert.notEqual(unchecked, indeterminate)
 })
 
+test('createCheckboxSvgEl accepts the chosen-state vocabulary (none/some/all)', () => {
+  setupDom()
+  const pathOf = (state: 'none' | 'some' | 'all' | 'unchecked' | 'checked' | 'indeterminate') =>
+    createCheckboxSvgEl({ state }).querySelector('path')?.getAttribute('d')
+  assert.equal(pathOf('none'), pathOf('unchecked'))
+  assert.equal(pathOf('some'), pathOf('indeterminate'))
+  assert.equal(pathOf('all'), pathOf('checked'))
+})
+
 test('createCheckboxSvgEl defaults to unchecked and honors size', () => {
   setupDom()
   const def = createCheckboxSvgEl().querySelector('path')?.getAttribute('d')
