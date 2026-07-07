@@ -178,6 +178,42 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       convention (no spacing).
 - [x] **R19 - demo section for i18n** (zhTW pack on a searchable multi with
       tags + clearable, so every translated string is visible).
+- [ ] **R20 - conditional search input (predicate form).** RULED:
+      `searchable: boolean | ((items: readonly T[]) => boolean)` - the
+      predicate is evaluated against the CURRENT full item list on every
+      `open()` (never mid-open; a `setItems` crossing the threshold applies on
+      the next open, select2 timing). Inactive open cycles behave exactly like
+      `searchable: false` (trigger keeps `role="combobox"`, focus stays on the
+      trigger). Impl: search-input listeners always wired (hidden input
+      receives no events); private `searchActive` state +
+      `computeSearchActive()` + `syncSearchModeToDom()` (trigger role, input
+      `hidden`, `comboboxEl` pointer). naming s3 gains the
+      capability-flag-union exception (`searchable` keeps its flag name).
+- [ ] **R21 - RTL: themes go logical.** The tag chip's asymmetric 4-value
+      padding -> `padding-block` + `padding-inline` in all 5 themes (the only
+      physical-direction rule in shipped CSS); demo 4.4's `margin-left` ->
+      `margin-inline-start`. Trigger layout is flex, so slot order (content |
+      clear | arrow) mirrors for free under `dir="rtl"` - arrow lands on the
+      LEFT, matching native `<select>`.
+- [ ] **R22 - RTL: `fit-content` popup grows leftward.** The one
+      direction-aware JS spot: `computePosition` gains
+      `direction?: 'ltr' | 'rtl'` (default ltr); rtl right-aligns the popup to
+      the anchor's right edge, shifts right when overflowing the LEFT viewport
+      edge (mirror of ltr). `createPositioner` snapshots
+      `getComputedStyle(anchor).direction` at attach (per open cycle).
+      `match-trigger` needs nothing (same width + position).
+- [ ] **R23 - i18n packs `ar` / `he`** (+ `textsByLocale` keys). Translations
+      drafted by LLM - flag for native-speaker review before a release.
+- [ ] **R24 - demo: RTL in section 12.** Pack picker gains ar / he; picking an
+      RTL pack sets `dir="rtl"` on the mounts (demonstrating the
+      inherit-the-environment model); items become a mixed-direction list
+      (Latin + Arabic + Hebrew labels, incl. weak characters) to show what
+      bidi does and does not solve.
+- [ ] **R25 - docs: RTL model.** DESIGN.md gains an "RTL" section: two-layer
+      model (chrome direction = inherited `dir`, zero settings, logical
+      properties, fit-content awareness; data direction = UBA auto + weak-char
+      caveat + `<bdi>` / `dir="auto"` guidance and why the library does not
+      force it). Close the old RTL open item.
 
 Ruled, no code change:
 
@@ -238,25 +274,22 @@ Ruled, no code change:
       add a `decorateItemFn(el, item)` setting, or keep the subclass-only path.
 - [ ] **`onChange` diff context** - decide whether to pass `previousChosenItem(s)`
       alongside current, so users can compute added/removed without tracking.
-- [ ] **Conditional search input (select2's `minimumResultsForSearch`)** - not
-      built; `searchable` is fixed at construction. The DOM side was pre-paved
-      in Phase 8 (the input is ALWAYS built, hidden when off - a CSS flip).
-      The hard part is ARIA: the two modes move the combobox role + focus host
-      (trigger vs input), wired once in the constructor today - a runtime flip
-      must also re-point `comboboxEl`, keydown listeners, and the trigger
-      role. Proposed shape: base setting `searchInputMinItemCount: number`
-      (default `0` = show whenever `searchable`; `Infinity` = never),
-      re-evaluated on `setItems`. Needs a ruling before building.
+- [x] **Conditional search input** - RULED + built as the predicate form of
+      `searchable` (R20); the threshold-number shape (select2's
+      `minimumResultsForSearch`) was rejected for its naming/off-by-one
+      ambiguity - a caller-written predicate is self-documenting.
 - [ ] **No-results message** - the one applicable gap from the select2 i18n
       survey: a filter with zero matches renders a bare empty listbox (A11Y.md:
       "no match -> empty listbox"); select2 shows "No results found". Would be
       a new empty-state render (not just a string): a non-option element in the
       popup + a `texts` key (s7 naming: `popupListNoResults`), plus deciding
       how AT hears it (`role="status"`?). Needs a ruling on whether to build.
-- [ ] **RTL support** - not handled yet. Clear / arrow slot order, tag chip flow,
-      and paddings should move to CSS logical properties + `dir` awareness (the
-      clear button's "right side" becomes left in RTL). Cross-cutting across all
-      themes + positioning; do it as one pass, not per-feature.
+- [x] **RTL support** - RULED + built (R21-R25): zero new API - the component
+      inherits the environment's `dir` like a native element; CSS is logical /
+      flex-mirrored; the only direction-aware JS is the `fit-content` popup
+      growth direction. Data-direction (mixed RTL/LTR item labels) is the
+      app's layer: UBA handles runs, weak characters need per-item
+      `dir="auto"` / `<bdi>` via content hooks (DESIGN.md "RTL").
 
 ## Done decisions (for reference)
 
