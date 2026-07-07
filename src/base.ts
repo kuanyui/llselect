@@ -117,8 +117,11 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * - `'match-trigger'` (default): popup width equals trigger width; long
    *   labels wrap inside the popup.
    * - `'fit-content'`: popup width grows to its own content (items, search
-   *   input, ...). May be wider than trigger. Auto-shifts left and width-
-   *   clamps when the natural width would overflow the viewport.
+   *   input, ...). May be wider than trigger. Auto-shifts and width-clamps
+   *   when the natural width would overflow the viewport. Direction-aware:
+   *   in an RTL context (`getComputedStyle(trigger).direction === 'rtl'`,
+   *   read once per open) it right-aligns to the trigger and grows LEFTWARD,
+   *   the mirror of LTR.
    */
   popupWidthPolicy: WidthPolicy
   /**

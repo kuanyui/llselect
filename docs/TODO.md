@@ -195,7 +195,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       `margin-inline-start`. Trigger layout is flex, so slot order (content |
       clear | arrow) mirrors for free under `dir="rtl"` - arrow lands on the
       LEFT, matching native `<select>`.
-- [ ] **R22 - RTL: `fit-content` popup grows leftward.** The one
+- [x] **R22 - RTL: `fit-content` popup grows leftward.** The one
       direction-aware JS spot: `computePosition` gains
       `direction?: 'ltr' | 'rtl'` (default ltr); rtl right-aligns the popup to
       the anchor's right edge, shifts right when overflowing the LEFT viewport

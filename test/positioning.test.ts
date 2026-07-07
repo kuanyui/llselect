@@ -145,6 +145,46 @@ test('fit-content: clamps width to viewport - 2*padding when natural is larger',
   assert.equal(r.left, 8)
 })
 
+test('fit-content + rtl: popup right-aligns to the anchor and grows leftward', () => {
+  const r = computePosition({
+    anchorRect: { top: 100, bottom: 130, left: 700, right: 800, width: 100, height: 30 },
+    viewportWidth: 1024,
+    viewportHeight: 768,
+    floatingHeight: 200,
+    widthPolicy: 'fit-content',
+    floatingNaturalWidth: 300,
+    direction: 'rtl',
+  })
+  assert.equal(r.width, 300)
+  assert.equal(r.left, 800 - 300) // right edges aligned -> grows leftward
+})
+
+test('fit-content + rtl: shifts right when overflowing the LEFT viewport edge', () => {
+  const r = computePosition({
+    anchorRect: { top: 100, bottom: 130, left: 20, right: 120, width: 100, height: 30 },
+    viewportWidth: 1024,
+    viewportHeight: 768,
+    floatingHeight: 200,
+    widthPolicy: 'fit-content',
+    floatingNaturalWidth: 300,
+    direction: 'rtl',
+  })
+  assert.equal(r.width, 300)
+  assert.equal(r.left, 8) // pushed back inside the left margin (mirror of ltr's right-edge shift)
+})
+
+test('fit-content: omitted direction defaults to ltr (left edges aligned)', () => {
+  const r = computePosition({
+    anchorRect: { top: 100, bottom: 130, left: 700, right: 800, width: 100, height: 30 },
+    viewportWidth: 1024,
+    viewportHeight: 768,
+    floatingHeight: 200,
+    widthPolicy: 'fit-content',
+    floatingNaturalWidth: 300,
+  })
+  assert.equal(r.left, 700)
+})
+
 test('match-trigger remains the explicit default behavior (no horizontal shift)', () => {
   // Anchor near right edge with `match-trigger` should NOT shift left;
   // popup stays the same width as the trigger.
