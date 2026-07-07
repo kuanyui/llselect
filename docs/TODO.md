@@ -76,7 +76,7 @@ trigger keeps `role="combobox"`). The input is always built into the DOM, just
 is a CSS flip rather than a DOM rebuild. Tab leaves the widget; Esc clears the
 filter then closes; filtering is IME-aware (composition-guarded).
 
-## API consistency review (2026-07-07)
+## API consistency review
 
 Whole-project review findings (API-design inconsistencies + doc drift), with
 per-item rulings. Work rule: one commit per item, in order; anything needing a

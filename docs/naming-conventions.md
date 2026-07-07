@@ -253,7 +253,7 @@ Every user/AT-visible string is a setting (flat, per house style; a grouped
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator
-(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). 2026-07 review (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createArrowEl(state)` reading `createArrowElFn` (mirrors `createClearEl`); `renderTriggerArrow` stays a private orchestrator and `commitArrowElToDom` a private primitive.
+(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). Consistency-review follow-up (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createArrowEl(state)` reading `createArrowElFn` (mirrors `createClearEl`); `renderTriggerArrow` stays a private orchestrator and `commitArrowElToDom` a private primitive.
 
 ## 6. Phasing
 
