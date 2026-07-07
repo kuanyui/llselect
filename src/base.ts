@@ -24,14 +24,6 @@ import { en as DEFAULT_TEXTS, type LLSelectTexts } from './texts.js'
 export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
 
 /**
- * Function that produces the trigger's arrow element (typically a dropdown
- * chevron or triangle). Called by the library when the arrow may need to
- * change - including on every open/close - so the returned element can vary
- * with `isOpen`. Return `null` to render no arrow for that state.
- */
-export type LLSelectCreateTriggerArrowContentElFn = (state: { isOpen: boolean }) => HTMLElement | SVGElement | null
-
-/**
  * Resolved (defaults applied) settings shared by all select variants.
  * Subclasses (`LLSelectSingle`, `LLSelectMultiple`) extend this with their
  * mode-specific options such as `onChange`.
@@ -62,10 +54,13 @@ export interface LLSelectBaseSettings<T, GK = string> {
   /** See {@link LLSelectOutsideClickBehavior}. */
   outsideClickBehavior: LLSelectOutsideClickBehavior
   /**
-   * See {@link LLSelectCreateTriggerArrowContentElFn}. `null` (default) means the library
-   * adds nothing to the arrow slot.
+   * The trigger arrow slot's content ELEMENT (typically a dropdown chevron or
+   * triangle). Called whenever the arrow may need to change - including on
+   * every open/close - so the returned element can vary with `isOpen`.
+   * - fn returns `null` - no arrow for that state.
+   * - setting is `null` (default) - the library adds nothing to the arrow slot.
    */
-  createTriggerArrowContentElFn: LLSelectCreateTriggerArrowContentElFn | null
+  createTriggerArrowContentElFn: ((state: { isOpen: boolean }) => HTMLElement | SVGElement | null) | null
   /**
    * Whether the trigger shows a clear (x) button that empties the selection.
    * `false` (default). The button sits in its OWN trigger slot (like the arrow,

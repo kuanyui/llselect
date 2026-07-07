@@ -64,6 +64,12 @@ By RETURN TYPE (behaviour, not input):
   flag name (no `*Fn`): the name describes the capability, the TS union
   already declares the function form, and `searchableFn: boolean | fn` would
   be worse. Example: `searchable: boolean | ((items) => boolean)`.
+- NAMED TYPE ALIASES are for enum-ish VALUE types only
+  (`LLSelectOutsideClickBehavior`, `LLSelectTriggerDisplay`,
+  `LLSelectChosenState`, `WidthPolicy`, `Placement`) - callers declare
+  variables of those. Callback types stay INLINE on the settings field: inside
+  a settings literal, contextual typing infers them, so an alias buys nothing
+  (the one historical callback alias was removed in the RC review).
 - RULE (CLAUDE.md): any callback whose type includes `null` documents what `null` does.
 
 ## 4. Every method / setting
@@ -72,7 +78,8 @@ By RETURN TYPE (behaviour, not input):
 
 > Three After-names were later renamed AGAIN by the precision audit (s7b):
 > `createArrowElFn` -> `createTriggerArrowContentElFn`, `LLSelectCreateArrowElFn` ->
-> `LLSelectCreateTriggerArrowContentElFn`, `commitArrowElToDom` (4a-new) ->
+> `LLSelectCreateTriggerArrowContentElFn` (that alias was then REMOVED in the
+> RC review - see the s3 alias policy), `commitArrowElToDom` ->
 > `commitTriggerArrowContentElToDom`.
 
 | Vis          | Before                                   | After                                                                 |
@@ -302,7 +309,10 @@ DONE - all three phases applied (npm test green: 182; npm run build green).
    real `<button>`s, and `<verb> button` is natural English (play button,
    submit button): `triggerClearButton`, `tagRemoveButton`. Verbs stay verbs
    on ACTIONS (`clearSelection`, `toggleItem`, `open`); `-able` adjectives
-   stay on capability flags (`clearable`, `searchable`).
+   stay on capability flags (`clearable`, `searchable`). When no natural
+   `-able` adjective exists, an ELEMENT-PRESENCE flag uses the element's noun
+   name as a boolean (`selectAllRow: boolean` - "selectAllable" would be
+   nonsense).
 2. **Family prefix (DESIGN.md "Element family naming") applies to ALL trigger
    children.** The clear button is a direct child of the trigger, like
    `triggerContent` / `triggerArrow`, so it carries the `trigger` prefix.
@@ -365,6 +375,7 @@ string; never `all` - that is the bulk-action word).
 | `clearSelection` / `toggleItem` / `open` ... | ACTIONS keep verbs (the noun rule is for elements only)                                                                        |
 | `openClass` (`.llselect-open`)               | a state class on root, not an element name                                                                                     |
 | `triggerDisplay`                             | already family-prefixed                                                                                                        |
+| `popupListNoResults*`                        | named for what it DESCRIBES (the list's empty state), not where it sits (a popup child, the listbox's sibling)                 |
 | keyboard / positioning / icons module fns    | audited, all conform to s1-s3                                                                                                  |
 
 ### 7d. Rulings
