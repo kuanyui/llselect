@@ -234,6 +234,22 @@ Methods (protected, overridable):
 
 `classIdMap` gained `clearClass`. All obey s1-s3.
 
+### 4g. AT-string settings (i18n mechanism)
+
+Every user/AT-visible string is a setting (flat, per house style; a grouped
+`texts` bag + shipped translations is TODO.md O1/O2):
+
+| Vis     | Name                     | Signature                       | s3               |
+| ------- | ------------------------ | ------------------------------- | ---------------- |
+| setting | `searchInputAriaLabel`   | `string`                        | value            |
+| setting | `searchInputPlaceholder` | `string \| null`                | value            |
+| setting | `clearButtonAriaLabel`   | `string`                        | value            |
+| setting | `itemToTagRemoveLabelFn` | `((item: T) => string) \| null` | map item->string |
+
+`itemToTagRemoveLabelFn` is backed by `protected itemToTagRemoveLabel(item)`
+(`itemTo*`, mirrors `itemToString`); the plain-string settings need no method
+(cf. `placeholder`).
+
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator

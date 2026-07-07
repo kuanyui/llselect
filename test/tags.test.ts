@@ -131,6 +131,16 @@ test('createTagRemoveEl can be overridden for full control of the remove button'
   assert.equal(removeBtn(sel).getAttribute('data-remove'), 'a')
 })
 
+test('itemToTagRemoveLabelFn customizes the remove button accessible name', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    triggerDisplay: 'tags',
+    itemToTagRemoveLabelFn: (item) => `Drop ${item}`,
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a'])
+  assert.equal(removeBtn(sel).getAttribute('aria-label'), 'Drop a')
+})
+
 test('tags mode with an empty selection shows the placeholder, not chips', () => {
   const sel = new LLSelectMultiple<string>(mount(), { triggerDisplay: 'tags', placeholder: 'Pick' })
   sel.setItems(['a', 'b'])

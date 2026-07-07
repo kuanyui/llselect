@@ -82,7 +82,7 @@ Whole-project review findings (API-design inconsistencies + doc drift), with
 per-item rulings. Work rule: one commit per item, in order; anything needing a
 user ruling is parked under "Open rulings" below and does not block the rest.
 
-- [ ] **R1 - de-hardcode all AT strings; the search input gets a name.** The
+- [x] **R1 - de-hardcode all AT strings; the search input gets a name.** The
       search input has no accessible name (violates WCAG 4.1.2: an unnamed
       `role="combobox"`) and no settings at all; the clear / tag-remove
       aria-labels are hardcoded English. Add base settings

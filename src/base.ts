@@ -72,12 +72,27 @@ export interface LLSelectBaseSettings<T, GK = string> {
    */
   createClearElFn: (() => HTMLElement | SVGElement | null) | null
   /**
+   * Accessible name (`aria-label`) of the clear (x) button. Default
+   * `'Clear selection'`. An i18n seam - set per locale.
+   */
+  clearButtonAriaLabel: string
+  /**
    * Whether the popup includes a search input. `false` (default) keeps the
    * trigger as `role="combobox"` and the (always-built) input is `hidden`.
    * `true` makes the trigger `role="button"` and moves focus to the input on
    * open. See `docs/A11Y.md` and `docs/DESIGN.md`.
    */
   searchable: boolean
+  /**
+   * Accessible name (`aria-label`) of the search input. The input has no
+   * visible label, so screen readers rely on this. Default `'Search'`. An
+   * i18n seam - set per locale.
+   */
+  searchInputAriaLabel: string
+  /**
+   * Placeholder text of the search input. `null` (default) = no placeholder.
+   */
+  searchInputPlaceholder: string | null
   /**
    * Predicate used by the search input; return `true` to keep the item.
    * `null` (default) means the built-in case-insensitive substring match
@@ -284,6 +299,8 @@ export interface LLSelectClassIdMap {
 
 const DEFAULT_PREFIX = 'llselect'
 const DEFAULT_PLACEHOLDER = 'Please select'
+const DEFAULT_SEARCH_INPUT_ARIA_LABEL = 'Search'
+const DEFAULT_CLEAR_BUTTON_ARIA_LABEL = 'Clear selection'
 
 let instanceCounter = 0
 
@@ -443,7 +460,10 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       createArrowElFn: settings?.createArrowElFn ?? null,
       clearable: settings?.clearable ?? false,
       createClearElFn: settings?.createClearElFn ?? null,
+      clearButtonAriaLabel: settings?.clearButtonAriaLabel ?? DEFAULT_CLEAR_BUTTON_ARIA_LABEL,
       searchable: settings?.searchable ?? false,
+      searchInputAriaLabel: settings?.searchInputAriaLabel ?? DEFAULT_SEARCH_INPUT_ARIA_LABEL,
+      searchInputPlaceholder: settings?.searchInputPlaceholder ?? null,
       filterFn: settings?.filterFn ?? null,
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'match-trigger',
       itemDisabledFn: settings?.itemDisabledFn ?? null,
@@ -1336,7 +1356,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * Build the clear (x) button for the `clearable` trigger slot. The library owns
    * the button + its click (stops propagation so it never toggles the popup, then
-   * `clearSelection`) + `aria-label`; `createClearElFn` optionally fills the icon,
+   * `clearSelection`) + `aria-label` (text from `clearButtonAriaLabel`);
+   * `createClearElFn` optionally fills the icon,
    * else the theme's CSS glyph. The theme hides it via `data-empty` when empty.
    */
   protected createClearEl(): HTMLElement {
@@ -1344,7 +1365,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     btn.type = 'button'
     btn.className = this.classIdMap.clearClass
     btn.tabIndex = -1
-    btn.setAttribute('aria-label', 'Clear selection')
+    btn.setAttribute('aria-label', this.settings.clearButtonAriaLabel)
     const icon = this.settings.createClearElFn?.() ?? null
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
@@ -1378,6 +1399,11 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     el.setAttribute('autocomplete', 'off')
     el.setAttribute('autocapitalize', 'off')
     el.setAttribute('spellcheck', 'false')
+    // The input has no visible label; its accessible name is required.
+    el.setAttribute('aria-label', this.settings.searchInputAriaLabel)
+    if (this.settings.searchInputPlaceholder !== null) {
+      el.placeholder = this.settings.searchInputPlaceholder
+    }
     return el
   }
 

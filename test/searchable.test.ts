@@ -63,6 +63,24 @@ test('aria-activedescendant lives on the search input when searchable', () => {
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), null)
 })
 
+test('search input has a default accessible name and no placeholder', () => {
+  const sel = new LLSelectSingle<string>(mount(), { searchable: true })
+  const input = searchInput(sel)
+  assert.equal(input.getAttribute('aria-label'), 'Search')
+  assert.equal(input.hasAttribute('placeholder'), false)
+})
+
+test('searchInputAriaLabel / searchInputPlaceholder settings are applied', () => {
+  const sel = new LLSelectSingle<string>(mount(), {
+    searchable: true,
+    searchInputAriaLabel: 'Find a country',
+    searchInputPlaceholder: 'Type to filter',
+  })
+  const input = searchInput(sel)
+  assert.equal(input.getAttribute('aria-label'), 'Find a country')
+  assert.equal(input.placeholder, 'Type to filter')
+})
+
 // --- filtering ----------------------------------------------------------
 
 test('typing in the search input filters the visible list', () => {
