@@ -168,6 +168,40 @@ violate "low-level". `i18n.ts` inlines only the tiny `texts.ts` module, never
 `base.ts`, and the main bundle carries only `en`. Usage: `texts: zhTW`, or a
 per-key override on top: `texts: { ...zhTW, searchInputPlaceholder: '...' }`.
 
+## RTL
+
+Zero new API: the component inherits the environment's direction (`dir`
+attribute / CSS `direction`) exactly like a native element. There is
+deliberately no `rtl` / `dir` setting (react-select's `isRtl` prop exists to
+service its CSS-in-JS pipeline; a DOM library has no such constraint).
+
+Two layers, owned by different parties:
+
+- **Chrome direction (the library's layer).** The trigger is a flex row, so
+  the slot order (content | clear button | arrow) mirrors automatically under
+  `dir="rtl"` - the arrow lands on the LEFT, matching the native `<select>`.
+  (Libraries whose arrow stays on the right in RTL are carrying un-mirrored
+  physical CSS, not making a design choice.) Shipped themes use logical
+  properties only (`padding-inline`, never left/right), and
+  `text-overflow: ellipsis` truncates at the logical end for free. The single
+  direction-aware piece of JS is the `'fit-content'` popup width policy: in
+  RTL it right-aligns to the trigger and grows LEFTWARD (direction read from
+  `getComputedStyle(triggerEl).direction` once per open);
+  `'match-trigger'` is position-identical in both directions.
+- **Data direction (the app's layer).** Mixed RTL/LTR item labels are handled
+  by the Unicode Bidi Algorithm per label; items and chips are separate
+  blocks / flex items, so labels never reorder across each other, and the
+  trigger's layout never changes because of a chosen label's script (same as
+  native). The remaining caveat is WEAK characters (digits, parentheses,
+  punctuation): their placement follows the element's base direction, which
+  is inherited, never content-detected. The fix is per-item `dir="auto"` or a
+  `<bdi>` wrapper, supplied by the app via `createItemContentElFn` - the app
+  knows its data, and the library does not force `dir="auto"` because it also
+  flips per-item text alignment, making mixed lists ragged.
+
+Demo: section 12 (the ar / he packs set `dir="rtl"` on the mounts and use a
+mixed-direction item list, weak-character examples included).
+
 ## Rendering model
 
 - State setters (`setItems`, `setChosenItem`, `setChosenItems`, `toggleItem`,

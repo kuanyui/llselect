@@ -209,7 +209,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       inherit-the-environment model); items become a mixed-direction list
       (Latin + Arabic + Hebrew labels, incl. weak characters) to show what
       bidi does and does not solve.
-- [ ] **R25 - docs: RTL model.** DESIGN.md gains an "RTL" section: two-layer
+- [x] **R25 - docs: RTL model.** DESIGN.md gains an "RTL" section: two-layer
       model (chrome direction = inherited `dir`, zero settings, logical
       properties, fit-content awareness; data direction = UBA auto + weak-char
       caveat + `<bdi>` / `dir="auto"` guidance and why the library does not
