@@ -119,7 +119,7 @@ By RETURN TYPE (behaviour, not input):
 | base            | private   | `renderTriggerArrow`                  | render-orch (body->ii) |
 | base            | protected | `renderPopupList`                     | render-orch (body->ii) |
 | base            | public    | `rerender`                            | render-orch            |
-| base            | protected | `createItemEl` (+1 override)          | create*El              |
+| base            | protected | `createItemEl` (+2 overrides)         | create*El              |
 | positioning     | public    | `createPositioner`                    | create (non-DOM)       |
 | base            | private   | `syncFocusedIndexToDom`               | sync                   |
 | base            | private   | `recomputeFilteredItems`              | recompute              |

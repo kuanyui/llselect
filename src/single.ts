@@ -79,8 +79,13 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
    */
   public setChosenItem(item: T | undefined): void {
     if (this.areEqual(item, this.chosenItem)) { return }
+    const previous = this.chosenItem
     this.chosenItem = item
     this.renderTrigger()
+    // Popup open: refresh only the two affected options so their
+    // aria-selected stays true to state (O(1); no-op while closed).
+    if (previous !== undefined) { this.replacePopupListItemElInDom(previous) }
+    if (item !== undefined) { this.replacePopupListItemElInDom(item) }
     this.fireChange()
   }
 
@@ -105,6 +110,13 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
   /** No selection iff `chosenItem` is unset. Drives the trigger's `data-empty`. */
   protected override isEmpty(): boolean {
     return this.chosenItem === undefined
+  }
+
+  /** Mark the chosen option `aria-selected="true"`, the rest `"false"` (APG select-only). */
+  protected override createItemEl(item: T, index: number): HTMLElement {
+    const el = super.createItemEl(item, index)
+    el.setAttribute('aria-selected', String(this.areEqual(item, this.chosenItem)))
+    return el
   }
 
   /** Pick this item as the chosen item and close the popup. */
