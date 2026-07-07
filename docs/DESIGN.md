@@ -284,7 +284,7 @@ Two independent axes, modelled differently on purpose.
     A predicate is the only generic-`T` option: the data-field approach (native /
     Ant / choices / select2 carry `disabled` ON the option) needs the option to
     be an object with a known field, which is impossible when `T` is unknown.
-    `protected isItemDisabled(item): boolean` is the internal helper (also for
+    `protected isItemEffectivelyDisabled(item): boolean` is the internal helper (also for
     subclasses overriding `createItemEl`); not public. NO `setItemsDisabled`: a
     predicate subsumes it (it can read an external set and you call `rerender()`),
     keeps a single source of truth, avoids reconciling a disabled-set across
@@ -440,7 +440,7 @@ behavior.
 - **Filtering: composes for free.** Filter the flat list first, regroup the
   survivors at render; a group whose every item was filtered out emits no header
   (empty groups vanish).
-- **Disabled layering.** `isItemDisabled(item)` also returns `true` when the
+- **Disabled layering.** `isItemEffectivelyDisabled(item)` also returns `true` when the
   item's group is disabled (`isGroupDisabled(itemToGroupKey(item))`) - so every
   existing item-disabled behavior (no click selection, keyboard skip,
   `aria-disabled`, selection retention, bulk-op skipping) covers group-disabled

@@ -528,7 +528,7 @@ const outDisItems = document.getElementById('out-disabled-items')
 class ProductSelect extends LLSelectSingle {
   createItemEl(p, i) {
     const el = super.createItemEl(p, i)
-    if (this.isItemDisabled(p)) { el.setAttribute('title', `${p.name} is out of stock`) }
+    if (this.isItemEffectivelyDisabled(p)) { el.setAttribute('title', `${p.name} is out of stock`) }
     return el
   }
 }

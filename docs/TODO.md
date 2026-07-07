@@ -324,6 +324,16 @@ Ruled, no code change:
       scroll / resize listeners. `destroy()` = `close()` + remove the root
       class / inline styles + empty the mount; idempotent; the instance must
       not be used afterwards.
+- [x] **`isItemDisabled` -> `isItemEffectivelyDisabled`** - RULED (user-spotted
+      from the RC review's F6 mention; recorded as F7 there). The method
+      composes `itemDisabledFn` OR the item's group's `groupDisabledFn`, but
+      the old name looked exactly like a 1:1 reader of `itemDisabledFn`
+      (drop `Fn`, prefix `is`) while sitting next to three true 1:1 readers
+      (`itemToGroupKey`, `groupKeyToLabel`, `isGroupDisabled`).
+      "effectively" = the standard word for a layered final value; keeps the
+      `is*` predicate family; does not hard-code the layer count.
+      `computedItemDisabled` rejected: noun phrase, breaks predicate grammar
+      at call sites. Rule recorded in naming-conventions s7a.6.
 - [ ] **Release readiness** - before the first `npm publish` (v0.0.1):
       ja / ar / he packs need native-speaker review (flagged in src/i18n.ts);
       a real-browser pass for what jsdom cannot cover (RTL mirroring,
