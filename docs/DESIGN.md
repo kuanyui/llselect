@@ -209,7 +209,13 @@ is in `A11Y.md`.
 - **No subclass split.** Search is a capability setting on the existing
   `LLSelectSingle` / `LLSelectMultiple`. Subclassing per feature would
   multiply combinatorially (search x optgroup x ...); a setting composes.
-- **Settings:** `searchable: boolean` (default `false`);
+- **Settings:** `searchable: boolean | ((items: readonly T[]) => boolean)`
+  (default `false`). The predicate form is the conditional-display knob
+  (select2's `minimumResultsForSearch`, rewritten as a caller-authored
+  predicate so the condition is self-documenting and not count-only):
+  evaluated against the full item list on every `open()`, never mid-open -
+  crossing the threshold via `setItems` applies on the next open, so the
+  focus host is never yanked while the popup is up. Also:
   `filterFn: ((item, query) => boolean) | null` (default `null` =
   case-insensitive substring on `itemToString`);
   `texts.searchInputAriaLabel` (default `'Search'` - the input's accessible

@@ -95,6 +95,38 @@ test('texts.searchInputAriaLabel / searchInputPlaceholder are applied; other key
   assert.equal(clearBtn.getAttribute('aria-label'), 'Clear selection')
 })
 
+// --- searchable predicate (conditional search) ---------------------------
+
+test('searchable predicate below the threshold: the open behaves like searchable false', () => {
+  const sel = new LLSelectSingle<string>(mount(), { searchable: (items) => items.length > 3 })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  assert.equal(searchInput(sel).hidden, true)
+  assert.equal(sel.triggerEl.getAttribute('role'), 'combobox')
+  // aria-activedescendant lives on the trigger, like searchable: false.
+  assert.ok(sel.triggerEl.getAttribute('aria-activedescendant'))
+})
+
+test('searchable predicate: crossing the threshold mid-open applies on the NEXT open only', () => {
+  const sel = new LLSelectSingle<string>(mount(), { searchable: (items) => items.length > 3 })
+  sel.setItems(['a', 'b'])
+  sel.triggerEl.focus()
+  sel.open()
+  assert.equal(searchInput(sel).hidden, true)
+  sel.setItems(['a', 'b', 'c', 'd', 'e']) // crosses the threshold while open
+  assert.equal(searchInput(sel).hidden, true) // mode must NOT flip mid-open
+  assert.equal(sel.triggerEl.getAttribute('role'), 'combobox')
+  sel.close()
+  sel.open() // re-evaluated: search is now active
+  const input = searchInput(sel)
+  assert.equal(input.hidden, false)
+  assert.equal(sel.triggerEl.getAttribute('role'), 'button')
+  assert.equal(document.activeElement, input)
+  input.value = 'a'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.equal(sel.popupListEl.querySelectorAll('[role="option"]').length, 1)
+})
+
 // --- filtering ----------------------------------------------------------
 
 test('typing in the search input filters the visible list', () => {
