@@ -123,7 +123,7 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
   }
 
   /** Pick this item as the chosen item and close the popup. */
-  protected override onItemClick(item: T): void {
+  protected override onItemActivated(item: T): void {
     this.setChosenItem(item)
     this.close()
   }

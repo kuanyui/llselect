@@ -166,7 +166,7 @@ By RETURN TYPE (behaviour, not input):
 | base            | protected | `onOpened`                            | on (hook)              |
 | base            | protected | `onClosed`                            | on (hook)              |
 | base            | protected | `onChosenChanged`                     | on (hook)              |
-| base            | protected | `onItemClick` (+2 overrides)          | on (hook)              |
+| base            | protected | `onItemActivated` (+2 overrides)          | on (hook)              |
 | base            | public    | `open`                                | domain                 |
 | base            | public    | `close`                               | domain                 |
 | base            | public    | `toggle`                              | domain                 |

@@ -343,7 +343,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   /** Toggle on click. Multi mode keeps the popup open. */
-  protected override onItemClick(item: T): void {
+  protected override onItemActivated(item: T): void {
     this.toggleItem(item)
   }
 

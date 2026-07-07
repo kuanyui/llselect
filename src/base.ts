@@ -1173,7 +1173,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
         // multi mode (which keeps the popup open) leaves the previous keyboard-
         // focused item highlighted while a different item was just clicked.
         this.setFocusedIndex(index)
-        this.onItemClick(item)
+        this.onItemActivated(item)
       })
     }
     return el
@@ -1268,7 +1268,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * no-op; subclasses implement their selection behaviour (single mode picks
    * and closes, multiple mode toggles and keeps the popup open).
    */
-  protected onItemClick(_item: T): void {}
+  protected onItemActivated(_item: T): void {}
 
   /**
    * Optional non-item `role="option"` row pinned at the TOP of the listbox:
@@ -1316,7 +1316,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * focused (`false` = none is rendered, nothing changed). The item focus is
    * cleared (`focusedIndex` becomes -1). Protected so a subclass can wire its
    * leading row's click to focus-then-activate (mirroring how item clicks
-   * call `setFocusedIndex` before `onItemClick`) and use it in
+   * call `setFocusedIndex` before `onItemActivated`) and use it in
    * `focusInitial` (the leading row is the listbox's FIRST option).
    */
   protected focusLeadingRow(): boolean {
@@ -1523,7 +1523,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
         if (this.focusedIndex >= 0 && this.focusedIndex < list.length) {
           const item = list[this.focusedIndex]!
           // Defensive: nav never lands on a disabled item, but guard anyway.
-          if (!this.isItemDisabled(item)) { this.onItemClick(item) }
+          if (!this.isItemDisabled(item)) { this.onItemActivated(item) }
         }
         return
       }
