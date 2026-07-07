@@ -12,6 +12,12 @@ import {
  */
 export type LLSelectTriggerDisplay = 'count' | 'tags'
 
+/**
+ * Tri-state of the select-all row (also the `data-chosen-state` attribute
+ * value): how much of the VISIBLE enabled subset is currently chosen.
+ */
+export type LLSelectChosenState = 'none' | 'some' | 'all'
+
 /** Context passed to {@link LLSelectMultipleSettings.createTriggerContentElFn}. */
 export interface LLSelectMultipleTriggerContext<T> {
   chosenItems: readonly T[]
@@ -88,6 +94,19 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * semantics. See `docs/A11Y.md` "Select-all".
    */
   selectAllRow: boolean
+  /**
+   * The select-all row's visible content ELEMENT, without subclassing - e.g.
+   * a tri-state SVG checkbox (`createCheckboxSvgEl`) + label. Mirrors
+   * `createItemContentElFn`. Only used with `selectAllRow: true`.
+   * - Receives the tri-state and the counts of the visible enabled subset.
+   * - Return an `HTMLElement`: inserted as the row's content; the accessible
+   *   name stays pinned to `texts.selectAllRowLabel` via `aria-label`, so
+   *   icon-only content is still announced with the counts.
+   * - `null` (setting default, or returned): plain text from
+   *   `texts.selectAllRowLabel` (themes then draw a text glyph tri-state).
+   */
+  createSelectAllRowContentElFn:
+    ((chosenState: LLSelectChosenState, chosenCount: number, totalCount: number) => HTMLElement | null) | null
 }
 
 /**
@@ -126,6 +145,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       createTagContentElFn: settings?.createTagContentElFn ?? null,
       createTagRemoveButtonContentElFn: settings?.createTagRemoveButtonContentElFn ?? null,
       selectAllRow: settings?.selectAllRow ?? false,
+      createSelectAllRowContentElFn: settings?.createSelectAllRowContentElFn ?? null,
     } satisfies Omit<LLSelectMultipleSettings<T, GK>, keyof LLSelectBaseSettings<T, GK>>)
     this.popupListEl.setAttribute('aria-multiselectable', 'true')
     this.renderTrigger()
@@ -345,7 +365,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     const actionable = this.getVisibleItems().filter(i => !this.isItemDisabled(i))
     if (actionable.length === 0) { return null }
     const chosenCount = actionable.filter(i => this.isChosen(i)).length
-    const state = chosenCount === 0 ? 'none' : chosenCount === actionable.length ? 'all' : 'some'
+    const state: LLSelectChosenState = chosenCount === 0 ? 'none' : chosenCount === actionable.length ? 'all' : 'some'
     const el = document.createElement('div')
     el.id = `${this.classIdMap.popupListId}-select-all`
     el.className = `${this.classIdMap.itemClass} ${this.classIdMap.selectAllRowClass}`
@@ -354,13 +374,39 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     // ARIA option has no `mixed`: the indeterminate state is conveyed by the
     // visual (data-chosen-state) + the counting accessible name only.
     el.setAttribute('aria-selected', String(state === 'all'))
-    el.textContent = this.settings.texts.selectAllRowLabel(chosenCount, actionable.length)
+    const label = this.settings.texts.selectAllRowLabel(chosenCount, actionable.length)
+    const content = this.createSelectAllRowContentEl(state, chosenCount, actionable.length)
+    if (content === null) {
+      el.textContent = label
+    } else {
+      // Custom content fills the visuals only; the accessible name stays the
+      // counting label (same pinning as createItemEl's custom content).
+      el.setAttribute('aria-label', label)
+      el.appendChild(content)
+    }
     el.addEventListener('click', () => {
       // Focus-then-activate, mirroring the item click wiring.
       this.focusLeadingRow()
       this.onLeadingRowActivated()
     })
     return el
+  }
+
+  /**
+   * The select-all row's visible content (rich tri-state). Mirrors
+   * `createItemContentEl`.
+   * - Default reads `createSelectAllRowContentElFn`; `null` (setting unset,
+   *   or returned) = plain text from `texts.selectAllRowLabel`.
+   * - Override only when extending; for one-off content pass the setting.
+   */
+  protected createSelectAllRowContentEl(
+    chosenState: LLSelectChosenState,
+    chosenCount: number,
+    totalCount: number,
+  ): HTMLElement | null {
+    return this.settings.createSelectAllRowContentElFn
+      ? this.settings.createSelectAllRowContentElFn(chosenState, chosenCount, totalCount)
+      : null
   }
 
   /**
