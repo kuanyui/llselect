@@ -58,8 +58,10 @@ export function createCheckSvgEl(opts: IconOptions = {}): SVGElement {
   )
 }
 
-/** Visual state of a {@link createCheckboxSvgEl}. `indeterminate` is the "mixed" / */
-/** partial state used by a select-all control (`aria-checked="mixed"`). */
+/**
+ * Visual state of a {@link createCheckboxSvgEl}. `indeterminate` is the
+ * "mixed" / partial state used by a select-all control (`aria-checked="mixed"`).
+ */
 export type CheckboxState = 'unchecked' | 'checked' | 'indeterminate'
 
 const CHECKBOX_PATHS: Record<CheckboxState, string> = {
