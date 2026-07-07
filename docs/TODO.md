@@ -227,7 +227,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
 - [x] **R26 - `destroy()`** (per the ruling above): base public method;
       tests (open-discard leak path, idempotence); README framework-wrapper
       note; DESIGN "Settings vs methods" method list.
-- [ ] **R27 - `onChange` previous param** (per the ruling above): single +
+- [x] **R27 - `onChange` previous param** (per the ruling above): single +
       multiple signatures, `fireChange(previous)` threading, docstrings,
       tests (incl. an added/removed diff example).
 - [ ] **R28 - no-results message** (per the ruling above): base element +

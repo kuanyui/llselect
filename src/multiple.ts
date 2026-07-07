@@ -25,12 +25,14 @@ export interface LLSelectMultipleTriggerContext<T> {
  */
 export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSettings<T, GK> {
   /**
-   * Fired when the chosen-items set actually changes. Does NOT fire on
+   * Fired when the chosen-items set actually changes. Receives the new set
+   * and the PREVIOUS one (the snapshot from before this change) - diff them
+   * with `compareFn` to compute added / removed. Does NOT fire on
    * construction nor on a setter call that yields an equivalent set
    * (element-wise compared via `compareFn`, order-sensitive).
    * `null` (default) = no listener.
    */
-  onChange: ((chosenItems: readonly T[]) => void) | null
+  onChange: ((chosenItems: readonly T[], previousChosenItems: readonly T[]) => void) | null
   /**
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen items
@@ -131,9 +133,10 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   public setChosenItems(items: T[]): void {
     const next = items.slice()
     if (this.arraysEqual(next, this.chosenItems)) { return }
+    const previous = this.chosenItems
     this.chosenItems = next
     this.rerender()
-    this.fireChange()
+    this.fireChange(previous)
   }
 
   /** Whether the given item is currently chosen (via `compareFn`). */
@@ -146,17 +149,18 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * if not present; removes if present. Fires `onChange`.
    */
   public toggleItem(item: T): void {
-    const idx = this.chosenItems.findIndex(c => this.settings.compareFn(c, item))
+    const previous = this.chosenItems
+    const idx = previous.findIndex(c => this.settings.compareFn(c, item))
     if (idx >= 0) {
-      this.chosenItems = [...this.chosenItems.slice(0, idx), ...this.chosenItems.slice(idx + 1)]
+      this.chosenItems = [...previous.slice(0, idx), ...previous.slice(idx + 1)]
     } else {
-      this.chosenItems = [...this.chosenItems, item]
+      this.chosenItems = [...previous, item]
     }
     // Only one item's selection changed: re-render the trigger (count) and
     // that single item's element, not the whole list. O(1) DOM work.
     this.renderTrigger()
     this.replacePopupListItemElInDom(item)
-    this.fireChange()
+    this.fireChange(previous)
   }
 
   /**
@@ -324,13 +328,14 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
 
   /** Drop chosen entries that disappeared from the new items list. */
   protected override onItemsChanged(): void {
-    const filtered = this.chosenItems.filter(c =>
+    const previous = this.chosenItems
+    const filtered = previous.filter(c =>
       this.items.some(item => this.settings.compareFn(item, c))
     )
-    if (filtered.length === this.chosenItems.length) { return }
+    if (filtered.length === previous.length) { return }
     this.chosenItems = filtered
     this.renderTrigger()
-    this.fireChange()
+    this.fireChange(previous)
   }
 
   /**
@@ -360,8 +365,8 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     return true
   }
 
-  private fireChange(): void {
+  private fireChange(previousChosenItems: readonly T[]): void {
     this.onChosenChanged()
-    this.settings.onChange?.(this.chosenItems)
+    this.settings.onChange?.(this.chosenItems, previousChosenItems)
   }
 }

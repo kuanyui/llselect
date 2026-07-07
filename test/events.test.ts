@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle } from '../src/single.js'
+import { LLSelectMultiple } from '../src/multiple.js'
 
 function mount(): HTMLElement {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
@@ -60,6 +61,41 @@ test('onChosenChanged hook fires before the onChange setting; both run', () => {
   assert.deepEqual(log, ['hook', 'setting']) // both run, hook first
   sel.setChosenItem('a') // equivalent value -> no actual change -> neither fires
   assert.deepEqual(log, ['hook', 'setting'])
+})
+
+test('onChange receives the previous value as the second parameter (single)', () => {
+  const pairs: Array<[string | undefined, string | undefined]> = []
+  const sel = new LLSelectSingle<string>(mount(), {
+    onChange: (chosen, previous) => pairs.push([chosen, previous]),
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItem('a')
+  sel.setChosenItem('b')
+  sel.setItems(['x']) // 'b' dropped by reconciliation
+  assert.deepEqual(pairs, [
+    ['a', undefined],
+    ['b', 'a'],
+    [undefined, 'b'],
+  ])
+})
+
+test('onChange previous enables an added/removed diff (multiple)', () => {
+  const diffs: Array<{ added: string[]; removed: string[] }> = []
+  const sel = new LLSelectMultiple<string>(mount(), {
+    onChange: (chosen, previous) => {
+      diffs.push({
+        added: chosen.filter(c => !previous.includes(c)),
+        removed: previous.filter(p => !chosen.includes(p)),
+      })
+    },
+  })
+  sel.setItems(['a', 'b', 'c'])
+  sel.toggleItem('a')
+  sel.setChosenItems(['b', 'c'])
+  assert.deepEqual(diffs, [
+    { added: ['a'], removed: [] },
+    { added: ['b', 'c'], removed: ['a'] },
+  ])
 })
 
 test('a disabled control does not fire onOpen', () => {

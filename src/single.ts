@@ -18,10 +18,12 @@ export interface LLSelectSingleTriggerContext<T> {
 export interface LLSelectSingleSettings<T, GK = string> extends LLSelectBaseSettings<T, GK> {
   /**
    * Fired when the chosen item actually changes (compared via `compareFn`).
-   * `undefined` means "no selection". Does NOT fire on construction nor on
-   * `setChosenItem` with an equivalent item. `null` (default) = no listener.
+   * Receives the new value and the PREVIOUS one (the snapshot from before
+   * this change); `undefined` means "no selection" on either side. Does NOT
+   * fire on construction nor on `setChosenItem` with an equivalent item.
+   * `null` (default) = no listener.
    */
-  onChange: ((chosenItem: T | undefined) => void) | null
+  onChange: ((chosenItem: T | undefined, previousChosenItem: T | undefined) => void) | null
   /**
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen item
@@ -87,7 +89,7 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
     // aria-selected stays true to state (O(1); no-op while closed).
     if (previous !== undefined) { this.replacePopupListItemElInDom(previous) }
     if (item !== undefined) { this.replacePopupListItemElInDom(item) }
-    this.fireChange()
+    this.fireChange(previous)
   }
 
   /**
@@ -151,13 +153,13 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
 
   /** Drop the chosen item if `setItems` removed it from the list. */
   protected override onItemsChanged(): void {
-    const current = this.chosenItem
-    if (current === undefined) { return }
-    const stillPresent = this.items.some(o => this.settings.compareFn(o, current))
+    const previous = this.chosenItem
+    if (previous === undefined) { return }
+    const stillPresent = this.items.some(o => this.settings.compareFn(o, previous))
     if (!stillPresent) {
       this.chosenItem = undefined
       this.renderTrigger()
-      this.fireChange()
+      this.fireChange(previous)
     }
   }
 
@@ -167,8 +169,8 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
     return this.settings.compareFn(a, b)
   }
 
-  private fireChange(): void {
+  private fireChange(previousChosenItem: T | undefined): void {
     this.onChosenChanged()
-    this.settings.onChange?.(this.chosenItem)
+    this.settings.onChange?.(this.chosenItem, previousChosenItem)
   }
 }
