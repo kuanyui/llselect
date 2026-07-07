@@ -76,6 +76,122 @@ trigger keeps `role="combobox"`). The input is always built into the DOM, just
 is a CSS flip rather than a DOM rebuild. Tab leaves the widget; Esc clears the
 filter then closes; filtering is IME-aware (composition-guarded).
 
+## API consistency review (2026-07-07)
+
+Whole-project review findings (API-design inconsistencies + doc drift), with
+per-item rulings. Work rule: one commit per item, in order; anything needing a
+user ruling is parked under "Open rulings" below and does not block the rest.
+
+- [ ] **R1 - de-hardcode all AT strings; the search input gets a name.** The
+      search input has no accessible name (violates WCAG 4.1.2: an unnamed
+      `role="combobox"`) and no settings at all; the clear / tag-remove
+      aria-labels are hardcoded English. Add base settings
+      `searchInputAriaLabel: string` (default `'Search'`),
+      `searchInputPlaceholder: string | null` (`null` default = no
+      placeholder), `clearButtonAriaLabel: string` (default
+      `'Clear selection'`); multiple setting
+      `itemToTagRemoveLabelFn: ((item: T) => string) | null` (`null` default =
+      `Remove <itemToString(item)>`). Flat settings per house style; grouping
+      into a `texts` bag is O2. This is the i18n MECHANISM (every
+      user/AT-visible string configurable); bundled translations are O1.
+- [ ] **R2 - single options carry `aria-selected`.** Only multiple sets it;
+      A11Y.md's own Elements table and the APG select-only pattern require it
+      on single too. Also make `setChosenItem` refresh the two affected option
+      elements while the popup is open (O(1) via
+      `replacePopupListItemElInDom`) so the attribute cannot go stale.
+- [ ] **R3 - complete the protected seams.** `matchesQuery` -> protected
+      (subclass-wide custom matching; default reads `filterFn`). Add
+      `protected createArrowEl(state): HTMLElement | SVGElement | null`
+      reading `createArrowElFn` (mirrors `createClearEl`);
+      `renderTriggerArrow` stays a private orchestrator and
+      `commitArrowElToDom` a private primitive. Closes the gap vs DESIGN.md's
+      "every customization point is a protected method" model.
+- [ ] **R4 - pair `onChange` with a protected hook.** `onOpen`/`onOpened` and
+      `onClose`/`onClosed` are pairs; `onChange` has no sibling. Add base
+      `protected onChosenChanged()` (default no-op), fired by single/multiple
+      `fireChange` before the setting (hook first, matching `open()`).
+- [ ] **R5 - export every user-reachable type.** Re-export `WidthPolicy` and
+      `Placement` from the package root (referenced by the public
+      `popupWidthPolicy` setting / `data-placement` attribute); add + export
+      `LLSelectTriggerDisplay = 'count' | 'tags'` (same treatment as
+      `LLSelectOutsideClickBehavior`). Rule: a type a consumer can observe
+      must be importable, never infer-only.
+- [ ] **R6 - stop lying about array ownership.** `getItems`'s docstring claims
+      mutating the result "has no effect" - false (it is the live internal
+      array; only TS `readonly` guards it). Fix the docstring (treat as
+      immutable; structural change goes through `setItems`);
+      `getVisibleItems` returns `readonly T[]` instead of leaking a mutable
+      live array to subclasses. RULED (user asked "make it externally mutable
+      instead?"): no - external structural mutation would silently bypass
+      `onItemsChanged` reconciliation (chosen-state dropping), searchable
+      re-filtering, and re-render. The supported efficient in-place path is
+      mutating item OBJECTS + `rerender()` (documented); `setItems` is already
+      an O(n) copy, unavoidable for structural change.
+- [ ] **R8 - fix stale API names in README / DESIGN.md / TODO.md.**
+      `renderTriggerContentFn` -> `createTriggerContentElFn`,
+      `renderArrowFn` -> `createArrowElFn`, `rerenderPopupListItem` ->
+      `replacePopupListItemElInDom`; rewrite DESIGN.md's outdated
+      "transitional role=combobox until Phase 8" note (Phase 8 shipped; both
+      trigger-role modes are final by design).
+- [ ] **R9 - render-responsibilities.md / naming-conventions.md reflect
+      Phase 10.** `commitItemElsToDom` no longer exists (superseded by
+      `computePopupSegments` + `commitPopupSegmentsToDom`); annotate the
+      renderPopupList example as the pre-Phase-10 decision-time record; close
+      the stale "still open: renderArrowFn / renderTriggerContentFn" pointer
+      (both shipped renamed).
+- [ ] **R10 - A11Y.md tells the truth about chip names.** A chip is a generic
+      `<span>` (no role) and ARIA prohibits naming `generic` elements, so the
+      doc's "chip accessible name stays itemToString" is not enforceable in
+      code (unlike options, which get `aria-label` pinned). Rewrite: the
+      item's AT name in tags mode is guaranteed by the remove button's
+      `aria-label="Remove <itemToString>"`, which custom content never
+      changes; icon-only chip content should include its own (visually
+      hidden) text when the chip must be announced. Mirror the guidance in
+      the `createTagContentElFn` docstring.
+- [ ] **R11 - merge icons.ts `CheckboxState` JSDoc** (split into two comment
+      blocks; tools show only the second half).
+- [ ] **R12 - version single-source guard.** `LLSELECT_VERSION` and
+      package.json `version` can drift; add a smoke test asserting they
+      match.
+- [ ] **R13 - item/group DOM ids hang off `popupListId`, not `triggerId`.**
+      `llselect1-trigger-item3` reads as the trigger's child; options live in
+      the listbox. Ids are opaque (no test / consumer contract on the
+      format), so the change is safe.
+- [ ] **R14 - draft.ts gets an ABANDONED header** (only README mentions it;
+      the file itself looks live).
+
+Ruled, no code change:
+
+- **R7a - no `isChosen` on single.** Single and multiple are deliberately
+  separate APIs (DESIGN.md "Explicit"); `getChosenItem()` + `compareFn`
+  covers the need without blurring the two.
+- **R7b - clear-button hide-when-empty already ships**: the library sets
+  `data-empty` on the trigger and every shipped theme hides
+  `.llselect-clear` under `[data-empty='true']`. No new visibility setting
+  (YAGNI until someone asks for always-visible); the conditional build (vs
+  the always-built search input) stays - nothing needs a runtime `clearable`
+  flip, which was the whole reason the search input is always built.
+- **R15 - per-item click listeners stay (for now).** Event delegation would
+  save memory on a 10k-item open but changes disabled-click wiring and has
+  no measured win; lazy render already bounds the cost. Revisit with a
+  benchmark (demo/bench-reflow.html precedent).
+
+### Open rulings (waiting on user)
+
+- [ ] **O1 - built-in i18n language packs.** R1 makes every AT string a
+      setting (the mechanism). Should the library also ship translations
+      (the content), e.g. pure-data presets under `llselect/i18n` (`zhTW`,
+      `ja`, ...) spreadable into settings? Pure data is arguably still
+      low-level (opt-in, tree-shakeable, zero behavior), and mainstream
+      select libraries do bundle translations. Needs: yes/no, the language
+      list, and who vets translation quality. Shape depends on O2.
+- [ ] **O2 - grouped `texts` setting vs flat string settings.** R1 adds flat
+      settings (house style). If O1 lands, a single `texts` object (one bag
+      a language pack can fill) may be nicer; the multi count summary
+      ("3 / 10 selected" / "All n selected") would join it - today it is
+      replaceable only via `createTriggerContentElFn`, which forces DOM
+      building for a pure text change. Decide before 0.2.0 to avoid churn.
+
 ## API design decisions (open)
 
 - [x] **`renderTriggerContentFn` settings callback** - DONE. `(ctx) => HTMLElement
