@@ -705,6 +705,12 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /** Subclass hook: called once after the popup finishes closing. Pairs with the `onClose` setting (both run). */
   protected onClosed(): void {}
   /**
+   * Subclass hook: called after the chosen state actually changed, right
+   * before the variant's `onChange` setting fires (hook first, both run -
+   * same pairing as `onOpened` / `onClosed`). Default no-op.
+   */
+  protected onChosenChanged(): void {}
+  /**
    * Called after `setItems` finishes. Override to reconcile state that
    * depends on the item list (e.g. clear a chosen value that disappeared).
    * Default no-op.

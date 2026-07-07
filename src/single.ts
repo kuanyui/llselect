@@ -155,6 +155,7 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
   }
 
   private fireChange(): void {
+    this.onChosenChanged()
     this.settings.onChange?.(this.chosenItem)
   }
 }
