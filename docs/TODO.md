@@ -116,7 +116,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       `LLSelectTriggerDisplay = 'count' | 'tags'` (same treatment as
       `LLSelectOutsideClickBehavior`). Rule: a type a consumer can observe
       must be importable, never infer-only.
-- [ ] **R6 - stop lying about array ownership.** `getItems`'s docstring claims
+- [x] **R6 - stop lying about array ownership.** `getItems`'s docstring claims
       mutating the result "has no effect" - false (it is the live internal
       array; only TS `readonly` guards it). Fix the docstring (treat as
       immutable; structural change goes through `setItems`);

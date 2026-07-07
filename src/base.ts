@@ -637,8 +637,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Return the current item list. The returned array is read-only;
-   * mutating it has no effect on the select.
+   * Return the current item list.
+   * - The returned array is the LIVE internal array, typed read-only. Do not
+   *   mutate it (TS blocks it; plain-JS callers must treat it as frozen) -
+   *   structural mutation would silently bypass chosen-state reconciliation,
+   *   re-filtering, and re-render.
+   * - Structural change goes through `setItems`; mutating item OBJECTS +
+   *   `rerender()` is the supported in-place path.
    */
   public getItems(): readonly T[] {
     return this.items
@@ -819,7 +824,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * free. `console.warn`s once per non-contiguous key reappearance (unsorted
    * data would otherwise emit a duplicate header for the same group).
    */
-  private computePopupSegments(list: T[], els: HTMLElement[]): PopupListSegment<T, GK>[] {
+  private computePopupSegments(list: readonly T[], els: HTMLElement[]): PopupListSegment<T, GK>[] {
     const keyOf = this.settings.itemToGroupKeyFn
     if (!keyOf) { return els.map((el): PopupListSegment<T, GK> => ({ group: false, el })) }
     const keyEq = this.settings.groupKeyCompareFn ?? ((a: GK, b: GK) => a === b)
@@ -1364,9 +1369,10 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Items currently displayed in the popup. Equals `items` when not
    * searchable or when no filter is active; equals the filtered subset when
    * the user has typed in the search input. Subclasses may read this when
-   * they need the visible list (e.g. for selection-by-index).
+   * they need the visible list (e.g. for selection-by-index). Returns the
+   * LIVE internal array, typed read-only - never mutate it (see `getItems`).
    */
-  protected getVisibleItems(): T[] {
+  protected getVisibleItems(): readonly T[] {
     return this.filteredItems ?? this.items
   }
 
