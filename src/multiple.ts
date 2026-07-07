@@ -66,15 +66,15 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
   createTagContentElFn: ((item: T) => HTMLElement | null) | null
   /**
    * Icon ELEMENT of each tag's remove (x) button in `'tags'` mode, mirroring
-   * `createClearElFn` (the clear button's icon hook). The library always owns the
+   * `createTriggerClearButtonContentElFn` (the clear button's icon hook). The library always owns the
    * button, its click (removes the item + `stopPropagation`), `tabindex="-1"`, and
    * the `aria-label` accessible name (from `itemToTagRemoveLabel`); this only
    * fills the decorative icon.
    * - Return an `HTMLElement` / `SVGElement`: appended inside the button as its icon.
    * - `null` (setting default, or returned for an item): no icon - the theme
-   *   draws the x via its CSS glyph (`.llselect-tag-remove:empty::before`).
+   *   draws the x via its CSS glyph (`.llselect-tag-remove-button:empty::before`).
    */
-  createTagRemoveElFn: ((item: T) => HTMLElement | SVGElement | null) | null
+  createTagRemoveButtonContentElFn: ((item: T) => HTMLElement | SVGElement | null) | null
   /**
    * Item -> its remove button's accessible name (`aria-label`) in `'tags'`
    * mode. The i18n seam for the removal announcement.
@@ -117,7 +117,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       createTriggerContentElFn: settings?.createTriggerContentElFn ?? null,
       triggerDisplay: settings?.triggerDisplay ?? 'count',
       createTagContentElFn: settings?.createTagContentElFn ?? null,
-      createTagRemoveElFn: settings?.createTagRemoveElFn ?? null,
+      createTagRemoveButtonContentElFn: settings?.createTagRemoveButtonContentElFn ?? null,
       itemToTagRemoveLabelFn: settings?.itemToTagRemoveLabelFn ?? null,
     } satisfies Omit<LLSelectMultipleSettings<T, GK>, keyof LLSelectBaseSettings<T, GK>>)
     this.popupListEl.setAttribute('aria-multiselectable', 'true')
@@ -236,7 +236,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
 
   /**
    * Build one removable tag chip: its content (from `createTagContentEl`, else
-   * plain `itemToString`) plus its remove (x) button (from `createTagRemoveEl`).
+   * plain `itemToString`) plus its remove (x) button (from `createTagRemoveButtonEl`).
    * Override for full control of the chip container; override the two sub-parts
    * for content-only / remove-button-only changes.
    */
@@ -251,7 +251,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     } else {
       tag.appendChild(content)
     }
-    tag.appendChild(this.createTagRemoveEl(item))
+    tag.appendChild(this.createTagRemoveButtonEl(item))
     return tag
   }
 
@@ -259,23 +259,36 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * Build one chip's remove (x) button. The library owns the button + its click
    * (`stopPropagation` so it never toggles the popup, then `toggleItem`) +
    * `tabindex="-1"` + `aria-label` (from `itemToTagRemoveLabel`);
-   * `createTagRemoveElFn` optionally fills the icon, else the theme's CSS glyph.
-   * Mirrors the clear button's `createClearEl`. Override for full control of
+   * `createTagRemoveButtonContentElFn` optionally fills the icon, else the theme's CSS glyph.
+   * Mirrors the clear button's `createTriggerClearButtonEl`. Override for full control of
    * the button element.
    */
-  protected createTagRemoveEl(item: T): HTMLElement {
+  protected createTagRemoveButtonEl(item: T): HTMLElement {
     const btn = document.createElement('button')
     btn.type = 'button'
-    btn.className = this.classIdMap.tagRemoveClass
+    btn.className = this.classIdMap.tagRemoveButtonClass
     btn.tabIndex = -1
     btn.setAttribute('aria-label', this.itemToTagRemoveLabel(item))
-    const icon = this.settings.createTagRemoveElFn?.(item) ?? null
+    const icon = this.createTagRemoveButtonContentEl(item)
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
       this.toggleItem(item)
     })
     return btn
+  }
+
+  /**
+   * One chip's remove-button visible content (its x icon). Mirrors
+   * `createTriggerClearButtonContentEl`.
+   * - Default reads `createTagRemoveButtonContentElFn`; `null` (setting unset,
+   *   or returned) = no icon - the theme's CSS glyph draws the x.
+   * - Override only when extending; for one-off icons pass the setting.
+   */
+  protected createTagRemoveButtonContentEl(item: T): HTMLElement | SVGElement | null {
+    return this.settings.createTagRemoveButtonContentElFn
+      ? this.settings.createTagRemoveButtonContentElFn(item)
+      : null
   }
 
   /**

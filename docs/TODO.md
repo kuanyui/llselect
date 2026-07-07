@@ -53,15 +53,15 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
       is `<button aria-label="Remove <label>" tabindex="-1">`, click
       `stopPropagation` + `toggleItem` (select2-style MVP; keyboard removes via the
       popup). Protected chain `createTagsEl` / `createTagEl` / `createTagContentEl`
-      / `createTagRemoveEl` (remove button; `createTagRemoveElFn` swaps its icon,
-      mirroring `createClearElFn`).
+      / `createTagRemoveButtonEl` (remove button; `createTagRemoveButtonContentElFn` swaps its icon,
+      mirroring `createTriggerClearButtonContentElFn`).
       Themes ship `.llselect-tag*` (x via CSS `\00d7`). Spec: DESIGN.md "Tags
       (triggerDisplay)"; A11Y.md "Tags". Future: focusable-remove flag (A11Y open
       questions).
 - [x] **Phase 12** - clear button. **DONE.** `clearable: boolean` (base setting)
       shows an x button in its own trigger slot (like the arrow, so no collision
-      with `createTriggerContentElFn`); `createClearElFn` fills the icon (mirrors
-      `createArrowElFn`), else theme CSS `\00d7`. Library owns click
+      with `createTriggerContentElFn`); `createTriggerClearButtonContentElFn` fills the icon (mirrors
+      `createTriggerArrowContentElFn`), else theme CSS `\00d7`. Library owns click
       (`stopPropagation` + `clearSelection`), `aria-label`, `tabindex="-1"`, and
       `data-empty` hide-when-empty. `protected clearSelection()`: single ->
       `undefined`, multiple -> `[]`, both through the normal setters so `onChange`
@@ -101,10 +101,10 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       `replacePopupListItemElInDom`) so the attribute cannot go stale.
 - [x] **R3 - complete the protected seams.** `matchesQuery` -> protected
       (subclass-wide custom matching; default reads `filterFn`). Add
-      `protected createArrowEl(state): HTMLElement | SVGElement | null`
-      reading `createArrowElFn` (mirrors `createClearEl`);
+      `protected createTriggerArrowContentEl(state): HTMLElement | SVGElement | null`
+      reading `createTriggerArrowContentElFn` (mirrors `createTriggerClearButtonEl`);
       `renderTriggerArrow` stays a private orchestrator and
-      `commitArrowElToDom` a private primitive. Closes the gap vs DESIGN.md's
+      `commitTriggerArrowContentElToDom` a private primitive. Closes the gap vs DESIGN.md's
       "every customization point is a protected method" model.
 - [x] **R4 - pair `onChange` with a protected hook.** `onOpen`/`onOpened` and
       `onClose`/`onClosed` are pairs; `onChange` has no sibling. Add base
@@ -129,7 +129,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       an O(n) copy, unavoidable for structural change.
 - [x] **R8 - fix stale API names in README / DESIGN.md / TODO.md.**
       `renderTriggerContentFn` -> `createTriggerContentElFn`,
-      `renderArrowFn` -> `createArrowElFn`, `rerenderPopupListItem` ->
+      `renderArrowFn` -> `createTriggerArrowContentElFn`, `rerenderPopupListItem` ->
       `replacePopupListItemElInDom`; rewrite DESIGN.md's outdated
       "transitional role=combobox until Phase 8" note (Phase 8 shipped; both
       trigger-role modes are final by design).
@@ -159,7 +159,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       format), so the change is safe.
 - [x] **R14 - draft.ts gets an ABANDONED header** (only README mentions it;
       the file itself looks live).
-- [ ] **R16 - apply the s7b rename table** (Button-system; element nouns;
+- [x] **R16 - apply the s7b rename table** (Button-system; element nouns;
       Container-Content law; naming-conventions.md s7): settings / protected
       methods / classIdMap / CSS classes / themes / demo / docs. Also adds the
       two thin content methods (`createTriggerClearButtonContentEl` /
@@ -186,7 +186,7 @@ Ruled, no code change:
   covers the need without blurring the two.
 - **R7b - clear-button hide-when-empty already ships**: the library sets
   `data-empty` on the trigger and every shipped theme hides
-  `.llselect-clear` under `[data-empty='true']`. No new visibility setting
+  `.llselect-trigger-clear-button` under `[data-empty='true']`. No new visibility setting
   (YAGNI until someone asks for always-visible); the conditional build (vs
   the always-built search input) stays - nothing needs a runtime `clearable`
   flip, which was the whole reason the search input is always built.

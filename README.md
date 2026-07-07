@@ -28,7 +28,7 @@ Quick test: "Am I making a new, named, reusable kind of select?"
 | Disable individual items | `itemDisabledFn` |
 | Search matching | `filterFn` |
 | Equality for object items | `compareFn` |
-| Dropdown arrow | `createArrowElFn` |
+| Dropdown arrow | `createTriggerArrowContentElFn` |
 | Events | `onChange`, `onOpen`, `onClose` |
 
 ```js

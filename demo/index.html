@@ -69,7 +69,7 @@
         (composes with content / arrow / tags). Click it to clear to
         <code>undefined</code> - <code>onChange</code> fires with the empty value.
         The x hides when nothing is selected. Swap the icon via
-        <code>createClearElFn</code> (mirrors <code>createArrowElFn</code>).
+        <code>createTriggerClearButtonContentElFn</code> (mirrors <code>createTriggerArrowContentElFn</code>).
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -149,7 +149,7 @@
   <section>
     <h2>4. Arrow variants</h2>
     <p class="hint">
-      Library ships no arrow by default. Pass <code>createArrowElFn</code>
+      Library ships no arrow by default. Pass <code>createTriggerArrowContentElFn</code>
       to add any element (SVG, &lt;i&gt; icon class, plain text, ...).
       All variants below use the same data binding; only the arrow differs.
     </p>
@@ -290,7 +290,7 @@
         it. Composes with <code>searchable</code>; per-chip content is
         customizable via <code>createTagContentElFn</code> (mirrors
         <code>createItemContentElFn</code>); the remove-button icon via
-        <code>createTagRemoveElFn</code> (mirrors <code>createClearElFn</code>).
+        <code>createTagRemoveButtonContentElFn</code> (mirrors <code>createTriggerClearButtonContentElFn</code>).
       </p>
       <div class="demo-split">
         <div class="demo-pane">

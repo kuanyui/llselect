@@ -15,8 +15,8 @@ function tags(sel: { triggerEl: HTMLElement; classIdMap: { tagClass: string } })
   return Array.from(sel.triggerEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`))
 }
 
-function removeBtn(sel: { triggerEl: HTMLElement; classIdMap: { tagRemoveClass: string } }): HTMLButtonElement {
-  return sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveClass}`)!
+function removeBtn(sel: { triggerEl: HTMLElement; classIdMap: { tagRemoveButtonClass: string } }): HTMLButtonElement {
+  return sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!
 }
 
 test('triggerDisplay tags renders one chip per chosen item', () => {
@@ -88,10 +88,10 @@ test('createTagContentElFn returning null falls back to plain itemToString text'
   assert.equal(tags(sel)[0]!.querySelector('b'), null)
 })
 
-test('createTagRemoveElFn fills the remove-button icon; library still owns click + aria', () => {
+test('createTagRemoveButtonContentElFn fills the remove-button icon; library still owns click + aria', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     triggerDisplay: 'tags',
-    createTagRemoveElFn: (item) => {
+    createTagRemoveButtonContentElFn: (item) => {
       const i = document.createElement('i')
       i.className = `x-${item}`
       return i
@@ -107,20 +107,20 @@ test('createTagRemoveElFn fills the remove-button icon; library still owns click
   assert.deepEqual([...sel.getChosenItems()], ['b'])
 })
 
-test('createTagRemoveElFn returning null leaves the button empty (theme CSS glyph draws the x)', () => {
+test('createTagRemoveButtonContentElFn returning null leaves the button empty (theme CSS glyph draws the x)', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     triggerDisplay: 'tags',
-    createTagRemoveElFn: () => null,
+    createTagRemoveButtonContentElFn: () => null,
   })
   sel.setItems(['a'])
   sel.setChosenItems(['a'])
   assert.equal(removeBtn(sel).children.length, 0)
 })
 
-test('createTagRemoveEl can be overridden for full control of the remove button', () => {
+test('createTagRemoveButtonEl can be overridden for full control of the remove button', () => {
   class CustomRemove extends LLSelectMultiple<string> {
-    protected override createTagRemoveEl(item: string): HTMLElement {
-      const el = super.createTagRemoveEl(item)
+    protected override createTagRemoveButtonEl(item: string): HTMLElement {
+      const el = super.createTagRemoveButtonEl(item)
       el.setAttribute('data-remove', item)
       return el
     }
@@ -170,6 +170,29 @@ test('createTriggerContentElFn wins over tags mode (full control)', () => {
   sel.setChosenItems(['a'])
   assert.equal(tags(sel).length, 0)
   assert.ok(sel.triggerEl.querySelector('.custom-trigger'))
+})
+
+test('a subclass createTagRemoveButtonContentEl override replaces the setting (override wins)', () => {
+  class Derived extends LLSelectMultiple<string> {
+    protected override createTagRemoveButtonContentEl(): HTMLElement | null {
+      const i = document.createElement('i')
+      i.className = 'derived-x'
+      return i
+    }
+  }
+  const sel = new Derived(mount(), {
+    triggerDisplay: 'tags',
+    createTagRemoveButtonContentElFn: () => {
+      const i = document.createElement('i')
+      i.className = 'fn-x'
+      return i
+    },
+  })
+  sel.setItems(['a'])
+  sel.setChosenItems(['a'])
+  const btn = removeBtn(sel)
+  assert.ok(btn.querySelector('.derived-x')) // override wins
+  assert.equal(btn.querySelector('.fn-x'), null)
 })
 
 test('createTagEl can be overridden for full control of a chip', () => {

@@ -3,7 +3,7 @@ export type {
   LLSelectBaseSettings,
   LLSelectBaseSettingsInput,
   LLSelectClassIdMap,
-  LLSelectCreateArrowElFn,
+  LLSelectCreateTriggerArrowContentElFn,
   LLSelectOutsideClickBehavior,
 } from './base.js'
 

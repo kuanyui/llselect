@@ -173,7 +173,7 @@
   line-height: 1.5;
 }
 
-.llselect-tag-remove {
+.llselect-tag-remove-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -189,17 +189,17 @@
   line-height: 1;
 }
 
-.llselect-tag-remove:empty::before { content: '\00d7'; font-size: 1.15em; }
+.llselect-tag-remove-button:empty::before { content: '\00d7'; font-size: 1.15em; }
 
-.llselect-tag-remove:hover {
+.llselect-tag-remove-button:hover {
   background: #ddd;
   color: #333;
 }
 
 /* --- clear button (clearable) ---------------------------------- */
-/* :empty::before draws the x only when createClearElFn gave no icon. */
+/* :empty::before draws the x only when createTriggerClearButtonContentElFn gave no icon. */
 
-.llselect-clear {
+.llselect-trigger-clear-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -216,8 +216,8 @@
   line-height: 1;
 }
 
-.llselect-clear:empty::before { content: '\00d7'; font-size: 1.2em; }
+.llselect-trigger-clear-button:empty::before { content: '\00d7'; font-size: 1.2em; }
 
-.llselect-clear:hover { color: #333; background: #eee; }
+.llselect-trigger-clear-button:hover { color: #333; background: #eee; }
 
-.llselect-trigger[data-empty='true'] .llselect-clear { display: none; }
+.llselect-trigger[data-empty='true'] .llselect-trigger-clear-button { display: none; }
