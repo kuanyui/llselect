@@ -47,6 +47,11 @@ test('a whole language pack applies to every chrome string (zhTW)', () => {
   const removeBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.tagRemoveButtonClass}`)!
   assert.equal(removeBtn.getAttribute('aria-label'), zhTW.tagRemoveButtonAriaLabel('a'))
   const noResults = sel.popupEl.querySelector(`.${sel.classIdMap.popupListNoResultsClass}`)!
+  // The message fills lazily when the empty state shows (it is query-aware):
+  // open and filter to zero matches first.
+  sel.open()
+  input.value = 'zzz'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
   assert.equal(noResults.textContent, zhTW.popupListNoResults)
 })
 
