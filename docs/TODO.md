@@ -189,7 +189,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       `computeSearchActive()` + `syncSearchModeToDom()` (trigger role, input
       `hidden`, `comboboxEl` pointer). naming s3 gains the
       capability-flag-union exception (`searchable` keeps its flag name).
-- [ ] **R21 - RTL: themes go logical.** The tag chip's asymmetric 4-value
+- [x] **R21 - RTL: themes go logical.** The tag chip's asymmetric 4-value
       padding -> `padding-block` + `padding-inline` in all 5 themes (the only
       physical-direction rule in shipped CSS); demo 4.4's `margin-left` ->
       `margin-inline-start`. Trigger layout is flex, so slot order (content |

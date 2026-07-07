@@ -182,7 +182,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  padding: 0.1rem 0.2rem 0.1rem 0.5rem;
+  /* Logical: mirrors under dir="rtl" (text side start, x-button side end). */
+  padding-block: 0.1rem;
+  padding-inline: 0.5rem 0.2rem;
   background-color: #007bff;
   color: #fff;
   border-radius: 0.2rem;

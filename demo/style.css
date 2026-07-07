@@ -275,7 +275,7 @@ pre[data-demo] code {
   border-top: 5px solid currentColor;
   transition: transform 0.15s;
   color: #666;
-  margin-left: 0.4rem;
+  margin-inline-start: 0.4rem;
 }
 
 #mount-ind-css .llselect-trigger[data-state='open']::after {
