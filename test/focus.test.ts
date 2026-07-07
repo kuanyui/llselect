@@ -38,3 +38,24 @@ test('focusout: focus leaving to nothing (relatedTarget null) closes the popup',
   sel.triggerEl.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: null }))
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
 })
+
+// jsdom performs no mousedown focus-fixup, so the actual focus loss cannot be
+// reproduced here; these pin the MECHANISM (preventDefault) that stops real
+// browsers from moving focus off the combobox host. See A11Y.md "Focus".
+
+test('mousedown on an option is default-prevented (focus stays on the combobox host)', () => {
+  const { sel } = mount()
+  sel.open()
+  const option = sel.popupListEl.querySelector<HTMLElement>('[role="option"]')!
+  const md = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+  option.dispatchEvent(md)
+  assert.equal(md.defaultPrevented, true)
+})
+
+test('mousedown on the popup list itself (scrollbar / padding) is NOT prevented', () => {
+  const { sel } = mount()
+  sel.open()
+  const md = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+  sel.popupListEl.dispatchEvent(md)
+  assert.equal(md.defaultPrevented, false)
+})
