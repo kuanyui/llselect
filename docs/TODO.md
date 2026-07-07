@@ -94,7 +94,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       `Remove <itemToString(item)>`). Flat settings per house style; grouping
       into a `texts` bag is O2. This is the i18n MECHANISM (every
       user/AT-visible string configurable); bundled translations are O1.
-- [ ] **R2 - single options carry `aria-selected`.** Only multiple sets it;
+- [x] **R2 - single options carry `aria-selected`.** Only multiple sets it;
       A11Y.md's own Elements table and the APG select-only pattern require it
       on single too. Also make `setChosenItem` refresh the two affected option
       elements while the popup is open (O(1) via

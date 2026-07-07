@@ -102,6 +102,30 @@ test('setItems keeps chosen if still present', () => {
   assert.deepEqual(fired, ['a'])
 })
 
+test('options carry aria-selected reflecting the chosen item (single)', () => {
+  const sel = new LLSelectSingle<string>(mount())
+  sel.setItems(['a', 'b', 'c'])
+  sel.setChosenItem('b')
+  sel.open()
+  const opts = sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')
+  assert.equal(opts[0]?.getAttribute('aria-selected'), 'false')
+  assert.equal(opts[1]?.getAttribute('aria-selected'), 'true')
+  assert.equal(opts[2]?.getAttribute('aria-selected'), 'false')
+})
+
+test('setChosenItem while open updates aria-selected on the affected options', () => {
+  const sel = new LLSelectSingle<string>(mount())
+  sel.setItems(['a', 'b'])
+  sel.setChosenItem('a')
+  sel.open()
+  sel.setChosenItem('b')
+  const opts = sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')
+  assert.equal(opts[0]?.getAttribute('aria-selected'), 'false')
+  assert.equal(opts[1]?.getAttribute('aria-selected'), 'true')
+  // programmatic set keeps the popup open
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
+})
+
 test('compareFn enables object-typed options', () => {
   interface Item { id: number; label: string }
   const items: Item[] = [
