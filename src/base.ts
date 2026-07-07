@@ -782,13 +782,23 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
 
   /**
    * Orchestrator: composes the `*ToDom` / `*El` primitives to (re)build the
-   * trigger's arrow slot from state; touches no DOM directly. Calls the
-   * `createArrowElFn` setting with the current `isOpen` and commits whatever it
-   * returns (including `null` -> no arrow for this state).
+   * trigger's arrow slot from state; touches no DOM directly. Calls
+   * `createArrowEl` with the current `isOpen` and commits whatever it returns
+   * (including `null` -> no arrow for this state).
    */
   private renderTriggerArrow(): void {
-    const el = this.settings.createArrowElFn?.({ isOpen: this.isOpen }) ?? null
-    this.commitArrowElToDom(el)
+    this.commitArrowElToDom(this.createArrowEl({ isOpen: this.isOpen }))
+  }
+
+  /**
+   * Trigger arrow element for the given open state.
+   * - Default reads `createArrowElFn`; `null` (setting unset, or returned for
+   *   a state) = no arrow for that state.
+   * - Override only when extending; for one-off arrows pass the setting.
+   *   Mirrors `createClearEl` / `createItemContentEl`.
+   */
+  protected createArrowEl(state: { isOpen: boolean }): HTMLElement | SVGElement | null {
+    return this.settings.createArrowElFn ? this.settings.createArrowElFn(state) : null
   }
 
   /**
@@ -1383,10 +1393,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Per-item match predicate for the search input. Uses `settings.filterFn`
-   * when provided; otherwise case-insensitive substring on `itemToString`.
+   * Per-item match predicate for the search input.
+   * - Default reads `filterFn`; else case-insensitive substring on
+   *   `itemToString`.
+   * - Override only when extending (subclass-wide custom matching); for a
+   *   one-off match rule pass the setting.
    */
-  private matchesQuery(item: T, query: string): boolean {
+  protected matchesQuery(item: T, query: string): boolean {
     const fn = this.settings.filterFn
     if (fn) { return fn(item, query) }
     return this.itemToString(item).toLowerCase().includes(query.toLowerCase())

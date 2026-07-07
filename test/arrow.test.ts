@@ -86,6 +86,26 @@ test('createArrowElFn returning null leaves the slot empty', () => {
   assert.equal(arrow.children.length, 1)
 })
 
+test('a subclass createArrowEl override replaces the setting (override wins)', () => {
+  class Derived extends LLSelectSingle<string> {
+    protected override createArrowEl(): HTMLElement | null {
+      const el = document.createElement('span')
+      el.className = 'derived-arrow'
+      return el
+    }
+  }
+  const sel = new Derived(mount(), {
+    createArrowElFn: () => {
+      const el = document.createElement('span')
+      el.className = 'fn-arrow'
+      return el
+    },
+  })
+  const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')!
+  assert.ok(arrow.querySelector('.derived-arrow')) // override wins
+  assert.equal(arrow.querySelector('.fn-arrow'), null)
+})
+
 test('triggerContentEl receives placeholder/chosen text (arrow slot preserved)', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     createArrowElFn: () => {
