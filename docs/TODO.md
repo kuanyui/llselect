@@ -148,7 +148,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       changes; icon-only chip content should include its own (visually
       hidden) text when the chip must be announced. Mirror the guidance in
       the `createTagContentElFn` docstring.
-- [ ] **R11 - merge icons.ts `CheckboxState` JSDoc** (split into two comment
+- [x] **R11 - merge icons.ts `CheckboxState` JSDoc** (split into two comment
       blocks; tools show only the second half).
 - [ ] **R12 - version single-source guard.** `LLSELECT_VERSION` and
       package.json `version` can drift; add a smoke test asserting they
@@ -157,7 +157,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       `llselect1-trigger-item3` reads as the trigger's child; options live in
       the listbox. Ids are opaque (no test / consumer contract on the
       format), so the change is safe.
-- [ ] **R14 - draft.ts gets an ABANDONED header** (only README mentions it;
+- [x] **R14 - draft.ts gets an ABANDONED header** (only README mentions it;
       the file itself looks live).
 
 Ruled, no code change:

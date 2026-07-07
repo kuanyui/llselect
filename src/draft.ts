@@ -1,6 +1,13 @@
 /*
-- Lazy rendering or options list.
+ABANDONED 2024 DRAFT - kept for reference only.
 
+- Not part of the build: excluded in tsconfig.json / tsconfig.test.json and
+  never imported. Contains type errors; do not fix, do not extend.
+- The shipped implementation lives in base.ts / single.ts / multiple.ts.
+  (See README "Acknowledgment" for the history.)
+
+Original note:
+- Lazy rendering or options list.
  */
 
 
