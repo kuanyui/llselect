@@ -24,11 +24,11 @@ Quick test: "Am I making a new, named, reusable kind of select?"
 | You want to customize | Setting |
 |---|---|
 | Item display text | `itemToStringFn` |
-| Trigger content (e.g. tag chips) | `renderTriggerContentFn` |
+| Trigger content (e.g. tag chips) | `createTriggerContentElFn` |
 | Disable individual items | `itemDisabledFn` |
 | Search matching | `filterFn` |
 | Equality for object items | `compareFn` |
-| Dropdown arrow | `renderArrowFn` |
+| Dropdown arrow | `createArrowElFn` |
 | Events | `onChange`, `onOpen`, `onClose` |
 
 ```js
