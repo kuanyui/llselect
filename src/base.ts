@@ -532,6 +532,17 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
 
     this.triggerEl.addEventListener('click', () => this.toggle())
     this.triggerEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
+    // Clicking inside the list must not move DOM focus: the browser's
+    // mousedown focus-fixup would focus popupListEl (tabindex="-1" makes it
+    // CLICK-focusable) and silently kill keyboard input into the combobox
+    // host (search input / trigger) - e.g. multi + searchable: mouse-toggle
+    // an item, then typing goes nowhere. Prevent the default on everything
+    // except the list element itself, so native scrollbar dragging on the
+    // list stays untouched. `click` still fires (it does not depend on the
+    // mousedown default), so selection wiring is unaffected.
+    this.popupListEl.addEventListener('mousedown', (ev) => {
+      if (ev.target !== this.popupListEl) { ev.preventDefault() }
+    })
     if (this.settings.searchable) {
       this.searchInputEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
       this.searchInputEl.addEventListener('input', () => this.handleSearchInputEvent())
