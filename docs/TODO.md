@@ -178,7 +178,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       convention (no spacing).
 - [x] **R19 - demo section for i18n** (zhTW pack on a searchable multi with
       tags + clearable, so every translated string is visible).
-- [ ] **R20 - conditional search input (predicate form).** RULED:
+- [x] **R20 - conditional search input (predicate form).** RULED:
       `searchable: boolean | ((items: readonly T[]) => boolean)` - the
       predicate is evaluated against the CURRENT full item list on every
       `open()` (never mid-open; a `setItems` crossing the threshold applies on

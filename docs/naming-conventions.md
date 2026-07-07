@@ -60,6 +60,10 @@ By RETURN TYPE (behaviour, not input):
   return type (`*Key`, `*Label`, `*String`), not necessarily `string`.
 - returns an element -> `create*ElFn`: `createItemContentElFn`, `createTriggerArrowContentElFn`, `createTriggerContentElFn`.
 - fires an event -> `on*`: `onChange`, `onOpen`, `onClose`.
+- EXCEPTION: a capability FLAG may widen to `boolean | predicate` and keep its
+  flag name (no `*Fn`): the name describes the capability, the TS union
+  already declares the function form, and `searchableFn: boolean | fn` would
+  be worse. Example: `searchable: boolean | ((items) => boolean)`.
 - RULE (CLAUDE.md): any callback whose type includes `null` documents what `null` does.
 
 ## 4. Every method / setting
@@ -271,7 +275,7 @@ their real (minimal) BCP 47 tags (`'zh-TW'`) for `navigator.language` lookup.
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator
-(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). Consistency-review follow-up (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createTriggerArrowContentEl(state)` reading `createTriggerArrowContentElFn` (mirrors the clear button's content method); `renderTriggerArrow` stays a private orchestrator and `commitTriggerArrowContentElToDom` a private primitive. (Names shown post-s7b.)
+(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). Consistency-review follow-up (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createTriggerArrowContentEl(state)` reading `createTriggerArrowContentElFn` (mirrors the clear button's content method); `renderTriggerArrow` stays a private orchestrator and `commitTriggerArrowContentElToDom` a private primitive. (Names shown post-s7b.) R20 added private `computeSearchActive` (compute*) + `syncSearchModeToDom` (sync*ToDom).
 
 ## 6. Phasing
 
