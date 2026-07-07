@@ -139,7 +139,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       renderPopupList example as the pre-Phase-10 decision-time record; close
       the stale "still open: renderArrowFn / renderTriggerContentFn" pointer
       (both shipped renamed).
-- [ ] **R10 - A11Y.md tells the truth about chip names.** A chip is a generic
+- [x] **R10 - A11Y.md tells the truth about chip names.** A chip is a generic
       `<span>` (no role) and ARIA prohibits naming `generic` elements, so the
       doc's "chip accessible name stays itemToString" is not enforceable in
       code (unlike options, which get `aria-label` pinned). Rewrite: the

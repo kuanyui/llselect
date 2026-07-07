@@ -56,8 +56,12 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    *   the library still owns the chip container + the remove (x) button + aria.
    * - `null` (setting default, or returned for an item) = plain text from
    *   `itemToString`.
-   * The remove button's accessible name comes from `itemToTagRemoveLabel`
-   * (default `Remove <itemToString>`).
+   * - The remove button's accessible name comes from `itemToTagRemoveLabel`
+   *   (default `Remove <itemToString>`) - that is what AT is guaranteed to
+   *   announce. The chip is a generic `<span>` (ARIA prohibits naming it), so
+   *   for icon-only content include your own (visually hidden) text if the
+   *   chip should be announced as more than its remove button. See
+   *   `docs/A11Y.md` "Tags".
    */
   createTagContentElFn: ((item: T) => HTMLElement | null) | null
   /**
