@@ -241,21 +241,27 @@ Methods (protected, overridable):
 
 `classIdMap` gained `triggerClearButtonClass`. All obey s1-s3 + s7.
 
-### 4g. AT-string settings (i18n mechanism)
+### 4g. texts (chrome strings / i18n)
 
-Every user/AT-visible string is a setting (flat, per house style; a grouped
-`texts` bag + shipped translations is TODO.md O1/O2):
+All user/AT-visible chrome strings live in ONE base setting
+`texts: LLSelectTexts` (input `Partial<LLSelectTexts>`, resolved against
+`en`). Keys are message ids per s7a.4 - no `Fn` suffix; attribute strings =
+`<elementFamily><Attribute>`, generated content = `<family><SemanticName>`;
+parameterized messages take resolved primitives, never `T`:
 
-| Vis     | Name                     | Signature                       | s3               |
-| ------- | ------------------------ | ------------------------------- | ---------------- |
-| setting | `searchInputAriaLabel`   | `string`                        | value            |
-| setting | `searchInputPlaceholder` | `string \| null`                | value            |
-| setting | `clearButtonAriaLabel`   | `string`                        | value            |
-| setting | `itemToTagRemoveLabelFn` | `((item: T) => string) \| null` | map item->string |
+| Key                           | Type                                                  |
+| ----------------------------- | ----------------------------------------------------- |
+| `searchInputAriaLabel`        | `string`                                              |
+| `searchInputPlaceholder`      | `string \| null`                                      |
+| `triggerClearButtonAriaLabel` | `string`                                              |
+| `tagRemoveButtonAriaLabel`    | `(itemLabel: string) => string`                       |
+| `triggerCountSummary`         | `(chosenCount: number, totalCount: number) => string` |
 
-`itemToTagRemoveLabelFn` is backed by `protected itemToTagRemoveLabel(item)`
-(`itemTo*`, mirrors `itemToString`); the plain-string settings need no method
-(cf. `placeholder`).
+`tagRemoveButtonAriaLabel` is backed by `protected
+itemToTagRemoveButtonAriaLabel(item)` (`itemTo*`, mirrors `itemToString`);
+string keys need no method (cf. `placeholder`). Language packs (`en` / `ja` /
+`zhTW`) live under `llselect/i18n`; `LLSelectSettingsInputOf<S>` is the shared
+input shape (everything optional, `texts` deep-partial).
 
 ## 5. Decisions log
 
