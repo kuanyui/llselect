@@ -238,6 +238,15 @@ Ruled, no code change:
       add a `decorateItemFn(el, item)` setting, or keep the subclass-only path.
 - [ ] **`onChange` diff context** - decide whether to pass `previousChosenItem(s)`
       alongside current, so users can compute added/removed without tracking.
+- [ ] **Conditional search input (select2's `minimumResultsForSearch`)** - not
+      built; `searchable` is fixed at construction. The DOM side was pre-paved
+      in Phase 8 (the input is ALWAYS built, hidden when off - a CSS flip).
+      The hard part is ARIA: the two modes move the combobox role + focus host
+      (trigger vs input), wired once in the constructor today - a runtime flip
+      must also re-point `comboboxEl`, keydown listeners, and the trigger
+      role. Proposed shape: base setting `searchInputMinItemCount: number`
+      (default `0` = show whenever `searchable`; `Infinity` = never),
+      re-evaluated on `setItems`. Needs a ruling before building.
 - [ ] **No-results message** - the one applicable gap from the select2 i18n
       survey: a filter with zero matches renders a bare empty listbox (A11Y.md:
       "no match -> empty listbox"); select2 shows "No results found". Would be
