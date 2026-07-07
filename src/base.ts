@@ -274,6 +274,11 @@ export interface LLSelectClassIdMap {
   popupClass: string
   /** Class on `popupListEl` (the inner element with `role="listbox"`). */
   popupListClass: string
+  /**
+   * Class on the no-results message element (`role="status"`), shown below
+   * the (empty) listbox when the visible item list has zero entries.
+   */
+  popupListNoResultsClass: string
   /** Class on every item element (`role="option"`) inside the popup list. */
   itemClass: string
   /**
@@ -339,6 +344,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     triggerClearButtonClass: `${prefix}-trigger-clear-button`,
     popupClass: `${prefix}-popup`,
     popupListClass: `${prefix}-popup-list`,
+    popupListNoResultsClass: `${prefix}-popup-list-no-results`,
     itemClass: `${prefix}-item`,
     itemFocusedClass: `${prefix}-item-focused`,
     itemDisabledClass: `${prefix}-item-disabled`,
@@ -454,6 +460,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    */
   private searchInputEl!: HTMLInputElement
   /**
+   * No-results message element (`role="status"`). Always built (like the
+   * search input), sits AFTER the listbox inside `popupEl` so the listbox
+   * keeps its options-only children contract; `hidden` while the visible
+   * list has entries.
+   */
+  private popupListNoResultsEl!: HTMLElement
+  /**
    * Whether the search input is active for the CURRENT open cycle. Evaluated
    * from the `searchable` setting (predicate form reads the current items) in
    * the constructor and on every `open()` - never re-evaluated mid-open, so
@@ -538,7 +551,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.searchInputEl = this.createSearchInputEl()
     // input always built; non-searchable keeps it `hidden`. Search box must
     // sit above the listbox: listbox children must be options only.
-    this.popupEl.append(this.searchInputEl, this.popupListEl)
+    this.popupListNoResultsEl = this.createPopupListNoResultsEl()
+    this.popupEl.append(this.searchInputEl, this.popupListEl, this.popupListNoResultsEl)
     this.popupEl.hidden = true
     this.syncSearchModeToDom()
     // Force border-box on the popup elements so the positioner's max-height
@@ -940,6 +954,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.itemEls = els
     this.focusedEl = undefined
     this.commitPopupSegmentsToDom(this.computePopupSegments(list, els))
+    this.syncPopupListNoResultsToDom()
     this.positioner?.reposition()
     // Clamp focused index if the visible list shrank, then re-apply visuals.
     if (this.focusedIndex >= list.length) {
@@ -1572,6 +1587,28 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     const el = document.createElement('div')
     el.className = this.classIdMap.popupClass
     return el
+  }
+
+  /**
+   * Build the no-results message element. `role="status"` announces its
+   * appearance politely; it lives OUTSIDE the listbox (options-only children)
+   * and its text comes from `texts.popupListNoResults`.
+   */
+  private createPopupListNoResultsEl(): HTMLElement {
+    const el = document.createElement('div')
+    el.className = this.classIdMap.popupListNoResultsClass
+    el.setAttribute('role', 'status')
+    el.textContent = this.settings.texts.popupListNoResults
+    el.hidden = true
+    return el
+  }
+
+  /**
+   * Mirror the visible-list-empty state onto the no-results message element
+   * (`hidden` while there is at least one visible item).
+   */
+  private syncPopupListNoResultsToDom(): void {
+    this.popupListNoResultsEl.hidden = this.getVisibleItems().length > 0
   }
 
   /** Inner element with `role="listbox"`. Holds item children. */

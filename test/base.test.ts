@@ -28,7 +28,9 @@ test('existing content in target is wiped', () => {
   const target = mount()
   assert.equal(target.textContent, 'old content')
   new TestSelect<string>(target)
-  assert.equal(target.textContent, '')
+  // The caller's prior content is gone; what remains is only library-built
+  // structure (e.g. the hidden no-results message's text).
+  assert.equal(target.textContent!.includes('old content'), false)
 })
 
 test('trigger has correct ARIA attributes', () => {
@@ -56,15 +58,18 @@ test('popup list has correct ARIA attributes', () => {
   assert.ok(lb.className.includes('llselect-popup-list'))
 })
 
-test('popup contains the (hidden) search input and the popup list, in order', () => {
+test('popup contains the (hidden) search input, the popup list, and the no-results message, in order', () => {
   const inst = new TestSelect<string>(mount())
   const popupChildren = Array.from(inst.popupEl.children) as HTMLElement[]
-  assert.equal(popupChildren.length, 2)
+  assert.equal(popupChildren.length, 3)
   // The search input is always built (see docs/DESIGN.md) but `hidden` when
-  // `searchable: false`. The listbox follows it.
+  // search is inactive. The listbox follows it; the no-results message
+  // (also always built, `hidden` while items are visible) comes last.
   assert.equal(popupChildren[0]!.tagName, 'INPUT')
   assert.equal(popupChildren[0]!.hidden, true)
   assert.equal(popupChildren[1], inst.popupListEl)
+  assert.ok(popupChildren[2]!.classList.contains(inst.classIdMap.popupListNoResultsClass))
+  assert.equal(popupChildren[2]!.hidden, true)
 })
 
 test('trigger and popup are children of rootEl in order', () => {

@@ -199,6 +199,25 @@ test('filtering does not change the chosen set; hidden chosen items stay chosen'
   assert.deepEqual(sel.getChosenItems(), ['Brazil'])
 })
 
+test('a filter with zero matches shows the no-results message (role=status, outside the listbox)', () => {
+  const sel = new LLSelectSingle<string>(mount(), { searchable: true })
+  sel.setItems(['apple', 'banana'])
+  sel.open()
+  const msg = sel.popupEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListNoResultsClass}`)!
+  assert.equal(msg.hidden, true) // results present -> hidden
+  const input = searchInput(sel)
+  input.value = 'zzz'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.equal(sel.popupListEl.querySelectorAll('[role="option"]').length, 0)
+  assert.equal(msg.hidden, false)
+  assert.equal(msg.getAttribute('role'), 'status')
+  assert.equal(msg.textContent, 'No results found')
+  assert.equal(msg.parentElement, sel.popupEl) // outside the listbox (options-only children)
+  input.value = '' // clearing the filter hides it again
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.equal(msg.hidden, true)
+})
+
 // --- keyboard / Esc two-stage / Tab close ------------------------------
 
 test('Esc clears the filter first; a second Esc closes and returns focus to trigger', () => {

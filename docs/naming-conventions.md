@@ -258,6 +258,7 @@ parameterized messages take resolved primitives, never `T`:
 | `triggerPlaceholder`          | `string`                                              |
 | `searchInputAriaLabel`        | `string`                                              |
 | `searchInputPlaceholder`      | `string \| null`                                      |
+| `popupListNoResults`          | `string`                                              |
 | `triggerClearButtonAriaLabel` | `string`                                              |
 | `tagRemoveButtonAriaLabel`    | `(itemLabel: string) => string`                       |
 | `triggerCountSummary`         | `(chosenCount: number, totalCount: number) => string` |

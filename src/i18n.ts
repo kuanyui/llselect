@@ -20,6 +20,7 @@ export const ja: LLSelectTexts = {
   triggerPlaceholder: '選択してください',
   searchInputAriaLabel: '検索',
   searchInputPlaceholder: '絞り込み（Escでクリア）',
+  popupListNoResults: '該当する結果はありません',
   triggerClearButtonAriaLabel: '選択をクリア',
   tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel}を削除`,
   triggerCountSummary: (chosenCount, totalCount) =>
@@ -31,6 +32,7 @@ export const zhTW: LLSelectTexts = {
   triggerPlaceholder: '請選擇',
   searchInputAriaLabel: '搜尋',
   searchInputPlaceholder: '篩選（按 Esc 清除）',
+  popupListNoResults: '沒有符合的結果',
   triggerClearButtonAriaLabel: '清除選擇',
   tagRemoveButtonAriaLabel: (itemLabel) => `移除 ${itemLabel}`,
   triggerCountSummary: (chosenCount, totalCount) =>
@@ -42,6 +44,7 @@ export const ar: LLSelectTexts = {
   triggerPlaceholder: 'الرجاء الاختيار',
   searchInputAriaLabel: 'بحث',
   searchInputPlaceholder: 'تصفية (Esc للمسح)',
+  popupListNoResults: 'لا توجد نتائج',
   triggerClearButtonAriaLabel: 'مسح التحديد',
   tagRemoveButtonAriaLabel: (itemLabel) => `إزالة ${itemLabel}`,
   triggerCountSummary: (chosenCount, totalCount) =>
@@ -53,6 +56,7 @@ export const he: LLSelectTexts = {
   triggerPlaceholder: 'נא לבחור',
   searchInputAriaLabel: 'חיפוש',
   searchInputPlaceholder: 'סינון (Esc לניקוי)',
+  popupListNoResults: 'לא נמצאו תוצאות',
   triggerClearButtonAriaLabel: 'נקה בחירה',
   tagRemoveButtonAriaLabel: (itemLabel) => `הסר ${itemLabel}`,
   triggerCountSummary: (chosenCount, totalCount) =>
