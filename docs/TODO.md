@@ -159,6 +159,25 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       format), so the change is safe.
 - [x] **R14 - draft.ts gets an ABANDONED header** (only README mentions it;
       the file itself looks live).
+- [ ] **R16 - apply the s7b rename table** (Button-system; element nouns;
+      Container-Content law; naming-conventions.md s7): settings / protected
+      methods / classIdMap / CSS classes / themes / demo / docs. Also adds the
+      two thin content methods (`createTriggerClearButtonContentEl` /
+      `createTagRemoveButtonContentEl`) completing the law.
+- [ ] **R17 - texts bag.** New `src/texts.ts`: `LLSelectTexts` (message-id
+      keys per s7a.4) + `en` (the defaults, single source). Base setting
+      `texts` (input `Partial<LLSelectTexts>`, resolved vs `en`); R1's flat
+      string settings fold in; the multi count summary reads
+      `texts.triggerCountSummary(chosenCount, totalCount)` (called only when
+      chosenCount > 0; 0 shows `placeholder`).
+- [ ] **R18 - `llselect/i18n` subpath.** `src/i18n.ts` re-exports `en` and
+      adds `ja` / `zhTW` (pure data; only inlines texts.ts, never base).
+      Rollup config array (second entry -> dist/i18n.*), package.json
+      `exports["./i18n"]`. CLAUDE.md gains the i18n non-ASCII exemption;
+      zh-TW strings use CJK/half-width spacing, ja follows Japanese
+      convention (no spacing).
+- [ ] **R19 - demo section for i18n** (zhTW pack on a searchable multi with
+      tags + clearable, so every translated string is visible).
 
 Ruled, no code change:
 
@@ -178,19 +197,16 @@ Ruled, no code change:
 
 ### Open rulings (waiting on user)
 
-- [ ] **O1 - built-in i18n language packs.** R1 makes every AT string a
-      setting (the mechanism). Should the library also ship translations
-      (the content), e.g. pure-data presets under `llselect/i18n` (`zhTW`,
-      `ja`, ...) spreadable into settings? Pure data is arguably still
-      low-level (opt-in, tree-shakeable, zero behavior), and mainstream
-      select libraries do bundle translations. Needs: yes/no, the language
-      list, and who vets translation quality. Shape depends on O2.
-- [ ] **O2 - grouped `texts` setting vs flat string settings.** R1 adds flat
-      settings (house style). If O1 lands, a single `texts` object (one bag
-      a language pack can fill) may be nicer; the multi count summary
-      ("3 / 10 selected" / "All n selected") would join it - today it is
-      replaceable only via `createTriggerContentElFn`, which forces DOM
-      building for a pure text change. Decide before 0.2.0 to avoid churn.
+- [x] **O1 - built-in i18n language packs.** RULED: yes - ship `en` / `ja` /
+      `zhTW` as pure-data packs under the `llselect/i18n` subpath (best
+      practice: pay only if you import them). Translation quality: user vets
+      zh-TW; ja is drafted and flagged for review. Work item: R18.
+- [x] **O2 - grouped `texts` setting vs flat string settings.** RULED: grouped
+      `texts` bag. Static strings are plain strings; parameterized messages
+      are functions taking RESOLVED primitives (`itemLabel`, counts - never
+      `T`) so packs can implement them; keys are message ids without `Fn`
+      (naming-conventions.md s7a.4). The count summary joins as
+      `triggerCountSummary`. Work item: R17.
 
 ## API design decisions (open)
 
