@@ -606,6 +606,37 @@ const selGroupRich = new LLSelectSingle(
 selGroupRich.setItems(GROUPED_FOODS)
 //#endregion
 
+//#region 11.4
+// Tags with rich chip content: the SAME createLanguageRowEl (11.1) feeds
+// createTagContentElFn - the chip is to the trigger what the option content
+// is to the row, so one renderer serves both. The library still owns the chip
+// shell + remove button + aria (the remove aria-label stays itemToString-
+// based, never the custom content). createTagRemoveButtonContentElFn swaps
+// the remove icon; unset, the theme's CSS glyph (:empty::before) draws the x.
+const outTagIcons = document.getElementById('out-tag-icons')
+const selTagIcons = new LLSelectMultiple(
+  document.getElementById('mount-tag-icons'),
+  {
+    placeholder: 'Pick languages',
+    triggerDisplay: 'tags',
+    compareFn: (a, b) => a.name === b.name,
+    itemToStringFn: (lang) => lang.name,
+    createItemContentElFn: createLanguageRowEl,
+    createTagContentElFn: createLanguageRowEl,
+    createTagRemoveButtonContentElFn: () => {
+      const i = document.createElement('i')
+      i.className = 'mdi mdi-close-circle-outline'
+      i.setAttribute('aria-hidden', 'true') // decorative; the button carries the aria-label
+      return i
+    },
+    onChange: (chosen) => { outTagIcons.textContent = 'chosen: ' + chosen.map((l) => l.name).join(', ') },
+  }
+)
+selTagIcons.setItems(PROGRAMMING_LANGUAGES)
+// Preselect so the chips (and their icons) are visible on load.
+selTagIcons.setChosenItems([PROGRAMMING_LANGUAGES[1], PROGRAMMING_LANGUAGES[3]])
+//#endregion
+
 //#region 12.1
 // Language packs (imported at the top: `import { en, ja, zhTW } from
 // 'llselect/i18n'`) fill the `texts` setting whole; per-key overrides spread
