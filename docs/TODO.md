@@ -67,6 +67,15 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
       `undefined`, multiple -> `[]`, both through the normal setters so `onChange`
       fires the empty value (no `onClear`). Spec: DESIGN.md "Clear button".
 
+- [ ] **Phase 13 - select-all row** (multi). The A11Y contract is already
+      locked (A11Y.md): the first `role="option"` row of the listbox (inside
+      the arrow-key ring, no extra tab stop), tri-state conveyed visually
+      (checkbox icon) + through the accessible name (e.g.
+      "Select all (3 of 10)" - ARIA `option` has no `mixed`), Enter / click
+      toggles all. Open sub-question (A11Y.md): act on the filtered subset or
+      the entire list (leaning: filtered). Its label becomes an
+      `LLSelectTexts` key when built.
+
 A11Y model (locked, see `A11Y.md`): two ARIA modes picked by `searchable`.
 `searchable: true` uses APG "Combobox with list autocomplete" (focus on the
 search input, `aria-activedescendant` on the input, trigger is a `button`).
@@ -278,6 +287,21 @@ Ruled, no code change:
       `searchable` (R20); the threshold-number shape (select2's
       `minimumResultsForSearch`) was rejected for its naming/off-by-one
       ambiguity - a caller-written predicate is self-documenting.
+- [ ] **`destroy()` lifecycle method** - none exists. Discarding an instance
+      is currently safe ONLY while closed: every document / window listener
+      and the positioner attach on `open()` and detach on `close()`, and the
+      trigger / popup listeners die with their elements. An instance discarded
+      while OPEN leaks the outside-click / focusout / scroll / resize
+      listeners. Decide: add `destroy()` (`close()` + remove the root class /
+      inline styles + drop element refs), or just document the
+      "close before discarding" rule. (The i18n demo's
+      recreate-on-locale-switch already relies on the closed-discard path.)
+- [ ] **Release readiness** - before the first `npm publish`: ja / ar / he
+      packs need native-speaker review (flagged in src/i18n.ts); a real-
+      browser pass for what jsdom cannot cover (RTL mirroring, mousedown
+      focus-steal rules, scrollbar drag on the popup list). Done already:
+      LICENSE file (was referenced by package.json `files` but missing),
+      `prepublishOnly` build+test guard, version-drift test.
 - [ ] **No-results message** - the one applicable gap from the select2 i18n
       survey: a filter with zero matches renders a bare empty listbox (A11Y.md:
       "no match -> empty listbox"); select2 shows "No results found". Would be
