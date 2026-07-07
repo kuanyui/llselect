@@ -280,8 +280,8 @@ DONE - all three phases applied (npm test green: 182; npm run build green).
 
 ## 7. Precision audit - element nouns, Container-Content law, texts keys
 
-> STATUS: RULED (Button-system; long names accepted) - rename in progress
-> (TODO.md R16-R19). Applies ON TOP of s1-s4.
+> STATUS: APPLIED (Button-system; long names accepted) - landed via TODO.md
+> R16-R19 (rename + texts bag + llselect/i18n + demo). Applies ON TOP of s1-s4.
 
 ### 7a. New rules
 
@@ -317,7 +317,7 @@ DONE - all three phases applied (npm test green: 182; npm run build green).
 5. Private helpers may keep shorter names (they matter least) but still obey
    the s1 suffix rules.
 
-### 7b. Rename table (PROPOSED, to apply after rulings)
+### 7b. Rename table (APPLIED)
 
 | Kind               | Before                                        | After                                                                            |
 | ------------------ | --------------------------------------------- | -------------------------------------------------------------------------------- |
