@@ -46,6 +46,8 @@ test('a whole language pack applies to every chrome string (zhTW)', () => {
   assert.equal(clearBtn.getAttribute('aria-label'), zhTW.triggerClearButtonAriaLabel)
   const removeBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.tagRemoveButtonClass}`)!
   assert.equal(removeBtn.getAttribute('aria-label'), zhTW.tagRemoveButtonAriaLabel('a'))
+  const noResults = sel.popupEl.querySelector(`.${sel.classIdMap.popupListNoResultsClass}`)!
+  assert.equal(noResults.textContent, zhTW.popupListNoResults)
 })
 
 test('the count summary comes from the pack (ja)', () => {

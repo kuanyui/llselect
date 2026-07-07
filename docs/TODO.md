@@ -230,7 +230,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
 - [x] **R27 - `onChange` previous param** (per the ruling above): single +
       multiple signatures, `fireChange(previous)` threading, docstrings,
       tests (incl. an added/removed diff example).
-- [ ] **R28 - no-results message** (per the ruling above): base element +
+- [x] **R28 - no-results message** (per the ruling above): base element +
       sync primitive, `texts.popupListNoResults` in all packs, classIdMap +
       themes, A11Y.md Filtering note, tests.
 - [ ] **R29 - Phase 13 select-all row** (per the Phase 13 plan above):

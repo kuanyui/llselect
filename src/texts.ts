@@ -31,6 +31,11 @@ export interface LLSelectTexts {
    * `texts: { searchInputPlaceholder: null }` to remove the default).
    */
   searchInputPlaceholder: string | null
+  /**
+   * Message shown (and announced via `role="status"`) when the visible item
+   * list is empty - a filter matched nothing, or there are no items at all.
+   */
+  popupListNoResults: string
   /** Accessible name (`aria-label`) of the trigger's clear (x) button (`clearable`). */
   triggerClearButtonAriaLabel: string
   /**
@@ -50,6 +55,7 @@ export const en: LLSelectTexts = {
   triggerPlaceholder: 'Please select',
   searchInputAriaLabel: 'Search',
   searchInputPlaceholder: 'Filter (Esc to clear)',
+  popupListNoResults: 'No results found',
   triggerClearButtonAriaLabel: 'Clear selection',
   tagRemoveButtonAriaLabel: (itemLabel) => `Remove ${itemLabel}`,
   triggerCountSummary: (chosenCount, totalCount) =>

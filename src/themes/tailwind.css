@@ -153,6 +153,13 @@
   box-shadow: 0 0 0 3px var(--color-blue-100, #dbeafe);
 }
 
+/* --- no-results message ----------------------------------------- */
+
+.llselect-popup-list-no-results {
+  padding: 0.375rem 0.75rem;
+  color: var(--color-slate-400, #94a3b8);
+}
+
 /* --- disabled (Phase 9) ---------------------------------------- */
 /* aria-disabled + data-disabled, never native `disabled`. Keep pointer
    events alive (no `pointer-events: none`) so hover/focus tooltips work. */
