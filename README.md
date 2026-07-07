@@ -44,7 +44,7 @@ const sel = new LLSelectSingle(el, {
 Subclass only when settings cannot express it:
 
 1. **A new select kind** - new public API / state / interaction (e.g. a TreeSelect).
-2. **A framework wrapper** - e.g. `class VueLLSelect extends LLSelectSingle` for lifecycle glue. This is the main reason llselect is "low-level".
+2. **A framework wrapper** - e.g. `class VueLLSelect extends LLSelectSingle` for lifecycle glue (call `destroy()` on unmount). This is the main reason llselect is "low-level".
 3. **Core behavior with no setting** - e.g. replace `onItemClick` semantics, or take full control of the item element via `createItemEl` (rich HTML, icons).
 
 How the two layers coexist: every customization point is a `protected` method whose default reads its `*Fn` setting. Overriding the method replaces that default - your override wins, plain OO, no hidden precedence. Rationale: `docs/DESIGN.md`.

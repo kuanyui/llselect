@@ -714,6 +714,24 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     if (this.isOpen) { this.renderPopupList() }
   }
 
+  /**
+   * Tear down the instance: close the popup (which detaches every document /
+   * window listener and the positioner), remove the library's class and
+   * inline styles from the caller's mount element, and empty it. Idempotent.
+   * The instance must not be used afterwards.
+   * - REQUIRED before discarding an instance that might be OPEN (framework
+   *   wrappers: call this on unmount) - skipping it there leaks the
+   *   outside-click / focusout / scroll / resize listeners.
+   * - Discarding a CLOSED instance without `destroy()` leaks nothing; it only
+   *   leaves the root class and `overflow-anchor` style on the mount.
+   */
+  public destroy(): void {
+    this.close()
+    this.rootEl.classList.remove(this.classIdMap.rootClass, this.classIdMap.openClass)
+    this.rootEl.style.overflowAnchor = ''
+    this.rootEl.replaceChildren()
+  }
+
   /** Open if closed, close if open. */
   public toggle(): void {
     if (this.isOpen) {
