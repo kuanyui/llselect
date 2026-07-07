@@ -116,6 +116,19 @@ export interface LLSelectBaseSettings<T, GK = string> {
    */
   filterFn: ((item: T, query: string) => boolean) | null
   /**
+   * The no-results message's visible content ELEMENT, without subclassing.
+   * Mirrors `createItemContentElFn`: the library owns the message container
+   * (`role="status"`, class, show/hide), this fills its content only.
+   * - `query` is the current search string (`''` when search is inactive or
+   *   the list is simply empty), so "Nothing matches <query>" is possible.
+   * - Return an `HTMLElement`: inserted as the content (you own it; include
+   *   real text - the status region announces its TEXT content).
+   * - `null` (setting default, or returned): plain text from
+   *   `texts.popupListNoResults`.
+   * Re-evaluated every time the message is shown (the query may differ).
+   */
+  createPopupListNoResultsContentElFn: ((query: string) => HTMLElement | null) | null
+  /**
    * How the popup decides its width. Does NOT affect the trigger - trigger
    * width is always whatever your CSS says.
    *
@@ -523,6 +536,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       searchable: settings?.searchable ?? false,
       texts,
       filterFn: settings?.filterFn ?? null,
+      createPopupListNoResultsContentElFn: settings?.createPopupListNoResultsContentElFn ?? null,
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'match-trigger',
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
@@ -1704,17 +1718,39 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     const el = document.createElement('div')
     el.className = this.classIdMap.popupListNoResultsClass
     el.setAttribute('role', 'status')
-    el.textContent = this.settings.texts.popupListNoResults
     el.hidden = true
     return el
   }
 
   /**
-   * Mirror the visible-list-empty state onto the no-results message element
-   * (`hidden` while there is at least one visible item).
+   * The no-results message's visible content (rich empty-state).
+   * - Default reads `createPopupListNoResultsContentElFn`; `null` (setting
+   *   unset, or returned) = plain text from `texts.popupListNoResults`.
+   * - Override only when extending; for one-off content pass the setting.
+   */
+  protected createPopupListNoResultsContentEl(query: string): HTMLElement | null {
+    return this.settings.createPopupListNoResultsContentElFn
+      ? this.settings.createPopupListNoResultsContentElFn(query)
+      : null
+  }
+
+  /**
+   * Mirror the visible-list-empty state onto the no-results message element:
+   * `hidden` while there is at least one visible item; when shown, (re)fill
+   * its content - `createPopupListNoResultsContentEl(query)` first, else the
+   * plain text from `texts.popupListNoResults`. Same null-branch shape as
+   * `createItemEl` / `createGroupEl`.
    */
   private syncPopupListNoResultsToDom(): void {
-    this.popupListNoResultsEl.hidden = this.getVisibleItems().length > 0
+    const empty = this.getVisibleItems().length === 0
+    this.popupListNoResultsEl.hidden = !empty
+    if (!empty) { return }
+    const content = this.createPopupListNoResultsContentEl(this.query)
+    if (content === null) {
+      this.popupListNoResultsEl.textContent = this.settings.texts.popupListNoResults
+    } else {
+      this.popupListNoResultsEl.replaceChildren(content)
+    }
   }
 
   /** Inner element with `role="listbox"`. Holds item children. */

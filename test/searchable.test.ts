@@ -218,6 +218,67 @@ test('a filter with zero matches shows the no-results message (role=status, outs
   assert.equal(msg.hidden, true)
 })
 
+test('createPopupListNoResultsContentElFn fills the message with rich content (receives the query)', () => {
+  const sel = new LLSelectSingle<string>(mount(), {
+    searchable: true,
+    createPopupListNoResultsContentElFn: (query) => {
+      const el = document.createElement('em')
+      el.className = 'rich-empty'
+      el.textContent = `Nothing matches "${query}"`
+      return el
+    },
+  })
+  sel.setItems(['apple'])
+  sel.open()
+  const input = searchInput(sel)
+  input.value = 'zzz'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  const msg = sel.popupEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListNoResultsClass}`)!
+  assert.equal(msg.hidden, false)
+  assert.equal(msg.querySelector('.rich-empty')!.textContent, 'Nothing matches "zzz"')
+})
+
+test('createPopupListNoResultsContentElFn returning null falls back to texts.popupListNoResults', () => {
+  const sel = new LLSelectSingle<string>(mount(), {
+    searchable: true,
+    createPopupListNoResultsContentElFn: () => null,
+  })
+  sel.setItems(['apple'])
+  sel.open()
+  const input = searchInput(sel)
+  input.value = 'zzz'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  const msg = sel.popupEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListNoResultsClass}`)!
+  assert.equal(msg.textContent, 'No results found')
+})
+
+test('a subclass createPopupListNoResultsContentEl override replaces the setting (override wins)', () => {
+  class Derived extends LLSelectSingle<string> {
+    protected override createPopupListNoResultsContentEl(): HTMLElement | null {
+      const el = document.createElement('b')
+      el.className = 'derived-empty'
+      el.textContent = 'derived'
+      return el
+    }
+  }
+  const sel = new Derived(mount(), {
+    searchable: true,
+    createPopupListNoResultsContentElFn: () => {
+      const i = document.createElement('i')
+      i.className = 'fn-empty'
+      return i
+    },
+  })
+  sel.setItems(['apple'])
+  sel.open()
+  const input = searchInput(sel)
+  input.value = 'zzz'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  const msg = sel.popupEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListNoResultsClass}`)!
+  assert.ok(msg.querySelector('.derived-empty')) // override wins
+  assert.equal(msg.querySelector('.fn-empty'), null)
+})
+
 // --- keyboard / Esc two-stage / Tab close ------------------------------
 
 test('Esc clears the filter first; a second Esc closes and returns focus to trigger', () => {
