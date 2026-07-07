@@ -67,14 +67,20 @@ Status: `[ ]` todo, `[x]` done, `[~]` in progress.
       `undefined`, multiple -> `[]`, both through the normal setters so `onChange`
       fires the empty value (no `onClear`). Spec: DESIGN.md "Clear button".
 
-- [ ] **Phase 13 - select-all row** (multi). The A11Y contract is already
-      locked (A11Y.md): the first `role="option"` row of the listbox (inside
-      the arrow-key ring, no extra tab stop), tri-state conveyed visually
-      (checkbox icon) + through the accessible name (e.g.
-      "Select all (3 of 10)" - ARIA `option` has no `mixed`), Enter / click
-      toggles all. Open sub-question (A11Y.md): act on the filtered subset or
-      the entire list (leaning: filtered). Its label becomes an
-      `LLSelectTexts` key when built.
+- [~] **Phase 13 - select-all row** (multi). RULED: build it; scope = the
+      FILTERED (visible) enabled subset. A11Y contract as locked in A11Y.md:
+      first `role="option"` row of the listbox (inside the arrow-key ring, no
+      extra tab stop), tri-state conveyed visually + through the accessible
+      name (ARIA `option` has no `mixed`), Enter / click toggles. Design
+      decisions for the build (R29): opt-in `selectAllRow: boolean` multi
+      setting (default false); accessible name from
+      `texts.selectAllRowLabel(chosenVisibleCount, visibleTotalCount)`
+      (English: "Select all (3 of 10)"); tri-state visual via a
+      `data-chosen-state="none|some|all"` hook the themes draw; the row acts
+      on visible enabled items only, while the PUBLIC `chooseAll` /
+      `unchooseAll` / `toggleAll` keep their whole-list semantics; the row
+      never enters `itemEls`, so the `itemEls[i] <-> getVisibleItems()[i]`
+      invariant survives (focus tracks it on a separate flag).
 
 A11Y model (locked, see `A11Y.md`): two ARIA modes picked by `searchable`.
 `searchable: true` uses APG "Combobox with list autocomplete" (focus on the
@@ -218,6 +224,19 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       inherit-the-environment model); items become a mixed-direction list
       (Latin + Arabic + Hebrew labels, incl. weak characters) to show what
       bidi does and does not solve.
+- [ ] **R26 - `destroy()`** (per the ruling above): base public method;
+      tests (open-discard leak path, idempotence); README framework-wrapper
+      note; DESIGN "Settings vs methods" method list.
+- [ ] **R27 - `onChange` previous param** (per the ruling above): single +
+      multiple signatures, `fireChange(previous)` threading, docstrings,
+      tests (incl. an added/removed diff example).
+- [ ] **R28 - no-results message** (per the ruling above): base element +
+      sync primitive, `texts.popupListNoResults` in all packs, classIdMap +
+      themes, A11Y.md Filtering note, tests.
+- [ ] **R29 - Phase 13 select-all row** (per the Phase 13 plan above):
+      setting, texts key, render + tri-state sync, keyboard ring extension
+      (separate focus flag; Home lands on the row), visible-scope toggle
+      logic, themes, demo, A11Y.md status flip, tests.
 - [x] **R25 - docs: RTL model.** DESIGN.md gains an "RTL" section: two-layer
       model (chrome direction = inherited `dir`, zero settings, logical
       properties, fit-content awareness; data direction = UBA auto + weak-char
@@ -281,33 +300,35 @@ Ruled, no code change:
 - [ ] **rich-item escape-hatch shape** - still open. Subclassing `createItemEl` is the
       current escape hatch for full control of the item element; decide whether to also
       add a `decorateItemFn(el, item)` setting, or keep the subclass-only path.
-- [ ] **`onChange` diff context** - decide whether to pass `previousChosenItem(s)`
-      alongside current, so users can compute added/removed without tracking.
+- [x] **`onChange` diff context** - RULED: pass the previous value as a
+      SECOND parameter (R27): single
+      `onChange(chosenItem, previousChosenItem)`, multiple
+      `onChange(chosenItems, previousChosenItems)`. Backward compatible
+      (one-arg listeners ignore it); the previous value is the pre-change
+      snapshot.
 - [x] **Conditional search input** - RULED + built as the predicate form of
       `searchable` (R20); the threshold-number shape (select2's
       `minimumResultsForSearch`) was rejected for its naming/off-by-one
       ambiguity - a caller-written predicate is self-documenting.
-- [ ] **`destroy()` lifecycle method** - none exists. Discarding an instance
-      is currently safe ONLY while closed: every document / window listener
-      and the positioner attach on `open()` and detach on `close()`, and the
-      trigger / popup listeners die with their elements. An instance discarded
-      while OPEN leaks the outside-click / focusout / scroll / resize
-      listeners. Decide: add `destroy()` (`close()` + remove the root class /
-      inline styles + drop element refs), or just document the
-      "close before discarding" rule. (The i18n demo's
-      recreate-on-locale-switch already relies on the closed-discard path.)
+- [x] **`destroy()` lifecycle method** - RULED: add it (R26). Framework
+      wrappers (a core README use case) unmount while the popup may be OPEN;
+      without `destroy()` that path leaks the outside-click / focusout /
+      scroll / resize listeners. `destroy()` = `close()` + remove the root
+      class / inline styles + empty the mount; idempotent; the instance must
+      not be used afterwards.
 - [ ] **Release readiness** - before the first `npm publish`: ja / ar / he
       packs need native-speaker review (flagged in src/i18n.ts); a real-
       browser pass for what jsdom cannot cover (RTL mirroring, mousedown
       focus-steal rules, scrollbar drag on the popup list). Done already:
       LICENSE file (was referenced by package.json `files` but missing),
       `prepublishOnly` build+test guard, version-drift test.
-- [ ] **No-results message** - the one applicable gap from the select2 i18n
-      survey: a filter with zero matches renders a bare empty listbox (A11Y.md:
-      "no match -> empty listbox"); select2 shows "No results found". Would be
-      a new empty-state render (not just a string): a non-option element in the
-      popup + a `texts` key (s7 naming: `popupListNoResults`), plus deciding
-      how AT hears it (`role="status"`?). Needs a ruling on whether to build.
+- [x] **No-results message** - RULED: build (R28). Empty visible list shows a
+      message element placed OUTSIDE the listbox (so the listbox keeps its
+      options-only children contract) with `role="status"` (announced once on
+      appearance); text from `texts.popupListNoResults` (all packs); class
+      hook `popupListNoResultsClass`; always built + `hidden`-toggled
+      (search-input precedent). Shows for ANY empty visible list (filtered to
+      zero, or no items at all) - one consistent rule.
 - [x] **RTL support** - RULED + built (R21-R25): zero new API - the component
       inherits the environment's `dir` like a native element; CSS is logical /
       flex-mirrored; the only direction-aware JS is the `fit-content` popup
