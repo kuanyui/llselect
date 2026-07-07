@@ -614,9 +614,10 @@ selGroupRich.setItems(GROUPED_FOODS)
 // app pattern. Deliberately NO `placeholder` (so the pack's localized
 // `triggerPlaceholder` default shows; an explicit `placeholder` is app copy
 // and would win) and NO preselection, so every change on switch comes from
-// the pack alone. Two instances because the displays are exclusive: 'tags'
-// shows the translated remove buttons (chips replace the count summary),
-// default 'count' shows the translated count summary.
+// the pack alone. Three instances: a single (localized placeholder + chosen
+// label in the trigger), and two multis because their displays are exclusive -
+// 'tags' shows the translated remove buttons (chips replace the count
+// summary), default 'count' shows the translated count summary.
 const I18N_PACKS = { en, ja, zhTW, ar, he }
 const RTL_PACKS = new Set(['ar', 'he'])
 const outI18n = document.getElementById('out-i18n')
@@ -629,10 +630,21 @@ function createI18nSelects(packName) {
   // Flex mirrors the trigger slots (arrow lands LEFT, like native <select>),
   // logical padding mirrors the chips, fit-content popups would grow leftward.
   const dir = RTL_PACKS.has(packName) ? 'rtl' : 'ltr'
+  const singleMount = document.getElementById('mount-i18n-single')
   const tagsMount = document.getElementById('mount-i18n-tags')
   const countMount = document.getElementById('mount-i18n-count')
+  singleMount.dir = dir
   tagsMount.dir = dir
   countMount.dir = dir
+  // Single: localized placeholder, and the chosen (possibly RTL) label
+  // rendered in the trigger.
+  const singleSel = new LLSelectSingle(singleMount, {
+    searchable: true,
+    clearable: true,
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+    texts,
+  })
+  singleSel.setItems(MIXED_DIRECTION_COUNTRIES)
   const tagsSel = new LLSelectMultiple(tagsMount, {
     searchable: true,
     clearable: true,

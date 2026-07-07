@@ -638,7 +638,7 @@
   </section>
 
   <section>
-    <h2>12. i18n (language packs)</h2>
+    <h2>12. i18n (language packs) + RTL</h2>
     <p class="hint">
       All chrome strings (trigger placeholder default, search aria-label +
       placeholder, clear x, tag remove buttons, count summary) live in the
@@ -649,21 +649,22 @@
     </p>
 
     <article>
-      <h3>12.1 zhTW / ja / en pack (searchable multi, tags + count)</h3>
+      <h3>12.1 Pack switcher: zhTW / ja / en / ar / he (single + multi)</h3>
       <p class="hint">
         Switch the pack - the instances are recreated (settings are
-        constructor-frozen). No <code>placeholder</code> is passed, so the
+        constructor-frozen). No <code>placeholder</code> is passed, so every
         trigger shows the pack's localized <code>triggerPlaceholder</code>
-        default; nothing is preselected, so every change on switch comes
-        from the pack alone. Pick a few items: the first instance
-        (<code>'tags'</code>) gets translated remove-x buttons (inspect their
-        <code>aria-label</code>), the second (default <code>'count'</code>)
-        shows the translated count summary directly. Open the popup - the
-        search input's placeholder (and <code>aria-label</code>) and the
-        clear x are translated in both. Picking <code>ar</code> /
-        <code>he</code> also sets <code>dir="rtl"</code> on the mounts (the
-        component inherits the environment's direction - there is no RTL
-        setting): the arrow and the x buttons mirror to the LEFT like a native
+        default; nothing is preselected, so every change on switch comes from
+        the pack alone. The single shows the chosen (possibly RTL) label in
+        its trigger; the <code>'tags'</code> multi gets translated remove-x
+        buttons (inspect their <code>aria-label</code>); the
+        <code>'count'</code> multi shows the translated count summary
+        directly. Open any popup - the search input's placeholder (and
+        <code>aria-label</code>) and the clear x are translated everywhere.
+        Picking <code>ar</code> / <code>he</code> also sets
+        <code>dir="rtl"</code> on the mounts (the component inherits the
+        environment's direction - there is no RTL setting): the arrow and the
+        x buttons mirror to the LEFT like a native
         <code>&lt;select&gt;</code>, chips flow right-to-left, and the
         mixed-direction item labels reorder via bidi.
       </p>
@@ -679,10 +680,12 @@
               <option value="he">he (RTL)</option>
             </select>
           </div>
-          <div id="mount-i18n-tags" style="margin-top:0.5rem"></div>
-          <div class="out">^ <code>triggerDisplay: 'tags'</code> - translated remove x per chip</div>
+          <div id="mount-i18n-single" style="margin-top:0.5rem"></div>
+          <div class="out">^ <code>LLSelectSingle</code> - localized placeholder, chosen label in the trigger</div>
+          <div id="mount-i18n-tags" style="margin-top:0.7rem"></div>
+          <div class="out">^ multi, <code>triggerDisplay: 'tags'</code> - translated remove x per chip</div>
           <div id="mount-i18n-count" style="margin-top:0.7rem"></div>
-          <div class="out">^ default <code>'count'</code> - translated count summary</div>
+          <div class="out">^ multi, default <code>'count'</code> - translated count summary</div>
           <div class="out" id="out-i18n">chosen: </div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="12.1"><code></code></pre></details>
