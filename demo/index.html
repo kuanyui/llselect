@@ -308,9 +308,12 @@
         first option (ArrowUp from the first item or Home reach it; Enter
         toggles). It acts on the VISIBLE enabled subset: type a filter, then
         activate the row - only the matches toggle, hidden choices are
-        preserved. The icon comes from the theme's
-        <code>data-chosen-state</code> hook, the counting label from
-        <code>texts.selectAllRowLabel</code>.
+        preserved. This demo fills the row via
+        <code>createSelectAllRowContentElFn</code> with a tri-state SVG
+        checkbox (<code>createCheckboxSvgEl</code>); without that hook, themes
+        draw a text glyph from the <code>data-chosen-state</code> attribute.
+        The accessible name stays the counting
+        <code>texts.selectAllRowLabel</code> either way.
       </p>
       <div class="demo-split">
         <div class="demo-pane">

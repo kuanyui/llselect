@@ -315,8 +315,8 @@ DONE - all three phases applied (npm test green: 182; npm run build green).
    `null` = that container's default content. Already conforming: trigger,
    item, tag, groupLabel. Brought into conformance by 7b: triggerArrow,
    triggerClearButton, tagRemoveButton. Later additions follow it:
-   popupListNoResults (query-aware). Plain `create<Element>El` (no
-   `Content`) builds the WHOLE element.
+   popupListNoResults (query-aware), selectAllRow (tri-state + counts).
+   Plain `create<Element>El` (no `Content`) builds the WHOLE element.
 4. **texts keys are message ids, never `Fn`-suffixed** (values may be strings
    or functions; s3 governs settings fields only, and the setting here is
    `texts`). Attribute strings: `<elementFamily><Attribute>`

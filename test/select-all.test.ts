@@ -111,6 +111,58 @@ test('toggleItem keeps the row fresh via the O(1) leading-row replace (items unt
   assert.equal(row(sel)!.textContent, 'Select all (1 of 2)')
 })
 
+test('createSelectAllRowContentElFn fills the row; accessible name stays the counting label', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    selectAllRow: true,
+    createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
+      const el = document.createElement('span')
+      el.className = 'rich-select-all'
+      el.setAttribute('data-got', `${chosenState}:${chosenCount}:${totalCount}`)
+      return el
+    },
+  })
+  sel.setItems(['a', 'b'])
+  sel.toggleItem('a')
+  sel.open()
+  const r = row(sel)!
+  assert.equal(r.querySelector('.rich-select-all')!.getAttribute('data-got'), 'some:1:2')
+  assert.equal(r.getAttribute('aria-label'), 'Select all (1 of 2)') // name pinned to the label
+})
+
+test('createSelectAllRowContentElFn returning null falls back to the plain label (no aria-label)', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    selectAllRow: true,
+    createSelectAllRowContentElFn: () => null,
+  })
+  sel.setItems(['a'])
+  sel.open()
+  assert.equal(row(sel)!.textContent, 'Select all (0 of 1)')
+  assert.equal(row(sel)!.getAttribute('aria-label'), null)
+})
+
+test('a subclass createSelectAllRowContentEl override replaces the setting (override wins)', () => {
+  class Derived extends LLSelectMultiple<string> {
+    protected override createSelectAllRowContentEl(): HTMLElement | null {
+      const el = document.createElement('b')
+      el.className = 'derived-select-all'
+      el.textContent = 'derived'
+      return el
+    }
+  }
+  const sel = new Derived(mount(), {
+    selectAllRow: true,
+    createSelectAllRowContentElFn: () => {
+      const i = document.createElement('i')
+      i.className = 'fn-select-all'
+      return i
+    },
+  })
+  sel.setItems(['a'])
+  sel.open()
+  assert.ok(row(sel)!.querySelector('.derived-select-all')) // override wins
+  assert.equal(row(sel)!.querySelector('.fn-select-all'), null)
+})
+
 test('no actionable items -> no row (everything disabled)', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     selectAllRow: true,

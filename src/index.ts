@@ -21,6 +21,7 @@ export type {
 
 export { LLSelectMultiple } from './multiple.js'
 export type {
+  LLSelectChosenState,
   LLSelectMultipleSettings,
   LLSelectMultipleSettingsInput,
   LLSelectMultipleTriggerContext,

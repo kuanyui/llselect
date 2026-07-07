@@ -474,10 +474,13 @@ selTags.setChosenItems(['Japan', 'Brazil', 'Canada'])
 //#endregion
 
 //#region 5.5
-// Select-all row: opt-in, tri-state (data-chosen-state drives the theme's
-// icon), acting on the VISIBLE enabled subset - filter first, then activate
-// the row: only the matches toggle, hidden choices are preserved. The public
-// chooseAll/unchooseAll/toggleAll keep their whole-list semantics.
+// Select-all row: opt-in, tri-state, acting on the VISIBLE enabled subset -
+// filter first, then activate the row: only the matches toggle, hidden
+// choices are preserved. The public chooseAll/unchooseAll/toggleAll keep
+// their whole-list semantics. createSelectAllRowContentElFn fills the row
+// with a tri-state SVG checkbox (createCheckboxSvgEl) + the library's own
+// counting label (en pack); without the hook, themes draw a text glyph from
+// data-chosen-state. The accessible name stays texts.selectAllRowLabel.
 const outSelectAll = document.getElementById('out-select-all')
 const selSelectAll = new LLSelectMultiple(
   document.getElementById('mount-select-all'),
@@ -485,6 +488,16 @@ const selSelectAll = new LLSelectMultiple(
     placeholder: 'Pick countries',
     searchable: true,
     selectAllRow: true,
+    createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
+      const row = document.createElement('span')
+      row.className = 'lang-row' // inline-flex + gap (demo CSS)
+      const iconState = chosenState === 'all' ? 'checked' : chosenState === 'some' ? 'indeterminate' : 'unchecked'
+      row.append(
+        createCheckboxSvgEl({ state: iconState }),
+        en.selectAllRowLabel(chosenCount, totalCount), // reuse the library's translation
+      )
+      return row
+    },
     onChange: (chosen) => { outSelectAll.textContent = 'chosen: ' + chosen.length + ' items' },
   }
 )
