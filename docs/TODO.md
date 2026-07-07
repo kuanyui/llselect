@@ -238,6 +238,12 @@ Ruled, no code change:
       add a `decorateItemFn(el, item)` setting, or keep the subclass-only path.
 - [ ] **`onChange` diff context** - decide whether to pass `previousChosenItem(s)`
       alongside current, so users can compute added/removed without tracking.
+- [ ] **No-results message** - the one applicable gap from the select2 i18n
+      survey: a filter with zero matches renders a bare empty listbox (A11Y.md:
+      "no match -> empty listbox"); select2 shows "No results found". Would be
+      a new empty-state render (not just a string): a non-option element in the
+      popup + a `texts` key (s7 naming: `popupListNoResults`), plus deciding
+      how AT hears it (`role="status"`?). Needs a ruling on whether to build.
 - [ ] **RTL support** - not handled yet. Clear / arrow slot order, tag chip flow,
       and paddings should move to CSS logical properties + `dir` awareness (the
       clear button's "right side" becomes left in RTL). Cross-cutting across all

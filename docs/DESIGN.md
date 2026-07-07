@@ -206,7 +206,8 @@ is in `A11Y.md`.
   case-insensitive substring on `itemToString`);
   `texts.searchInputAriaLabel` (default `'Search'` - the input's accessible
   name; it has no visible label) and `texts.searchInputPlaceholder`
-  (default `null` = none) - see "Texts (i18n)" below. IME-aware filtering
+  (default `'Filter (Esc to clear)'` - also teaches the Esc-clears-filter
+  behavior; `null` = no placeholder) - see "Texts (i18n)" below. IME-aware filtering
   (composition-guarded) is part of the contract; see `A11Y.md`.
 
 ## Disabled (Phase 9)

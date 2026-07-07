@@ -63,11 +63,19 @@ test('aria-activedescendant lives on the search input when searchable', () => {
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), null)
 })
 
-test('search input has a default accessible name and no placeholder', () => {
+test('search input has a default accessible name and the default filter placeholder', () => {
   const sel = new LLSelectSingle<string>(mount(), { searchable: true })
   const input = searchInput(sel)
   assert.equal(input.getAttribute('aria-label'), 'Search')
-  assert.equal(input.hasAttribute('placeholder'), false)
+  assert.equal(input.placeholder, 'Filter (Esc to clear)')
+})
+
+test('texts.searchInputPlaceholder null removes the placeholder entirely', () => {
+  const sel = new LLSelectSingle<string>(mount(), {
+    searchable: true,
+    texts: { searchInputPlaceholder: null },
+  })
+  assert.equal(searchInput(sel).hasAttribute('placeholder'), false)
 })
 
 test('texts.searchInputAriaLabel / searchInputPlaceholder are applied; other keys keep defaults', () => {

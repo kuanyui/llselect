@@ -15,7 +15,7 @@ export type { LLSelectTexts } from './texts.js'
 /** Japanese texts. */
 export const ja: LLSelectTexts = {
   searchInputAriaLabel: '検索',
-  searchInputPlaceholder: null,
+  searchInputPlaceholder: '絞り込み（Escでクリア）',
   triggerClearButtonAriaLabel: '選択をクリア',
   tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel}を削除`,
   triggerCountSummary: (chosenCount, totalCount) =>
@@ -25,7 +25,7 @@ export const ja: LLSelectTexts = {
 /** Traditional Chinese (Taiwan) texts. */
 export const zhTW: LLSelectTexts = {
   searchInputAriaLabel: '搜尋',
-  searchInputPlaceholder: null,
+  searchInputPlaceholder: '篩選（按 Esc 清除）',
   triggerClearButtonAriaLabel: '清除選擇',
   tagRemoveButtonAriaLabel: (itemLabel) => `移除 ${itemLabel}`,
   triggerCountSummary: (chosenCount, totalCount) =>
