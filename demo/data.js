@@ -88,6 +88,23 @@ export const PROGRAMMING_LANGUAGES = [
   { name: 'Kotlin', icon: 'language-kotlin', color: '#7f52ff' },
 ]
 
+// i18n / RTL demo (section 12): mixed-direction labels. The Unicode Bidi
+// Algorithm reorders runs inside each label automatically; the parenthesised
+// and numbered entries show how weak characters follow the item's base
+// direction (see DESIGN.md "RTL").
+export const MIXED_DIRECTION_COUNTRIES = [
+  'Japan',
+  'مصر',
+  'ישראל',
+  'France',
+  'المغرب',
+  'יוון',
+  'Taiwan',
+  'السعودية (Saudi Arabia)',
+  'תל אביב 123',
+  'Germany',
+]
+
 // Grouped items for the optgroup demos (section 12). Pre-sorted by category:
 // contiguous-run grouping needs items sharing a group to be adjacent.
 export const GROUPED_FOODS = [

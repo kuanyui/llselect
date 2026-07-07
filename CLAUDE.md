@@ -70,7 +70,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 - All source code, identifiers, file names, comments, and documentation are English only.
 - Use only the ASCII hyphen-minus character `-`. Do not use em dash, en dash, smart quotes, or other non-ASCII punctuation anywhere in code or docs.
-- Exception to the two rules above: i18n resource STRINGS (the translated values in `src/i18n.ts` language packs) are inherently non-English / non-ASCII. Identifiers, comments, and docs in those files stay English/ASCII. Typography inside translations: zh-TW puts a space between CJK and half-width characters (Pangu spacing); ja follows Japanese convention (no such spacing).
+- Exception to the two rules above: i18n resource STRINGS (the translated values in `src/i18n.ts` language packs, and demo data that exists to demonstrate i18n / RTL) are inherently non-English / non-ASCII. Identifiers, comments, and docs in those files stay English/ASCII. Typography inside translations: zh-TW puts a space between CJK and half-width characters (Pangu spacing); ja follows Japanese convention (no such spacing).
 - Comments should be terse. Skip anything obvious from the code; only note non-obvious intent, invariants, or workarounds.
 - Browser target: roughly the last 5 years. Do not add polyfills, vendor prefixes, or workarounds for older versions.
 - TypeScript: write explicit, precise types. Do not use `any` unless genuinely unavoidable; when you must, add a short comment explaining why.

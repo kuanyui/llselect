@@ -1,6 +1,6 @@
 import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, createChevronDownSvgEl, createTriangleDownSvgEl, createCheckboxSvgEl } from '../dist/index.mjs'
-import { en, ja, zhTW } from '../dist/i18n.mjs'
-import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS } from './data.js'
+import { ar, en, he, ja, zhTW } from '../dist/i18n.mjs'
+import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS, MIXED_DIRECTION_COUNTRIES } from './data.js'
 
 console.log('llselect v' + LLSELECT_VERSION)
 
@@ -617,13 +617,23 @@ selGroupRich.setItems(GROUPED_FOODS)
 // the pack alone. Two instances because the displays are exclusive: 'tags'
 // shows the translated remove buttons (chips replace the count summary),
 // default 'count' shows the translated count summary.
-const I18N_PACKS = { en, ja, zhTW }
+const I18N_PACKS = { en, ja, zhTW, ar, he }
+const RTL_PACKS = new Set(['ar', 'he'])
 const outI18n = document.getElementById('out-i18n')
 const i18nPackSelect = document.getElementById('i18n-pack-select')
 function createI18nSelects(packName) {
   // The constructor wipes each mount's children, so re-mounting is just `new`.
   const texts = I18N_PACKS[packName]
-  const tagsSel = new LLSelectMultiple(document.getElementById('mount-i18n-tags'), {
+  // RTL packs set `dir` on the mounts: the component inherits the
+  // environment's direction like a native element (there is NO rtl setting).
+  // Flex mirrors the trigger slots (arrow lands LEFT, like native <select>),
+  // logical padding mirrors the chips, fit-content popups would grow leftward.
+  const dir = RTL_PACKS.has(packName) ? 'rtl' : 'ltr'
+  const tagsMount = document.getElementById('mount-i18n-tags')
+  const countMount = document.getElementById('mount-i18n-count')
+  tagsMount.dir = dir
+  countMount.dir = dir
+  const tagsSel = new LLSelectMultiple(tagsMount, {
     searchable: true,
     clearable: true,
     triggerDisplay: 'tags',
@@ -631,14 +641,17 @@ function createI18nSelects(packName) {
     texts,
     onChange: (chosen) => { outI18n.textContent = 'chosen: ' + chosen.join(', ') },
   })
-  tagsSel.setItems(COUNTRIES)
-  const countSel = new LLSelectMultiple(document.getElementById('mount-i18n-count'), {
+  // Mixed-direction labels: bidi reorders runs inside each item on its own;
+  // the weak-character entries (parens / digits) show the base-direction
+  // caveat that per-item dir="auto" / <bdi> would solve (DESIGN.md "RTL").
+  tagsSel.setItems(MIXED_DIRECTION_COUNTRIES)
+  const countSel = new LLSelectMultiple(countMount, {
     searchable: true,
     clearable: true,
     createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
     texts,
   })
-  countSel.setItems(COUNTRIES)
+  countSel.setItems(MIXED_DIRECTION_COUNTRIES)
 }
 i18nPackSelect.addEventListener('change', () => createI18nSelects(i18nPackSelect.value))
 createI18nSelects(i18nPackSelect.value)
