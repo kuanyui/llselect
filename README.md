@@ -11,6 +11,38 @@ This is not mean to provide a full-bundle select (such `select2.js`). This provi
 - Customizable HTML renderer function.
 - Search input.
 
+# Install
+
+```sh
+npm install llselect
+```
+
+# Quick start
+
+```js
+import { LLSelectSingle, LLSelectMultiple } from 'llselect'
+import 'llselect/themes/vanilla.css' // optional: any shipped theme, or bring your own CSS
+
+const sel = new LLSelectSingle(document.querySelector('#mount'), {
+  placeholder: 'Pick a fruit',
+  onChange: (item, previousItem) => console.log(item),
+})
+sel.setItems(['Apple', 'Banana', 'Cherry'])
+```
+
+Multi select: `new LLSelectMultiple(el, { ... })` - `getChosenItems()` /
+`toggleItem()` / `triggerDisplay: 'tags'` / `selectAllRow: true` and friends.
+
+Language packs (optional, tree-shakeable pure data):
+
+```js
+import { zhTW } from 'llselect/i18n'
+new LLSelectSingle(el, { texts: zhTW })
+```
+
+No build tool? The UMD bundle exposes `window.llselect`
+(`<script src="https://unpkg.com/llselect"></script>`), themes via `<link>`.
+
 # Customization: settings or subclassing?
 
 Rule of thumb: **settings configure one instance; subclassing extends the library.**
