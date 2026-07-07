@@ -264,3 +264,94 @@ DONE - all three phases applied (npm test green: 182; npm run build green).
    `replacePopupListItemElInDom`, `findNextEnabledIndex`, `onItemsChanged`, the protected
    (ii) primitives, render* body refactor.
 3. public / settings: `create*SvgEl` factories, `createItemContentElFn`, 4b once decided.
+
+## 7. Precision audit - element nouns, Container-Content law, texts keys
+
+> STATUS: PROPOSED - this section is the plan; code / CSS / docs not yet
+> renamed. Apply only after the OPEN rulings (7d) are settled. Applies ON TOP
+> of s1-s4.
+
+### 7a. New rules
+
+1. **Element names are nouns, never bare verbs.** Any name denoting an ELEMENT
+   (classIdMap key, `*El` field, `create*El` method, texts-key prefix) must
+   read as a noun phrase. Verb-derived elements take `Button` - they are all
+   real `<button>`s, and `<verb> button` is natural English (play button,
+   submit button): `triggerClearButton`, `tagRemoveButton`. Verbs stay verbs
+   on ACTIONS (`clearSelection`, `toggleItem`, `open`); `-able` adjectives
+   stay on capability flags (`clearable`, `searchable`).
+2. **Family prefix (DESIGN.md "Element family naming") applies to ALL trigger
+   children.** The clear button is a direct child of the trigger, like
+   `triggerContent` / `triggerArrow`, so it carries the `trigger` prefix.
+   Today's `clear*` family violated the existing rule. `tagRemoveButton`
+   needs no extra prefix (`tag` is already in the name).
+3. **Container-Content law.** Every "library owns the container element +
+   wiring; the hook fills only its visible content" customization point is
+   named `create<Container>ContentElFn` (setting) +
+   `create<Container>ContentEl` (protected, default reads the setting);
+   `null` = that container's default content. Already conforming: trigger,
+   item, tag, groupLabel. Brought into conformance by 7b: triggerArrow,
+   triggerClearButton, tagRemoveButton. Plain `create<Element>El` (no
+   `Content`) builds the WHOLE element.
+4. **texts keys are message ids, never `Fn`-suffixed** (values may be strings
+   or functions; s3 governs settings fields only, and the setting here is
+   `texts`). Attribute strings: `<elementFamily><Attribute>`
+   (`searchInputAriaLabel`, `triggerClearButtonAriaLabel`,
+   `tagRemoveButtonAriaLabel`). Generated content strings:
+   `<family><SemanticName>` (`triggerCountSummary`). Parameterized messages
+   take RESOLVED primitives (`itemLabel: string`, counts) - never `T` - so a
+   language pack can implement them; per-`T` control stays on the protected
+   method (`itemToTagRemoveButtonAriaLabel`).
+5. Private helpers may keep shorter names (they matter least) but still obey
+   the s1 suffix rules.
+
+### 7b. Rename table (PROPOSED, to apply after rulings)
+
+| Kind               | Before                                        | After                                                                            |
+| ------------------ | --------------------------------------------- | -------------------------------------------------------------------------------- |
+| classIdMap + CSS   | `clearClass` / `.llselect-clear`              | `triggerClearButtonClass` / `.llselect-trigger-clear-button`                     |
+| classIdMap + CSS   | `tagRemoveClass` / `.llselect-tag-remove`     | `tagRemoveButtonClass` / `.llselect-tag-remove-button`                           |
+| setting            | `createArrowElFn`                             | `createTriggerArrowContentElFn`                                                  |
+| type alias         | `LLSelectCreateArrowElFn`                     | `LLSelectCreateTriggerArrowContentElFn`                                          |
+| setting            | `createClearElFn`                             | `createTriggerClearButtonContentElFn`                                            |
+| setting (multiple) | `createTagRemoveElFn`                         | `createTagRemoveButtonContentElFn`                                               |
+| protected          | `createArrowEl`                               | `createTriggerArrowContentEl`                                                    |
+| protected          | `createClearEl` (whole button)                | `createTriggerClearButtonEl`                                                     |
+| protected NEW      | -                                             | `createTriggerClearButtonContentEl` (thin, reads the setting)                    |
+| protected          | `createTagRemoveEl` (whole button)            | `createTagRemoveButtonEl`                                                        |
+| protected NEW      | -                                             | `createTagRemoveButtonContentEl` (thin, reads the setting)                       |
+| protected          | `itemToTagRemoveLabel`                        | `itemToTagRemoveButtonAriaLabel`                                                 |
+| private            | `commitArrowElToDom`                          | `commitTriggerArrowContentElToDom`                                               |
+| setting -> texts   | `searchInputAriaLabel` (flat)                 | `texts.searchInputAriaLabel`                                                     |
+| setting -> texts   | `searchInputPlaceholder` (flat)               | `texts.searchInputPlaceholder`                                                   |
+| setting -> texts   | `clearButtonAriaLabel` (flat)                 | `texts.triggerClearButtonAriaLabel`                                              |
+| setting -> texts   | `itemToTagRemoveLabelFn: (item: T) => string` | `texts.tagRemoveButtonAriaLabel: (itemLabel: string) => string`                  |
+| texts NEW          | - (hardcoded count summary)                   | `texts.triggerCountSummary: (chosenCount: number, totalCount: number) => string` |
+
+`triggerCountSummary` params are named `chosenCount` / `totalCount`: the
+project vocabulary is `chosen*` (never `selected` - that is the ARIA spec
+string; never `all` - that is the bulk-action word).
+
+### 7c. Audited, kept as-is
+
+| Name                                         | Why kept                                                                                                                       |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `placeholder`                                | control-level concept (same as HTML input placeholder); the search input's is fully qualified (`texts.searchInputPlaceholder`) |
+| `clearable` / `searchable`                   | capability flags describe the CONTROL, not an element; verbs/adjectives are correct on actions and abilities                   |
+| `clearSelection` / `toggleItem` / `open` ... | ACTIONS keep verbs (the noun rule is for elements only)                                                                        |
+| `openClass` (`.llselect-open`)               | a state class on root, not an element name                                                                                     |
+| `triggerDisplay`                             | already family-prefixed                                                                                                        |
+| keyboard / positioning / icons module fns    | audited, all conform to s1-s3                                                                                                  |
+
+### 7d. OPEN rulings
+
+- **Button-system vs -er-system.** 7b uses `tagRemoveButton` /
+  `triggerClearButton` (RECOMMENDED: both ARE `<button>`s; one uniform rule;
+  natural English; and the -er system has no good form for clear - `Cleaner` /
+  `Clearer` are both broken). The user's earlier ruling said `tagRemover`; if
+  that stands, the clear side has no consistent -er counterpart and rule 7a.1
+  must be rewritten around `-er` nominalization instead.
+- **Long-name acceptance.** The law yields e.g.
+  `createTriggerClearButtonContentElFn` (33 chars). CLAUDE.md s5 explicitly
+  prefers explicit over brief; confirm the length is acceptable before the
+  rename lands everywhere (settings, docs, themes, demo).
