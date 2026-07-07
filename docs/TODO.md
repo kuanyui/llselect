@@ -204,7 +204,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       `match-trigger` needs nothing (same width + position).
 - [x] **R23 - i18n packs `ar` / `he`** (+ `textsByLocale` keys). Translations
       drafted by LLM - flag for native-speaker review before a release.
-- [ ] **R24 - demo: RTL in section 12.** Pack picker gains ar / he; picking an
+- [x] **R24 - demo: RTL in section 12.** Pack picker gains ar / he; picking an
       RTL pack sets `dir="rtl"` on the mounts (demonstrating the
       inherit-the-environment model); items become a mixed-direction list
       (Latin + Arabic + Hebrew labels, incl. weak characters) to show what

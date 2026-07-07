@@ -660,7 +660,12 @@
         <code>aria-label</code>), the second (default <code>'count'</code>)
         shows the translated count summary directly. Open the popup - the
         search input's placeholder (and <code>aria-label</code>) and the
-        clear x are translated in both.
+        clear x are translated in both. Picking <code>ar</code> /
+        <code>he</code> also sets <code>dir="rtl"</code> on the mounts (the
+        component inherits the environment's direction - there is no RTL
+        setting): the arrow and the x buttons mirror to the LEFT like a native
+        <code>&lt;select&gt;</code>, chips flow right-to-left, and the
+        mixed-direction item labels reorder via bidi.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -670,6 +675,8 @@
               <option value="zhTW" selected>zhTW</option>
               <option value="ja">ja</option>
               <option value="en">en</option>
+              <option value="ar">ar (RTL)</option>
+              <option value="he">he (RTL)</option>
             </select>
           </div>
           <div id="mount-i18n-tags" style="margin-top:0.5rem"></div>
