@@ -1312,16 +1312,20 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Move keyboard focus onto the leading row (no-op when none is rendered).
-   * The item focus is cleared (`focusedIndex` becomes -1). Protected so a
-   * subclass can wire its leading row's click to focus-then-activate,
-   * mirroring how item clicks call `setFocusedIndex` before `onItemClick`.
+   * Move keyboard focus onto the leading row. Returns whether the row is now
+   * focused (`false` = none is rendered, nothing changed). The item focus is
+   * cleared (`focusedIndex` becomes -1). Protected so a subclass can wire its
+   * leading row's click to focus-then-activate (mirroring how item clicks
+   * call `setFocusedIndex` before `onItemClick`) and use it in
+   * `focusInitial` (the leading row is the listbox's FIRST option).
    */
-  protected focusLeadingRow(): void {
-    if (!this.leadingRowEl || this.leadingRowFocused) { return }
+  protected focusLeadingRow(): boolean {
+    if (!this.leadingRowEl) { return false }
+    if (this.leadingRowFocused) { return true }
     this.leadingRowFocused = true
     this.focusedIndex = -1
     this.syncFocusedIndexToDom()
+    return true
   }
 
   /**

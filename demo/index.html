@@ -305,8 +305,10 @@
       <h3>5.5 Select-all row (tri-state, filtered scope)</h3>
       <p class="hint">
         <code>selectAllRow: true</code> pins a tri-state select-all row as the
-        first option (ArrowUp from the first item or Home reach it; Enter
-        toggles). It acts on the VISIBLE enabled subset: type a filter, then
+        first option: with nothing chosen it holds the initial keyboard focus
+        on open, ArrowUp from the first item / Home (non-search mode) reach it,
+        Enter toggles. Tab never focuses it - the whole widget stays one tab
+        stop (APG combobox). It acts on the VISIBLE enabled subset: type a filter, then
         activate the row - only the matches toggle, hidden choices are
         preserved. This demo fills the row via
         <code>createSelectAllRowContentElFn</code> with a tri-state SVG

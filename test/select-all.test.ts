@@ -81,22 +81,34 @@ test('disabled items are excluded from the scope and the counts', () => {
   assert.deepEqual([...sel.getChosenItems()], ['a', 'c'])
 })
 
-test('keyboard: ArrowUp from the first item reaches the row; Home lands on it; Enter toggles', () => {
+test('keyboard ring: opens ON the row when nothing is chosen; ArrowDown/Up + Home + Enter', () => {
   const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
   sel.setItems(['a', 'b'])
-  sel.open() // focusInitial -> first item
-  fireKey(sel.triggerEl, 'ArrowUp')
+  sel.open()
   const r = row(sel)!
+  // Nothing chosen -> the select-all row IS the first option -> initial focus.
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), r.id)
   assert.ok(r.classList.contains(sel.classIdMap.itemFocusedClass))
-  fireKey(sel.triggerEl, 'ArrowDown') // back down to the first item
+  fireKey(sel.triggerEl, 'ArrowDown') // down to the first item
   assert.notEqual(sel.triggerEl.getAttribute('aria-activedescendant'), r.id)
-  fireKey(sel.triggerEl, 'Home')
+  fireKey(sel.triggerEl, 'ArrowUp') // back up to the row
+  assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), row(sel)!.id)
+  fireKey(sel.triggerEl, 'ArrowDown')
+  fireKey(sel.triggerEl, 'Home') // Home lands on the row (non-search mode)
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), row(sel)!.id)
   fireKey(sel.triggerEl, 'Enter')
   assert.deepEqual([...sel.getChosenItems()], ['a', 'b'])
   // Focus stays on the (rebuilt) row after activation.
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), row(sel)!.id)
+})
+
+test('opens focused on the first chosen item (not the row) when something is chosen', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['b'])
+  sel.open()
+  const active = sel.triggerEl.getAttribute('aria-activedescendant')!
+  assert.equal(document.getElementById(active)!.textContent, 'b')
 })
 
 test('toggleItem keeps the row fresh via the O(1) leading-row replace (items untouched)', () => {

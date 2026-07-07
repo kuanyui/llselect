@@ -447,8 +447,12 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   /**
-   * On open, focus the first chosen item (if present and enabled), otherwise
-   * the first enabled item. Indices are into `getVisibleItems()`.
+   * On open, focus the first chosen item (if present and enabled). Otherwise
+   * the FIRST OPTION - which is the select-all row when rendered (A11Y.md:
+   * activedescendant points at the first chosen option, else the first
+   * option; the row is the topmost option), so keyboard users discover it
+   * immediately. Else the first enabled item. Indices are into
+   * `getVisibleItems()`.
    */
   protected override focusInitial(): void {
     const list = this.getVisibleItems()
@@ -460,6 +464,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
         return
       }
     }
+    if (this.focusLeadingRow()) { return }
     const first = this.findNextEnabledIndex(0, 1, list)
     if (first >= 0) { this.setFocusedIndex(first) }
   }
