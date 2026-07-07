@@ -99,7 +99,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       on single too. Also make `setChosenItem` refresh the two affected option
       elements while the popup is open (O(1) via
       `replacePopupListItemElInDom`) so the attribute cannot go stale.
-- [ ] **R3 - complete the protected seams.** `matchesQuery` -> protected
+- [x] **R3 - complete the protected seams.** `matchesQuery` -> protected
       (subclass-wide custom matching; default reads `filterFn`). Add
       `protected createArrowEl(state): HTMLElement | SVGElement | null`
       reading `createArrowElFn` (mirrors `createClearEl`);

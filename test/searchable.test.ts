@@ -90,6 +90,22 @@ test('custom filterFn is used when provided', () => {
   assert.deepEqual(rendered, ['apple', 'grape'])
 })
 
+test('a subclass matchesQuery override replaces the default matching (override wins)', () => {
+  class Derived extends LLSelectSingle<string> {
+    protected override matchesQuery(item: string, query: string): boolean {
+      return item.startsWith(query) // prefix-only instead of default substring
+    }
+  }
+  const sel = new Derived(mount(), { searchable: true })
+  sel.setItems(['banana', 'abanana', 'apple'])
+  sel.open()
+  const input = searchInput(sel)
+  input.value = 'a'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  const rendered = Array.from(sel.popupListEl.querySelectorAll('[role="option"]')).map(el => el.textContent)
+  assert.deepEqual(rendered, ['abanana', 'apple']) // substring would also keep 'banana'
+})
+
 test('IME composition: typing while composing does not filter; compositionend fires the filter once', () => {
   const sel = new LLSelectSingle<string>(mount(), { searchable: true })
   sel.setItems(['台北', '東京', '首爾'])

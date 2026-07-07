@@ -147,7 +147,7 @@ By RETURN TYPE (behaviour, not input):
 | base            | protected | `isItemDisabled`                      | is                     |
 | base            | protected | `itemToString`                        | itemTo*                |
 | base            | protected | `focusInitial` (+2 overrides)         | focus                  |
-| base            | private   | `matchesQuery`                        | matches                |
+| base            | protected | `matchesQuery`                        | matches (seam for `filterFn`) |
 | base            | private   | `attachOutsideClick`                  | attach                 |
 | base            | private   | `attachFocusOut`                      | attach                 |
 | base            | private   | `detachOutsideClick`                  | detach                 |
@@ -237,7 +237,7 @@ Methods (protected, overridable):
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator
-(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix).
+(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). 2026-07 review (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createArrowEl(state)` reading `createArrowElFn` (mirrors `createClearEl`); `renderTriggerArrow` stays a private orchestrator and `commitArrowElToDom` a private primitive.
 
 ## 6. Phasing
 
