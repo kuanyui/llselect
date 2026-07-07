@@ -324,12 +324,20 @@ Ruled, no code change:
       scroll / resize listeners. `destroy()` = `close()` + remove the root
       class / inline styles + empty the mount; idempotent; the instance must
       not be used afterwards.
-- [ ] **Release readiness** - before the first `npm publish`: ja / ar / he
-      packs need native-speaker review (flagged in src/i18n.ts); a real-
-      browser pass for what jsdom cannot cover (RTL mirroring, mousedown
-      focus-steal rules, scrollbar drag on the popup list). Done already:
-      LICENSE file (was referenced by package.json `files` but missing),
-      `prepublishOnly` build+test guard, version-drift test.
+- [ ] **Release readiness** - before the first `npm publish` (v0.0.1):
+      ja / ar / he packs need native-speaker review (flagged in src/i18n.ts);
+      a real-browser pass for what jsdom cannot cover (RTL mirroring,
+      mousedown focus-steal rules, scrollbar drag, select-all / no-results
+      visuals). Done already: name availability checked (llselect is free),
+      LICENSE, `prepublishOnly` build+test guard, version-drift test,
+      `sideEffects: false`, `./package.json` export, README install /
+      quick-start, `npm pack --dry-run` audited (dist + themes + d.ts + maps,
+      README, LICENSE; ~149 kB tarball). Known accepted limitation: a single
+      set of `.d.ts` serves both ESM and CJS - TypeScript consumers on
+      `moduleResolution: nodenext` who `require()` the package hit the
+      classic dual-types edge (bundler / import consumers are unaffected);
+      fixing it properly means bundling declarations into per-format
+      `.d.ts` / `.d.cts` - revisit if anyone actually hits it.
 - [x] **No-results message** - RULED: build (R28). Empty visible list shows a
       message element placed OUTSIDE the listbox (so the listbox keeps its
       options-only children contract) with `role="status"` (announced once on
