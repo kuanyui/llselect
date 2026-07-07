@@ -176,7 +176,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       `exports["./i18n"]`. CLAUDE.md gains the i18n non-ASCII exemption;
       zh-TW strings use CJK/half-width spacing, ja follows Japanese
       convention (no spacing).
-- [ ] **R19 - demo section for i18n** (zhTW pack on a searchable multi with
+- [x] **R19 - demo section for i18n** (zhTW pack on a searchable multi with
       tags + clearable, so every translated string is visible).
 
 Ruled, no code change:

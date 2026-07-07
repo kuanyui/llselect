@@ -637,6 +637,42 @@
     </article>
   </section>
 
+  <section>
+    <h2>12. i18n (language packs)</h2>
+    <p class="hint">
+      All chrome strings (search aria-label, clear x, tag remove buttons, count
+      summary) live in the <code>texts</code> setting; packs from
+      <code>llselect/i18n</code> fill it whole (<code>texts: zhTW</code>), with
+      per-key overrides via spread. <code>placeholder</code> is app copy - packs
+      never set it.
+    </p>
+
+    <article>
+      <h3>12.1 zhTW / ja / en pack (searchable multi + tags + clearable)</h3>
+      <p class="hint">
+        Switch the pack - the instance is recreated (settings are
+        constructor-frozen). Open the popup and inspect the search input's
+        <code>aria-label</code>, hover the x buttons, and deselect / select
+        items with the search cleared to see the translated count summary.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div class="demo-row">
+            <label for="i18n-pack-select">Pack:</label>
+            <select id="i18n-pack-select">
+              <option value="zhTW" selected>zhTW</option>
+              <option value="ja">ja</option>
+              <option value="en">en</option>
+            </select>
+          </div>
+          <div id="mount-i18n" style="margin-top:0.5rem"></div>
+          <div class="out" id="out-i18n">chosen: </div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="12.1"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
+
   <script type="module" src="main.js"></script>
 </body>
 </html>

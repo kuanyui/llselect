@@ -1,4 +1,5 @@
 import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, createChevronDownSvgEl, createTriangleDownSvgEl, createCheckboxSvgEl } from '../dist/index.mjs'
+import { en, ja, zhTW } from '../dist/i18n.mjs'
 import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS } from './data.js'
 
 console.log('llselect v' + LLSELECT_VERSION)
@@ -603,6 +604,33 @@ const selGroupRich = new LLSelectSingle(
   }
 )
 selGroupRich.setItems(GROUPED_FOODS)
+//#endregion
+
+//#region 12.1
+// Language packs (imported at the top: `import { en, ja, zhTW } from
+// 'llselect/i18n'`) fill the `texts` setting whole; per-key overrides spread
+// on top (`texts: { ...zhTW, searchInputPlaceholder: '...' }`). Settings are
+// constructor-frozen, so switching locale recreates the instance - the usual
+// app pattern. Search aria-label, clear x, tag remove buttons, and the count
+// summary are all translated; `placeholder` stays app copy (packs never set it).
+const I18N_PACKS = { en, ja, zhTW }
+const outI18n = document.getElementById('out-i18n')
+const i18nPackSelect = document.getElementById('i18n-pack-select')
+function createI18nSelect(packName) {
+  // The constructor wipes the mount's children, so re-mounting is just `new`.
+  const sel = new LLSelectMultiple(document.getElementById('mount-i18n'), {
+    placeholder: 'Pick countries',
+    searchable: true,
+    clearable: true,
+    triggerDisplay: 'tags',
+    texts: I18N_PACKS[packName],
+    onChange: (chosen) => { outI18n.textContent = 'chosen: ' + chosen.join(', ') },
+  })
+  sel.setItems(COUNTRIES)
+  sel.setChosenItems(['Japan', 'Taiwan'])
+}
+i18nPackSelect.addEventListener('change', () => createI18nSelect(i18nPackSelect.value))
+createI18nSelect(i18nPackSelect.value)
 //#endregion
 
 // --- Inject demo snippets into <pre data-demo="X"><code></code></pre> -----
