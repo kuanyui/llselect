@@ -157,6 +157,11 @@ resolution is `settings.placeholder ?? texts.triggerPlaceholder`. (select2 has
 no such key only because it ships no default placeholder at all; llselect
 does, so the default must be translatable.)
 
+The resolved bag is publicly readable via `getTexts()` (defaults + pack +
+overrides merged), so app code can reuse the library's translations - e.g. an
+app-owned tooltip on a remove button - instead of keeping a second translation
+source.
+
 Language packs are pure data under `llselect/i18n` (`en` / `ja` / `zhTW`):
 opt-in, tree-shakeable, zero behavior, so bundling translations does not
 violate "low-level". `i18n.ts` inlines only the tiny `texts.ts` module, never

@@ -262,7 +262,8 @@ parameterized messages take resolved primitives, never `T`:
 itemToTagRemoveButtonAriaLabel(item)` (`itemTo*`, mirrors `itemToString`);
 string keys need no method (cf. `placeholder`). Language packs (`en` / `ja` /
 `zhTW`) live under `llselect/i18n`; `LLSelectSettingsInputOf<S>` is the shared
-input shape (everything optional, `texts` deep-partial).
+input shape (everything optional, `texts` deep-partial). The resolved bag is
+public via `getTexts(): Readonly<LLSelectTexts>` (`get*`, live object).
 
 ## 5. Decisions log
 

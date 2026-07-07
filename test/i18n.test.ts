@@ -57,6 +57,20 @@ test('an explicit placeholder setting (app copy) wins over the pack default', ()
   assert.equal(sel.triggerContentEl.textContent, 'Pick some')
 })
 
+test('getTexts exposes the resolved bag (defaults + pack + overrides merged)', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    texts: { ...zhTW, searchInputAriaLabel: 'custom' },
+  })
+  const texts = sel.getTexts()
+  assert.equal(texts.searchInputAriaLabel, 'custom') // per-key override
+  assert.equal(texts.triggerPlaceholder, zhTW.triggerPlaceholder) // from the pack
+  // App reuse case: the library's translation drives an app-owned tooltip.
+  assert.equal(texts.tagRemoveButtonAriaLabel('x'), zhTW.tagRemoveButtonAriaLabel('x'))
+
+  const sel2 = new LLSelectMultiple<string>(mount())
+  assert.equal(sel2.getTexts().searchInputAriaLabel, en.searchInputAriaLabel) // en fallback
+})
+
 test('a pack composes with per-key overrides (spread order wins)', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     searchable: true,
