@@ -610,27 +610,35 @@ selGroupRich.setItems(GROUPED_FOODS)
 // Language packs (imported at the top: `import { en, ja, zhTW } from
 // 'llselect/i18n'`) fill the `texts` setting whole; per-key overrides spread
 // on top (`texts: { ...zhTW, searchInputPlaceholder: '...' }`). Settings are
-// constructor-frozen, so switching locale recreates the instance - the usual
-// app pattern. Search aria-label, clear x, tag remove buttons, and the count
-// summary are all translated; `placeholder` stays app copy (packs never set it).
+// constructor-frozen, so switching locale recreates the instances - the usual
+// app pattern. Deliberately NO `placeholder` (the library's English default
+// shows: packs never translate app copy) and NO preselection, so every change
+// on switch comes from the pack alone. Two instances because the displays are
+// exclusive: 'tags' shows the translated remove buttons (chips replace the
+// count summary), default 'count' shows the translated count summary.
 const I18N_PACKS = { en, ja, zhTW }
 const outI18n = document.getElementById('out-i18n')
 const i18nPackSelect = document.getElementById('i18n-pack-select')
-function createI18nSelect(packName) {
-  // The constructor wipes the mount's children, so re-mounting is just `new`.
-  const sel = new LLSelectMultiple(document.getElementById('mount-i18n'), {
-    placeholder: 'Pick countries',
+function createI18nSelects(packName) {
+  // The constructor wipes each mount's children, so re-mounting is just `new`.
+  const texts = I18N_PACKS[packName]
+  const tagsSel = new LLSelectMultiple(document.getElementById('mount-i18n-tags'), {
     searchable: true,
     clearable: true,
     triggerDisplay: 'tags',
-    texts: I18N_PACKS[packName],
+    texts,
     onChange: (chosen) => { outI18n.textContent = 'chosen: ' + chosen.join(', ') },
   })
-  sel.setItems(COUNTRIES)
-  sel.setChosenItems(['Japan', 'Taiwan'])
+  tagsSel.setItems(COUNTRIES)
+  const countSel = new LLSelectMultiple(document.getElementById('mount-i18n-count'), {
+    searchable: true,
+    clearable: true,
+    texts,
+  })
+  countSel.setItems(COUNTRIES)
 }
-i18nPackSelect.addEventListener('change', () => createI18nSelect(i18nPackSelect.value))
-createI18nSelect(i18nPackSelect.value)
+i18nPackSelect.addEventListener('change', () => createI18nSelects(i18nPackSelect.value))
+createI18nSelects(i18nPackSelect.value)
 //#endregion
 
 // --- Inject demo snippets into <pre data-demo="X"><code></code></pre> -----

@@ -648,12 +648,17 @@
     </p>
 
     <article>
-      <h3>12.1 zhTW / ja / en pack (searchable multi + tags + clearable)</h3>
+      <h3>12.1 zhTW / ja / en pack (searchable multi, tags + count)</h3>
       <p class="hint">
-        Switch the pack - the instance is recreated (settings are
-        constructor-frozen). Open the popup and inspect the search input's
-        <code>aria-label</code>, hover the x buttons, and deselect / select
-        items with the search cleared to see the translated count summary.
+        Switch the pack - the instances are recreated (settings are
+        constructor-frozen). No <code>placeholder</code> is passed (the
+        library's English default shows: packs deliberately never translate
+        app copy) and nothing is preselected, so every change on switch comes
+        from the pack alone. Pick a few items: the first instance
+        (<code>'tags'</code>) gets translated remove-x buttons (inspect their
+        <code>aria-label</code>), the second (default <code>'count'</code>)
+        shows the translated count summary directly. The search input's
+        <code>aria-label</code> and the clear x are translated in both.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -665,7 +670,10 @@
               <option value="en">en</option>
             </select>
           </div>
-          <div id="mount-i18n" style="margin-top:0.5rem"></div>
+          <div id="mount-i18n-tags" style="margin-top:0.5rem"></div>
+          <div class="out">^ <code>triggerDisplay: 'tags'</code> - translated remove x per chip</div>
+          <div id="mount-i18n-count" style="margin-top:0.7rem"></div>
+          <div class="out">^ default <code>'count'</code> - translated count summary</div>
           <div class="out" id="out-i18n">chosen: </div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="12.1"><code></code></pre></details>
