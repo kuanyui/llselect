@@ -251,6 +251,7 @@ parameterized messages take resolved primitives, never `T`:
 
 | Key                           | Type                                                  |
 | ----------------------------- | ----------------------------------------------------- |
+| `triggerPlaceholder`          | `string`                                              |
 | `searchInputAriaLabel`        | `string`                                              |
 | `searchInputPlaceholder`      | `string \| null`                                      |
 | `triggerClearButtonAriaLabel` | `string`                                              |

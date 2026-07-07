@@ -611,11 +611,12 @@ selGroupRich.setItems(GROUPED_FOODS)
 // 'llselect/i18n'`) fill the `texts` setting whole; per-key overrides spread
 // on top (`texts: { ...zhTW, searchInputPlaceholder: '...' }`). Settings are
 // constructor-frozen, so switching locale recreates the instances - the usual
-// app pattern. Deliberately NO `placeholder` (the library's English default
-// shows: packs never translate app copy) and NO preselection, so every change
-// on switch comes from the pack alone. Two instances because the displays are
-// exclusive: 'tags' shows the translated remove buttons (chips replace the
-// count summary), default 'count' shows the translated count summary.
+// app pattern. Deliberately NO `placeholder` (so the pack's localized
+// `triggerPlaceholder` default shows; an explicit `placeholder` is app copy
+// and would win) and NO preselection, so every change on switch comes from
+// the pack alone. Two instances because the displays are exclusive: 'tags'
+// shows the translated remove buttons (chips replace the count summary),
+// default 'count' shows the translated count summary.
 const I18N_PACKS = { en, ja, zhTW }
 const outI18n = document.getElementById('out-i18n')
 const i18nPackSelect = document.getElementById('i18n-pack-select')

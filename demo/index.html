@@ -640,20 +640,21 @@
   <section>
     <h2>12. i18n (language packs)</h2>
     <p class="hint">
-      All chrome strings (search aria-label, clear x, tag remove buttons, count
-      summary) live in the <code>texts</code> setting; packs from
-      <code>llselect/i18n</code> fill it whole (<code>texts: zhTW</code>), with
-      per-key overrides via spread. <code>placeholder</code> is app copy - packs
-      never set it.
+      All chrome strings (trigger placeholder default, search aria-label +
+      placeholder, clear x, tag remove buttons, count summary) live in the
+      <code>texts</code> setting; packs from <code>llselect/i18n</code> fill it
+      whole (<code>texts: zhTW</code>), with per-key overrides via spread. An
+      explicit <code>placeholder</code> setting is app copy and wins over the
+      pack's <code>triggerPlaceholder</code> default.
     </p>
 
     <article>
       <h3>12.1 zhTW / ja / en pack (searchable multi, tags + count)</h3>
       <p class="hint">
         Switch the pack - the instances are recreated (settings are
-        constructor-frozen). No <code>placeholder</code> is passed (the
-        library's English default shows: packs deliberately never translate
-        app copy) and nothing is preselected, so every change on switch comes
+        constructor-frozen). No <code>placeholder</code> is passed, so the
+        trigger shows the pack's localized <code>triggerPlaceholder</code>
+        default; nothing is preselected, so every change on switch comes
         from the pack alone. Pick a few items: the first instance
         (<code>'tags'</code>) gets translated remove-x buttons (inspect their
         <code>aria-label</code>), the second (default <code>'count'</code>)

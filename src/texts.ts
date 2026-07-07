@@ -14,6 +14,13 @@
  */
 export interface LLSelectTexts {
   /**
+   * Default text shown in the trigger while nothing is chosen, used only when
+   * the app did not pass the `placeholder` setting. An explicit `placeholder`
+   * always wins (app copy beats chrome); this key just localizes the library
+   * fallback.
+   */
+  triggerPlaceholder: string
+  /**
    * Accessible name (`aria-label`) of the search input (it has no visible
    * label, so screen readers rely on this).
    */
@@ -40,6 +47,7 @@ export interface LLSelectTexts {
 
 /** English texts - the library default. */
 export const en: LLSelectTexts = {
+  triggerPlaceholder: 'Please select',
   searchInputAriaLabel: 'Search',
   searchInputPlaceholder: 'Filter (Esc to clear)',
   triggerClearButtonAriaLabel: 'Clear selection',
