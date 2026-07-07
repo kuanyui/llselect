@@ -202,7 +202,7 @@ user ruling is parked under "Open rulings" below and does not block the rest.
       edge (mirror of ltr). `createPositioner` snapshots
       `getComputedStyle(anchor).direction` at attach (per open cycle).
       `match-trigger` needs nothing (same width + position).
-- [ ] **R23 - i18n packs `ar` / `he`** (+ `textsByLocale` keys). Translations
+- [x] **R23 - i18n packs `ar` / `he`** (+ `textsByLocale` keys). Translations
       drafted by LLM - flag for native-speaker review before a release.
 - [ ] **R24 - demo: RTL in section 12.** Pack picker gains ar / he; picking an
       RTL pack sets `dir="rtl"` on the mounts (demonstrating the

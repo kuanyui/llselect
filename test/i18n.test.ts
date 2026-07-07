@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectMultiple } from '../src/multiple.js'
-import { en, ja, zhTW, textsByLocale } from '../src/i18n.js'
+import { ar, en, he, ja, zhTW, textsByLocale } from '../src/i18n.js'
 
 // Language packs (`llselect/i18n`): pure LLSelectTexts data spreadable into
 // the `texts` setting. Assertions compare against the pack values themselves,
@@ -14,16 +14,18 @@ function mount(): HTMLElement {
 }
 
 test('every pack is a complete LLSelectTexts (same keys as en)', () => {
-  for (const pack of [ja, zhTW]) {
+  for (const pack of [ar, he, ja, zhTW]) {
     assert.deepEqual(Object.keys(pack).sort(), Object.keys(en).sort())
   }
 })
 
 test('textsByLocale maps minimal BCP 47 tags to the packs', () => {
+  assert.equal(textsByLocale['ar'], ar)
   assert.equal(textsByLocale['en'], en)
+  assert.equal(textsByLocale['he'], he)
   assert.equal(textsByLocale['ja'], ja)
   assert.equal(textsByLocale['zh-TW'], zhTW)
-  assert.deepEqual(Object.keys(textsByLocale).sort(), ['en', 'ja', 'zh-TW'])
+  assert.deepEqual(Object.keys(textsByLocale).sort(), ['ar', 'en', 'he', 'ja', 'zh-TW'])
 })
 
 test('a whole language pack applies to every chrome string (zhTW)', () => {
