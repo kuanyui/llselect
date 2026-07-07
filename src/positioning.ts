@@ -34,6 +34,13 @@ export interface PositionInput {
    * `widthPolicy === 'fit-content'`. Default `0`.
    */
   floatingNaturalWidth?: number
+  /**
+   * Writing direction of the anchor's context. Only consulted when
+   * `widthPolicy === 'fit-content'`: `'rtl'` right-aligns the floating element
+   * to the anchor and grows LEFTWARD (the mirror of ltr). Default `'ltr'`.
+   * `'match-trigger'` is position-identical in both directions.
+   */
+  direction?: 'ltr' | 'rtl'
 }
 
 /** Result of {@link computePosition}: coordinates and chosen placement. */
@@ -58,11 +65,12 @@ const VIEWPORT_PADDING = 8
  *
  * Horizontal: `widthPolicy === 'match-trigger'` (default) returns
  * `width = anchor.width` and `left = anchor.left` (no collision handling -
- * popup is the same width as trigger). `widthPolicy === 'fit-content'`
- * returns `width = max(anchor.width, floatingNaturalWidth)`, clamps to
- * `viewport - 2 * VIEWPORT_PADDING`, and shifts `left` so the popup never
- * crosses the viewport's right or left margin - so `left` may end up smaller
- * than `anchor.left`.
+ * popup is the same width as trigger; direction-independent).
+ * `widthPolicy === 'fit-content'` returns
+ * `width = max(anchor.width, floatingNaturalWidth)`, clamps to
+ * `viewport - 2 * VIEWPORT_PADDING`, and keeps the popup inside the viewport
+ * margins. Growth direction follows `direction`: ltr aligns left edges and
+ * grows rightward; rtl aligns RIGHT edges and grows leftward (the mirror).
  */
 export function computePosition(input: PositionInput): PositionResult {
   const {
@@ -72,6 +80,7 @@ export function computePosition(input: PositionInput): PositionResult {
     floatingHeight,
     widthPolicy = 'match-trigger',
     floatingNaturalWidth = 0,
+    direction = 'ltr',
   } = input
 
   const spaceBelow = viewportHeight - anchorRect.bottom - GAP - VIEWPORT_PADDING
@@ -108,13 +117,25 @@ export function computePosition(input: PositionInput): PositionResult {
     const desiredWidth = Math.max(anchorRect.width, floatingNaturalWidth)
     const maxAvailable = viewportWidth - 2 * VIEWPORT_PADDING
     width = Math.min(desiredWidth, Math.max(0, maxAvailable))
-    left = anchorRect.left
     const rightEdge = viewportWidth - VIEWPORT_PADDING
-    if (left + width > rightEdge) {
-      left = rightEdge - width
-    }
-    if (left < VIEWPORT_PADDING) {
-      left = VIEWPORT_PADDING
+    if (direction === 'rtl') {
+      // Mirror of ltr: right edges aligned, growth goes leftward; push back
+      // inside the LEFT margin first, then clamp at the right one.
+      left = anchorRect.right - width
+      if (left < VIEWPORT_PADDING) {
+        left = VIEWPORT_PADDING
+      }
+      if (left + width > rightEdge) {
+        left = rightEdge - width
+      }
+    } else {
+      left = anchorRect.left
+      if (left + width > rightEdge) {
+        left = rightEdge - width
+      }
+      if (left < VIEWPORT_PADDING) {
+        left = VIEWPORT_PADDING
+      }
     }
   }
 
@@ -221,6 +242,10 @@ export function createPositioner(
 ): Positioner {
   let attached = true
   const widthPolicy: WidthPolicy = options?.widthPolicy ?? 'match-trigger'
+  // Snapshot at attach (= once per open cycle): direction changes are rare
+  // and the next open re-reads it. Only fit-content consults it.
+  const direction: 'ltr' | 'rtl' =
+    window.getComputedStyle(anchor).direction === 'rtl' ? 'rtl' : 'ltr'
 
   // `allowHide`: whether this reposition may invoke `onHide` (auto-close).
   // Only scroll-driven repositions (and the initial placement) close the popup
@@ -265,6 +290,7 @@ export function createPositioner(
       floatingHeight: floating.offsetHeight,
       widthPolicy,
       floatingNaturalWidth,
+      direction,
     })
     floating.style.position = 'fixed'
     floating.style.top = `${result.top}px`
