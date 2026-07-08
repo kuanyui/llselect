@@ -142,7 +142,7 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
     const c = this.chosenItem
     if (c !== undefined) {
       const idx = list.findIndex(o => this.settings.compareFn(o, c))
-      if (idx >= 0 && !this.isItemDisabled(list[idx]!)) {
+      if (idx >= 0 && !this.isItemEffectivelyDisabled(list[idx]!)) {
         this.setFocusedIndex(idx)
         return
       }

@@ -202,7 +202,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * Fires `onChange` only when the set actually changes.
    */
   public chooseAll(): void {
-    this.setChosenItems(this.items.filter(it => !this.isItemDisabled(it) || this.isChosen(it)))
+    this.setChosenItems(this.items.filter(it => !this.isItemEffectivelyDisabled(it) || this.isChosen(it)))
   }
 
   /**
@@ -210,12 +210,12 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * togglable through the UI). Fires `onChange` only when the set changes.
    */
   public unchooseAll(): void {
-    this.setChosenItems(this.chosenItems.filter(c => this.isItemDisabled(c)))
+    this.setChosenItems(this.chosenItems.filter(c => this.isItemEffectivelyDisabled(c)))
   }
 
   /** Toggle between "all enabled chosen" and "none chosen". Ignores disabled. */
   public toggleAll(): void {
-    const enabled = this.items.filter(it => !this.isItemDisabled(it))
+    const enabled = this.items.filter(it => !this.isItemEffectivelyDisabled(it))
     const allChosen = enabled.length > 0 && enabled.every(it => this.isChosen(it))
     if (allChosen) { this.unchooseAll() } else { this.chooseAll() }
   }
@@ -362,7 +362,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    */
   protected override createPopupListLeadingRowEl(): HTMLElement | null {
     if (!this.settings.selectAllRow) { return null }
-    const actionable = this.getVisibleItems().filter(i => !this.isItemDisabled(i))
+    const actionable = this.getVisibleItems().filter(i => !this.isItemEffectivelyDisabled(i))
     if (actionable.length === 0) { return null }
     const chosenCount = actionable.filter(i => this.isChosen(i)).length
     const state: LLSelectChosenState = chosenCount === 0 ? 'none' : chosenCount === actionable.length ? 'all' : 'some'
@@ -415,7 +415,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * the visible subset (filtered-out or disabled) are preserved either way.
    */
   protected override onLeadingRowActivated(): void {
-    const actionable = this.getVisibleItems().filter(i => !this.isItemDisabled(i))
+    const actionable = this.getVisibleItems().filter(i => !this.isItemEffectivelyDisabled(i))
     if (actionable.length === 0) { return }
     const allChosen = actionable.every(i => this.isChosen(i))
     if (allChosen) {
@@ -459,7 +459,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     const firstChosen = this.chosenItems[0]
     if (firstChosen !== undefined) {
       const idx = list.findIndex(i => this.settings.compareFn(i, firstChosen))
-      if (idx >= 0 && !this.isItemDisabled(list[idx]!)) {
+      if (idx >= 0 && !this.isItemEffectivelyDisabled(list[idx]!)) {
         this.setFocusedIndex(idx)
         return
       }

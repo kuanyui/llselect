@@ -160,7 +160,7 @@ By RETURN TYPE (behaviour, not input):
 | positioning     | mod-fn    | `getVisibleViewport`                  | get                    |
 | positioning     | mod-fn    | `isClippedByAncestor`                 | is                     |
 | base            | protected | `setFocusedIndex`                     | set                    |
-| base            | protected | `isItemDisabled`                      | is                     |
+| base            | protected | `isItemEffectivelyDisabled`                      | is                     |
 | base            | protected | `itemToString`                        | itemTo*                |
 | base            | protected | `focusInitial` (+2 overrides)         | focus                  |
 | base            | protected | `matchesQuery`                        | matches (seam for `filterFn`) |
@@ -284,7 +284,7 @@ their real (minimal) BCP 47 tags (`'zh-TW'`) for `navigator.language` lookup.
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator
-(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). Consistency-review follow-up (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createTriggerArrowContentEl(state)` reading `createTriggerArrowContentElFn` (mirrors the clear button's content method); `renderTriggerArrow` stays a private orchestrator and `commitTriggerArrowContentElToDom` a private primitive. (Names shown post-s7b.) R20 added private `computeSearchActive` (compute*) + `syncSearchModeToDom` (sync*ToDom). R26 added public `destroy` (domain lifecycle op, industry-standard name; joins `open`/`close`/`toggle` on the DOM-touching exception list). R29 (Phase 13) added base protected `createPopupListLeadingRowEl` (create*El), `onLeadingRowActivated` (on-hook), `focusLeadingRow` (focus*), `replaceLeadingRowElInDom` (replace*ElInDom); multi flag setting `selectAllRow`; classIdMap `selectAllRowClass`.
+(DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). Consistency-review follow-up (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createTriggerArrowContentEl(state)` reading `createTriggerArrowContentElFn` (mirrors the clear button's content method); `renderTriggerArrow` stays a private orchestrator and `commitTriggerArrowContentElToDom` a private primitive. (Names shown post-s7b.) R20 added private `computeSearchActive` (compute*) + `syncSearchModeToDom` (sync*ToDom). R26 added public `destroy` (domain lifecycle op, industry-standard name; joins `open`/`close`/`toggle` on the DOM-touching exception list). R29 (Phase 13) added base protected `createPopupListLeadingRowEl` (create*El), `onLeadingRowActivated` (on-hook), `focusLeadingRow` (focus*), `replaceLeadingRowElInDom` (replace*ElInDom); multi flag setting `selectAllRow`; classIdMap `selectAllRowClass`. RC review follow-up (F7, user ruling): `isItemDisabled` -> `isItemEffectivelyDisabled` - it composes `itemDisabledFn` OR the group layer, so its name must not mimic a 1:1 `<setting minus Fn>` reader; rule in s7a.6.
 
 ## 6. Phasing
 
@@ -338,6 +338,13 @@ DONE - all three phases applied (npm test green: 182; npm run build green).
    method (`itemToTagRemoveButtonAriaLabel`).
 5. Private helpers may keep shorter names (they matter least) but still obey
    the s1 suffix rules.
+6. **A predicate that composes MULTIPLE settings must not reuse one setting's
+   bare name.** `is<X>` reading exactly `<x>Fn` is a 1:1 reader
+   (`isGroupDisabled` <-> `groupDisabledFn`); when the answer layers more
+   than that one setting, qualify the name so it cannot be mistaken for the
+   raw read: `isItemEffectivelyDisabled` = `itemDisabledFn` OR the item's
+   group's `groupDisabledFn` ("effectively" = layered final value, layer
+   count not hard-coded).
 
 ### 7b. Rename table (APPLIED)
 

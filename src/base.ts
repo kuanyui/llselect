@@ -1156,7 +1156,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     // full label is already visible and a tooltip is redundant. Adding
     // `title` would also fight third-party tooltip libraries (Tippy etc.).
     // Users who opt into ellipsis-on-items pick their own tooltip mechanism.
-    if (this.isItemDisabled(item)) {
+    if (this.isItemEffectivelyDisabled(item)) {
       // `aria-disabled` (never native `disabled`) keeps the item perceivable and
       // hoverable for a "why disabled" tooltip. No click handler -> not
       // selectable; keyboard nav skips it too.
@@ -1197,12 +1197,14 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Whether `item` is disabled - by `itemDisabledFn`, or because its group is
-   * disabled (`groupDisabledFn`). Group-disabled layers on top, so every
-   * item-disabled behavior (no selection, keyboard skip, aria) covers grouped
-   * items with no extra code. False when neither applies.
+   * Whether `item` is effectively disabled - by `itemDisabledFn`, or because
+   * its group is disabled (`groupDisabledFn`). Group-disabled layers on top,
+   * so every item-disabled behavior (no selection, keyboard skip, aria)
+   * covers grouped items with no extra code. False when neither applies.
+   * The whole-control disabled state (`isDisabled()`) is a separate layer,
+   * not part of this answer.
    */
-  protected isItemDisabled(item: T): boolean {
+  protected isItemEffectivelyDisabled(item: T): boolean {
     if (this.settings.itemDisabledFn && this.settings.itemDisabledFn(item)) { return true }
     const key = this.itemToGroupKey(item)
     return key !== null && this.isGroupDisabled(key)
@@ -1237,7 +1239,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    */
   protected findNextEnabledIndex(start: number, step: number, list: readonly T[]): number {
     for (let i = start; i >= 0 && i < list.length; i += step) {
-      if (!this.isItemDisabled(list[i]!)) { return i }
+      if (!this.isItemEffectivelyDisabled(list[i]!)) { return i }
     }
     return -1
   }
@@ -1518,7 +1520,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
         if (this.focusedIndex >= 0 && this.focusedIndex < list.length) {
           const item = list[this.focusedIndex]!
           // Defensive: nav never lands on a disabled item, but guard anyway.
-          if (!this.isItemDisabled(item)) { this.onItemActivated(item) }
+          if (!this.isItemEffectivelyDisabled(item)) { this.onItemActivated(item) }
         }
         return
       }

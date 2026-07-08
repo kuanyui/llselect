@@ -39,6 +39,14 @@ with their defenses below.
   had one). `createCheckboxSvgEl` now ACCEPTS the chosen-state vocabulary
   too (`none -> unchecked`, `some -> indeterminate`, `all -> checked`), so
   `createSelectAllRowContentElFn` passes its state straight through.
+- **F7 - `isItemDisabled` mimicked a 1:1 setting reader** (user-spotted from
+  F6's mention, post-review). It layers the group's `groupDisabledFn` on top
+  of `itemDisabledFn`, yet sat next to three true 1:1 readers
+  (`itemToGroupKey`, `groupKeyToLabel`, `isGroupDisabled`) while looking
+  like `itemDisabledFn`'s own reader (drop `Fn`, prefix `is`). Renamed to
+  **`isItemEffectivelyDisabled`** ("effectively" = layered final value,
+  layer count not hard-coded; the whole-control `isDisabled()` layer stays
+  separate and the docstring now says so). Rule recorded in s7a.6.
 
 ## Findings - convention gap closed by a rule (no rename)
 
@@ -58,7 +66,7 @@ with their defenses below.
 ## Findings - recorded, optional
 
 - **F6 - the final disabled state of an item is not externally queryable.**
-  `isItemDisabled` (which layers `groupDisabledFn` on top of
+  `isItemEffectivelyDisabled` (which layers `groupDisabledFn` on top of
   `itemDisabledFn`) is protected. An app that set both predicates can
   recompute the answer itself, so the information gap is real only in
   principle. Do nothing until someone actually needs it; the fix would be a
