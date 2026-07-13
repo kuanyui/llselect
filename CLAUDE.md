@@ -70,12 +70,39 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 - All source code, identifiers, file names, comments, and documentation are English only.
 - Use only the ASCII hyphen-minus character `-`. Do not use em dash, en dash, smart quotes, or other non-ASCII punctuation anywhere in code or docs.
-- Exception to the two rules above: i18n resource STRINGS (the translated values in `src/i18n.ts` language packs, and demo data that exists to demonstrate i18n / RTL) are inherently non-English / non-ASCII. Identifiers, comments, and docs in those files stay English/ASCII. Typography inside translations: zh-TW puts a space between CJK and half-width characters (Pangu spacing); ja follows Japanese convention (no such spacing).
+- Exception to the two rules above, limited to user-visible or behavior-verifying DATA: i18n resource STRINGS (the translated values in `src/i18n.ts` language packs, and demo data that exists to demonstrate i18n / RTL), test fixtures that verify Unicode behavior (CJK search / IME filtering inputs, bidi labels), and intentional visual glyphs (e.g. a theme's `\00d7` close cross). Identifiers, comments, and surrounding explanations in those files stay English/ASCII. Typography inside translations: zh-TW puts a space between CJK and half-width characters (Pangu spacing); ja follows Japanese convention (no such spacing).
 - Comments should be terse. Skip anything obvious from the code; only note non-obvious intent, invariants, or workarounds.
-- Browser target: roughly the last 5 years. Do not add polyfills, vendor prefixes, or workarounds for older versions.
+- Browser support floor (fixed baseline, update deliberately - never let it drift with the calendar): Firefox 78+, Chrome/Edge 87+, Safari 14.1+. This is the measured floor of what the code actually uses (ES2020 output per tsconfig `target`, `replaceChildren`, flex `gap`, `padding-block` / `padding-inline` / `inset` shorthands; `visualViewport` and scroll anchoring degrade gracefully). Do not add polyfills, vendor prefixes, or workarounds for older versions; raising the floor for a new API is fine if it is called out in the commit.
 - TypeScript: write explicit, precise types. Do not use `any` unless genuinely unavoidable; when you must, add a short comment explaining why.
 - Always wrap the body of `if` / `else` / `while` / `for` / `do` in `{ }`, even when the body is a single statement, and even when written on the same line. Example: `if (x) { return }` not `if (x) return`. This avoids the "next line gets accidentally added but isn't actually in the body" class of bugs.
-- For API / architecture decisions (naming conventions, module boundaries, settings vs methods, ARIA mapping, etc.) see `docs/DESIGN.md`. For the keyboard / focus / ARIA behavior contract see `docs/A11Y.md`. CLAUDE.md is style only.
+- Document authority: CLAUDE.md governs agent behavior and enforceable code-style constraints. `docs/DESIGN.md` owns API / architecture decisions (naming conventions, module boundaries, settings vs methods, ARIA mapping, etc.). `docs/A11Y.md` owns the keyboard / focus / ARIA behavior contract. When these disagree, the owning document wins; fix the others to match it.
 - When asking the user to decide a name (method / function / setting / type), ALWAYS give its full TypeScript signature (param + return types) and one line on what it actually does. Never ask for a naming decision on insufficient information - the user should not have to go look it up.
 - Any callback / setting whose type includes `null` must have its docstring state exactly what `null` means; it differs per case (e.g. "fall back to the default text" vs "render nothing") and is never self-evident.
 - When explicit naming / structure conflicts with brevity or "fewer abstractions" (including s2 Simplicity First), prefer explicit. The cost of guessing while reading the API outweighs a few extra methods or longer names.
+
+### Verification commands (llselect)
+
+Run before claiming a change is done; all must pass:
+
+```sh
+npm test            # tsc test compile + node:test under jsdom
+npm run build       # d.ts + rollup bundles + themes
+npm run check       # mechanical style checks (ASCII punctuation, doc links)
+npm pack --dry-run  # when package.json / exports / files changed
+```
+
+jsdom cannot test layout, native Tab focus navigation, scrollbar dragging,
+visual-viewport behavior, or assistive-technology output. Changes touching
+positioning, focus order, RTL, themes, or ARIA need a real-browser pass -
+record what to verify in `docs/TODO.md` ("manual verification") if it cannot
+happen in the same session.
+
+### Generated and abandoned files (llselect)
+
+- `dist/` and `.build/` are build outputs. Never edit them manually; change
+  `src/` (or the build config) and rebuild.
+- `src/draft.ts` is an abandoned early reference, excluded from builds and
+  tests. Do not repair, extend, or "clean it up".
+- A public API change is not done until everything it touches moves together:
+  exports (`src/index.ts`), declarations, README examples, tests, and the
+  owning contract doc (`docs/DESIGN.md` / `docs/A11Y.md`).
