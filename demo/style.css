@@ -331,3 +331,57 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
   border-radius: 3px;
 }
 #toc a:hover { background: #eef3fb; }
+
+/* --- multi-page navigation (hub / examples / benchmark) ------------------ */
+.demo-nav {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  margin: 0 0 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #ddd;
+}
+.demo-nav a {
+  padding: 0.35rem 0.8rem;
+  color: #2456a6;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.demo-nav a:hover { background: #eef3fb; }
+.demo-nav a.current { background: #2456a6; color: #fff; }
+
+/* --- hub (index.html) ---------------------------------------------------- */
+.hub-cmd { background: #f4f4f4; padding: 0.75rem 1rem; border-radius: 6px; overflow-x: auto; }
+.hub-version { color: #555; font-size: 0.9rem; }
+.hub-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.hub-card {
+  display: block;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.hub-card:hover { border-color: #2456a6; box-shadow: 0 2px 10px rgba(36, 86, 166, 0.12); }
+.hub-card h2 { margin: 0 0 0.4rem; font-size: 1.1rem; color: #2456a6; border: none; padding: 0; }
+.hub-card p { margin: 0; font-size: 0.9rem; color: #444; }
+
+/* --- benchmark (benchmark.html) ----------------------------------------- */
+.bench-controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin: 1.25rem 0; }
+.bench-controls select { padding: 0.25rem; }
+.bench-controls button { font: inherit; padding: 0.35rem 1rem; cursor: pointer; border: 1px solid #2456a6; background: #2456a6; color: #fff; border-radius: 4px; }
+.bench-controls button:hover { background: #1d4788; }
+#status { color: #555; font-size: 0.9rem; }
+#results, #sizes { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+#results th, #results td, #sizes th, #sizes td { border: 1px solid #ccc; padding: 5px 10px; text-align: right; }
+#results th:first-child, #results td:first-child, #sizes th:first-child, #sizes td:first-child { text-align: left; }
+#results thead th, #sizes thead th { background: #f6f8fa; }
+#results td.best { background: #e6f4ea; color: #1a7f37; font-weight: 700; }
+.bench-legend, .bench-caveats { font-size: 0.9rem; color: #333; }
+.bench-legend li, .bench-caveats li { margin: 0.35rem 0; }
+.bench-stage-title { font-size: 1rem; color: #555; }
+.bench-stage-title small { font-weight: normal; color: #888; }
+.bench-stage { min-height: 40px; border: 1px dashed #ccc; border-radius: 6px; padding: 0.5rem; background: #fafafa; }
