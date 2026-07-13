@@ -109,8 +109,9 @@ log owns the when.
       sat unnoticed in two docs. Grep the surface form the doc actually uses,
       not the one you expect.
 - [x] **[DOCUMENTATION-12] - release-candidate review bookkeeping was inconsistent**
-  - Fix: corrected the fixed-defect count (four, incl. F7) and the
-    Container-Content pair count (nine); archived. docs/archive/review-release-candidate.md.
+  - Fix: corrected the fixed-defect count (four - the fourth being the
+    isItemEffectivelyDisabled rename) and the Container-Content pair count
+    (nine); archived. docs/archive/review-release-candidate.md.
 - [x] **[DOCUMENTATION-13] - CLAUDE.md claimed to be "style only" while defining behavior**
   - Fix: authority split - CLAUDE.md = agent behavior + style, DESIGN.md = API,
     A11Y.md = keyboard / focus / ARIA. CLAUDE.md.
