@@ -121,7 +121,9 @@
         until a popup opens, so this shows its lazy-render footprint.</li>
       <li><strong>Filter candidates (ms)</strong> - open the first built widget,
         type a character that narrows the candidate list, re-render the matches;
-        median of a few. Every widget is searchable.</li>
+        median of a few, timed to the next rendered frame (so a library that
+        defers rendering to <code>requestAnimationFrame</code> is not read as 0).
+        Every widget is searchable.</li>
     </ul>
   </details>
 
@@ -174,8 +176,12 @@
       <li><strong>Select</strong> - pick one option: single-select replaces its
         one value, multiple-select adds a chip and keeps the list open.</li>
       <li><strong>Close</strong> - close the dropdown.</li>
-      <li>Each cell is the median of a few cycles (the first dropped as warm-up).
-        Native <code>&lt;select&gt;</code> is shown for reference but not timed.</li>
+      <li>Each op is timed <strong>to the next rendered frame</strong>, not just
+        its synchronous return: some libraries (Choices.js) schedule their
+        dropdown DOM work with <code>requestAnimationFrame</code>, so a purely
+        synchronous timer would read ~0 for them. The floor is therefore about
+        one frame. Median of a few cycles (first dropped as warm-up); native
+        <code>&lt;select&gt;</code> is shown for reference but not timed.</li>
     </ul>
   </details>
 

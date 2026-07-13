@@ -278,21 +278,22 @@ async function buildAll(key, scen, runOpts) {
   return { built, compute, timedOut, errored, stopped }
 }
 
-function sampleFilter(key, scen) {
+async function sampleFilter(key, scen) {
   const a = ADAPTERS[key]
   if (a.noFilter || !live.length) { return null }
   const h = live[0].h
   const q = scen.itemsPer > 100 ? '7777' : '5'
   // The sampled widget must be on-screen or llselect refuses to open it (same
   // off-screen no-op that would zero out the interaction cycle).
-  stage.firstElementChild?.scrollIntoView({ block: 'center' })
-  return safe(() => {
-    a.open(h)
+  stage.firstElementChild?.scrollIntoView({ block: 'center', behavior: 'instant' })
+  try {
+    a.open(h); await raf(); reflow(stage)
     const samples = []
-    for (let i = 0; i < 4; i++) { const t0 = performance.now(); a.filter(h, q); reflow(stage); if (i > 0) { samples.push(performance.now() - t0) } }
-    a.close(h)
+    // Time to the next rendered frame so rAF-deferred rendering (Choices) counts.
+    for (let i = 0; i < 4; i++) { const t0 = performance.now(); a.filter(h, q); await raf(); reflow(stage); if (i > 0) { samples.push(performance.now() - t0) } }
+    a.close(h); await raf()
     return median(samples)
-  })
+  } catch (e) { console.warn(key, e); return null }
 }
 
 // --- table ----------------------------------------------------------------
@@ -355,7 +356,7 @@ async function runLib(key, renderAfter = true) {
   const before = countNodes()
   const res = await buildAll(key, scen, runOptsFromDom())
   const nodes = countNodes() - before
-  const filterMs = sampleFilter(key, scen)
+  const filterMs = await sampleFilter(key, scen)
 
   const builtCell = rowFor(key).querySelector('td[data-col="built"]')
   builtCell.textContent = `${res.built} / ${scen.widgets}` + (res.errored ? ' (error)' : res.stopped ? ' (stopped)' : res.timedOut ? ' (timeout)' : '')
@@ -400,6 +401,35 @@ function setRunning(on) {
   for (const id of ['run-all', 'clear', 'scenario', 'custom', 'preselect', 'no-timeout']) { document.getElementById(id).disabled = on }
   document.querySelectorAll('.bench-libbuttons button').forEach(b => { b.disabled = on })
   document.getElementById('stop').disabled = !on
+  scrollLock(on)
+}
+
+// Block manual scrolling during a run: the harness scrolls each widget into
+// view to measure it, and a user scroll could move one off-screen mid-measure
+// (an off-screen trigger will not open, zeroing its timings). Programmatic
+// scrollIntoView still works; only wheel / touch scrolling is prevented.
+let scrollBlocker = null
+function scrollLock(on) {
+  let overlay = document.getElementById('bench-overlay')
+  if (on && !overlay) {
+    overlay = document.createElement('div')
+    overlay.id = 'bench-overlay'
+    overlay.innerHTML = '<div class="bench-overlay-box"><strong>Benchmark running</strong>'
+      + '<small>The page auto-scrolls to keep each widget on-screen; manual scrolling is blocked. '
+      + 'An off-screen trigger will not open, so its timings would read zero. This clears when the run finishes.</small></div>'
+    document.body.appendChild(overlay)
+  }
+  if (overlay) { overlay.style.display = on ? 'flex' : 'none' }
+  if (on === !!scrollBlocker) { return }
+  if (on) {
+    scrollBlocker = (e) => e.preventDefault()
+    window.addEventListener('wheel', scrollBlocker, { passive: false })
+    window.addEventListener('touchmove', scrollBlocker, { passive: false })
+  } else {
+    window.removeEventListener('wheel', scrollBlocker)
+    window.removeEventListener('touchmove', scrollBlocker)
+    scrollBlocker = null
+  }
 }
 
 // --- bundle sizes ---------------------------------------------------------
@@ -518,22 +548,35 @@ const IX_MODES = [
 
 function ixStageEl(mode) { return document.getElementById(`ix-${mode.key}-stage`) }
 
-function measureInteraction(mode, key, items, stageEl) {
+async function measureInteraction(mode, key, items, stageEl) {
   const a = ADAPTERS[key]
   const pick = mode.pick[key]
   const h = mode.live[key]
   if (!a.open || !a.filter || !pick || !h) { return null }
   const CYCLES = 6
-  const open = [], filt = [], sel = [], close = []
+  const rows = { open: [], filter: [], select: [], close: [] }
   const picks = items.filter((_, i) => i % 2 === 0) // the ' q' half stays visible after filtering
-  for (let i = 0; i < CYCLES; i++) {
-    try { const t = performance.now(); a.open(h); reflow(stageEl); open.push(performance.now() - t) } catch (e) { console.warn(key, 'open', e) }
-    try { const t = performance.now(); a.filter(h, 'q'); reflow(stageEl); filt.push(performance.now() - t) } catch (e) { console.warn(key, 'filter', e) }
-    try { const t = performance.now(); pick(h, picks[i % picks.length]); reflow(stageEl); sel.push(performance.now() - t) } catch (e) { console.warn(key, 'pick', e) }
-    try { const t = performance.now(); a.close(h); reflow(stageEl); close.push(performance.now() - t) } catch (e) { console.warn(key, 'close', e) }
+  // Time each op to the NEXT RENDERED FRAME, not just its synchronous return:
+  // some libraries (Choices) schedule their dropdown DOM work with
+  // requestAnimationFrame, so a purely synchronous timer reads ~0 for them. The
+  // op's own rAF (registered during the call) runs before this raf, so after it
+  // the work has happened; a forced reflow then includes its layout. This makes
+  // the number "latency until the result is on screen", one frame being the floor.
+  const timeOp = async (fn) => {
+    const t = performance.now()
+    try { fn() } catch (e) { console.warn(key, e); return null }
+    await raf()
+    reflow(stageEl)
+    return performance.now() - t
   }
-  const med = arr => (arr.length > 1 ? median(arr.slice(1)) : (arr.length ? arr[0] : null)) // drop first as warm-up
-  return { open: med(open), filter: med(filt), select: med(sel), close: med(close) }
+  for (let i = 0; i < CYCLES; i++) {
+    rows.open.push(await timeOp(() => a.open(h)))
+    rows.filter.push(await timeOp(() => a.filter(h, 'q')))
+    rows.select.push(await timeOp(() => pick(h, picks[i % picks.length])))
+    rows.close.push(await timeOp(() => a.close(h)))
+  }
+  const med = arr => { const v = arr.slice(1).filter(x => x != null); return v.length ? median(v) : null } // drop first as warm-up
+  return { open: med(rows.open), filter: med(rows.filter), select: med(rows.select), close: med(rows.close) }
 }
 
 function ixRow(mode, key) { return document.querySelector(`#ix-${mode.key}-results tbody tr[data-lib="${key}"]`) }
@@ -624,6 +667,9 @@ async function ixBuildAndMeasure() {
   const runBtn = document.getElementById('ix-run')
   const status = document.getElementById('ix-status')
   runBtn.disabled = true
+  document.getElementById('ix-size').disabled = true
+  document.getElementById('ix-custom').disabled = true
+  scrollLock(true)
   ixClearAll()
   for (const mode of IX_MODES) { ixInitTable(mode) }
   const n = Number(document.getElementById('ix-size').value)
@@ -645,9 +691,9 @@ async function ixBuildAndMeasure() {
       // The widget must be on-screen: llselect refuses to open an off-screen
       // trigger (and its popup would position off-screen), which would make
       // open / filter / close all measure ~0 on a widget that never opened.
-      cell.scrollIntoView({ block: 'center' })
+      cell.scrollIntoView({ block: 'center', behavior: 'instant' })
       await raf()
-      const m = ADAPTERS[key].noFilter ? null : measureInteraction(mode, key, items, stageEl)
+      const m = ADAPTERS[key].noFilter ? null : await measureInteraction(mode, key, items, stageEl)
       ixSetRow(mode, key, m)
       if (m && m.open != null) { mode.results[key] = m }
       ixHighlightBest(mode)
@@ -657,7 +703,10 @@ async function ixBuildAndMeasure() {
   // Draw both charts only after every measurement is done - a chart animating
   // mid-run would skew the timings that follow.
   for (const mode of IX_MODES) { renderIxChart(mode) }
+  scrollLock(false)
   runBtn.disabled = false
+  document.getElementById('ix-size').disabled = false
+  document.getElementById('ix-custom').disabled = false
   status.textContent = 'Done. Lower is better. Widgets are live - open them yourself.'
 }
 

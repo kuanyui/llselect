@@ -432,3 +432,8 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .bench-toc span { color: #555; font-weight: 600; }
 .bench-toc a { color: #2456a6; text-decoration: none; }
 .bench-toc a:hover { text-decoration: underline; }
+
+/* --- benchmark scroll-block overlay during a run ------------------------- */
+#bench-overlay { position: fixed; inset: 0; z-index: 9999; display: none; align-items: flex-start; justify-content: center; background: rgba(20, 30, 50, 0.06); cursor: progress; }
+.bench-overlay-box { margin-top: 1.5rem; max-width: 32rem; background: #2456a6; color: #fff; padding: 0.7rem 1.1rem; border-radius: 6px; font-size: 0.95rem; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+.bench-overlay-box small { display: block; margin-top: 0.35rem; font-size: 0.8rem; font-weight: normal; opacity: 0.9; }
