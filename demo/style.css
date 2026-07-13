@@ -370,10 +370,19 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .hub-card p { margin: 0; font-size: 0.9rem; color: #444; }
 
 /* --- benchmark (benchmark.html) ----------------------------------------- */
-.bench-controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin: 1.25rem 0; }
-.bench-controls select { padding: 0.25rem; }
-.bench-controls button { font: inherit; padding: 0.35rem 1rem; cursor: pointer; border: 1px solid #2456a6; background: #2456a6; color: #fff; border-radius: 4px; }
-.bench-controls button:hover { background: #1d4788; }
+/* Controls: interaction uses one .bench-controls row; the mass section stacks
+   three .bench-row lines (scenario / checkboxes / buttons) in a .bench-toolbar. */
+.bench-controls, .bench-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.bench-controls { margin: 1.25rem 0; }
+.bench-toolbar { display: flex; flex-direction: column; gap: 0.6rem; margin: 1.25rem 0; }
+.bench-controls select, .bench-row select { padding: 0.25rem; }
+.bench-controls button, .bench-row button { font: inherit; padding: 0.35rem 1rem; cursor: pointer; border: 1px solid #2456a6; background: #2456a6; color: #fff; border-radius: 4px; }
+.bench-controls button:hover, .bench-row button:hover { background: #1d4788; }
+.bench-controls button:disabled, .bench-row button:disabled { opacity: 0.45; cursor: not-allowed; }
+/* Collapsed column reference under a results table. */
+.bench-cols { margin: 0.25rem 0 1rem; font-size: 0.9rem; }
+.bench-cols > summary { cursor: pointer; user-select: none; color: #2456a6; }
+.bench-cols[open] > summary { margin-bottom: 0.3rem; }
 #status { color: #555; font-size: 0.9rem; }
 #results, #sizes { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
 #results th, #results td, #sizes th, #sizes td { border: 1px solid #ccc; padding: 5px 10px; text-align: right; }

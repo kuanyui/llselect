@@ -51,7 +51,8 @@
     cut-off. "Run all" walks the five libraries in turn, so it can take a while.
   </p>
 
-  <div class="bench-controls">
+  <div class="bench-toolbar">
+    <div class="bench-row">
     <label>Scenario
       <select id="scenario">
         <optgroup label="Single-select">
@@ -68,13 +69,18 @@
         </optgroup>
       </select>
     </label>
-    <label><input type="checkbox" id="custom"> custom renderer (MDI icon per item)</label>
-    <label><input type="checkbox" id="preselect"> multi: pre-select 10% of items (render chips at build time)</label>
-    <label><input type="checkbox" id="no-timeout"> no timeout (build every widget; may take minutes or run out of memory)</label>
-    <button id="run-all">Run all</button>
-    <button id="stop" disabled>Stop</button>
-    <button id="clear">Clear</button>
-    <span id="status">Ready.</span>
+    </div>
+    <div class="bench-row">
+      <label><input type="checkbox" id="custom"> custom renderer (MDI icon per item)</label>
+      <label><input type="checkbox" id="preselect"> multi: pre-select 10% of items (render chips at build time)</label>
+      <label><input type="checkbox" id="no-timeout"> no timeout (build every widget; may take minutes or run out of memory)</label>
+    </div>
+    <div class="bench-row">
+      <button id="run-all">Run all</button>
+      <button id="stop" disabled>Stop</button>
+      <button id="clear">Clear</button>
+      <span id="status">Ready.</span>
+    </div>
   </div>
 
   <div class="bench-libbuttons">
@@ -92,13 +98,32 @@
       <tr>
         <th>Library</th>
         <th>Built / target</th>
-        <th>Init compute (ms)</th>
+        <th>Build total (ms)</th>
         <th>DOM nodes (resting)</th>
-        <th>Filter sample (ms)</th>
+        <th>Filter candidates (ms)</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
+
+  <details class="bench-cols">
+    <summary>What the columns mean</summary>
+    <ul class="bench-legend">
+      <li><strong>Built / target</strong> - how many widgets finished before the
+        time budget. A competitor that cannot mass-instantiate at this scale
+        shows e.g. <code>240 / 10000 (timeout)</code> - itself a result.</li>
+      <li><strong>Build total (ms)</strong> - total synchronous time to build all
+        the widgets (the deliberate yields that keep the page responsive are
+        excluded). One run, not a median: at this scale the signal dwarfs the
+        noise.</li>
+      <li><strong>DOM nodes (resting)</strong> - element nodes left under the
+        scratch area after building, popups closed. llselect builds no option DOM
+        until a popup opens, so this shows its lazy-render footprint.</li>
+      <li><strong>Filter candidates (ms)</strong> - open the first built widget,
+        type a character that narrows the candidate list, re-render the matches;
+        median of a few. Every widget is searchable.</li>
+    </ul>
+  </details>
 
   <h3>Comparison chart</h3>
   <p class="hint">Each metric is shown relative to its own best performer
@@ -112,24 +137,9 @@
   <h3>Scratch area <small>(the widgets from the last run render here - scroll)</small></h3>
   <div id="stage" class="bench-stage"></div>
 
-  <h3>What the columns mean</h3>
-  <ul class="bench-legend">
-    <li><strong>Built / target</strong> - how many widgets finished before the
-      time budget. A competitor that cannot mass-instantiate at this scale shows
-      e.g. <code>240 / 10000 (timeout)</code> - itself a result.</li>
-    <li><strong>Init compute (ms)</strong> - summed synchronous build time (the
-      deliberate yields that keep the page responsive are excluded). One run,
-      not a median: at this scale the signal dwarfs the noise.</li>
-    <li><strong>DOM nodes (resting)</strong> - element nodes added under the
-      scratch area after building, popups closed. llselect builds no option DOM
-      until a popup opens, so this shows its lazy-render footprint.</li>
-    <li><strong>Filter sample (ms)</strong> - open the first built widget, type a
-      query, re-render matches; median of a few. All widgets are searchable.</li>
-  </ul>
-
   <h2 id="interaction">Interaction latency</h2>
   <p>
-    The other axis: one dedicated multiple-select per library, timing a real
+    The other axis: one dedicated widget per library, timing a real
     open / filter / select / close cycle, so <strong>opening a big list is
     measured in isolation</strong> - this is where llselect builds its option
     DOM (it renders nothing until you open). The widgets stay live below; click
@@ -152,6 +162,21 @@
     open on select and renders a chip per choice, single-select replaces its one
     value. Stacked chart: the whole bar is the full cycle cost (shorter is
     better), each segment a phase; click a legend entry to show or hide it.</p>
+
+  <details class="bench-cols">
+    <summary>What the columns mean</summary>
+    <ul class="bench-legend">
+      <li><strong>Open</strong> - open the dropdown. For a big list this is where
+        llselect builds its option DOM (it renders nothing until you open).</li>
+      <li><strong>Filter</strong> - type one character that narrows the list to
+        about half, and re-render the matches.</li>
+      <li><strong>Select</strong> - pick one option: single-select replaces its
+        one value, multiple-select adds a chip and keeps the list open.</li>
+      <li><strong>Close</strong> - close the dropdown.</li>
+      <li>Each cell is the median of a few cycles (the first dropped as warm-up).
+        Native <code>&lt;select&gt;</code> is shown for reference but not timed.</li>
+    </ul>
+  </details>
 
   <h3>Single-select</h3>
   <table class="ix-table" id="ix-single-results">

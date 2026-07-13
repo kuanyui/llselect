@@ -413,9 +413,9 @@ async function measureSizes() {
 // to share one axis; the tooltip shows the real value.
 const METRICS = [
   { key: 'throughput', label: 'Throughput (widgets/sec)', color: '#2456a6', higherBetter: true, value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null), fmt: v => Math.round(v).toLocaleString() + ' /s' },
-  { key: 'compute', label: 'Init time (ms)', color: '#c9821a', higherBetter: false, value: r => r.compute, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
+  { key: 'compute', label: 'Build total (ms)', color: '#c9821a', higherBetter: false, value: r => r.compute, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
   { key: 'nodes', label: 'DOM nodes', color: '#7a3ea6', higherBetter: false, value: r => r.nodes, fmt: v => Math.round(v).toLocaleString() },
-  { key: 'filter', label: 'Filter (ms)', color: '#1a7f37', higherBetter: false, value: r => r.filter, fmt: v => (v == null ? '-' : (v < 10 ? v.toFixed(2) : v.toFixed(0)) + ' ms') },
+  { key: 'filter', label: 'Filter candidates (ms)', color: '#1a7f37', higherBetter: false, value: r => r.filter, fmt: v => (v == null ? '-' : (v < 10 ? v.toFixed(2) : v.toFixed(0)) + ' ms') },
 ]
 
 let chartInstance = null
