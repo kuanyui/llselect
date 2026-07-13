@@ -669,6 +669,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.searchInputEl.hidden = !this.searchActive
     this.comboboxEl = this.searchActive ? this.searchInputEl : this.triggerEl
     this.syncFieldNameToDom()
+    this.syncTriggerTabindex()
   }
 
   /**
@@ -777,6 +778,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.isOpen = false
     this.triggerEl.setAttribute('aria-expanded', 'false')
     this.triggerEl.setAttribute('data-state', 'closed')
+    this.syncTriggerTabindex()
     this.rootEl.classList.remove(this.classIdMap.openClass)
     if (this.searchActive) {
       this.searchInputEl.setAttribute('aria-expanded', 'false')
@@ -912,12 +914,25 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     if (this.disabled) {
       this.triggerEl.setAttribute('aria-disabled', 'true')
       this.triggerEl.setAttribute('data-disabled', 'true')
-      this.triggerEl.setAttribute('tabindex', this.settings.focusableWhenDisabled ? '0' : '-1')
     } else {
       this.triggerEl.removeAttribute('aria-disabled')
       this.triggerEl.setAttribute('data-disabled', 'false')
-      this.triggerEl.setAttribute('tabindex', '0')
     }
+    this.syncTriggerTabindex()
+  }
+
+  /**
+   * Recompute the trigger's tabindex from every input that owns it: disabled
+   * state (with `focusableWhenDisabled`), and the searchable open cycle -
+   * while the search input is the focus host the trigger leaves the tab
+   * order, so the open widget stays a single tab stop and Shift+Tab exits
+   * instead of landing on the trigger with the popup still open
+   * (`docs/A11Y.md` "Focus").
+   */
+  private syncTriggerTabindex(): void {
+    const disabledAndUnfocusable = this.disabled && !this.settings.focusableWhenDisabled
+    const searchOwnsFocus = this.isOpen && this.searchActive
+    this.triggerEl.setAttribute('tabindex', disabledAndUnfocusable || searchOwnsFocus ? '-1' : '0')
   }
 
   /**
