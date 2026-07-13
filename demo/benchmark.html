@@ -72,7 +72,7 @@
     </div>
     <div class="bench-row">
       <label><input type="checkbox" id="custom"> custom renderer (MDI icon per item)</label>
-      <label><input type="checkbox" id="preselect"> multi: pre-select 10% of items (render chips at build time)</label>
+      <label><input type="checkbox" id="preselect"> pre-select at build time (single: 1 item, multi: 10%)</label>
       <label><input type="checkbox" id="no-timeout"> no timeout (build every widget; may take minutes or run out of memory)</label>
     </div>
     <div class="bench-row">
@@ -154,6 +154,7 @@
         <option value="10000">10,000</option>
       </select>
     </label>
+    <label><input type="checkbox" id="ix-custom"> custom renderer (MDI icon per item)</label>
     <button id="ix-run">Build + measure</button>
     <span id="ix-status">Ready.</span>
   </div>

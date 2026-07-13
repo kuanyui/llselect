@@ -61,9 +61,12 @@ function iconSpan(text) {
 }
 function iconHtml(text) { return '<i class="mdi mdi-tag-outline" aria-hidden="true"></i> ' + text }
 
-// How many items to pre-select: 10% for a multi widget when the toggle is on,
-// else none. Renders chips at build time, like the competitors do.
-function preCount(items, opts) { return (opts.preselect && opts.multi) ? Math.max(1, Math.ceil(items.length * 0.1)) : 0 }
+// How many items to pre-select when the toggle is on: one for a single-select,
+// 10% for a multiple-select (renders a value / chips at build time).
+function preCount(items, opts) {
+  if (!opts.preselect) { return 0 }
+  return opts.multi ? Math.max(1, Math.ceil(items.length * 0.1)) : 1
+}
 
 // --- adapters -------------------------------------------------------------
 // setup(mount, items, {multi, custom}) -> handle; open/filter/close/teardown
@@ -102,11 +105,15 @@ const ADAPTERS = {
       // chip, so llselect renders tags too (not the lighter count summary),
       // otherwise it would be doing less per-selection work than they do.
       if (opts.multi) { o.triggerDisplay = 'tags' }
-      if (opts.custom) { o.createItemContentElFn = (it) => iconSpan(it) }
+      if (opts.custom) {
+        o.createItemContentElFn = (it) => iconSpan(it)
+        // If list items carry an icon, the tag chips must carry it too.
+        if (opts.multi) { o.createTagContentElFn = (it) => iconSpan(it) }
+      }
       const inst = new Ctor(mount, o)
       inst.setItems(items)
       const k = preCount(items, opts)
-      if (k > 0) { inst.setChosenItems(items.slice(0, k)) }
+      if (k > 0) { if (opts.multi) { inst.setChosenItems(items.slice(0, k)) } else { inst.setChosenItem(items[0]) } }
       return { inst, mount }
     },
     open(h) { h.inst.open() },
@@ -133,9 +140,13 @@ const ADAPTERS = {
       const sel = makeSelect(mount, opts.multi)
       const $sel = window.jQuery(sel)
       const cfg = { data: items.map(v => ({ id: v, text: v })), width: '260px' }
-      if (opts.custom) { cfg.templateResult = (o) => (o.id ? window.jQuery('<span>' + iconHtml(o.text) + '</span>') : o.text) }
+      if (opts.custom) {
+        const tmpl = (o) => (o.id ? window.jQuery('<span>' + iconHtml(o.text) + '</span>') : o.text)
+        cfg.templateResult = tmpl // dropdown option
+        cfg.templateSelection = tmpl // the chosen chip
+      }
       $sel.select2(cfg)
-      if (k > 0) { $sel.val(items.slice(0, k)).trigger('change') }
+      if (k > 0) { $sel.val(opts.multi ? items.slice(0, k) : items[0]).trigger('change') }
       return { $sel }
     },
     open(h) { h.$sel.select2('open') },
@@ -151,7 +162,10 @@ const ADAPTERS = {
       // the counterpart to llselect's lazy render (see caveats).
       const cfg = { options: items.map(v => ({ value: v, text: v })), maxItems: opts.multi ? null : 1 }
       if (k > 0) { cfg.items = items.slice(0, k) }
-      if (opts.custom) { cfg.render = { option: (d, esc) => '<div>' + iconHtml(esc(d.text)) + '</div>' } }
+      if (opts.custom) {
+        const tmpl = (d, esc) => '<div>' + iconHtml(esc(d.text)) + '</div>'
+        cfg.render = { option: tmpl, item: tmpl } // dropdown option + chosen chip
+      }
       return { inst: new window.TomSelect(sel, cfg) }
     },
     open(h) { h.inst.open() },
@@ -604,6 +618,7 @@ async function ixBuildAndMeasure() {
   ixClearAll()
   for (const mode of IX_MODES) { ixInitTable(mode) }
   const n = Number(document.getElementById('ix-size').value)
+  const custom = document.getElementById('ix-custom').checked
   const items = ixBuildItems(n)
   for (const mode of IX_MODES) {
     const stageEl = ixStageEl(mode)
@@ -615,7 +630,7 @@ async function ixBuildAndMeasure() {
       const lab = document.createElement('div'); lab.className = 'ix-lab'; lab.textContent = DISPLAY[key].name
       const mount = document.createElement('div'); mount.className = 'ix-mount'
       cell.append(lab, mount); stageEl.appendChild(cell)
-      try { mode.live[key] = ADAPTERS[key].setup(mount, items, { multi: mode.multi, custom: false, preselect: false }) } catch (e) { console.warn(key, e); ixSetRow(mode, key, { err: true }); continue }
+      try { mode.live[key] = ADAPTERS[key].setup(mount, items, { multi: mode.multi, custom, preselect: false }) } catch (e) { console.warn(key, e); ixSetRow(mode, key, { err: true }); continue }
       await raf()
       status.textContent = `${mode.label} - ${DISPLAY[key].name}: measuring ...`
       await raf()
