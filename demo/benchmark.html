@@ -23,13 +23,20 @@
     <a href="bench-reflow.html">Reflow bench</a>
   </nav>
 
-  <h1>llselect vs the field - mass instantiation</h1>
+  <h1>llselect vs the field</h1>
+  <p>
+    Two browser benchmarks against the native <code>&lt;select&gt;</code> (the
+    baseline floor), Choices.js, Select2, Tom Select and Slim Select: building
+    many selects at once (<a href="#mass">mass instantiation</a>), and
+    interacting with one (<a href="#interaction">interaction latency</a>).
+    Everything runs in your browser. <strong>Lower is better;</strong> numbers
+    depend on your machine.
+  </p>
+
+  <h2 id="mass">Mass instantiation</h2>
   <p>
     A stress test: build many independent selects at once and measure it, with
-    the widgets actually rendered in the scroll area below. llselect against
-    the native <code>&lt;select&gt;</code> (the baseline floor), Choices.js,
-    Select2, Tom Select and Slim Select on the same scenario.
-    <strong>Lower is better.</strong> Numbers depend on your machine and browser.
+    the widgets actually rendered in the scroll area below.
   </p>
   <p class="bench-warn">
     Heavy. Each library gets a time budget (about 20 s); a competitor that cannot
@@ -78,7 +85,7 @@
     <tbody></tbody>
   </table>
 
-  <h2>Comparison chart</h2>
+  <h3>Comparison chart</h3>
   <p class="hint">Each metric is shown relative to its own best performer
     (100% = winner, longer is better), so they share one axis. <strong>Click a
     legend entry to show or hide that metric</strong>; hover a bar for the real
@@ -87,10 +94,10 @@
   <div class="bench-chart"><canvas id="chart"></canvas></div>
   <p id="chart-empty" class="hint">Run a scenario to see the chart.</p>
 
-  <h2>Scratch area <small>(the widgets from the last run render here - scroll)</small></h2>
+  <h3>Scratch area <small>(the widgets from the last run render here - scroll)</small></h3>
   <div id="stage" class="bench-stage"></div>
 
-  <h2>What the columns mean</h2>
+  <h3>What the columns mean</h3>
   <ul class="bench-legend">
     <li><strong>Built / target</strong> - how many widgets finished before the
       time budget. A competitor that cannot mass-instantiate at this scale shows
@@ -105,13 +112,14 @@
       query, re-render matches; median of a few. All widgets are searchable.</li>
   </ul>
 
-  <h2>Interaction latency <small>(each library its own widget - open, select, close)</small></h2>
+  <h2 id="interaction">Interaction latency</h2>
   <p>
-    Separate from the mass test: one dedicated multiple-select per library, so
-    <strong>opening a big list is measured in isolation</strong> - this is where
-    llselect builds its option DOM (it renders nothing until you open). The
-    widgets stay live below; click them yourself too. Native <code>&lt;select&gt;</code>
-    is shown for reference but its dropdown is browser-driven, so it is not timed.
+    The other axis: one dedicated multiple-select per library, timing a real
+    open / filter / select / close cycle, so <strong>opening a big list is
+    measured in isolation</strong> - this is where llselect builds its option
+    DOM (it renders nothing until you open). The widgets stay live below; click
+    them yourself too. Native <code>&lt;select&gt;</code> is shown for reference
+    but its dropdown is browser-driven, so it is not timed.
   </p>
   <div class="bench-controls">
     <label>Items
