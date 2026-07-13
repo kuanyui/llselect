@@ -27,12 +27,14 @@ const DISPLAY = {
 const ORDER = ['native', 'llselect', 'choices', 'select2', 'tom-select', 'slim-select']
 
 const SCENARIOS = {
-  everyday: { widgets: 100, itemsPer: 100, multi: false },
-  many1k: { widgets: 1000, itemsPer: 10, multi: false },
-  s1: { widgets: 10000, itemsPer: 10, multi: false },
-  s2: { widgets: 10000, itemsPer: 10, multi: true },
-  s3: { widgets: 10, itemsPer: 10000, multi: false },
-  s4: { widgets: 10, itemsPer: 10000, multi: true },
+  's-100x100': { widgets: 100, itemsPer: 100, multi: false },
+  's-1000x10': { widgets: 1000, itemsPer: 10, multi: false },
+  's-10000x10': { widgets: 10000, itemsPer: 10, multi: false },
+  's-10x10000': { widgets: 10, itemsPer: 10000, multi: false },
+  'm-100x100': { widgets: 100, itemsPer: 100, multi: true },
+  'm-1000x10': { widgets: 1000, itemsPer: 10, multi: true },
+  'm-10000x10': { widgets: 10000, itemsPer: 10, multi: true },
+  'm-10x10000': { widgets: 10, itemsPer: 10000, multi: true },
 }
 
 // llselect UMD is now minified, so its number is comparable to the competitors'.
