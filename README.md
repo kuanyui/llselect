@@ -1,29 +1,39 @@
-# llselect -- low-level select
+# llselect - low-level select
 
-A JavaScript library to replace HTML native `<select>`.
+A JavaScript library that replaces the native HTML `<select>` element.
 
-This is not mean to provide a full-bundle select (such `select2.js`). This provide a minimal but flexible library which implement `<select>` in JavaScript, which you can easily wrap & integrate it into your existing UI library / framework / style.
+llselect is not meant to be a full-bundle select (like `select2.js`). It is a
+minimal but flexible implementation of `<select>` in JavaScript that you can
+easily wrap and integrate into your existing UI library / framework / style.
 
-# Features
-- Lazy rendering: the DOM of items list is rendered only when the popup open.
-- Do not rely on native `<select>` to store data. (so you can directly use `number` or any type of JS value as data model, without type-casting hell anymore)
+## Features
+
+- Lazy rendering: the item-list DOM is built only when the popup opens.
+- Does not rely on a native `<select>` to store data: use `number` or any JS
+  value as the data model directly, without type-casting hell.
 - Native TypeScript support.
-- Customizable HTML renderer function.
-- Search input.
+- Customizable HTML renderer functions.
+- Search input with IME-aware filtering.
+- ARIA combobox keyboard / focus model built in (see
+  [docs/A11Y.md](https://gitlab.com/kuanyui/llselect/-/blob/master/docs/A11Y.md)).
 
-# Install
+Browser support floor: Firefox 78+, Chrome/Edge 87+, Safari 14.1+. No
+polyfills or legacy-browser workarounds are included.
+
+## Install
 
 ```sh
 npm install llselect
 ```
 
-# Quick start
+## Quick start
 
 ```js
 import { LLSelectSingle, LLSelectMultiple } from 'llselect'
 import 'llselect/themes/vanilla.css' // optional: any shipped theme, or bring your own CSS
 
 const sel = new LLSelectSingle(document.querySelector('#mount'), {
+  ariaLabel: 'Fruit', // accessible name (or ariaLabelledBy: id of your visible label) - always set one
   placeholder: 'Pick a fruit',
   onChange: (item, previousItem) => console.log(item),
 })
@@ -43,15 +53,73 @@ new LLSelectSingle(el, { texts: zhTW })
 No build tool? The UMD bundle exposes `window.llselect`
 (`<script src="https://unpkg.com/llselect"></script>`), themes via `<link>`.
 
-# Customization: settings or subclassing?
+## What llselect deliberately does NOT do
+
+These are integration boundaries, not bugs. Plan for them up front:
+
+- **No native form integration.** llselect renders plain `div`s, not a form
+  control: nothing is submitted with a `<form>`, and `name`/value
+  serialization, form reset, constraint validation (`required` etc.), and
+  `<label for>` association do not apply. Name the field through the
+  `ariaLabel` / `ariaLabelledBy` setting, and mirror the selection into your
+  own form state (or a hidden input) yourself:
+
+  ```js
+  const hidden = document.querySelector('input[name="fruit"]')
+  const sel = new LLSelectSingle(mountEl, {
+    ariaLabelledBy: 'fruit-label',
+    onChange: (item) => { hidden.value = item ?? '' },
+  })
+  ```
+
+- **No HTML parsing of your data - and therefore no sanitizer.** Item strings
+  and trigger text are assigned via `textContent`, never parsed as HTML. An
+  XSS risk appears only when your own render callbacks
+  (`createItemContentElFn` and friends) parse untrusted markup (e.g. via
+  `innerHTML`); sanitize that markup first (e.g. with DOMPurify) - llselect
+  does not do it for you.
+- **No asynchronous data-fetching API.** Fetch however you like, then call
+  `setItems(...)`.
+- **No virtual scrolling.** llselect is a `<select>` replacement, not a data
+  grid.
+- **No alphabetic prefix typeahead** (the native `<select>` behavior) - it is
+  unusable for East Asian languages and IME input. Use the `searchable`
+  option instead.
+- **You must call `destroy()`** when unmounting (e.g. in a framework
+  wrapper): it removes the document / window listeners the instance owns.
+
+## Capabilities overview
+
+| Capability | Entry points |
+|---|---|
+| Search box + custom matching | `searchable` (bool or predicate), `filterFn` |
+| Accessible field naming (required) | `ariaLabel` / `ariaLabelledBy` |
+| Disabling - whole control / per item | `setDisabled()`, `focusableWhenDisabled`, `itemDisabledFn` |
+| Grouping (optgroup) | `itemToGroupKeyFn`, `groupKeyToLabelFn`, `groupDisabledFn` |
+| Multiple selection | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `selectAllRow`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
+| Popup width | `popupWidthPolicy: 'match-trigger' \| 'fit-content'` |
+| Rich rendering without subclassing | `createItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ... |
+| i18n | `texts` setting + `llselect/i18n` packs (en / ja / zh-TW / ar / he), RTL inherited from `dir` |
+| Lifecycle | `destroy()` (required on unmount), `rerender()`, `setItems()` |
+| Events | `onChange(current, previous)`, `onOpen`, `onClose` |
+
+Full contracts:
+[docs/DESIGN.md](https://gitlab.com/kuanyui/llselect/-/blob/master/docs/DESIGN.md)
+(API / architecture) and
+[docs/A11Y.md](https://gitlab.com/kuanyui/llselect/-/blob/master/docs/A11Y.md)
+(keyboard / focus / ARIA). The TypeScript declarations shipped in the package
+document every setting inline.
+
+## Customization: settings or subclassing?
 
 Rule of thumb: **settings configure one instance; subclassing extends the library.**
 
 Quick test: "Am I making a new, named, reusable kind of select?"
+
 - No, I just want this one dropdown to look / behave some way -> **settings**.
 - Yes -> **subclass**.
 
-## Settings (the common path - no subclass needed)
+### Settings (the common path - no subclass needed)
 
 | You want to customize | Setting |
 |---|---|
@@ -71,7 +139,7 @@ const sel = new LLSelectSingle(el, {
 })
 ```
 
-## Subclassing (extending the library)
+### Subclassing (extending the library)
 
 Subclass only when settings cannot express it:
 
@@ -79,50 +147,53 @@ Subclass only when settings cannot express it:
 2. **A framework wrapper** - e.g. `class VueLLSelect extends LLSelectSingle` for lifecycle glue (call `destroy()` on unmount). This is the main reason llselect is "low-level".
 3. **Core behavior with no setting** - e.g. replace `onItemActivated` semantics, or take full control of the item element via `createItemEl` (rich HTML, icons).
 
-How the two layers coexist: every customization point is a `protected` method whose default reads its `*Fn` setting. Overriding the method replaces that default - your override wins, plain OO, no hidden precedence. Rationale: `docs/DESIGN.md`.
+How the two layers coexist: every customization point is a `protected` method
+whose default reads its `*Fn` setting. Overriding the method replaces that
+default - your override wins, plain OO, no hidden precedence. Rationale:
+[docs/DESIGN.md](https://gitlab.com/kuanyui/llselect/-/blob/master/docs/DESIGN.md).
 
-# Design Decisions
-## Principles
-1. Minimal - No external JS / CSS dependency. Auditable.
-2. Performance - blazing fast.
+## Design principles
+
+1. Minimal - no external JS / CSS dependency. Auditable.
+2. Performance - lazy popup rendering, and a single-item selection change
+   replaces one item node instead of rebuilding the list (O(1) DOM work even
+   in a 10k-item list).
 3. Flexible
-  - Easy to integrate into existing project / library / style.
-  - Settings configure one instance; subclassing extends the library. (See "Customization" above.)
+   - Easy to integrate into an existing project / library / style.
+   - Settings configure one instance; subclassing extends the library. (See "Customization" above.)
 4. Explicit
-  - Explicit better than implicit - API names are long but no surprise nor ambiguity.
-  - Single-select and multiple-select are handled by separate classes to avoid ambiguous / too-complicated / over-abstraction API (e.g. use the same `T[]` to model single / multiple select).
-  - Improve some terrible UI/UX anti-pattern in legacy `<select>` (ex: replace `disabled` with `aria-disabled` to let it still able to accept mouse hover event, for example, show the reasons of disabling in hovering tooltip)
+   - Explicit is better than implicit - API names are long, but hold no surprise or ambiguity.
+   - Single-select and multiple-select are separate classes, avoiding ambiguous / over-abstracted APIs (e.g. one `T[]` modeling both modes).
+   - Improves some UI/UX anti-patterns of the legacy `<select>` (e.g. `aria-disabled` instead of native `disabled`, so a disabled control still receives hover events and can show a "why is this disabled" tooltip).
 
-## Limitations
-- **No sanitizer is provided by default. Please use `DOMPurify` by yourself.**
-- No asynchronize data fetching API. Please do it by yourself.
-- No virtual scroll. That's too complicated; `llselect` is merely meant to be a replacement of native `<select>`.
-- No "alphabet suffix searching" (like native `<select>`) because this is totally unusable for eastern-Asia languages. If you really want search, please use `searchable` option.
-- Legacy browser is not handled.
+## Acknowledgment
 
-# Acknowledgment
-I had this idea since 2024 and wrote some drafts for this. But I have no time to implement this so the draft was abandoned.
+I have had this idea since 2024 and wrote some drafts for it, but I had no
+time to implement it, so the draft was abandoned.
 
-Now with Claude Code, I try to finish this with it.
+Now, with Claude Code, I am trying to finish it.
 
-## LLM Disclosures
+### LLM Disclosures
 
-This project heavily relys on LLM agent. >= 99% main working codes are directly written by LLM.
+This project heavily relies on LLM agents. More than 99% of the working code
+was written directly by an LLM.
 
-### So you are just a fucking idiot vibe coder? what on Earth were you responsible for in this project, if LLM has done so much?
-1. I review all modifications via `git diff` before `git commit` as possible as I can, to avoid some obvious anti-patterns, or bad-smelling codes.
+#### So you are just a fucking idiot vibe coder? what on Earth were you responsible for in this project, if LLM has done so much?
+
+1. I review all modifications via `git diff` before `git commit`, as much as
+   I can, to avoid obvious anti-patterns and bad-smelling code.
 2. I
-  - correct unreasonable APIs according to my development experiences, trying to avoid some painful APIs and anti-patterns which are common among existed select UI component libraries.
-  - do technical decisions,
-  - test on real browsers and OS (Firefox / Chromium, Linux / Android) and decide UI/UX details,
+   - correct unreasonable APIs according to my development experience, trying
+     to avoid the painful APIs and anti-patterns common among existing select
+     UI component libraries,
+   - make the technical decisions,
+   - test on real browsers and OSes (Firefox / Chromium, Linux / Android) and
+     decide the UI/UX details.
 
-I tried to provide an usable software, but **I still cannot provide any warranty.**
+I try to provide usable software, but **I still cannot provide any warranty.**
 
-# License
-Copyright © 2024, 2026 kuanyui (ono ono)
+## License
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Copyright (c) 2024, 2026 kuanyui (ono ono)
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+MIT License. See [LICENSE](./LICENSE) for the full text.

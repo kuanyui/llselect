@@ -217,8 +217,10 @@ mixed-direction item list, weak-character examples included).
     element. DOM work stays O(1) regardless of list size, so toggling one
     selection in a 10k-item list does not recreate 10k nodes. (The lookup to
     find the item is O(n), but a comparison loop is negligible next to DOM
-    mutation + reflow.) This beats vdom frameworks, which must diff the whole
-    list on a state change.
+    mutation + reflow.) A vdom framework would instead diff the list render
+    on each state change; llselect skips that by knowing exactly which item
+    changed. (No published benchmark - this is an implementation description,
+    not a measured comparison.)
 - External mutation of an item object's properties (e.g.
   `users[0].name = 'X'`) is **not** auto-detected. Call `rerender()` to
   reflect the change in the DOM. `rerender` is a pure visual refresh: it
