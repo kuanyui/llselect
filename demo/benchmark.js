@@ -287,10 +287,18 @@ async function sampleFilter(key, scen) {
   // off-screen no-op that would zero out the interaction cycle).
   stage.firstElementChild?.scrollIntoView({ block: 'center', behavior: 'instant' })
   try {
-    a.open(h); await raf(); reflow(stage)
+    a.open(h); await raf(); reflow(stage); await raf()
     const samples = []
-    // Time to the next rendered frame so rAF-deferred rendering (Choices) counts.
-    for (let i = 0; i < 4; i++) { const t0 = performance.now(); a.filter(h, q); await raf(); reflow(stage); if (i > 0) { samples.push(performance.now() - t0) } }
+    // Timed to after the next paint (two rAFs + a forced layout) so rAF-deferred
+    // and paint-heavy rendering (Choices reveals a display:none list) is counted.
+    // Reset the query untimed each round so typing is always a real change.
+    for (let i = 0; i < 4; i++) {
+      try { a.filter(h, '') } catch (e) { /* ignore */ }
+      await raf()
+      const t0 = performance.now()
+      a.filter(h, q); await raf(); reflow(stage); await raf()
+      if (i > 0) { samples.push(performance.now() - t0) }
+    }
     a.close(h); await raf()
     return median(samples)
   } catch (e) { console.warn(key, e); return null }
@@ -562,11 +570,18 @@ async function measureInteraction(mode, key, items, stageEl) {
   // op's own rAF (registered during the call) runs before this raf, so after it
   // the work has happened; a forced reflow then includes its layout. This makes
   // the number "latency until the result is on screen", one frame being the floor.
+  // Time an op to AFTER the next frame's paint, not just its synchronous return.
+  // Choices reveals a display:none list whose real cost (laying out + painting N
+  // options) lands on the frame the browser shows it, not inside the synchronous
+  // showDropdown() call - and it schedules that with requestAnimationFrame. So:
+  // run the op, let its rAF fire (frame N), force this frame's layout, then wait
+  // one more frame - the second rAF fires after frame N has painted.
   const timeOp = async (fn) => {
     const t = performance.now()
     try { fn() } catch (e) { console.warn(key, e); return null }
     await raf()
     reflow(stageEl)
+    await raf()
     return performance.now() - t
   }
   for (let i = 0; i < CYCLES; i++) {
