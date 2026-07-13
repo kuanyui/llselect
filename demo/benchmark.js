@@ -89,6 +89,10 @@ const ADAPTERS = {
     setup(mount, items, { multi, custom }) {
       const Ctor = multi ? window.llselect.LLSelectMultiple : window.llselect.LLSelectSingle
       const opts = { searchable: true }
+      // Match the competitors: their multi-selects render each chosen item as a
+      // chip, so llselect renders tags too (not the lighter count summary),
+      // otherwise it would be doing less per-selection work than they do.
+      if (multi) { opts.triggerDisplay = 'tags' }
       if (custom) { opts.createItemContentElFn = (it) => iconSpan(it) }
       const inst = new Ctor(mount, opts)
       inst.setItems(items)
@@ -350,7 +354,8 @@ async function measureSizes() {
 }
 
 // --- chart ----------------------------------------------------------------
-// Pure CSS bars (no chart library - keeps the demo dependency-free). Default
+// Interactive horizontal bar chart via Chart.js (loaded from the CDN, like the
+// competitor libraries - demo tooling, never part of what is measured). Default
 // metric is throughput (built / time), which stays comparable even when a
 // library timed out, because it is a per-widget rate rather than a total.
 
@@ -377,34 +382,60 @@ const METRICS = {
   },
 }
 
+let chartInstance = null
+
 function renderChart(metricKey) {
-  const chart = document.getElementById('chart')
+  const canvas = document.getElementById('chart')
   const caption = document.getElementById('chart-caption')
+  const empty = document.getElementById('chart-empty')
   const metric = METRICS[metricKey]
   const rows = ORDER
     .filter(k => results[k])
     .map(k => ({ k, v: metric.value(results[k]), r: results[k] }))
     .filter(x => x.v != null && !isNaN(x.v))
-  chart.replaceChildren()
-  if (!rows.length) { chart.textContent = 'Run a scenario to see the chart.'; caption.textContent = ''; return }
-  caption.textContent = metric.higherBetter ? '(longer is better)' : '(longer is worse; shortest wins)'
-  const max = Math.max(...rows.map(x => x.v))
-  const best = metric.higherBetter ? max : Math.min(...rows.map(x => x.v))
-  for (const { k, v, r } of rows) {
-    const row = document.createElement('div'); row.className = 'chart-row'
-    const label = document.createElement('div'); label.className = 'chart-label'; label.textContent = DISPLAY[k].name
-    const track = document.createElement('div'); track.className = 'chart-track'
-    const bar = document.createElement('div'); bar.className = 'chart-bar'
-    bar.style.width = (max > 0 ? Math.max(1, v / max * 100) : 0) + '%'
-    if (v === best) { bar.classList.add('best') }
-    if (r.timedOut || r.errored) { bar.classList.add('partial') }
-    const val = document.createElement('span'); val.className = 'chart-value'
-    val.textContent = metric.fmt(v) + ((r.timedOut || r.errored) ? ` (built ${r.built}/${r.target})` : '')
-    bar.appendChild(val)
-    track.appendChild(bar)
-    row.append(label, track)
-    chart.appendChild(row)
+
+  if (!window.Chart) { caption.textContent = '(Chart.js failed to load)'; return }
+  if (!rows.length) {
+    if (chartInstance) { chartInstance.destroy(); chartInstance = null }
+    caption.textContent = ''
+    empty.style.display = ''
+    return
   }
+  empty.style.display = 'none'
+  caption.textContent = metric.higherBetter ? '(longer is better)' : '(shorter is better)'
+
+  const best = metric.higherBetter ? Math.max(...rows.map(x => x.v)) : Math.min(...rows.map(x => x.v))
+  const labels = rows.map(x => DISPLAY[x.k].name)
+  const data = rows.map(x => x.v)
+  const meta = rows.map(x => x.r)
+  // green = winner, amber = incomplete (timeout / error), blue = the rest.
+  const colors = rows.map(x => ((x.r.timedOut || x.r.errored) ? '#c9821a' : (x.v === best ? '#1a7f37' : '#2456a6')))
+
+  const cfg = {
+    type: 'bar',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const r = meta[ctx.dataIndex]
+              const base = metric.fmt(ctx.parsed.x)
+              return (r.timedOut || r.errored) ? `${base}  (built ${r.built}/${r.target})` : base
+            },
+          },
+        },
+      },
+      scales: { x: { beginAtZero: true } },
+    },
+  }
+  if (chartInstance) { chartInstance.destroy() }
+  chartInstance = new window.Chart(canvas, cfg)
 }
 
 // --- interaction latency --------------------------------------------------

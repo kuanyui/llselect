@@ -85,7 +85,8 @@
       <option value="filter">Filter sample (ms)</option>
     </select>
   </label>
-  <div id="chart" class="bench-chart">Run a scenario to see the chart.</div>
+  <div class="bench-chart"><canvas id="chart"></canvas></div>
+  <p id="chart-empty" class="hint">Run a scenario to see the chart.</p>
 
   <h2>Scratch area <small>(the widgets from the last run render here - scroll)</small></h2>
   <div id="stage" class="bench-stage"></div>
@@ -174,6 +175,8 @@
   <script src="https://cdn.jsdelivr.net/npm/slim-select@2.10.0/dist/slimselect.umd.js"></script>
   <!-- llselect (the library under test), UMD global `llselect` -->
   <script src="../dist/index.umd.js"></script>
+  <!-- Chart.js for the interactive comparison chart (demo tooling, not measured) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js"></script>
   <script type="module" src="benchmark.js"></script>
 </body>
 </html>
