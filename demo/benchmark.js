@@ -190,6 +190,7 @@ function countNodes() { return stage.querySelectorAll('*').length }
 let live = [] // { key, h } currently rendered, for teardown
 let results = {} // key -> latest metrics for the current scenario, for the chart
 let ixLive = {} // key -> handle of the one dedicated interaction widget
+let ixResults = {} // key -> { open, select, close } for the interaction chart
 
 function clearStage() {
   for (const { key, h } of live) { try { ADAPTERS[key].teardown(h) } catch (e) { /* ignore */ } }
@@ -487,7 +488,59 @@ function ixHighlightBest() {
 function ixClear() {
   for (const key of Object.keys(ixLive)) { try { ADAPTERS[key].teardown(ixLive[key]) } catch (e) { /* ignore */ } }
   ixLive = {}
+  ixResults = {}
   ixStage.replaceChildren()
+  renderIxChart()
+}
+
+// Stacked bar: the whole bar is the full open + select + close cost, each
+// segment a phase (all in ms, so no normalization). Legend toggles phases.
+const IX_PHASES = [
+  { key: 'open', label: 'Open', color: '#2456a6' },
+  { key: 'select', label: 'Select', color: '#1a7f37' },
+  { key: 'close', label: 'Close', color: '#c9821a' },
+]
+let ixChartInstance = null
+
+function renderIxChart() {
+  const canvas = document.getElementById('ix-chart')
+  const empty = document.getElementById('ix-chart-empty')
+  if (!window.Chart) { empty.textContent = 'Chart.js failed to load.'; empty.style.display = ''; return }
+  const libs = ORDER.filter(k => ixResults[k] && ixResults[k].open != null)
+  if (!libs.length) {
+    if (ixChartInstance) { ixChartInstance.destroy(); ixChartInstance = null }
+    empty.style.display = ''
+    return
+  }
+  empty.style.display = 'none'
+  const labels = libs.map(k => DISPLAY[k].name)
+  const datasets = IX_PHASES.map(p => ({
+    label: p.label,
+    data: libs.map(k => ixResults[k][p.key]),
+    backgroundColor: p.color,
+    borderWidth: 0,
+    stack: 'ix',
+  }))
+  const cfg = {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${fmt(ctx.parsed.x)} ms` } },
+      },
+      scales: {
+        x: { beginAtZero: true, stacked: true, title: { display: true, text: 'ms (whole bar = open + select + close; shorter is better)' } },
+        y: { stacked: true },
+      },
+    },
+  }
+  if (ixChartInstance) { ixChartInstance.destroy() }
+  ixChartInstance = new window.Chart(canvas, cfg)
 }
 
 async function ixBuildAndMeasure() {
@@ -509,8 +562,11 @@ async function ixBuildAndMeasure() {
     await raf()
     status.textContent = `${DISPLAY[key].name}: measuring open / select / close ...`
     await raf()
-    ixSetRow(key, ADAPTERS[key].noFilter ? null : measureInteraction(key, items))
+    const m = ADAPTERS[key].noFilter ? null : measureInteraction(key, items)
+    ixSetRow(key, m)
+    if (m && m.open != null) { ixResults[key] = m }
     ixHighlightBest()
+    renderIxChart()
     await raf()
   }
   runBtn.disabled = false

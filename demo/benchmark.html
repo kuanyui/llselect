@@ -126,6 +126,11 @@
     <thead><tr><th>Library</th><th>Open (ms)</th><th>Select (ms)</th><th>Close (ms)</th></tr></thead>
     <tbody></tbody>
   </table>
+  <p class="hint">Stacked, so the whole bar is the full open + select + close cost
+    (shorter is better); each segment is one phase. Click a legend entry to show
+    or hide a phase; hover for the exact millisecond value.</p>
+  <div class="bench-chart"><canvas id="ix-chart"></canvas></div>
+  <p id="ix-chart-empty" class="hint">Build + measure to see the chart.</p>
   <div id="ix-stage" class="ix-stage"></div>
 
   <h2>Bundle size</h2>
