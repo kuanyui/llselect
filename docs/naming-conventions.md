@@ -1,6 +1,6 @@
 # Method naming conventions
 
-> STATUS: APPLIED to src/ + test/ + demo/ (npm test green: 219; npm run build green). Covers
+> STATUS: APPLIED to src/ + test/ + demo/ (npm test passes; npm run build green). Covers
 > every method/function in src/, incl. Phase 10 optgroup (s4d). Private names matter least, but docstrings stay clear.
 > render* responsibility: APPLIED=(ii) - see render-responsibilities.md (render* are pure
 > orchestrators with DOM-free bodies).
@@ -288,7 +288,7 @@ Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure
 
 ## 6. Phasing
 
-DONE - all three phases applied (npm test green: 182; npm run build green).
+DONE - all three phases applied (npm test passes; npm run build green).
 
 1. private renames (zero API impact) + private (ii) primitive (`commitArrowElToDom`).
 2. protected: `createItemContentEl`, `create*El` family, `getVisibleItems`,

@@ -156,8 +156,10 @@ default - your override wins, plain OO, no hidden precedence. Rationale:
 
 1. Minimal - no external JS / CSS dependency. Auditable.
 2. Performance - lazy popup rendering, and a single-item selection change
-   replaces one item node instead of rebuilding the list (O(1) DOM work even
-   in a 10k-item list).
+   replaces just the one affected option node in the popup list instead of
+   rebuilding every row (the list update is O(1) in list size). The trigger is
+   refreshed too; its cost depends on `triggerDisplay` (`count` is constant,
+   `tags` rebuilds one chip per chosen item).
 3. Flexible
    - Easy to integrate into an existing project / library / style.
    - Settings configure one instance; subclassing extends the library. (See "Customization" above.)

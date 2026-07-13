@@ -187,9 +187,11 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     } else {
       this.chosenItems = [...previous, item]
     }
-    // Only one item's selection changed: re-render the trigger (count),
-    // that single item's element, and the select-all row's tri-state (when
-    // present) - not the whole list. O(1) DOM work.
+    // Only one item's selection changed, so the popup list replaces just that
+    // one row (plus the select-all tri-state) instead of rebuilding every row -
+    // O(1) in list size. The trigger is refreshed too; its cost depends on
+    // triggerDisplay (count = constant, tags = one chip per chosen item,
+    // custom = caller-defined), so the whole update is not unconditionally O(1).
     this.renderTrigger()
     this.replacePopupListItemElInDom(item)
     this.replaceLeadingRowElInDom()
