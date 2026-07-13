@@ -3,7 +3,7 @@
 > STATUS: APPLIED = (ii). Every `render*` method is a PURE ORCHESTRATOR - it computes
 > content/elements and calls the low-level primitives, and touches NO DOM directly. So each
 > `render*` is unsuffixed AND genuinely DOM-free in its body. (iii) is recorded at the bottom
-> as NOT TAKEN. Bodies refactored in src/ (base + single + multiple); npm test green (182).
+> as NOT TAKEN. Bodies refactored in src/ (base + single + multiple); npm test passes.
 >
 > Phase 10 update: `renderPopupList` now composes `computePopupSegments` +
 > `commitPopupSegmentsToDom` (group containers); `commitItemElsToDom` was superseded and no

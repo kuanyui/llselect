@@ -291,7 +291,11 @@ export type LLSelectBaseSettingsInput<T, GK = string> = LLSelectSettingsInputOf<
 export interface LLSelectClassIdMap {
   /** Class on `rootEl` (the caller-passed mount element). */
   rootClass: string
-  /** Class on `triggerEl` (the interactive trigger, `role="combobox"`). */
+  /**
+   * Class on `triggerEl` (the interactive trigger). Its `role` is
+   * `combobox` while search is inactive and `button` while a searchable popup
+   * is open; see `docs/A11Y.md`.
+   */
   triggerClass: string
   /** Class on the inner span where content (text/tags) is rendered. */
   triggerContentClass: string
@@ -433,9 +437,12 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    */
   public readonly rootEl: HTMLElement
   /**
-   * The interactive trigger element (`role="combobox"`). Receives focus,
-   * click, and keydown events; carries `aria-expanded`, `aria-controls`,
-   * `aria-activedescendant`, and `data-state="open|closed"`.
+   * The interactive trigger element. Receives focus, click, and keydown
+   * events; carries `aria-expanded`, `aria-controls`, and
+   * `data-state="open|closed"`. Its `role` depends on search mode: `combobox`
+   * while search is inactive (it then also hosts `aria-activedescendant`) and
+   * `button` while a searchable popup is open (the search input hosts
+   * `aria-activedescendant`). See `docs/A11Y.md`.
    */
   public readonly triggerEl: HTMLElement
   /**

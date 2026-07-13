@@ -255,8 +255,10 @@ is in `A11Y.md`.
   focus host is never yanked while the popup is up. Also:
   `filterFn: ((item, query) => boolean) | null` (default `null` =
   case-insensitive substring on `itemToString`);
-  `texts.searchInputAriaLabel` (default `'Search'` - the input's accessible
-  name; it has no visible label) and `texts.searchInputPlaceholder`
+  `texts.searchInputAriaLabel` (default `'Search'` - a FALLBACK accessible
+  name for the input, used only when the app supplies neither `ariaLabel` nor
+  `ariaLabelledBy`; the field name replaces it otherwise) and
+  `texts.searchInputPlaceholder`
   (default `'Filter (Esc to clear)'` - also teaches the Esc-clears-filter
   behavior; `null` = no placeholder) - see "Texts (i18n)" below. IME-aware filtering
   (composition-guarded) is part of the contract; see `A11Y.md`.
