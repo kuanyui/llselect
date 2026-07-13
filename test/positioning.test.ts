@@ -451,3 +451,57 @@ test('LLSelectSingle auto-closes when trigger scrolls fully out of viewport', ()
 
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
 })
+
+// --- placement stickiness (currentPlacement) ------------------------------
+
+// Anchor near the viewport bottom: a little room below (58px), lots above.
+const ANCHOR_NEAR_BOTTOM: AnchorRect = {
+  top: 600, left: 50, right: 250, bottom: 630, width: 200, height: 30,
+}
+const NEAR_BOTTOM_VIEWPORT = { viewportWidth: 1024, viewportHeight: 700 }
+
+test('sticky: an above placement is kept while content still fits above', () => {
+  // Open with a tall list -> above. The filter then matches nothing and the
+  // popup shrinks to fit below too; without stickiness it would jump down.
+  const first = computePosition({
+    anchorRect: ANCHOR_NEAR_BOTTOM, ...NEAR_BOTTOM_VIEWPORT,
+    floatingHeight: 500,
+  })
+  assert.equal(first.placement, 'above')
+  const shrunk = computePosition({
+    anchorRect: ANCHOR_NEAR_BOTTOM, ...NEAR_BOTTOM_VIEWPORT,
+    floatingHeight: 40, currentPlacement: first.placement,
+  })
+  assert.equal(shrunk.placement, 'above')
+  // Esc clears the filter, the list regrows: still above, full room to grow.
+  const regrown = computePosition({
+    anchorRect: ANCHOR_NEAR_BOTTOM, ...NEAR_BOTTOM_VIEWPORT,
+    floatingHeight: 500, currentPlacement: shrunk.placement,
+  })
+  assert.equal(regrown.placement, 'above')
+  assert.equal(regrown.maxHeight, 588) // spaceAbove = 600 - 4 - 8
+})
+
+test('sticky: a below placement is kept while content still fits below', () => {
+  const r = computePosition({
+    anchorRect: ANCHOR_AT_TOP, viewportWidth: 1024, viewportHeight: 768,
+    floatingHeight: 200, currentPlacement: 'below',
+  })
+  assert.equal(r.placement, 'below')
+})
+
+test('sticky yields: current side no longer fits and the other does -> flip', () => {
+  const r = computePosition({
+    anchorRect: ANCHOR_NEAR_BOTTOM, ...NEAR_BOTTOM_VIEWPORT,
+    floatingHeight: 400, currentPlacement: 'below',
+  })
+  assert.equal(r.placement, 'above')
+})
+
+test('sticky yields: neither side fits -> larger side wins regardless of current', () => {
+  const r = computePosition({
+    anchorRect: ANCHOR_NEAR_BOTTOM, ...NEAR_BOTTOM_VIEWPORT,
+    floatingHeight: 800, currentPlacement: 'below',
+  })
+  assert.equal(r.placement, 'above')
+})
