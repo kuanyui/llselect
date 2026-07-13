@@ -488,7 +488,7 @@ const IX_PHASES = [
 // its own live handles + results.
 const IX_MODES = [
   { key: 'single', label: 'Single-select', multi: false, pick: PICK_SINGLE, live: {}, results: {}, chart: null },
-  { key: 'multiple', label: 'Multiple-select', multi: true, pick: PICK, live: {}, results: {}, chart: null },
+  { key: 'multi', label: 'Multiple-select', multi: true, pick: PICK, live: {}, results: {}, chart: null },
 ]
 
 function ixStageEl(mode) { return document.getElementById(`ix-${mode.key}-stage`) }

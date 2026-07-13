@@ -27,11 +27,18 @@
   <p>
     Two browser benchmarks against the native <code>&lt;select&gt;</code> (the
     baseline floor), Choices.js, Select2, Tom Select and Slim Select: building
-    many selects at once (<a href="#mass">mass instantiation</a>), and
-    interacting with one (<a href="#interaction">interaction latency</a>).
-    Everything runs in your browser. <strong>Lower is better;</strong> numbers
-    depend on your machine.
+    many selects at once (mass instantiation), and interacting with one
+    (interaction latency). Everything runs in your browser.
+    <strong>Lower is better;</strong> numbers depend on your machine.
   </p>
+
+  <nav class="bench-toc">
+    <span>On this page:</span>
+    <a href="#mass">Mass instantiation</a>
+    <a href="#interaction">Interaction latency</a>
+    <a href="#bundle">Bundle size</a>
+    <a href="#method">Method and caveats</a>
+  </nav>
 
   <h2 id="mass">Mass instantiation</h2>
   <p>
@@ -158,7 +165,7 @@
   <p id="ix-multi-empty" class="hint">Build + measure to see the chart.</p>
   <div id="ix-multi-stage" class="ix-stage"></div>
 
-  <h2>Bundle size</h2>
+  <h2 id="bundle">Bundle size</h2>
   <p>Minified transfer bytes, <em>uncompressed</em> - the same method for every
     script, fetched live from the CDN (gzip shrinks them all by roughly 3x).
     Select2 also requires jQuery, listed separately.</p>
@@ -167,7 +174,7 @@
     <tbody></tbody>
   </table>
 
-  <h2>Method and caveats</h2>
+  <h2 id="method">Method and caveats</h2>
   <ul class="bench-caveats">
     <li>Widgets are built in small chunks with a yield between them, so the page
       stays responsive and a runaway library can be cut off at its time budget. A

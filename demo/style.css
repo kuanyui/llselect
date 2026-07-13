@@ -417,3 +417,9 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .ix-table th:first-child, .ix-table td:first-child { text-align: left; }
 .ix-table thead th { background: #f6f8fa; }
 .ix-table td.best { background: #e6f4ea; color: #1a7f37; font-weight: 700; }
+
+/* --- benchmark table of contents (not collapsible) ---------------------- */
+.bench-toc { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; margin: 0.5rem 0 1.5rem; padding: 0.6rem 0.9rem; background: #f6f8fa; border: 1px solid #e2e2e2; border-radius: 6px; font-size: 0.9rem; }
+.bench-toc span { color: #555; font-weight: 600; }
+.bench-toc a { color: #2456a6; text-decoration: none; }
+.bench-toc a:hover { text-decoration: underline; }
