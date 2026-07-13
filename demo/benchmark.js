@@ -378,6 +378,7 @@ async function runLib(key) {
 async function runAll() {
   setRunning(true)
   stopRequested = false
+  reset('Running all libraries ...') // start from a clean table + chart
   for (const key of ORDER) {
     await runLib(key)
     if (stopRequested) { break }
