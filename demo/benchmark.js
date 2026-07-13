@@ -107,8 +107,9 @@ const ADAPTERS = {
       if (opts.multi) { o.triggerDisplay = 'tags' }
       if (opts.custom) {
         o.createItemContentElFn = (it) => iconSpan(it)
-        // If list items carry an icon, the tag chips must carry it too.
-        if (opts.multi) { o.createTagContentElFn = (it) => iconSpan(it) }
+        // If list items carry an icon, the chosen display must carry it too:
+        // the tag chips in multi, the trigger content in single.
+        if (opts.multi) { o.createTagContentElFn = (it) => iconSpan(it) } else { o.createTriggerContentElFn = (ctx) => (ctx.chosenItem == null ? null : iconSpan(ctx.chosenItem)) }
       }
       const inst = new Ctor(mount, o)
       inst.setItems(items)
