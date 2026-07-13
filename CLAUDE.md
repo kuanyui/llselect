@@ -79,6 +79,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - When asking the user to decide a name (method / function / setting / type), ALWAYS give its full TypeScript signature (param + return types) and one line on what it actually does. Never ask for a naming decision on insufficient information - the user should not have to go look it up.
 - Any callback / setting whose type includes `null` must have its docstring state exactly what `null` means; it differs per case (e.g. "fall back to the default text" vs "render nothing") and is never self-evident.
 - When explicit naming / structure conflicts with brevity or "fewer abstractions" (including s2 Simplicity First), prefer explicit. The cost of guessing while reading the API outweighs a few extra methods or longer names.
+- No invented abbreviations or opaque tracking codes anywhere - identifiers, comments, docs, or commit messages. Spell it out: `isItemEffectivelyDisabled` not `isItemEffDis`, `previousChosenItem` not `prevItem`, `[DOCUMENTATION-14]` not `R14`. A commit message says what it did in prose; it carries no `(R20)` / `(REVIEW 1.2)`-style tag. Two exemptions only: (a) established domain terms that ARE the standard spelling - ARIA, DOM, HTML, CSS, RTL / LTR, IME, SVG, API, URL, UMD, CJK, npm, i18n, a11y, id; (b) a within-a-document section reference such as naming-conventions.md's `s7a.4` (a `section`-style cross-reference, not a coined name).
 
 ### Verification commands (llselect)
 
@@ -106,3 +107,32 @@ happen in the same session.
 - A public API change is not done until everything it touches moves together:
   exports (`src/index.ts`), declarations, README examples, tests, and the
   owning contract doc (`docs/DESIGN.md` / `docs/A11Y.md`).
+
+### Review-findings log (`docs/FIXME.md`)
+
+Findings from reviews (external, `/code-review`, audits) are tracked in
+`docs/FIXME.md`, newest round on top under a `## review (<topic>)` heading. No
+date in the heading, or anywhere in the file - `git log` carries the when
+(see the no-dates-in-docs rule). Each finding is one entry:
+
+`- [ ] **[SEVERITY-N] - title**` - `[ ]` open, `[x]` resolved. SEVERITY is a
+full word, never abbreviated: HIGH / MEDIUM / PERFORMANCE / QUALITY /
+DOCUMENTATION / NEEDS-VERIFICATION / LINT. N is a number unique across all
+rounds (e.g. `[QUALITY-7]`).
+
+Nested body:
+
+- Plain facts use a label, one per line: `Symptom:` / `Cause:` / `Impact:` /
+  `Fix:` / `Verified:` (Verified only on resolved entries).
+- A non-obvious judgement becomes a two-level Q&A: `- Q: Why <judgement>, not
+  <the tempting alternative>?` then `  - A: Because <why the alternative fails
+  / why this holds>.` Add one only when the answer is non-trivial; keep each A
+  terse.
+- Cross-round correction is the PRIMARY use of the Q&A: when a later round
+  finds a prior call wrong, delete the wrong CONCLUSION but keep the LESSON as
+  a Q&A for why it was wrong. These accumulate across rounds - keep them. The Q
+  asks about the judgement itself, never which round made it.
+- `file:line` refs: keep line numbers while the entry is open (`[ ]` - you
+  still navigate there); on resolving (`[x]`), drop the line number and keep
+  only the file / symbol (lines drift after the fix; git blame / grep finds
+  the exact spot).

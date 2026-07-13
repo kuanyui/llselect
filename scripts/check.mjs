@@ -22,11 +22,11 @@ function listDir(rel, extension) {
 }
 
 // Exceptions (CLAUDE.md s5): i18n pack values, draft.ts (abandoned), test
-// fixtures (unicode-behavior data), demo (i18n / RTL data), REVIEW inputs.
+// fixtures (unicode-behavior data), demo (i18n / RTL data).
 const asciiFiles = [
   ...listDir('src', '.ts').filter((f) => !f.endsWith('i18n.ts') && !f.endsWith('draft.ts')),
   ...listDir('src/themes', '.css'),
-  ...listDir('docs', '.md').filter((f) => !f.endsWith('REVIEW.md')),
+  ...listDir('docs', '.md'),
   ...listDir('docs/archive', '.md'),
   ...listDir('scripts', '.mjs'),
   'README.md',
@@ -35,7 +35,7 @@ const asciiFiles = [
 ]
 
 const markdownFiles = [
-  ...listDir('docs', '.md').filter((f) => !f.endsWith('REVIEW.md')),
+  ...listDir('docs', '.md'),
   ...listDir('docs/archive', '.md'),
   'README.md',
   'CLAUDE.md',
