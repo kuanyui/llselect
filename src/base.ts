@@ -43,6 +43,27 @@ export interface LLSelectBaseSettings<T, GK = string> {
    */
   placeholder: string
   /**
+   * Accessible name of the field, like the `<label>` text of a native
+   * `<select>` (e.g. `'Country'`).
+   * - Applied to the trigger, the popup listbox, and (while search is active)
+   *   the search input; per-mode wiring: `docs/A11Y.md` "Accessible name".
+   * - `null` (default): the library sets no name. Provide `ariaLabelledBy`
+   *   instead; if BOTH stay `null` the field has no accessible name, which
+   *   violates WAI-ARIA 1.2 - always supply one of the two.
+   * - Ignored when `ariaLabelledBy` is set (ARIA name precedence).
+   */
+  ariaLabel: string | null
+  /**
+   * Space-separated DOM id(s) of the visible label element(s) naming the
+   * field; forwarded as `aria-labelledby` to the same elements as `ariaLabel`.
+   * - Prefer this over `ariaLabel` when a visible label element exists: the
+   *   spoken name then always matches the visible text.
+   * - `null` (default): not forwarded; see `ariaLabel` for the naming
+   *   requirement.
+   * - Wins over `ariaLabel` when both are set (ARIA name precedence).
+   */
+  ariaLabelledBy: string | null
+  /**
    * Equality predicate for item values - return `true` when `a` and `b` are the
    * same item.
    * - Required for non-primitive `T` (the default `===` compares references).
@@ -330,6 +351,13 @@ export interface LLSelectClassIdMap {
   /** DOM `id` of `triggerEl`. Unique across instances. */
   triggerId: string
   /**
+   * DOM `id` of the trigger content span. Unique across instances. Referenced
+   * by the searchable-mode trigger's `aria-labelledby` chain so the closed
+   * button's accessible name includes the current value (see the `ariaLabel` /
+   * `ariaLabelledBy` settings).
+   */
+  triggerContentId: string
+  /**
    * DOM `id` of `popupListEl` (the inner listbox). Unique across instances.
    * Referenced by the trigger's `aria-controls` attribute.
    */
@@ -370,6 +398,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     tagRemoveButtonClass: `${prefix}-tag-remove-button`,
     openClass: `${prefix}-open`,
     triggerId: `${uniq}-trigger`,
+    triggerContentId: `${uniq}-trigger-content`,
     popupListId: `${uniq}-popup-list`,
     searchInputClass: `${prefix}-search-input`,
     searchInputId: `${uniq}-search-input`,
@@ -523,6 +552,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.settings = {
       cssClassPrefix: settings?.cssClassPrefix ?? DEFAULT_PREFIX,
       placeholder: settings?.placeholder ?? texts.triggerPlaceholder,
+      ariaLabel: settings?.ariaLabel ?? null,
+      ariaLabelledBy: settings?.ariaLabelledBy ?? null,
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
       createTriggerArrowContentElFn: settings?.createTriggerArrowContentElFn ?? null,
@@ -637,6 +668,44 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.triggerEl.setAttribute('role', this.searchActive ? 'button' : 'combobox')
     this.searchInputEl.hidden = !this.searchActive
     this.comboboxEl = this.searchActive ? this.searchInputEl : this.triggerEl
+    this.syncFieldNameToDom()
+  }
+
+  /**
+   * Reflect the field's accessible name (`ariaLabel` / `ariaLabelledBy`) onto
+   * the elements that carry it. Runs with `syncSearchModeToDom` (constructor +
+   * every open) because the trigger's wiring depends on the mode:
+   * - Trigger, search inactive (`role="combobox"`): the name directly; the
+   *   combobox VALUE already comes from the trigger content.
+   * - Trigger, search active (`role="button"`): a button's name would
+   *   otherwise be its content (the current value) with no field name, so
+   *   `aria-labelledby` chains label + content span. With only `ariaLabel`
+   *   there is no label element to reference, so the chain starts at the
+   *   trigger itself - the accname algorithm substitutes its `aria-label`.
+   * - Search input: the field name replaces the `texts.searchInputAriaLabel`
+   *   fallback (while search is active the input IS the field's combobox).
+   * - Listbox: the field name, both modes.
+   */
+  private syncFieldNameToDom(): void {
+    const apply = (el: HTMLElement, labelledBy: string | null, label: string | null): void => {
+      if (labelledBy !== null) { el.setAttribute('aria-labelledby', labelledBy) } else { el.removeAttribute('aria-labelledby') }
+      if (label !== null) { el.setAttribute('aria-label', label) } else { el.removeAttribute('aria-label') }
+    }
+    const { ariaLabel, ariaLabelledBy } = this.settings
+    const { triggerId, triggerContentId } = this.classIdMap
+    if (ariaLabelledBy !== null) {
+      apply(this.triggerEl, this.searchActive ? `${ariaLabelledBy} ${triggerContentId}` : ariaLabelledBy, null)
+      apply(this.searchInputEl, ariaLabelledBy, null)
+      apply(this.popupListEl, ariaLabelledBy, null)
+    } else if (ariaLabel !== null) {
+      apply(this.triggerEl, this.searchActive ? `${triggerId} ${triggerContentId}` : null, ariaLabel)
+      apply(this.searchInputEl, null, ariaLabel)
+      apply(this.popupListEl, null, ariaLabel)
+    } else {
+      apply(this.triggerEl, null, null)
+      apply(this.searchInputEl, null, this.settings.texts.searchInputAriaLabel)
+      apply(this.popupListEl, null, null)
+    }
   }
 
   /**
@@ -1578,6 +1647,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     // Child slots: content (text/tags), optional clear button, arrow. Clear and
     // arrow are own slots so they never collide with createTriggerContentElFn.
     const content = document.createElement('span')
+    content.id = this.classIdMap.triggerContentId
     content.className = this.classIdMap.triggerContentClass
     el.append(content)
     if (this.settings.clearable) { el.append(this.createTriggerClearButtonEl()) }
@@ -1645,8 +1715,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     el.setAttribute('autocomplete', 'off')
     el.setAttribute('autocapitalize', 'off')
     el.setAttribute('spellcheck', 'false')
-    // The input has no visible label; its accessible name is required.
-    el.setAttribute('aria-label', this.settings.texts.searchInputAriaLabel)
+    // Accessible name (aria-label / aria-labelledby) is owned by
+    // syncFieldNameToDom, which runs right after construction.
     if (this.settings.texts.searchInputPlaceholder !== null) {
       el.placeholder = this.settings.texts.searchInputPlaceholder
     }
