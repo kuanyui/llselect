@@ -1,5 +1,11 @@
 # API review - release candidate (v0.0.1)
 
+Status: **ARCHIVED - completed review record.** All findings below are
+dispositioned and their fixes merged; this file certifies that state and is
+not maintained afterwards. Current contracts live in `../DESIGN.md` /
+`../A11Y.md`; completed roadmap items referenced by R-number live in
+`roadmap-v0.0.1.md`.
+
 A full-surface API review before the first npm publish: naming-convention
 consistency, weird design, and wrong abstractions. Method: the complete
 public + protected + settings + texts + classIdMap + exports surface was
@@ -10,7 +16,8 @@ commit messages); dating and history live in git blame.
 
 ## Verdict
 
-The surface is coherent. Three real defects were found and FIXED (F1-F3),
+The surface is coherent. Four real defects were found and FIXED (F1-F3 in
+the review pass, F7 user-spotted right after it),
 two convention gaps were closed by adding the missing rule instead of
 renaming (F4-F5), one minor information gap is recorded as optional (F6).
 No wrong abstraction survived the audit; the closest candidates are listed
@@ -79,7 +86,7 @@ with their defenses below.
   element producers are `create*ContentElFn` per the Container-Content law;
   events are `on*`; capability flags are adjectives or ruled nouns (F4);
   `searchable`'s `boolean | predicate` union is the documented s3 exception.
-- **Container-Content law conformance** - all eight pairs verified: trigger,
+- **Container-Content law conformance** - all nine pairs verified: trigger,
   item, tag, groupLabel, triggerArrow, triggerClearButton, tagRemoveButton,
   popupListNoResults, selectAllRow (setting + protected method, `null` =
   default content, accessible-name pinning where the container is an
@@ -119,7 +126,7 @@ with their defenses below.
   `satisfies`-checked and the pattern is documented for extenders.
 - **texts bag vs flat string settings** - ruled (one bag a language pack can
   fill); the flat alternative was shipped first and consciously replaced.
-- **`decorateItemFn`** - ruled CLOSED (TODO.md): rare need, fully overlapped
+- **`decorateItemFn`** - ruled CLOSED (roadmap archive): rare need, fully overlapped
   by the `createItemEl` override, and mutation-of-library-output is the
   undefendable direction.
 
@@ -127,8 +134,8 @@ with their defenses below.
 
 - Dual-types edge for TypeScript `moduleResolution: nodenext` consumers who
   `require()` the package (single `.d.ts` set serves both formats) -
-  TODO.md "Release readiness".
+  TODO.md "Accepted limitations".
 - Per-item click listeners on huge lists (event delegation deferred until a
-  benchmark shows a win) - TODO.md R15.
+  benchmark shows a win) - `roadmap-v0.0.1.md` R15.
 - ja / ar / he pack translations are LLM-drafted pending native review -
   flagged in `src/i18n.ts`.

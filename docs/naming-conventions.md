@@ -298,8 +298,9 @@ DONE - all three phases applied (npm test green: 182; npm run build green).
 
 ## 7. Precision audit - element nouns, Container-Content law, texts keys
 
-> STATUS: APPLIED (Button-system; long names accepted) - landed via TODO.md
-> R16-R19 (rename + texts bag + llselect/i18n + demo). Applies ON TOP of s1-s4.
+> STATUS: APPLIED (Button-system; long names accepted) - landed via roadmap
+> R16-R19 (rename + texts bag + llselect/i18n + demo; archived in
+> archive/roadmap-v0.0.1.md). Applies ON TOP of s1-s4.
 
 ### 7a. New rules
 

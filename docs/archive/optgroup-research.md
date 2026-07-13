@@ -1,12 +1,14 @@
-# Optgroup / option grouping - research notes (DECIDED)
+# Optgroup / option grouping - research notes
 
-Status: **API decided; not yet implemented.** The design is locked in DESIGN.md
-"Optgroup (Phase 10)": flat `items` + a generic group key `GK` mirroring the item
+Status: **ARCHIVED - SUPERSEDED RESEARCH RECORD.** Phase 10 has shipped. The
+accepted design - flat `items` + a generic group key `GK` mirroring the item
 layer (`itemToGroupKeyFn` / `groupKeyCompareFn` / `groupKeyToLabelFn` /
-`groupDisabledFn`), no nested structure. This file is kept as the research trail
-behind that decision - how the native control and the main libraries model
-grouping, so the choice is grounded rather than guessed. (It was parked behind
-Phase 9 `disabled`, now done, which is what the disabled-group layering needed.)
+`groupDisabledFn`), no nested structure - is normatively documented in
+`../DESIGN.md` "Optgroup (Phase 10)"; the keyboard / ARIA contract is in
+`../A11Y.md` "Grouping (optgroup)". Everything below is the historical research
+trail behind that decision (how the native control and the main libraries model
+grouping), kept so the choice stays grounded rather than guessed. Sketches and
+statuses below describe the decision-time state, not the current API.
 
 ## How the ecosystem models grouping
 

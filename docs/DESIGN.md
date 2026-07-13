@@ -331,7 +331,7 @@ Decided: grouping is a **derived projection of the flat `items` list**, not a
 nested data structure. `items` stays `T[]`; a setting maps each item to a group
 *key*, and the group's label + disabled state are derived from that key. Design
 research (how native / select2 / choices / react-select / MUI / Downshift model
-it) is in `optgroup-research.md`.
+it) is in `archive/optgroup-research.md`.
 
 ### Data model: flat + derived, mirroring the item layer
 
