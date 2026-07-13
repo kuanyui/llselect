@@ -210,6 +210,17 @@ export interface PositionerOptions {
    * behaviour of `width = anchor.width`).
    */
   widthPolicy?: WidthPolicy
+  /**
+   * The floating element's inner scroll container (the popup list). Under an
+   * active `maxHeight` clamp the floating element's overflow is absorbed as
+   * this element's internal scrolling, so `offsetHeight` alone under-reports
+   * the natural height; its `scrollHeight - clientHeight` restores the
+   * difference WITHOUT lifting the clamp to re-measure (a lift-and-restore
+   * would clamp this element's scrollTop to 0 mid-frame - losing the
+   * scrolled-to-chosen position - and caused a visible window-scroll jolt on
+   * Firefox). Omit when the floating element has no inner scroller.
+   */
+  innerScrollEl?: HTMLElement
 }
 
 /**
@@ -296,14 +307,18 @@ export function createPositioner(
     const floatingNaturalWidth = widthPolicy === 'fit-content'
       ? measureNaturalWidth(floating)
       : 0
-    // Lift the previous reposition's maxHeight before measuring: reading
-    // offsetHeight under the old clamp feeds the clamp back into the fits
-    // test - after a flip to the smaller side the popup could then never
-    // measure taller than that side and stayed stuck there even when the
-    // list grew back (regrown filter results kept a bottom-flipped popup
-    // squeezed at the viewport edge).
-    floating.style.maxHeight = ''
-    const floatingHeight = floating.offsetHeight
+    // Natural (unclamped) height, measured by reads only. offsetHeight under
+    // an active maxHeight clamp feeds the clamp back into the fits test -
+    // after a flip to the smaller side the popup could then never measure
+    // taller than that side and stayed stuck there even when the list grew
+    // back (regrown filter results kept a bottom-flipped popup squeezed at
+    // the viewport edge). The clamp swallows exactly the inner scroller's
+    // overflow, so adding it back reconstructs the natural height; see
+    // `PositionerOptions.innerScrollEl` for why the clamp must not be lifted
+    // to re-measure instead.
+    const inner = options?.innerScrollEl
+    const clampedOverflow = inner ? Math.max(0, inner.scrollHeight - inner.clientHeight) : 0
+    const floatingHeight = floating.offsetHeight + clampedOverflow
     const result = computePosition({
       anchorRect: {
         top: rect.top,

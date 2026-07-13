@@ -750,6 +750,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.positioner = createPositioner(this.triggerEl, this.popupEl, {
       onHide: () => this.close(),
       widthPolicy: this.settings.popupWidthPolicy,
+      innerScrollEl: this.popupListEl,
     })
     this.attachOutsideClick()
     this.attachFocusOut()
@@ -1474,12 +1475,15 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * since that accessibility scroll can land after the current layout flush.
    * No-op when nothing actually scrolled, so it never fights real user
    * scrolling (and stays silent under jsdom, which has no `window.scrollTo`).
+   * Restores with `behavior: 'instant'`: the two-arg `scrollTo` obeys the
+   * page's CSS `scroll-behavior`, so under `scroll-behavior: smooth` the
+   * correction would render as a visible glide instead of a revert.
    */
   private captureWindowScroll(): () => void {
     const { scrollX, scrollY } = window
     const restore = (): void => {
       if (window.scrollX !== scrollX || window.scrollY !== scrollY) {
-        window.scrollTo(scrollX, scrollY)
+        window.scrollTo({ left: scrollX, top: scrollY, behavior: 'instant' })
       }
     }
     return (): void => {
