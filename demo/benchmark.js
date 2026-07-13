@@ -320,7 +320,7 @@ async function runLib(key) {
     filter: ADAPTERS[key].noFilter ? null : filterMs, timedOut: res.timedOut, errored: res.errored,
   }
   highlightBest()
-  renderChart(document.getElementById('chart-metric').value)
+  renderChart()
   status.textContent = `${DISPLAY[key].name} done. Lower is better.`
 }
 
@@ -359,79 +359,67 @@ async function measureSizes() {
 // metric is throughput (built / time), which stays comparable even when a
 // library timed out, because it is a per-widget rate rather than a total.
 
-const METRICS = {
-  throughput: {
-    higherBetter: true,
-    value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null),
-    fmt: v => Math.round(v).toLocaleString() + ' /s',
-  },
-  compute: {
-    higherBetter: false,
-    value: r => r.compute,
-    fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms',
-  },
-  nodes: {
-    higherBetter: false,
-    value: r => r.nodes,
-    fmt: v => Math.round(v).toLocaleString(),
-  },
-  filter: {
-    higherBetter: false,
-    value: r => r.filter,
-    fmt: v => (v < 10 ? v.toFixed(2) : v.toFixed(0)) + ' ms',
-  },
-}
+// One dataset per metric; the legend (Chart.js's own interactivity) toggles
+// each on/off. Metrics have very different scales, so each bar is normalized to
+// "percent of that metric's best performer" (100% = winner, longer is better)
+// to share one axis; the tooltip shows the real value.
+const METRICS = [
+  { key: 'throughput', label: 'Throughput (widgets/sec)', color: '#2456a6', higherBetter: true, value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null), fmt: v => Math.round(v).toLocaleString() + ' /s' },
+  { key: 'compute', label: 'Init time (ms)', color: '#c9821a', higherBetter: false, value: r => r.compute, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
+  { key: 'nodes', label: 'DOM nodes', color: '#7a3ea6', higherBetter: false, value: r => r.nodes, fmt: v => Math.round(v).toLocaleString() },
+  { key: 'filter', label: 'Filter (ms)', color: '#1a7f37', higherBetter: false, value: r => r.filter, fmt: v => (v == null ? '-' : (v < 10 ? v.toFixed(2) : v.toFixed(0)) + ' ms') },
+]
 
 let chartInstance = null
 
-function renderChart(metricKey) {
+function renderChart() {
   const canvas = document.getElementById('chart')
-  const caption = document.getElementById('chart-caption')
   const empty = document.getElementById('chart-empty')
-  const metric = METRICS[metricKey]
-  const rows = ORDER
-    .filter(k => results[k])
-    .map(k => ({ k, v: metric.value(results[k]), r: results[k] }))
-    .filter(x => x.v != null && !isNaN(x.v))
+  const libs = ORDER.filter(k => results[k])
 
-  if (!window.Chart) { caption.textContent = '(Chart.js failed to load)'; return }
-  if (!rows.length) {
+  if (!window.Chart) { empty.textContent = 'Chart.js failed to load.'; empty.style.display = ''; return }
+  if (!libs.length) {
     if (chartInstance) { chartInstance.destroy(); chartInstance = null }
-    caption.textContent = ''
     empty.style.display = ''
     return
   }
   empty.style.display = 'none'
-  caption.textContent = metric.higherBetter ? '(longer is better)' : '(shorter is better)'
 
-  const best = metric.higherBetter ? Math.max(...rows.map(x => x.v)) : Math.min(...rows.map(x => x.v))
-  const labels = rows.map(x => DISPLAY[x.k].name)
-  const data = rows.map(x => x.v)
-  const meta = rows.map(x => x.r)
-  // green = winner, amber = incomplete (timeout / error), blue = the rest.
-  const colors = rows.map(x => ((x.r.timedOut || x.r.errored) ? '#c9821a' : (x.v === best ? '#1a7f37' : '#2456a6')))
+  const labels = libs.map(k => DISPLAY[k].name)
+  const datasets = METRICS.map((m, mi) => {
+    const raw = libs.map(k => { const v = m.value(results[k]); return (v == null || isNaN(v)) ? null : v })
+    const valid = raw.filter(v => v != null)
+    const best = valid.length ? (m.higherBetter ? Math.max(...valid) : Math.min(...valid)) : null
+    const data = raw.map(v => {
+      if (v == null || best == null) { return null }
+      if (m.higherBetter) { return best > 0 ? v / best * 100 : (v === best ? 100 : 0) }
+      return v > 0 ? best / v * 100 : (v === best ? 100 : 0)
+    })
+    return { label: m.label, data, backgroundColor: m.color, borderWidth: 0, hidden: mi !== 0, rawValues: raw, fmt: m.fmt }
+  })
 
   const cfg = {
     type: 'bar',
-    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
+    data: { labels, datasets },
     options: {
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
       animation: { duration: 300 },
       plugins: {
-        legend: { display: false },
+        legend: { position: 'top' }, // click to show / hide a metric (Chart.js native)
         tooltip: {
           callbacks: {
             label: (ctx) => {
-              const r = meta[ctx.dataIndex]
-              const base = metric.fmt(ctx.parsed.x)
-              return (r.timedOut || r.errored) ? `${base}  (built ${r.built}/${r.target})` : base
+              const raw = ctx.dataset.rawValues[ctx.dataIndex]
+              const r = results[libs[ctx.dataIndex]]
+              const base = `${ctx.dataset.label}: ${raw == null ? '-' : ctx.dataset.fmt(raw)}`
+              return (r && (r.timedOut || r.errored)) ? `${base}  (built ${r.built}/${r.target})` : base
             },
           },
         },
       },
-      scales: { x: { beginAtZero: true } },
+      scales: { x: { beginAtZero: true, title: { display: true, text: '% of the best (100% = winner, longer is better)' } } },
     },
   }
   if (chartInstance) { chartInstance.destroy() }
@@ -535,7 +523,7 @@ function reset(msg) {
   clearStage()
   results = {}
   initTable()
-  renderChart(document.getElementById('chart-metric').value)
+  renderChart()
   document.getElementById('status').textContent = msg
 }
 
@@ -545,7 +533,6 @@ document.getElementById('run-all').addEventListener('click', () => { runAll() })
 document.getElementById('clear').addEventListener('click', () => { reset('Cleared.') })
 // A scenario change invalidates the accumulated results (they are per-scenario).
 document.getElementById('scenario').addEventListener('change', () => { reset('Scenario changed - results reset.') })
-document.getElementById('chart-metric').addEventListener('change', (e) => { renderChart(e.target.value) })
 document.querySelectorAll('.bench-libbuttons button').forEach(btn => {
   btn.addEventListener('click', () => { runLib(btn.dataset.lib) })
 })

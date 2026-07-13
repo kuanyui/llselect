@@ -404,8 +404,6 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .bench-stage h2 { display: none; }
 
 /* --- benchmark comparison chart (pure CSS bars, no chart library) -------- */
-.chart-metric-label { font-size: 0.9rem; display: inline-block; margin-bottom: 0.5rem; }
-#chart-caption { font-weight: normal; color: #888; font-size: 0.85rem; }
 /* Sized container: Chart.js runs with maintainAspectRatio off and fills it. */
 .bench-chart { position: relative; height: 260px; margin: 0.25rem 0 1rem; }
 

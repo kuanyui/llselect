@@ -76,15 +76,12 @@
     <tbody></tbody>
   </table>
 
-  <h2>Comparison chart <small id="chart-caption"></small></h2>
-  <label class="chart-metric-label">Metric
-    <select id="chart-metric">
-      <option value="throughput">Init throughput (widgets / sec) - fair even when a library timed out</option>
-      <option value="compute">Init compute time (ms)</option>
-      <option value="nodes">DOM nodes (resting)</option>
-      <option value="filter">Filter sample (ms)</option>
-    </select>
-  </label>
+  <h2>Comparison chart</h2>
+  <p class="hint">Each metric is shown relative to its own best performer
+    (100% = winner, longer is better), so they share one axis. <strong>Click a
+    legend entry to show or hide that metric</strong>; hover a bar for the real
+    value. Throughput stays fair even when a library timed out (it is a
+    per-widget rate, not a total).</p>
   <div class="bench-chart"><canvas id="chart"></canvas></div>
   <p id="chart-empty" class="hint">Run a scenario to see the chart.</p>
 
