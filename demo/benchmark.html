@@ -47,6 +47,7 @@
       </select>
     </label>
     <label><input type="checkbox" id="custom"> custom renderer (MDI icon per item)</label>
+    <label><input type="checkbox" id="no-timeout"> no timeout (build every widget; may take minutes or run out of memory)</label>
     <button id="run-all">Run all</button>
     <button id="clear">Clear</button>
     <span id="status">Ready.</span>
@@ -74,6 +75,17 @@
     </thead>
     <tbody></tbody>
   </table>
+
+  <h2>Comparison chart <small id="chart-caption"></small></h2>
+  <label class="chart-metric-label">Metric
+    <select id="chart-metric">
+      <option value="throughput">Init throughput (widgets / sec) - fair even when a library timed out</option>
+      <option value="compute">Init compute time (ms)</option>
+      <option value="nodes">DOM nodes (resting)</option>
+      <option value="filter">Filter sample (ms)</option>
+    </select>
+  </label>
+  <div id="chart" class="bench-chart">Run a scenario to see the chart.</div>
 
   <h2>Scratch area <small>(the widgets from the last run render here - scroll)</small></h2>
   <div id="stage" class="bench-stage"></div>
@@ -105,8 +117,15 @@
   <h2>Method and caveats</h2>
   <ul class="bench-caveats">
     <li>Widgets are built in small chunks with a yield between them, so the page
-      stays responsive and a runaway library can be cut off. A forced reflow ends
-      each build so deferred layout is not hidden.</li>
+      stays responsive and a runaway library can be cut off at its time budget. A
+      forced reflow ends each build so deferred layout is not hidden. Tick
+      <em>no timeout</em> to build every widget regardless (it may take minutes or
+      run out of memory).</li>
+    <li>The chart defaults to <strong>throughput (widgets built per second)</strong>
+      because that stays a fair comparison even when a library timed out - it is a
+      per-widget rate, not a total. Switch the metric to compare init time, DOM
+      nodes, or filter latency instead; a bar from an incomplete run is shown in
+      amber with its built count.</li>
     <li>Every widget is <strong>independent</strong> - its own chosen state, no
       cross-widget interaction (that would be an integration test, not a render
       stress test).</li>

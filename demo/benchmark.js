@@ -173,6 +173,7 @@ function buildItems(n) { return Array.from({ length: n }, (_, i) => 'Item ' + St
 function countNodes() { return stage.querySelectorAll('*').length }
 
 let live = [] // { key, h } currently rendered, for teardown
+let results = {} // key -> latest metrics for the current scenario, for the chart
 
 function clearStage() {
   for (const { key, h } of live) { try { ADAPTERS[key].teardown(h) } catch (e) { /* ignore */ } }
@@ -180,10 +181,13 @@ function clearStage() {
   stage.replaceChildren()
 }
 
-// Build all N widgets in chunks, yielding between them, stopping at the budget.
-// Returns compute time (yields excluded) plus how many were built.
-async function buildAll(key, scen, custom) {
+// Build all N widgets in chunks, yielding between them. With the budget on, a
+// library that overruns is cut off (timedOut). With noTimeout, it builds every
+// widget no matter how long. Returns compute time (yields excluded) and how
+// many were built.
+async function buildAll(key, scen, custom, noTimeout) {
   const a = ADAPTERS[key]
+  const status = document.getElementById('status')
   const items = buildItems(scen.itemsPer)
   const opts = { multi: scen.multi, custom }
   const CHUNK = scen.widgets >= 1000 ? 25 : 1
@@ -191,6 +195,7 @@ async function buildAll(key, scen, custom) {
   let compute = 0
   let timedOut = false
   let errored = false
+  let chunk = 0
   const wall0 = performance.now()
   for (let i = 0; i < scen.widgets; i += CHUNK) {
     const end = Math.min(i + CHUNK, scen.widgets)
@@ -203,7 +208,8 @@ async function buildAll(key, scen, custom) {
     }
     compute += performance.now() - c0
     if (errored) { break }
-    if (performance.now() - wall0 > BUDGET_MS) { timedOut = true; break }
+    if (!noTimeout && performance.now() - wall0 > BUDGET_MS) { timedOut = true; break }
+    if (++chunk % 8 === 0) { status.textContent = `${DISPLAY[key].name}: built ${built} / ${scen.widgets} ...` }
     await raf()
   }
   reflow(stage)
@@ -270,12 +276,13 @@ async function runLib(key) {
   const scen = SCENARIOS[document.getElementById('scenario').value]
   const custom = document.getElementById('custom').checked
   if (!available(key)) { setCell(key, 'built', 'not loaded'); return }
+  const noTimeout = document.getElementById('no-timeout').checked
   clearStage()
   await raf()
   status.textContent = `${DISPLAY[key].name}: building ${scen.widgets} widget(s) x ${scen.itemsPer} items ...`
   await raf()
   const before = countNodes()
-  const res = await buildAll(key, scen, custom)
+  const res = await buildAll(key, scen, custom, noTimeout)
   const nodes = countNodes() - before
   const filterMs = sampleFilter(key, scen)
 
@@ -292,7 +299,12 @@ async function runLib(key) {
   filterCell.textContent = ADAPTERS[key].noFilter ? 'n/a' : fmt(filterMs)
   if (filterMs != null) { filterCell.dataset.value = filterMs } else { delete filterCell.dataset.value }
 
+  results[key] = {
+    built: res.built, target: scen.widgets, compute: res.compute, nodes,
+    filter: ADAPTERS[key].noFilter ? null : filterMs, timedOut: res.timedOut, errored: res.errored,
+  }
   highlightBest()
+  renderChart(document.getElementById('chart-metric').value)
   status.textContent = `${DISPLAY[key].name} done. Lower is better.`
 }
 
@@ -325,11 +337,80 @@ async function measureSizes() {
   }
 }
 
+// --- chart ----------------------------------------------------------------
+// Pure CSS bars (no chart library - keeps the demo dependency-free). Default
+// metric is throughput (built / time), which stays comparable even when a
+// library timed out, because it is a per-widget rate rather than a total.
+
+const METRICS = {
+  throughput: {
+    higherBetter: true,
+    value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null),
+    fmt: v => Math.round(v).toLocaleString() + ' /s',
+  },
+  compute: {
+    higherBetter: false,
+    value: r => r.compute,
+    fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms',
+  },
+  nodes: {
+    higherBetter: false,
+    value: r => r.nodes,
+    fmt: v => Math.round(v).toLocaleString(),
+  },
+  filter: {
+    higherBetter: false,
+    value: r => r.filter,
+    fmt: v => (v < 10 ? v.toFixed(2) : v.toFixed(0)) + ' ms',
+  },
+}
+
+function renderChart(metricKey) {
+  const chart = document.getElementById('chart')
+  const caption = document.getElementById('chart-caption')
+  const metric = METRICS[metricKey]
+  const rows = ORDER
+    .filter(k => results[k])
+    .map(k => ({ k, v: metric.value(results[k]), r: results[k] }))
+    .filter(x => x.v != null && !isNaN(x.v))
+  chart.replaceChildren()
+  if (!rows.length) { chart.textContent = 'Run a scenario to see the chart.'; caption.textContent = ''; return }
+  caption.textContent = metric.higherBetter ? '(longer is better)' : '(longer is worse; shortest wins)'
+  const max = Math.max(...rows.map(x => x.v))
+  const best = metric.higherBetter ? max : Math.min(...rows.map(x => x.v))
+  for (const { k, v, r } of rows) {
+    const row = document.createElement('div'); row.className = 'chart-row'
+    const label = document.createElement('div'); label.className = 'chart-label'; label.textContent = DISPLAY[k].name
+    const track = document.createElement('div'); track.className = 'chart-track'
+    const bar = document.createElement('div'); bar.className = 'chart-bar'
+    bar.style.width = (max > 0 ? Math.max(1, v / max * 100) : 0) + '%'
+    if (v === best) { bar.classList.add('best') }
+    if (r.timedOut || r.errored) { bar.classList.add('partial') }
+    const val = document.createElement('span'); val.className = 'chart-value'
+    val.textContent = metric.fmt(v) + ((r.timedOut || r.errored) ? ` (built ${r.built}/${r.target})` : '')
+    bar.appendChild(val)
+    track.appendChild(bar)
+    row.append(label, track)
+    chart.appendChild(row)
+  }
+}
+
 // --- wire up --------------------------------------------------------------
+
+function reset(msg) {
+  clearStage()
+  results = {}
+  initTable()
+  renderChart(document.getElementById('chart-metric').value)
+  document.getElementById('status').textContent = msg
+}
 
 initTable()
 document.getElementById('run-all').addEventListener('click', () => { runAll() })
-document.getElementById('clear').addEventListener('click', () => { clearStage(); document.getElementById('status').textContent = 'Cleared.' })
+document.getElementById('clear').addEventListener('click', () => { reset('Cleared.') })
+// A scenario change invalidates the accumulated results (they are per-scenario).
+document.getElementById('scenario').addEventListener('change', () => { reset('Scenario changed - results reset.') })
+document.getElementById('chart-metric').addEventListener('change', (e) => { renderChart(e.target.value) })
 document.querySelectorAll('.bench-libbuttons button').forEach(btn => {
   btn.addEventListener('click', () => { runLib(btn.dataset.lib) })
 })
