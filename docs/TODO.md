@@ -30,7 +30,10 @@ technology before the first public release.
       Include the placement-stickiness scenario (near-bottom trigger, popup
       opens upward, filter to zero matches, Esc to restore): the popup must
       stay upward the whole time - it used to flip down on the empty list and
-      stay stuck squeezed at the bottom after the filter cleared.
+      stay stuck squeezed at the bottom after the filter cleared. On Firefox
+      specifically, also verify the open instant: no window-scroll jolt on a
+      page with `scroll-behavior: smooth` (the demo has it), and a
+      scrolled-to-chosen option stays scrolled into view in the list.
 - [ ] **Consumer bundler smoke test** (production mode): import
       `llselect/themes/vanilla.css` in a webpack/vite app with tree shaking on
       and assert the CSS reaches the output (`sideEffects: ["**/*.css"]`

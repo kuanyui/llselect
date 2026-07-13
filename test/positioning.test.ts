@@ -505,3 +505,25 @@ test('sticky yields: neither side fits -> larger side wins regardless of current
   })
   assert.equal(r.placement, 'above')
 })
+
+test('positioner: natural height comes from the inner scroller, not the clamped box', () => {
+  setupDom('<!doctype html><html><body></body></html>')
+  const anchor = document.createElement('div')
+  const floating = document.createElement('div')
+  const inner = document.createElement('div')
+  floating.append(inner)
+  document.body.append(anchor, floating)
+  anchor.getBoundingClientRect = () =>
+    ({ top: 370, left: 50, right: 250, bottom: 400, width: 200, height: 30, x: 50, y: 370, toJSON: () => ({}) }) as DOMRect
+  // A popup already clamped to 200px whose list hides 800px of overflow.
+  Object.defineProperty(floating, 'offsetHeight', { value: 200, configurable: true })
+  Object.defineProperty(inner, 'scrollHeight', { value: 900, configurable: true })
+  Object.defineProperty(inner, 'clientHeight', { value: 100, configurable: true })
+  const p = createPositioner(anchor, floating, { innerScrollEl: inner })
+  // jsdom viewport is 1024x768: spaceBelow = 356, spaceAbove = 358. The
+  // clamped box (200) would fit below; the true content height
+  // (200 + 800 = 1000) fits neither side, so the larger side must win.
+  // Reading only offsetHeight (the old feedback bug) would report 'below'.
+  assert.equal(floating.getAttribute('data-placement'), 'above')
+  p.detach()
+})
