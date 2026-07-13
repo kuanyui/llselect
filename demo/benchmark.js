@@ -46,7 +46,6 @@ const SIZE_URLS = {
 }
 
 const stage = document.getElementById('stage')
-const ixStage = document.getElementById('ix-stage')
 
 // --- item content helpers (custom-renderer variant) -----------------------
 
@@ -59,6 +58,10 @@ function iconSpan(text) {
   return s
 }
 function iconHtml(text) { return '<i class="mdi mdi-tag-outline" aria-hidden="true"></i> ' + text }
+
+// How many items to pre-select: 10% for a multi widget when the toggle is on,
+// else none. Renders chips at build time, like the competitors do.
+function preCount(items, opts) { return (opts.preselect && opts.multi) ? Math.max(1, Math.ceil(items.length * 0.1)) : 0 }
 
 // --- adapters -------------------------------------------------------------
 // setup(mount, items, {multi, custom}) -> handle; open/filter/close/teardown
@@ -74,30 +77,34 @@ function makeSelect(mount, multi) {
 const ADAPTERS = {
   native: {
     noFilter: true, // native <select> has no in-widget filter
-    setup(mount, items, { multi }) {
-      const sel = makeSelect(mount, multi)
+    setup(mount, items, opts) {
+      const k = preCount(items, opts)
+      const sel = makeSelect(mount, opts.multi)
       const frag = document.createDocumentFragment()
-      for (const v of items) {
+      items.forEach((v, i) => {
         const o = document.createElement('option')
         o.value = v; o.textContent = v
+        if (i < k) { o.selected = true }
         frag.appendChild(o)
-      }
+      })
       sel.appendChild(frag)
       return { sel }
     },
     teardown(h) { h.sel.remove() },
   },
   llselect: {
-    setup(mount, items, { multi, custom }) {
-      const Ctor = multi ? window.llselect.LLSelectMultiple : window.llselect.LLSelectSingle
-      const opts = { searchable: true }
+    setup(mount, items, opts) {
+      const Ctor = opts.multi ? window.llselect.LLSelectMultiple : window.llselect.LLSelectSingle
+      const o = { searchable: true }
       // Match the competitors: their multi-selects render each chosen item as a
       // chip, so llselect renders tags too (not the lighter count summary),
       // otherwise it would be doing less per-selection work than they do.
-      if (multi) { opts.triggerDisplay = 'tags' }
-      if (custom) { opts.createItemContentElFn = (it) => iconSpan(it) }
-      const inst = new Ctor(mount, opts)
+      if (opts.multi) { o.triggerDisplay = 'tags' }
+      if (opts.custom) { o.createItemContentElFn = (it) => iconSpan(it) }
+      const inst = new Ctor(mount, o)
       inst.setItems(items)
+      const k = preCount(items, opts)
+      if (k > 0) { inst.setChosenItems(items.slice(0, k)) }
       return { inst, mount }
     },
     open(h) { h.inst.open() },
@@ -106,10 +113,11 @@ const ADAPTERS = {
     teardown(h) { h.inst.destroy() },
   },
   choices: {
-    setup(mount, items, { multi, custom }) {
-      const sel = makeSelect(mount, multi)
-      const inst = new window.Choices(sel, { searchEnabled: true, allowHTML: !!custom, silent: true, removeItemButton: false })
-      inst.setChoices(items.map(v => ({ value: v, label: custom ? iconHtml(v) : v })), 'value', 'label', true)
+    setup(mount, items, opts) {
+      const k = preCount(items, opts)
+      const sel = makeSelect(mount, opts.multi)
+      const inst = new window.Choices(sel, { searchEnabled: true, allowHTML: !!opts.custom, silent: true, removeItemButton: false })
+      inst.setChoices(items.map((v, i) => ({ value: v, label: opts.custom ? iconHtml(v) : v, selected: i < k })), 'value', 'label', true)
       return { inst }
     },
     open(h) { h.inst.showDropdown() },
@@ -118,12 +126,14 @@ const ADAPTERS = {
     teardown(h) { h.inst.destroy() },
   },
   select2: {
-    setup(mount, items, { multi, custom }) {
-      const sel = makeSelect(mount, multi)
+    setup(mount, items, opts) {
+      const k = preCount(items, opts)
+      const sel = makeSelect(mount, opts.multi)
       const $sel = window.jQuery(sel)
       const cfg = { data: items.map(v => ({ id: v, text: v })), width: '260px' }
-      if (custom) { cfg.templateResult = (o) => (o.id ? window.jQuery('<span>' + iconHtml(o.text) + '</span>') : o.text) }
+      if (opts.custom) { cfg.templateResult = (o) => (o.id ? window.jQuery('<span>' + iconHtml(o.text) + '</span>') : o.text) }
       $sel.select2(cfg)
+      if (k > 0) { $sel.val(items.slice(0, k)).trigger('change') }
       return { $sel }
     },
     open(h) { h.$sel.select2('open') },
@@ -132,12 +142,14 @@ const ADAPTERS = {
     teardown(h) { h.$sel.select2('destroy') },
   },
   'tom-select': {
-    setup(mount, items, { multi, custom }) {
-      const sel = makeSelect(mount, multi)
+    setup(mount, items, opts) {
+      const k = preCount(items, opts)
+      const sel = makeSelect(mount, opts.multi)
       // Keep Tom Select's rendered-option cap: capping is its perf strategy,
       // the counterpart to llselect's lazy render (see caveats).
-      const cfg = { options: items.map(v => ({ value: v, text: v })), maxItems: multi ? null : 1 }
-      if (custom) { cfg.render = { option: (d, esc) => '<div>' + iconHtml(esc(d.text)) + '</div>' } }
+      const cfg = { options: items.map(v => ({ value: v, text: v })), maxItems: opts.multi ? null : 1 }
+      if (k > 0) { cfg.items = items.slice(0, k) }
+      if (opts.custom) { cfg.render = { option: (d, esc) => '<div>' + iconHtml(esc(d.text)) + '</div>' } }
       return { inst: new window.TomSelect(sel, cfg) }
     },
     open(h) { h.inst.open() },
@@ -146,9 +158,10 @@ const ADAPTERS = {
     teardown(h) { h.inst.destroy() },
   },
   'slim-select': {
-    setup(mount, items, { multi, custom }) {
-      const sel = makeSelect(mount, multi)
-      const data = items.map(v => (custom ? { text: v, value: v, html: iconHtml(v) } : { text: v, value: v }))
+    setup(mount, items, opts) {
+      const k = preCount(items, opts)
+      const sel = makeSelect(mount, opts.multi)
+      const data = items.map((v, i) => (opts.custom ? { text: v, value: v, html: iconHtml(v), selected: i < k } : { text: v, value: v, selected: i < k }))
       return { inst: new window.SlimSelect({ select: sel, settings: { showSearch: true }, data }) }
     },
     open(h) { h.inst.open() },
@@ -166,6 +179,15 @@ const PICK = {
   select2: (h, item) => { const cur = h.$sel.val() || []; h.$sel.val(cur.concat(item)).trigger('change') },
   'tom-select': (h, item) => h.inst.addItem(item, true),
   'slim-select': (h, item) => h.inst.setSelected(h.inst.getSelected().concat(item)),
+}
+
+// Select-one for a single-select widget (replaces the value, not adds).
+const PICK_SINGLE = {
+  llselect: (h, item) => h.inst.setChosenItem(item),
+  choices: (h, item) => h.inst.setChoiceByValue(item),
+  select2: (h, item) => h.$sel.val(item).trigger('change'),
+  'tom-select': (h, item) => h.inst.setValue(item, true),
+  'slim-select': (h, item) => h.inst.setSelected(item),
 }
 
 function available(key) {
@@ -194,8 +216,7 @@ function countNodes() { return stage.querySelectorAll('*').length }
 
 let live = [] // { key, h } currently rendered, for teardown
 let results = {} // key -> latest metrics for the current scenario, for the chart
-let ixLive = {} // key -> handle of the one dedicated interaction widget
-let ixResults = {} // key -> { open, select, close } for the interaction chart
+let stopRequested = false // cooperative cancel for the mass build
 
 function clearStage() {
   for (const { key, h } of live) { try { ADAPTERS[key].teardown(h) } catch (e) { /* ignore */ } }
@@ -207,16 +228,17 @@ function clearStage() {
 // library that overruns is cut off (timedOut). With noTimeout, it builds every
 // widget no matter how long. Returns compute time (yields excluded) and how
 // many were built.
-async function buildAll(key, scen, custom, noTimeout) {
+async function buildAll(key, scen, runOpts) {
   const a = ADAPTERS[key]
   const status = document.getElementById('status')
   const items = buildItems(scen.itemsPer)
-  const opts = { multi: scen.multi, custom }
+  const opts = { multi: scen.multi, custom: runOpts.custom, preselect: runOpts.preselect }
   const CHUNK = scen.widgets >= 1000 ? 25 : 1
   let built = 0
   let compute = 0
   let timedOut = false
   let errored = false
+  let stopped = false
   let chunk = 0
   const wall0 = performance.now()
   for (let i = 0; i < scen.widgets; i += CHUNK) {
@@ -230,12 +252,13 @@ async function buildAll(key, scen, custom, noTimeout) {
     }
     compute += performance.now() - c0
     if (errored) { break }
-    if (!noTimeout && performance.now() - wall0 > BUDGET_MS) { timedOut = true; break }
+    if (stopRequested) { stopped = true; break }
+    if (!runOpts.noTimeout && performance.now() - wall0 > BUDGET_MS) { timedOut = true; break }
     if (++chunk % 8 === 0) { status.textContent = `${DISPLAY[key].name}: built ${built} / ${scen.widgets} ...` }
     await raf()
   }
   reflow(stage)
-  return { built, compute, timedOut, errored }
+  return { built, compute, timedOut, errored, stopped }
 }
 
 function sampleFilter(key, scen) {
@@ -293,23 +316,29 @@ function highlightBest() {
   }
 }
 
+function runOptsFromDom() {
+  return {
+    custom: document.getElementById('custom').checked,
+    preselect: document.getElementById('preselect').checked,
+    noTimeout: document.getElementById('no-timeout').checked,
+  }
+}
+
 async function runLib(key) {
   const status = document.getElementById('status')
   const scen = SCENARIOS[document.getElementById('scenario').value]
-  const custom = document.getElementById('custom').checked
   if (!available(key)) { setCell(key, 'built', 'not loaded'); return }
-  const noTimeout = document.getElementById('no-timeout').checked
   clearStage()
   await raf()
   status.textContent = `${DISPLAY[key].name}: building ${scen.widgets} widget(s) x ${scen.itemsPer} items ...`
   await raf()
   const before = countNodes()
-  const res = await buildAll(key, scen, custom, noTimeout)
+  const res = await buildAll(key, scen, runOptsFromDom())
   const nodes = countNodes() - before
   const filterMs = sampleFilter(key, scen)
 
   const builtCell = rowFor(key).querySelector('td[data-col="built"]')
-  builtCell.textContent = `${res.built} / ${scen.widgets}` + (res.errored ? ' (error)' : res.timedOut ? ' (timeout)' : '')
+  builtCell.textContent = `${res.built} / ${scen.widgets}` + (res.errored ? ' (error)' : res.stopped ? ' (stopped)' : res.timedOut ? ' (timeout)' : '')
 
   const computeCell = rowFor(key).querySelector('td[data-col="compute"]')
   computeCell.textContent = fmt(res.compute); computeCell.dataset.value = res.compute
@@ -331,10 +360,21 @@ async function runLib(key) {
 }
 
 async function runAll() {
-  document.getElementById('run-all').disabled = true
-  for (const key of ORDER) { await runLib(key) }
-  document.getElementById('run-all').disabled = false
-  document.getElementById('status').textContent = 'All done. Lower is better.'
+  setRunning(true)
+  stopRequested = false
+  for (const key of ORDER) {
+    await runLib(key)
+    if (stopRequested) { break }
+  }
+  setRunning(false)
+  document.getElementById('status').textContent = stopRequested ? 'Stopped.' : 'All done. Lower is better.'
+}
+
+// Toggle the mass-section controls while a run is in flight; enable Stop.
+function setRunning(on) {
+  for (const id of ['run-all', 'clear', 'scenario', 'custom', 'preselect', 'no-timeout']) { document.getElementById(id).disabled = on }
+  document.querySelectorAll('.bench-libbuttons button').forEach(b => { b.disabled = on })
+  document.getElementById('stop').disabled = !on
 }
 
 // --- bundle sizes ---------------------------------------------------------
@@ -433,33 +473,48 @@ function renderChart() {
 }
 
 // --- interaction latency --------------------------------------------------
-// One dedicated widget per library (multiple mode, so select does not close),
-// timing open -> select -> close over a few cycles. Each phase is guarded, so a
-// version drift on one op leaves the others intact.
+// One dedicated widget per library, timing an open -> filter -> select -> close
+// cycle, run for both single- and multiple-select (two tables + two charts).
+// Each phase is guarded, so a version drift on one op leaves the others intact.
 
-function measureInteraction(key, items) {
+const IX_PHASES = [
+  { key: 'open', label: 'Open', color: '#2456a6' },
+  { key: 'filter', label: 'Filter', color: '#7a3ea6' },
+  { key: 'select', label: 'Select', color: '#1a7f37' },
+  { key: 'close', label: 'Close', color: '#c9821a' },
+]
+
+// Each mode owns its table / chart / stage element ids, its select-one op, and
+// its own live handles + results.
+const IX_MODES = [
+  { key: 'single', label: 'Single-select', multi: false, pick: PICK_SINGLE, live: {}, results: {}, chart: null },
+  { key: 'multiple', label: 'Multiple-select', multi: true, pick: PICK, live: {}, results: {}, chart: null },
+]
+
+function ixStageEl(mode) { return document.getElementById(`ix-${mode.key}-stage`) }
+
+function measureInteraction(mode, key, items, stageEl) {
   const a = ADAPTERS[key]
-  const pick = PICK[key]
-  const h = ixLive[key]
+  const pick = mode.pick[key]
+  const h = mode.live[key]
   if (!a.open || !a.filter || !pick || !h) { return null }
   const CYCLES = 6
   const open = [], filt = [], sel = [], close = []
-  // The ' q' half stays visible after filtering, so pick from it.
-  const picks = items.filter((_, i) => i % 2 === 0)
+  const picks = items.filter((_, i) => i % 2 === 0) // the ' q' half stays visible after filtering
   for (let i = 0; i < CYCLES; i++) {
-    try { const t = performance.now(); a.open(h); reflow(ixStage); open.push(performance.now() - t) } catch (e) { console.warn(key, 'open', e) }
-    try { const t = performance.now(); a.filter(h, 'q'); reflow(ixStage); filt.push(performance.now() - t) } catch (e) { console.warn(key, 'filter', e) }
-    try { const t = performance.now(); pick(h, picks[i % picks.length]); reflow(ixStage); sel.push(performance.now() - t) } catch (e) { console.warn(key, 'pick', e) }
-    try { const t = performance.now(); a.close(h); reflow(ixStage); close.push(performance.now() - t) } catch (e) { console.warn(key, 'close', e) }
+    try { const t = performance.now(); a.open(h); reflow(stageEl); open.push(performance.now() - t) } catch (e) { console.warn(key, 'open', e) }
+    try { const t = performance.now(); a.filter(h, 'q'); reflow(stageEl); filt.push(performance.now() - t) } catch (e) { console.warn(key, 'filter', e) }
+    try { const t = performance.now(); pick(h, picks[i % picks.length]); reflow(stageEl); sel.push(performance.now() - t) } catch (e) { console.warn(key, 'pick', e) }
+    try { const t = performance.now(); a.close(h); reflow(stageEl); close.push(performance.now() - t) } catch (e) { console.warn(key, 'close', e) }
   }
   const med = arr => (arr.length > 1 ? median(arr.slice(1)) : (arr.length ? arr[0] : null)) // drop first as warm-up
   return { open: med(open), filter: med(filt), select: med(sel), close: med(close) }
 }
 
-function ixRow(key) { return document.querySelector(`#ix-results tbody tr[data-lib="${key}"]`) }
+function ixRow(mode, key) { return document.querySelector(`#ix-${mode.key}-results tbody tr[data-lib="${key}"]`) }
 
-function ixInitTable() {
-  const tbody = document.querySelector('#ix-results tbody')
+function ixInitTable(mode) {
+  const tbody = document.querySelector(`#ix-${mode.key}-results tbody`)
   tbody.replaceChildren()
   for (const key of ORDER) {
     const tr = document.createElement('tr'); tr.dataset.lib = key
@@ -471,9 +526,9 @@ function ixInitTable() {
   }
 }
 
-function ixSetRow(key, m) {
+function ixSetRow(mode, key, m) {
   const cols = IX_PHASES.map(p => p.key)
-  const cell = col => ixRow(key).querySelector(`td[data-col="${col}"]`)
+  const cell = col => ixRow(mode, key).querySelector(`td[data-col="${col}"]`)
   if (m && (m.na || m.err)) {
     cols.forEach((c, idx) => { cell(c).textContent = idx === 0 ? (m.na || 'error') : ''; delete cell(c).dataset.value })
     return
@@ -485,104 +540,93 @@ function ixSetRow(key, m) {
   }
 }
 
-function ixHighlightBest() {
+function ixHighlightBest(mode) {
   for (const col of IX_PHASES.map(p => p.key)) {
     let best = Infinity, bestKey = null
     for (const key of ORDER) {
-      const c = ixRow(key).querySelector(`td[data-col="${col}"]`); c.classList.remove('best')
+      const c = ixRow(mode, key).querySelector(`td[data-col="${col}"]`); c.classList.remove('best')
       const v = parseFloat(c.dataset.value); if (!isNaN(v) && v < best) { best = v; bestKey = key }
     }
-    if (bestKey) { ixRow(bestKey).querySelector(`td[data-col="${col}"]`).classList.add('best') }
+    if (bestKey) { ixRow(mode, bestKey).querySelector(`td[data-col="${col}"]`).classList.add('best') }
   }
 }
 
-function ixClear() {
-  for (const key of Object.keys(ixLive)) { try { ADAPTERS[key].teardown(ixLive[key]) } catch (e) { /* ignore */ } }
-  ixLive = {}
-  ixResults = {}
-  ixStage.replaceChildren()
-  renderIxChart()
+function ixClearMode(mode) {
+  for (const key of Object.keys(mode.live)) { try { ADAPTERS[key].teardown(mode.live[key]) } catch (e) { /* ignore */ } }
+  mode.live = {}
+  mode.results = {}
+  ixStageEl(mode).replaceChildren()
+  renderIxChart(mode)
 }
 
-// Stacked bar: the whole bar is the full open + select + close cost, each
-// segment a phase (all in ms, so no normalization). Legend toggles phases.
-const IX_PHASES = [
-  { key: 'open', label: 'Open', color: '#2456a6' },
-  { key: 'filter', label: 'Filter', color: '#7a3ea6' },
-  { key: 'select', label: 'Select', color: '#1a7f37' },
-  { key: 'close', label: 'Close', color: '#c9821a' },
-]
-let ixChartInstance = null
+function ixClearAll() { for (const mode of IX_MODES) { ixClearMode(mode) } }
 
-function renderIxChart() {
-  const canvas = document.getElementById('ix-chart')
-  const empty = document.getElementById('ix-chart-empty')
+// Stacked bar per mode: the whole bar is the full open + filter + select + close
+// cost (all ms, so no normalization). Legend toggles phases.
+function renderIxChart(mode) {
+  const canvas = document.getElementById(`ix-${mode.key}-chart`)
+  const empty = document.getElementById(`ix-${mode.key}-empty`)
   if (!window.Chart) { empty.textContent = 'Chart.js failed to load.'; empty.style.display = ''; return }
-  const libs = ORDER.filter(k => ixResults[k] && ixResults[k].open != null)
+  const libs = ORDER.filter(k => mode.results[k] && mode.results[k].open != null)
   if (!libs.length) {
-    if (ixChartInstance) { ixChartInstance.destroy(); ixChartInstance = null }
+    if (mode.chart) { mode.chart.destroy(); mode.chart = null }
     empty.style.display = ''
     return
   }
   empty.style.display = 'none'
   const labels = libs.map(k => DISPLAY[k].name)
-  const datasets = IX_PHASES.map(p => ({
-    label: p.label,
-    data: libs.map(k => ixResults[k][p.key]),
-    backgroundColor: p.color,
-    borderWidth: 0,
-    stack: 'ix',
-  }))
+  const datasets = IX_PHASES.map(p => ({ label: p.label, data: libs.map(k => mode.results[k][p.key]), backgroundColor: p.color, borderWidth: 0, stack: 'ix' }))
   const cfg = {
     type: 'bar',
     data: { labels, datasets },
     options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 300 },
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: { duration: 300 },
       plugins: {
         legend: { position: 'top' },
         tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${fmt(ctx.parsed.x)} ms` } },
       },
       scales: {
-        x: { beginAtZero: true, stacked: true, title: { display: true, text: 'ms (whole bar = open + select + close; shorter is better)' } },
+        x: { beginAtZero: true, stacked: true, title: { display: true, text: 'ms (whole bar = full cycle; shorter is better)' } },
         y: { stacked: true },
       },
     },
   }
-  if (ixChartInstance) { ixChartInstance.destroy() }
-  ixChartInstance = new window.Chart(canvas, cfg)
+  if (mode.chart) { mode.chart.destroy() }
+  mode.chart = new window.Chart(canvas, cfg)
 }
 
 async function ixBuildAndMeasure() {
   const runBtn = document.getElementById('ix-run')
   const status = document.getElementById('ix-status')
   runBtn.disabled = true
-  ixClear(); ixInitTable()
+  ixClearAll()
+  for (const mode of IX_MODES) { ixInitTable(mode) }
   const n = Number(document.getElementById('ix-size').value)
   const items = ixBuildItems(n)
-  for (const key of ORDER) {
-    if (!available(key)) { ixSetRow(key, { na: 'not loaded' }); continue }
-    status.textContent = `${DISPLAY[key].name}: building 1 widget x ${n} ...`
-    await raf()
-    const cell = document.createElement('div'); cell.className = 'ix-cell'
-    const lab = document.createElement('div'); lab.className = 'ix-lab'; lab.textContent = DISPLAY[key].name
-    const mount = document.createElement('div'); mount.className = 'ix-mount'
-    cell.append(lab, mount); ixStage.appendChild(cell)
-    try { ixLive[key] = ADAPTERS[key].setup(mount, items, { multi: true, custom: false }) } catch (e) { console.warn(key, e); ixSetRow(key, { err: true }); continue }
-    await raf()
-    status.textContent = `${DISPLAY[key].name}: measuring open / select / close ...`
-    await raf()
-    const m = ADAPTERS[key].noFilter ? null : measureInteraction(key, items)
-    ixSetRow(key, m)
-    if (m && m.open != null) { ixResults[key] = m }
-    ixHighlightBest()
-    renderIxChart()
-    await raf()
+  for (const mode of IX_MODES) {
+    const stageEl = ixStageEl(mode)
+    for (const key of ORDER) {
+      if (!available(key)) { ixSetRow(mode, key, { na: 'not loaded' }); continue }
+      status.textContent = `${mode.label} - ${DISPLAY[key].name}: building 1 x ${n} ...`
+      await raf()
+      const cell = document.createElement('div'); cell.className = 'ix-cell'
+      const lab = document.createElement('div'); lab.className = 'ix-lab'; lab.textContent = DISPLAY[key].name
+      const mount = document.createElement('div'); mount.className = 'ix-mount'
+      cell.append(lab, mount); stageEl.appendChild(cell)
+      try { mode.live[key] = ADAPTERS[key].setup(mount, items, { multi: mode.multi, custom: false, preselect: false }) } catch (e) { console.warn(key, e); ixSetRow(mode, key, { err: true }); continue }
+      await raf()
+      status.textContent = `${mode.label} - ${DISPLAY[key].name}: measuring ...`
+      await raf()
+      const m = ADAPTERS[key].noFilter ? null : measureInteraction(mode, key, items, stageEl)
+      ixSetRow(mode, key, m)
+      if (m && m.open != null) { mode.results[key] = m }
+      ixHighlightBest(mode)
+      renderIxChart(mode)
+      await raf()
+    }
   }
   runBtn.disabled = false
-  status.textContent = 'Done. Lower is better. The widgets are live - open them yourself too.'
+  status.textContent = 'Done. Lower is better. Widgets are live - open them yourself.'
 }
 
 // --- wire up --------------------------------------------------------------
@@ -596,16 +640,21 @@ function reset(msg) {
 }
 
 initTable()
-ixInitTable()
+IX_MODES.forEach(ixInitTable)
 document.getElementById('run-all').addEventListener('click', () => { runAll() })
+document.getElementById('stop').addEventListener('click', () => { stopRequested = true; document.getElementById('status').textContent = 'Stopping ...' })
 document.getElementById('clear').addEventListener('click', () => { reset('Cleared.') })
 // A scenario change invalidates the accumulated results (they are per-scenario).
 document.getElementById('scenario').addEventListener('change', () => { reset('Scenario changed - results reset.') })
 document.querySelectorAll('.bench-libbuttons button').forEach(btn => {
-  btn.addEventListener('click', () => { runLib(btn.dataset.lib) })
+  btn.addEventListener('click', async () => {
+    stopRequested = false
+    setRunning(true)
+    try { await runLib(btn.dataset.lib) } finally { setRunning(false) }
+  })
 })
 document.getElementById('ix-run').addEventListener('click', () => { ixBuildAndMeasure() })
-document.getElementById('ix-size').addEventListener('change', () => { ixClear(); ixInitTable(); document.getElementById('ix-status').textContent = 'Size changed - press Build + measure.' })
+document.getElementById('ix-size').addEventListener('change', () => { ixClearAll(); IX_MODES.forEach(ixInitTable); document.getElementById('ix-status').textContent = 'Size changed - press Build + measure.' })
 document.getElementById('versions').textContent =
   ORDER.map(k => `${DISPLAY[k].name} ${DISPLAY[k].version}`).join('  |  ') + '  |  jQuery 3.7.1 (for Select2)'
 measureSizes()

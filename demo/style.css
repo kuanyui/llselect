@@ -412,8 +412,8 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .ix-cell { width: 220px; border: 1px solid #e2e2e2; border-radius: 6px; padding: 8px; background: #fff; }
 .ix-lab { font-size: 0.8rem; color: #555; font-weight: 600; margin-bottom: 6px; }
 .ix-mount { min-height: 34px; }
-#ix-results { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
-#ix-results th, #ix-results td { border: 1px solid #ccc; padding: 5px 10px; text-align: right; }
-#ix-results th:first-child, #ix-results td:first-child { text-align: left; }
-#ix-results thead th { background: #f6f8fa; }
-#ix-results td.best { background: #e6f4ea; color: #1a7f37; font-weight: 700; }
+.ix-table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+.ix-table th, .ix-table td { border: 1px solid #ccc; padding: 5px 10px; text-align: right; }
+.ix-table th:first-child, .ix-table td:first-child { text-align: left; }
+.ix-table thead th { background: #f6f8fa; }
+.ix-table td.best { background: #e6f4ea; color: #1a7f37; font-weight: 700; }
