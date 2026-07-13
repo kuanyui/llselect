@@ -527,3 +527,33 @@ test('positioner: natural height comes from the inner scroller, not the clamped 
   assert.equal(floating.getAttribute('data-placement'), 'above')
   p.detach()
 })
+
+// --- F1: opening against an off-screen trigger is a no-op, not a leak ------
+
+test('open() on an out-of-view trigger is a no-op and attaches no listeners', () => {
+  setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
+  const mount = document.getElementById('mount')!
+  let opens = 0
+  let closes = 0
+  const sel = new LLSelectSingle<string>(mount, {
+    onOpen: () => { opens++ },
+    onClose: () => { closes++ },
+  })
+  sel.setItems(['a', 'b'])
+  // Trigger fully above the viewport (bottom < 0): the positioner's initial
+  // placement would have hidden it re-entrantly under the old code.
+  sel.triggerEl.getBoundingClientRect = () =>
+    ({ top: -100, left: 50, right: 250, bottom: -70, width: 200, height: 30, x: 50, y: -100, toJSON: () => ({}) }) as DOMRect
+  sel.open()
+  // Clean no-op: never reported open, fired no callbacks, popup stays hidden.
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
+  assert.equal(sel.popupEl.hidden, true)
+  assert.equal(opens, 0)
+  assert.equal(closes, 0)
+  // No positioner was attached, so a later resize does not mutate the popup.
+  window.dispatchEvent(new Event('resize'))
+  assert.equal(sel.popupEl.hidden, true)
+  assert.equal(sel.popupEl.hasAttribute('data-placement'), false)
+  // destroy() stays clean (nothing stranded to tear down).
+  sel.destroy()
+})

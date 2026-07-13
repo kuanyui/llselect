@@ -185,6 +185,29 @@ function isClippedByAncestor(anchor: HTMLElement, anchorRect: DOMRect): boolean 
   return false
 }
 
+// Anchor fully outside the LAYOUT viewport (window.innerWidth/Height, not the
+// visual viewport - see reposition) or clipped away by a scroll ancestor.
+// Strict comparisons so an unsized anchor at (0,0,0,0) - common in jsdom or
+// before first layout - reads as "in viewport, no rect yet", not "off-screen".
+function isAnchorHiddenForRect(anchor: HTMLElement, rect: DOMRect): boolean {
+  const outOfViewport =
+    rect.bottom < 0 ||
+    rect.top > window.innerHeight ||
+    rect.right < 0 ||
+    rect.left > window.innerWidth
+  return outOfViewport || isClippedByAncestor(anchor, rect)
+}
+
+/**
+ * Whether `anchor` is currently hidden (scrolled out of the layout viewport or
+ * clipped by a scrollable ancestor). Exposed so a caller can refuse to open a
+ * popup against an off-screen trigger BEFORE building a positioner, rather than
+ * opening and then hiding re-entrantly.
+ */
+export function isAnchorHidden(anchor: HTMLElement): boolean {
+  return isAnchorHiddenForRect(anchor, anchor.getBoundingClientRect())
+}
+
 /** Controls the lifecycle of an active positioner. */
 export interface Positioner {
   /** Force a re-position now. Normally called automatically. */
@@ -219,6 +242,13 @@ export interface PositionerOptions {
    * would clamp this element's scrollTop to 0 mid-frame - losing the
    * scrolled-to-chosen position - and caused a visible window-scroll jolt on
    * Firefox). Omit when the floating element has no inner scroller.
+   *
+   * INVARIANT: this element must have no author-set height cap of its own -
+   * the positioner owns the popup's `maxHeight`. The reconstruction adds back
+   * ALL of its overflow, so an independent `max-height` on the inner list
+   * (theme or consumer CSS) is read as extra natural height and can pick a
+   * side as if the popup were taller than it can render. Shipped themes honor
+   * this; consumer themes must clamp the popup, not the inner list.
    */
   innerScrollEl?: HTMLElement
 }
@@ -292,15 +322,7 @@ export function createPositioner(
     // spaces would treat a lower-screen anchor as "scrolled out" and close the
     // popup the instant the keyboard opens. The visual viewport still drives
     // computePosition below (maxHeight clamps to the actually-visible area).
-    // Strict comparisons so an unsized anchor at (0,0,0,0) - common in jsdom
-    // or before layout - is treated as "in viewport, no rect yet" rather than
-    // "fully above/left of viewport".
-    const outOfViewport =
-      rect.bottom < 0 ||
-      rect.top > window.innerHeight ||
-      rect.right < 0 ||
-      rect.left > window.innerWidth
-    if (allowHide && (outOfViewport || isClippedByAncestor(anchor, rect)) && options?.onHide) {
+    if (allowHide && isAnchorHiddenForRect(anchor, rect) && options?.onHide) {
       options.onHide()
       return
     }

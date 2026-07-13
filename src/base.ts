@@ -3,7 +3,7 @@
 // LLSelectMultiple. Subclasses own chosen-state and decide what happens on
 // item click.
 
-import { createPositioner, type Positioner, type WidthPolicy } from './positioning.js'
+import { createPositioner, isAnchorHidden, type Positioner, type WidthPolicy } from './positioning.js'
 import {
   LLSelectAction,
   ensureVisibleInScroll,
@@ -717,6 +717,15 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    */
   public open(): void {
     if (this.isOpen || this.disabled) { return }
+    // A trigger already scrolled out of view / clipped by an ancestor when
+    // open() runs cannot host a visible popup, so opening is a no-op (mirrors
+    // the disabled guard). This also prevents the positioner's initial
+    // synchronous placement from firing onHide -> close() re-entrantly before
+    // this.positioner is assigned and the listeners are attached - which would
+    // strand the outside-click / focusout / scroll / resize handlers with the
+    // control already reporting itself closed (destroy() -> close() then early-
+    // returns and cannot recover them).
+    if (isAnchorHidden(this.triggerEl)) { return }
     const restoreWindowScroll = this.captureWindowScroll()
     this.isOpen = true
     // Search mode is (re)evaluated once per open cycle, before anything that
