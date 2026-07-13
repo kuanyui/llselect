@@ -27,6 +27,10 @@ technology before the first public release.
 - [ ] **Real-browser visual / pointer pass** for the rest of what jsdom cannot
       cover: RTL mirroring, mousedown focus-steal rules, native scrollbar drag
       inside the popup list, select-all tri-state and no-results visuals.
+      Include the placement-stickiness scenario (near-bottom trigger, popup
+      opens upward, filter to zero matches, Esc to restore): the popup must
+      stay upward the whole time - it used to flip down on the empty list and
+      stay stuck squeezed at the bottom after the filter cleared.
 - [ ] **Consumer bundler smoke test** (production mode): import
       `llselect/themes/vanilla.css` in a webpack/vite app with tree shaking on
       and assert the CSS reaches the output (`sideEffects: ["**/*.css"]`

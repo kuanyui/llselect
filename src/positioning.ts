@@ -41,6 +41,14 @@ export interface PositionInput {
    * `'match-trigger'` is position-identical in both directions.
    */
   direction?: 'ltr' | 'rtl'
+  /**
+   * Placement currently in effect, for stickiness across repositions of one
+   * open cycle. When set and the content still fits on that side, it is kept
+   * even if the other side would also fit - so a transient content shrink
+   * (e.g. a search filter matching nothing) does not flip the popup back and
+   * forth. Omit / `undefined` (first placement) to pick fresh.
+   */
+  currentPlacement?: Placement | undefined
 }
 
 /** Result of {@link computePosition}: coordinates and chosen placement. */
@@ -61,7 +69,10 @@ const VIEWPORT_PADDING = 8
  *
  * Vertical: prefers placing below; flips above when it does not fit below and
  * either fits above or has more room above. When neither side fits, picks the
- * side with more space and clamps `maxHeight` accordingly.
+ * side with more space and clamps `maxHeight` accordingly. A
+ * `currentPlacement` that still fits is kept (stickiness) - re-preferring
+ * "below" on every content change would make the popup jump sides whenever
+ * the list shrinks and regrows.
  *
  * Horizontal: `widthPolicy === 'match-trigger'` (default) returns
  * `width = anchor.width` and `left = anchor.left` (no collision handling -
@@ -81,6 +92,7 @@ export function computePosition(input: PositionInput): PositionResult {
     widthPolicy = 'match-trigger',
     floatingNaturalWidth = 0,
     direction = 'ltr',
+    currentPlacement,
   } = input
 
   const spaceBelow = viewportHeight - anchorRect.bottom - GAP - VIEWPORT_PADDING
@@ -88,9 +100,14 @@ export function computePosition(input: PositionInput): PositionResult {
 
   const fitsBelow = floatingHeight <= spaceBelow
   const fitsAbove = floatingHeight <= spaceAbove
+  const currentStillFits =
+    (currentPlacement === 'below' && fitsBelow) ||
+    (currentPlacement === 'above' && fitsAbove)
 
   let placement: Placement
-  if (fitsBelow) {
+  if (currentStillFits && currentPlacement !== undefined) {
+    placement = currentPlacement
+  } else if (fitsBelow) {
     placement = 'below'
   } else if (fitsAbove) {
     placement = 'above'
@@ -246,6 +263,9 @@ export function createPositioner(
   // and the next open re-reads it. Only fit-content consults it.
   const direction: 'ltr' | 'rtl' =
     window.getComputedStyle(anchor).direction === 'rtl' ? 'rtl' : 'ltr'
+  // Placement chosen by the previous reposition, fed back for stickiness.
+  // Positioner lifetime = one open cycle, so the next open picks fresh.
+  let lastPlacement: Placement | undefined
 
   // `allowHide`: whether this reposition may invoke `onHide` (auto-close).
   // Only scroll-driven repositions (and the initial placement) close the popup
@@ -276,6 +296,14 @@ export function createPositioner(
     const floatingNaturalWidth = widthPolicy === 'fit-content'
       ? measureNaturalWidth(floating)
       : 0
+    // Lift the previous reposition's maxHeight before measuring: reading
+    // offsetHeight under the old clamp feeds the clamp back into the fits
+    // test - after a flip to the smaller side the popup could then never
+    // measure taller than that side and stayed stuck there even when the
+    // list grew back (regrown filter results kept a bottom-flipped popup
+    // squeezed at the viewport edge).
+    floating.style.maxHeight = ''
+    const floatingHeight = floating.offsetHeight
     const result = computePosition({
       anchorRect: {
         top: rect.top,
@@ -287,11 +315,13 @@ export function createPositioner(
       },
       viewportWidth,
       viewportHeight,
-      floatingHeight: floating.offsetHeight,
+      floatingHeight,
       widthPolicy,
       floatingNaturalWidth,
       direction,
+      currentPlacement: lastPlacement,
     })
+    lastPlacement = result.placement
     floating.style.position = 'fixed'
     floating.style.top = `${result.top}px`
     floating.style.left = `${result.left}px`
