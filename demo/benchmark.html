@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slim-select@2.10.0/dist/slimselect.css">
+  <!-- Material Design Icons, for the custom-renderer variant only -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
 </head>
 <body>
   <nav class="demo-nav">
@@ -21,60 +23,80 @@
     <a href="bench-reflow.html">Reflow bench</a>
   </nav>
 
-  <h1>llselect vs the field</h1>
+  <h1>llselect vs the field - mass instantiation</h1>
   <p>
-    llselect against Choices.js, Select2, Tom Select and Slim Select on an
-    identical dataset. Everything runs in your browser; nothing is precomputed.
-    <strong>Lower is better.</strong> Numbers depend on your machine and browser,
-    so read the ratios, not the absolute milliseconds, and click <em>Run</em> a
-    few times.
+    A stress test: build many independent selects at once and measure it, with
+    the widgets actually rendered in the scroll area below. llselect against
+    the native <code>&lt;select&gt;</code> (the baseline floor), Choices.js,
+    Select2, Tom Select and Slim Select on the same scenario.
+    <strong>Lower is better.</strong> Numbers depend on your machine and browser.
+  </p>
+  <p class="bench-warn">
+    Heavy. Each library gets a time budget (about 20 s); a competitor that cannot
+    finish in it stops early and its row shows how many it built before the
+    cut-off. "Run all" walks the five libraries in turn, so it can take a while.
   </p>
 
   <div class="bench-controls">
-    <label>Options
-      <select id="size">
-        <option value="200">200</option>
-        <option value="1000" selected>1,000</option>
-        <option value="5000">5,000</option>
-        <option value="10000">10,000</option>
+    <label>Scenario
+      <select id="scenario">
+        <option value="s1">10,000 single selects x 10 items</option>
+        <option value="s2">10,000 multiple selects x 10 items</option>
+        <option value="s3">10 single selects x 10,000 items</option>
+        <option value="s4">10 multiple selects x 10,000 items</option>
       </select>
     </label>
-    <button id="run">Run</button>
-    <span id="status">Ready. Pick a size and press Run.</span>
+    <label><input type="checkbox" id="custom"> custom renderer (MDI icon per item)</label>
+    <button id="run-all">Run all</button>
+    <button id="clear">Clear</button>
+    <span id="status">Ready.</span>
+  </div>
+
+  <div class="bench-libbuttons">
+    <span>Render one:</span>
+    <button data-lib="native">Native &lt;select&gt;</button>
+    <button data-lib="llselect">llselect</button>
+    <button data-lib="choices">Choices.js</button>
+    <button data-lib="select2">Select2</button>
+    <button data-lib="tom-select">Tom Select</button>
+    <button data-lib="slim-select">Slim Select</button>
   </div>
 
   <table id="results">
     <thead>
       <tr>
         <th>Library</th>
-        <th>Init + render (ms)</th>
-        <th>Open popup (ms)</th>
-        <th>Filter (ms)</th>
-        <th>Select 1, multi (ms)</th>
+        <th>Built / target</th>
+        <th>Init compute (ms)</th>
+        <th>DOM nodes (resting)</th>
+        <th>Filter sample (ms)</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
-  <h2>What each column measures</h2>
+  <h2>Scratch area <small>(the widgets from the last run render here - scroll)</small></h2>
+  <div id="stage" class="bench-stage"></div>
+
+  <h2>What the columns mean</h2>
   <ul class="bench-legend">
-    <li><strong>Init + render</strong> - from an empty mount to an interactive
-      widget holding N options, with layout forced. This is where llselect's
-      lazy rendering shows: it builds no option DOM until the popup opens.</li>
-    <li><strong>Open popup</strong> - time to open the dropdown once built. The
-      counterpart to Init: whatever a library defers from init lands here.
-      Read the two columns together.</li>
-    <li><strong>Filter</strong> - type a query that narrows N options to a few
-      and re-render the matches.</li>
-    <li><strong>Select 1, multi</strong> - toggle a single option in a large
-      multi-select. llselect replaces one option node rather than rebuilding
-      the list.</li>
+    <li><strong>Built / target</strong> - how many widgets finished before the
+      time budget. A competitor that cannot mass-instantiate at this scale shows
+      e.g. <code>240 / 10000 (timeout)</code> - itself a result.</li>
+    <li><strong>Init compute (ms)</strong> - summed synchronous build time (the
+      deliberate yields that keep the page responsive are excluded). One run,
+      not a median: at this scale the signal dwarfs the noise.</li>
+    <li><strong>DOM nodes (resting)</strong> - element nodes added under the
+      scratch area after building, popups closed. llselect builds no option DOM
+      until a popup opens, so this shows its lazy-render footprint.</li>
+    <li><strong>Filter sample (ms)</strong> - open the first built widget, type a
+      query, re-render matches; median of a few. All widgets are searchable.</li>
   </ul>
 
   <h2>Bundle size</h2>
   <p>Minified transfer bytes, <em>uncompressed</em> - the same method for every
-    script, fetched live from the CDN, so the ratio is fair (gzip shrinks them
-    all by roughly 3x). Select2 also requires jQuery, listed separately.</p>
+    script, fetched live from the CDN (gzip shrinks them all by roughly 3x).
+    Select2 also requires jQuery, listed separately.</p>
   <table id="sizes">
     <thead><tr><th>Script</th><th>Version</th><th>Minified bytes</th></tr></thead>
     <tbody></tbody>
@@ -82,25 +104,23 @@
 
   <h2>Method and caveats</h2>
   <ul class="bench-caveats">
-    <li>Each cell is the <strong>median of several runs after two warm-ups</strong>
-      (fewer runs at large N). A synchronous reflow is forced inside every timed
-      region, so a library cannot look fast by deferring layout past the timer.</li>
-    <li>Libraries use <strong>different rendering strategies</strong>, which is
-      the whole point of reading Init and Open together: llselect lazy-renders
-      options when the popup opens; Tom Select caps how many options it renders
-      at once (its own perf strategy); Choices, Select2 and Slim Select render
-      eagerly. None is "cheating" - they trade differently.</li>
-    <li>This benches a <strong>plain single / multi select</strong>. Select2,
-      Choices and Tom Select also do tagging, remote data, templating and more;
-      that scope is not free and is not measured here.</li>
-    <li>A <strong>"-"</strong> means the adapter could not perform that operation
-      on the loaded CDN version (an API drift), not that the library is
-      incapable. Tell me which cell so I can fix the adapter.</li>
+    <li>Widgets are built in small chunks with a yield between them, so the page
+      stays responsive and a runaway library can be cut off. A forced reflow ends
+      each build so deferred layout is not hidden.</li>
+    <li>Every widget is <strong>independent</strong> - its own chosen state, no
+      cross-widget interaction (that would be an integration test, not a render
+      stress test).</li>
+    <li>Libraries render differently, which is the point of the DOM-nodes column:
+      llselect lazy-renders options on open; Tom Select caps rendered options;
+      Choices, Select2 and Slim Select render eagerly. None is cheating.</li>
+    <li>The custom-renderer variant adds one MDI icon per item through each
+      library's item-render hook (best-effort per version). This benches a plain
+      searchable select otherwise; tagging, remote data and templating are out
+      of scope.</li>
+    <li>A <strong>"-"</strong> or <strong>error</strong> means the adapter could
+      not drive that library on the loaded CDN version - tell me which cell.</li>
     <li>Versions under test: <span id="versions"></span></li>
   </ul>
-
-  <h2 class="bench-stage-title">Scratch area <small>(widgets build here during a run)</small></h2>
-  <div id="stage" class="bench-stage"></div>
 
   <!-- Competitor libraries via CDN (UMD globals). jQuery must precede Select2. -->
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>

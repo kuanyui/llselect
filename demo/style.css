@@ -382,6 +382,23 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 #results td.best { background: #e6f4ea; color: #1a7f37; font-weight: 700; }
 .bench-legend, .bench-caveats { font-size: 0.9rem; color: #333; }
 .bench-legend li, .bench-caveats li { margin: 0.35rem 0; }
-.bench-stage-title { font-size: 1rem; color: #555; }
-.bench-stage-title small { font-weight: normal; color: #888; }
-.bench-stage { min-height: 40px; border: 1px dashed #ccc; border-radius: 6px; padding: 0.5rem; background: #fafafa; }
+.bench-warn { font-size: 0.9rem; color: #8a5a00; background: #fff6e5; border-left: 4px solid #e0a100; padding: 0.5rem 0.85rem; border-radius: 4px; }
+.bench-libbuttons { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin: 0 0 1rem; font-size: 0.9rem; }
+.bench-libbuttons button { font: inherit; font-size: 0.85rem; padding: 0.25rem 0.7rem; cursor: pointer; border: 1px solid #bbb; background: #fff; border-radius: 4px; }
+.bench-libbuttons button:hover { border-color: #2456a6; color: #2456a6; }
+/* Scroll area where a run's widgets actually render. Fixed height so 10k
+   widgets stay scrollable rather than growing the page. */
+.bench-stage {
+  height: 420px;
+  overflow: auto;
+  border: 1px dashed #ccc;
+  border-radius: 6px;
+  padding: 0.5rem;
+  background: #fafafa;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 4px;
+}
+.bench-widget { width: 250px; }
+.bench-stage h2 { display: none; }
