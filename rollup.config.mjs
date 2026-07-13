@@ -3,6 +3,7 @@
 import { readdirSync, mkdirSync, copyFileSync } from 'node:fs'
 import { join } from 'node:path'
 import typescript from '@rollup/plugin-typescript'
+import terser from '@rollup/plugin-terser'
 
 const THEMES_SRC = 'src/themes'
 const THEMES_DEST = 'dist/themes'
@@ -56,11 +57,15 @@ const options = [
       { file: 'dist/index.mjs', format: 'es', sourcemap: true },
       { file: 'dist/index.cjs', format: 'cjs', exports: 'named', sourcemap: true },
       {
+        // UMD is the direct-in-browser / unpkg build, so it ships minified +
+        // mangled (terser as an output plugin, main/cjs stay readable for
+        // bundler consumers). Keeps the CDN size honest against other libraries.
         file: 'dist/index.umd.js',
         format: 'umd',
         name: 'llselect',
         exports: 'named',
-        sourcemap: true
+        sourcemap: true,
+        plugins: [terser()]
       }
     ],
     plugins: [tsPlugin, copyThemes()]
@@ -75,7 +80,8 @@ const options = [
         format: 'umd',
         name: 'llselectI18n',
         exports: 'named',
-        sourcemap: true
+        sourcemap: true,
+        plugins: [terser()]
       }
     ],
     plugins: [

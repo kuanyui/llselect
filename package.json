@@ -51,6 +51,7 @@
   },
   "homepage": "https://gitlab.com/kuanyui/llselect#readme",
   "devDependencies": {
+    "@rollup/plugin-terser": "^1.0.0",
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^20.17.0",
