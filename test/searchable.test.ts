@@ -352,3 +352,60 @@ test('setItems while open + searchable: re-filter applies', () => {
   assert.equal(sel.popupListEl.querySelectorAll('[role="option"]').length, 1)
   assert.equal(sel.popupListEl.querySelector('[role="option"]')!.textContent, 'Apple')
 })
+
+// --- tab-order: single tab stop while open --------------------------------
+
+test('searchable open: trigger leaves the tab order; close restores it', () => {
+  const sel = new LLSelectSingle<string>(mount(), { searchable: true })
+  sel.setItems(['a', 'b'])
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '0')
+  sel.open()
+  // Only the search input may be tabbable while open: Shift+Tab must leave
+  // the widget (and close via focusout), never land on the trigger with the
+  // popup still open.
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '-1')
+  sel.close()
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '0')
+})
+
+test('non-searchable open: trigger stays tabbable (it is the focus host)', () => {
+  const sel = new LLSelectSingle<string>(mount())
+  sel.setItems(['a', 'b'])
+  sel.open()
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '0')
+  sel.close()
+})
+
+test('predicate searchable: an inactive open cycle keeps the trigger tabbable', () => {
+  const sel = new LLSelectSingle<string>(mount(), { searchable: (items) => items.length > 2 })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '0')
+  sel.close()
+  sel.setItems(['a', 'b', 'c'])
+  sel.open()
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '-1')
+  sel.close()
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '0')
+})
+
+test('setDisabled while searchable-open: closes and lands on the disabled tabindex', () => {
+  const sel = new LLSelectSingle<string>(mount(), { searchable: true })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '-1')
+  sel.setDisabled(true)
+  // close() restored 0 first, then the disabled sync takes it back out.
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '-1')
+  sel.setDisabled(false)
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '0')
+})
+
+test('focusableWhenDisabled survives the searchable open/close cycle', () => {
+  const sel = new LLSelectSingle<string>(mount(), { searchable: true, focusableWhenDisabled: true })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  sel.setDisabled(true)
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '0')
+})
