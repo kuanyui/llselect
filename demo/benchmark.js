@@ -571,6 +571,13 @@ async function measureInteraction(mode, key, items, stageEl) {
   }
   for (let i = 0; i < CYCLES; i++) {
     rows.open.push(await timeOp(() => a.open(h)))
+    // Reset the query to empty UNTIMED first, so the timed keystroke below is
+    // always a real change (empty -> 'q', narrow to half). Otherwise re-typing
+    // the same 'q' is a no-op for a library that keeps the query after a
+    // selection (Choices) or clears it on close (llselect), reading ~0. This
+    // also matches real usage: type into an empty search box.
+    try { a.filter(h, '') } catch (e) { /* ignore */ }
+    await raf()
     rows.filter.push(await timeOp(() => a.filter(h, 'q')))
     rows.select.push(await timeOp(() => pick(h, picks[i % picks.length])))
     rows.close.push(await timeOp(() => a.close(h)))

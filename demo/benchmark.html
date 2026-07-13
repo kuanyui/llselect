@@ -171,8 +171,10 @@
     <ul class="bench-legend">
       <li><strong>Open</strong> - open the dropdown. For a big list this is where
         llselect builds its option DOM (it renders nothing until you open).</li>
-      <li><strong>Filter</strong> - type one character that narrows the list to
-        about half, and re-render the matches.</li>
+      <li><strong>Filter</strong> - clear the search box, then type one character
+        that narrows the list to about half. Clearing first makes every keystroke
+        a real change (a library that keeps the query after a selection would
+        otherwise re-render nothing on a repeated character).</li>
       <li><strong>Select</strong> - pick one option: single-select replaces its
         one value, multiple-select adds a chip and keeps the list open.</li>
       <li><strong>Close</strong> - close the dropdown.</li>
