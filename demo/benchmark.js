@@ -27,6 +27,8 @@ const DISPLAY = {
 const ORDER = ['native', 'llselect', 'choices', 'select2', 'tom-select', 'slim-select']
 
 const SCENARIOS = {
+  everyday: { widgets: 100, itemsPer: 100, multi: false },
+  many1k: { widgets: 1000, itemsPer: 10, multi: false },
   s1: { widgets: 10000, itemsPer: 10, multi: false },
   s2: { widgets: 10000, itemsPer: 10, multi: true },
   s3: { widgets: 10, itemsPer: 10000, multi: false },
@@ -185,6 +187,9 @@ function reflow(el) { return el.offsetHeight }
 function safe(fn) { try { return fn() } catch (e) { console.warn(e); return null } }
 function median(xs) { const s = xs.slice().sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2 }
 function buildItems(n) { return Array.from({ length: n }, (_, i) => 'Item ' + String(i + 1).padStart(6, '0')) }
+// Interaction items: every other one carries a ' q' token so a single-character
+// query 'q' filters the list to exactly half (the interaction filter test).
+function ixBuildItems(n) { return Array.from({ length: n }, (_, i) => 'Item ' + String(i + 1).padStart(6, '0') + (i % 2 === 0 ? ' q' : '')) }
 function countNodes() { return stage.querySelectorAll('*').length }
 
 let live = [] // { key, h } currently rendered, for teardown
@@ -436,16 +441,19 @@ function measureInteraction(key, items) {
   const a = ADAPTERS[key]
   const pick = PICK[key]
   const h = ixLive[key]
-  if (!a.open || !pick || !h) { return null }
+  if (!a.open || !a.filter || !pick || !h) { return null }
   const CYCLES = 6
-  const open = [], sel = [], close = []
+  const open = [], filt = [], sel = [], close = []
+  // The ' q' half stays visible after filtering, so pick from it.
+  const picks = items.filter((_, i) => i % 2 === 0)
   for (let i = 0; i < CYCLES; i++) {
     try { const t = performance.now(); a.open(h); reflow(ixStage); open.push(performance.now() - t) } catch (e) { console.warn(key, 'open', e) }
-    try { const t = performance.now(); pick(h, items[i]); reflow(ixStage); sel.push(performance.now() - t) } catch (e) { console.warn(key, 'pick', e) }
+    try { const t = performance.now(); a.filter(h, 'q'); reflow(ixStage); filt.push(performance.now() - t) } catch (e) { console.warn(key, 'filter', e) }
+    try { const t = performance.now(); pick(h, picks[i % picks.length]); reflow(ixStage); sel.push(performance.now() - t) } catch (e) { console.warn(key, 'pick', e) }
     try { const t = performance.now(); a.close(h); reflow(ixStage); close.push(performance.now() - t) } catch (e) { console.warn(key, 'close', e) }
   }
   const med = arr => (arr.length > 1 ? median(arr.slice(1)) : (arr.length ? arr[0] : null)) // drop first as warm-up
-  return { open: med(open), select: med(sel), close: med(close) }
+  return { open: med(open), filter: med(filt), select: med(sel), close: med(close) }
 }
 
 function ixRow(key) { return document.querySelector(`#ix-results tbody tr[data-lib="${key}"]`) }
@@ -458,16 +466,19 @@ function ixInitTable() {
     const nameTd = document.createElement('td')
     const a = document.createElement('a'); a.href = DISPLAY[key].url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = DISPLAY[key].name
     nameTd.appendChild(a); tr.appendChild(nameTd)
-    for (const col of ['open', 'select', 'close']) { const td = document.createElement('td'); td.dataset.col = col; tr.appendChild(td) }
+    for (const col of IX_PHASES.map(p => p.key)) { const td = document.createElement('td'); td.dataset.col = col; tr.appendChild(td) }
     tbody.appendChild(tr)
   }
 }
 
 function ixSetRow(key, m) {
+  const cols = IX_PHASES.map(p => p.key)
   const cell = col => ixRow(key).querySelector(`td[data-col="${col}"]`)
-  if (m && m.na) { cell('open').textContent = m.na; cell('select').textContent = ''; cell('close').textContent = ''; return }
-  if (m && m.err) { cell('open').textContent = 'error'; cell('select').textContent = ''; cell('close').textContent = ''; return }
-  for (const col of ['open', 'select', 'close']) {
+  if (m && (m.na || m.err)) {
+    cols.forEach((c, idx) => { cell(c).textContent = idx === 0 ? (m.na || 'error') : ''; delete cell(c).dataset.value })
+    return
+  }
+  for (const col of cols) {
     const v = m ? m[col] : null
     cell(col).textContent = m == null ? 'n/a' : fmt(v)
     if (v != null && !isNaN(v)) { cell(col).dataset.value = v } else { delete cell(col).dataset.value }
@@ -475,7 +486,7 @@ function ixSetRow(key, m) {
 }
 
 function ixHighlightBest() {
-  for (const col of ['open', 'select', 'close']) {
+  for (const col of IX_PHASES.map(p => p.key)) {
     let best = Infinity, bestKey = null
     for (const key of ORDER) {
       const c = ixRow(key).querySelector(`td[data-col="${col}"]`); c.classList.remove('best')
@@ -497,6 +508,7 @@ function ixClear() {
 // segment a phase (all in ms, so no normalization). Legend toggles phases.
 const IX_PHASES = [
   { key: 'open', label: 'Open', color: '#2456a6' },
+  { key: 'filter', label: 'Filter', color: '#7a3ea6' },
   { key: 'select', label: 'Select', color: '#1a7f37' },
   { key: 'close', label: 'Close', color: '#c9821a' },
 ]
@@ -549,7 +561,7 @@ async function ixBuildAndMeasure() {
   runBtn.disabled = true
   ixClear(); ixInitTable()
   const n = Number(document.getElementById('ix-size').value)
-  const items = buildItems(n)
+  const items = ixBuildItems(n)
   for (const key of ORDER) {
     if (!available(key)) { ixSetRow(key, { na: 'not loaded' }); continue }
     status.textContent = `${DISPLAY[key].name}: building 1 widget x ${n} ...`
