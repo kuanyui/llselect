@@ -341,7 +341,7 @@ function runOptsFromDom() {
   }
 }
 
-async function runLib(key) {
+async function runLib(key, renderAfter = true) {
   const status = document.getElementById('status')
   const scen = SCENARIOS[document.getElementById('scenario').value]
   if (!available(key)) { setCell(key, 'built', 'not loaded'); return }
@@ -372,7 +372,10 @@ async function runLib(key) {
     filter: ADAPTERS[key].noFilter ? null : filterMs, timedOut: res.timedOut, errored: res.errored,
   }
   highlightBest()
-  renderChart()
+  // Chart.js create + animate competes with the main thread, so drawing it
+  // between libraries would pollute the next library's timing. Skip it during a
+  // Run all (rendered once at the end); a single-library button still draws.
+  if (renderAfter) { renderChart() }
   status.textContent = `${DISPLAY[key].name} done. Lower is better.`
 }
 
@@ -381,9 +384,10 @@ async function runAll() {
   stopRequested = false
   reset('Running all libraries ...') // start from a clean table + chart
   for (const key of ORDER) {
-    await runLib(key)
+    await runLib(key, false) // no chart mid-run - it would skew later timings
     if (stopRequested) { break }
   }
+  renderChart() // draw once, after every measurement is done
   setRunning(false)
   document.getElementById('status').textContent = stopRequested ? 'Stopped.' : 'All done. Lower is better.'
 }
@@ -640,10 +644,12 @@ async function ixBuildAndMeasure() {
       ixSetRow(mode, key, m)
       if (m && m.open != null) { mode.results[key] = m }
       ixHighlightBest(mode)
-      renderIxChart(mode)
       await raf()
     }
   }
+  // Draw both charts only after every measurement is done - a chart animating
+  // mid-run would skew the timings that follow.
+  for (const mode of IX_MODES) { renderIxChart(mode) }
   runBtn.disabled = false
   status.textContent = 'Done. Lower is better. Widgets are live - open them yourself.'
 }
