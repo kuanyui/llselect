@@ -1,10 +1,20 @@
 # Item rendering - brainstorming notes
 
-**Status: brainstorming paused here.** The conclusions below are
-*leanings*, not locked decisions. No API, naming, ctx shape, or implementation
-is chosen. Nothing is locked until it reaches `DESIGN.md` + code. This file is
-the record of how we got here, split into: what we lean toward, what we
-deliberately decided NOT to do, and what is still open.
+**Status: ARCHIVED - SUPERSEDED BRAINSTORM.** Every question this file left
+open has since been resolved and shipped; the normative record is
+`../DESIGN.md` ("Customization model", "Tags (triggerDisplay)"). Final
+outcomes of the "Still open" list below:
+
+- Middle-layer item renderer: shipped as
+  `createItemContentElFn: (item) => HTMLElement | null` (one free-form hook;
+  named slots rejected).
+- Multiple trigger layout: shipped as `triggerDisplay: 'count' | 'tags'`.
+- Escape hatch: the `createItemEl` subclass override stays; `decorateItemFn`
+  was rejected (see the roadmap archive, "rich-item escape-hatch shape").
+- `onChange` diff context: shipped as the previous-value second parameter.
+
+The text below is the decision-time record only - its "leanings", sketches,
+and open questions do not describe the current API.
 
 ## The question
 
