@@ -1,11 +1,11 @@
 # TODO
 
 Version-controlled source of truth for llselect's REMAINING work only.
-Completed phases, rulings, and design decisions are archived in
-`archive/roadmap-v0.0.1.md`; the pre-publish API review record in
-`archive/review-release-candidate.md`. (The Claude Code harness keeps its own
-in-session task list, but that is session-local and not committed - this file
-is the durable record.)
+Review findings (open and resolved) live in `FIXME.md`; completed phases,
+rulings, and design decisions are archived in `archive/roadmap-v0.0.1.md`; the
+pre-publish API review record in `archive/review-release-candidate.md`. (The
+Claude Code harness keeps its own in-session task list, but that is
+session-local and not committed - this file is the durable record.)
 
 Status: `[ ]` todo, `[~]` in progress.
 
@@ -33,7 +33,9 @@ technology before the first public release.
       stay stuck squeezed at the bottom after the filter cleared. On Firefox
       specifically, also verify the open instant: no window-scroll jolt on a
       page with `scroll-behavior: smooth` (the demo has it), and a
-      scrolled-to-chosen option stays scrolled into view in the list.
+      scrolled-to-chosen option stays scrolled into view in the list. Confirm
+      that opening while the trigger is scrolled out of view / clipped is a
+      clean no-op (popup never flashes, no listeners stranded).
 - [ ] **Consumer bundler smoke test** (production mode): import
       `llselect/themes/vanilla.css` in a webpack/vite app with tree shaking on
       and assert the CSS reaches the output (`sideEffects: ["**/*.css"]`
@@ -50,8 +52,8 @@ technology before the first public release.
   properly means bundling declarations into per-format `.d.ts` / `.d.cts` -
   revisit if anyone actually hits it.
 - Per-item click listeners stay (no event delegation) until a benchmark shows
-  a win; lazy render already bounds the cost. See `archive/roadmap-v0.0.1.md`
-  R15.
+  a win; lazy render already bounds the cost. See the event-delegation
+  deferral in `archive/roadmap-v0.0.1.md`.
 
 ## Notes
 
@@ -60,5 +62,6 @@ technology before the first public release.
 - Method naming conventions (suffixes, callback naming): see `naming-conventions.md`.
 - `render*` orchestrator vs `*ToDom` / `*El` primitive split: see `render-responsibilities.md`.
 - Code style rules: see `../CLAUDE.md`.
+- Review findings (open + resolved): see `FIXME.md`.
 - Completed roadmap + rulings: see `archive/roadmap-v0.0.1.md`; pre-publish
   API review: see `archive/review-release-candidate.md`.
