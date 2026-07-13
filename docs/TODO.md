@@ -6,6 +6,26 @@ not committed - this file is the durable record.)
 
 Status: `[ ]` todo, `[x]` done, `[~]` in progress.
 
+## Release readiness - manual verification (open)
+
+jsdom cannot exercise these; they need a real browser and real assistive
+technology before the first public release.
+
+- [ ] **Accessible-name pass with a screen reader** (NVDA + Firefox, VoiceOver
+      + Safari if available). With `ariaLabelledBy` (and once with `ariaLabel`):
+      closed trigger announces field name + current value in both modes;
+      searchable open announces the field name on the search input; listbox is
+      named; `LLSelectMultiple` announces multi-selectable state and per-option
+      selected state. Contract: `docs/A11Y.md` "Accessible name".
+- [ ] **Real-browser Tab / Shift+Tab pass** (jsdom has no native Tab
+      navigation). searchable open: Tab and Shift+Tab leave the widget and
+      close the popup (trigger is out of the tab order while open); closed:
+      one tab stop only. Contract: `docs/A11Y.md` "Focus".
+- [ ] **Consumer bundler smoke test** (production mode): import
+      `llselect/themes/vanilla.css` in a webpack/vite app with tree shaking on
+      and assert the CSS reaches the output (`sideEffects: ["**/*.css"]`
+      guards this; verify once against a real bundler).
+
 ## Phases
 
 - [x] **Phase 0** - project scaffolding (rollup, tsc, node:test + jsdom, demo)

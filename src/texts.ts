@@ -21,8 +21,10 @@ export interface LLSelectTexts {
    */
   triggerPlaceholder: string
   /**
-   * Accessible name (`aria-label`) of the search input (it has no visible
-   * label, so screen readers rely on this).
+   * Fallback accessible name (`aria-label`) of the search input, used only
+   * when the app supplies neither `ariaLabel` nor `ariaLabelledBy` (the field
+   * name then replaces this generic operation label). The input has no
+   * visible label, so screen readers rely on one of these.
    */
   searchInputAriaLabel: string
   /**
