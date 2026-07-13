@@ -44,6 +44,7 @@ const SIZE_URLS = {
 }
 
 const stage = document.getElementById('stage')
+const ixStage = document.getElementById('ix-stage')
 
 // --- item content helpers (custom-renderer variant) -----------------------
 
@@ -151,6 +152,16 @@ const ADAPTERS = {
   },
 }
 
+// Select-one-option op per library (for the interaction test), in multiple
+// mode so it adds without closing. Best-effort per version; guarded at call.
+const PICK = {
+  llselect: (h, item) => h.inst.toggleItem(item),
+  choices: (h, item) => h.inst.setChoiceByValue(item),
+  select2: (h, item) => { const cur = h.$sel.val() || []; h.$sel.val(cur.concat(item)).trigger('change') },
+  'tom-select': (h, item) => h.inst.addItem(item, true),
+  'slim-select': (h, item) => h.inst.setSelected(h.inst.getSelected().concat(item)),
+}
+
 function available(key) {
   switch (key) {
     case 'native': return true
@@ -174,6 +185,7 @@ function countNodes() { return stage.querySelectorAll('*').length }
 
 let live = [] // { key, h } currently rendered, for teardown
 let results = {} // key -> latest metrics for the current scenario, for the chart
+let ixLive = {} // key -> handle of the one dedicated interaction widget
 
 function clearStage() {
   for (const { key, h } of live) { try { ADAPTERS[key].teardown(h) } catch (e) { /* ignore */ } }
@@ -395,6 +407,97 @@ function renderChart(metricKey) {
   }
 }
 
+// --- interaction latency --------------------------------------------------
+// One dedicated widget per library (multiple mode, so select does not close),
+// timing open -> select -> close over a few cycles. Each phase is guarded, so a
+// version drift on one op leaves the others intact.
+
+function measureInteraction(key, items) {
+  const a = ADAPTERS[key]
+  const pick = PICK[key]
+  const h = ixLive[key]
+  if (!a.open || !pick || !h) { return null }
+  const CYCLES = 6
+  const open = [], sel = [], close = []
+  for (let i = 0; i < CYCLES; i++) {
+    try { const t = performance.now(); a.open(h); reflow(ixStage); open.push(performance.now() - t) } catch (e) { console.warn(key, 'open', e) }
+    try { const t = performance.now(); pick(h, items[i]); reflow(ixStage); sel.push(performance.now() - t) } catch (e) { console.warn(key, 'pick', e) }
+    try { const t = performance.now(); a.close(h); reflow(ixStage); close.push(performance.now() - t) } catch (e) { console.warn(key, 'close', e) }
+  }
+  const med = arr => (arr.length > 1 ? median(arr.slice(1)) : (arr.length ? arr[0] : null)) // drop first as warm-up
+  return { open: med(open), select: med(sel), close: med(close) }
+}
+
+function ixRow(key) { return document.querySelector(`#ix-results tbody tr[data-lib="${key}"]`) }
+
+function ixInitTable() {
+  const tbody = document.querySelector('#ix-results tbody')
+  tbody.replaceChildren()
+  for (const key of ORDER) {
+    const tr = document.createElement('tr'); tr.dataset.lib = key
+    const nameTd = document.createElement('td')
+    const a = document.createElement('a'); a.href = DISPLAY[key].url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = DISPLAY[key].name
+    nameTd.appendChild(a); tr.appendChild(nameTd)
+    for (const col of ['open', 'select', 'close']) { const td = document.createElement('td'); td.dataset.col = col; tr.appendChild(td) }
+    tbody.appendChild(tr)
+  }
+}
+
+function ixSetRow(key, m) {
+  const cell = col => ixRow(key).querySelector(`td[data-col="${col}"]`)
+  if (m && m.na) { cell('open').textContent = m.na; cell('select').textContent = ''; cell('close').textContent = ''; return }
+  if (m && m.err) { cell('open').textContent = 'error'; cell('select').textContent = ''; cell('close').textContent = ''; return }
+  for (const col of ['open', 'select', 'close']) {
+    const v = m ? m[col] : null
+    cell(col).textContent = m == null ? 'n/a' : fmt(v)
+    if (v != null && !isNaN(v)) { cell(col).dataset.value = v } else { delete cell(col).dataset.value }
+  }
+}
+
+function ixHighlightBest() {
+  for (const col of ['open', 'select', 'close']) {
+    let best = Infinity, bestKey = null
+    for (const key of ORDER) {
+      const c = ixRow(key).querySelector(`td[data-col="${col}"]`); c.classList.remove('best')
+      const v = parseFloat(c.dataset.value); if (!isNaN(v) && v < best) { best = v; bestKey = key }
+    }
+    if (bestKey) { ixRow(bestKey).querySelector(`td[data-col="${col}"]`).classList.add('best') }
+  }
+}
+
+function ixClear() {
+  for (const key of Object.keys(ixLive)) { try { ADAPTERS[key].teardown(ixLive[key]) } catch (e) { /* ignore */ } }
+  ixLive = {}
+  ixStage.replaceChildren()
+}
+
+async function ixBuildAndMeasure() {
+  const runBtn = document.getElementById('ix-run')
+  const status = document.getElementById('ix-status')
+  runBtn.disabled = true
+  ixClear(); ixInitTable()
+  const n = Number(document.getElementById('ix-size').value)
+  const items = buildItems(n)
+  for (const key of ORDER) {
+    if (!available(key)) { ixSetRow(key, { na: 'not loaded' }); continue }
+    status.textContent = `${DISPLAY[key].name}: building 1 widget x ${n} ...`
+    await raf()
+    const cell = document.createElement('div'); cell.className = 'ix-cell'
+    const lab = document.createElement('div'); lab.className = 'ix-lab'; lab.textContent = DISPLAY[key].name
+    const mount = document.createElement('div'); mount.className = 'ix-mount'
+    cell.append(lab, mount); ixStage.appendChild(cell)
+    try { ixLive[key] = ADAPTERS[key].setup(mount, items, { multi: true, custom: false }) } catch (e) { console.warn(key, e); ixSetRow(key, { err: true }); continue }
+    await raf()
+    status.textContent = `${DISPLAY[key].name}: measuring open / select / close ...`
+    await raf()
+    ixSetRow(key, ADAPTERS[key].noFilter ? null : measureInteraction(key, items))
+    ixHighlightBest()
+    await raf()
+  }
+  runBtn.disabled = false
+  status.textContent = 'Done. Lower is better. The widgets are live - open them yourself too.'
+}
+
 // --- wire up --------------------------------------------------------------
 
 function reset(msg) {
@@ -406,6 +509,7 @@ function reset(msg) {
 }
 
 initTable()
+ixInitTable()
 document.getElementById('run-all').addEventListener('click', () => { runAll() })
 document.getElementById('clear').addEventListener('click', () => { reset('Cleared.') })
 // A scenario change invalidates the accumulated results (they are per-scenario).
@@ -414,6 +518,8 @@ document.getElementById('chart-metric').addEventListener('change', (e) => { rend
 document.querySelectorAll('.bench-libbuttons button').forEach(btn => {
   btn.addEventListener('click', () => { runLib(btn.dataset.lib) })
 })
+document.getElementById('ix-run').addEventListener('click', () => { ixBuildAndMeasure() })
+document.getElementById('ix-size').addEventListener('change', () => { ixClear(); ixInitTable(); document.getElementById('ix-status').textContent = 'Size changed - press Build + measure.' })
 document.getElementById('versions').textContent =
   ORDER.map(k => `${DISPLAY[k].name} ${DISPLAY[k].version}`).join('  |  ') + '  |  jQuery 3.7.1 (for Select2)'
 measureSizes()

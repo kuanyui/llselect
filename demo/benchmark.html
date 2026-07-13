@@ -105,6 +105,31 @@
       query, re-render matches; median of a few. All widgets are searchable.</li>
   </ul>
 
+  <h2>Interaction latency <small>(each library its own widget - open, select, close)</small></h2>
+  <p>
+    Separate from the mass test: one dedicated multiple-select per library, so
+    <strong>opening a big list is measured in isolation</strong> - this is where
+    llselect builds its option DOM (it renders nothing until you open). The
+    widgets stay live below; click them yourself too. Native <code>&lt;select&gt;</code>
+    is shown for reference but its dropdown is browser-driven, so it is not timed.
+  </p>
+  <div class="bench-controls">
+    <label>Items
+      <select id="ix-size">
+        <option value="100">100</option>
+        <option value="1000" selected>1,000</option>
+        <option value="10000">10,000</option>
+      </select>
+    </label>
+    <button id="ix-run">Build + measure</button>
+    <span id="ix-status">Ready.</span>
+  </div>
+  <table id="ix-results">
+    <thead><tr><th>Library</th><th>Open (ms)</th><th>Select (ms)</th><th>Close (ms)</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <div id="ix-stage" class="ix-stage"></div>
+
   <h2>Bundle size</h2>
   <p>Minified transfer bytes, <em>uncompressed</em> - the same method for every
     script, fetched live from the CDN (gzip shrinks them all by roughly 3x).

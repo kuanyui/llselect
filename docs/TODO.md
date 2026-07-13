@@ -37,12 +37,14 @@ technology before the first public release.
       that opening while the trigger is scrolled out of view / clipped is a
       clean no-op (popup never flashes, no listeners stranded).
 - [ ] **Benchmark page competitor adapters** (`demo/benchmark.html`): the
-      llselect adapter path is jsdom-smoke-tested, but the Choices / Select2 /
-      Tom Select / Slim Select adapters (open / filter / select selectors and
-      teardown) only run against the real CDN builds in a browser. Open the page
-      in Firefox and Chromium, run each size, and fix any cell showing `-`
-      (an API drift on a pinned version). Sanity-check that the numbers are fair
-      before citing them anywhere.
+      llselect adapter paths (mass build + open / select / close) are
+      jsdom-smoke-tested, but the Choices / Select2 / Tom Select / Slim Select
+      adapters only run against the real CDN builds in a browser - this covers
+      both the mass-instantiation section (setup / filter / teardown) and the
+      interaction-latency section (open / pick / close per version). Open the
+      page in Firefox and Chromium, run every scenario and both tables, and fix
+      any cell showing `-` / error (an API drift on a pinned version).
+      Sanity-check that the numbers are fair before citing them anywhere.
 - [ ] **Consumer bundler smoke test** (production mode): import
       `llselect/themes/vanilla.css` in a webpack/vite app with tree shaking on
       and assert the CSS reaches the output (`sideEffects: ["**/*.css"]`
