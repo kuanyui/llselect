@@ -283,6 +283,9 @@ function sampleFilter(key, scen) {
   if (a.noFilter || !live.length) { return null }
   const h = live[0].h
   const q = scen.itemsPer > 100 ? '7777' : '5'
+  // The sampled widget must be on-screen or llselect refuses to open it (same
+  // off-screen no-op that would zero out the interaction cycle).
+  stage.firstElementChild?.scrollIntoView({ block: 'center' })
   return safe(() => {
     a.open(h)
     const samples = []
@@ -639,6 +642,10 @@ async function ixBuildAndMeasure() {
       try { mode.live[key] = ADAPTERS[key].setup(mount, items, { multi: mode.multi, custom, preselect: false }) } catch (e) { console.warn(key, e); ixSetRow(mode, key, { err: true }); continue }
       await raf()
       status.textContent = `${mode.label} - ${DISPLAY[key].name}: measuring ...`
+      // The widget must be on-screen: llselect refuses to open an off-screen
+      // trigger (and its popup would position off-screen), which would make
+      // open / filter / close all measure ~0 on a widget that never opened.
+      cell.scrollIntoView({ block: 'center' })
       await raf()
       const m = ADAPTERS[key].noFilter ? null : measureInteraction(mode, key, items, stageEl)
       ixSetRow(mode, key, m)
