@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "description": "Low-level select: a minimal, flexible, framework-agnostic replacement for the native HTML select element.",
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
