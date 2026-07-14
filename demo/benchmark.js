@@ -187,12 +187,13 @@ const ADAPTERS = {
     setup(mount, items, opts) {
       const k = preCount(items, opts)
       const sel = makeSelect(mount, opts.multi)
+      // Slim Select v2's multi chip is textContent = option.text with no
+      // per-chip HTML hook, so the custom icon reaches the dropdown options
+      // (via html) but NOT the chips - a real limitation. A CSS ::before could
+      // fake the look, but that is free compositor work and would misrepresent
+      // Slim Select as doing per-chip custom rendering it does not, so the chips
+      // are left plain (which is also what its measured cost reflects).
       const data = items.map((v, i) => (opts.custom ? { text: v, value: v, html: iconHtml(v), selected: i < k } : { text: v, value: v, selected: i < k }))
-      // Slim Select v2's multi chip is textContent = option.text (no per-chip
-      // HTML hook), so the icon cannot go through the data. But the chip carries
-      // the .ss-value-text class, so a CSS ::before injects it - and being a CSS
-      // rule it re-applies to chips Slim Select re-renders on every change.
-      if (opts.custom && opts.multi) { mount.classList.add('bench-slim-custom') }
       // closeOnSelect: false so a multi choose keeps the popup open for
       // continuous selection (Slim Select otherwise closes it, which is unfair).
       return { inst: new window.SlimSelect({ select: sel, settings: { showSearch: true, closeOnSelect: !opts.multi }, data }) }

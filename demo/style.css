@@ -442,7 +442,3 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 #bench-overlay-stop { display: block; margin: 0.7rem auto 0; font: inherit; padding: 0.4rem 1.4rem; cursor: pointer; border: 1px solid #fff; background: #c0392b; color: #fff; border-radius: 4px; font-weight: 600; }
 #bench-overlay-stop:hover { background: #a83226; }
 #bench-overlay-stop:disabled { opacity: 0.6; cursor: default; }
-
-/* Slim Select multi chips have no per-chip HTML hook (textContent only), so the
-   custom-renderer MDI icon is injected with a CSS ::before on the chip text. */
-.bench-slim-custom .ss-value-text::before { font-family: "Material Design Icons"; content: "\F04FC"; margin-right: 0.25rem; }
