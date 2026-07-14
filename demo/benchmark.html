@@ -159,6 +159,19 @@
   <div id="stage" class="bench-stage"></div>
 
   <h2 id="interaction">Interaction latency</h2>
+  <blockquote class="bench-fairness-note">
+    <strong>These numbers are best-effort, not a guaranteed-fair ranking.</strong>
+    The libraries differ too much under the hood to time identically: some debounce
+    the filter input with no setting to turn it off; some defer a chip's removal on
+    an animation timer that cannot be disabled; some do their work in a microtask
+    and others in a macrotask (<code>setTimeout</code>); some paint on the next
+    <code>requestAnimationFrame</code> rather than synchronously; and some phases a
+    library's API simply does not offer (shown as <code>n/a</code>). The harness
+    normalises what it can (see <a href="#fair">Fairness</a>) and times to the
+    painted frame / settled DOM, but treat small gaps as noise. That is why the
+    measured widgets are left <strong>live</strong> below - open, filter and select
+    them yourself to feel the real latency, rather than trusting a single number.
+  </blockquote>
   <p>
     The other axis: one dedicated widget per library. Each operation is
     timed <strong>separately</strong> (never mixed), so one phase's cost never
@@ -168,18 +181,24 @@
     <code>&lt;select&gt;</code> is shown for reference but its dropdown is
     browser-driven, so it is not timed.
   </p>
-  <div class="bench-controls">
-    <label>Items
-      <select id="ix-size">
-        <option value="100">100</option>
-        <option value="1000" selected>1,000</option>
-        <option value="10000">10,000</option>
-      </select>
-    </label>
-    <label><input type="checkbox" id="ix-custom"> custom renderer (MDI icon per item)</label>
-    <label><input type="checkbox" id="ix-closebtn"> test close button on multiple tags (Choices / Tom Select need it opted in; adds the "Remove tag (x)" column)</label>
-    <button id="ix-run">Build + measure</button>
-    <span id="ix-status">Ready.</span>
+  <div class="bench-toolbar">
+    <div class="bench-row">
+      <label>Items
+        <select id="ix-size">
+          <option value="100">100</option>
+          <option value="1000" selected>1,000</option>
+          <option value="10000">10,000</option>
+        </select>
+      </label>
+    </div>
+    <div class="bench-row">
+      <label><input type="checkbox" id="ix-custom"> custom renderer (MDI icon per item)</label>
+      <label><input type="checkbox" id="ix-closebtn"> test close button on multiple tags (Choices / Tom Select need it opted in; adds the "Remove tag (x)" column)</label>
+    </div>
+    <div class="bench-row">
+      <button id="ix-run">Build + measure</button>
+      <span id="ix-status">Ready.</span>
+    </div>
   </div>
   <p class="hint">One "Build + measure" fills both tables. Stacked chart: the
     whole bar is the sum of the phases (shorter is better), each segment a phase;

@@ -370,15 +370,14 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .hub-card p { margin: 0; font-size: 0.9rem; color: #444; }
 
 /* --- benchmark (benchmark.html) ----------------------------------------- */
-/* Controls: interaction uses one .bench-controls row; the mass section stacks
-   three .bench-row lines (scenario / checkboxes / buttons) in a .bench-toolbar. */
-.bench-controls, .bench-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-.bench-controls { margin: 1.25rem 0; }
+/* Controls: both sections stack .bench-row lines in a .bench-toolbar (interaction:
+   items / checkboxes / button; mass: scenario / checkboxes / buttons). */
+.bench-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .bench-toolbar { display: flex; flex-direction: column; gap: 0.6rem; margin: 1.25rem 0; }
-.bench-controls select, .bench-row select { padding: 0.25rem; }
-.bench-controls button, .bench-row button { font: inherit; padding: 0.35rem 1rem; cursor: pointer; border: 1px solid #2456a6; background: #2456a6; color: #fff; border-radius: 4px; }
-.bench-controls button:hover, .bench-row button:hover { background: #1d4788; }
-.bench-controls button:disabled, .bench-row button:disabled { opacity: 0.45; cursor: not-allowed; }
+.bench-row select { padding: 0.25rem; }
+.bench-row button { font: inherit; padding: 0.35rem 1rem; cursor: pointer; border: 1px solid #2456a6; background: #2456a6; color: #fff; border-radius: 4px; }
+.bench-row button:hover { background: #1d4788; }
+.bench-row button:disabled { opacity: 0.45; cursor: not-allowed; }
 /* Collapsed column reference under a results table. */
 .bench-cols { margin: 0.25rem 0 1rem; font-size: 0.9rem; }
 .bench-cols > summary { cursor: pointer; user-select: none; color: #2456a6; }
@@ -392,6 +391,9 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .bench-legend, .bench-caveats, .bench-fair { font-size: 0.9rem; color: #333; }
 .bench-legend li, .bench-caveats li, .bench-fair li { margin: 0.35rem 0; }
 .bench-warn { font-size: 0.9rem; color: #8a5a00; background: #fff6e5; border-left: 4px solid #e0a100; padding: 0.5rem 0.85rem; border-radius: 4px; }
+/* Fairness caveat at the top of the interaction section - light red. */
+.bench-fairness-note { font-size: 0.9rem; color: #7a2230; background: #fdecec; border-left: 4px solid #d0454c; padding: 0.6rem 0.95rem; border-radius: 4px; margin: 1rem 0; }
+.bench-fairness-note code { background: #f6d8db; }
 .bench-libbuttons { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin: 0 0 1rem; font-size: 0.9rem; }
 .bench-libbuttons button { font: inherit; font-size: 0.85rem; padding: 0.25rem 0.7rem; cursor: pointer; border: 1px solid #bbb; background: #fff; border-radius: 4px; }
 .bench-libbuttons button:hover { border-color: #2456a6; color: #2456a6; }
