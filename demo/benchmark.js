@@ -126,7 +126,7 @@ const ADAPTERS = {
     setup(mount, items, opts) {
       const k = preCount(items, opts)
       const sel = makeSelect(mount, opts.multi)
-      const inst = new window.Choices(sel, { searchEnabled: true, allowHTML: !!opts.custom, silent: true, removeItemButton: !!opts.multi })
+      const inst = new window.Choices(sel, { searchEnabled: true, allowHTML: !!opts.custom, silent: true, removeItemButton: !!(opts.multi && opts.closeBtn) })
       inst.setChoices(items.map((v, i) => ({ value: v, label: opts.custom ? iconHtml(v) : v, selected: i < k })), 'value', 'label', true)
       return { inst, mount }
     },
@@ -171,7 +171,7 @@ const ADAPTERS = {
         maxOptions: null,
         closeAfterSelect: !opts.multi,
       }
-      if (opts.multi) { cfg.plugins = ['remove_button'] } // an x on each tag
+      if (opts.multi && opts.closeBtn) { cfg.plugins = ['remove_button'] } // an x on each tag (opt-in)
       if (k > 0) { cfg.items = items.slice(0, k) }
       if (opts.custom) {
         const tmpl = (d, esc) => '<div>' + iconHtml(esc(d.text)) + '</div>'
@@ -197,7 +197,11 @@ const ADAPTERS = {
       const data = items.map((v, i) => (opts.custom ? { text: v, value: v, html: iconHtml(v), selected: i < k } : { text: v, value: v, selected: i < k }))
       // closeOnSelect: false so a multi choose keeps the popup open for
       // continuous selection (Slim Select otherwise closes it, which is unfair).
-      return { inst: new window.SlimSelect({ select: sel, settings: { showSearch: true, closeOnSelect: !opts.multi }, data }), mount }
+      // allowDeselect: true lets a click on an already-chosen option in the OPEN
+      // list toggle it off (the Unchoose-in-popup phase). Without it Slim Select
+      // ignores such a click (verified in slimselect.umd.js: the option click
+      // handler early-returns when `option.selected && !allowDeselect`). Multi only.
+      return { inst: new window.SlimSelect({ select: sel, settings: { showSearch: true, closeOnSelect: !opts.multi, allowDeselect: !!opts.multi }, data }), mount }
     },
     open(h) { h.inst.open() },
     filter(h, q) { const i = document.querySelector('.ss-content .ss-search input'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) },
@@ -236,6 +240,42 @@ const REMOVE = {
   'tom-select': (h) => h.mount.querySelector('.ts-control .remove'),
   'slim-select': (h) => h.mount.querySelector('.ss-value-delete'),
 }
+
+// llselect's CSS classes are `${prefix}-...`; the default prefix is `llselect`.
+const LL = 'llselect'
+
+// The already-chosen option ELEMENT inside the OPEN popup list, for the
+// "Unchoose (in popup)" phase (multi only). The harness CLICKS it to toggle the
+// item off, so this is the "click a selected row in the list to deselect it"
+// path, not an API call. Only libraries whose open list both SHOWS chosen
+// options and deselects them on click appear here (verified against the pinned
+// builds under test):
+//   - llselect: chosen list items carry aria-selected="true" and toggle off.
+//   - Select2: renders chosen options with --selected and, in multiple mode,
+//     fires unselect on a click (its dropdown is portaled to document.body).
+//   - Slim Select: chosen ss-option elements carry aria-selected="true"; the
+//     click toggles off only with allowDeselect:true (set in the adapter).
+// Choices and Tom Select are absent on purpose: a click on an already-selected
+// option is a no-op there (Choices' choice handler acts only when NOT selected;
+// Tom Select's addItem is idempotent), so they offer no in-popup unchoose - only
+// the tag x (the Remove-tag phase). Their Unchoose cell reads n/a.
+const UNCHOOSE = {
+  llselect: (h) => h.mount.querySelector(`.${LL}-item[aria-selected="true"]:not([data-chosen-state])`),
+  select2: () => document.querySelector('.select2-container--open .select2-results__option--selected'),
+  'slim-select': (h) => h.mount.querySelector('.ss-option[aria-selected="true"]'),
+}
+
+// Current chosen-count per library, used to VERIFY an in-popup unchoose click
+// really deselected (the count dropped) instead of no-opping; if it did not, the
+// phase is reported n/a rather than as a misleading number.
+const COUNT = {
+  llselect: (h) => h.inst.getChosenItems().length,
+  choices: (h) => (h.inst.getValue(true) || []).length,
+  select2: (h) => (h.$sel.val() || []).length,
+  'tom-select': (h) => h.inst.items.length,
+  'slim-select': (h) => h.inst.getSelected().length,
+}
+function chosenCount(key, h) { try { return COUNT[key](h) } catch (e) { return NaN } }
 
 function available(key) {
   switch (key) {
@@ -279,7 +319,10 @@ async function buildAll(key, scen, runOpts) {
   const a = ADAPTERS[key]
   const status = document.getElementById('status')
   const items = buildItems(scen.itemsPer)
-  const opts = { multi: scen.multi, custom: runOpts.custom, preselect: runOpts.preselect }
+  // closeBtn: true keeps the mass section's existing tag rendering (Choices /
+  // Tom Select keep their opt-in remove button); only the interaction section
+  // exposes this as a checkbox.
+  const opts = { multi: scen.multi, custom: runOpts.custom, preselect: runOpts.preselect, closeBtn: true }
   const CHUNK = scen.widgets >= 1000 ? 25 : 1
   let built = 0
   let compute = 0
@@ -592,13 +635,28 @@ function renderChart() {
 // cycle, run for both single- and multiple-select (two tables + two charts).
 // Each phase is guarded, so a version drift on one op leaves the others intact.
 
-const IX_PHASES = [
-  { key: 'open', label: 'Open popup', color: '#2456a6' },
-  { key: 'filter', label: 'Filter candidates', color: '#7a3ea6' },
-  { key: 'choose', label: 'Choose candidate', color: '#1a7f37' },
-  { key: 'remove', label: 'Remove tag', color: '#b5651d' },
-  { key: 'close', label: 'Close popup', color: '#c9821a' },
-]
+// Phase descriptors. The columns differ per mode: single has no tags and no
+// in-popup unchoose, so it is open / filter / choose / close. Multi adds
+// Unchoose (in popup), plus a Remove tag (x) column only when the close-button
+// checkbox is on (see ixPhases).
+const PH = {
+  open: { key: 'open', label: 'Open popup', color: '#2456a6' },
+  filter: { key: 'filter', label: 'Filter candidates', color: '#7a3ea6' },
+  choose: { key: 'choose', label: 'Choose candidate', color: '#1a7f37' },
+  unchoose: { key: 'unchoose', label: 'Unchoose (in popup)', color: '#3a9dbf' },
+  removeTag: { key: 'removeTag', label: 'Remove tag (x)', color: '#b5651d' },
+  close: { key: 'close', label: 'Close popup', color: '#c9821a' },
+}
+const NA = 'n/a' // a phase a library does not support - rendered literally, no bar
+function ixCloseBtnOn() { return document.getElementById('ix-closebtn').checked }
+// Table, chart, and measurement all read the columns through here so they always
+// agree. The close-button checkbox both forces the opt-in tag x on the libraries
+// that need it AND adds the Remove-tag column.
+function ixPhases(mode) {
+  if (!mode.multi) { return [PH.open, PH.filter, PH.choose, PH.close] }
+  const mid = ixCloseBtnOn() ? [PH.unchoose, PH.removeTag] : [PH.unchoose]
+  return [PH.open, PH.filter, PH.choose, ...mid, PH.close]
+}
 
 // Each mode owns its table / chart / stage element ids, its select-one op, and
 // its own live handles + results.
@@ -646,7 +704,7 @@ const IX_REPS = 5
 
 // Each phase is measured on its own - never mixed - so one phase's cost never
 // leaks into another's.
-async function measureInteraction(mode, key, items, stageEl) {
+async function measureInteraction(mode, key, items, stageEl, closeBtn) {
   const a = ADAPTERS[key]
   const pick = mode.pick[key]
   const h = mode.live[key]
@@ -701,28 +759,73 @@ async function measureInteraction(mode, key, items, stageEl) {
     }
   }
 
-  // REMOVE TAG (multi only): choose a fresh batch (untimed) so tags exist, close
-  // the popup, then CLICK each tag's remove (x) button - timed - which drops the
-  // item and re-renders. Measures the "click the x to kill a tag" path.
-  const removeS = []
-  if (mode.multi && REMOVE[key]) {
-    safeOp(() => a.open(h))
-    for (let i = 20; i < 30 && i < items.length; i++) { safeOp(() => pick(h, items[i])) }
-    safeOp(() => a.close(h)); await raf()
-    for (let i = 0; i < 10; i++) {
-      const btn = REMOVE[key](h)
-      if (!btn) { break }
-      const dt = await timeToSettle(() => btn.click(), stageEl, key)
-      if (i > 0 && dt != null) { removeS.push(dt) } // drop first as warm-up
+  // UNCHOOSE IN POPUP (multi only): choose a fresh batch (untimed), re-open so
+  // the list shows them as selected, then CLICK an already-chosen option IN the
+  // list - timed - which toggles it off. Only the libraries in UNCHOOSE reach
+  // here; the rest read n/a. Each click is verified to actually drop the chosen
+  // count (a click that no-ops must not be timed as if it deselected).
+  let unchoose = null
+  if (mode.multi) {
+    if (!UNCHOOSE[key]) {
+      unchoose = NA
+    } else {
+      safeOp(() => a.open(h)); safeOp(() => a.filter(h, '')); await raf()
+      for (let i = 40; i < 50 && i < items.length; i++) { safeOp(() => pick(h, items[i])) }
+      // Re-open so an already-open list re-tags the freshly (API-)chosen options
+      // as selected (Select2 does not re-mark an open list on a programmatic set).
+      safeOp(() => a.close(h)); await raf(); safeOp(() => a.open(h)); await raf()
+      const unchooseS = []
+      for (let i = 0; i < 10; i++) {
+        safeOp(() => a.open(h)); await raf() // re-open if a prior unselect closed the popup
+        const el = UNCHOOSE[key](h)
+        if (!el) { break }
+        const before = chosenCount(key, h)
+        const dt = await timeToSettle(() => el.click(), stageEl, key)
+        if (!(chosenCount(key, h) < before)) { unchoose = NA; break } // click did not deselect
+        if (i > 0 && dt != null) { unchooseS.push(dt) } // drop first as warm-up
+      }
+      safeOp(() => a.close(h)); await raf()
+      if (unchoose !== NA) { unchoose = med(unchooseS) }
     }
   }
 
-  return { open: med(openS), filter: med(filterS), choose: med(chooseS), remove: med(removeS), close: med(closeS) }
+  // REMOVE TAG (multi + close-button checkbox): choose a fresh batch (untimed) so
+  // tags exist, close the popup, then CLICK each tag's remove (x) button - timed -
+  // dropping the item and re-rendering. The "press x to drop a tag" path. Gated
+  // on the checkbox because it forces the opt-in x onto Choices / Tom Select.
+  let removeTag = null
+  if (mode.multi && closeBtn) {
+    if (!REMOVE[key]) {
+      removeTag = NA
+    } else {
+      const removeS = []
+      safeOp(() => a.open(h))
+      for (let i = 20; i < 30 && i < items.length; i++) { safeOp(() => pick(h, items[i])) }
+      safeOp(() => a.close(h)); await raf()
+      for (let i = 0; i < 10; i++) {
+        const btn = REMOVE[key](h)
+        if (!btn) { break }
+        const dt = await timeToSettle(() => btn.click(), stageEl, key)
+        if (i > 0 && dt != null) { removeS.push(dt) } // drop first as warm-up
+      }
+      removeTag = med(removeS)
+    }
+  }
+
+  return { open: med(openS), filter: med(filterS), choose: med(chooseS), unchoose, removeTag, close: med(closeS) }
 }
 
 function ixRow(mode, key) { return document.querySelector(`#ix-${mode.key}-results tbody tr[data-lib="${key}"]`) }
 
 function ixInitTable(mode) {
+  const phases = ixPhases(mode)
+  // The header is rebuilt here (not static in the HTML) so single and multi -
+  // and multi with / without the Remove-tag column - stay in step with ixPhases.
+  const thead = document.querySelector(`#ix-${mode.key}-results thead`)
+  const htr = document.createElement('tr')
+  const libTh = document.createElement('th'); libTh.textContent = 'Library'; htr.appendChild(libTh)
+  for (const p of phases) { const th = document.createElement('th'); th.textContent = `${p.label} (ms)`; htr.appendChild(th) }
+  thead.replaceChildren(htr)
   const tbody = document.querySelector(`#ix-${mode.key}-results tbody`)
   tbody.replaceChildren()
   for (const key of ORDER) {
@@ -730,13 +833,13 @@ function ixInitTable(mode) {
     const nameTd = document.createElement('td')
     const a = document.createElement('a'); a.href = DISPLAY[key].url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = DISPLAY[key].name
     nameTd.appendChild(a); tr.appendChild(nameTd)
-    for (const col of IX_PHASES.map(p => p.key)) { const td = document.createElement('td'); td.dataset.col = col; tr.appendChild(td) }
+    for (const p of phases) { const td = document.createElement('td'); td.dataset.col = p.key; tr.appendChild(td) }
     tbody.appendChild(tr)
   }
 }
 
 function ixSetRow(mode, key, m) {
-  const cols = IX_PHASES.map(p => p.key)
+  const cols = ixPhases(mode).map(p => p.key)
   const cell = col => ixRow(mode, key).querySelector(`td[data-col="${col}"]`)
   if (m && (m.na || m.err)) {
     cols.forEach((c, idx) => { cell(c).textContent = idx === 0 ? (m.na || 'error') : ''; delete cell(c).dataset.value })
@@ -744,13 +847,14 @@ function ixSetRow(mode, key, m) {
   }
   for (const col of cols) {
     const v = m ? m[col] : null
+    if (typeof v === 'string') { cell(col).textContent = v; delete cell(col).dataset.value; continue } // e.g. n/a
     cell(col).textContent = m == null ? 'n/a' : fmt(v)
     if (v != null && !isNaN(v)) { cell(col).dataset.value = v } else { delete cell(col).dataset.value }
   }
 }
 
 function ixHighlightBest(mode) {
-  for (const col of IX_PHASES.map(p => p.key)) {
+  for (const col of ixPhases(mode).map(p => p.key)) {
     let best = Infinity, bestKey = null
     for (const key of ORDER) {
       const c = ixRow(mode, key).querySelector(`td[data-col="${col}"]`); c.classList.remove('best')
@@ -784,7 +888,11 @@ function renderIxChart(mode) {
   }
   empty.style.display = 'none'
   const labels = libs.map(k => DISPLAY[k].name)
-  const datasets = IX_PHASES.map(p => ({ label: p.label, data: libs.map(k => mode.results[k][p.key]), backgroundColor: p.color, borderWidth: 0, stack: 'ix' }))
+  const datasets = ixPhases(mode).map(p => ({
+    label: p.label,
+    data: libs.map(k => { const v = mode.results[k][p.key]; return typeof v === 'number' ? v : null }), // n/a -> gap
+    backgroundColor: p.color, borderWidth: 0, stack: 'ix',
+  }))
   const cfg = {
     type: 'bar',
     data: { labels, datasets },
@@ -810,12 +918,14 @@ async function ixBuildAndMeasure() {
   runBtn.disabled = true
   document.getElementById('ix-size').disabled = true
   document.getElementById('ix-custom').disabled = true
+  document.getElementById('ix-closebtn').disabled = true
   stopRequested = false
   scrollLock(true)
   ixClearAll()
   for (const mode of IX_MODES) { ixInitTable(mode) }
   const n = Number(document.getElementById('ix-size').value)
   const custom = document.getElementById('ix-custom').checked
+  const closeBtn = ixCloseBtnOn()
   const items = ixBuildItems(n)
   for (const mode of IX_MODES) {
     const stageEl = ixStageEl(mode)
@@ -828,7 +938,7 @@ async function ixBuildAndMeasure() {
       const lab = document.createElement('div'); lab.className = 'ix-lab'; lab.textContent = DISPLAY[key].name
       const mount = document.createElement('div'); mount.className = 'ix-mount'
       cell.append(lab, mount); stageEl.appendChild(cell)
-      try { mode.live[key] = ADAPTERS[key].setup(mount, items, { multi: mode.multi, custom, preselect: false }) } catch (e) { console.warn(key, e); ixSetRow(mode, key, { err: true }); continue }
+      try { mode.live[key] = ADAPTERS[key].setup(mount, items, { multi: mode.multi, custom, preselect: false, closeBtn }) } catch (e) { console.warn(key, e); ixSetRow(mode, key, { err: true }); continue }
       await raf()
       status.textContent = `${mode.label} - ${DISPLAY[key].name}: measuring ...`
       // The widget must be on-screen: llselect refuses to open an off-screen
@@ -836,7 +946,7 @@ async function ixBuildAndMeasure() {
       // open / filter / close all measure ~0 on a widget that never opened.
       cell.scrollIntoView({ block: 'center', behavior: 'instant' })
       await raf()
-      const m = ADAPTERS[key].noFilter ? null : await measureInteraction(mode, key, items, stageEl)
+      const m = ADAPTERS[key].noFilter ? null : await measureInteraction(mode, key, items, stageEl, closeBtn)
       ixSetRow(mode, key, m)
       if (m && m.open != null) { mode.results[key] = m }
       ixHighlightBest(mode)
@@ -851,6 +961,7 @@ async function ixBuildAndMeasure() {
   runBtn.disabled = false
   document.getElementById('ix-size').disabled = false
   document.getElementById('ix-custom').disabled = false
+  document.getElementById('ix-closebtn').disabled = false
   status.textContent = stopRequested ? 'Stopped.' : 'Done. Lower is better. Widgets are live - open them yourself.'
 }
 
@@ -879,6 +990,9 @@ document.querySelectorAll('.bench-libbuttons button').forEach(btn => {
 })
 document.getElementById('ix-run').addEventListener('click', () => { ixBuildAndMeasure() })
 document.getElementById('ix-size').addEventListener('change', () => { ixClearAll(); IX_MODES.forEach(ixInitTable); document.getElementById('ix-status').textContent = 'Size changed - press Build + measure.' })
+// Toggling the close-button option changes the multi table's columns (adds /
+// drops Remove tag), so rebuild the tables and drop the stale results.
+document.getElementById('ix-closebtn').addEventListener('change', () => { ixClearAll(); IX_MODES.forEach(ixInitTable); document.getElementById('ix-status').textContent = 'Close-button option changed - press Build + measure.' })
 document.getElementById('versions').textContent =
   ORDER.map(k => `${DISPLAY[k].name} ${DISPLAY[k].version}`).join('  |  ') + '  |  jQuery 3.7.1 (for Select2)'
 measureSizes()

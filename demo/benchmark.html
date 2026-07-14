@@ -157,6 +157,7 @@
       </select>
     </label>
     <label><input type="checkbox" id="ix-custom"> custom renderer (MDI icon per item)</label>
+    <label><input type="checkbox" id="ix-closebtn"> test close button on multiple tags (Choices / Tom Select need it opted in; adds the "Remove tag (x)" column)</label>
     <button id="ix-run">Build + measure</button>
     <span id="ix-status">Ready.</span>
   </div>
@@ -180,11 +181,26 @@
         choose the first 10 items, the popup staying open the whole time (closing
         it would skip the open-list re-render and be unfair). Single: choose one
         item.</li>
-      <li><strong>Remove tag</strong> - multiple only. With tags present, CLICK
-        each tag's remove (x) button and time the removal + re-render. It is a
-        real button click, not an API call, so it measures the "press x to drop a
-        tag" path. Choices and Tom Select need their remove-button option turned
-        on (the others show one by default). Single has no tags, so this is n/a.</li>
+      <li><strong>Columns differ per mode.</strong> The single-select table stops
+        at Open / Filter / Choose / Close (no tags, no in-popup unchoose). The
+        multiple-select table adds the two deselect columns below.</li>
+      <li><strong>Unchoose (in popup)</strong> - multiple only. With items chosen,
+        CLICK an already-chosen option <em>in the open list</em> and time the
+        toggle-off + re-render (a real click, not an API call). Only libraries
+        whose open list both shows chosen options and deselects them on click can
+        do this: <strong>llselect</strong> and <strong>Select2</strong> natively,
+        <strong>Slim Select</strong> via its <code>allowDeselect</code> setting.
+        <strong>Choices</strong> and <strong>Tom Select</strong> read <code>n/a</code>:
+        a click on an already-selected option is a no-op there (their only removal
+        path is the tag x), verified against the loaded builds. Each timed click
+        is checked to actually drop the chosen count, else it is reported n/a.</li>
+      <li><strong>Remove tag (x)</strong> - multiple only, and only when
+        <em>test close button on multiple tags</em> is ticked. CLICK each tag's
+        remove (x) button and time the removal + re-render - the "press x to drop
+        a tag" path. The option is off by default because Choices and Tom Select
+        only grow a tag x through a setting / plugin (the others show one anyway),
+        so forcing it on everyone would not be their default rendering; ticking it
+        enables the x on those two and reveals this column.</li>
       <li><strong>Close popup</strong> - open first, then time closing.</li>
       <li><strong>Timing.</strong> Open / close are timed to <strong>after the
         next frame is painted</strong> (two <code>requestAnimationFrame</code>s +
@@ -200,8 +216,10 @@
   </details>
 
   <h3>Single-select</h3>
+  <!-- Header rows are built by benchmark.js (ixInitTable) so the columns match
+       the mode (single vs multi) and the close-button option. -->
   <table class="ix-table" id="ix-single-results">
-    <thead><tr><th>Library</th><th>Open popup (ms)</th><th>Filter candidates (ms)</th><th>Choose candidate (ms)</th><th>Remove tag (ms)</th><th>Close popup (ms)</th></tr></thead>
+    <thead></thead>
     <tbody></tbody>
   </table>
   <div class="bench-chart"><canvas id="ix-single-chart"></canvas></div>
@@ -210,7 +228,7 @@
 
   <h3>Multiple-select</h3>
   <table class="ix-table" id="ix-multi-results">
-    <thead><tr><th>Library</th><th>Open popup (ms)</th><th>Filter candidates (ms)</th><th>Choose candidate (ms)</th><th>Remove tag (ms)</th><th>Close popup (ms)</th></tr></thead>
+    <thead></thead>
     <tbody></tbody>
   </table>
   <div class="bench-chart"><canvas id="ix-multi-chart"></canvas></div>

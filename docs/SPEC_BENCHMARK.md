@@ -23,7 +23,7 @@ Two co-equal sections (`<h2>`), plus shared bundle-size and method notes:
 - **Mass instantiation** - build many independent selects at once and measure it,
   with the widgets actually rendered in an on-page scroll area.
 - **Interaction latency** - one dedicated widget per library; time open, filter,
-  choose, and close, each on its own.
+  choose, close, and (multi only) the two deselect paths, each on its own.
 
 ## Libraries and versions
 
@@ -62,6 +62,15 @@ dependency-free.
   multi choose does not close the dropdown - matching llselect and normal
   multi-select UX. A library that closes would skip the open-list re-render and
   look cheaper.
+- **Deselect paths are configured from each library's real API, not assumed.**
+  For the Unchoose-in-popup phase, Slim Select is given `allowDeselect: true`
+  (its documented switch for click-to-deselect); Select2 and llselect need no
+  setting. Where a library genuinely cannot deselect from the open list (Choices,
+  Tom Select - verified in their loaded builds), the phase is n/a, detected by
+  checking the chosen count actually dropped rather than assumed. The tag x
+  (Remove-tag) column is opt-in and off by default, because Choices and Tom
+  Select only grow a tag x through a setting / plugin - forcing it on everyone
+  would not be their default rendering.
 - **Guarded adapters.** Every op is wrapped; an adapter that cannot drive a
   loaded version reports `-` / error for that cell instead of breaking the page.
 
@@ -93,9 +102,9 @@ stays comparable even when a library timed out.
 
 ### Interaction latency
 
-One widget per library. The four operations are timed SEPARATELY - never in one
-mixed cycle - so one phase's cost never leaks into another's. Median of a few
-repeats, first dropped as warm-up. Two timers:
+One widget per library. Each operation is timed SEPARATELY - never in one mixed
+cycle - so one phase's cost never leaks into another's. Median of a few repeats,
+first dropped as warm-up. Two timers:
 
 - **to-paint** (open, close): the cost of revealing a list is layout + paint on
   the frame the browser shows it, and libraries schedule the show with
@@ -108,7 +117,9 @@ repeats, first dropped as warm-up. Two timers:
   stop, then reports the time to the LAST mutation - so the debounce wait is
   included without trailing idle. (llselect filters synchronously.)
 
-Phase definitions:
+Phase definitions (the single and multi tables carry DIFFERENT columns - single
+is open / filter / choose / close; multi adds the two deselect phases below, and
+the header rows are built by `ixInitTable` so they track the mode + the checkbox):
 
 - **Open popup** - close first, then time opening.
 - **Filter candidates** - open once, then `q` / clear / `q` / clear five times,
@@ -118,11 +129,24 @@ Phase definitions:
 - **Choose candidate** - filter cleared (full list). Multiple: choose the first
   10 items, popup staying open (closing skips the open-list re-render, unfair).
   Single: choose one item.
-- **Remove tag** - multiple only. With tags present, CLICK each tag's remove (x)
-  button and time the removal + re-render (a real click, not an API call, so it
-  is the "press x to drop a tag" path). Choices (`removeItemButton`) and Tom
-  Select (`remove_button` plugin) have their remove button enabled; llselect,
-  Select2, Slim Select show one by default. Single has no tags - n/a.
+- **Unchoose (in popup)** - multiple only. CLICK an already-chosen option IN the
+  open list and time the toggle-off + re-render (a real click, not an API call).
+  Supported only where the open list both shows chosen options and deselects them
+  on click: llselect and Select2 natively, Slim Select via `allowDeselect: true`.
+  Choices and Tom Select are n/a - clicking an already-selected option is a no-op
+  there (Choices' choice handler acts only when the choice is NOT selected; Tom
+  Select's `addItem` is idempotent), so their only removal path is the tag x. Each
+  timed click is verified to actually drop the chosen count; a no-op click is
+  reported n/a rather than as a misleading number. (Verified against the pinned
+  builds - see the per-library notes.)
+- **Remove tag (x)** - multiple only, and only when the "test close button on
+  multiple tags" checkbox is on. CLICK each tag's remove (x) button and time the
+  removal + re-render (a real click, not an API call - the "press x to drop a tag"
+  path). The checkbox is off by default because Choices (`removeItemButton`) and
+  Tom Select (`remove_button` plugin) only grow a tag x through a setting / plugin
+  (llselect, Select2, Slim Select show one anyway), so forcing it on everyone is
+  not their default rendering; turning it on enables the x on those two and reveals
+  this column. It also changes the Choose number (a tag with an x is more DOM).
 - **Close popup** - open first, then time closing.
 
 Native `<select>` is shown for reference but not timed (its dropdown is
@@ -168,18 +192,26 @@ browser-driven).
   the pre-select toggle. No in-widget filter, no timed dropdown.
 - **llselect** - the library under test. Multi uses `triggerDisplay: 'tags'`.
   Custom renderer wires the item, tag, and trigger content. Filters
-  synchronously.
+  synchronously. Chosen list items carry `aria-selected="true"`, and a click on
+  one toggles it off - the Unchoose-in-popup path.
 - **Choices.js** - eager-renders all options at init; `display:none` until show;
   rAF-scheduled show/hide. HTML label carries the custom icon into the chip.
-  `removeItemButton: true` for multi so tags have an x.
+  `removeItemButton` for multi only when the close-button checkbox is on. A click
+  on an already-selected choice is a no-op (its choice handler acts only when the
+  choice is NOT selected), so in-popup unchoose is n/a - removal is the tag x.
 - **Select2** - needs jQuery (counted separately in bundle size). Portals its
   dropdown to `document.body`. `templateResult` + `templateSelection` for the
-  icon.
+  icon. Renders chosen options in the results with `--selected` and fires
+  `unselect` on a click in multiple mode, so in-popup unchoose works natively.
 - **Tom Select** - caps rendered options to 50 by default; forced to
   `maxOptions: null` here so it renders the same N as the others. Debounced
   search; `render.option` + `render.item` for the icon; `closeAfterSelect:false`
-  and the `remove_button` plugin (for the tag x) for multi.
+  for multi, and the `remove_button` plugin (for the tag x) only when the
+  close-button checkbox is on. `addItem` is idempotent, so clicking an
+  already-selected option is a no-op - in-popup unchoose is n/a.
 - **Slim Select** - debounced search; open/close transition (disabled while
-  measuring); `closeOnSelect:false` for multi; multi chip is `textContent` only,
-  so the custom icon cannot reach its chips (dropdown options only) - a real
-  limitation, left plain rather than faked with a free CSS `::before`.
+  measuring); `closeOnSelect:false` for multi; `allowDeselect:true` for multi so a
+  click on a chosen option in the open list toggles it off (the Unchoose phase;
+  without it the click is ignored). Multi chip is `textContent` only, so the
+  custom icon cannot reach its chips (dropdown options only) - a real limitation,
+  left plain rather than faked with a free CSS `::before`.

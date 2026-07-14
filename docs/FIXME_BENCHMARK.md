@@ -33,54 +33,53 @@ live in `SPEC_BENCHMARK.md`.
       `display:none` pre-rendered list; the cost is layout + paint on the frame,
       not in the synchronous call).
 
-## Planned: deselect phases + close-button checkbox (AGREED, not yet built)
+## Deselect phases + close-button checkbox (BUILT)
 
-Design agreed with the user; this is the next rework. Rationale below.
+Per-mode interaction columns plus the two deselect phases. `IX_PHASES` is now a
+per-mode `ixPhases(mode)`; the table headers are built by `ixInitTable`.
 
-Structure (decided): keep ONE interaction section, but give the single and multi
-tables their OWN column sets (no shared list, no n/a-column noise). So `IX_PHASES`
-becomes per-mode instead of one shared array.
-
-- [ ] Single table columns: Open popup / Filter candidates / Choose candidate /
-      Close popup. (single has no tags and no in-popup unchoose.)
-- [ ] Multi table columns: Open popup / Filter candidates / Choose candidate /
-      **Unchoose (in popup)** / Close popup, PLUS **Remove tag (x)** only when the
+- [x] Single table columns: Open popup / Filter candidates / Choose candidate /
+      Close popup (no tags, no in-popup unchoose).
+- [x] Multi table columns: Open popup / Filter candidates / Choose candidate /
+      Unchoose (in popup) / Close popup, plus Remove tag (x) only when the
       close-button checkbox is on.
-- [ ] Add a checkbox "test close button on multiple tags" (interaction controls).
-      It GLOBALLY gates the close-button rendering, not just the extra column:
-      enabling close buttons changes what each library renders on a tag, so it
-      also affects the Choose number. OFF (default) = each library's default tag
-      rendering, i.e. the "no custom template / no forced close button" baseline;
-      ON = close buttons enabled + the Remove-tag column appears. Some libraries
-      only get a tag close button through a setting/plugin/custom template
-      (Choices `removeItemButton`, Tom Select `remove_button` plugin; a custom
-      `render.item` can REPLACE the built-in button, so you would have to add it
-      back), so forcing it on everyone always is not a fair default - hence the
-      opt-in.
-- [ ] Unchoose (in popup): a REAL DOM click on an already-chosen option element
-      IN the open popup list (not an API call), matching the Remove-tag spirit.
-- [ ] Remove tag (x): change the CURRENT (already-built, unconditional) Remove-tag
-      phase to be gated behind the close-button checkbox, and keep it as a real
-      click on the tag x button. Currently it is always measured - that must
-      become conditional.
+- [x] Checkbox "test close button on multiple tags" gates BOTH the opt-in tag x
+      (Choices `removeItemButton`, Tom Select `remove_button` plugin) AND the
+      Remove-tag column. Off by default = the libraries' default tag rendering; it
+      also affects the Choose number (a tag with an x is more DOM). Mass section
+      keeps its old behaviour (`closeBtn: true`).
+- [x] Unchoose (in popup): a REAL DOM click on an already-chosen option element in
+      the open list, verified to actually drop the chosen count (else n/a).
+- [x] Remove tag (x): now gated behind the checkbox (was unconditional).
 
-### Per-library "unchoose in popup" behaviour (IMPORTANT - measured n/a for most)
+### Per-library "unchoose in popup" behaviour (VERIFIED against the pinned builds)
 
-Unchoose-in-popup is NOT universal; clicking a chosen option in the open list
-does different things per library, so most will be n/a (which itself shows
-llselect supports it and the others do not):
+Earlier this doc guessed "n/a for most" (Slim Select "no toggle", Select2 "TBD")
+without checking each library's deselect API. That was wrong. Grepping the pinned
+minified/UMD builds + reading the option-click handlers settles it: 3 of 5 support
+an in-popup unchoose.
 
-- llselect: clicking a chosen item in the list toggles it OFF. Supported.
-- Choices.js: a chosen candidate is auto-REMOVED from the popup, so there is
-  nothing in the list to click to unchoose - n/a.
-- Tom Select: same as Choices - chosen candidates are removed from the popup - n/a.
-- Slim Select: clicking a chosen candidate in the popup has NO toggle effect - n/a.
-- Select2: TBD - verify in a browser (likely removes chosen from the dropdown, or
-  no toggle). Treat as n/a until confirmed.
+- llselect: chosen list item carries `aria-selected="true"`; a click toggles it
+  off. Supported (native).
+- Select2 4.1.0-rc.0: chosen options render in the results with `--selected`; in
+  multiple mode a click fires `unselect`. Supported (native, no config).
+- Slim Select 2.10.0: the option-click handler early-returns on
+  `option.selected && !allowDeselect`, else (multi) filters the id out. Supported
+  with `allowDeselect: true` (set in the adapter). NOT "no toggle" as first claimed.
+- Choices.js 11.1.0: the choice handler acts only `if (!selected)`, so clicking an
+  already-selected choice is a no-op. Genuinely n/a (removal is the tag x). Its
+  `renderSelectedChoices: 'always'` keeps selected choices visible but does not
+  make them deselect on click.
+- Tom Select 2.4.3: `addItem` is idempotent (returns early when the value is
+  already an item), so clicking a selected option is a no-op. Genuinely n/a.
 
-So the Unchoose column will mostly be n/a for competitors. Detect "did the click
-actually deselect?" (chosen count dropped); if not, report n/a rather than a
-misleading number.
+The harness detects a real deselect (chosen count dropped) and reports n/a
+otherwise, so a version that changes this behaviour degrades safely.
+
+Lesson (the reason the first pass was wrong): do not mark a competitor phase n/a
+from memory - check whether the library exposes the capability behind a setting
+(`allowDeselect`, `hideSelected`, `renderSelectedChoices`) before concluding it
+cannot do the thing.
 
 ## Still open (real-browser only - cannot verify without a browser here)
 
@@ -94,3 +93,10 @@ misleading number.
       `.ts-control .remove`, `.ss-value-delete`) actually finds and removes a tag
       on the loaded version. (llselect's `.llselect-tag-remove-button` is
       jsdom-verified.)
+- [ ] Verify the Unchoose-in-popup phase in a browser: the chosen-option selectors
+      (`.llselect-item[aria-selected="true"]`, Select2
+      `.select2-results__option--selected`, Slim `.ss-option[aria-selected="true"]`)
+      find a clickable element in the OPEN list and the click drops the chosen
+      count; and that Choices / Tom Select correctly fall to n/a (the count-drop
+      guard reports n/a, it does not time a no-op click). Source-verified above,
+      but the actual DOM classes / open-list rendering need a real browser.
