@@ -41,6 +41,20 @@ real page in a headless Chromium (Playwright), not by eyeballing.
       `--selected`, Slim `.ss-selected`, llselect `aria-selected`) - all classes
       confirmed present in the headless probe. Paint-only, uniform.
 
+### Decisive headless evidence (the numbers behind the ticks)
+
+- Select2 tag x: WITHOUT the fix, clicking `.select2-selection__choice__remove`
+  leaves `.select2-container--open` present (dropdown opened) = the bug. WITH the
+  `select2:opening` suppression, it is absent (stays closed) AND the tag is removed.
+  Both states measured, not assumed.
+- Slim Remove-tag settle: 102 ms without the short-timer flush (the hardcoded
+  `setTimeout(removeChild, 100)`), 2 ms with it.
+- prefers-reduced-motion (tried per Slim's README): emulating `reduce`
+  (`matchMedia('(prefers-reduced-motion: reduce)').matches === true`) still gives
+  102 ms - slim-select 2.10.0 does NOT implement it (no `matchMedia` in its JS, zero
+  `prefers-reduced-motion` in its CSS; that is a newer release), and a page cannot
+  force the setting on a visitor anyway. So the short-timer flush stays as the fix.
+
 ## Naming
 
 - [x] Rename the "Select" column and its phase to "Choose".

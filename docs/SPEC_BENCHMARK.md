@@ -297,6 +297,9 @@ browser-driven).
   removed chip's actual `removeChild` is deferred by a hardcoded 100 ms setTimeout
   (its exit animation, which CSS `animation:none` cannot reach), so the remove-tag
   / unchoose click runs short timers immediately to time the work, not the wait.
+  (slim-select 2.10.0 does not respect `prefers-reduced-motion` - no `matchMedia` in
+  its JS, none in its CSS, headless-verified at 102 ms even with `reduce` emulated -
+  and a page cannot force that setting on a visitor, so the flush is the fix.)
   Multi chip is `textContent` only, so the custom icon cannot reach its chips
   (dropdown options only) - a real limitation, left plain rather than faked with a
   free CSS `::before`.
