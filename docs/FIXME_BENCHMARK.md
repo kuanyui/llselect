@@ -30,7 +30,7 @@ real page in a headless Chromium (Playwright), not by eyeballing.
       leaves one, so a mount-scoped selector missed it and a document-wide one hit
       the wrong widget. Fixed by targeting the OPEN content (`.ss-open-*`). Headless:
       n/a -> a real (slow) number.
-- [x] Slim Remove-tag / Unchoose timed ~100 ms of a hardcoded `setTimeout` chip
+- [x] Slim Remove-tag / Unchoose timed ~100 ms of a hardcoded `setTimeout` tag
       removal (exit animation) that `animation:none` cannot reach. Fixed by running
       short timers immediately around the click. Headless: Remove-tag ~100 ms -> ~3.7 ms.
 - [x] Tom Unchoose is n/a: clicking a `.selected` option calls the idempotent
@@ -150,7 +150,7 @@ cannot do the thing.
       `hideSelected: false` leave a chosen option visible (`.is-selected` /
       `.selected` present), so the list does not shrink per selection.
 - [x] Slim `maxValuesShown: Infinity` prevents the collapse: 20-30 selected still
-      renders one chip per item (Remove-tag found the chips), not a `.ss-max` summary.
+      renders one tag per item (Remove-tag found the tags), not a `.ss-max` summary.
 
 ## Still worth a manual pass (not done here)
 

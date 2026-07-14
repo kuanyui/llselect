@@ -164,7 +164,9 @@
     The libraries differ too much under the hood to time identically:
     <ul>
       <li>some debounce the filter input, with no setting to turn it off;</li>
-      <li>some defer a chip's removal on an animation timer that cannot be disabled;</li>
+      <li>some animate almost everything - the popup opening and closing, tags
+        appearing and being removed - and some of that runs on a JavaScript timer
+        that disabling CSS animation cannot reach;</li>
       <li>some do their work in a microtask, others in a macrotask (<code>setTimeout</code>);</li>
       <li>some paint on the next <code>requestAnimationFrame</code> rather than synchronously;</li>
       <li>some phases a library's API simply does not offer (shown as <code>n/a</code>).</li>
@@ -327,12 +329,12 @@
       cycle, so one phase's cost never leaks into another's. Median of a few
       repeats, the first dropped as warm-up.</li>
     <li><strong>Multi renders tags.</strong> llselect uses
-      <code>triggerDisplay: 'tags'</code> so it draws one chip per chosen item like
+      <code>triggerDisplay: 'tags'</code> so it draws one tag per chosen item like
       every competitor, not its cheaper count summary.</li>
     <li><strong>No collapsing tags into a summary.</strong> Slim Select shows a
-      single "{n} selected" chip once more than <code>maxValuesShown</code>
+      single "{n} selected" tag once more than <code>maxValuesShown</code>
       (default 20) items are selected - one node instead of n. It is set to
-      <code>maxValuesShown: Infinity</code> so it renders one chip per selected
+      <code>maxValuesShown: Infinity</code> so it renders one tag per selected
       item like the others; otherwise its multi DOM-node count and its tag / choose
       work would collapse to near-nothing past 20 selections.</li>
     <li><strong>Multi keeps the popup open on choose.</strong> Select2, Tom Select
@@ -352,8 +354,8 @@
       library's own tag rendering) and forced on for all only when you tick the
       box.</li>
     <li><strong>The custom renderer reaches the chosen display too - or is marked.</strong>
-      The icon is added to list items <em>and</em> chips / triggers. Slim Select's
-      v2 chip has no per-chip HTML hook, so its chip stays plain rather than being
+      The icon is added to list items <em>and</em> tags / triggers. Slim Select's
+      v2 tag has no per-tag HTML hook, so its tag stays plain rather than being
       faked with a free CSS <code>::before</code>; the limitation is documented,
       not hidden.</li>
     <li><strong>The chart is drawn only after a run.</strong> Animating a chart
@@ -394,12 +396,12 @@
     <li>The custom-renderer variant adds one MDI icon per item through each
       library's item-render hook, and to the chosen display too (llselect tag /
       trigger, Select2 templateSelection, Tom Select render.item, Choices HTML
-      label). <strong>Slim Select limitation:</strong> its v2 multi chip is
-      <code>textContent = option.text</code> with no per-chip HTML hook, so the
-      icon reaches its dropdown options but its chips stay plain text. A CSS
+      label). <strong>Slim Select limitation:</strong> its v2 multi tag is
+      <code>textContent = option.text</code> with no per-tag HTML hook, so the
+      icon reaches its dropdown options but its tags stay plain text. A CSS
       <code>::before</code> could fake the look but that is free compositor work,
-      not the per-chip rendering the others do, so it is deliberately not used -
-      Slim Select simply does less chip work here, which its Choose number
+      not the per-tag rendering the others do, so it is deliberately not used -
+      Slim Select simply does less tag work here, which its Choose number
       reflects. This benches a plain searchable select otherwise; tagging, remote
       data and templating are out of scope.</li>
     <li>A <strong>"-"</strong> or <strong>error</strong> means the adapter could

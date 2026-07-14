@@ -40,17 +40,17 @@ dependency-free.
 - **On-screen widgets.** A widget is scrolled into view before it is measured -
   llselect refuses to open an off-screen trigger, so measuring off-screen would
   read zero (see Traps). Manual scrolling is blocked during a run.
-- **Multi renders tags.** Every competitor's multi-select shows a chip per chosen
+- **Multi renders tags.** Every competitor's multi-select shows a tag per chosen
   item, so llselect uses `triggerDisplay: 'tags'`, not the lighter count summary.
 - **Custom renderer reaches the chosen display.** The MDI-icon variant adds the
-  icon to list items AND to the chosen chip / trigger (llselect
+  icon to list items AND to the chosen tag / trigger (llselect
   `createTagContentElFn` / `createTriggerContentElFn`, Select2
   `templateSelection`, Tom Select `render.item`, Choices HTML label). Slim Select
-  v2's multi chip is `textContent = option.text` with no per-chip HTML hook, so
-  the icon reaches its dropdown options (via `html`) but NOT its chips - a real
+  v2's multi tag is `textContent = option.text` with no per-tag HTML hook, so
+  the icon reaches its dropdown options (via `html`) but NOT its tags - a real
   limitation. Not faked with a CSS `::before`: that would be free compositor work
-  and would misrepresent Slim Select as doing per-chip custom rendering it does
-  not. Its chips stay plain, which is what its Choose cost reflects.
+  and would misrepresent Slim Select as doing per-tag custom rendering it does
+  not. Its tags stay plain, which is what its Choose cost reflects.
 - **Transitions off while measuring.** A run injects
   `* { transition:none; animation:none }`, so a CSS open/close animation (Slim
   Select) is not counted as work.
@@ -63,10 +63,10 @@ dependency-free.
   it). They are set to keep it (`renderSelectedChoices: 'always'` /
   `hideSelected: false`) so every library re-renders the same-size list while
   choosing and filtering.
-- **No collapsing tags into a summary.** Slim Select collapses all chips into one
+- **No collapsing tags into a summary.** Slim Select collapses all tags into one
   `{n} selected` summary once more than `maxValuesShown` (default 20) are selected
   - one node instead of n. It is set to `maxValuesShown: Infinity` so it renders
-  one chip per selected item like the others; otherwise its multi DOM-node count
+  one tag per selected item like the others; otherwise its multi DOM-node count
   and its tag / choose work would collapse to near-nothing past 20 selections.
 - **Multi keeps the popup open on choose.** Select2 (`closeOnSelect`), Tom Select
   (`closeAfterSelect`), and Slim Select (`closeOnSelect`) are configured so a
@@ -224,9 +224,9 @@ browser-driven).
   re-render less than the libraries that keep it. Fix: `renderSelectedChoices:
   'always'` / `hideSelected: false` so all re-render the same-size list.
 - **Slim Select collapsed tags past 20.** With more than `maxValuesShown` (default
-  20) selected, Slim Select replaces every chip with one `{n} selected` summary -
+  20) selected, Slim Select replaces every tag with one `{n} selected` summary -
   one node instead of n, so its multi DOM-node count and tag work collapse to
-  near-nothing. Fix: `maxValuesShown: Infinity` so it always renders one chip per
+  near-nothing. Fix: `maxValuesShown: Infinity` so it always renders one tag per
   item.
 - **Deferred render read as ~0 (the settle broke too early).** The settle timer
   broke after 2 quiet frames; for Choices that landed in the gap between its
@@ -246,7 +246,7 @@ browser-driven).
   document-wide one hit the FIRST (single-select) widget's leftover content - the
   click landed on the wrong widget, whose count never changed, so Unchoose read
   n/a. Fix: scope to the OPEN content (`.ss-open-below` / `.ss-open-above`).
-- **Animation deferral hidden in a JS timer.** Slim Select delays a chip's real
+- **Animation deferral hidden in a JS timer.** Slim Select delays a tag's real
   `removeChild` by a hardcoded 100 ms `setTimeout` for its exit animation - which
   `animation:none` cannot touch - so Remove-tag / Unchoose timed ~100 ms of
   animation. Fix: run short timers immediately around the click.
@@ -263,7 +263,7 @@ browser-driven).
   synchronously. Chosen list items carry `aria-selected="true"`, and a click on
   one toggles it off - the Unchoose-in-popup path.
 - **Choices.js** - eager-renders all options at init; `display:none` until show;
-  rAF-scheduled show/hide. HTML label carries the custom icon into the chip.
+  rAF-scheduled show/hide. HTML label carries the custom icon into the tag.
   `removeItemButton` for multi only when the close-button checkbox is on.
   `renderSelectedChoices: 'always'` for multi keeps a chosen option in the dropdown
   (its default drops it) so it re-renders the same-size list. A click on an
@@ -291,15 +291,15 @@ browser-driven).
   latency); `closeOnSelect:false` for multi; `allowDeselect:true` for multi so a
   click on a chosen option in the open list toggles it off (the Unchoose phase;
   without it the click is ignored); `maxValuesShown: Infinity` so it never
-  collapses chips into a `{n} selected` summary. Its dropdown (`.ss-content`) is
+  collapses tags into a `{n} selected` summary. Its dropdown (`.ss-content`) is
   portaled to `document.body` and every widget leaves one there, so the unchoose
   selector targets only the OPEN content (`.ss-open-below` / `.ss-open-above`). A
-  removed chip's actual `removeChild` is deferred by a hardcoded 100 ms setTimeout
+  removed tag's actual `removeChild` is deferred by a hardcoded 100 ms setTimeout
   (its exit animation, which CSS `animation:none` cannot reach), so the remove-tag
   / unchoose click runs short timers immediately to time the work, not the wait.
   (slim-select 2.10.0 does not respect `prefers-reduced-motion` - no `matchMedia` in
   its JS, none in its CSS, headless-verified at 102 ms even with `reduce` emulated -
   and a page cannot force that setting on a visitor, so the flush is the fix.)
-  Multi chip is `textContent` only, so the custom icon cannot reach its chips
+  Multi tag is `textContent` only, so the custom icon cannot reach its tags
   (dropdown options only) - a real limitation, left plain rather than faked with a
   free CSS `::before`.

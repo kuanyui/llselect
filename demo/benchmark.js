@@ -62,7 +62,7 @@ function iconSpan(text) {
 function iconHtml(text) { return '<i class="mdi mdi-tag-outline" aria-hidden="true"></i> ' + text }
 
 // How many items to pre-select when the toggle is on: one for a single-select,
-// 10% for a multiple-select (renders a value / chips at build time).
+// 10% for a multiple-select (renders a value / tags at build time).
 function preCount(items, opts) {
   if (!opts.preselect) { return 0 }
   return opts.multi ? Math.max(1, Math.ceil(items.length * 0.1)) : 1
@@ -102,13 +102,13 @@ const ADAPTERS = {
       const Ctor = opts.multi ? window.llselect.LLSelectMultiple : window.llselect.LLSelectSingle
       const o = { searchable: true }
       // Match the competitors: their multi-selects render each chosen item as a
-      // chip, so llselect renders tags too (not the lighter count summary),
+      // tag, so llselect renders tags too (not the lighter count summary),
       // otherwise it would be doing less per-selection work than they do.
       if (opts.multi) { o.triggerDisplay = 'tags' }
       if (opts.custom) {
         o.createItemContentElFn = (it) => iconSpan(it)
         // If list items carry an icon, the chosen display must carry it too:
-        // the tag chips in multi, the trigger content in single.
+        // the tags in multi, the trigger content in single.
         if (opts.multi) { o.createTagContentElFn = (it) => iconSpan(it) } else { o.createTriggerContentElFn = (ctx) => (ctx.chosenItem == null ? null : iconSpan(ctx.chosenItem)) }
       }
       const inst = new Ctor(mount, o)
@@ -150,7 +150,7 @@ const ADAPTERS = {
       if (opts.custom) {
         const tmpl = (o) => (o.id ? window.jQuery('<span>' + iconHtml(o.text) + '</span>') : o.text)
         cfg.templateResult = tmpl // dropdown option
-        cfg.templateSelection = tmpl // the chosen chip
+        cfg.templateSelection = tmpl // the chosen tag
       }
       $sel.select2(cfg)
       // A click on the tag remove (x) bubbles to the selection and opens the
@@ -188,7 +188,7 @@ const ADAPTERS = {
       if (k > 0) { cfg.items = items.slice(0, k) }
       if (opts.custom) {
         const tmpl = (d, esc) => '<div>' + iconHtml(esc(d.text)) + '</div>'
-        cfg.render = { option: tmpl, item: tmpl } // dropdown option + chosen chip
+        cfg.render = { option: tmpl, item: tmpl } // dropdown option + chosen tag
       }
       return { inst: new window.TomSelect(sel, cfg), mount }
     },
@@ -201,11 +201,11 @@ const ADAPTERS = {
     setup(mount, items, opts) {
       const k = preCount(items, opts)
       const sel = makeSelect(mount, opts.multi)
-      // Slim Select v2's multi chip is textContent = option.text with no
-      // per-chip HTML hook, so the custom icon reaches the dropdown options
-      // (via html) but NOT the chips - a real limitation. A CSS ::before could
+      // Slim Select v2's multi tag is textContent = option.text with no
+      // per-tag HTML hook, so the custom icon reaches the dropdown options
+      // (via html) but NOT the tags - a real limitation. A CSS ::before could
       // fake the look, but that is free compositor work and would misrepresent
-      // Slim Select as doing per-chip custom rendering it does not, so the chips
+      // Slim Select as doing per-tag custom rendering it does not, so the tags
       // are left plain (which is also what its measured cost reflects).
       const data = items.map((v, i) => (opts.custom ? { text: v, value: v, html: iconHtml(v), selected: i < k } : { text: v, value: v, selected: i < k }))
       // closeOnSelect: false so a multi choose keeps the popup open for
@@ -214,7 +214,7 @@ const ADAPTERS = {
       // list toggle it off (the Unchoose-in-popup phase). Without it Slim Select
       // ignores such a click (verified in slimselect.umd.js: the option click
       // handler early-returns when `option.selected && !allowDeselect`). Multi only.
-      // maxValuesShown: Infinity stops Slim Select collapsing all chips into a
+      // maxValuesShown: Infinity stops Slim Select collapsing all tags into a
       // single "{n} selected" summary once more than maxValuesShown (default 20)
       // are selected - that would render one node instead of n and make its multi
       // DOM-node / tag work collapse to near-nothing, which is not the same work.
@@ -332,7 +332,7 @@ function fireMouse(el) {
     el.dispatchEvent(new MouseEvent(t, { bubbles: true, cancelable: true, view: window }))
   }
 }
-// Slim Select defers a chip's actual removeChild by a hardcoded 100ms setTimeout
+// Slim Select defers a tag's actual removeChild by a hardcoded 100ms setTimeout
 // (its exit animation), which the CSS animation:none override cannot reach - so a
 // removal / deselect would time ~100ms of animation, not work. Run SHORT timers
 // immediately around such a click so the measured settle is the real re-render.
@@ -827,7 +827,7 @@ async function measureInteraction(mode, key, items, stageEl, closeBtn) {
         const el = UNCHOOSE[key](h)
         if (!el) { break }
         const before = chosenCount(key, h)
-        // Full mouse sequence (Select2 fires on mouseup); Slim's removed chip has a
+        // Full mouse sequence (Select2 fires on mouseup); Slim's removed tag has a
         // 100ms deferred removeChild, flushed so only real work is timed.
         const clickEl = () => (key === 'slim-select' ? flushShortTimers(() => fireMouse(el)) : fireMouse(el))
         const dt = await timeToSettle(clickEl, stageEl, key)
@@ -859,7 +859,7 @@ async function measureInteraction(mode, key, items, stageEl, closeBtn) {
         const btn = REMOVE[key](h)
         if (!btn) { break }
         // Select2 opens its dropdown on this click (bubbling quirk) - suppress the
-        // open so only the removal is timed. Slim defers the chip's removeChild by
+        // open so only the removal is timed. Slim defers the tag's removeChild by
         // 100ms (animation) - flush it. Full mouse sequence for parity.
         const click = key === 'select2'
           ? () => { select2SuppressOpen = true; try { fireMouse(btn) } finally { select2SuppressOpen = false } }
