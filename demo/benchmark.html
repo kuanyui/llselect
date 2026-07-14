@@ -36,6 +36,7 @@
     <span>On this page:</span>
     <a href="#mass">Mass instantiation</a>
     <a href="#interaction">Interaction latency</a>
+    <a href="#fair">Fairness</a>
     <a href="#bundle">Bundle size</a>
     <a href="#method">Method and caveats</a>
   </nav>
@@ -99,7 +100,6 @@
         <th>Built / target</th>
         <th>Build total (ms)</th>
         <th>DOM nodes (resting)</th>
-        <th>Filter candidates (ms)</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -118,12 +118,9 @@
       <li><strong>DOM nodes (resting)</strong> - element nodes left under the
         scratch area after building, popups closed. llselect builds no option DOM
         until a popup opens, so this shows its lazy-render footprint.</li>
-      <li><strong>Filter candidates (ms)</strong> - open the first built widget,
-        clear the box, type a character that narrows the candidate list, re-render
-        the matches; median of a few, timed to after the next paint (so
-        rAF-deferred and paint-heavy rendering is counted, not read as 0). Every
-        widget is searchable.</li>
     </ul>
+    <p class="hint">Filtering is measured in the interaction-latency section
+      below, not here - it is about one widget, not about building many.</p>
   </details>
 
   <h3>Comparison chart</h3>
@@ -235,6 +232,78 @@
   <p id="ix-multi-empty" class="hint">Build + measure to see the chart.</p>
   <div id="ix-multi-stage" class="ix-stage"></div>
 
+  <h2 id="fair">Fairness: making every library do the same work</h2>
+  <p>The point of a comparison is that every library is measured doing the
+    <em>same</em> work, timed the same way, with no library flattered by an
+    artifact of how it renders. These are the rules the harness enforces (each one
+    fixes a real trap hit while building this - see <code>docs/SPEC_BENCHMARK.md</code>
+    for the gory detail):</p>
+  <ol class="bench-fair">
+    <li><strong>Minified vs minified.</strong> Every library loads its minified
+      build, llselect included (its UMD is run through terser), so parse and build
+      cost are compared like for like - not one library's dev build against
+      another's <code>.min.js</code>.</li>
+    <li><strong>Everyone renders all N candidates.</strong> Tom Select caps the
+      dropdown to 50 options by default; it is forced to <code>maxOptions: null</code>
+      so it builds the whole list like the others, instead of a fraction that
+      looks fastest for free.</li>
+    <li><strong>Timed to the painted frame, not the function return</strong>
+      (open / close). Libraries reveal a <code>display:none</code> list on a later
+      <code>requestAnimationFrame</code> (Choices), so the real cost - laying out
+      and painting N options - lands on the next frame, not in the synchronous
+      call. The timer waits for that frame to actually paint. This is exactly the
+      "the benchmark says fast but I can see it hang" case: a library cannot look
+      instant while you are still waiting for the list to appear.</li>
+    <li><strong>Debounce is measured, not hidden</strong> (filter / choose). Tom
+      Select and Slim Select debounce the search input. Rather than disabling the
+      debounce (which would hide latency the user really feels), the timer watches
+      the DOM and waits until it stops mutating, so the debounce delay is included
+      - and a debounced render is never mis-read as 0 ms. llselect filters
+      synchronously.</li>
+    <li><strong>Transitions and animations are disabled during a run.</strong> An
+      injected <code>* { transition: none; animation: none }</code> means a CSS
+      open / close animation (Slim Select) is not counted as work - the number is
+      the render, not the tween.</li>
+    <li><strong>Widgets are measured on-screen.</strong> llselect refuses to open
+      an off-screen trigger (a real-use correctness guard), which would read ~0; so
+      each widget is scrolled into view first, and manual scrolling is blocked by
+      the run overlay so a stray scroll cannot move one off-screen mid-measure.</li>
+    <li><strong>Each phase is timed on its own.</strong> Open, filter, choose,
+      unchoose, remove-tag and close are measured separately, never in one mixed
+      cycle, so one phase's cost never leaks into another's. Median of a few
+      repeats, the first dropped as warm-up.</li>
+    <li><strong>Multi renders tags.</strong> llselect uses
+      <code>triggerDisplay: 'tags'</code> so it draws one chip per chosen item like
+      every competitor, not its cheaper count summary.</li>
+    <li><strong>Multi keeps the popup open on choose.</strong> Select2, Tom Select
+      and Slim Select are configured (<code>closeOnSelect</code> /
+      <code>closeAfterSelect</code>) so choosing does not close the dropdown and
+      skip the open-list re-render that the others pay for.</li>
+    <li><strong>Filter keystrokes are always real changes.</strong> The query is
+      cleared between timed keystrokes, so re-typing the same letter is never a
+      no-op (some libraries keep the query after a selection, which would read 0).</li>
+    <li><strong>Deselect is enabled from each library's own API, not assumed.</strong>
+      Unchoose-in-popup uses Slim Select's <code>allowDeselect</code>; where a
+      library genuinely cannot deselect from the open list (Choices, Tom Select)
+      the phase is <code>n/a</code>, detected by checking the chosen count actually
+      dropped - never timed as if a no-op click worked.</li>
+    <li><strong>The tag close button is opt-in.</strong> Choices and Tom Select
+      only grow a tag x through a setting / plugin, so it is off by default (each
+      library's own tag rendering) and forced on for all only when you tick the
+      box.</li>
+    <li><strong>The custom renderer reaches the chosen display too - or is marked.</strong>
+      The icon is added to list items <em>and</em> chips / triggers. Slim Select's
+      v2 chip has no per-chip HTML hook, so its chip stays plain rather than being
+      faked with a free CSS <code>::before</code>; the limitation is documented,
+      not hidden.</li>
+    <li><strong>The chart is drawn only after a run.</strong> Animating a chart
+      between libraries polluted the next library's timing, so it is deferred to
+      the end.</li>
+    <li><strong>Adapters are guarded.</strong> A library the adapter cannot drive
+      on its loaded version shows <code>-</code> / error for that cell instead of
+      breaking the page or silently reporting a wrong number.</li>
+  </ol>
+
   <h2 id="bundle">Bundle size</h2>
   <p>Minified transfer bytes, <em>uncompressed</em> - the same method for every
     script, fetched live from the CDN (gzip shrinks them all by roughly 3x).
@@ -253,9 +322,9 @@
       run out of memory).</li>
     <li>The chart defaults to <strong>throughput (widgets built per second)</strong>
       because that stays a fair comparison even when a library timed out - it is a
-      per-widget rate, not a total. Switch the metric to compare init time, DOM
-      nodes, or filter latency instead; a bar from an incomplete run is shown in
-      amber with its built count.</li>
+      per-widget rate, not a total. Switch the metric to compare init time or DOM
+      nodes instead; a bar from an incomplete run is shown in amber with its built
+      count.</li>
     <li>Every widget is <strong>independent</strong> - its own chosen state, no
       cross-widget interaction (that would be an integration test, not a render
       stress test).</li>

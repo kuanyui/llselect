@@ -389,8 +389,8 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 #results th:first-child, #results td:first-child, #sizes th:first-child, #sizes td:first-child { text-align: left; }
 #results thead th, #sizes thead th { background: #f6f8fa; }
 #results td.best { background: #e6f4ea; color: #1a7f37; font-weight: 700; }
-.bench-legend, .bench-caveats { font-size: 0.9rem; color: #333; }
-.bench-legend li, .bench-caveats li { margin: 0.35rem 0; }
+.bench-legend, .bench-caveats, .bench-fair { font-size: 0.9rem; color: #333; }
+.bench-legend li, .bench-caveats li, .bench-fair li { margin: 0.35rem 0; }
 .bench-warn { font-size: 0.9rem; color: #8a5a00; background: #fff6e5; border-left: 4px solid #e0a100; padding: 0.5rem 0.85rem; border-radius: 4px; }
 .bench-libbuttons { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin: 0 0 1rem; font-size: 0.9rem; }
 .bench-libbuttons button { font: inherit; font-size: 0.85rem; padding: 0.25rem 0.7rem; cursor: pointer; border: 1px solid #bbb; background: #fff; border-radius: 4px; }

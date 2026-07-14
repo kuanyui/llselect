@@ -351,32 +351,6 @@ async function buildAll(key, scen, runOpts) {
   return { built, compute, timedOut, errored, stopped }
 }
 
-async function sampleFilter(key, scen) {
-  const a = ADAPTERS[key]
-  if (a.noFilter || !live.length) { return null }
-  const h = live[0].h
-  const q = scen.itemsPer > 100 ? '7777' : '5'
-  // The sampled widget must be on-screen or llselect refuses to open it (same
-  // off-screen no-op that would zero out the interaction cycle).
-  stage.firstElementChild?.scrollIntoView({ block: 'center', behavior: 'instant' })
-  try {
-    a.open(h); await raf(); reflow(stage); await raf()
-    const samples = []
-    // Timed to after the next paint (two rAFs + a forced layout) so rAF-deferred
-    // and paint-heavy rendering (Choices reveals a display:none list) is counted.
-    // Reset the query untimed each round so typing is always a real change.
-    for (let i = 0; i < 4; i++) {
-      try { a.filter(h, '') } catch (e) { /* ignore */ }
-      await raf()
-      const t0 = performance.now()
-      a.filter(h, q); await raf(); reflow(stage); await raf()
-      if (i > 0) { samples.push(performance.now() - t0) }
-    }
-    a.close(h); await raf()
-    return median(samples)
-  } catch (e) { console.warn(key, e); return null }
-}
-
 // --- table ----------------------------------------------------------------
 
 function fmt(ms) { return ms == null ? '-' : (ms < 10 ? ms.toFixed(2) : ms.toFixed(0)) }
@@ -395,7 +369,7 @@ function initTable() {
     a.textContent = DISPLAY[key].name
     nameTd.appendChild(a)
     tr.appendChild(nameTd)
-    for (const col of ['built', 'compute', 'nodes', 'filter']) {
+    for (const col of ['built', 'compute', 'nodes']) {
       const td = document.createElement('td'); td.dataset.col = col; td.textContent = ''
       tr.appendChild(td)
     }
@@ -406,7 +380,7 @@ function initTable() {
 function setCell(key, col, text) { rowFor(key).querySelector(`td[data-col="${col}"]`).textContent = text }
 
 function highlightBest() {
-  for (const col of ['compute', 'nodes', 'filter']) {
+  for (const col of ['compute', 'nodes']) {
     let best = Infinity, bestKey = null
     for (const key of ORDER) {
       const cell = rowFor(key).querySelector(`td[data-col="${col}"]`)
@@ -437,7 +411,6 @@ async function runLib(key, renderAfter = true) {
   const before = countNodes()
   const res = await buildAll(key, scen, runOptsFromDom())
   const nodes = countNodes() - before
-  const filterMs = await sampleFilter(key, scen)
 
   const builtCell = rowFor(key).querySelector('td[data-col="built"]')
   builtCell.textContent = `${res.built} / ${scen.widgets}` + (res.errored ? ' (error)' : res.stopped ? ' (stopped)' : res.timedOut ? ' (timeout)' : '')
@@ -448,13 +421,9 @@ async function runLib(key, renderAfter = true) {
   const nodesCell = rowFor(key).querySelector('td[data-col="nodes"]')
   nodesCell.textContent = nodes.toLocaleString(); nodesCell.dataset.value = nodes
 
-  const filterCell = rowFor(key).querySelector('td[data-col="filter"]')
-  filterCell.textContent = ADAPTERS[key].noFilter ? 'n/a' : fmt(filterMs)
-  if (filterMs != null) { filterCell.dataset.value = filterMs } else { delete filterCell.dataset.value }
-
   results[key] = {
     built: res.built, target: scen.widgets, compute: res.compute, nodes,
-    filter: ADAPTERS[key].noFilter ? null : filterMs, timedOut: res.timedOut, errored: res.errored,
+    timedOut: res.timedOut, errored: res.errored,
   }
   highlightBest()
   // Chart.js create + animate competes with the main thread, so drawing it
@@ -571,7 +540,6 @@ const METRICS = [
   { key: 'throughput', label: 'Throughput (widgets/sec)', color: '#2456a6', higherBetter: true, value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null), fmt: v => Math.round(v).toLocaleString() + ' /s' },
   { key: 'compute', label: 'Build total (ms)', color: '#c9821a', higherBetter: false, value: r => r.compute, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
   { key: 'nodes', label: 'DOM nodes', color: '#7a3ea6', higherBetter: false, value: r => r.nodes, fmt: v => Math.round(v).toLocaleString() },
-  { key: 'filter', label: 'Filter candidates (ms)', color: '#1a7f37', higherBetter: false, value: r => r.filter, fmt: v => (v == null ? '-' : (v < 10 ? v.toFixed(2) : v.toFixed(0)) + ' ms') },
 ]
 
 let chartInstance = null

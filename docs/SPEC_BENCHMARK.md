@@ -91,8 +91,11 @@ page-level Stop would be unreachable mid-run. Reported:
 - **DOM nodes (resting)** - element nodes under the scratch area after building,
   popups closed. Shows llselect's lazy-render footprint (it builds no option DOM
   until a popup opens).
-- **Filter candidates (ms)** - open the first widget, clear the box, type one
-  character, re-render; timed to after the next paint.
+
+Filtering is NOT measured here: it is a property of one widget, not of building
+many (the widgets are independent), so it belongs to - and is measured in - the
+interaction-latency section. It used to have a column here; that was removed as
+misplaced.
 
 The comparison chart normalizes each metric to "percent of the best performer"
 so metrics of different scale share one axis; the legend toggles metrics. The
