@@ -437,3 +437,8 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 #bench-overlay { position: fixed; inset: 0; z-index: 9999; display: none; align-items: flex-start; justify-content: center; background: rgba(20, 30, 50, 0.06); cursor: progress; }
 .bench-overlay-box { margin-top: 1.5rem; max-width: 32rem; background: #2456a6; color: #fff; padding: 0.7rem 1.1rem; border-radius: 6px; font-size: 0.95rem; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
 .bench-overlay-box small { display: block; margin-top: 0.35rem; font-size: 0.8rem; font-weight: normal; opacity: 0.9; }
+
+/* Stop button on the run overlay (the page's own Stop would be behind it). */
+#bench-overlay-stop { display: block; margin: 0.7rem auto 0; font: inherit; padding: 0.4rem 1.4rem; cursor: pointer; border: 1px solid #fff; background: #c0392b; color: #fff; border-radius: 4px; font-weight: 600; }
+#bench-overlay-stop:hover { background: #a83226; }
+#bench-overlay-stop:disabled { opacity: 0.6; cursor: default; }

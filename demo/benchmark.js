@@ -419,7 +419,6 @@ async function runAll() {
 function setRunning(on) {
   for (const id of ['run-all', 'clear', 'scenario', 'custom', 'preselect', 'no-timeout']) { document.getElementById(id).disabled = on }
   document.querySelectorAll('.bench-libbuttons button').forEach(b => { b.disabled = on })
-  document.getElementById('stop').disabled = !on
   scrollLock(on)
 }
 
@@ -435,10 +434,21 @@ function scrollLock(on) {
     overlay.id = 'bench-overlay'
     overlay.innerHTML = '<div class="bench-overlay-box"><strong>Benchmark running</strong>'
       + '<small>The page auto-scrolls to keep each widget on-screen; manual scrolling is blocked. '
-      + 'An off-screen trigger will not open, so its timings would read zero. This clears when the run finishes.</small></div>'
+      + 'An off-screen trigger will not open, so its timings would read zero.</small>'
+      + '<button id="bench-overlay-stop" type="button">Stop</button></div>'
     document.body.appendChild(overlay)
+    // The Stop button lives ON the overlay - the overlay blocks clicks to
+    // everything behind it, so a Stop in the page would be unreachable mid-run.
+    document.getElementById('bench-overlay-stop').addEventListener('click', () => {
+      stopRequested = true
+      const b = document.getElementById('bench-overlay-stop')
+      b.textContent = 'Stopping ...'; b.disabled = true
+    })
   }
-  if (overlay) { overlay.style.display = on ? 'flex' : 'none' }
+  if (overlay) {
+    overlay.style.display = on ? 'flex' : 'none'
+    if (on) { const b = document.getElementById('bench-overlay-stop'); b.textContent = 'Stop'; b.disabled = false }
+  }
   // Kill CSS transitions / animations while measuring, so a library's open/close
   // animation (Slim Select) is not counted as work - we measure the render, not
   // the animation.
@@ -764,6 +774,7 @@ async function ixBuildAndMeasure() {
   runBtn.disabled = true
   document.getElementById('ix-size').disabled = true
   document.getElementById('ix-custom').disabled = true
+  stopRequested = false
   scrollLock(true)
   ixClearAll()
   for (const mode of IX_MODES) { ixInitTable(mode) }
@@ -773,6 +784,7 @@ async function ixBuildAndMeasure() {
   for (const mode of IX_MODES) {
     const stageEl = ixStageEl(mode)
     for (const key of ORDER) {
+      if (stopRequested) { break }
       if (!available(key)) { ixSetRow(mode, key, { na: 'not loaded' }); continue }
       status.textContent = `${mode.label} - ${DISPLAY[key].name}: building 1 x ${n} ...`
       await raf()
@@ -794,6 +806,7 @@ async function ixBuildAndMeasure() {
       ixHighlightBest(mode)
       await raf()
     }
+    if (stopRequested) { break }
   }
   // Draw both charts only after every measurement is done - a chart animating
   // mid-run would skew the timings that follow.
@@ -802,7 +815,7 @@ async function ixBuildAndMeasure() {
   runBtn.disabled = false
   document.getElementById('ix-size').disabled = false
   document.getElementById('ix-custom').disabled = false
-  status.textContent = 'Done. Lower is better. Widgets are live - open them yourself.'
+  status.textContent = stopRequested ? 'Stopped.' : 'Done. Lower is better. Widgets are live - open them yourself.'
 }
 
 // --- wire up --------------------------------------------------------------
@@ -818,7 +831,6 @@ function reset(msg) {
 initTable()
 IX_MODES.forEach(ixInitTable)
 document.getElementById('run-all').addEventListener('click', () => { runAll() })
-document.getElementById('stop').addEventListener('click', () => { stopRequested = true; document.getElementById('status').textContent = 'Stopping ...' })
 document.getElementById('clear').addEventListener('click', () => { reset('Cleared.') })
 // A scenario change invalidates the accumulated results (they are per-scenario).
 document.getElementById('scenario').addEventListener('change', () => { reset('Scenario changed - results reset.') })
