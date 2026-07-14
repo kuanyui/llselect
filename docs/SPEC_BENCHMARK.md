@@ -300,6 +300,12 @@ browser-driven).
   (slim-select 2.10.0 does not respect `prefers-reduced-motion` - no `matchMedia` in
   its JS, none in its CSS, headless-verified at 102 ms even with `reduce` emulated -
   and a page cannot force that setting on a visitor, so the flush is the fix.)
+  Slim's Filter / Choose / Unchoose numbers run high because that is real work, NOT
+  animation: `setSelected` rebuilds the whole native `<select>` (every `<option>` via
+  `updateOptions`) AND re-renders every dropdown option on each change (source:
+  `setSelected` -> `updateOptions` + `renderValues` + `renderOptions`), and the search
+  debounces 100 ms per keystroke. The animations are provably off - a CSS transition
+  would make Open / Close ~200 ms, but they measure ~2 frames.
   Multi tag is `textContent` only, so the custom icon cannot reach its tags
   (dropdown options only) - a real limitation, left plain rather than faked with a
   free CSS `::before`.
