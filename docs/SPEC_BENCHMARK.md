@@ -128,7 +128,18 @@ stays comparable even when a library timed out.
 
 One widget per library. Each operation is timed SEPARATELY - never in one mixed
 cycle - so one phase's cost never leaks into another's. Median of a few repeats,
-first dropped as warm-up. Two timers:
+first dropped as warm-up.
+
+**Every phase is driven by the real DOM event a user would cause** - focus the
+search box and type to filter, click an option in the open list to choose /
+unchoose, click a tag's x to remove - through a per-library `DRIVER`, never the
+library's own API. An API shortcut can skip work the user actually pays for, which
+is exactly where the earlier numbers were wrong: Choices only searches a FOCUSED
+input (an unfocused programmatic `input` event was a no-op, so Filter read ~0.6 ms);
+Tom Select's search is throttled, but calling its refresh method directly BYPASSED
+the throttle (Filter read ~8 ms instead of the real ~300 ms); Select2's
+`.val().trigger('change')` did not re-render the open results the way clicking one
+does. Driving real events fixed all three. Two timers:
 
 - **to-paint** (open, close): the cost of revealing a list is layout + paint on
   the frame the browser shows it, and libraries schedule the show with
@@ -149,14 +160,16 @@ is open / filter / choose / close; multi adds the two deselect phases below, and
 the header rows are built by `ixInitTable` so they track the mode + the checkbox):
 
 - **Open popup** - close first, then time opening.
-- **Filter candidates** - a round-trip, reported as the SUM of two medians: narrow
-  the list to half (type `q`) and restore it (clear), each timed on its own, five
-  reps. One filter interaction is type + clear, so a single direction understates
-  it. Clearing between also keeps every keystroke a real change (re-typing the same
-  query is a no-op for a library that keeps the query after a selection).
-- **Choose candidate** - filter cleared (full list). Multiple: choose the first
-  10 items, popup staying open (closing skips the open-list re-render, unfair).
-  Single: choose one item.
+- **Filter candidates** - FOCUS the search input, then type `q` (narrows the list)
+  and clear it: a round-trip reported as the SUM of two medians, five reps (one
+  filter interaction is type + clear). The focus matters - Choices ignores an
+  unfocused input - and the keystroke goes through the library's own debounce /
+  throttle (Tom Select ~300 ms, Slim Select ~100 ms), which IS real latency the
+  user waits through.
+- **Choose candidate** - CLICK a not-yet-chosen option in the open list (a real
+  click, not an API select, so it does the same work the user's click does).
+  Multiple: click 10, the popup staying open. Single: click one (it closes),
+  repeated.
 - **Unchoose (in popup)** - multiple only. CLICK an already-chosen option IN the
   open list and time the toggle-off + re-render (a real click, not an API call).
   Supported only where the open list both shows chosen options and deselects them
@@ -250,9 +263,20 @@ browser-driven).
   `removeChild` by a hardcoded 100 ms `setTimeout` for its exit animation - which
   `animation:none` cannot touch - so Remove-tag / Unchoose timed ~100 ms of
   animation. Fix: run short timers immediately around the click.
+- **API shortcuts skipped the work the user pays for.** The interaction ops used
+  to call the library API (`filter()` helpers, `addItem` / `.val().trigger`), which
+  measured DIFFERENT work than a real interaction. Three concrete cases: Choices'
+  search runs only on a FOCUSED input, so a programmatic `input` event never
+  searched (Filter read ~0.6 ms); Tom Select's filter adapter called its render
+  method directly, BYPASSING the search throttle (Filter read ~8 ms instead of the
+  real ~300 ms); Select2's `.val().trigger('change')` did not re-render the open
+  results. Fix: a rewrite where every phase is a real DOM event through a per-library
+  `DRIVER` (focus + type, click an option, click the tag x). After it, Choices Filter
+  ~3.8 ms, Tom Filter ~300 ms - both faithful.
 - **Verified headless.** These were all found and confirmed by driving the page in
   a headless Chromium, not by eyeballing - Select2 Unchoose went n/a -> ~6 ms, Slim
-  Unchoose n/a -> a real (slow) number, Slim Remove-tag ~100 ms -> a few ms.
+  Unchoose n/a -> a real (slow) number, Slim Remove-tag ~100 ms -> a few ms, Choices
+  Filter ~0.6 -> ~3.8 ms, Tom Filter ~8 -> ~300 ms.
 
 ## Per-library adapter notes
 

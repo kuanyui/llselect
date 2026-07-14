@@ -69,8 +69,9 @@ function preCount(items, opts) {
 }
 
 // --- adapters -------------------------------------------------------------
-// setup(mount, items, {multi, custom}) -> handle; open/filter/close/teardown
-// operate on that handle. Adapters with noFilter skip the filter sample.
+// setup(mount, items, {multi, custom, preselect, closeBtn}) -> handle; teardown
+// disposes it. The interaction test drives each handle through DRIVER (below),
+// which uses real DOM events rather than the library's API.
 
 function makeSelect(mount, multi) {
   const sel = document.createElement('select')
@@ -81,7 +82,6 @@ function makeSelect(mount, multi) {
 
 const ADAPTERS = {
   native: {
-    noFilter: true, // native <select> has no in-widget filter
     setup(mount, items, opts) {
       const k = preCount(items, opts)
       const sel = makeSelect(mount, opts.multi)
@@ -117,9 +117,6 @@ const ADAPTERS = {
       if (k > 0) { if (opts.multi) { inst.setChosenItems(items.slice(0, k)) } else { inst.setChosenItem(items[0]) } }
       return { inst, mount }
     },
-    open(h) { h.inst.open() },
-    filter(h, q) { const i = h.mount.querySelector('input'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) },
-    close(h) { h.inst.close() },
     teardown(h) { h.inst.destroy() },
   },
   choices: {
@@ -134,9 +131,6 @@ const ADAPTERS = {
       inst.setChoices(items.map((v, i) => ({ value: v, label: opts.custom ? iconHtml(v) : v, selected: i < k })), 'value', 'label', true)
       return { inst, mount }
     },
-    open(h) { h.inst.showDropdown() },
-    filter(h, q) { const i = h.inst.input.element; i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) },
-    close(h) { h.inst.hideDropdown() },
     teardown(h) { h.inst.destroy() },
   },
   select2: {
@@ -161,9 +155,6 @@ const ADAPTERS = {
       if (k > 0) { $sel.val(opts.multi ? items.slice(0, k) : items[0]).trigger('change') }
       return { $sel, mount }
     },
-    open(h) { h.$sel.select2('open') },
-    filter(h, q) { const i = document.querySelector('.select2-container--open .select2-search__field'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) },
-    close(h) { h.$sel.select2('close') },
     teardown(h) { h.$sel.select2('destroy') },
   },
   'tom-select': {
@@ -192,9 +183,6 @@ const ADAPTERS = {
       }
       return { inst: new window.TomSelect(sel, cfg), mount }
     },
-    open(h) { h.inst.open() },
-    filter(h, q) { h.inst.setTextboxValue(q); h.inst.refreshOptions(true) },
-    close(h) { h.inst.close() },
     teardown(h) { h.inst.destroy() },
   },
   'slim-select': {
@@ -220,92 +208,68 @@ const ADAPTERS = {
       // DOM-node / tag work collapse to near-nothing, which is not the same work.
       return { inst: new window.SlimSelect({ select: sel, settings: { showSearch: true, closeOnSelect: !opts.multi, allowDeselect: !!opts.multi, maxValuesShown: Infinity }, data }), mount }
     },
-    open(h) { h.inst.open() },
-    filter(h, q) { const i = document.querySelector('.ss-content .ss-search input'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) },
-    close(h) { h.inst.close() },
     teardown(h) { h.inst.destroy() },
   },
 }
 
-// Select-one-option op per library (for the interaction test), in multiple
-// mode so it adds without closing. Best-effort per version; guarded at call.
-const PICK = {
-  llselect: (h, item) => h.inst.toggleItem(item),
-  choices: (h, item) => h.inst.setChoiceByValue(item),
-  select2: (h, item) => { const cur = h.$sel.val() || []; h.$sel.val(cur.concat(item)).trigger('change') },
-  'tom-select': (h, item) => h.inst.addItem(item, true),
-  'slim-select': (h, item) => h.inst.setSelected(h.inst.getSelected().concat(item)),
+// --- per-library faithful-DOM driver --------------------------------------
+// Every interaction phase is driven by the REAL DOM event a user would cause -
+// focus + type to filter, click an option to choose / unchoose, click the tag x
+// to remove - so no API shortcut can skip work the user actually pays for. Each
+// method below was verified in a headless browser. Dropdown selectors target the
+// OPEN content, because Select2 and Slim Select portal it to document.body and
+// leave closed copies behind (a plain document query would hit the wrong one).
+//   - searchInput(h): the search <input> to focus + type into (null = no search).
+//     Choices only searches a FOCUSED input; Tom Select debounces the real
+//     keystroke - both are why filtering goes through this input, not an API that
+//     would bypass the focus gate / the debounce.
+//   - optionUnselected(h) / optionSelected(h): the first not-yet-chosen / chosen
+//     option element in the OPEN list, to click (choose / unchoose).
+//   - tagRemove(h): the first tag's remove (x) button (null = none).
+//   - count(h): how many are currently chosen (to confirm a click did its work).
+function slimOpenContent() { return document.querySelector('.ss-content.ss-open-below, .ss-content.ss-open-above') }
+const DRIVER = {
+  llselect: {
+    open: (h) => h.inst.open(), close: (h) => h.inst.close(),
+    searchInput: (h) => h.mount.querySelector('input'),
+    optionUnselected: (h) => h.mount.querySelector('.llselect-item[aria-selected="false"]:not([data-chosen-state])'),
+    optionSelected: (h) => h.mount.querySelector('.llselect-item[aria-selected="true"]:not([data-chosen-state])'),
+    tagRemove: (h) => h.mount.querySelector('.llselect-tag-remove-button'),
+    count: (h) => h.inst.getChosenItems().length,
+  },
+  choices: {
+    open: (h) => h.inst.showDropdown(), close: (h) => h.inst.hideDropdown(),
+    searchInput: (h) => h.mount.querySelector('input.choices__input--cloned') || h.inst.input.element,
+    optionUnselected: (h) => h.mount.querySelector('.choices__list--dropdown .choices__item--choice:not(.is-selected)'),
+    optionSelected: (h) => h.mount.querySelector('.choices__list--dropdown .choices__item--choice.is-selected'),
+    tagRemove: (h) => h.mount.querySelector('.choices__button'),
+    count: (h) => (h.inst.getValue(true) || []).length,
+  },
+  select2: {
+    open: (h) => h.$sel.select2('open'), close: (h) => h.$sel.select2('close'),
+    searchInput: () => document.querySelector('.select2-container--open .select2-search__field'),
+    optionUnselected: () => document.querySelector('.select2-container--open .select2-results__option--selectable:not(.select2-results__option--selected)'),
+    optionSelected: () => document.querySelector('.select2-container--open .select2-results__option--selected'),
+    tagRemove: (h) => h.mount.querySelector('.select2-selection__choice__remove'),
+    count: (h) => (h.$sel.val() || []).length,
+  },
+  'tom-select': {
+    open: (h) => h.inst.open(), close: (h) => h.inst.close(),
+    searchInput: (h) => h.mount.querySelector('.ts-control input'),
+    optionUnselected: (h) => h.mount.querySelector('.ts-dropdown .option:not(.selected)'),
+    optionSelected: (h) => h.mount.querySelector('.ts-dropdown .option.selected'),
+    tagRemove: (h) => h.mount.querySelector('.ts-control .remove'),
+    count: (h) => h.inst.items.length,
+  },
+  'slim-select': {
+    open: (h) => h.inst.open(), close: (h) => h.inst.close(),
+    searchInput: () => { const c = slimOpenContent(); return c ? c.querySelector('.ss-search input') : null },
+    optionUnselected: () => { const c = slimOpenContent(); return c ? c.querySelector('.ss-option:not(.ss-selected)') : null },
+    optionSelected: () => { const c = slimOpenContent(); return c ? c.querySelector('.ss-option.ss-selected') : null },
+    tagRemove: (h) => h.mount.querySelector('.ss-value-delete'),
+    count: (h) => h.inst.getSelected().length,
+  },
 }
-
-// Select-one for a single-select widget (replaces the value, not adds).
-const PICK_SINGLE = {
-  llselect: (h, item) => h.inst.setChosenItem(item),
-  choices: (h, item) => h.inst.setChoiceByValue(item),
-  select2: (h, item) => h.$sel.val(item).trigger('change'),
-  'tom-select': (h, item) => h.inst.setValue(item, true),
-  'slim-select': (h, item) => h.inst.setSelected(item),
-}
-
-// The first tag's remove (x) button in a multi widget, or null if none. The
-// harness CLICKS it, so this measures the real "click the x to drop the tag"
-// path, not an API call. Choices / Tom Select need their remove-button option
-// enabled (see the adapters); the others show one by default.
-const REMOVE = {
-  llselect: (h) => h.mount.querySelector('.llselect-tag-remove-button'),
-  choices: (h) => h.mount.querySelector('.choices__button'),
-  select2: (h) => h.mount.querySelector('.select2-selection__choice__remove'),
-  'tom-select': (h) => h.mount.querySelector('.ts-control .remove'),
-  'slim-select': (h) => h.mount.querySelector('.ss-value-delete'),
-}
-
-// llselect's CSS classes are `${prefix}-...`; the default prefix is `llselect`.
-const LL = 'llselect'
-
-// The already-chosen option ELEMENT inside the OPEN popup list, for the
-// "Unchoose (in popup)" phase (multi only). The harness CLICKS it to toggle the
-// item off, so this is the "click a selected row in the list to deselect it"
-// path, not an API call. Only libraries whose open list both SHOWS chosen
-// options and deselects them on click appear here (verified against the pinned
-// builds under test):
-//   - llselect: chosen list items carry aria-selected="true" and toggle off.
-//   - Select2: renders chosen options with --selected and, in multiple mode,
-//     fires unselect on a click (its dropdown is portaled to document.body).
-//   - Slim Select: chosen ss-option elements carry .ss-selected (and
-//     aria-selected="true"); the click toggles off only with allowDeselect:true.
-//     Its dropdown (.ss-content) is PORTALED to document.body, and every widget
-//     leaves one there, so the selector targets only the OPEN content
-//     (.ss-open-below / .ss-open-above) - a mount-scoped one missed it, and a
-//     plain document-scoped one hit the wrong widget's leftover content.
-//   - Choices: with renderSelectedChoices:'always' a chosen option stays in the
-//     dropdown carrying .is-selected, so the harness clicks it - but the click
-//     only ever ADDS (never deselects), so the count-drop guard reports n/a.
-//   - Tom Select: with hideSelected:false a chosen option stays in the dropdown
-//     carrying .selected, but a click does NOT deselect it - onOptionSelect just
-//     calls the idempotent addItem. (Only the checkbox_options plugin toggles off
-//     on click, and it changes the rendering to checkboxes, so it is not used; the
-//     remove_button plugin does NOT do this.) The count-drop guard reports n/a.
-// Every non-native library is CLICKED with a full mouse sequence (Select2's
-// results fire on mouseup, not click); the guard, not an assumption, decides
-// whether the click actually deselected. All verified in a headless browser.
-const UNCHOOSE = {
-  llselect: (h) => h.mount.querySelector(`.${LL}-item[aria-selected="true"]:not([data-chosen-state])`),
-  select2: () => document.querySelector('.select2-container--open .select2-results__option--selected'),
-  'slim-select': () => document.querySelector('.ss-content.ss-open-below .ss-option.ss-selected, .ss-content.ss-open-above .ss-option.ss-selected'),
-  choices: (h) => h.mount.querySelector('.choices__list--dropdown .choices__item--choice.is-selected'),
-  'tom-select': (h) => h.mount.querySelector('.ts-dropdown .option.selected'),
-}
-
-// Current chosen-count per library, used to VERIFY an in-popup unchoose click
-// really deselected (the count dropped) instead of no-opping; if it did not, the
-// phase is reported n/a rather than as a misleading number.
-const COUNT = {
-  llselect: (h) => h.inst.getChosenItems().length,
-  choices: (h) => (h.inst.getValue(true) || []).length,
-  select2: (h) => (h.$sel.val() || []).length,
-  'tom-select': (h) => h.inst.items.length,
-  'slim-select': (h) => h.inst.getSelected().length,
-}
-function chosenCount(key, h) { try { return COUNT[key](h) } catch (e) { return NaN } }
 
 function available(key) {
   switch (key) {
@@ -692,8 +656,8 @@ function ixPhases(mode) {
 // Each mode owns its table / chart / stage element ids, its select-one op, and
 // its own live handles + results.
 const IX_MODES = [
-  { key: 'single', label: 'Single-select', multi: false, pick: PICK_SINGLE, live: {}, results: {}, chart: null },
-  { key: 'multi', label: 'Multiple-select', multi: true, pick: PICK, live: {}, results: {}, chart: null },
+  { key: 'single', label: 'Single-select', multi: false, live: {}, results: {}, chart: null },
+  { key: 'multi', label: 'Multiple-select', multi: true, live: {}, results: {}, chart: null },
 ]
 
 function ixStageEl(mode) { return document.getElementById(`ix-${mode.key}-stage`) }
@@ -745,128 +709,115 @@ const IX_REPS = 5
 
 // Each phase is measured on its own - never mixed - so one phase's cost never
 // leaks into another's.
-async function measureInteraction(mode, key, items, stageEl, closeBtn) {
-  const a = ADAPTERS[key]
-  const pick = mode.pick[key]
+async function measureInteraction(mode, key, stageEl, closeBtn) {
+  const d = DRIVER[key]
   const h = mode.live[key]
-  if (!a.open || !a.filter || !pick || !h) { return null }
+  if (!d || !h) { return null } // native has no driver -> the whole row is n/a
   const safeOp = (fn) => { try { fn() } catch (e) { /* ignore */ } }
   const med = arr => { const v = arr.filter(x => x != null); return v.length ? median(v) : null }
+  // Focus the search input and type - the real filter path (Choices only searches
+  // a FOCUSED input; Tom Select debounces the real keystroke). No-op if no search.
+  const typeQuery = (q) => { const i = safe(() => d.searchInput(h)); if (i) { i.focus(); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) } }
+  // A real click on an option element. Slim Select defers a removed tag's
+  // removeChild by a 100ms timer (its exit animation); flush short timers so only
+  // the render work is timed, not the wait.
+  const clickEl = (el) => (key === 'slim-select' ? flushShortTimers(() => fireMouse(el)) : fireMouse(el))
+  // A real click on a tag's x. Select2's bubbles into an unwanted dropdown open,
+  // suppressed via the select2:opening guard so only the removal is timed.
+  const clickTag = (el) => {
+    if (key === 'select2') { select2SuppressOpen = true; try { fireMouse(el) } finally { select2SuppressOpen = false } } else { clickEl(el) }
+  }
+  // Click a batch of not-yet-chosen options (untimed setup), so a phase that needs
+  // existing selections is self-contained regardless of prior state.
+  const chooseBatch = (n) => { for (let i = 0; i < n; i++) { const el = safe(() => d.optionUnselected(h)); if (el) { safeOp(() => clickEl(el)) } } }
 
-  // OPEN: close first (untimed), time the open.
+  // OPEN: close first (untimed), time the open. to-paint (reveal + paint).
   const openS = []
   for (let i = 0; i <= IX_REPS; i++) {
-    safeOp(() => a.close(h)); await raf()
-    const dt = await timeToPaint(() => a.open(h), stageEl, key)
+    safeOp(() => d.close(h)); await raf()
+    const dt = await timeToPaint(() => d.open(h), stageEl, key)
     if (i > 0) { openS.push(dt) } // drop first as warm-up
   }
 
   // CLOSE: open first (untimed), time the close.
   const closeS = []
   for (let i = 0; i <= IX_REPS; i++) {
-    safeOp(() => a.open(h)); await raf()
-    const dt = await timeToPaint(() => a.close(h), stageEl, key)
+    safeOp(() => d.open(h)); await raf()
+    const dt = await timeToPaint(() => d.close(h), stageEl, key)
     if (i > 0) { closeS.push(dt) }
   }
 
-  // FILTER as a round-trip: narrow to half ('' -> q), then restore (q -> ''),
-  // each timed on its own (settle timer, so debounced renders count), reported as
-  // the SUM of the two medians. One filter interaction is type + clear, so a single
-  // direction understates it. Clearing between also keeps every keystroke a real
-  // change.
+  // FILTER round-trip (to-settle): focus + type q (narrows the list), then clear.
+  // Reported as the SUM of the two medians - one filter interaction is type + clear.
   const filterDownS = [], filterUpS = []
-  safeOp(() => a.open(h)); safeOp(() => a.filter(h, '')); await raf()
+  safeOp(() => d.open(h)); typeQuery(''); await raf()
   for (let i = 0; i < IX_REPS; i++) {
-    filterDownS.push(await timeToSettle(() => a.filter(h, 'q'), stageEl, key))
-    filterUpS.push(await timeToSettle(() => a.filter(h, ''), stageEl, key))
+    filterDownS.push(await timeToSettle(() => typeQuery('q'), stageEl, key))
+    filterUpS.push(await timeToSettle(() => typeQuery(''), stageEl, key))
   }
-  safeOp(() => a.close(h)); await raf()
+  safeOp(() => d.close(h)); await raf()
   const fdown = med(filterDownS), fup = med(filterUpS)
   const filter = (fdown == null && fup == null) ? null : (fdown || 0) + (fup || 0)
 
-  // CHOOSE on its own, filter cleared (full list, no filter dependency).
+  // CHOOSE (to-settle): CLICK a not-yet-chosen option in the OPEN list. Multiple:
+  // choose 10, popup staying open. Single: choose one (it closes), repeat.
   const chooseS = []
   if (mode.multi) {
-    // Choose the first 10 items; the popup must stay open the whole time.
-    safeOp(() => a.open(h)); safeOp(() => a.filter(h, '')); await raf()
+    safeOp(() => d.open(h)); typeQuery(''); await raf()
     for (let i = 0; i < 10; i++) {
-      safeOp(() => a.open(h)); await raf() // keep it open (no-op if already open)
-      const dt = await timeToSettle(() => pick(h, items[i]), stageEl, key)
-      if (i > 0) { chooseS.push(dt) } // drop first as warm-up
+      safeOp(() => d.open(h)); await raf() // keep it open (no-op if already open)
+      const el = safe(() => d.optionUnselected(h)); if (!el) { break }
+      const before = d.count(h)
+      const dt = await timeToSettle(() => clickEl(el), stageEl, key)
+      if (i > 0 && d.count(h) > before) { chooseS.push(dt) } // only when it really chose
     }
-    safeOp(() => a.close(h)); await raf()
+    safeOp(() => d.close(h)); await raf()
   } else {
-    // Single: choose one item (it closes); repeat.
     for (let i = 0; i <= IX_REPS; i++) {
-      safeOp(() => a.open(h)); safeOp(() => a.filter(h, '')); await raf()
-      const dt = await timeToSettle(() => pick(h, items[i]), stageEl, key)
+      safeOp(() => d.open(h)); typeQuery(''); await raf()
+      const el = safe(() => d.optionUnselected(h))
+      const dt = el ? await timeToSettle(() => clickEl(el), stageEl, key) : null
       if (i > 0) { chooseS.push(dt) }
-      safeOp(() => a.close(h)); await raf()
+      safeOp(() => d.close(h)); await raf()
     }
   }
 
-  // UNCHOOSE IN POPUP (multi only): choose a fresh batch (untimed), re-open so
-  // the list shows them as selected, then CLICK an already-chosen option IN the
-  // list - timed - which toggles it off. Only the libraries in UNCHOOSE reach
-  // here; the rest read n/a. Each click is verified to actually drop the chosen
-  // count (a click that no-ops must not be timed as if it deselected).
+  // UNCHOOSE (multi): with options chosen, CLICK a chosen one in the OPEN list and
+  // time the toggle-off. n/a when nothing chosen is clickable, or the click does
+  // not drop the chosen count (the library has no in-popup deselect).
   let unchoose = null
   if (mode.multi) {
-    if (!UNCHOOSE[key]) {
-      unchoose = NA
-    } else {
-      safeOp(() => a.open(h)); safeOp(() => a.filter(h, '')); await raf()
-      for (let i = 40; i < 50 && i < items.length; i++) { safeOp(() => pick(h, items[i])) }
-      // Re-open so an already-open list re-tags the freshly (API-)chosen options
-      // as selected (Select2 does not re-mark an open list on a programmatic set).
-      safeOp(() => a.close(h)); await raf(); safeOp(() => a.open(h)); await raf()
-      const unchooseS = []
-      let clicked = 0
-      for (let i = 0; i < 10; i++) {
-        safeOp(() => a.open(h)); await raf() // re-open if a prior unselect closed the popup
-        const el = UNCHOOSE[key](h)
-        if (!el) { break }
-        const before = chosenCount(key, h)
-        // Full mouse sequence (Select2 fires on mouseup); Slim's removed tag has a
-        // 100ms deferred removeChild, flushed so only real work is timed.
-        const clickEl = () => (key === 'slim-select' ? flushShortTimers(() => fireMouse(el)) : fireMouse(el))
-        const dt = await timeToSettle(clickEl, stageEl, key)
-        clicked++
-        if (!(chosenCount(key, h) < before)) { unchoose = NA; break } // click did not deselect -> n/a
-        if (i > 0 && dt != null) { unchooseS.push(dt) } // drop first as warm-up
-      }
-      safeOp(() => a.close(h)); await raf()
-      // No chosen option was clickable in the list (the library hides selected
-      // options, or the selector missed) -> n/a, never a spurious 0.
-      if (unchoose !== NA) { unchoose = clicked === 0 ? NA : med(unchooseS) }
+    safeOp(() => d.open(h)); typeQuery(''); await raf()
+    chooseBatch(10) // ensure some are chosen
+    safeOp(() => d.close(h)); await raf(); safeOp(() => d.open(h)); await raf() // re-render the selected state
+    const unchooseS = []; let clicked = 0
+    for (let i = 0; i < 10; i++) {
+      safeOp(() => d.open(h)); await raf()
+      const el = safe(() => d.optionSelected(h)); if (!el) { break }
+      const before = d.count(h)
+      const dt = await timeToSettle(() => clickEl(el), stageEl, key)
+      clicked++
+      if (!(d.count(h) < before)) { unchoose = NA; break } // click did not deselect
+      if (i > 0 && dt != null) { unchooseS.push(dt) } // drop first as warm-up
     }
+    safeOp(() => d.close(h)); await raf()
+    if (unchoose !== NA) { unchoose = clicked === 0 ? NA : med(unchooseS) }
   }
 
-  // REMOVE TAG (multi + close-button checkbox): choose a fresh batch (untimed) so
-  // tags exist, close the popup, then CLICK each tag's remove (x) button - timed -
-  // dropping the item and re-rendering. The "press x to drop a tag" path. Gated
-  // on the checkbox because it forces the opt-in x onto Choices / Tom Select.
+  // REMOVE TAG (multi + close-button checkbox): with tags present, CLICK each tag's
+  // remove (x) and time the removal. n/a when the library shows no x.
   let removeTag = null
   if (mode.multi && closeBtn) {
-    if (!REMOVE[key]) {
+    safeOp(() => d.open(h)); typeQuery(''); await raf()
+    chooseBatch(10) // ensure tags exist
+    safeOp(() => d.close(h)); await raf()
+    if (!safe(() => d.tagRemove(h))) {
       removeTag = NA
     } else {
       const removeS = []
-      safeOp(() => a.open(h))
-      for (let i = 20; i < 30 && i < items.length; i++) { safeOp(() => pick(h, items[i])) }
-      safeOp(() => a.close(h)); await raf()
       for (let i = 0; i < 10; i++) {
-        const btn = REMOVE[key](h)
-        if (!btn) { break }
-        // Select2 opens its dropdown on this click (bubbling quirk) - suppress the
-        // open so only the removal is timed. Slim defers the tag's removeChild by
-        // 100ms (animation) - flush it. Full mouse sequence for parity.
-        const click = key === 'select2'
-          ? () => { select2SuppressOpen = true; try { fireMouse(btn) } finally { select2SuppressOpen = false } }
-          : key === 'slim-select'
-            ? () => flushShortTimers(() => fireMouse(btn))
-            : () => fireMouse(btn)
-        const dt = await timeToSettle(click, stageEl, key)
+        const btn = safe(() => d.tagRemove(h)); if (!btn) { break }
+        const dt = await timeToSettle(() => clickTag(btn), stageEl, key)
         if (i > 0 && dt != null) { removeS.push(dt) } // drop first as warm-up
       }
       removeTag = med(removeS)
@@ -1012,7 +963,7 @@ async function ixBuildAndMeasure() {
       // open / filter / close all measure ~0 on a widget that never opened.
       cell.scrollIntoView({ block: 'center', behavior: 'instant' })
       await raf()
-      const m = ADAPTERS[key].noFilter ? null : await measureInteraction(mode, key, items, stageEl, closeBtn)
+      const m = await measureInteraction(mode, key, stageEl, closeBtn)
       ixSetRow(mode, key, m)
       if (m && m.open != null) { mode.results[key] = m }
       ixHighlightBest(mode)
