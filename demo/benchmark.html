@@ -242,11 +242,11 @@
     <li>The custom-renderer variant adds one MDI icon per item through each
       library's item-render hook, and to the chosen display too (llselect tag /
       trigger, Select2 templateSelection, Tom Select render.item, Choices HTML
-      label). One exception: Slim Select v2 renders a selected chip as
-      <code>textContent = option.text</code> with no per-chip HTML hook, so its
-      chips stay plain text - a real library limitation, not a missing adapter.
-      This benches a plain searchable select otherwise; tagging, remote data and
-      templating are out of scope.</li>
+      label). Slim Select v2's multi chip is <code>textContent = option.text</code>
+      with no per-chip HTML hook, but the chip carries the
+      <code>.ss-value-text</code> class, so the icon is injected with a CSS
+      <code>::before</code> instead. This benches a plain searchable select
+      otherwise; tagging, remote data and templating are out of scope.</li>
     <li>A <strong>"-"</strong> or <strong>error</strong> means the adapter could
       not drive that library on the loaded CDN version - tell me which cell.</li>
     <li>Versions under test: <span id="versions"></span></li>

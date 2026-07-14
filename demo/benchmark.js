@@ -188,6 +188,11 @@ const ADAPTERS = {
       const k = preCount(items, opts)
       const sel = makeSelect(mount, opts.multi)
       const data = items.map((v, i) => (opts.custom ? { text: v, value: v, html: iconHtml(v), selected: i < k } : { text: v, value: v, selected: i < k }))
+      // Slim Select v2's multi chip is textContent = option.text (no per-chip
+      // HTML hook), so the icon cannot go through the data. But the chip carries
+      // the .ss-value-text class, so a CSS ::before injects it - and being a CSS
+      // rule it re-applies to chips Slim Select re-renders on every change.
+      if (opts.custom && opts.multi) { mount.classList.add('bench-slim-custom') }
       // closeOnSelect: false so a multi choose keeps the popup open for
       // continuous selection (Slim Select otherwise closes it, which is unfair).
       return { inst: new window.SlimSelect({ select: sel, settings: { showSearch: true, closeOnSelect: !opts.multi }, data }) }

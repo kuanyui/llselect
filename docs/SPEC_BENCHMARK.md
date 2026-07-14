@@ -46,7 +46,10 @@ dependency-free.
   icon to list items AND to the chosen chip / trigger (llselect
   `createTagContentElFn` / `createTriggerContentElFn`, Select2
   `templateSelection`, Tom Select `render.item`, Choices HTML label). Slim Select
-  v2 cannot: its chip is `textContent = option.text`, no per-chip HTML hook.
+  v2's multi chip is `textContent = option.text` (no per-chip HTML hook), so the
+  icon is injected with a CSS `::before` on the chip's `.ss-value-text` class -
+  which, being a CSS rule, survives the chip re-renders Slim Select does on every
+  change.
 - **Transitions off while measuring.** A run injects
   `* { transition:none; animation:none }`, so a CSS open/close animation (Slim
   Select) is not counted as work.
@@ -169,5 +172,6 @@ browser-driven).
   search; `render.option` + `render.item` for the icon; `closeAfterSelect:false`
   for multi.
 - **Slim Select** - debounced search; open/close transition (disabled while
-  measuring); `closeOnSelect:false` for multi; chip is plain text (no per-chip
-  HTML), so the custom icon cannot reach its chips.
+  measuring); `closeOnSelect:false` for multi; multi chip is `textContent` only,
+  so the custom icon reaches it through a CSS `::before` on `.ss-value-text`
+  (added when the mount gets the `bench-slim-custom` class), not through data.
