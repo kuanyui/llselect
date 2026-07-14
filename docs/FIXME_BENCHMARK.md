@@ -95,8 +95,18 @@ cannot do the thing.
       jsdom-verified.)
 - [ ] Verify the Unchoose-in-popup phase in a browser: the chosen-option selectors
       (`.llselect-item[aria-selected="true"]`, Select2
-      `.select2-results__option--selected`, Slim `.ss-option[aria-selected="true"]`)
-      find a clickable element in the OPEN list and the click drops the chosen
-      count; and that Choices / Tom Select correctly fall to n/a (the count-drop
-      guard reports n/a, it does not time a no-op click). Source-verified above,
-      but the actual DOM classes / open-list rendering need a real browser.
+      `.select2-results__option--selected`, Slim `.ss-option[aria-selected="true"]`,
+      Choices `.choices__list--dropdown .choices__item--choice.is-selected`) find a
+      clickable element in the OPEN list; the click drops the chosen count for
+      llselect / Select2 / Slim; and Choices lands on n/a via the count-drop guard
+      (its `.is-selected` option IS clicked but the click only adds, never
+      deselects) while Tom Select is n/a (no dropdown marker to target). The
+      count-drop guard must report n/a, never time a no-op click.
+- [ ] Verify the "keep selected in the list" settings in a browser:
+      `renderSelectedChoices: 'always'` (Choices) and `hideSelected: false` (Tom
+      Select) keep a chosen option visible in the dropdown, so choosing / filtering
+      re-renders the full-size list (not one that shrinks per selection).
+- [ ] Verify Slim Select's `maxValuesShown: Infinity` prevents the tag collapse:
+      select more than 20 and confirm it renders one chip per item, NOT a single
+      `{n} selected` (`.ss-max`) summary. Sanity-check the mass multi + pre-select
+      DOM-node count for Slim at 1,000 x 10 reflects ~100 chips, not 1.

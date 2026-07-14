@@ -126,7 +126,11 @@ const ADAPTERS = {
     setup(mount, items, opts) {
       const k = preCount(items, opts)
       const sel = makeSelect(mount, opts.multi)
-      const inst = new window.Choices(sel, { searchEnabled: true, allowHTML: !!opts.custom, silent: true, removeItemButton: !!(opts.multi && opts.closeBtn) })
+      // renderSelectedChoices: 'always' (multi) keeps a chosen option in the
+      // dropdown instead of removing it (Choices' default), so choosing / filtering
+      // re-renders the same-size list as llselect / Select2 / Slim Select, which
+      // keep it. Without this Choices re-renders a shrinking list and does less work.
+      const inst = new window.Choices(sel, { searchEnabled: true, allowHTML: !!opts.custom, silent: true, removeItemButton: !!(opts.multi && opts.closeBtn), renderSelectedChoices: opts.multi ? 'always' : 'auto' })
       inst.setChoices(items.map((v, i) => ({ value: v, label: opts.custom ? iconHtml(v) : v, selected: i < k })), 'value', 'label', true)
       return { inst, mount }
     },
@@ -165,10 +169,14 @@ const ADAPTERS = {
       // only 50 at a time, so without this it would build a fraction of the list
       // and look fastest for free - not the same work as the others.
       // closeAfterSelect: false keeps the popup open on a multi choose.
+      // hideSelected: false keeps a chosen option in the dropdown (Tom Select
+      // hides it by default for multi), so choosing / filtering re-renders the
+      // same-size list as the libraries that keep it - not a shrinking one.
       const cfg = {
         options: items.map(v => ({ value: v, text: v })),
         maxItems: opts.multi ? null : 1,
         maxOptions: null,
+        hideSelected: false,
         closeAfterSelect: !opts.multi,
       }
       if (opts.multi && opts.closeBtn) { cfg.plugins = ['remove_button'] } // an x on each tag (opt-in)
@@ -201,7 +209,11 @@ const ADAPTERS = {
       // list toggle it off (the Unchoose-in-popup phase). Without it Slim Select
       // ignores such a click (verified in slimselect.umd.js: the option click
       // handler early-returns when `option.selected && !allowDeselect`). Multi only.
-      return { inst: new window.SlimSelect({ select: sel, settings: { showSearch: true, closeOnSelect: !opts.multi, allowDeselect: !!opts.multi }, data }), mount }
+      // maxValuesShown: Infinity stops Slim Select collapsing all chips into a
+      // single "{n} selected" summary once more than maxValuesShown (default 20)
+      // are selected - that would render one node instead of n and make its multi
+      // DOM-node / tag work collapse to near-nothing, which is not the same work.
+      return { inst: new window.SlimSelect({ select: sel, settings: { showSearch: true, closeOnSelect: !opts.multi, allowDeselect: !!opts.multi, maxValuesShown: Infinity }, data }), mount }
     },
     open(h) { h.inst.open() },
     filter(h, q) { const i = document.querySelector('.ss-content .ss-search input'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) },
@@ -255,14 +267,19 @@ const LL = 'llselect'
 //     fires unselect on a click (its dropdown is portaled to document.body).
 //   - Slim Select: chosen ss-option elements carry aria-selected="true"; the
 //     click toggles off only with allowDeselect:true (set in the adapter).
-// Choices and Tom Select are absent on purpose: a click on an already-selected
-// option is a no-op there (Choices' choice handler acts only when NOT selected;
-// Tom Select's addItem is idempotent), so they offer no in-popup unchoose - only
-// the tag x (the Remove-tag phase). Their Unchoose cell reads n/a.
+//   - Choices: with renderSelectedChoices:'always' (set in the adapter) a chosen
+//     option stays in the dropdown carrying .is-selected, so the harness CAN click
+//     it - but the click does not deselect (its choice handler only ever ADDS),
+//     so the count-drop guard reports n/a. Attempted and measured, not asserted.
+// Tom Select is absent: even with hideSelected:false its dropdown gives a chosen
+// option no marker to target (only the highlighted one gets a class), and its
+// addItem is idempotent, so there is no in-popup unchoose to click - only the
+// tag x (the Remove-tag phase). Its Unchoose cell reads n/a.
 const UNCHOOSE = {
   llselect: (h) => h.mount.querySelector(`.${LL}-item[aria-selected="true"]:not([data-chosen-state])`),
   select2: () => document.querySelector('.select2-container--open .select2-results__option--selected'),
   'slim-select': (h) => h.mount.querySelector('.ss-option[aria-selected="true"]'),
+  choices: (h) => h.mount.querySelector('.choices__list--dropdown .choices__item--choice.is-selected'),
 }
 
 // Current chosen-count per library, used to VERIFY an in-popup unchoose click
@@ -756,17 +773,21 @@ async function measureInteraction(mode, key, items, stageEl, closeBtn) {
       // as selected (Select2 does not re-mark an open list on a programmatic set).
       safeOp(() => a.close(h)); await raf(); safeOp(() => a.open(h)); await raf()
       const unchooseS = []
+      let clicked = 0
       for (let i = 0; i < 10; i++) {
         safeOp(() => a.open(h)); await raf() // re-open if a prior unselect closed the popup
         const el = UNCHOOSE[key](h)
         if (!el) { break }
         const before = chosenCount(key, h)
         const dt = await timeToSettle(() => el.click(), stageEl, key)
-        if (!(chosenCount(key, h) < before)) { unchoose = NA; break } // click did not deselect
+        clicked++
+        if (!(chosenCount(key, h) < before)) { unchoose = NA; break } // click did not deselect -> n/a
         if (i > 0 && dt != null) { unchooseS.push(dt) } // drop first as warm-up
       }
       safeOp(() => a.close(h)); await raf()
-      if (unchoose !== NA) { unchoose = med(unchooseS) }
+      // No chosen option was clickable in the list (the library hides selected
+      // options, or the selector missed) -> n/a, never a spurious 0.
+      if (unchoose !== NA) { unchoose = clicked === 0 ? NA : med(unchooseS) }
     }
   }
 

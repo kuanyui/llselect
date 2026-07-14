@@ -190,14 +190,15 @@
         multiple-select table adds the two deselect columns below.</li>
       <li><strong>Unchoose (in popup)</strong> - multiple only. With items chosen,
         CLICK an already-chosen option <em>in the open list</em> and time the
-        toggle-off + re-render (a real click, not an API call). Only libraries
-        whose open list both shows chosen options and deselects them on click can
-        do this: <strong>llselect</strong> and <strong>Select2</strong> natively,
-        <strong>Slim Select</strong> via its <code>allowDeselect</code> setting.
-        <strong>Choices</strong> and <strong>Tom Select</strong> read <code>n/a</code>:
-        a click on an already-selected option is a no-op there (their only removal
-        path is the tag x), verified against the loaded builds. Each timed click
-        is checked to actually drop the chosen count, else it is reported n/a.</li>
+        toggle-off + re-render (a real click, not an API call). <strong>llselect</strong>
+        and <strong>Select2</strong> do this natively; <strong>Slim Select</strong>
+        via its <code>allowDeselect</code> setting. <strong>Choices</strong> keeps
+        its chosen options in the list (<code>renderSelectedChoices</code>) so the
+        harness does click one, but the click only ever adds, never deselects, so it
+        reads <code>n/a</code> - measured, not assumed. <strong>Tom Select</strong>
+        gives a chosen option no marker in its dropdown and its add is idempotent,
+        so there is nothing to target: <code>n/a</code>. Every timed click is checked
+        to actually drop the chosen count, else the phase is n/a.</li>
       <li><strong>Remove tag (x)</strong> - multiple only, and only when
         <em>test close button on multiple tags</em> is ticked. CLICK each tag's
         remove (x) button and time the removal + re-render - the "press x to drop
@@ -254,6 +255,12 @@
       dropdown to 50 options by default; it is forced to <code>maxOptions: null</code>
       so it builds the whole list like the others, instead of a fraction that
       looks fastest for free.</li>
+    <li><strong>Selected options stay in the list.</strong> Choices and Tom Select
+      drop a chosen option from the dropdown by default, so choosing one shrinks
+      their list and they re-render less than llselect / Select2 / Slim Select
+      (which keep it and just re-mark it). They are set to keep it
+      (<code>renderSelectedChoices: 'always'</code> / <code>hideSelected: false</code>)
+      so every library re-renders the same-size list while you choose and filter.</li>
     <li><strong>Timed to the painted frame, not the function return</strong>
       (open / close). Libraries reveal a <code>display:none</code> list on a later
       <code>requestAnimationFrame</code> (Choices), so the real cost - laying out
@@ -282,6 +289,12 @@
     <li><strong>Multi renders tags.</strong> llselect uses
       <code>triggerDisplay: 'tags'</code> so it draws one chip per chosen item like
       every competitor, not its cheaper count summary.</li>
+    <li><strong>No collapsing tags into a summary.</strong> Slim Select shows a
+      single "{n} selected" chip once more than <code>maxValuesShown</code>
+      (default 20) items are selected - one node instead of n. It is set to
+      <code>maxValuesShown: Infinity</code> so it renders one chip per selected
+      item like the others; otherwise its multi DOM-node count and its tag / choose
+      work would collapse to near-nothing past 20 selections.</li>
     <li><strong>Multi keeps the popup open on choose.</strong> Select2, Tom Select
       and Slim Select are configured (<code>closeOnSelect</code> /
       <code>closeAfterSelect</code>) so choosing does not close the dropdown and

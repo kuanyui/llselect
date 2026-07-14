@@ -57,6 +57,17 @@ dependency-free.
 - **Everyone renders the same N options.** Tom Select caps the rendered options
   (default 50), so it is forced to `maxOptions: null` - otherwise it builds a
   fraction of the list and looks fastest for free, which is not the same work.
+- **Selected options stay in the list.** Choices and Tom Select drop a chosen
+  option from the dropdown by default, so choosing one shrinks their list and they
+  re-render less than llselect / Select2 / Slim Select (which keep it and re-mark
+  it). They are set to keep it (`renderSelectedChoices: 'always'` /
+  `hideSelected: false`) so every library re-renders the same-size list while
+  choosing and filtering.
+- **No collapsing tags into a summary.** Slim Select collapses all chips into one
+  `{n} selected` summary once more than `maxValuesShown` (default 20) are selected
+  - one node instead of n. It is set to `maxValuesShown: Infinity` so it renders
+  one chip per selected item like the others; otherwise its multi DOM-node count
+  and its tag / choose work would collapse to near-nothing past 20 selections.
 - **Multi keeps the popup open on choose.** Select2 (`closeOnSelect`), Tom Select
   (`closeAfterSelect`), and Slim Select (`closeOnSelect`) are configured so a
   multi choose does not close the dropdown - matching llselect and normal
@@ -65,12 +76,14 @@ dependency-free.
 - **Deselect paths are configured from each library's real API, not assumed.**
   For the Unchoose-in-popup phase, Slim Select is given `allowDeselect: true`
   (its documented switch for click-to-deselect); Select2 and llselect need no
-  setting. Where a library genuinely cannot deselect from the open list (Choices,
-  Tom Select - verified in their loaded builds), the phase is n/a, detected by
-  checking the chosen count actually dropped rather than assumed. The tag x
-  (Remove-tag) column is opt-in and off by default, because Choices and Tom
-  Select only grow a tag x through a setting / plugin - forcing it on everyone
-  would not be their default rendering.
+  setting. Choices keeps its chosen options in the list (`renderSelectedChoices:
+  'always'`) so the harness does click one, but the click only ever adds and never
+  deselects, so it lands on n/a - determined by the chosen-count guard, not
+  asserted. Tom Select gives a chosen option no dropdown marker to target and its
+  add is idempotent, so it is n/a. Every timed click is checked to actually drop
+  the chosen count. The tag x (Remove-tag) column is opt-in and off by default,
+  because Choices and Tom Select only grow a tag x through a setting / plugin -
+  forcing it on everyone would not be their default rendering.
 - **Guarded adapters.** Every op is wrapped; an adapter that cannot drive a
   loaded version reports `-` / error for that cell instead of breaking the page.
 
@@ -199,6 +212,15 @@ browser-driven).
   close the dropdown after a selection by default, skipping the open-list
   re-render that llselect and the others pay. Fix: `closeOnSelect:false` /
   `closeAfterSelect:false` for multi.
+- **Choices / Tom Select removed chosen options from the dropdown.** Both drop a
+  chosen option from the list by default, so choosing shrinks their list and they
+  re-render less than the libraries that keep it. Fix: `renderSelectedChoices:
+  'always'` / `hideSelected: false` so all re-render the same-size list.
+- **Slim Select collapsed tags past 20.** With more than `maxValuesShown` (default
+  20) selected, Slim Select replaces every chip with one `{n} selected` summary -
+  one node instead of n, so its multi DOM-node count and tag work collapse to
+  near-nothing. Fix: `maxValuesShown: Infinity` so it always renders one chip per
+  item.
 
 ## Per-library adapter notes
 
@@ -210,22 +232,28 @@ browser-driven).
   one toggles it off - the Unchoose-in-popup path.
 - **Choices.js** - eager-renders all options at init; `display:none` until show;
   rAF-scheduled show/hide. HTML label carries the custom icon into the chip.
-  `removeItemButton` for multi only when the close-button checkbox is on. A click
-  on an already-selected choice is a no-op (its choice handler acts only when the
-  choice is NOT selected), so in-popup unchoose is n/a - removal is the tag x.
+  `removeItemButton` for multi only when the close-button checkbox is on.
+  `renderSelectedChoices: 'always'` for multi keeps a chosen option in the dropdown
+  (its default drops it) so it re-renders the same-size list. A click on an
+  already-selected choice still only adds, never deselects (its choice handler acts
+  only when the choice is NOT selected), so in-popup unchoose is n/a - measured by
+  the count guard, removal is the tag x.
 - **Select2** - needs jQuery (counted separately in bundle size). Portals its
   dropdown to `document.body`. `templateResult` + `templateSelection` for the
   icon. Renders chosen options in the results with `--selected` and fires
   `unselect` on a click in multiple mode, so in-popup unchoose works natively.
 - **Tom Select** - caps rendered options to 50 by default; forced to
-  `maxOptions: null` here so it renders the same N as the others. Debounced
-  search; `render.option` + `render.item` for the icon; `closeAfterSelect:false`
-  for multi, and the `remove_button` plugin (for the tag x) only when the
-  close-button checkbox is on. `addItem` is idempotent, so clicking an
-  already-selected option is a no-op - in-popup unchoose is n/a.
+  `maxOptions: null` here so it renders the same N as the others. `hideSelected:
+  false` keeps a chosen option in the dropdown (it hides it by default for multi)
+  so it re-renders the same-size list. Debounced search; `render.option` +
+  `render.item` for the icon; `closeAfterSelect:false` for multi, and the
+  `remove_button` plugin (for the tag x) only when the close-button checkbox is on.
+  `addItem` is idempotent and a chosen option gets no dropdown marker, so in-popup
+  unchoose is n/a.
 - **Slim Select** - debounced search; open/close transition (disabled while
   measuring); `closeOnSelect:false` for multi; `allowDeselect:true` for multi so a
   click on a chosen option in the open list toggles it off (the Unchoose phase;
-  without it the click is ignored). Multi chip is `textContent` only, so the
-  custom icon cannot reach its chips (dropdown options only) - a real limitation,
-  left plain rather than faked with a free CSS `::before`.
+  without it the click is ignored); `maxValuesShown: Infinity` so it never
+  collapses chips into a `{n} selected` summary. Multi chip is `textContent` only,
+  so the custom icon cannot reach its chips (dropdown options only) - a real
+  limitation, left plain rather than faked with a free CSS `::before`.
