@@ -140,7 +140,9 @@ const ADAPTERS = {
       const k = preCount(items, opts)
       const sel = makeSelect(mount, opts.multi)
       const $sel = window.jQuery(sel)
-      const cfg = { data: items.map(v => ({ id: v, text: v })), width: '260px' }
+      // closeOnSelect: false keeps the popup open on a multi choose (Select2
+      // otherwise closes it after each selection, which is unfair).
+      const cfg = { data: items.map(v => ({ id: v, text: v })), width: '260px', closeOnSelect: !opts.multi }
       if (opts.custom) {
         const tmpl = (o) => (o.id ? window.jQuery('<span>' + iconHtml(o.text) + '</span>') : o.text)
         cfg.templateResult = tmpl // dropdown option
@@ -159,9 +161,16 @@ const ADAPTERS = {
     setup(mount, items, opts) {
       const k = preCount(items, opts)
       const sel = makeSelect(mount, opts.multi)
-      // Keep Tom Select's rendered-option cap: capping is its perf strategy,
-      // the counterpart to llselect's lazy render (see caveats).
-      const cfg = { options: items.map(v => ({ value: v, text: v })), maxItems: opts.multi ? null : 1 }
+      // maxOptions: null renders EVERY option. Tom Select defaults to rendering
+      // only 50 at a time, so without this it would build a fraction of the list
+      // and look fastest for free - not the same work as the others.
+      // closeAfterSelect: false keeps the popup open on a multi choose.
+      const cfg = {
+        options: items.map(v => ({ value: v, text: v })),
+        maxItems: opts.multi ? null : 1,
+        maxOptions: null,
+        closeAfterSelect: !opts.multi,
+      }
       if (k > 0) { cfg.items = items.slice(0, k) }
       if (opts.custom) {
         const tmpl = (d, esc) => '<div>' + iconHtml(esc(d.text)) + '</div>'
@@ -179,7 +188,9 @@ const ADAPTERS = {
       const k = preCount(items, opts)
       const sel = makeSelect(mount, opts.multi)
       const data = items.map((v, i) => (opts.custom ? { text: v, value: v, html: iconHtml(v), selected: i < k } : { text: v, value: v, selected: i < k }))
-      return { inst: new window.SlimSelect({ select: sel, settings: { showSearch: true }, data }) }
+      // closeOnSelect: false so a multi choose keeps the popup open for
+      // continuous selection (Slim Select otherwise closes it, which is unfair).
+      return { inst: new window.SlimSelect({ select: sel, settings: { showSearch: true, closeOnSelect: !opts.multi }, data }) }
     },
     open(h) { h.inst.open() },
     filter(h, q) { const i = document.querySelector('.ss-content .ss-search input'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) },

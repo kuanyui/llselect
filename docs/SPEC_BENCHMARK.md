@@ -50,6 +50,14 @@ dependency-free.
 - **Transitions off while measuring.** A run injects
   `* { transition:none; animation:none }`, so a CSS open/close animation (Slim
   Select) is not counted as work.
+- **Everyone renders the same N options.** Tom Select caps the rendered options
+  (default 50), so it is forced to `maxOptions: null` - otherwise it builds a
+  fraction of the list and looks fastest for free, which is not the same work.
+- **Multi keeps the popup open on choose.** Select2 (`closeOnSelect`), Tom Select
+  (`closeAfterSelect`), and Slim Select (`closeOnSelect`) are configured so a
+  multi choose does not close the dropdown - matching llselect and normal
+  multi-select UX. A library that closes would skip the open-list re-render and
+  look cheaper.
 - **Guarded adapters.** Every op is wrapped; an adapter that cannot drive a
   loaded version reports `-` / error for that cell instead of breaking the page.
 
@@ -134,6 +142,13 @@ browser-driven).
   animation time to the number. Fix: disable transitions/animations during a run.
 - **Unfair bundle size.** llselect's UMD shipped unminified while competitors
   loaded `.min.js`. Fix: minify the UMD (added terser to the library build).
+- **Tom Select rendered only 50 options.** Its default `maxOptions: 50` meant it
+  built a fraction of the list and looked fastest for free. Fix:
+  `maxOptions: null` so it renders the same N.
+- **Multi choose closed the popup for some libraries.** Slim Select (and Select2)
+  close the dropdown after a selection by default, skipping the open-list
+  re-render that llselect and the others pay. Fix: `closeOnSelect:false` /
+  `closeAfterSelect:false` for multi.
 
 ## Per-library adapter notes
 
@@ -147,7 +162,10 @@ browser-driven).
 - **Select2** - needs jQuery (counted separately in bundle size). Portals its
   dropdown to `document.body`. `templateResult` + `templateSelection` for the
   icon.
-- **Tom Select** - caps the number of rendered options (its own perf strategy);
-  debounced search; `render.option` + `render.item` for the icon.
-- **Slim Select** - debounced search; open/close transition; chip is plain text
-  (no per-chip HTML), so the custom icon cannot reach its chips.
+- **Tom Select** - caps rendered options to 50 by default; forced to
+  `maxOptions: null` here so it renders the same N as the others. Debounced
+  search; `render.option` + `render.item` for the icon; `closeAfterSelect:false`
+  for multi.
+- **Slim Select** - debounced search; open/close transition (disabled while
+  measuring); `closeOnSelect:false` for multi; chip is plain text (no per-chip
+  HTML), so the custom icon cannot reach its chips.
