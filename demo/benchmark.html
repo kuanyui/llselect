@@ -206,17 +206,17 @@
       <li><strong>Columns differ per mode.</strong> The single-select table stops
         at Open / Filter / Choose / Close (no tags, no in-popup unchoose). The
         multiple-select table adds the two deselect columns below.</li>
-      <li><strong>Unchoose (in popup)</strong> - multiple only. With items chosen,
-        CLICK an already-chosen option <em>in the open list</em> and time the
-        toggle-off + re-render (a real click, not an API call). Every non-native
-        library is clicked; the harness checks the chosen count actually dropped and
-        reads <code>n/a</code> if it did not. <strong>llselect</strong> and
-        <strong>Select2</strong> deselect natively; <strong>Slim Select</strong> with
-        <code>allowDeselect</code>; <strong>Tom Select</strong> when its
-        <code>remove_button</code> plugin is on (tick "test close button on multiple
-        tags") - its dropdown then removes a chosen option on click, otherwise the
-        click no-ops and it reads n/a. <strong>Choices</strong> keeps chosen options
-        visible but its click only ever adds, never deselects, so it reads n/a.</li>
+      <li><strong>Unchoose (in popup)</strong> - multiple only. CLICK an
+        already-chosen option <em>in the open list</em> - with a full mouse sequence,
+        because Select2's results fire on <code>mouseup</code>, not a synthetic
+        click - and time the toggle-off. The harness checks the chosen count actually
+        dropped and reads <code>n/a</code> if not. <strong>llselect</strong>,
+        <strong>Select2</strong> and <strong>Slim Select</strong> (with
+        <code>allowDeselect</code>) deselect on click. <strong>Choices</strong> and
+        <strong>Tom Select</strong> read <code>n/a</code>: clicking a chosen option
+        only re-adds it - both keep it visible, but neither deselects from the list
+        (Tom would only with a plugin that turns options into checkboxes). All
+        verified in a headless browser.</li>
       <li><strong>Remove tag (x)</strong> - multiple only, and only when
         <em>test close button on multiple tags</em> is ticked. CLICK each tag's
         remove (x) button and time the removal + re-render - the "press x to drop

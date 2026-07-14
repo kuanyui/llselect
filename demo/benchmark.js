@@ -270,23 +270,27 @@ const LL = 'llselect'
 //   - llselect: chosen list items carry aria-selected="true" and toggle off.
 //   - Select2: renders chosen options with --selected and, in multiple mode,
 //     fires unselect on a click (its dropdown is portaled to document.body).
-//   - Slim Select: chosen ss-option elements carry aria-selected="true"; the
-//     click toggles off only with allowDeselect:true (set in the adapter).
+//   - Slim Select: chosen ss-option elements carry .ss-selected (and
+//     aria-selected="true"); the click toggles off only with allowDeselect:true.
+//     Its dropdown (.ss-content) is PORTALED to document.body, and every widget
+//     leaves one there, so the selector targets only the OPEN content
+//     (.ss-open-below / .ss-open-above) - a mount-scoped one missed it, and a
+//     plain document-scoped one hit the wrong widget's leftover content.
 //   - Choices: with renderSelectedChoices:'always' a chosen option stays in the
 //     dropdown carrying .is-selected, so the harness clicks it - but the click
 //     only ever ADDS (never deselects), so the count-drop guard reports n/a.
-//     Attempted and measured, not asserted.
 //   - Tom Select: with hideSelected:false a chosen option stays in the dropdown
-//     carrying .selected. A click deselects it ONLY when the remove_button plugin
-//     is active - its onOptionSelect hook calls removeItem on a .selected option -
-//     i.e. when the close-button checkbox is on; otherwise the click no-ops. The
-//     count-drop guard decides: measured when it deselects, n/a when it does not.
-// So every non-native library is CLICKED; the guard, not an assumption, decides
-// whether the click actually deselected (and the cell reads n/a when it did not).
+//     carrying .selected, but a click does NOT deselect it - onOptionSelect just
+//     calls the idempotent addItem. (Only the checkbox_options plugin toggles off
+//     on click, and it changes the rendering to checkboxes, so it is not used; the
+//     remove_button plugin does NOT do this.) The count-drop guard reports n/a.
+// Every non-native library is CLICKED with a full mouse sequence (Select2's
+// results fire on mouseup, not click); the guard, not an assumption, decides
+// whether the click actually deselected. All verified in a headless browser.
 const UNCHOOSE = {
   llselect: (h) => h.mount.querySelector(`.${LL}-item[aria-selected="true"]:not([data-chosen-state])`),
   select2: () => document.querySelector('.select2-container--open .select2-results__option--selected'),
-  'slim-select': (h) => h.mount.querySelector('.ss-option[aria-selected="true"]'),
+  'slim-select': () => document.querySelector('.ss-content.ss-open-below .ss-option.ss-selected, .ss-content.ss-open-above .ss-option.ss-selected'),
   choices: (h) => h.mount.querySelector('.choices__list--dropdown .choices__item--choice.is-selected'),
   'tom-select': (h) => h.mount.querySelector('.ts-dropdown .option.selected'),
 }
@@ -320,6 +324,25 @@ function available(key) {
 const raf = () => new Promise(r => requestAnimationFrame(r))
 function reflow(el) { return el.offsetHeight }
 function safe(fn) { try { return fn() } catch (e) { console.warn(e); return null } }
+// Some libraries bind their option / result click to mousedown / mouseup, not the
+// synthetic click event - Select2's results fire on mouseup, so el.click() alone
+// never selects/deselects there. Dispatch the full pointer + mouse sequence.
+function fireMouse(el) {
+  for (const t of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click']) {
+    el.dispatchEvent(new MouseEvent(t, { bubbles: true, cancelable: true, view: window }))
+  }
+}
+// Slim Select defers a chip's actual removeChild by a hardcoded 100ms setTimeout
+// (its exit animation), which the CSS animation:none override cannot reach - so a
+// removal / deselect would time ~100ms of animation, not work. Run SHORT timers
+// immediately around such a click so the measured settle is the real re-render.
+// Long timers (a ~200ms search debounce) are left alone, so real debounce latency
+// is still counted.
+function flushShortTimers(fn) {
+  const orig = window.setTimeout
+  window.setTimeout = (cb, d, ...a) => (typeof cb === 'function' && (d || 0) <= 120 ? (queueMicrotask(() => cb(...a)), 0) : orig(cb, d, ...a))
+  try { return fn() } finally { window.setTimeout = orig }
+}
 function median(xs) { const s = xs.slice().sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2 }
 function buildItems(n) { return Array.from({ length: n }, (_, i) => 'Item ' + String(i + 1).padStart(6, '0')) }
 // Interaction items: every other one carries a ' q' token so a single-character
@@ -804,7 +827,10 @@ async function measureInteraction(mode, key, items, stageEl, closeBtn) {
         const el = UNCHOOSE[key](h)
         if (!el) { break }
         const before = chosenCount(key, h)
-        const dt = await timeToSettle(() => el.click(), stageEl, key)
+        // Full mouse sequence (Select2 fires on mouseup); Slim's removed chip has a
+        // 100ms deferred removeChild, flushed so only real work is timed.
+        const clickEl = () => (key === 'slim-select' ? flushShortTimers(() => fireMouse(el)) : fireMouse(el))
+        const dt = await timeToSettle(clickEl, stageEl, key)
         clicked++
         if (!(chosenCount(key, h) < before)) { unchoose = NA; break } // click did not deselect -> n/a
         if (i > 0 && dt != null) { unchooseS.push(dt) } // drop first as warm-up
@@ -832,11 +858,14 @@ async function measureInteraction(mode, key, items, stageEl, closeBtn) {
       for (let i = 0; i < 10; i++) {
         const btn = REMOVE[key](h)
         if (!btn) { break }
-        // Select2 opens its dropdown on this click (bubbling quirk); suppress that
-        // open so only the removal is timed, not an unwanted open render.
+        // Select2 opens its dropdown on this click (bubbling quirk) - suppress the
+        // open so only the removal is timed. Slim defers the chip's removeChild by
+        // 100ms (animation) - flush it. Full mouse sequence for parity.
         const click = key === 'select2'
-          ? () => { select2SuppressOpen = true; btn.click(); select2SuppressOpen = false }
-          : () => btn.click()
+          ? () => { select2SuppressOpen = true; try { fireMouse(btn) } finally { select2SuppressOpen = false } }
+          : key === 'slim-select'
+            ? () => flushShortTimers(() => fireMouse(btn))
+            : () => fireMouse(btn)
         const dt = await timeToSettle(click, stageEl, key)
         if (i > 0 && dt != null) { removeS.push(dt) } // drop first as warm-up
       }

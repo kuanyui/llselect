@@ -79,10 +79,12 @@ dependency-free.
   setting. Choices keeps its chosen options in the list (`renderSelectedChoices:
   'always'`) so the harness does click one, but the click only ever adds and never
   deselects, so it lands on n/a. Tom Select marks a chosen option `.selected` (via
-  `hideSelected: false`) and its `remove_button` plugin removes it on click, so it
-  is measured when the close-button checkbox is on and n/a otherwise. Every case is
-  decided by the chosen-count guard - a click that did not deselect is never timed
-  as if it did. The tag x (Remove-tag) column is opt-in and off by default,
+  `hideSelected: false`) but clicking it does not deselect either (only its
+  `checkbox_options` plugin would, and that changes the rendering to checkboxes), so
+  it is n/a too. Every case is decided by the chosen-count guard - a click that did
+  not deselect is never timed as if it did, and it was all confirmed in a headless
+  browser (Select2 needed a full mouse sequence; Slim needed the OPEN portaled
+  content). The tag x (Remove-tag) column is opt-in and off by default,
   because Choices and Tom Select only grow a tag x through a setting / plugin -
   forcing it on everyone would not be their default rendering.
 - **Guarded adapters.** Every op is wrapped; an adapter that cannot drive a
@@ -236,6 +238,21 @@ browser-driven).
   bubbles to the selection and opens the dropdown, adding an open render to the
   Remove-tag timing (and a UX surprise). Fix: prevent the cancelable
   `select2:opening` around the remove click, so only the removal is timed.
+- **Synthetic `.click()` missed mouseup-bound handlers.** Select2's results select
+  / unselect on `mouseup`, so `el.click()` (a lone click event) did nothing and its
+  Unchoose read n/a. Fix: dispatch the full pointer + mouse sequence.
+- **Portaled dropdowns and the wrong widget.** Slim Select portals every widget's
+  `.ss-content` to `document.body`, so a mount-scoped selector missed it and a
+  document-wide one hit the FIRST (single-select) widget's leftover content - the
+  click landed on the wrong widget, whose count never changed, so Unchoose read
+  n/a. Fix: scope to the OPEN content (`.ss-open-below` / `.ss-open-above`).
+- **Animation deferral hidden in a JS timer.** Slim Select delays a chip's real
+  `removeChild` by a hardcoded 100 ms `setTimeout` for its exit animation - which
+  `animation:none` cannot touch - so Remove-tag / Unchoose timed ~100 ms of
+  animation. Fix: run short timers immediately around the click.
+- **Verified headless.** These were all found and confirmed by driving the page in
+  a headless Chromium, not by eyeballing - Select2 Unchoose went n/a -> ~6 ms, Slim
+  Unchoose n/a -> a real (slow) number, Slim Remove-tag ~100 ms -> a few ms.
 
 ## Per-library adapter notes
 
@@ -256,20 +273,30 @@ browser-driven).
 - **Select2** - needs jQuery (counted separately in bundle size). Portals its
   dropdown to `document.body`. `templateResult` + `templateSelection` for the
   icon. Renders chosen options in the results with `--selected` and fires
-  `unselect` on a click in multiple mode, so in-popup unchoose works natively.
+  `unselect` on a click in multiple mode, so in-popup unchoose works natively - but
+  its results bind `mouseup`, not click, so the harness dispatches a full mouse
+  sequence (a synthetic `.click()` alone does nothing). Scoped to
+  `.select2-container--open` so the open dropdown, not a leftover, is targeted.
 - **Tom Select** - caps rendered options to 50 by default; forced to
   `maxOptions: null` here so it renders the same N as the others. `hideSelected:
   false` keeps a chosen option in the dropdown (it hides it by default for multi),
   so it re-renders the same-size list AND marks a chosen option `.selected`.
   Debounced search; `render.option` + `render.item` for the icon;
   `closeAfterSelect:false` for multi, and the `remove_button` plugin (the tag x)
-  only when the close-button checkbox is on. That plugin's `onOptionSelect` hook
-  removes a `.selected` option on click, so in-popup unchoose works when it is on;
-  without it the click no-ops (`addItem` is idempotent) - the count guard decides.
-- **Slim Select** - debounced search; open/close transition (disabled while
-  measuring); `closeOnSelect:false` for multi; `allowDeselect:true` for multi so a
+  only when the close-button checkbox is on. Clicking a `.selected` option does NOT
+  deselect it - `onOptionSelect` just calls the idempotent `addItem`; only the
+  `checkbox_options` plugin toggles off on click, and it renders checkboxes (a
+  different UX), so it is not used. In-popup unchoose is n/a (verified headless).
+- **Slim Select** - debounced search (200 ms - the Filter number includes it, real
+  latency); `closeOnSelect:false` for multi; `allowDeselect:true` for multi so a
   click on a chosen option in the open list toggles it off (the Unchoose phase;
   without it the click is ignored); `maxValuesShown: Infinity` so it never
-  collapses chips into a `{n} selected` summary. Multi chip is `textContent` only,
-  so the custom icon cannot reach its chips (dropdown options only) - a real
-  limitation, left plain rather than faked with a free CSS `::before`.
+  collapses chips into a `{n} selected` summary. Its dropdown (`.ss-content`) is
+  portaled to `document.body` and every widget leaves one there, so the unchoose
+  selector targets only the OPEN content (`.ss-open-below` / `.ss-open-above`). A
+  removed chip's actual `removeChild` is deferred by a hardcoded 100 ms setTimeout
+  (its exit animation, which CSS `animation:none` cannot reach), so the remove-tag
+  / unchoose click runs short timers immediately to time the work, not the wait.
+  Multi chip is `textContent` only, so the custom icon cannot reach its chips
+  (dropdown options only) - a real limitation, left plain rather than faked with a
+  free CSS `::before`.

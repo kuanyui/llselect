@@ -6,36 +6,40 @@ live in `SPEC_BENCHMARK.md`.
 
 ## Real-browser results that contradict perceived experience (found in testing)
 
-Recorded before fixing (do not lose these). Code fixes for all of these have
-landed; they stay unticked until re-confirmed in a real browser.
+Recorded before fixing (do not lose these). All fixed and VERIFIED by driving the
+real page in a headless Chromium (Playwright), not by eyeballing.
 
-- [ ] Choices Filter reads ~0.25 ms (ranked first) but clearing the query feels
-      slightly SLOWER than llselect. Suspected cause: `timeToSettle` breaks after
-      2 quiet frames, and Choices fires a tiny immediate mutation (input attr /
-      class) and THEN renders the filtered list a frame or two later (rAF /
-      internal defer) - the 2-quiet-frame break lands in the gap and times only
-      the trivial first mutation. Fix: observe for a minimum window (past any
-      debounce / rAF defer) before allowing the quiet break, and return time to
-      the LAST mutation, so the real filtered render is what is timed.
-- [ ] Choices Choose reads ~11 ms (ranked first) but has clear perceived lag. Same
-      root cause as the filter reading: the real re-render lands after the early
-      settle break. The `timeToSettle` fix above should cover it; re-check in a
-      browser.
-- [ ] Filter should measure BOTH directions as a round-trip, not one direction /
-      a mixed median. Report `median('' -> q) + median(q -> '')` so the number is
-      "narrow to half, then restore" - the real filter interaction. (Confirm the
-      loop already times both directions; make the REPORTED value their sum.)
-- [ ] Select2 tag remove (x): a real click on `.select2-selection__choice__remove`
-      BUBBLES to the selection container and OPENS the dropdown, which both is a UX
-      bug and pollutes the Remove-tag timing (the open render gets counted). Hack:
-      suppress the open around the remove click (prevent `select2:opening`), so
-      only the tag removal is timed.
-- [ ] Legibility: with selected options now kept in the dropdown, a chosen option
-      is not visually distinct. Give chosen dropdown options a distinct background
-      + text color in the demo CSS: Choices `.choices__item--choice.is-selected`,
-      and Tom Select's chosen option (VERIFY it exposes a class / attr to target -
-      if it truly marks nothing, note that it cannot be styled). Applies per-library
-      to the dropdown option, paint-only (no layout / DOM added), same for all.
+- [x] Choices Filter read ~0.25 ms (ranked first) despite feeling slower than
+      llselect: `timeToSettle` broke after 2 quiet frames, and Choices fires a tiny
+      immediate mutation then renders the filtered list a frame or two later - the
+      break landed in the gap and timed only the trivial first mutation. Fixed with
+      a minimum observation window before the quiet break; returns time to the LAST
+      mutation. Headless: now ~4.7 ms.
+- [x] Choices Choose read ~11 ms despite clear perceived lag - same root cause.
+      Headless: now ~2.8 ms.
+- [x] Filter is a round-trip: `median('' -> q) + median(q -> '')`, reported as the
+      sum. Headless: Slim ~205 ms (its real 200 ms debounce shows up), others single
+      digit.
+- [x] Select2 tag remove (x) click bubbled to the selection and opened the dropdown,
+      polluting Remove-tag. Fixed by preventing the cancelable `select2:opening`
+      around the click.
+- [x] Select2 Unchoose read n/a: its results select on `mouseup`, so `el.click()`
+      did nothing. Fixed by dispatching a full pointer + mouse sequence. Headless:
+      n/a -> ~5.8 ms.
+- [x] Slim Unchoose read n/a: `.ss-content` is portaled to body and every widget
+      leaves one, so a mount-scoped selector missed it and a document-wide one hit
+      the wrong widget. Fixed by targeting the OPEN content (`.ss-open-*`). Headless:
+      n/a -> a real (slow) number.
+- [x] Slim Remove-tag / Unchoose timed ~100 ms of a hardcoded `setTimeout` chip
+      removal (exit animation) that `animation:none` cannot reach. Fixed by running
+      short timers immediately around the click. Headless: Remove-tag ~100 ms -> ~3.7 ms.
+- [x] Tom Unchoose is n/a: clicking a `.selected` option calls the idempotent
+      `addItem` - the `remove_button` plugin does NOT deselect (that was the
+      `checkbox_options` plugin, which renders checkboxes). Confirmed headless.
+- [x] Legibility: chosen dropdown options get a distinct background + text color in
+      the benchmark CSS (Choices `.is-selected`, Tom `.option.selected`, Select2
+      `--selected`, Slim `.ss-selected`, llselect `aria-selected`) - all classes
+      confirmed present in the headless probe. Paint-only, uniform.
 
 ## Naming
 
@@ -114,33 +118,28 @@ from memory - check whether the library exposes the capability behind a setting
 (`allowDeselect`, `hideSelected`, `renderSelectedChoices`) before concluding it
 cannot do the thing.
 
-## Still open (real-browser only - cannot verify without a browser here)
+## Verified in headless Chromium (Playwright, driving the real page)
 
-- [ ] Run the reworked interaction test in Firefox and Chromium and sanity-check
-      that Choices' open / filter now show realistic (non-zero, human-plausible)
-      numbers, and that Tom Select / Slim Select filter is no longer read as ~0.
-- [ ] Confirm each competitor keeps its popup open on a multi choose; if one
-      closes, decide whether to re-open (untimed) or flag it.
-- [ ] Verify the Remove-tag phase in a browser: each competitor's remove-button
-      selector (`.choices__button`, `.select2-selection__choice__remove`,
-      `.ts-control .remove`, `.ss-value-delete`) actually finds and removes a tag
-      on the loaded version. (llselect's `.llselect-tag-remove-button` is
-      jsdom-verified.)
-- [ ] Verify the Unchoose-in-popup phase in a browser: the chosen-option selectors
-      (`.llselect-item[aria-selected="true"]`, Select2
-      `.select2-results__option--selected`, Slim `.ss-option[aria-selected="true"]`,
-      Choices `.choices__item--choice.is-selected`, Tom `.ts-dropdown .option.selected`)
-      each find a clickable chosen option in the OPEN list; the click drops the
-      chosen count for llselect / Select2 / Slim; Tom drops it too WHEN the
-      close-button checkbox is on (the `remove_button` plugin hook removes a
-      `.selected` option) and reads n/a when off; Choices reads n/a (its click only
-      adds, never deselects). The count-drop guard must report n/a, never time a
-      no-op click.
-- [ ] Verify the "keep selected in the list" settings in a browser:
-      `renderSelectedChoices: 'always'` (Choices) and `hideSelected: false` (Tom
-      Select) keep a chosen option visible in the dropdown, so choosing / filtering
-      re-renders the full-size list (not one that shrinks per selection).
-- [ ] Verify Slim Select's `maxValuesShown: Infinity` prevents the tag collapse:
-      select more than 20 and confirm it renders one chip per item, NOT a single
-      `{n} selected` (`.ss-max`) summary. Sanity-check the mass multi + pre-select
-      DOM-node count for Slim at 1,000 x 10 reflects ~100 chips, not 1.
+- [x] Interaction test runs; Choices open / filter / choose show realistic numbers
+      (filter ~4.7 ms, choose ~2.8 ms), not ~0.
+- [x] Each competitor keeps its popup open on a multi choose (choose is measured for
+      all five).
+- [x] Remove-tag: every remove-button selector (`.choices__button`,
+      `.select2-selection__choice__remove`, `.ts-control .remove`,
+      `.ss-value-delete`) finds and removes a tag (all five report a number).
+- [x] Unchoose selectors find a clickable chosen option in the OPEN list; the click
+      drops the chosen count for llselect / Select2 / Slim; Choices and Tom read n/a
+      (both keep the option visible but neither deselects on click - Tom's
+      `remove_button` does NOT toggle off, only `checkbox_options` would). The
+      count-drop guard reports n/a, never times a no-op click.
+- [x] Keep-selected settings work: Choices `renderSelectedChoices: 'always'` and Tom
+      `hideSelected: false` leave a chosen option visible (`.is-selected` /
+      `.selected` present), so the list does not shrink per selection.
+- [x] Slim `maxValuesShown: Infinity` prevents the collapse: 20-30 selected still
+      renders one chip per item (Remove-tag found the chips), not a `.ss-max` summary.
+
+## Still worth a manual pass (not done here)
+
+- [ ] Spot-check in Firefox and Safari (only Chromium was driven headless here); the
+      positioning / portaling and any WebKit-specific event quirks want a real look.
+- [ ] Eyeball the chosen-option highlight colors and the RTL / dark cases visually.
