@@ -140,7 +140,7 @@
 
   <h2 id="interaction">Interaction latency</h2>
   <p>
-    The other axis: one dedicated widget per library. The four operations are
+    The other axis: one dedicated widget per library. Each operation is
     timed <strong>separately</strong> (never mixed), so one phase's cost never
     leaks into another's - <strong>opening a big list in isolation</strong> is
     where llselect builds its option DOM (it renders nothing until you open). The
@@ -161,26 +161,31 @@
     <span id="ix-status">Ready.</span>
   </div>
   <p class="hint">One "Build + measure" fills both tables. Stacked chart: the
-    whole bar is the sum of the four phases (shorter is better), each segment a
-    phase; click a legend entry to show or hide it. Details of how each phase is
-    measured are under "What the columns mean" below each table.</p>
+    whole bar is the sum of the phases (shorter is better), each segment a phase;
+    click a legend entry to show or hide it. Details of how each phase is measured
+    are under "What the columns mean" below each table.</p>
 
   <details class="bench-cols">
     <summary>What the columns mean</summary>
     <ul class="bench-legend">
-      <li><strong>Open</strong> - close first, then time opening the dropdown.
-        For a big list this is where llselect builds its option DOM (it renders
-        nothing until you open). Timed to after the next paint (see below).</li>
-      <li><strong>Filter</strong> - open once, then type <code>q</code> / clear /
-        <code>q</code> / clear five times, timing each keystroke on its own (not
-        mixed with choose). Clearing between makes every keystroke a real change.
-        Timed to when the DOM settles, so a debounced search (Tom Select, Slim
-        Select) is caught rather than read as 0.</li>
-      <li><strong>Choose</strong> - with the filter cleared (full list). Multiple:
+      <li><strong>Open popup</strong> - close first, then time opening the
+        dropdown. For a big list this is where llselect builds its option DOM (it
+        renders nothing until you open). Timed to after the next paint.</li>
+      <li><strong>Filter candidates</strong> - open once, then type <code>q</code>
+        / clear / <code>q</code> / clear five times, timing each keystroke on its
+        own (not mixed with choose). Clearing between makes every keystroke a real
+        change. Timed to when the DOM settles, so a debounced search (Tom Select,
+        Slim Select) is caught rather than read as 0.</li>
+      <li><strong>Choose candidate</strong> - filter cleared (full list). Multiple:
         choose the first 10 items, the popup staying open the whole time (closing
         it would skip the open-list re-render and be unfair). Single: choose one
         item.</li>
-      <li><strong>Close</strong> - open first, then time closing.</li>
+      <li><strong>Remove tag</strong> - multiple only. With tags present, CLICK
+        each tag's remove (x) button and time the removal + re-render. It is a
+        real button click, not an API call, so it measures the "press x to drop a
+        tag" path. Choices and Tom Select need their remove-button option turned
+        on (the others show one by default). Single has no tags, so this is n/a.</li>
+      <li><strong>Close popup</strong> - open first, then time closing.</li>
       <li><strong>Timing.</strong> Open / close are timed to <strong>after the
         next frame is painted</strong> (two <code>requestAnimationFrame</code>s +
         a forced layout): Choices reveals a <code>display:none</code> list whose
@@ -196,7 +201,7 @@
 
   <h3>Single-select</h3>
   <table class="ix-table" id="ix-single-results">
-    <thead><tr><th>Library</th><th>Open (ms)</th><th>Filter (ms)</th><th>Choose (ms)</th><th>Close (ms)</th></tr></thead>
+    <thead><tr><th>Library</th><th>Open popup (ms)</th><th>Filter candidates (ms)</th><th>Choose candidate (ms)</th><th>Remove tag (ms)</th><th>Close popup (ms)</th></tr></thead>
     <tbody></tbody>
   </table>
   <div class="bench-chart"><canvas id="ix-single-chart"></canvas></div>
@@ -205,7 +210,7 @@
 
   <h3>Multiple-select</h3>
   <table class="ix-table" id="ix-multi-results">
-    <thead><tr><th>Library</th><th>Open (ms)</th><th>Filter (ms)</th><th>Choose (ms)</th><th>Close (ms)</th></tr></thead>
+    <thead><tr><th>Library</th><th>Open popup (ms)</th><th>Filter candidates (ms)</th><th>Choose candidate (ms)</th><th>Remove tag (ms)</th><th>Close popup (ms)</th></tr></thead>
     <tbody></tbody>
   </table>
   <div class="bench-chart"><canvas id="ix-multi-chart"></canvas></div>

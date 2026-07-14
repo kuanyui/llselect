@@ -110,14 +110,20 @@ repeats, first dropped as warm-up. Two timers:
 
 Phase definitions:
 
-- **Open** - close first, then time opening.
-- **Filter** - open once, then `q` / clear / `q` / clear five times, timing each
-  keystroke. Clearing between makes every keystroke a real change (re-typing the
-  same query is a no-op for a library that keeps the query after a selection).
-- **Choose** - filter cleared (full list). Multiple: choose the first 10 items,
-  popup staying open (closing skips the open-list re-render, unfair). Single:
-  choose one item.
-- **Close** - open first, then time closing.
+- **Open popup** - close first, then time opening.
+- **Filter candidates** - open once, then `q` / clear / `q` / clear five times,
+  timing each keystroke. Clearing between makes every keystroke a real change
+  (re-typing the same query is a no-op for a library that keeps the query after a
+  selection).
+- **Choose candidate** - filter cleared (full list). Multiple: choose the first
+  10 items, popup staying open (closing skips the open-list re-render, unfair).
+  Single: choose one item.
+- **Remove tag** - multiple only. With tags present, CLICK each tag's remove (x)
+  button and time the removal + re-render (a real click, not an API call, so it
+  is the "press x to drop a tag" path). Choices (`removeItemButton`) and Tom
+  Select (`remove_button` plugin) have their remove button enabled; llselect,
+  Select2, Slim Select show one by default. Single has no tags - n/a.
+- **Close popup** - open first, then time closing.
 
 Native `<select>` is shown for reference but not timed (its dropdown is
 browser-driven).
@@ -165,13 +171,14 @@ browser-driven).
   synchronously.
 - **Choices.js** - eager-renders all options at init; `display:none` until show;
   rAF-scheduled show/hide. HTML label carries the custom icon into the chip.
+  `removeItemButton: true` for multi so tags have an x.
 - **Select2** - needs jQuery (counted separately in bundle size). Portals its
   dropdown to `document.body`. `templateResult` + `templateSelection` for the
   icon.
 - **Tom Select** - caps rendered options to 50 by default; forced to
   `maxOptions: null` here so it renders the same N as the others. Debounced
   search; `render.option` + `render.item` for the icon; `closeAfterSelect:false`
-  for multi.
+  and the `remove_button` plugin (for the tag x) for multi.
 - **Slim Select** - debounced search; open/close transition (disabled while
   measuring); `closeOnSelect:false` for multi; multi chip is `textContent` only,
   so the custom icon cannot reach its chips (dropdown options only) - a real

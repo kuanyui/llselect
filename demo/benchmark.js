@@ -126,9 +126,9 @@ const ADAPTERS = {
     setup(mount, items, opts) {
       const k = preCount(items, opts)
       const sel = makeSelect(mount, opts.multi)
-      const inst = new window.Choices(sel, { searchEnabled: true, allowHTML: !!opts.custom, silent: true, removeItemButton: false })
+      const inst = new window.Choices(sel, { searchEnabled: true, allowHTML: !!opts.custom, silent: true, removeItemButton: !!opts.multi })
       inst.setChoices(items.map((v, i) => ({ value: v, label: opts.custom ? iconHtml(v) : v, selected: i < k })), 'value', 'label', true)
-      return { inst }
+      return { inst, mount }
     },
     open(h) { h.inst.showDropdown() },
     filter(h, q) { const i = h.inst.input.element; i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) },
@@ -150,7 +150,7 @@ const ADAPTERS = {
       }
       $sel.select2(cfg)
       if (k > 0) { $sel.val(opts.multi ? items.slice(0, k) : items[0]).trigger('change') }
-      return { $sel }
+      return { $sel, mount }
     },
     open(h) { h.$sel.select2('open') },
     filter(h, q) { const i = document.querySelector('.select2-container--open .select2-search__field'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) },
@@ -171,12 +171,13 @@ const ADAPTERS = {
         maxOptions: null,
         closeAfterSelect: !opts.multi,
       }
+      if (opts.multi) { cfg.plugins = ['remove_button'] } // an x on each tag
       if (k > 0) { cfg.items = items.slice(0, k) }
       if (opts.custom) {
         const tmpl = (d, esc) => '<div>' + iconHtml(esc(d.text)) + '</div>'
         cfg.render = { option: tmpl, item: tmpl } // dropdown option + chosen chip
       }
-      return { inst: new window.TomSelect(sel, cfg) }
+      return { inst: new window.TomSelect(sel, cfg), mount }
     },
     open(h) { h.inst.open() },
     filter(h, q) { h.inst.setTextboxValue(q); h.inst.refreshOptions(true) },
@@ -196,7 +197,7 @@ const ADAPTERS = {
       const data = items.map((v, i) => (opts.custom ? { text: v, value: v, html: iconHtml(v), selected: i < k } : { text: v, value: v, selected: i < k }))
       // closeOnSelect: false so a multi choose keeps the popup open for
       // continuous selection (Slim Select otherwise closes it, which is unfair).
-      return { inst: new window.SlimSelect({ select: sel, settings: { showSearch: true, closeOnSelect: !opts.multi }, data }) }
+      return { inst: new window.SlimSelect({ select: sel, settings: { showSearch: true, closeOnSelect: !opts.multi }, data }), mount }
     },
     open(h) { h.inst.open() },
     filter(h, q) { const i = document.querySelector('.ss-content .ss-search input'); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) },
@@ -222,6 +223,18 @@ const PICK_SINGLE = {
   select2: (h, item) => h.$sel.val(item).trigger('change'),
   'tom-select': (h, item) => h.inst.setValue(item, true),
   'slim-select': (h, item) => h.inst.setSelected(item),
+}
+
+// The first tag's remove (x) button in a multi widget, or null if none. The
+// harness CLICKS it, so this measures the real "click the x to drop the tag"
+// path, not an API call. Choices / Tom Select need their remove-button option
+// enabled (see the adapters); the others show one by default.
+const REMOVE = {
+  llselect: (h) => h.mount.querySelector('.llselect-tag-remove-button'),
+  choices: (h) => h.mount.querySelector('.choices__button'),
+  select2: (h) => h.mount.querySelector('.select2-selection__choice__remove'),
+  'tom-select': (h) => h.mount.querySelector('.ts-control .remove'),
+  'slim-select': (h) => h.mount.querySelector('.ss-value-delete'),
 }
 
 function available(key) {
@@ -580,10 +593,11 @@ function renderChart() {
 // Each phase is guarded, so a version drift on one op leaves the others intact.
 
 const IX_PHASES = [
-  { key: 'open', label: 'Open', color: '#2456a6' },
-  { key: 'filter', label: 'Filter', color: '#7a3ea6' },
-  { key: 'choose', label: 'Choose', color: '#1a7f37' },
-  { key: 'close', label: 'Close', color: '#c9821a' },
+  { key: 'open', label: 'Open popup', color: '#2456a6' },
+  { key: 'filter', label: 'Filter candidates', color: '#7a3ea6' },
+  { key: 'choose', label: 'Choose candidate', color: '#1a7f37' },
+  { key: 'remove', label: 'Remove tag', color: '#b5651d' },
+  { key: 'close', label: 'Close popup', color: '#c9821a' },
 ]
 
 // Each mode owns its table / chart / stage element ids, its select-one op, and
@@ -687,7 +701,23 @@ async function measureInteraction(mode, key, items, stageEl) {
     }
   }
 
-  return { open: med(openS), filter: med(filterS), choose: med(chooseS), close: med(closeS) }
+  // REMOVE TAG (multi only): choose a fresh batch (untimed) so tags exist, close
+  // the popup, then CLICK each tag's remove (x) button - timed - which drops the
+  // item and re-renders. Measures the "click the x to kill a tag" path.
+  const removeS = []
+  if (mode.multi && REMOVE[key]) {
+    safeOp(() => a.open(h))
+    for (let i = 20; i < 30 && i < items.length; i++) { safeOp(() => pick(h, items[i])) }
+    safeOp(() => a.close(h)); await raf()
+    for (let i = 0; i < 10; i++) {
+      const btn = REMOVE[key](h)
+      if (!btn) { break }
+      const dt = await timeToSettle(() => btn.click(), stageEl, key)
+      if (i > 0 && dt != null) { removeS.push(dt) } // drop first as warm-up
+    }
+  }
+
+  return { open: med(openS), filter: med(filterS), choose: med(chooseS), remove: med(removeS), close: med(closeS) }
 }
 
 function ixRow(mode, key) { return document.querySelector(`#ix-${mode.key}-results tbody tr[data-lib="${key}"]`) }

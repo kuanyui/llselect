@@ -40,3 +40,8 @@ live in `SPEC_BENCHMARK.md`.
       numbers, and that Tom Select / Slim Select filter is no longer read as ~0.
 - [ ] Confirm each competitor keeps its popup open on a multi choose; if one
       closes, decide whether to re-open (untimed) or flag it.
+- [ ] Verify the Remove-tag phase in a browser: each competitor's remove-button
+      selector (`.choices__button`, `.select2-selection__choice__remove`,
+      `.ts-control .remove`, `.ss-value-delete`) actually finds and removes a tag
+      on the loaded version. (llselect's `.llselect-tag-remove-button` is
+      jsdom-verified.)
