@@ -153,6 +153,11 @@ const ADAPTERS = {
         cfg.templateSelection = tmpl // the chosen chip
       }
       $sel.select2(cfg)
+      // A click on the tag remove (x) bubbles to the selection and opens the
+      // dropdown (a Select2 quirk), which would pollute the Remove-tag timing.
+      // select2:opening is a cancelable event; the Remove-tag phase sets the flag
+      // around the click so only the removal is timed, not an unwanted open.
+      $sel.on('select2:opening', (e) => { if (select2SuppressOpen) { e.preventDefault() } })
       if (k > 0) { $sel.val(opts.multi ? items.slice(0, k) : items[0]).trigger('change') }
       return { $sel, mount }
     },
@@ -267,19 +272,23 @@ const LL = 'llselect'
 //     fires unselect on a click (its dropdown is portaled to document.body).
 //   - Slim Select: chosen ss-option elements carry aria-selected="true"; the
 //     click toggles off only with allowDeselect:true (set in the adapter).
-//   - Choices: with renderSelectedChoices:'always' (set in the adapter) a chosen
-//     option stays in the dropdown carrying .is-selected, so the harness CAN click
-//     it - but the click does not deselect (its choice handler only ever ADDS),
-//     so the count-drop guard reports n/a. Attempted and measured, not asserted.
-// Tom Select is absent: even with hideSelected:false its dropdown gives a chosen
-// option no marker to target (only the highlighted one gets a class), and its
-// addItem is idempotent, so there is no in-popup unchoose to click - only the
-// tag x (the Remove-tag phase). Its Unchoose cell reads n/a.
+//   - Choices: with renderSelectedChoices:'always' a chosen option stays in the
+//     dropdown carrying .is-selected, so the harness clicks it - but the click
+//     only ever ADDS (never deselects), so the count-drop guard reports n/a.
+//     Attempted and measured, not asserted.
+//   - Tom Select: with hideSelected:false a chosen option stays in the dropdown
+//     carrying .selected. A click deselects it ONLY when the remove_button plugin
+//     is active - its onOptionSelect hook calls removeItem on a .selected option -
+//     i.e. when the close-button checkbox is on; otherwise the click no-ops. The
+//     count-drop guard decides: measured when it deselects, n/a when it does not.
+// So every non-native library is CLICKED; the guard, not an assumption, decides
+// whether the click actually deselected (and the cell reads n/a when it did not).
 const UNCHOOSE = {
   llselect: (h) => h.mount.querySelector(`.${LL}-item[aria-selected="true"]:not([data-chosen-state])`),
   select2: () => document.querySelector('.select2-container--open .select2-results__option--selected'),
   'slim-select': (h) => h.mount.querySelector('.ss-option[aria-selected="true"]'),
   choices: (h) => h.mount.querySelector('.choices__list--dropdown .choices__item--choice.is-selected'),
+  'tom-select': (h) => h.mount.querySelector('.ts-dropdown .option.selected'),
 }
 
 // Current chosen-count per library, used to VERIFY an in-popup unchoose click
@@ -321,6 +330,7 @@ function countNodes() { return stage.querySelectorAll('*').length }
 let live = [] // { key, h } currently rendered, for teardown
 let results = {} // key -> latest metrics for the current scenario, for the chart
 let stopRequested = false // cooperative cancel for the mass build
+let select2SuppressOpen = false // set around a Select2 remove-tag click (see adapter)
 
 function clearStage() {
   for (const { key, h } of live) { try { ADAPTERS[key].teardown(h) } catch (e) { /* ignore */ } }
@@ -682,6 +692,14 @@ async function timeToPaint(fn, stageEl, key) {
 // to-paint timer would miss it and read fast. Instead observe the DOM and wait
 // until it stops mutating, then report the time to the LAST mutation (so the
 // debounce wait and any rAF/settle delay are included, without trailing idle).
+// Observe for at least this long before accepting a "settled" reading. A search
+// can debounce (Slim ~200ms) or defer its render a frame or two (Choices flips an
+// input attribute immediately, then renders the filtered list later). Without a
+// floor the 2-quiet-frame break lands in that gap and times only the trivial first
+// mutation - the Choices "0.25 ms filter / fastest" artifact. We return time to the
+// LAST mutation, so what is timed is the real render whenever it lands.
+const SETTLE_MIN_MS = 350
+
 async function timeToSettle(fn, stageEl, key) {
   let lastMut = 0
   const obs = new MutationObserver(() => { lastMut = performance.now() })
@@ -689,10 +707,12 @@ async function timeToSettle(fn, stageEl, key) {
   const t = performance.now()
   try { fn() } catch (e) { obs.disconnect(); console.warn(key, e); return null }
   let quiet = 0
-  for (let i = 0; i < 40; i++) { // ~640ms cap - generous for debounced search
+  for (let i = 0; i < 90; i++) { // ~1.5s hard cap
     const before = lastMut
     await raf(); reflow(stageEl)
-    if (lastMut === before) { if (++quiet >= 2) { break } } else { quiet = 0 }
+    // Do not accept the quiet break until the minimum window has elapsed, so a
+    // deferred / debounced render is not missed.
+    if (lastMut === before) { if (performance.now() - t >= SETTLE_MIN_MS && ++quiet >= 2) { break } } else { quiet = 0 }
   }
   obs.disconnect()
   return (lastMut > t ? lastMut : performance.now()) - t
@@ -726,15 +746,20 @@ async function measureInteraction(mode, key, items, stageEl, closeBtn) {
     if (i > 0) { closeS.push(dt) }
   }
 
-  // FILTER on its own: open once, then 'q' -> '' repeated, each a real change,
-  // each timed with the settle timer (catches debounced renders).
-  const filterS = []
+  // FILTER as a round-trip: narrow to half ('' -> q), then restore (q -> ''),
+  // each timed on its own (settle timer, so debounced renders count), reported as
+  // the SUM of the two medians. One filter interaction is type + clear, so a single
+  // direction understates it. Clearing between also keeps every keystroke a real
+  // change.
+  const filterDownS = [], filterUpS = []
   safeOp(() => a.open(h)); safeOp(() => a.filter(h, '')); await raf()
   for (let i = 0; i < IX_REPS; i++) {
-    filterS.push(await timeToSettle(() => a.filter(h, 'q'), stageEl, key))
-    filterS.push(await timeToSettle(() => a.filter(h, ''), stageEl, key))
+    filterDownS.push(await timeToSettle(() => a.filter(h, 'q'), stageEl, key))
+    filterUpS.push(await timeToSettle(() => a.filter(h, ''), stageEl, key))
   }
   safeOp(() => a.close(h)); await raf()
+  const fdown = med(filterDownS), fup = med(filterUpS)
+  const filter = (fdown == null && fup == null) ? null : (fdown || 0) + (fup || 0)
 
   // CHOOSE on its own, filter cleared (full list, no filter dependency).
   const chooseS = []
@@ -807,14 +832,19 @@ async function measureInteraction(mode, key, items, stageEl, closeBtn) {
       for (let i = 0; i < 10; i++) {
         const btn = REMOVE[key](h)
         if (!btn) { break }
-        const dt = await timeToSettle(() => btn.click(), stageEl, key)
+        // Select2 opens its dropdown on this click (bubbling quirk); suppress that
+        // open so only the removal is timed, not an unwanted open render.
+        const click = key === 'select2'
+          ? () => { select2SuppressOpen = true; btn.click(); select2SuppressOpen = false }
+          : () => btn.click()
+        const dt = await timeToSettle(click, stageEl, key)
         if (i > 0 && dt != null) { removeS.push(dt) } // drop first as warm-up
       }
       removeTag = med(removeS)
     }
   }
 
-  return { open: med(openS), filter: med(filterS), choose: med(chooseS), unchoose, removeTag, close: med(closeS) }
+  return { open: med(openS), filter, choose: med(chooseS), unchoose, removeTag, close: med(closeS) }
 }
 
 function ixRow(mode, key) { return document.querySelector(`#ix-${mode.key}-results tbody tr[data-lib="${key}"]`) }

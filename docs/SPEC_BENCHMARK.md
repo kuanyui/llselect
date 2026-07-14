@@ -78,10 +78,11 @@ dependency-free.
   (its documented switch for click-to-deselect); Select2 and llselect need no
   setting. Choices keeps its chosen options in the list (`renderSelectedChoices:
   'always'`) so the harness does click one, but the click only ever adds and never
-  deselects, so it lands on n/a - determined by the chosen-count guard, not
-  asserted. Tom Select gives a chosen option no dropdown marker to target and its
-  add is idempotent, so it is n/a. Every timed click is checked to actually drop
-  the chosen count. The tag x (Remove-tag) column is opt-in and off by default,
+  deselects, so it lands on n/a. Tom Select marks a chosen option `.selected` (via
+  `hideSelected: false`) and its `remove_button` plugin removes it on click, so it
+  is measured when the close-button checkbox is on and n/a otherwise. Every case is
+  decided by the chosen-count guard - a click that did not deselect is never timed
+  as if it did. The tag x (Remove-tag) column is opt-in and off by default,
   because Choices and Tom Select only grow a tag x through a setting / plugin -
   forcing it on everyone would not be their default rendering.
 - **Guarded adapters.** Every op is wrapped; an adapter that cannot drive a
@@ -132,21 +133,25 @@ first dropped as warm-up. Two timers:
   `requestAnimationFrame`. Run the op, wait one rAF (the library's rAF fires),
   force that frame's layout, wait one more rAF (fires after that frame painted).
   Floor is about one to two frames.
-- **to-settle** (filter, choose): these re-render the option DOM, and some
-  libraries DEBOUNCE the search (Tom Select, Slim Select), so the render lands
-  later. A `MutationObserver` watches the DOM; the timer waits until mutations
-  stop, then reports the time to the LAST mutation - so the debounce wait is
-  included without trailing idle. (llselect filters synchronously.)
+- **to-settle** (filter, choose, unchoose, remove-tag): these re-render the option
+  DOM, and some libraries DEBOUNCE the search (Tom Select, Slim Select) or defer the
+  render a frame (Choices), so it lands later. A `MutationObserver` watches the DOM;
+  the timer observes for a MINIMUM window first - so a tiny immediate mutation (an
+  input attribute flip) does not end it inside the gap before the real render - then
+  waits until mutations stop, and reports the time to the LAST mutation. So the
+  deferred/debounce wait is included without trailing idle. (llselect filters
+  synchronously.)
 
 Phase definitions (the single and multi tables carry DIFFERENT columns - single
 is open / filter / choose / close; multi adds the two deselect phases below, and
 the header rows are built by `ixInitTable` so they track the mode + the checkbox):
 
 - **Open popup** - close first, then time opening.
-- **Filter candidates** - open once, then `q` / clear / `q` / clear five times,
-  timing each keystroke. Clearing between makes every keystroke a real change
-  (re-typing the same query is a no-op for a library that keeps the query after a
-  selection).
+- **Filter candidates** - a round-trip, reported as the SUM of two medians: narrow
+  the list to half (type `q`) and restore it (clear), each timed on its own, five
+  reps. One filter interaction is type + clear, so a single direction understates
+  it. Clearing between also keeps every keystroke a real change (re-typing the same
+  query is a no-op for a library that keeps the query after a selection).
 - **Choose candidate** - filter cleared (full list). Multiple: choose the first
   10 items, popup staying open (closing skips the open-list re-render, unfair).
   Single: choose one item.
@@ -221,6 +226,16 @@ browser-driven).
   one node instead of n, so its multi DOM-node count and tag work collapse to
   near-nothing. Fix: `maxValuesShown: Infinity` so it always renders one chip per
   item.
+- **Deferred render read as ~0 (the settle broke too early).** The settle timer
+  broke after 2 quiet frames; for Choices that landed in the gap between its
+  immediate input-attribute flip and its slightly later filtered render, so it
+  timed only the trivial first mutation (~0.25 ms, "fastest" - contradicting the
+  obvious perceived lag). Fix: a minimum observation window before the quiet break
+  is allowed, and return time to the LAST mutation.
+- **Select2 tag x opened the dropdown.** A real click on Select2's remove (x)
+  bubbles to the selection and opens the dropdown, adding an open render to the
+  Remove-tag timing (and a UX surprise). Fix: prevent the cancelable
+  `select2:opening` around the remove click, so only the removal is timed.
 
 ## Per-library adapter notes
 
@@ -244,12 +259,13 @@ browser-driven).
   `unselect` on a click in multiple mode, so in-popup unchoose works natively.
 - **Tom Select** - caps rendered options to 50 by default; forced to
   `maxOptions: null` here so it renders the same N as the others. `hideSelected:
-  false` keeps a chosen option in the dropdown (it hides it by default for multi)
-  so it re-renders the same-size list. Debounced search; `render.option` +
-  `render.item` for the icon; `closeAfterSelect:false` for multi, and the
-  `remove_button` plugin (for the tag x) only when the close-button checkbox is on.
-  `addItem` is idempotent and a chosen option gets no dropdown marker, so in-popup
-  unchoose is n/a.
+  false` keeps a chosen option in the dropdown (it hides it by default for multi),
+  so it re-renders the same-size list AND marks a chosen option `.selected`.
+  Debounced search; `render.option` + `render.item` for the icon;
+  `closeAfterSelect:false` for multi, and the `remove_button` plugin (the tag x)
+  only when the close-button checkbox is on. That plugin's `onOptionSelect` hook
+  removes a `.selected` option on click, so in-popup unchoose works when it is on;
+  without it the click no-ops (`addItem` is idempotent) - the count guard decides.
 - **Slim Select** - debounced search; open/close transition (disabled while
   measuring); `closeOnSelect:false` for multi; `allowDeselect:true` for multi so a
   click on a chosen option in the open list toggles it off (the Unchoose phase;

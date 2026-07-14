@@ -14,6 +14,22 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slim-select@2.10.0/dist/slimselect.css">
   <!-- Material Design Icons, for the custom-renderer variant only -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+  <!-- Benchmark-only: make a CHOSEN option visible in each library's open list,
+       now that selected options are kept in the dropdown. Paint-only (background +
+       text color); it adds no DOM or layout and is applied to every library the
+       same way, so it does not skew the measurement. Tom Select marks a chosen
+       option .selected only with hideSelected:false (set in the adapter). -->
+  <style>
+    .llselect-item[aria-selected="true"],
+    .choices__list--dropdown .choices__item--choice.is-selected,
+    .select2-results__option--selected,
+    .ts-dropdown .option.selected,
+    .ss-content .ss-option.ss-selected {
+      background: #cfe6ff !important;
+      color: #0b3d66 !important;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
   <nav class="demo-nav">
@@ -176,11 +192,13 @@
       <li><strong>Open popup</strong> - close first, then time opening the
         dropdown. For a big list this is where llselect builds its option DOM (it
         renders nothing until you open). Timed to after the next paint.</li>
-      <li><strong>Filter candidates</strong> - open once, then type <code>q</code>
-        / clear / <code>q</code> / clear five times, timing each keystroke on its
-        own (not mixed with choose). Clearing between makes every keystroke a real
-        change. Timed to when the DOM settles, so a debounced search (Tom Select,
-        Slim Select) is caught rather than read as 0.</li>
+      <li><strong>Filter candidates</strong> - a round-trip: narrow the list to
+        half (type <code>q</code>), then restore it (clear), timed separately and
+        reported as the SUM, because one filter interaction is type + clear (a
+        single direction understates it). Five reps. Timed to when the DOM
+        <em>settles</em>, with a minimum observation window so a debounced (Tom
+        Select, Slim Select) or deferred (Choices) render is included, not read as
+        ~0.</li>
       <li><strong>Choose candidate</strong> - filter cleared (full list). Multiple:
         choose the first 10 items, the popup staying open the whole time (closing
         it would skip the open-list re-render and be unfair). Single: choose one
@@ -190,15 +208,15 @@
         multiple-select table adds the two deselect columns below.</li>
       <li><strong>Unchoose (in popup)</strong> - multiple only. With items chosen,
         CLICK an already-chosen option <em>in the open list</em> and time the
-        toggle-off + re-render (a real click, not an API call). <strong>llselect</strong>
-        and <strong>Select2</strong> do this natively; <strong>Slim Select</strong>
-        via its <code>allowDeselect</code> setting. <strong>Choices</strong> keeps
-        its chosen options in the list (<code>renderSelectedChoices</code>) so the
-        harness does click one, but the click only ever adds, never deselects, so it
-        reads <code>n/a</code> - measured, not assumed. <strong>Tom Select</strong>
-        gives a chosen option no marker in its dropdown and its add is idempotent,
-        so there is nothing to target: <code>n/a</code>. Every timed click is checked
-        to actually drop the chosen count, else the phase is n/a.</li>
+        toggle-off + re-render (a real click, not an API call). Every non-native
+        library is clicked; the harness checks the chosen count actually dropped and
+        reads <code>n/a</code> if it did not. <strong>llselect</strong> and
+        <strong>Select2</strong> deselect natively; <strong>Slim Select</strong> with
+        <code>allowDeselect</code>; <strong>Tom Select</strong> when its
+        <code>remove_button</code> plugin is on (tick "test close button on multiple
+        tags") - its dropdown then removes a chosen option on click, otherwise the
+        click no-ops and it reads n/a. <strong>Choices</strong> keeps chosen options
+        visible but its click only ever adds, never deselects, so it reads n/a.</li>
       <li><strong>Remove tag (x)</strong> - multiple only, and only when
         <em>test close button on multiple tags</em> is ticked. CLICK each tag's
         remove (x) button and time the removal + re-render - the "press x to drop
