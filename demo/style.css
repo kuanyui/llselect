@@ -383,6 +383,8 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .bench-cols > summary { cursor: pointer; user-select: none; color: #2456a6; }
 .bench-cols[open] > summary { margin-bottom: 0.3rem; }
 #status { color: #555; font-size: 0.9rem; }
+/* Table captions spell out what one number means (per-widget vs total, median vs sum). */
+#results caption, .ix-table caption { caption-side: top; text-align: left; font-size: 0.85rem; color: #555; padding: 0 0 0.4rem; }
 #results, #sizes { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
 #results th, #results td, #sizes th, #sizes td { border: 1px solid #ccc; padding: 5px 10px; text-align: right; }
 #results th:first-child, #results td:first-child, #sizes th:first-child, #sizes td:first-child { text-align: left; }

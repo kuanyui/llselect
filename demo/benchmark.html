@@ -110,13 +110,15 @@
   </div>
 
   <table id="results">
+    <caption>One row per library. Every number is for the WHOLE run - the total
+      across all widgets built, not an average per widget.</caption>
     <thead>
       <tr>
         <th>Library</th>
         <th>Built / target</th>
-        <th>Build total (ms)</th>
-        <th>DOM nodes (resting)</th>
-        <th>Teardown total (ms)</th>
+        <th>Build total (all widgets, ms)</th>
+        <th>DOM nodes (all, resting)</th>
+        <th>Teardown total (all widgets, ms)</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -167,7 +169,8 @@
       <li>some animate almost everything - the popup opening and closing, tags
         appearing and being removed - and some of that runs on a JavaScript timer
         that disabling CSS animation cannot reach;</li>
-      <li>some do their work in a microtask, others in a macrotask (<code>setTimeout</code>);</li>
+      <li>some do their work in a microtask (<code>queueMicrotask</code> / a
+        <code>Promise.then</code>), others in a macrotask (<code>setTimeout</code>);</li>
       <li>some paint on the next <code>requestAnimationFrame</code> rather than synchronously;</li>
       <li>some phases a library's API simply does not offer (shown as <code>n/a</code>).</li>
     </ul>
@@ -266,6 +269,9 @@
   <!-- Header rows are built by benchmark.js (ixInitTable) so the columns match
        the mode (single vs multi) and the close-button option. -->
   <table class="ix-table" id="ix-single-results">
+    <caption>Each cell is the MEDIAN of a few repeats of that ONE operation - not a
+      sum across operations, not a single run. Filter is a type + clear round-trip,
+      reported as the sum of its two medians. The chart below stacks the columns.</caption>
     <thead></thead>
     <tbody></tbody>
   </table>
@@ -275,6 +281,9 @@
 
   <h3>Multiple-select</h3>
   <table class="ix-table" id="ix-multi-results">
+    <caption>Each cell is the MEDIAN of a few repeats of that ONE operation - not a
+      sum across operations, not a single run. Filter is a type + clear round-trip,
+      reported as the sum of its two medians. The chart below stacks the columns.</caption>
     <thead></thead>
     <tbody></tbody>
   </table>
