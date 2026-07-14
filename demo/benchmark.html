@@ -141,12 +141,13 @@
 
   <h2 id="interaction">Interaction latency</h2>
   <p>
-    The other axis: one dedicated widget per library, timing a real
-    open / filter / select / close cycle, so <strong>opening a big list is
-    measured in isolation</strong> - this is where llselect builds its option
-    DOM (it renders nothing until you open). The widgets stay live below; click
-    them yourself too. Native <code>&lt;select&gt;</code> is shown for reference
-    but its dropdown is browser-driven, so it is not timed.
+    The other axis: one dedicated widget per library. The four operations are
+    timed <strong>separately</strong> (never mixed), so one phase's cost never
+    leaks into another's - <strong>opening a big list in isolation</strong> is
+    where llselect builds its option DOM (it renders nothing until you open). The
+    widgets stay live below; click them yourself too. Native
+    <code>&lt;select&gt;</code> is shown for reference but its dropdown is
+    browser-driven, so it is not timed.
   </p>
   <div class="bench-controls">
     <label>Items
@@ -160,38 +161,43 @@
     <button id="ix-run">Build + measure</button>
     <span id="ix-status">Ready.</span>
   </div>
-  <p class="hint">One "Build + measure" fills both tables. Same open / filter /
-    select / close cycle; the widgets differ - multiple-select keeps its list
-    open on select and renders a chip per choice, single-select replaces its one
-    value. Stacked chart: the whole bar is the full cycle cost (shorter is
-    better), each segment a phase; click a legend entry to show or hide it.</p>
+  <p class="hint">One "Build + measure" fills both tables. Stacked chart: the
+    whole bar is the sum of the four phases (shorter is better), each segment a
+    phase; click a legend entry to show or hide it. Details of how each phase is
+    measured are under "What the columns mean" below each table.</p>
 
   <details class="bench-cols">
     <summary>What the columns mean</summary>
     <ul class="bench-legend">
-      <li><strong>Open</strong> - open the dropdown. For a big list this is where
-        llselect builds its option DOM (it renders nothing until you open).</li>
-      <li><strong>Filter</strong> - clear the search box, then type one character
-        that narrows the list to about half. Clearing first makes every keystroke
-        a real change (a library that keeps the query after a selection would
-        otherwise re-render nothing on a repeated character).</li>
-      <li><strong>Select</strong> - pick one option: single-select replaces its
-        one value, multiple-select adds a chip and keeps the list open.</li>
-      <li><strong>Close</strong> - close the dropdown.</li>
-      <li>Each op is timed <strong>to after the next frame is painted</strong>
-        (two <code>requestAnimationFrame</code>s plus a forced layout), not just
-        its synchronous return. Choices.js schedules its show/hide with
-        <code>requestAnimationFrame</code> and reveals a <code>display:none</code>
-        option list, so its real cost - laying out and painting N options - lands
-        on the frame, not in the synchronous call; a plain timer reads ~0. The
-        floor is therefore about one to two frames. Median of a few cycles (first
-        dropped as warm-up); native <code>&lt;select&gt;</code> is not timed.</li>
+      <li><strong>Open</strong> - close first, then time opening the dropdown.
+        For a big list this is where llselect builds its option DOM (it renders
+        nothing until you open). Timed to after the next paint (see below).</li>
+      <li><strong>Filter</strong> - open once, then type <code>q</code> / clear /
+        <code>q</code> / clear five times, timing each keystroke on its own (not
+        mixed with choose). Clearing between makes every keystroke a real change.
+        Timed to when the DOM settles, so a debounced search (Tom Select, Slim
+        Select) is caught rather than read as 0.</li>
+      <li><strong>Choose</strong> - with the filter cleared (full list). Multiple:
+        choose the first 10 items, the popup staying open the whole time (closing
+        it would skip the open-list re-render and be unfair). Single: choose one
+        item.</li>
+      <li><strong>Close</strong> - open first, then time closing.</li>
+      <li><strong>Timing.</strong> Open / close are timed to <strong>after the
+        next frame is painted</strong> (two <code>requestAnimationFrame</code>s +
+        a forced layout): Choices reveals a <code>display:none</code> list whose
+        real cost - laying out and painting N options - lands on the frame, not
+        in the synchronous call, so a plain timer reads ~0 (floor ~one to two
+        frames). Filter / choose are timed to when the DOM <strong>settles</strong>
+        so debounced renders count. Transitions / animations are disabled during
+        a run so a CSS transition (Slim Select) is not counted as work. Median of
+        a few repeats (first dropped as warm-up); native
+        <code>&lt;select&gt;</code> is not timed.</li>
     </ul>
   </details>
 
   <h3>Single-select</h3>
   <table class="ix-table" id="ix-single-results">
-    <thead><tr><th>Library</th><th>Open (ms)</th><th>Filter (ms)</th><th>Select (ms)</th><th>Close (ms)</th></tr></thead>
+    <thead><tr><th>Library</th><th>Open (ms)</th><th>Filter (ms)</th><th>Choose (ms)</th><th>Close (ms)</th></tr></thead>
     <tbody></tbody>
   </table>
   <div class="bench-chart"><canvas id="ix-single-chart"></canvas></div>
@@ -200,7 +206,7 @@
 
   <h3>Multiple-select</h3>
   <table class="ix-table" id="ix-multi-results">
-    <thead><tr><th>Library</th><th>Open (ms)</th><th>Filter (ms)</th><th>Select (ms)</th><th>Close (ms)</th></tr></thead>
+    <thead><tr><th>Library</th><th>Open (ms)</th><th>Filter (ms)</th><th>Choose (ms)</th><th>Close (ms)</th></tr></thead>
     <tbody></tbody>
   </table>
   <div class="bench-chart"><canvas id="ix-multi-chart"></canvas></div>

@@ -428,6 +428,18 @@ function scrollLock(on) {
     document.body.appendChild(overlay)
   }
   if (overlay) { overlay.style.display = on ? 'flex' : 'none' }
+  // Kill CSS transitions / animations while measuring, so a library's open/close
+  // animation (Slim Select) is not counted as work - we measure the render, not
+  // the animation.
+  let noAnim = document.getElementById('bench-noanim')
+  if (on && !noAnim) {
+    noAnim = document.createElement('style')
+    noAnim.id = 'bench-noanim'
+    noAnim.textContent = '*, *::before, *::after { transition: none !important; animation: none !important; }'
+    document.head.appendChild(noAnim)
+  } else if (!on && noAnim) {
+    noAnim.remove()
+  }
   if (on === !!scrollBlocker) { return }
   if (on) {
     scrollBlocker = (e) => e.preventDefault()
@@ -543,7 +555,7 @@ function renderChart() {
 const IX_PHASES = [
   { key: 'open', label: 'Open', color: '#2456a6' },
   { key: 'filter', label: 'Filter', color: '#7a3ea6' },
-  { key: 'select', label: 'Select', color: '#1a7f37' },
+  { key: 'choose', label: 'Choose', color: '#1a7f37' },
   { key: 'close', label: 'Close', color: '#c9821a' },
 ]
 
@@ -556,49 +568,99 @@ const IX_MODES = [
 
 function ixStageEl(mode) { return document.getElementById(`ix-${mode.key}-stage`) }
 
+// Open / close cost is layout + paint of revealing a (possibly display:none)
+// list on the frame the browser shows it, and libraries schedule the show with
+// requestAnimationFrame (Choices). Time to AFTER that frame's paint: run the op,
+// let its rAF fire (frame N), force frame N's layout, then wait one more rAF -
+// the second fires after frame N painted, so paint is in the number.
+async function timeToPaint(fn, stageEl, key) {
+  const t = performance.now()
+  try { fn() } catch (e) { console.warn(key, e); return null }
+  await raf(); reflow(stageEl); await raf()
+  return performance.now() - t
+}
+
+// Filter / choose re-render the option DOM, and some libraries DEBOUNCE the
+// search (Tom Select, Slim Select) so the render lands a while later - a
+// to-paint timer would miss it and read fast. Instead observe the DOM and wait
+// until it stops mutating, then report the time to the LAST mutation (so the
+// debounce wait and any rAF/settle delay are included, without trailing idle).
+async function timeToSettle(fn, stageEl, key) {
+  let lastMut = 0
+  const obs = new MutationObserver(() => { lastMut = performance.now() })
+  obs.observe(document.body, { childList: true, subtree: true, attributes: true })
+  const t = performance.now()
+  try { fn() } catch (e) { obs.disconnect(); console.warn(key, e); return null }
+  let quiet = 0
+  for (let i = 0; i < 40; i++) { // ~640ms cap - generous for debounced search
+    const before = lastMut
+    await raf(); reflow(stageEl)
+    if (lastMut === before) { if (++quiet >= 2) { break } } else { quiet = 0 }
+  }
+  obs.disconnect()
+  return (lastMut > t ? lastMut : performance.now()) - t
+}
+
+const IX_REPS = 5
+
+// Each phase is measured on its own - never mixed - so one phase's cost never
+// leaks into another's.
 async function measureInteraction(mode, key, items, stageEl) {
   const a = ADAPTERS[key]
   const pick = mode.pick[key]
   const h = mode.live[key]
   if (!a.open || !a.filter || !pick || !h) { return null }
-  const CYCLES = 6
-  const rows = { open: [], filter: [], select: [], close: [] }
-  const picks = items.filter((_, i) => i % 2 === 0) // the ' q' half stays visible after filtering
-  // Time each op to the NEXT RENDERED FRAME, not just its synchronous return:
-  // some libraries (Choices) schedule their dropdown DOM work with
-  // requestAnimationFrame, so a purely synchronous timer reads ~0 for them. The
-  // op's own rAF (registered during the call) runs before this raf, so after it
-  // the work has happened; a forced reflow then includes its layout. This makes
-  // the number "latency until the result is on screen", one frame being the floor.
-  // Time an op to AFTER the next frame's paint, not just its synchronous return.
-  // Choices reveals a display:none list whose real cost (laying out + painting N
-  // options) lands on the frame the browser shows it, not inside the synchronous
-  // showDropdown() call - and it schedules that with requestAnimationFrame. So:
-  // run the op, let its rAF fire (frame N), force this frame's layout, then wait
-  // one more frame - the second rAF fires after frame N has painted.
-  const timeOp = async (fn) => {
-    const t = performance.now()
-    try { fn() } catch (e) { console.warn(key, e); return null }
-    await raf()
-    reflow(stageEl)
-    await raf()
-    return performance.now() - t
+  const safeOp = (fn) => { try { fn() } catch (e) { /* ignore */ } }
+  const med = arr => { const v = arr.filter(x => x != null); return v.length ? median(v) : null }
+
+  // OPEN: close first (untimed), time the open.
+  const openS = []
+  for (let i = 0; i <= IX_REPS; i++) {
+    safeOp(() => a.close(h)); await raf()
+    const dt = await timeToPaint(() => a.open(h), stageEl, key)
+    if (i > 0) { openS.push(dt) } // drop first as warm-up
   }
-  for (let i = 0; i < CYCLES; i++) {
-    rows.open.push(await timeOp(() => a.open(h)))
-    // Reset the query to empty UNTIMED first, so the timed keystroke below is
-    // always a real change (empty -> 'q', narrow to half). Otherwise re-typing
-    // the same 'q' is a no-op for a library that keeps the query after a
-    // selection (Choices) or clears it on close (llselect), reading ~0. This
-    // also matches real usage: type into an empty search box.
-    try { a.filter(h, '') } catch (e) { /* ignore */ }
-    await raf()
-    rows.filter.push(await timeOp(() => a.filter(h, 'q')))
-    rows.select.push(await timeOp(() => pick(h, picks[i % picks.length])))
-    rows.close.push(await timeOp(() => a.close(h)))
+
+  // CLOSE: open first (untimed), time the close.
+  const closeS = []
+  for (let i = 0; i <= IX_REPS; i++) {
+    safeOp(() => a.open(h)); await raf()
+    const dt = await timeToPaint(() => a.close(h), stageEl, key)
+    if (i > 0) { closeS.push(dt) }
   }
-  const med = arr => { const v = arr.slice(1).filter(x => x != null); return v.length ? median(v) : null } // drop first as warm-up
-  return { open: med(rows.open), filter: med(rows.filter), select: med(rows.select), close: med(rows.close) }
+
+  // FILTER on its own: open once, then 'q' -> '' repeated, each a real change,
+  // each timed with the settle timer (catches debounced renders).
+  const filterS = []
+  safeOp(() => a.open(h)); safeOp(() => a.filter(h, '')); await raf()
+  for (let i = 0; i < IX_REPS; i++) {
+    filterS.push(await timeToSettle(() => a.filter(h, 'q'), stageEl, key))
+    filterS.push(await timeToSettle(() => a.filter(h, ''), stageEl, key))
+  }
+  safeOp(() => a.close(h)); await raf()
+
+  // CHOOSE on its own, filter cleared (full list, no filter dependency).
+  const chooseS = []
+  if (mode.multi) {
+    // Choose the first 10 items; the popup must stay open the whole time.
+    safeOp(() => a.open(h)); safeOp(() => a.filter(h, '')); await raf()
+    for (let i = 0; i < 10; i++) {
+      safeOp(() => a.open(h)); await raf() // keep it open (no-op if already open)
+      const dt = await timeToSettle(() => pick(h, items[i]), stageEl, key)
+      if (i > 0) { chooseS.push(dt) } // drop first as warm-up
+    }
+    safeOp(() => a.close(h)); await raf()
+  } else {
+    // Single: choose one item (it closes); repeat.
+    for (let i = 0; i <= IX_REPS; i++) {
+      safeOp(() => a.open(h)); safeOp(() => a.filter(h, '')); await raf()
+      const dt = await timeToSettle(() => pick(h, items[i]), stageEl, key)
+      if (i > 0) { chooseS.push(dt) }
+      safeOp(() => a.close(h)); await raf()
+    }
+  }
+
+  return { open: med(openS), filter: med(filterS), choose: med(chooseS), close: med(closeS) }
 }
 
 function ixRow(mode, key) { return document.querySelector(`#ix-${mode.key}-results tbody tr[data-lib="${key}"]`) }
