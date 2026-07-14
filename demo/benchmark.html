@@ -161,16 +161,19 @@
   <h2 id="interaction">Interaction latency</h2>
   <blockquote class="bench-fairness-note">
     <strong>These numbers are best-effort, not a guaranteed-fair ranking.</strong>
-    The libraries differ too much under the hood to time identically: some debounce
-    the filter input with no setting to turn it off; some defer a chip's removal on
-    an animation timer that cannot be disabled; some do their work in a microtask
-    and others in a macrotask (<code>setTimeout</code>); some paint on the next
-    <code>requestAnimationFrame</code> rather than synchronously; and some phases a
-    library's API simply does not offer (shown as <code>n/a</code>). The harness
-    normalises what it can (see <a href="#fair">Fairness</a>) and times to the
-    painted frame / settled DOM, but treat small gaps as noise. That is why the
-    measured widgets are left <strong>live</strong> below - open, filter and select
-    them yourself to feel the real latency, rather than trusting a single number.
+    The libraries differ too much under the hood to time identically:
+    <ul>
+      <li>some debounce the filter input, with no setting to turn it off;</li>
+      <li>some defer a chip's removal on an animation timer that cannot be disabled;</li>
+      <li>some do their work in a microtask, others in a macrotask (<code>setTimeout</code>);</li>
+      <li>some paint on the next <code>requestAnimationFrame</code> rather than synchronously;</li>
+      <li>some phases a library's API simply does not offer (shown as <code>n/a</code>).</li>
+    </ul>
+    The harness normalises what it can (see <a href="#fair">Fairness</a>) and times
+    to the painted frame / settled DOM, but treat small gaps as noise. That is why
+    the measured widgets are left <strong>live</strong> below - open, filter and
+    select them yourself to feel the real latency, rather than trusting a single
+    number.
   </blockquote>
   <p>
     The other axis: one dedicated widget per library. Each operation is

@@ -394,6 +394,8 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 /* Fairness caveat at the top of the interaction section - light red. */
 .bench-fairness-note { font-size: 0.9rem; color: #7a2230; background: #fdecec; border-left: 4px solid #d0454c; padding: 0.6rem 0.95rem; border-radius: 4px; margin: 1rem 0; }
 .bench-fairness-note code { background: #f6d8db; }
+.bench-fairness-note ul { margin: 0.4rem 0; padding-inline-start: 1.4rem; }
+.bench-fairness-note li { margin: 0.15rem 0; }
 .bench-libbuttons { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin: 0 0 1rem; font-size: 0.9rem; }
 .bench-libbuttons button { font: inherit; font-size: 0.85rem; padding: 0.25rem 0.7rem; cursor: pointer; border: 1px solid #bbb; background: #fff; border-radius: 4px; }
 .bench-libbuttons button:hover { border-color: #2456a6; color: #2456a6; }
