@@ -67,7 +67,9 @@ dependency-free.
 
 Widgets are built in small chunks with a `requestAnimationFrame` yield between
 them, under a per-library time budget (about 20 s, or unlimited with the "no
-timeout" toggle; a Stop button ON the run overlay cancels cooperatively (the overlay blocks clicks, so a page-level button would be unreachable mid-run)). Reported:
+timeout" toggle). A Stop button cancels cooperatively; it lives ON the run
+overlay, because the overlay blocks clicks to everything behind it, so a
+page-level Stop would be unreachable mid-run. Reported:
 
 - **Built / target** - how many finished before the budget (a competitor that
   cannot mass-instantiate shows e.g. `240 / 10000 (timeout)`).
