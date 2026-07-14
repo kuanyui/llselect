@@ -369,7 +369,7 @@ function initTable() {
     a.textContent = DISPLAY[key].name
     nameTd.appendChild(a)
     tr.appendChild(nameTd)
-    for (const col of ['built', 'compute', 'nodes']) {
+    for (const col of ['built', 'compute', 'nodes', 'teardown']) {
       const td = document.createElement('td'); td.dataset.col = col; td.textContent = ''
       tr.appendChild(td)
     }
@@ -380,7 +380,7 @@ function initTable() {
 function setCell(key, col, text) { rowFor(key).querySelector(`td[data-col="${col}"]`).textContent = text }
 
 function highlightBest() {
-  for (const col of ['compute', 'nodes']) {
+  for (const col of ['compute', 'nodes', 'teardown']) {
     let best = Infinity, bestKey = null
     for (const key of ORDER) {
       const cell = rowFor(key).querySelector(`td[data-col="${col}"]`)
@@ -412,6 +412,15 @@ async function runLib(key, renderAfter = true) {
   const res = await buildAll(key, scen, runOptsFromDom())
   const nodes = countNodes() - before
 
+  // Teardown: time destroying every widget just built (symmetric to Build total).
+  // This empties the scratch area - the mass widgets are transient proof they
+  // rendered; the interaction section keeps its widgets live for inspection.
+  const td0 = performance.now()
+  for (const w of live) { try { ADAPTERS[w.key].teardown(w.h) } catch (e) { /* ignore */ } }
+  const teardown = performance.now() - td0
+  live = []
+  stage.replaceChildren()
+
   const builtCell = rowFor(key).querySelector('td[data-col="built"]')
   builtCell.textContent = `${res.built} / ${scen.widgets}` + (res.errored ? ' (error)' : res.stopped ? ' (stopped)' : res.timedOut ? ' (timeout)' : '')
 
@@ -421,8 +430,11 @@ async function runLib(key, renderAfter = true) {
   const nodesCell = rowFor(key).querySelector('td[data-col="nodes"]')
   nodesCell.textContent = nodes.toLocaleString(); nodesCell.dataset.value = nodes
 
+  const teardownCell = rowFor(key).querySelector('td[data-col="teardown"]')
+  teardownCell.textContent = fmt(teardown); teardownCell.dataset.value = teardown
+
   results[key] = {
-    built: res.built, target: scen.widgets, compute: res.compute, nodes,
+    built: res.built, target: scen.widgets, compute: res.compute, nodes, teardown,
     timedOut: res.timedOut, errored: res.errored,
   }
   highlightBest()
@@ -540,6 +552,7 @@ const METRICS = [
   { key: 'throughput', label: 'Throughput (widgets/sec)', color: '#2456a6', higherBetter: true, value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null), fmt: v => Math.round(v).toLocaleString() + ' /s' },
   { key: 'compute', label: 'Build total (ms)', color: '#c9821a', higherBetter: false, value: r => r.compute, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
   { key: 'nodes', label: 'DOM nodes', color: '#7a3ea6', higherBetter: false, value: r => r.nodes, fmt: v => Math.round(v).toLocaleString() },
+  { key: 'teardown', label: 'Teardown total (ms)', color: '#1a7f37', higherBetter: false, value: r => r.teardown, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
 ]
 
 let chartInstance = null
@@ -860,6 +873,11 @@ function renderIxChart(mode) {
     label: p.label,
     data: libs.map(k => { const v = mode.results[k][p.key]; return typeof v === 'number' ? v : null }), // n/a -> gap
     backgroundColor: p.color, borderWidth: 0, stack: 'ix',
+    // Deselect the two deselect phases by default: Unchoose is n/a for some
+    // libraries (Choices, Tom Select) and Remove tag is opt-in, so including them
+    // in the default stacked bar would sum uneven totals. The legend toggles them
+    // back on.
+    hidden: p.key === 'unchoose' || p.key === 'removeTag',
   }))
   const cfg = {
     type: 'bar',

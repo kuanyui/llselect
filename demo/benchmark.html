@@ -100,6 +100,7 @@
         <th>Built / target</th>
         <th>Build total (ms)</th>
         <th>DOM nodes (resting)</th>
+        <th>Teardown total (ms)</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -118,6 +119,12 @@
       <li><strong>DOM nodes (resting)</strong> - element nodes left under the
         scratch area after building, popups closed. llselect builds no option DOM
         until a popup opens, so this shows its lazy-render footprint.</li>
+      <li><strong>Teardown total (ms)</strong> - synchronous time to
+        <code>destroy()</code> every widget just built (the mirror of Build total).
+        A library that leaks listeners or unwinds slowly shows here. Measuring it
+        clears the scratch area, so the widgets appear during the build and are
+        gone after. Like Build total it is one run, and a timed-out library tears
+        down only what it built.</li>
     </ul>
     <p class="hint">Filtering is measured in the interaction-latency section
       below, not here - it is about one widget, not about building many.</p>
@@ -132,7 +139,7 @@
   <div class="bench-chart"><canvas id="chart"></canvas></div>
   <p id="chart-empty" class="hint">Run a scenario to see the chart.</p>
 
-  <h3>Scratch area <small>(the widgets from the last run render here - scroll)</small></h3>
+  <h3>Scratch area <small>(widgets build here during a run, then the teardown measurement clears them)</small></h3>
   <div id="stage" class="bench-stage"></div>
 
   <h2 id="interaction">Interaction latency</h2>

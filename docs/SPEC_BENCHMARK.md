@@ -91,6 +91,11 @@ page-level Stop would be unreachable mid-run. Reported:
 - **DOM nodes (resting)** - element nodes under the scratch area after building,
   popups closed. Shows llselect's lazy-render footprint (it builds no option DOM
   until a popup opens).
+- **Teardown total (ms)** - synchronous time to `destroy()` every widget just
+  built (the mirror of Build total; a library that leaks listeners or unwinds
+  slowly shows here). Measuring it clears the scratch area, so the mass widgets
+  are transient - they render during the build and are gone after. One run; a
+  timed-out library tears down only what it built.
 
 Filtering is NOT measured here: it is a property of one widget, not of building
 many (the widgets are independent), so it belongs to - and is measured in - the
@@ -151,6 +156,12 @@ the header rows are built by `ixInitTable` so they track the mode + the checkbox
   not their default rendering; turning it on enables the x on those two and reveals
   this column. It also changes the Choose number (a tag with an x is more DOM).
 - **Close popup** - open first, then time closing.
+
+The interaction chart is a stacked bar (whole bar = the summed phases). Unchoose
+and Remove tag start DESELECTED in the legend: they are n/a for some libraries or
+opt-in, so summing them by default would stack uneven totals across libraries. The
+default bar is the shared open / filter / choose / close; the legend toggles the
+two deselect phases back on.
 
 Native `<select>` is shown for reference but not timed (its dropdown is
 browser-driven).
