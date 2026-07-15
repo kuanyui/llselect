@@ -84,9 +84,10 @@ dependency-free.
   it is n/a too. Every case is decided by the chosen-count guard - a click that did
   not deselect is never timed as if it did, and it was all confirmed in a headless
   browser (Select2 needed a full mouse sequence; Slim needed the OPEN portaled
-  content). The tag x (Remove-tag) column is opt-in and off by default,
-  because Choices and Tom Select only grow a tag x through a setting / plugin -
-  forcing it on everyone would not be their default rendering.
+  content). The tag x (Remove-tag) column is ON by default: for Choices and Tom
+  Select the tag x IS the mouse way to deselect (their dropdown is add-only; Tom
+  Select otherwise deselects only via Backspace), so showing it is more honest than
+  hiding it. Turn the checkbox off to see each library's no-forced-x baseline.
 - **Guarded adapters.** Every op is wrapped; an adapter that cannot drive a
   loaded version reports `-` / error for that cell instead of breaking the page.
 
@@ -180,14 +181,15 @@ the header rows are built by `ixInitTable` so they track the mode + the checkbox
   timed click is verified to actually drop the chosen count; a no-op click is
   reported n/a rather than as a misleading number. (Verified against the pinned
   builds - see the per-library notes.)
-- **Remove tag (x)** - multiple only, and only when the "test close button on
-  multiple tags" checkbox is on. CLICK each tag's remove (x) button and time the
-  removal + re-render (a real click, not an API call - the "press x to drop a tag"
-  path). The checkbox is off by default because Choices (`removeItemButton`) and
-  Tom Select (`remove_button` plugin) only grow a tag x through a setting / plugin
-  (llselect, Select2, Slim Select show one anyway), so forcing it on everyone is
-  not their default rendering; turning it on enables the x on those two and reveals
-  this column. It also changes the Choose number (a tag with an x is more DOM).
+- **Remove tag (x)** - multiple only, gated on the "test close button on multiple
+  tags" checkbox. CLICK each tag's remove (x) button and time the removal + re-render
+  (a real click, not an API call - the "press x to drop a tag" path). The checkbox
+  is ON by default, because for Choices and Tom Select the tag x IS the mouse way to
+  deselect (they have no in-popup unchoose), so showing it is more useful than
+  hiding it; Choices needs `removeItemButton` and Tom Select the `remove_button`
+  plugin for the x (llselect, Select2, Slim Select show one anyway). Turn it OFF to
+  see each library's no-forced-x baseline. It also changes the Choose number a
+  little (a tag with an x is slightly more DOM).
 - **Close popup** - open first, then time closing.
 
 The interaction chart is a stacked bar (whole bar = the summed phases). Unchoose
@@ -313,10 +315,13 @@ left live in the stage so a reader can open and scroll it by hand.
   so it re-renders the same-size list AND marks a chosen option `.selected`.
   Debounced search; `render.option` + `render.item` for the icon;
   `closeAfterSelect:false` for multi, and the `remove_button` plugin (the tag x)
-  only when the close-button checkbox is on. Clicking a `.selected` option does NOT
-  deselect it - `onOptionSelect` just calls the idempotent `addItem`; only the
+  when the close-button checkbox is on (default). Clicking a `.selected` option does
+  NOT deselect it - `onOptionSelect` just calls the idempotent `addItem`; only the
   `checkbox_options` plugin toggles off on click, and it renders checkboxes (a
-  different UX), so it is not used. In-popup unchoose is n/a (verified headless).
+  different UX), so it is not used. So in-popup unchoose is n/a - Tom Select's
+  dropdown is add-only; it deselects via Backspace (keyboard) or the tag x
+  (remove_button). All verified headless (dropdown click 3->3, Backspace 3->2, tag
+  x 2->1).
 - **Slim Select** - debounced search (200 ms - the Filter number includes it, real
   latency); `closeOnSelect:false` for multi; `allowDeselect:true` for multi so a
   click on a chosen option in the open list toggles it off (the Unchoose phase;

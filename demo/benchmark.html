@@ -204,7 +204,7 @@
     </div>
     <div class="bench-row">
       <label><input type="checkbox" id="ix-custom"> custom renderer (MDI icon per item)</label>
-      <label><input type="checkbox" id="ix-closebtn"> test close button on multiple tags (Choices / Tom Select need it opted in; adds the "Remove tag (x)" column)</label>
+      <label><input type="checkbox" id="ix-closebtn" checked> test close button on multiple tags - adds the "Remove tag (x)" column (Choices and Tom Select only grow a tag x when this is on; it is how they deselect with the mouse)</label>
     </div>
     <div class="bench-row">
       <button id="ix-run">Build + measure</button>
@@ -243,10 +243,11 @@
         dropped and reads <code>n/a</code> if not. <strong>llselect</strong>,
         <strong>Select2</strong> and <strong>Slim Select</strong> (with
         <code>allowDeselect</code>) deselect on click. <strong>Choices</strong> and
-        <strong>Tom Select</strong> read <code>n/a</code>: clicking a chosen option
-        only re-adds it - both keep it visible, but neither deselects from the list
-        (Tom would only with a plugin that turns options into checkboxes). All
-        verified in a headless browser.</li>
+        <strong>Tom Select</strong> read <code>n/a</code>: their dropdown is add-only
+        - clicking a chosen option just re-adds it. That does not mean they cannot
+        deselect; they do it elsewhere - via the tag's x (the Remove-tag column), and
+        Tom Select also via Backspace. (Tom would deselect from the list only with a
+        plugin that turns every option into a checkbox.) All verified headless.</li>
       <li><strong>Remove tag (x)</strong> - multiple only, and only when
         <em>test close button on multiple tags</em> is ticked. CLICK each tag's
         remove (x) button and time the removal + re-render - the "press x to drop
