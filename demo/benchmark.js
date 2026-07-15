@@ -132,7 +132,11 @@ const ADAPTERS = {
       // dropdown instead of removing it (Choices' default), so choosing / filtering
       // re-renders the same-size list as llselect / Select2 / Slim Select, which
       // keep it. Without this Choices re-renders a shrinking list and does less work.
-      const inst = new window.Choices(sel, { searchEnabled: true, allowHTML: !!opts.custom, silent: true, removeItemButton: !!(opts.multi && opts.closeBtn), renderSelectedChoices: opts.multi ? 'always' : 'auto' })
+      // searchResultLimit: items.length renders EVERY match on a filter. Choices
+      // caps search results at 4 by default (searchResultLimit:4), so it would draw
+      // a handful while the others draw all ~N/2 matches - the maxOptions:50 trap
+      // again (looks fast for free, most visibly at 10k items). null-ish = all.
+      const inst = new window.Choices(sel, { searchEnabled: true, allowHTML: !!opts.custom, silent: true, removeItemButton: !!(opts.multi && opts.closeBtn), renderSelectedChoices: opts.multi ? 'always' : 'auto', searchResultLimit: items.length })
       inst.setChoices(items.map((v, i) => ({ value: v, label: opts.custom ? iconHtml(v) : v, selected: i < k })), 'value', 'label', true)
       return { inst, mount }
     },

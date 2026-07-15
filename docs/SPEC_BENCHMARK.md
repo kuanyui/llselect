@@ -54,9 +54,14 @@ dependency-free.
 - **Transitions off while measuring.** A run injects
   `* { transition:none; animation:none }`, so a CSS open/close animation (Slim
   Select) is not counted as work.
-- **Everyone renders the same N options.** Tom Select caps the rendered options
-  (default 50), so it is forced to `maxOptions: null` - otherwise it builds a
-  fraction of the list and looks fastest for free, which is not the same work.
+- **Everyone renders the same N options.** Two libraries cap what they render:
+  Tom Select caps the dropdown to 50 (`maxOptions: 50`), and Choices caps SEARCH
+  results to 4 (`searchResultLimit: 4`). Both are forced to render everything
+  (`maxOptions: null`, `searchResultLimit: items.length`) - otherwise they draw a
+  fraction and look fastest for free, most visibly at 10k items. (For Choices the
+  effect on the Filter number is small at 1k - its cost is the Fuse.js fuzzy search
+  over all items, not the render - but the cap still matters at scale, so it is
+  raised for consistency.)
 - **Selected options stay in the list.** Choices and Tom Select drop a chosen
   option from the dropdown by default, so choosing one shrinks their list and they
   re-render less than llselect / Select2 / Slim Select (which keep it and re-mark
@@ -233,6 +238,12 @@ left live in the stage so a reader can open and scroll it by hand.
 - **Tom Select rendered only 50 options.** Its default `maxOptions: 50` meant it
   built a fraction of the list and looked fastest for free. Fix:
   `maxOptions: null` so it renders the same N.
+- **Choices rendered only 4 search results.** Its default `searchResultLimit: 4`
+  caps the FILTERED list to four - so on a filter it draws a handful while the
+  others draw every match, looking too fast (most so at 10k items). Fix:
+  `searchResultLimit: items.length`. Verified headless: at 1k it barely moves the
+  number (13 vs 14 ms - the cost is the Fuse.js search over all items, not the
+  render), but it is the same class of cap as Tom's and matters at scale.
 - **Multi choose closed the popup for some libraries.** Slim Select (and Select2)
   close the dropdown after a selection by default, skipping the open-list
   re-render that llselect and the others pay. Fix: `closeOnSelect:false` /
@@ -295,8 +306,11 @@ left live in the stage so a reader can open and scroll it by hand.
   synchronously. Chosen list items carry `aria-selected="true"`, and a click on
   one toggles it off - the Unchoose-in-popup path.
 - **Choices.js** - eager-renders all options at init; `display:none` until show;
-  rAF-scheduled show/hide. HTML label carries the custom icon into the tag.
-  `removeItemButton` for multi only when the close-button checkbox is on.
+  rAF-scheduled show/hide. HTML label carries the custom icon into the tag. Filters
+  with a Fuse.js FUZZY search (no debounce) and only searches a FOCUSED input, so
+  Filter focuses first; `searchResultLimit: items.length` renders every match (its
+  default caps at 4). `removeItemButton` for multi only when the close-button
+  checkbox is on.
   `renderSelectedChoices: 'always'` for multi keeps a chosen option in the dropdown
   (its default drops it) so it re-renders the same-size list. A click on an
   already-selected choice still only adds, never deselects (its choice handler acts
