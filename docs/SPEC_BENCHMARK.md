@@ -196,8 +196,11 @@ opt-in, so summing them by default would stack uneven totals across libraries. T
 default bar is the shared open / filter / choose / close; the legend toggles the
 two deselect phases back on.
 
-Native `<select>` is shown for reference but not timed (its dropdown is
-browser-driven).
+Native `<select>` is the floor. Its dropdown is browser / OS-driven, so open /
+filter / close are not observable from the page (n/a). Its single-select Choose IS
+timed - set the value + fire change, a synchronous timer (~0, no option list to
+re-render) - so the table has a baseline for how much overhead each library adds.
+Native multi is a scrolled listbox, not a popup, so it stays n/a.
 
 ## Traps hit (so they are not re-hit)
 
@@ -280,8 +283,10 @@ browser-driven).
 
 ## Per-library adapter notes
 
-- **Native `<select>`** - baseline; `<option>` elements, first N `selected` for
-  the pre-select toggle. No in-widget filter, no timed dropdown.
+- **Native `<select>`** - the floor; `<option>` elements, first N `selected` for
+  the pre-select toggle. No in-widget filter; its dropdown is browser-driven so
+  open / filter / close are n/a. Single-select Choose is timed (set the value +
+  fire change, synchronous, ~0) as the baseline overhead every library adds to.
 - **llselect** - the library under test. Multi uses `triggerDisplay: 'tags'`.
   Custom renderer wires the item, tag, and trigger content. Filters
   synchronously. Chosen list items carry `aria-selected="true"`, and a click on

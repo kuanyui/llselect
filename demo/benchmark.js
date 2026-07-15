@@ -710,11 +710,36 @@ const IX_REPS = 5
 // Each phase is measured on its own - never mixed - so one phase's cost never
 // leaks into another's.
 async function measureInteraction(mode, key, stageEl, closeBtn) {
-  const d = DRIVER[key]
   const h = mode.live[key]
-  if (!d || !h) { return null } // native has no driver -> the whole row is n/a
-  const safeOp = (fn) => { try { fn() } catch (e) { /* ignore */ } }
+  if (!h) { return null }
   const med = arr => { const v = arr.filter(x => x != null); return v.length ? median(v) : null }
+
+  // Native <select>: its dropdown is browser / OS-driven, so open / filter / close
+  // are not observable from the page. The one comparable interaction is choosing a
+  // value (single-select): set it + fire change. Timed with a synchronous timer -
+  // the same "work done to reflect the choice" that to-settle captures for a
+  // synchronous re-render elsewhere - which for native is ~0: there is no option
+  // list to re-render, so it is the floor. (to-paint would instead charge it the
+  // ~2-frame paint floor and make the floor look mid-pack.) Native multi is a
+  // scrolled listbox, not a popup, so it is left out.
+  if (key === 'native') {
+    if (mode.multi) { return null }
+    const sel = h.sel
+    const chooseS = []
+    for (let i = 0; i <= IX_REPS; i++) {
+      const idx = (i + 1) % Math.max(1, sel.options.length)
+      const t0 = performance.now()
+      sel.selectedIndex = idx
+      sel.dispatchEvent(new Event('change', { bubbles: true }))
+      if (i > 0) { chooseS.push(performance.now() - t0) } // drop first as warm-up
+      await raf()
+    }
+    return { open: NA, filter: NA, choose: med(chooseS), unchoose: NA, removeTag: NA, close: NA }
+  }
+
+  const d = DRIVER[key]
+  if (!d) { return null }
+  const safeOp = (fn) => { try { fn() } catch (e) { /* ignore */ } }
   // Focus the search input and type - the real filter path (Choices only searches
   // a FOCUSED input; Tom Select debounces the real keystroke). No-op if no search.
   const typeQuery = (q) => { const i = safe(() => d.searchInput(h)); if (i) { i.focus(); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) } }

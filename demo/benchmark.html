@@ -186,8 +186,11 @@
     leaks into another's - <strong>opening a big list in isolation</strong> is
     where llselect builds its option DOM (it renders nothing until you open). The
     widgets stay live below; click them yourself too. Native
-    <code>&lt;select&gt;</code> is shown for reference but its dropdown is
-    browser-driven, so it is not timed.
+    <code>&lt;select&gt;</code>'s dropdown is browser / OS-driven, so its open /
+    filter / close cannot be timed from the page (n/a); its single-select
+    <strong>Choose</strong> IS measured as the floor - setting the value does ~0
+    work, no option list to re-render, which is exactly the overhead every library
+    adds.
   </p>
   <div class="bench-toolbar">
     <div class="bench-row">
@@ -260,8 +263,9 @@
         frames). Filter / choose are timed to when the DOM <strong>settles</strong>
         so debounced renders count. Transitions / animations are disabled during
         a run so a CSS transition (Slim Select) is not counted as work. Median of
-        a few repeats (first dropped as warm-up); native
-        <code>&lt;select&gt;</code> is not timed.</li>
+        a few repeats (first dropped as warm-up). Native <code>&lt;select&gt;</code>
+        shows a number only for single-select Choose (its floor, ~0); its
+        browser-driven open / filter / close are n/a.</li>
     </ul>
   </details>
 
