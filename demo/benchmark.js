@@ -66,12 +66,14 @@ function tuneCellTitle(key, phase, multi) {
   }
   return (T[key] && T[key][phase]) || null
 }
-// Set a cell's text and, if that (library, phase) was tuned, append a `*` whose
-// title explains it.
+// Set a cell's text and, if that (library, phase) was tuned, put a `*` (whose title
+// explains it) to the LEFT of the number - cells are right-aligned, so a trailing
+// star would shift the digits out of line.
 function ixCellText(td, text, key, col, multi) {
-  td.textContent = text
+  td.replaceChildren()
   const title = tuneCellTitle(key, col, multi)
-  if (title) { const s = document.createElement('sup'); s.className = 'tune-star'; s.textContent = '*'; s.title = title; td.append(' ', s) }
+  if (title) { const s = document.createElement('sup'); s.className = 'tune-star'; s.textContent = '*'; s.title = title; td.append(s) }
+  td.append(text)
 }
 
 const SCENARIOS = {
@@ -447,14 +449,17 @@ function setCell(key, col, text) { rowFor(key).querySelector(`td[data-col="${col
 
 function highlightBest() {
   for (const col of ['compute', 'nodes', 'teardown']) {
-    let best = Infinity, bestKey = null
+    let best = Infinity, bestText = null
+    const cells = []
     for (const key of ORDER) {
       const cell = rowFor(key).querySelector(`td[data-col="${col}"]`)
       cell.classList.remove('best')
       const v = parseFloat(cell.dataset.value)
-      if (!isNaN(v) && v < best) { best = v; bestKey = key }
+      if (!isNaN(v)) { cells.push(cell); if (v < best) { best = v; bestText = cell.textContent } }
     }
-    if (bestKey) { rowFor(bestKey).querySelector(`td[data-col="${col}"]`).classList.add('best') }
+    // Every cell whose DISPLAYED value ties the best goes green (compare the shown
+    // text - these columns use different formatters and mass cells carry no star).
+    if (bestText != null) { for (const cell of cells) { if (cell.textContent === bestText) { cell.classList.add('best') } } }
   }
 }
 
@@ -932,12 +937,16 @@ function ixSetRow(mode, key, m) {
 
 function ixHighlightBest(mode) {
   for (const col of ixPhases(mode).map(p => p.key)) {
-    let best = Infinity, bestKey = null
+    let best = Infinity
+    const cells = []
     for (const key of IX_ORDER) {
       const c = ixRow(mode, key).querySelector(`td[data-col="${col}"]`); c.classList.remove('best')
-      const v = parseFloat(c.dataset.value); if (!isNaN(v) && v < best) { best = v; bestKey = key }
+      const v = parseFloat(c.dataset.value)
+      if (!isNaN(v)) { cells.push({ c, v }); if (v < best) { best = v } }
     }
-    if (bestKey) { ixRow(mode, bestKey).querySelector(`td[data-col="${col}"]`).classList.add('best') }
+    // Highlight every cell whose DISPLAYED value ties the best - two libraries
+    // showing the same best number both go green (all these columns use fmt()).
+    if (best < Infinity) { const bestStr = fmt(best); for (const { c, v } of cells) { if (fmt(v) === bestStr) { c.classList.add('best') } } }
   }
 }
 
