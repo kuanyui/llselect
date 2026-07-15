@@ -702,16 +702,26 @@ async function timeToSettle(fn, stageEl, key) {
   obs.observe(document.body, { childList: true, subtree: true, attributes: true })
   const t = performance.now()
   try { fn() } catch (e) { obs.disconnect(); console.warn(key, e); return null }
-  let quiet = 0
-  for (let i = 0; i < 90; i++) { // ~1.5s hard cap
+  // The endpoint is the frame ~2 rAFs AFTER the last DOM mutation, not the mutation
+  // itself: rendering a big list re-flows and paints on the frame after the DOM
+  // changes, and that layout + paint is real perceived latency (Choices does a fast
+  // incremental DOM update but then the browser lays out / paints the whole list -
+  // e.g. all N options when the query is cleared). A heavy frame delays the next
+  // rAF, so it lands in the number; the layout part shows even headless.
+  let quiet = 0, sinceMut = 99, paintedEnd = 0
+  for (let i = 0; i < 100; i++) { // ~1.6s hard cap
     const before = lastMut
     await raf(); reflow(stageEl)
+    const now = performance.now()
+    sinceMut = lastMut > before ? 0 : sinceMut + 1
+    if (sinceMut === 2) { paintedEnd = now } // ~after the last mutation's frame laid out + painted
     // Do not accept the quiet break until the minimum window has elapsed, so a
     // deferred / debounced render is not missed.
-    if (lastMut === before) { if (performance.now() - t >= SETTLE_MIN_MS && ++quiet >= 2) { break } } else { quiet = 0 }
+    if (lastMut === before) { if (now - t >= SETTLE_MIN_MS && ++quiet >= 2) { break } } else { quiet = 0 }
   }
   obs.disconnect()
-  return (lastMut > t ? lastMut : performance.now()) - t
+  const end = paintedEnd > t ? paintedEnd : (lastMut > t ? lastMut : performance.now())
+  return end - t
 }
 
 const IX_REPS = 5

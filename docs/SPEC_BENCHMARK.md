@@ -157,9 +157,14 @@ does. Driving real events fixed all three. Two timers:
   render a frame (Choices), so it lands later. A `MutationObserver` watches the DOM;
   the timer observes for a MINIMUM window first - so a tiny immediate mutation (an
   input attribute flip) does not end it inside the gap before the real render - then
-  waits until mutations stop, and reports the time to the LAST mutation. So the
-  deferred/debounce wait is included without trailing idle. (llselect filters
-  synchronously.)
+  waits until mutations stop. The endpoint is the frame ~2 rAFs AFTER the last
+  mutation, NOT the mutation itself: the browser lays out + paints the new list on
+  the frame after the DOM changes, and that is real perceived latency. It matters
+  because a fast incremental DOM update can hide a heavy paint - Choices clears the
+  query with a quick ~500-node diff (JS ~10 ms) but the browser then lays out + paints
+  the whole ~1000-item list; measuring only to the last mutation read ~10 ms while
+  the perceived clear is much slower. To the painted frame it reads ~66 ms (headless,
+  layout only; more on a real display). (llselect filters synchronously.)
 
 Phase definitions (the single and multi tables carry DIFFERENT columns - single
 is open / filter / choose / close; multi adds the two deselect phases below, and
