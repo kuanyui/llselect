@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>llselect demo - framework bindings</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- One llselect visual theme so the widgets look styled. -->
+  <link rel="stylesheet" href="../dist/themes/vanilla.css">
+  <style>
+    .fw-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.5rem 2rem; align-items: start; }
+    .fw-grid h3 { font-size: 0.95rem; margin: 0 0 0.5rem; }
+    .fw-live { max-width: 340px; margin-bottom: 1.25rem; }
+    .fw-live button { margin-top: 0.5rem; font: inherit; padding: 0.35rem 0.8rem; cursor: pointer; }
+    .fw-cdn { font-size: 0.82rem; color: #555; }
+    .fw-cdn code { font-size: 0.95em; }
+  </style>
+</head>
+<body>
+  <nav class="demo-nav">
+    <a href="index.html">Home</a>
+    <a href="examples.html">Examples</a>
+    <a href="frameworks.html" class="current">Frameworks</a>
+    <a href="benchmark.html">Benchmark</a>
+  </nav>
+
+  <h1>llselect demo - framework bindings</h1>
+  <p>
+    llselect is an <strong>imperative, framework-agnostic</strong> widget: you
+    construct an instance on a mount element, drive it with methods
+    (<code>setItems</code>, <code>setChosenItem(s)</code>), listen through
+    <code>onChange</code>, and call <code>destroy()</code> on teardown. Binding it
+    to a framework is just wiring those three moments to that framework's
+    lifecycle and reactive state - <em>create on mount, sync on change, destroy on
+    unmount</em>.
+  </p>
+  <p class="fw-cdn">
+    Everything on this page runs with <strong>no build step</strong>. View source:
+    a single <code>&lt;script type="module"&gt;</code> pulls <strong>real React
+    18</strong> and <strong>Vue 3</strong> straight from a CDN and llselect from its
+    ES-module build (<code>../dist/index.mjs</code>). There is no bundler and no
+    JSX compiler - React is written with <a href="https://github.com/developit/htm"><code>htm</code></a>
+    tagged templates. The same create / sync / destroy pattern applies to Angular,
+    Svelte, Solid and the rest; those need their own compiler, so they are not
+    embedded live here, but the wrapper logic is identical.
+  </p>
+
+  <!-- ===================== Vanilla ===================== -->
+  <section>
+    <h2>Vanilla JS (the raw API)</h2>
+    <p>No wrapper - this is what every framework binding drives underneath.</p>
+    <div class="fw-grid">
+      <div class="fw-live">
+        <h3>Single</h3>
+        <div id="van-single"></div>
+        <p class="out" id="van-single-out"></p>
+        <button id="van-single-set">Set "Cherry" from code</button>
+      </div>
+      <div class="fw-live">
+        <h3>Multiple</h3>
+        <div id="van-multi"></div>
+        <p class="out" id="van-multi-out"></p>
+        <button id="van-multi-clear">Clear from code</button>
+      </div>
+    </div>
+    <pre data-demo><code>import { LLSelectSingle } from 'llselect'
+
+const sel = new LLSelectSingle(mountEl, {
+  ariaLabel: 'Fruit',
+  searchable: true,
+  onChange: (item) =&gt; { readout.textContent = JSON.stringify(item) },
+})
+sel.setItems(['Apple', 'Banana', 'Cherry', ...])
+sel.setChosenItem('Banana')   // initial value
+
+sel.setChosenItem('Cherry')   // later, from your own code -&gt; updates the widget
+sel.destroy()                 // on teardown: drops document / window listeners</code></pre>
+  </section>
+
+  <!-- ===================== React ===================== -->
+  <section>
+    <h2>React</h2>
+    <p>
+      A controlled <code>&lt;LlSelect&gt;</code> wrapper: <code>useEffect</code>
+      creates the instance once and returns <code>destroy</code> as cleanup; two
+      more effects push <code>items</code> and the controlled <code>value</code>
+      down. Pick in a widget and the readout updates; click a button and the
+      widget updates - two-way, through React state.
+    </p>
+    <div id="react-app" class="fw-live" style="max-width:none"></div>
+    <pre data-demo><code>import { LLSelectSingle, LLSelectMultiple } from 'llselect'
+import { useRef, useEffect } from 'react'
+
+function LlSelect({ items, value, multiple = false, onChange, ariaLabel, searchable }) {
+  const mountRef = useRef(null)
+  const instRef = useRef(null)
+  const cbRef = useRef(onChange)
+  cbRef.current = onChange                       // always reach the latest onChange
+
+  useEffect(() =&gt; {                              // create once; destroy on unmount
+    const Ctor = multiple ? LLSelectMultiple : LLSelectSingle
+    const inst = new Ctor(mountRef.current, {
+      ariaLabel,
+      searchable,
+      // copy the multi array so parent state never aliases llselect's internal one
+      onChange: (v) =&gt; { cbRef.current(multiple ? v.slice() : v) },
+    })
+    instRef.current = inst
+    return () =&gt; { inst.destroy() }
+  }, [])
+
+  useEffect(() =&gt; { instRef.current.setItems(items) }, [items])
+
+  useEffect(() =&gt; {                              // push the controlled value down
+    if (multiple) { instRef.current.setChosenItems(value) } else { instRef.current.setChosenItem(value) }
+  }, [value])
+
+  return &lt;div ref={mountRef} /&gt;
+}
+
+// usage
+&lt;LlSelect items={FRUITS} value={fruit} onChange={setFruit} searchable ariaLabel="Fruit" /&gt;
+&lt;LlSelect items={TOPPINGS} value={picked} onChange={setPicked} multiple ariaLabel="Toppings" /&gt;</code></pre>
+  </section>
+
+  <!-- ===================== Vue ===================== -->
+  <section>
+    <h2>Vue 3</h2>
+    <p>
+      A <code>v-model</code> component: <code>onMounted</code> creates the instance
+      and <code>onChange</code> emits <code>update:modelValue</code>;
+      <code>watch</code> pushes an outside change back into the widget;
+      <code>onBeforeUnmount</code> destroys it.
+    </p>
+    <div id="vue-app" class="fw-live" style="max-width:none"></div>
+    <pre data-demo><code>import { LLSelectSingle, LLSelectMultiple } from 'llselect'
+import { ref, h, onMounted, onBeforeUnmount, watch } from 'vue'
+
+const LlSelect = {
+  props: {
+    items: { type: Array, default: () =&gt; [] },
+    modelValue: { default: undefined },
+    multiple: Boolean,
+    ariaLabel: String,
+    searchable: { type: [Boolean, Function], default: false },
+  },
+  emits: ['update:modelValue'],
+  setup(props, { emit }) {
+    const mount = ref(null)
+    let inst = null
+    onMounted(() =&gt; {
+      const Ctor = props.multiple ? LLSelectMultiple : LLSelectSingle
+      inst = new Ctor(mount.value, {
+        ariaLabel: props.ariaLabel,
+        searchable: props.searchable,
+        // copy the multi array so v-model state never aliases the internal one
+        onChange: (v) =&gt; { emit('update:modelValue', props.multiple ? [...v] : v) },
+      })
+      inst.setItems(props.items)
+      if (props.multiple) { inst.setChosenItems(props.modelValue ?? []) } else { inst.setChosenItem(props.modelValue) }
+    })
+    watch(() =&gt; props.items, (items) =&gt; { inst.setItems(items) })
+    watch(() =&gt; props.modelValue, (v) =&gt; {
+      if (props.multiple) { inst.setChosenItems(v ?? []) } else { inst.setChosenItem(v) }
+    })
+    onBeforeUnmount(() =&gt; { inst.destroy() })
+    return () =&gt; h('div', { ref: mount })
+  },
+}
+
+// usage
+&lt;LlSelect v-model="fruit" :items="fruits" searchable aria-label="Fruit" /&gt;
+&lt;LlSelect v-model="picked" :items="toppings" multiple aria-label="Toppings" /&gt;</code></pre>
+  </section>
+
+  <script type="module">
+    import { LLSelectSingle, LLSelectMultiple } from '../dist/index.mjs'
+    import React from 'https://esm.sh/react@18.3.1'
+    import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client'
+    import htmLib from 'https://cdn.jsdelivr.net/npm/htm@3.1.1/+esm'
+    import { createApp, ref, h, onMounted, onBeforeUnmount, watch } from 'https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.esm-browser.prod.js'
+
+    const FRUITS = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape']
+    const TOPPINGS = ['Cheese', 'Mushroom', 'Olive', 'Onion', 'Pepper', 'Pineapple']
+
+    // ---------- Vanilla ----------
+    const vs = new LLSelectSingle(document.getElementById('van-single'), {
+      ariaLabel: 'Fruit',
+      searchable: true,
+      onChange: (item) => { document.getElementById('van-single-out').textContent = 'fruit = ' + JSON.stringify(item) },
+    })
+    vs.setItems(FRUITS)
+    vs.setChosenItem('Banana')
+    document.getElementById('van-single-out').textContent = 'fruit = ' + JSON.stringify(vs.getChosenItem())
+    document.getElementById('van-single-set').addEventListener('click', () => { vs.setChosenItem('Cherry') })
+
+    const vm = new LLSelectMultiple(document.getElementById('van-multi'), {
+      ariaLabel: 'Toppings',
+      triggerDisplay: 'tags',
+      onChange: (items) => { document.getElementById('van-multi-out').textContent = 'picked = ' + JSON.stringify(items) },
+    })
+    vm.setItems(TOPPINGS)
+    vm.setChosenItems(['Cheese', 'Olive'])
+    document.getElementById('van-multi-out').textContent = 'picked = ' + JSON.stringify(vm.getChosenItems())
+    document.getElementById('van-multi-clear').addEventListener('click', () => { vm.setChosenItems([]) })
+
+    // ---------- React ----------
+    const html = htmLib.bind(React.createElement)
+    const { useRef, useEffect, useState } = React
+
+    function LlSelect({ items, value, multiple = false, onChange, ariaLabel, searchable }) {
+      const mountRef = useRef(null)
+      const instRef = useRef(null)
+      const cbRef = useRef(onChange)
+      cbRef.current = onChange
+
+      useEffect(() => {
+        const Ctor = multiple ? LLSelectMultiple : LLSelectSingle
+        const inst = new Ctor(mountRef.current, {
+          ariaLabel,
+          searchable,
+          onChange: (v) => { cbRef.current(multiple ? v.slice() : v) },
+        })
+        instRef.current = inst
+        return () => { inst.destroy() }
+      }, [])
+
+      useEffect(() => { instRef.current.setItems(items) }, [items])
+
+      useEffect(() => {
+        if (multiple) { instRef.current.setChosenItems(value) } else { instRef.current.setChosenItem(value) }
+      }, [value])
+
+      return html`<div ref=${mountRef}></div>`
+    }
+
+    function ReactDemo() {
+      const [fruit, setFruit] = useState('Banana')
+      const [picked, setPicked] = useState(['Cheese', 'Olive'])
+      const randomFruit = () => { setFruit(FRUITS[Math.floor(Math.random() * FRUITS.length)]) }
+      return html`
+        <div class="fw-grid">
+          <div class="fw-live">
+            <h3>Single</h3>
+            <${LlSelect} items=${FRUITS} value=${fruit} onChange=${setFruit} searchable ariaLabel="Fruit" />
+            <p class="out">fruit = ${JSON.stringify(fruit)}</p>
+            <button onClick=${randomFruit}>Set a random fruit</button>
+          </div>
+          <div class="fw-live">
+            <h3>Multiple</h3>
+            <${LlSelect} items=${TOPPINGS} value=${picked} onChange=${setPicked} multiple ariaLabel="Toppings" />
+            <p class="out">picked = ${JSON.stringify(picked)}</p>
+            <button onClick=${() => setPicked([])}>Clear from code</button>
+          </div>
+        </div>`
+    }
+    createRoot(document.getElementById('react-app')).render(html`<${ReactDemo} />`)
+
+    // ---------- Vue ----------
+    const LlSelectVue = {
+      props: {
+        items: { type: Array, default: () => [] },
+        modelValue: { default: undefined },
+        multiple: Boolean,
+        ariaLabel: String,
+        searchable: { type: [Boolean, Function], default: false },
+      },
+      emits: ['update:modelValue'],
+      setup(props, { emit }) {
+        const mount = ref(null)
+        let inst = null
+        onMounted(() => {
+          const Ctor = props.multiple ? LLSelectMultiple : LLSelectSingle
+          inst = new Ctor(mount.value, {
+            ariaLabel: props.ariaLabel,
+            searchable: props.searchable,
+            onChange: (v) => { emit('update:modelValue', props.multiple ? [...v] : v) },
+          })
+          inst.setItems(props.items)
+          if (props.multiple) { inst.setChosenItems(props.modelValue ?? []) } else { inst.setChosenItem(props.modelValue) }
+        })
+        watch(() => props.items, (items) => { inst.setItems(items) })
+        watch(() => props.modelValue, (v) => {
+          if (props.multiple) { inst.setChosenItems(v ?? []) } else { inst.setChosenItem(v) }
+        })
+        onBeforeUnmount(() => { inst.destroy() })
+        return () => h('div', { ref: mount })
+      },
+    }
+
+    createApp({
+      components: { LlSelect: LlSelectVue },
+      setup() {
+        const fruit = ref('Banana')
+        const picked = ref(['Cheese', 'Olive'])
+        const randomFruit = () => { fruit.value = FRUITS[Math.floor(Math.random() * FRUITS.length)] }
+        return { FRUITS, TOPPINGS, fruit, picked, randomFruit }
+      },
+      template: `
+        <div class="fw-grid">
+          <div class="fw-live">
+            <h3>Single</h3>
+            <LlSelect v-model="fruit" :items="FRUITS" :searchable="true" aria-label="Fruit" />
+            <p class="out">fruit = {{ JSON.stringify(fruit) }}</p>
+            <button @click="randomFruit">Set a random fruit</button>
+          </div>
+          <div class="fw-live">
+            <h3>Multiple</h3>
+            <LlSelect v-model="picked" :items="TOPPINGS" multiple aria-label="Toppings" />
+            <p class="out">picked = {{ JSON.stringify(picked) }}</p>
+            <button @click="picked = []">Clear from code</button>
+          </div>
+        </div>`,
+    }).mount('#vue-app')
+  </script>
+</body>
+</html>
