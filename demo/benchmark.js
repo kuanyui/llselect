@@ -31,22 +31,47 @@ const ORDER = ['native', 'llselect', 'choices', 'select2', 'tom-select', 'slim-s
 // widget is still built and left live below so a reader can feel it by hand.
 const IX_ORDER = ORDER.filter(k => k !== 'native')
 
-// One-line summary, per library, of the tuning the harness applies so it is driven
-// and timed comparably. Shown as a `*` on the library name in the tables (hover for
-// the text); the full per-library detail is in BENCHMARK-LIBS-TUNE-FOR-FAIRNESS.md.
-// No entry = no tuning (native is the untouched baseline).
-const TUNE_TITLE = {
-  llselect: 'Matched to the competitors: triggerDisplay "tags" (a chip per item, not the lighter count summary); custom renderer reaches the tags and trigger.',
-  choices: 'searchResultLimit raised to render every match (default caps at 4); its search runs only on a FOCUSED input, so the harness focuses it first; renderSelectedChoices "always" keeps chosen options in the list; choose / unchoose by a real option click.',
-  select2: 'Results select on mouseup, so a full mouse sequence is dispatched; the dropdown portals to document.body (open-scoped selectors); closeOnSelect false in multi; the tag-x dropdown-open is suppressed.',
-  'tom-select': 'maxOptions null (default caps at 50); hideSelected false; a real keystroke goes through the ~300 ms search throttle (the old adapter bypassed it); remove_button plugin for the tag x; no in-popup unchoose - it deselects via Backspace or the tag x.',
-  'slim-select': 'allowDeselect true (else a click on a chosen option is ignored); maxValuesShown Infinity (else tags collapse to a "{n} selected" summary past 20); the dropdown portals to body (open-scoped selectors); its hardcoded 100 ms tag-removal timer is flushed.',
+// Short, plain-language note per library AND per interaction phase, of the tuning
+// that ONE cell's number involved - shown as a `*` in that cell (hover for the
+// text). A cell with no entry had no special handling, so it gets no star. Full
+// detail per library in BENCHMARK-LIBS-TUNE-FOR-FAIRNESS.md.
+function tuneCellTitle(key, phase, multi) {
+  const T = {
+    choices: {
+      filter: 'Choices searches only when the box is focused (the harness focuses it first), and shows just 4 results by default - raised here to render every match.',
+      choose: multi ? 'Chosen options are kept in the list (Choices drops them by default) so it re-renders the same-size list as the others.' : null,
+      unchoose: 'n/a - clicking an option in the Choices list only adds it, never removes. In Choices you deselect with the tag x.',
+      removeTag: 'Choices grows a tag x only when its remove-button option is on.',
+    },
+    select2: {
+      choose: 'Chosen by a real click on the option - Select2 does not re-render the open list from its set-value API.',
+      unchoose: 'Select2 selects on mouse-up, so a full mouse press is sent, not a bare click.',
+      removeTag: 'Clicking a Select2 tag x also opens the dropdown; that open is suppressed so only the removal is timed.',
+    },
+    'tom-select': {
+      filter: 'A real keystroke goes through the ~300 ms search delay (an earlier adapter skipped it); Tom Select also shows only 50 options by default - raised to all.',
+      unchoose: 'n/a - clicking an option in the Tom Select list does nothing. In Tom Select you deselect with Backspace or the tag x.',
+      removeTag: 'Tom Select grows a tag x only when its remove-button plugin is on.',
+    },
+    'slim-select': {
+      open: 'Timed once - the first open, which builds the list. Slim Select keeps the list in the DOM on close (a CSS scaleY), so later opens are almost free.',
+      filter: 'Includes the ~100 ms search delay (real latency).',
+      choose: 'Slim Select rebuilds its whole list on every selection - genuinely slow, not a measuring error.',
+      unchoose: 'Click-to-deselect is turned on (off by default); the removed tag has a built-in 100 ms delay that is skipped so only work is timed.',
+      removeTag: 'The removed tag has a built-in 100 ms delay that is skipped so only work is timed.',
+    },
+    llselect: {
+      choose: multi ? 'Renders a tag per chosen item to match the competitors (its lighter count summary would be less work).' : null,
+    },
+  }
+  return (T[key] && T[key][phase]) || null
 }
-// Append a `*` (with the tuning summary as its title) to a name cell, if tuned.
-function appendTuneStar(nameTd, key) {
-  if (!TUNE_TITLE[key]) { return }
-  const star = document.createElement('sup'); star.className = 'tune-star'; star.textContent = '*'; star.title = TUNE_TITLE[key]
-  nameTd.append(' ', star)
+// Set a cell's text and, if that (library, phase) was tuned, append a `*` whose
+// title explains it.
+function ixCellText(td, text, key, col, multi) {
+  td.textContent = text
+  const title = tuneCellTitle(key, col, multi)
+  if (title) { const s = document.createElement('sup'); s.className = 'tune-star'; s.textContent = '*'; s.title = title; td.append(' ', s) }
 }
 
 const SCENARIOS = {
@@ -408,7 +433,7 @@ function initTable() {
     const a = document.createElement('a')
     a.href = DISPLAY[key].url; a.target = '_blank'; a.rel = 'noopener'
     a.textContent = DISPLAY[key].name
-    nameTd.appendChild(a); appendTuneStar(nameTd, key)
+    nameTd.appendChild(a)
     tr.appendChild(nameTd)
     for (const col of ['built', 'compute', 'nodes', 'teardown']) {
       const td = document.createElement('td'); td.dataset.col = col; td.textContent = ''
@@ -883,7 +908,7 @@ function ixInitTable(mode) {
     const tr = document.createElement('tr'); tr.dataset.lib = key
     const nameTd = document.createElement('td')
     const a = document.createElement('a'); a.href = DISPLAY[key].url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = DISPLAY[key].name
-    nameTd.appendChild(a); appendTuneStar(nameTd, key); tr.appendChild(nameTd)
+    nameTd.appendChild(a); tr.appendChild(nameTd)
     for (const p of phases) { const td = document.createElement('td'); td.dataset.col = p.key; tr.appendChild(td) }
     tbody.appendChild(tr)
   }
@@ -892,15 +917,16 @@ function ixInitTable(mode) {
 function ixSetRow(mode, key, m) {
   const cols = ixPhases(mode).map(p => p.key)
   const cell = col => ixRow(mode, key).querySelector(`td[data-col="${col}"]`)
-  if (m && (m.na || m.err)) {
+  if (m && (m.na || m.err)) { // whole row not-loaded / error: plain text, no stars
     cols.forEach((c, idx) => { cell(c).textContent = idx === 0 ? (m.na || 'error') : ''; delete cell(c).dataset.value })
     return
   }
   for (const col of cols) {
     const v = m ? m[col] : null
-    if (typeof v === 'string') { cell(col).textContent = v; delete cell(col).dataset.value; continue } // e.g. n/a
-    cell(col).textContent = m == null ? 'n/a' : fmt(v)
-    if (v != null && !isNaN(v)) { cell(col).dataset.value = v } else { delete cell(col).dataset.value }
+    const td = cell(col)
+    if (typeof v === 'string') { ixCellText(td, v, key, col, mode.multi); delete td.dataset.value; continue } // e.g. n/a
+    ixCellText(td, m == null ? 'n/a' : fmt(v), key, col, mode.multi)
+    if (v != null && !isNaN(v)) { td.dataset.value = v } else { delete td.dataset.value }
   }
 }
 
