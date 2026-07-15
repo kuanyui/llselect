@@ -25,6 +25,11 @@ const DISPLAY = {
   'slim-select': { name: 'Slim Select', url: 'https://slimselectjs.com/', version: '2.10.0' },
 }
 const ORDER = ['native', 'llselect', 'choices', 'select2', 'tom-select', 'slim-select']
+// Interaction tables exclude native <select>: its dropdown is browser / OS-driven,
+// so open / filter / close are not observable and choosing measures ~0 - no
+// discriminative value, and it would misrepresent the real perceived latency. Its
+// widget is still built and left live below so a reader can feel it by hand.
+const IX_ORDER = ORDER.filter(k => k !== 'native')
 
 const SCENARIOS = {
   's-100x100': { widgets: 100, itemsPer: 100, multi: false },
@@ -714,29 +719,6 @@ async function measureInteraction(mode, key, stageEl, closeBtn) {
   if (!h) { return null }
   const med = arr => { const v = arr.filter(x => x != null); return v.length ? median(v) : null }
 
-  // Native <select>: its dropdown is browser / OS-driven, so open / filter / close
-  // are not observable from the page. The one comparable interaction is choosing a
-  // value (single-select): set it + fire change. Timed with a synchronous timer -
-  // the same "work done to reflect the choice" that to-settle captures for a
-  // synchronous re-render elsewhere - which for native is ~0: there is no option
-  // list to re-render, so it is the floor. (to-paint would instead charge it the
-  // ~2-frame paint floor and make the floor look mid-pack.) Native multi is a
-  // scrolled listbox, not a popup, so it is left out.
-  if (key === 'native') {
-    if (mode.multi) { return null }
-    const sel = h.sel
-    const chooseS = []
-    for (let i = 0; i <= IX_REPS; i++) {
-      const idx = (i + 1) % Math.max(1, sel.options.length)
-      const t0 = performance.now()
-      sel.selectedIndex = idx
-      sel.dispatchEvent(new Event('change', { bubbles: true }))
-      if (i > 0) { chooseS.push(performance.now() - t0) } // drop first as warm-up
-      await raf()
-    }
-    return { open: NA, filter: NA, choose: med(chooseS), unchoose: NA, removeTag: NA, close: NA }
-  }
-
   const d = DRIVER[key]
   if (!d) { return null }
   const safeOp = (fn) => { try { fn() } catch (e) { /* ignore */ } }
@@ -865,7 +847,7 @@ function ixInitTable(mode) {
   thead.replaceChildren(htr)
   const tbody = document.querySelector(`#ix-${mode.key}-results tbody`)
   tbody.replaceChildren()
-  for (const key of ORDER) {
+  for (const key of IX_ORDER) {
     const tr = document.createElement('tr'); tr.dataset.lib = key
     const nameTd = document.createElement('td')
     const a = document.createElement('a'); a.href = DISPLAY[key].url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = DISPLAY[key].name
@@ -893,7 +875,7 @@ function ixSetRow(mode, key, m) {
 function ixHighlightBest(mode) {
   for (const col of ixPhases(mode).map(p => p.key)) {
     let best = Infinity, bestKey = null
-    for (const key of ORDER) {
+    for (const key of IX_ORDER) {
       const c = ixRow(mode, key).querySelector(`td[data-col="${col}"]`); c.classList.remove('best')
       const v = parseFloat(c.dataset.value); if (!isNaN(v) && v < best) { best = v; bestKey = key }
     }
@@ -917,7 +899,7 @@ function renderIxChart(mode) {
   const canvas = document.getElementById(`ix-${mode.key}-chart`)
   const empty = document.getElementById(`ix-${mode.key}-empty`)
   if (!window.Chart) { empty.textContent = 'Chart.js failed to load.'; empty.style.display = ''; return }
-  const libs = ORDER.filter(k => mode.results[k] && mode.results[k].open != null)
+  const libs = IX_ORDER.filter(k => mode.results[k] && mode.results[k].open != null)
   if (!libs.length) {
     if (mode.chart) { mode.chart.destroy(); mode.chart = null }
     empty.style.display = ''
@@ -980,8 +962,11 @@ async function ixBuildAndMeasure() {
       const lab = document.createElement('div'); lab.className = 'ix-lab'; lab.textContent = DISPLAY[key].name
       const mount = document.createElement('div'); mount.className = 'ix-mount'
       cell.append(lab, mount); stageEl.appendChild(cell)
-      try { mode.live[key] = ADAPTERS[key].setup(mount, items, { multi: mode.multi, custom, preselect: false, closeBtn }) } catch (e) { console.warn(key, e); ixSetRow(mode, key, { err: true }); continue }
+      try { mode.live[key] = ADAPTERS[key].setup(mount, items, { multi: mode.multi, custom, preselect: false, closeBtn }) } catch (e) { console.warn(key, e); if (key !== 'native') { ixSetRow(mode, key, { err: true }) } continue }
       await raf()
+      // Native <select> is built (kept live below for hands-on feel) but not timed -
+      // it has no interaction row (IX_ORDER excludes it).
+      if (key === 'native') { continue }
       status.textContent = `${mode.label} - ${DISPLAY[key].name}: measuring ...`
       // The widget must be on-screen: llselect refuses to open an off-screen
       // trigger (and its popup would position off-screen), which would make

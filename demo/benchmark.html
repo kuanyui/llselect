@@ -186,11 +186,11 @@
     leaks into another's - <strong>opening a big list in isolation</strong> is
     where llselect builds its option DOM (it renders nothing until you open). The
     widgets stay live below; click them yourself too. Native
-    <code>&lt;select&gt;</code>'s dropdown is browser / OS-driven, so its open /
-    filter / close cannot be timed from the page (n/a); its single-select
-    <strong>Choose</strong> IS measured as the floor - setting the value does ~0
-    work, no option list to re-render, which is exactly the overhead every library
-    adds.
+    <code>&lt;select&gt;</code> is <strong>not in the tables</strong>: its dropdown
+    is browser / OS-driven, so the page cannot time its open / filter / close, and
+    what JS can measure (setting a value) is ~0 - no discriminative value, and it
+    would hide the real latency you feel. Its widget is kept live below so you can
+    open and scroll it by hand and judge that for yourself.
   </p>
   <div class="bench-toolbar">
     <div class="bench-row">
@@ -264,8 +264,8 @@
         so debounced renders count. Transitions / animations are disabled during
         a run so a CSS transition (Slim Select) is not counted as work. Median of
         a few repeats (first dropped as warm-up). Native <code>&lt;select&gt;</code>
-        shows a number only for single-select Choose (its floor, ~0); its
-        browser-driven open / filter / close are n/a.</li>
+        is not in the tables (browser-driven dropdown, nothing meaningful for JS to
+        time) - its live widget is below to try by hand.</li>
     </ul>
   </details>
 
