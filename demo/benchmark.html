@@ -206,7 +206,7 @@
       <label><input type="checkbox" id="ix-custom"> custom renderer (MDI icon per item)</label>
       <label><input type="checkbox" id="ix-closebtn" checked> test close button on multiple tags - adds the "Remove tag (x)" column (Choices and Tom Select only grow a tag x when this is on; it is how they deselect with the mouse)</label>
     </div>
-    <div class="bench-row bench-libbuttons">
+    <div class="bench-libbuttons">
       <button id="ix-run-single" class="ix-run-all">Build + measure: Single-select</button>
       <span>or one lib:</span>
       <button data-ix-mode="single" data-ix-lib="native">Native &lt;select&gt;</button>
@@ -216,7 +216,7 @@
       <button data-ix-mode="single" data-ix-lib="tom-select">Tom Select</button>
       <button data-ix-mode="single" data-ix-lib="slim-select">Slim Select</button>
     </div>
-    <div class="bench-row bench-libbuttons">
+    <div class="bench-libbuttons">
       <button id="ix-run-multi" class="ix-run-all">Build + measure: Multiple-select</button>
       <span>or one lib:</span>
       <button data-ix-mode="multi" data-ix-lib="llselect">llselect</button>
@@ -326,6 +326,10 @@
     artifact of how it renders. These are the rules the harness enforces (each one
     fixes a real trap hit while building this - see <code>docs/SPEC_BENCHMARK.md</code>
     for the gory detail):</p>
+  <p class="hint">In the tables above, a <sup class="tune-star">*</sup> on a library
+    name means the harness applied per-library tuning to time it comparably -
+    <strong>hover the star</strong> for the summary; the full per-library list is in
+    <code>docs/BENCHMARK-LIBS-TUNE-FOR-FAIRNESS.md</code>.</p>
   <ol class="bench-fair">
     <li><strong>Minified vs minified.</strong> Every library loads its minified
       build, llselect included (its UMD is run through terser), so parse and build

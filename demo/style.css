@@ -385,6 +385,8 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 #status { color: #555; font-size: 0.9rem; }
 /* Table captions spell out what one number means (per-widget vs total, median vs sum). */
 #results caption, .ix-table caption { caption-side: top; text-align: left; font-size: 0.85rem; color: #555; padding: 0 0 0.4rem; }
+/* Star on a tuned library's name: hover shows the tuning applied (title attribute). */
+.tune-star { color: #c9821a; cursor: help; font-weight: 700; }
 #results, #sizes { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
 #results th, #results td, #sizes th, #sizes td { border: 1px solid #ccc; padding: 5px 10px; text-align: right; }
 #results th:first-child, #results td:first-child, #sizes th:first-child, #sizes td:first-child { text-align: left; }
@@ -399,7 +401,7 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .bench-fairness-note ul { margin: 0.4rem 0; padding-inline-start: 1.4rem; }
 .bench-fairness-note li { margin: 0.15rem 0; }
 .bench-libbuttons { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin: 0 0 1rem; font-size: 0.9rem; }
-.bench-libbuttons button { font: inherit; font-size: 0.85rem; padding: 0.25rem 0.7rem; cursor: pointer; border: 1px solid #bbb; background: #fff; border-radius: 4px; }
+.bench-libbuttons button { font: inherit; font-size: 0.85rem; padding: 0.25rem 0.7rem; cursor: pointer; border: 1px solid #bbb; background: #fff; color: #222; border-radius: 4px; }
 .bench-libbuttons button:hover { border-color: #2456a6; color: #2456a6; }
 /* Interaction: the per-mode "Build + measure" primary button, blue among the secondary per-lib ones. */
 .bench-libbuttons button.ix-run-all { font-size: inherit; padding: 0.35rem 1rem; border-color: #2456a6; background: #2456a6; color: #fff; }

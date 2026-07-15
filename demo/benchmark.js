@@ -31,6 +31,24 @@ const ORDER = ['native', 'llselect', 'choices', 'select2', 'tom-select', 'slim-s
 // widget is still built and left live below so a reader can feel it by hand.
 const IX_ORDER = ORDER.filter(k => k !== 'native')
 
+// One-line summary, per library, of the tuning the harness applies so it is driven
+// and timed comparably. Shown as a `*` on the library name in the tables (hover for
+// the text); the full per-library detail is in BENCHMARK-LIBS-TUNE-FOR-FAIRNESS.md.
+// No entry = no tuning (native is the untouched baseline).
+const TUNE_TITLE = {
+  llselect: 'Matched to the competitors: triggerDisplay "tags" (a chip per item, not the lighter count summary); custom renderer reaches the tags and trigger.',
+  choices: 'searchResultLimit raised to render every match (default caps at 4); its search runs only on a FOCUSED input, so the harness focuses it first; renderSelectedChoices "always" keeps chosen options in the list; choose / unchoose by a real option click.',
+  select2: 'Results select on mouseup, so a full mouse sequence is dispatched; the dropdown portals to document.body (open-scoped selectors); closeOnSelect false in multi; the tag-x dropdown-open is suppressed.',
+  'tom-select': 'maxOptions null (default caps at 50); hideSelected false; a real keystroke goes through the ~300 ms search throttle (the old adapter bypassed it); remove_button plugin for the tag x; no in-popup unchoose - it deselects via Backspace or the tag x.',
+  'slim-select': 'allowDeselect true (else a click on a chosen option is ignored); maxValuesShown Infinity (else tags collapse to a "{n} selected" summary past 20); the dropdown portals to body (open-scoped selectors); its hardcoded 100 ms tag-removal timer is flushed.',
+}
+// Append a `*` (with the tuning summary as its title) to a name cell, if tuned.
+function appendTuneStar(nameTd, key) {
+  if (!TUNE_TITLE[key]) { return }
+  const star = document.createElement('sup'); star.className = 'tune-star'; star.textContent = '*'; star.title = TUNE_TITLE[key]
+  nameTd.append(' ', star)
+}
+
 const SCENARIOS = {
   's-100x100': { widgets: 100, itemsPer: 100, multi: false },
   's-1000x10': { widgets: 1000, itemsPer: 10, multi: false },
@@ -390,7 +408,7 @@ function initTable() {
     const a = document.createElement('a')
     a.href = DISPLAY[key].url; a.target = '_blank'; a.rel = 'noopener'
     a.textContent = DISPLAY[key].name
-    nameTd.appendChild(a)
+    nameTd.appendChild(a); appendTuneStar(nameTd, key)
     tr.appendChild(nameTd)
     for (const col of ['built', 'compute', 'nodes', 'teardown']) {
       const td = document.createElement('td'); td.dataset.col = col; td.textContent = ''
@@ -865,7 +883,7 @@ function ixInitTable(mode) {
     const tr = document.createElement('tr'); tr.dataset.lib = key
     const nameTd = document.createElement('td')
     const a = document.createElement('a'); a.href = DISPLAY[key].url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = DISPLAY[key].name
-    nameTd.appendChild(a); tr.appendChild(nameTd)
+    nameTd.appendChild(a); appendTuneStar(nameTd, key); tr.appendChild(nameTd)
     for (const p of phases) { const td = document.createElement('td'); td.dataset.col = p.key; tr.appendChild(td) }
     tbody.appendChild(tr)
   }
