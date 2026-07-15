@@ -301,6 +301,10 @@ left live in the stage so a reader can open and scroll it by hand.
 
 ## Per-library adapter notes
 
+The full per-library list of tuning and quirks (one heading per library) is in
+[BENCHMARK-LIBS-TUNE-FOR-FAIRNESS.md](BENCHMARK-LIBS-TUNE-FOR-FAIRNESS.md); the
+notes here are a summary.
+
 - **Native `<select>`** - the baseline widget; `<option>` elements, first N
   `selected` for the pre-select toggle. In the MASS section it is measured (build /
   nodes / teardown). In the INTERACTION section it is NOT (no table row) - its
