@@ -76,8 +76,8 @@ These are integration boundaries, not bugs. Plan for them up front:
   and trigger text are assigned via `textContent`, never parsed as HTML. An
   XSS risk appears only when your own render callbacks
   (`createItemContentElFn` and friends) parse untrusted markup (e.g. via
-  `innerHTML`); sanitize that markup first (e.g. with DOMPurify) - llselect
-  does not do it for you.
+  `innerHTML`); sanitize that markup first (e.g. with DOMPurify, or the
+  browser's native Sanitizer API) - llselect does not do it for you.
 - **No asynchronous data-fetching API.** Fetch however you like, then call
   `setItems(...)`.
 - **No virtual scrolling.** llselect is a `<select>` replacement, not a data
@@ -85,6 +85,19 @@ These are integration boundaries, not bugs. Plan for them up front:
 - **No alphabetic prefix typeahead** (the native `<select>` behavior) - it is
   unusable for East Asian languages and IME input. Use the `searchable`
   option instead.
+- **No official React / Vue / Angular wrapper - on purpose.** A good wrapper is
+  inseparable from choices only your project can make. llselect is generic over
+  your item type `T` (`LLSelectSingle<T>`), so how your model objects are shaped,
+  keyed and compared, and how `onChange` flows back into your state (Pinia,
+  Redux, signals, a form library), depend on your schema and your performance
+  budget. A one-size wrapper would have to pick a `T` and a sync strategy for
+  everyone - wrong for someone - and a thorough one (typed generics, slot /
+  render-prop bridging for custom trigger / item / tag content) would lag every
+  framework's API churn. So llselect ships the library and the CSS themes and
+  leaves the small, stable binding to you: create the instance in your mount
+  hook, push state in with `setItems` / `setChosenItem(s)`, read it back through
+  `onChange`, and `destroy()` on unmount. The Quick start above is the whole
+  pattern; it ports to any framework in ~15 lines.
 - **You must call `destroy()`** when unmounting (e.g. in a framework
   wrapper): it removes the document / window listeners the instance owns.
 
