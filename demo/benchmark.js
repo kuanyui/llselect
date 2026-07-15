@@ -752,13 +752,13 @@ async function measureInteraction(mode, key, stageEl, closeBtn) {
   // existing selections is self-contained regardless of prior state.
   const chooseBatch = (n) => { for (let i = 0; i < n; i++) { const el = safe(() => d.optionUnselected(h)); if (el) { safeOp(() => clickEl(el)) } } }
 
-  // OPEN: close first (untimed), time the open. to-paint (reveal + paint).
-  const openS = []
-  for (let i = 0; i <= IX_REPS; i++) {
-    safeOp(() => d.close(h)); await raf()
-    const dt = await timeToPaint(() => d.open(h), stageEl, key)
-    if (i > 0) { openS.push(dt) } // drop first as warm-up
-  }
+  // OPEN: measured ONCE - the FIRST open, which builds the popup's option DOM. A
+  // library that keeps that DOM on close (Slim Select hides it with a CSS scaleY(0)
+  // and never removes it) has cheap WARM reopens, so a median of repeats would hide
+  // the real build cost - the first open is the honest one. The widget is freshly
+  // set up here (not yet opened), so this open pays the build. to-paint.
+  safeOp(() => d.close(h)); await raf()
+  const openMs = await timeToPaint(() => d.open(h), stageEl, key)
 
   // CLOSE: open first (untimed), time the close.
   const closeS = []
@@ -845,7 +845,7 @@ async function measureInteraction(mode, key, stageEl, closeBtn) {
     }
   }
 
-  return { open: med(openS), filter, choose: med(chooseS), unchoose, removeTag, close: med(closeS) }
+  return { open: openMs, filter, choose: med(chooseS), unchoose, removeTag, close: med(closeS) }
 }
 
 function ixRow(mode, key) { return document.querySelector(`#ix-${mode.key}-results tbody tr[data-lib="${key}"]`) }

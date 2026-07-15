@@ -219,9 +219,14 @@
   <details class="bench-cols">
     <summary>What the columns mean</summary>
     <ul class="bench-legend">
-      <li><strong>Open popup</strong> - close first, then time opening the
-        dropdown. For a big list this is where llselect builds its option DOM (it
-        renders nothing until you open). Timed to after the next paint.</li>
+      <li><strong>Open popup</strong> - timed <strong>once</strong>: the FIRST open,
+        which builds the popup's option DOM (for a big list this is where llselect
+        builds its option DOM - it renders nothing until you open). Not a median of
+        repeats, because a library that keeps the DOM on close has cheap warm
+        reopens that would hide the build cost: <strong>Slim Select closes with a CSS
+        <code>scaleY(0)</code> and never removes the option DOM</strong>, so its
+        second open is nearly free - only its first open is honest. Timed to after
+        the next paint.</li>
       <li><strong>Filter candidates</strong> - <strong>focus the search box and
         type</strong> <code>q</code> (narrows the list), then clear it: a round-trip
         reported as the SUM of both directions, five reps. It goes through each
