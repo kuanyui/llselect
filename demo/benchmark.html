@@ -192,7 +192,7 @@
     would hide the real latency you feel. Its widget is kept live below so you can
     open and scroll it by hand and judge that for yourself.
   </p>
-  <div class="bench-toolbar">
+  <div class="bench-toolbar" id="ix-toolbar">
     <div class="bench-row">
       <label>Items
         <select id="ix-size">
@@ -206,12 +206,31 @@
       <label><input type="checkbox" id="ix-custom"> custom renderer (MDI icon per item)</label>
       <label><input type="checkbox" id="ix-closebtn" checked> test close button on multiple tags - adds the "Remove tag (x)" column (Choices and Tom Select only grow a tag x when this is on; it is how they deselect with the mouse)</label>
     </div>
+    <div class="bench-row bench-libbuttons">
+      <button id="ix-run-single" class="ix-run-all">Build + measure: Single-select</button>
+      <span>or one lib:</span>
+      <button data-ix-mode="single" data-ix-lib="native">Native &lt;select&gt;</button>
+      <button data-ix-mode="single" data-ix-lib="llselect">llselect</button>
+      <button data-ix-mode="single" data-ix-lib="choices">Choices.js</button>
+      <button data-ix-mode="single" data-ix-lib="select2">Select2</button>
+      <button data-ix-mode="single" data-ix-lib="tom-select">Tom Select</button>
+      <button data-ix-mode="single" data-ix-lib="slim-select">Slim Select</button>
+    </div>
+    <div class="bench-row bench-libbuttons">
+      <button id="ix-run-multi" class="ix-run-all">Build + measure: Multiple-select</button>
+      <span>or one lib:</span>
+      <button data-ix-mode="multi" data-ix-lib="llselect">llselect</button>
+      <button data-ix-mode="multi" data-ix-lib="choices">Choices.js</button>
+      <button data-ix-mode="multi" data-ix-lib="select2">Select2</button>
+      <button data-ix-mode="multi" data-ix-lib="tom-select">Tom Select</button>
+      <button data-ix-mode="multi" data-ix-lib="slim-select">Slim Select</button>
+    </div>
     <div class="bench-row">
-      <button id="ix-run">Build + measure</button>
       <span id="ix-status">Ready.</span>
     </div>
   </div>
-  <p class="hint">One "Build + measure" fills both tables. Stacked chart: the
+  <p class="hint">"Build + measure" fills that mode's table; or click one library to
+    (re)measure just it, leaving the rest. Stacked chart: the
     whole bar is the sum of the phases (shorter is better), each segment a phase;
     click a legend entry to show or hide it. Details of how each phase is measured
     are under "What the columns mean" below each table.</p>

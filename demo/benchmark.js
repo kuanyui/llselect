@@ -950,41 +950,49 @@ function renderIxChart(mode) {
   mode.chart = new window.Chart(canvas, cfg)
 }
 
-async function ixBuildAndMeasure() {
-  const runBtn = document.getElementById('ix-run')
+function ixSetControlsDisabled(on) {
+  for (const el of document.querySelectorAll('#ix-toolbar button, #ix-toolbar select, #ix-toolbar input')) { el.disabled = on }
+}
+
+// Build + measure the given libraries in the given modes. A whole-mode run (all
+// libraries) resets that mode's table + stage first; a single-library run rebuilds
+// just that library's widget + row and leaves the others in place.
+async function ixRun(modeKeys, libKeys) {
   const status = document.getElementById('ix-status')
-  runBtn.disabled = true
-  document.getElementById('ix-size').disabled = true
-  document.getElementById('ix-custom').disabled = true
-  document.getElementById('ix-closebtn').disabled = true
+  ixSetControlsDisabled(true)
   stopRequested = false
   scrollLock(true)
-  ixClearAll()
-  for (const mode of IX_MODES) { ixInitTable(mode) }
   const n = Number(document.getElementById('ix-size').value)
   const custom = document.getElementById('ix-custom').checked
   const closeBtn = ixCloseBtnOn()
   const items = ixBuildItems(n)
-  for (const mode of IX_MODES) {
+  const fullRun = libKeys.length > 1 // all libs for the mode, vs a single lib
+  for (const modeKey of modeKeys) {
+    if (stopRequested) { break }
+    const mode = IX_MODES.find(m => m.key === modeKey)
     const stageEl = ixStageEl(mode)
-    for (const key of ORDER) {
+    if (fullRun) { ixClearMode(mode); ixInitTable(mode) }
+    for (const key of libKeys) {
       if (stopRequested) { break }
       if (!available(key)) { ixSetRow(mode, key, { na: 'not loaded' }); continue }
+      // Per-lib re-run: tear down this library's previous widget / cell / result.
+      if (mode.live[key]) {
+        try { ADAPTERS[key].teardown(mode.live[key]) } catch (e) { /* ignore */ }
+        delete mode.live[key]; delete mode.results[key]
+        const old = stageEl.querySelector(`.ix-cell[data-lib="${key}"]`); if (old) { old.remove() }
+      }
       status.textContent = `${mode.label} - ${DISPLAY[key].name}: building 1 x ${n} ...`
       await raf()
-      const cell = document.createElement('div'); cell.className = 'ix-cell'
+      const cell = document.createElement('div'); cell.className = 'ix-cell'; cell.dataset.lib = key
       const lab = document.createElement('div'); lab.className = 'ix-lab'; lab.textContent = DISPLAY[key].name
       const mount = document.createElement('div'); mount.className = 'ix-mount'
       cell.append(lab, mount); stageEl.appendChild(cell)
       try { mode.live[key] = ADAPTERS[key].setup(mount, items, { multi: mode.multi, custom, preselect: false, closeBtn }) } catch (e) { console.warn(key, e); if (key !== 'native') { ixSetRow(mode, key, { err: true }) } continue }
       await raf()
-      // Native <select> is built (kept live below for hands-on feel) but not timed -
-      // it has no interaction row (IX_ORDER excludes it).
+      // Native is built (kept live below for hands-on feel) but not timed - no row.
       if (key === 'native') { continue }
       status.textContent = `${mode.label} - ${DISPLAY[key].name}: measuring ...`
-      // The widget must be on-screen: llselect refuses to open an off-screen
-      // trigger (and its popup would position off-screen), which would make
-      // open / filter / close all measure ~0 on a widget that never opened.
+      // On-screen, or llselect refuses to open an off-screen trigger (reads ~0).
       cell.scrollIntoView({ block: 'center', behavior: 'instant' })
       await raf()
       const m = await measureInteraction(mode, key, stageEl, closeBtn)
@@ -993,16 +1001,10 @@ async function ixBuildAndMeasure() {
       ixHighlightBest(mode)
       await raf()
     }
-    if (stopRequested) { break }
+    renderIxChart(mode)
   }
-  // Draw both charts only after every measurement is done - a chart animating
-  // mid-run would skew the timings that follow.
-  for (const mode of IX_MODES) { renderIxChart(mode) }
   scrollLock(false)
-  runBtn.disabled = false
-  document.getElementById('ix-size').disabled = false
-  document.getElementById('ix-custom').disabled = false
-  document.getElementById('ix-closebtn').disabled = false
+  ixSetControlsDisabled(false)
   status.textContent = stopRequested ? 'Stopped.' : 'Done. Lower is better. Widgets are live - open them yourself.'
 }
 
@@ -1022,14 +1024,22 @@ document.getElementById('run-all').addEventListener('click', () => { runAll() })
 document.getElementById('clear').addEventListener('click', () => { reset('Cleared.') })
 // A scenario change invalidates the accumulated results (they are per-scenario).
 document.getElementById('scenario').addEventListener('change', () => { reset('Scenario changed - results reset.') })
-document.querySelectorAll('.bench-libbuttons button').forEach(btn => {
+// Mass "Render one" buttons carry data-lib; the interaction per-lib buttons carry
+// data-ix-lib, so [data-lib] keeps this handler off them (both use .bench-libbuttons).
+document.querySelectorAll('.bench-libbuttons button[data-lib]').forEach(btn => {
   btn.addEventListener('click', async () => {
     stopRequested = false
     setRunning(true)
     try { await runLib(btn.dataset.lib) } finally { setRunning(false) }
   })
 })
-document.getElementById('ix-run').addEventListener('click', () => { ixBuildAndMeasure() })
+// Per-mode "Build + measure all" (native is built only in single). Per-lib buttons
+// (re)build just that one library in that one mode.
+document.getElementById('ix-run-single').addEventListener('click', () => { ixRun(['single'], ORDER) })
+document.getElementById('ix-run-multi').addEventListener('click', () => { ixRun(['multi'], IX_ORDER) })
+document.querySelectorAll('#ix-toolbar button[data-ix-lib]').forEach(btn => {
+  btn.addEventListener('click', () => { ixRun([btn.dataset.ixMode], [btn.dataset.ixLib]) })
+})
 document.getElementById('ix-size').addEventListener('change', () => { ixClearAll(); IX_MODES.forEach(ixInitTable); document.getElementById('ix-status').textContent = 'Size changed - press Build + measure.' })
 // Toggling the close-button option changes the multi table's columns (adds /
 // drops Remove tag), so rebuild the tables and drop the stale results.

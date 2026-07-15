@@ -401,6 +401,9 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .bench-libbuttons { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin: 0 0 1rem; font-size: 0.9rem; }
 .bench-libbuttons button { font: inherit; font-size: 0.85rem; padding: 0.25rem 0.7rem; cursor: pointer; border: 1px solid #bbb; background: #fff; border-radius: 4px; }
 .bench-libbuttons button:hover { border-color: #2456a6; color: #2456a6; }
+/* Interaction: the per-mode "Build + measure" primary button, blue among the secondary per-lib ones. */
+.bench-libbuttons button.ix-run-all { font-size: inherit; padding: 0.35rem 1rem; border-color: #2456a6; background: #2456a6; color: #fff; }
+.bench-libbuttons button.ix-run-all:hover { background: #1d4788; color: #fff; }
 /* Scroll area where a run's widgets actually render. Fixed height so 10k
    widgets stay scrollable rather than growing the page. */
 .bench-stage {
