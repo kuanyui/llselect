@@ -1,14 +1,6 @@
 # Optgroup / option grouping - research notes
 
-Status: **ARCHIVED - SUPERSEDED RESEARCH RECORD.** Phase 10 has shipped. The
-accepted design - flat `items` + a generic group key `GK` mirroring the item
-layer (`itemToGroupKeyFn` / `groupKeyCompareFn` / `groupKeyToLabelFn` /
-`groupDisabledFn`), no nested structure - is normatively documented in
-`../DESIGN.md` "Optgroup (Phase 10)"; the keyboard / ARIA contract is in
-`../A11Y.md` "Grouping (optgroup)". Everything below is the historical research
-trail behind that decision (how the native control and the main libraries model
-grouping), kept so the choice stays grounded rather than guessed. Sketches and
-statuses below describe the decision-time state, not the current API.
+Status: **ARCHIVED - SUPERSEDED RESEARCH RECORD.** Phase 10 has shipped. The accepted design - flat `items` + a generic group key `GK` mirroring the item layer (`itemToGroupKeyFn` / `groupKeyCompareFn` / `groupKeyToLabelFn` / `groupDisabledFn`), no nested structure - is normatively documented in `../DESIGN.md` "Optgroup (Phase 10)"; the keyboard / ARIA contract is in `../A11Y.md` "Grouping (optgroup)". Everything below is the historical research trail behind that decision (how the native control and the main libraries model grouping), kept so the choice stays grounded rather than guessed. Sketches and statuses below describe the decision-time state, not the current API.
 
 ## How the ecosystem models grouping
 
@@ -25,87 +17,37 @@ Three distinct patterns:
 
 ## Key findings
 
-1. **Single level only is the norm.** Native forbids nested optgroups; select2
-   errors if you nest. Whatever we do, one level of grouping is enough.
+1. **Single level only is the norm.** Native forbids nested optgroups; select2 errors if you nest. Whatever we do, one level of grouping is enough.
 
-2. **The library whose architecture most resembles llselect (MUI Autocomplete)
-   uses a function on a flat list**, not a nested structure. Its docs state the
-   grouping "happens during rendering, not in the data structure itself", and
-   warn: "Ensure that the options are sorted by the same dimension they are
-   grouped by to avoid duplicate headers." That is exactly the
-   "consecutive-equal-label = one group" (contiguous-run) semantic.
+2. **The library whose architecture most resembles llselect (MUI Autocomplete) uses a function on a flat list**, not a nested structure. Its docs state the grouping "happens during rendering, not in the data structure itself", and warn: "Ensure that the options are sorted by the same dimension they are grouped by to avoid duplicate headers." That is exactly the "consecutive-equal-label = one group" (contiguous-run) semantic.
 
-3. **The headless libraries closest to llselect's philosophy (Downshift,
-   Headless UI) push grouping to render time over a flat index** - which is
-   precisely llselect's existing `itemEls[i] <-> visibleItems()[i]` model.
-   Downshift flags this as a "complex" pattern because keyboard nav depends on
-   correct index tracking; llselect already solved that tracking.
+3. **The headless libraries closest to llselect's philosophy (Downshift, Headless UI) push grouping to render time over a flat index** - which is precisely llselect's existing `itemEls[i] <-> visibleItems()[i]` model. Downshift flags this as a "complex" pattern because keyboard nav depends on correct index tracking; llselect already solved that tracking.
 
-4. **The majority (native + select2 + choices + react-select) use a nested
-   structure**, which is the most familiar shape when migrating from native
-   `<optgroup>` or those libraries, and the only one that cleanly carries
-   per-group metadata (a disabled group, a group icon).
+4. **The majority (native + select2 + choices + react-select) use a nested structure**, which is the most familiar shape when migrating from native `<optgroup>` or those libraries, and the only one that cleanly carries per-group metadata (a disabled group, a group icon).
 
 ## Leading direction (CONFIRMED)
 
-> Post-decision update: this direction was adopted, with one refinement past the
-> single `groupLabelFn` sketched here. The final API separates the group's *key*
-> (identity) from its *label* (display) and makes the key a generic type `GK`
-> (class `<T, GK = string>`), mirroring how the item layer separates `T` /
-> `compareFn` / `itemToStringFn`. Shipped names (naming-conventions.md s3, by
-> return type): `itemToGroupKeyFn` (item -> GK), `groupKeyCompareFn` (key
-> equality, default `===`), `groupKeyToLabelFn` (GK -> string display / i18n),
-> `groupDisabledFn` (predicate on the key), deferred `createGroupLabelContentElFn`
-> (custom header element). The "Open tension" below is resolved - see its note.
-> Canonical spec: DESIGN.md "Optgroup (Phase 10)".
+> Post-decision update: this direction was adopted, with one refinement past the single `groupLabelFn` sketched here. The final API separates the group's *key* (identity) from its *label* (display) and makes the key a generic type `GK` (class `<T, GK = string>`), mirroring how the item layer separates `T` / `compareFn` / `itemToStringFn`. Shipped names (naming-conventions.md s3, by return type): `itemToGroupKeyFn` (item -> GK), `groupKeyCompareFn` (key equality, default `===`), `groupKeyToLabelFn` (GK -> string display / i18n), `groupDisabledFn` (predicate on the key), deferred `createGroupLabelContentElFn` (custom header element). The "Open tension" below is resolved - see its note. Canonical spec: DESIGN.md "Optgroup (Phase 10)".
 
-`groupLabelFn?: (item: T) => string | null` - flat items, grouping derived at
-render time. Rationale:
+`groupLabelFn?: (item: T) => string | null` - flat items, grouping derived at render time. Rationale:
 
-- Keeps the single flat `items` source of truth; no dual representation
-  (DESIGN.md explicitly avoids the dual-write-channel pattern that bit
-  select2 / choices.js).
+- Keeps the single flat `items` source of truth; no dual representation (DESIGN.md explicitly avoids the dual-write-channel pattern that bit select2 / choices.js).
 - Matches the `*Fn` settings convention (`compareFn`, `filterFn`).
-- Smallest change: only `renderPopupList` (emit group-label rows) plus two CSS
-  class names; the whole focus / selection / keyboard / lazy-render machinery is
-  untouched, because group labels are NOT added to `itemEls` and so are skipped
-  by keyboard nav for free.
+- Smallest change: only `renderPopupList` (emit group-label rows) plus two CSS class names; the whole focus / selection / keyboard / lazy-render machinery is untouched, because group labels are NOT added to `itemEls` and so are skipped by keyboard nav for free.
 - Has direct external precedent (MUI `groupBy`), contiguous semantic included.
-- Filtering composes for free: filter the flat list, regroup survivors at
-  render; empty groups vanish.
+- Filtering composes for free: filter the flat list, regroup survivors at render; empty groups vanish.
 
-Open tension: a nested structure is more native-familiar and is the clean way to
-carry per-group metadata. That advantage is currently moot because llselect has
-no `disabled` concept yet - which is why `disabled` goes first. Revisit whether
-per-group metadata (disabled group, group icon) is wanted before locking this.
+Open tension: a nested structure is more native-familiar and is the clean way to carry per-group metadata. That advantage is currently moot because llselect has no `disabled` concept yet - which is why `disabled` goes first. Revisit whether per-group metadata (disabled group, group icon) is wanted before locking this.
 
-> RESOLVED: per-group metadata is carried by parallel `*Fn` settings
-> (`groupDisabledFn` now; `createGroupLabelContentElFn` later) instead of a
-> nested object - consistent with how item-level disabled is already a predicate,
-> and it keeps `items` a single flat channel (DESIGN.md "Settings vs methods"
-> rejects the dual-write channel a nested shape reintroduces). Nested's only
-> irreplaceable wins (empty groups, one item in many groups, group order
-> decoupled from item order) are all outside llselect's scope (native `<select>`
-> does none), so nothing real is lost. Full rationale: DESIGN.md.
+> RESOLVED: per-group metadata is carried by parallel `*Fn` settings (`groupDisabledFn` now; `createGroupLabelContentElFn` later) instead of a nested object - consistent with how item-level disabled is already a predicate, and it keeps `items` a single flat channel (DESIGN.md "Settings vs methods" rejects the dual-write channel a nested shape reintroduces). Nested's only irreplaceable wins (empty groups, one item in many groups, group order decoupled from item order) are all outside llselect's scope (native `<select>` does none), so nothing real is lost. Full rationale: DESIGN.md.
 
 ## Design sketch for when we resume (not decided)
 
-- Grouping semantic: consecutive items with the same `groupLabelFn` result form
-  one group; a new label inserts a section header. Preserves `visibleItems`
-  order and index alignment exactly.
-- ARIA: group container `role="group"` with `aria-label="<label>"`; the visible
-  label element gets `.llselect-group-label`, `role="presentation"`,
-  `aria-hidden="true"`. (Matches the APG grouped-listbox example.)
-- Scroll math: `ensureVisibleInScroll` uses `offsetTop` (relative to
-  offsetParent); nesting items inside group containers can break it. Switch to a
-  `getBoundingClientRect`-delta computation so it is correct regardless of theme
-  CSS.
-- Label customization: start with a plain string (like `itemToString`); add a
-  `renderGroupLabelFn` later if needed (cf. react-select `formatGroupLabel`,
-  MUI `renderGroup`, which also receive the group's items for count badges).
-- Group disabled: a disabled group disables all its items - layers on top of
-  item-level `disabled`. This is the dependency that makes `disabled` come
-  first.
+- Grouping semantic: consecutive items with the same `groupLabelFn` result form one group; a new label inserts a section header. Preserves `visibleItems` order and index alignment exactly.
+- ARIA: group container `role="group"` with `aria-label="<label>"`; the visible label element gets `.llselect-group-label`, `role="presentation"`, `aria-hidden="true"`. (Matches the APG grouped-listbox example.)
+- Scroll math: `ensureVisibleInScroll` uses `offsetTop` (relative to offsetParent); nesting items inside group containers can break it. Switch to a `getBoundingClientRect`-delta computation so it is correct regardless of theme CSS.
+- Label customization: start with a plain string (like `itemToString`); add a `renderGroupLabelFn` later if needed (cf. react-select `formatGroupLabel`, MUI `renderGroup`, which also receive the group's items for count badges).
+- Group disabled: a disabled group disables all its items - layers on top of item-level `disabled`. This is the dependency that makes `disabled` come first.
 
 ## Sources
 

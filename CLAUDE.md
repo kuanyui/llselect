@@ -71,6 +71,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - All source code, identifiers, file names, comments, and documentation are English only.
 - Use only the ASCII hyphen-minus character `-`. Do not use em dash, en dash, smart quotes, or other non-ASCII punctuation anywhere in code or docs.
 - Exception to the two rules above, limited to user-visible or behavior-verifying DATA: i18n resource STRINGS (the translated values in `src/i18n.ts` language packs, and demo data that exists to demonstrate i18n / RTL), test fixtures that verify Unicode behavior (CJK search / IME filtering inputs, bidi labels), and intentional visual glyphs (e.g. a theme's `\00d7` close cross). Identifiers, comments, and surrounding explanations in those files stay English/ASCII. Typography inside translations: zh-TW puts a space between CJK and half-width characters (Pangu spacing); ja follows Japanese convention (no such spacing).
+- Markdown: do NOT hard-wrap prose to a fixed column. Write each paragraph, list item, and blockquote as ONE physical line and let the renderer wrap it; wrapping is the reader's / renderer's job, not the author's. This repo lives on GitLab, whose Flavored Markdown (like GitHub issues / PRs / comments) turns every in-paragraph newline into a `<br>`, so column-wrapping renders as a wall of unwanted line breaks. Only fenced code blocks, table rows (one per row), and headings keep their own physical lines.
 - Comments should be terse. Skip anything obvious from the code; only note non-obvious intent, invariants, or workarounds.
 - Browser support floor (fixed baseline, update deliberately - never let it drift with the calendar): Firefox 78+, Chrome/Edge 87+, Safari 14.1+. This is the measured floor of what the code actually uses (ES2020 output per tsconfig `target`, `replaceChildren`, flex `gap`, `padding-block` / `padding-inline` / `inset` shorthands; `visualViewport` and scroll anchoring degrade gracefully). Do not add polyfills, vendor prefixes, or workarounds for older versions; raising the floor for a new API is fine if it is called out in the commit.
 - TypeScript: write explicit, precise types. Do not use `any` unless genuinely unavoidable; when you must, add a short comment explaining why.
@@ -92,47 +93,25 @@ npm run check       # mechanical style checks (ASCII punctuation, doc links)
 npm pack --dry-run  # when package.json / exports / files changed
 ```
 
-jsdom cannot test layout, native Tab focus navigation, scrollbar dragging,
-visual-viewport behavior, or assistive-technology output. Changes touching
-positioning, focus order, RTL, themes, or ARIA need a real-browser pass -
-record what to verify in `docs/TODO.md` ("manual verification") if it cannot
-happen in the same session.
+jsdom cannot test layout, native Tab focus navigation, scrollbar dragging, visual-viewport behavior, or assistive-technology output. Changes touching positioning, focus order, RTL, themes, or ARIA need a real-browser pass - record what to verify in `docs/TODO.md` ("manual verification") if it cannot happen in the same session.
 
 ### Generated and abandoned files (llselect)
 
-- `dist/` and `.build/` are build outputs. Never edit them manually; change
-  `src/` (or the build config) and rebuild.
-- `src/draft.ts` is an abandoned early reference, excluded from builds and
-  tests. Do not repair, extend, or "clean it up".
-- A public API change is not done until everything it touches moves together:
-  exports (`src/index.ts`), declarations, README examples, tests, and the
-  owning contract doc (`docs/DESIGN.md` / `docs/A11Y.md`).
+- `dist/` and `.build/` are build outputs. Never edit them manually; change `src/` (or the build config) and rebuild.
+- `src/draft.ts` is an abandoned early reference, excluded from builds and tests. Do not repair, extend, or "clean it up".
+- A public API change is not done until everything it touches moves together: exports (`src/index.ts`), declarations, README examples, tests, and the owning contract doc (`docs/DESIGN.md` / `docs/A11Y.md`).
 
 ### Review-findings log (`docs/FIXME.md`)
 
-Findings from reviews (external, `/code-review`, audits) are tracked in
-`docs/FIXME.md`, newest round on top under a `## review (<topic>)` heading. No
-date in the heading, or anywhere in the file - `git log` carries the when
-(see the no-dates-in-docs rule). Each finding is one entry:
+Findings from reviews (external, `/code-review`, audits) are tracked in `docs/FIXME.md`, newest round on top under a `## review (<topic>)` heading. No date in the heading, or anywhere in the file - `git log` carries the when (see the no-dates-in-docs rule). Each finding is one entry:
 
-`- [ ] **[SEVERITY-N] - title**` - `[ ]` open, `[x]` resolved. SEVERITY is a
-full word, never abbreviated: HIGH / MEDIUM / PERFORMANCE / QUALITY /
-DOCUMENTATION / NEEDS-VERIFICATION / LINT. N is a number unique across all
-rounds (e.g. `[QUALITY-7]`).
+`- [ ] **[SEVERITY-N] - title**` - `[ ]` open, `[x]` resolved. SEVERITY is a full word, never abbreviated: HIGH / MEDIUM / PERFORMANCE / QUALITY / DOCUMENTATION / NEEDS-VERIFICATION / LINT. N is a number unique across all rounds (e.g. `[QUALITY-7]`).
 
 Nested body:
 
-- Plain facts use a label, one per line: `Symptom:` / `Cause:` / `Impact:` /
-  `Fix:` / `Verified:` (Verified only on resolved entries).
+- Plain facts use a label, one per line: `Symptom:` / `Cause:` / `Impact:` / `Fix:` / `Verified:` (Verified only on resolved entries).
 - A non-obvious judgement becomes a two-level Q&A: `- Q: Why <judgement>, not
   <the tempting alternative>?` then `  - A: Because <why the alternative fails
-  / why this holds>.` Add one only when the answer is non-trivial; keep each A
-  terse.
-- Cross-round correction is the PRIMARY use of the Q&A: when a later round
-  finds a prior call wrong, delete the wrong CONCLUSION but keep the LESSON as
-  a Q&A for why it was wrong. These accumulate across rounds - keep them. The Q
-  asks about the judgement itself, never which round made it.
-- `file:line` refs: keep line numbers while the entry is open (`[ ]` - you
-  still navigate there); on resolving (`[x]`), drop the line number and keep
-  only the file / symbol (lines drift after the fix; git blame / grep finds
-  the exact spot).
+  / why this holds>.` Add one only when the answer is non-trivial; keep each A terse.
+- Cross-round correction is the PRIMARY use of the Q&A: when a later round finds a prior call wrong, delete the wrong CONCLUSION but keep the LESSON as a Q&A for why it was wrong. These accumulate across rounds - keep them. The Q asks about the judgement itself, never which round made it.
+- `file:line` refs: keep line numbers while the entry is open (`[ ]` - you still navigate there); on resolving (`[x]`), drop the line number and keep only the file / symbol (lines drift after the fix; git blame / grep finds the exact spot).
