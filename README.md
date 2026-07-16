@@ -1,19 +1,79 @@
-# llselect - low-level select
+# LLSelect - Low-Level Select
 
 A JavaScript library that replaces the native HTML `<select>` element.
 
-llselect is not meant to be a full-bundle select (like `select2.js`). It is a minimal but flexible implementation of `<select>` in JavaScript that you can easily wrap and integrate into your existing UI library / framework / style.
+It is a minimal but flexible implementation of `<select>` in JavaScript that you can easily wrap and integrate into your existing UI library / framework / style.
+
+> [!TIP]
+> #### Why not native `<select>`?
+>
+> Native `<select>` was designed in the 1990s, and the lots of limitations have caused enormous traumatic pains to OCD developers and designers for over two decades:
+>
+> - Unable to customize the HTML template of `<select>`, `<option>`, `<optgroup>` Behavior of dropdown are platform-dependent (popup/dropdown list are OS-native widgets, which are rendered by system instead of browser)
+> - No filter feature, especially for East-Asian languages.
+> - Values can only be stored as `string`.
+> - Unable to accept mouse event when `<select disabled="true">` (to show tooltip to explain why it's disabled, for example).
 
 ## Features
 
-- Lazy rendering: the item-list DOM is built only when the popup opens.
-- Does not rely on a native `<select>` to store data: use `number` or any JS value as the data model directly, without type-casting hell.
+- No external JS / CSS dependency.
+- Blazing fast. Instantiation on DOM is sometimes even faster than native `<select>`.
+- Does not rely on a native `<select>` and its `string` to store data: use `number`, customized object or any JavaScript value as the data model directly, without type-casting hell.
 - Native TypeScript support.
 - Customizable HTML renderer functions.
-- Search input with IME-aware filtering.
-- ARIA combobox keyboard / focus model built in (see [docs/A11Y.md](https://gitlab.com/kuanyui/llselect/-/blob/master/docs/A11Y.md)).
+- Search candidates in input, friendly for Eastern-Asian languages.
+- ARIA, A11Y and keyboard support.
+- I18n packages and RTL languages support.
 
-Browser support floor: Firefox 78+, Chrome/Edge 87+, Safari 14.1+. No polyfills or legacy-browser workarounds are included.
+> [!WARNING]
+> Browser support floor: Firefox 78+, Chrome/Edge 87+, Safari 14.1+. No polyfills or legacy-browser workarounds are included.
+
+## Design principles
+
+1. Minimalist
+   - No external JS / CSS dependency. Auditable.
+   - Do only one thing: *"a minimal replacement of `<select>`"*, not aimed to be an omnipotent monster.
+2. Performance
+   - Create minimal elements on DOM when instantiating to optimize the page loading latency.
+   - The DOM of popup and candidates are lazy-rendering, and remove unneeded element from DOM when unneeded to minimize memory footprints.
+   - Mutate minimal DOM if possible. Choosing candidate in popup list mutates only the DOM of the chosen candidate, instead of rebuilding the whole list.
+3. Flexible
+   - Highly customizable: HTML templates of select itself, popup, candidates list, candidate row, arrow icon, ...etc.
+   - Easy to integrate into an existing project / library / style.
+   - Settings configure one instance; subclassing extends the library.
+4. Explicit
+   - Explicit is better than implicit - API names are long, but hold no surprise or ambiguity.
+   - *Single-select* and *multiple-select* are separate classes, avoiding ambiguous / over-abstracted APIs (e.g. one `T[]` adopted on both modes).
+   - Improves some UI/UX anti-patterns of the legacy `<select>` (e.g. `aria-disabled` instead of native `disabled`, so a disabled control still receives hover events and can show a "why is this disabled" tooltip).
+
+## Benchmark
+
+> [!NOTE]
+> - Tested on Intel 13900HX, Chromium 149.
+> - All tests are single select.
+> - The following table shows **instantiation** only, other tests (interactions like open popup, filter candidates, choose candidate, ... etc) cannot be accurately benchmarked nor able to be fairly compared across libraries due to the details in implementations of each library. But you still can test by yourself in demo benchmark page, and interact with them and feel the "real experience" instead of relying on inaccurate benchmark results.
+
+### 100 selects x 100 candidates
+
+| Library           | Build total (all widgets, ms) | DOM nodes (all, resting) | Teardown total (all widgets, ms) |
+|-------------------|-------------------------------|--------------------------|----------------------------------|
+| Native `<select>` | 53                            | 10,200                   | 6.70                             |
+| llselect          | 27                            | 800                      | 0.80                             |
+| Choices.js        | 318                           | 20,800                   | 9.00                             |
+| Select2           | 288                           | 10,900                   | 14                               |
+| Tom Select        | 108                           | 800                      | 3.70                             |
+| Slim Select       | 154                           | 11,000                   | 6.50                             |
+
+### 1000 selects x 10 candidates
+| Library           | Build total (all widgets, ms) | DOM nodes (all, resting) | Teardown total (all widgets, ms) |
+|-------------------|-------------------------------|--------------------------|----------------------------------|
+| Native `<select>` | 46                            | 12,000                   | 7.70                             |
+| llselect          | 54                            | 8,000                    | 7.10                             |
+| Choices.js        | 1147                          | 28,000                   | 35                               |
+| Select2           | 624                           | 19,000                   | 51                               |
+| Tom Select        | 539                           | 8,000                    | 23                               |
+| Slim Select       | 171                           | 20,000                   | 32                               |
+
 
 ## Install
 
@@ -46,9 +106,7 @@ new LLSelectSingle(el, { texts: zhTW })
 
 No build tool? The UMD bundle exposes `window.llselect` (`<script src="https://unpkg.com/llselect"></script>`), themes via `<link>`.
 
-## What llselect deliberately does NOT do
-
-These are integration boundaries, not bugs. Plan for them up front:
+## Limitation: What llselect deliberately decides **not** to do?
 
 - **No native form integration.** llselect renders plain `div`s, not a form control: nothing is submitted with a `<form>`, and `name`/value serialization, form reset, constraint validation (`required` etc.), and `<label for>` association do not apply. Name the field through the `ariaLabel` / `ariaLabelledBy` setting, and mirror the selection into your own form state (or a hidden input) yourself:
 
@@ -60,29 +118,40 @@ These are integration boundaries, not bugs. Plan for them up front:
   })
   ```
 
-- **No HTML parsing of your data - and therefore no sanitizer.** Item strings and trigger text are assigned via `textContent`, never parsed as HTML. An XSS risk appears only when your own render callbacks (`createItemContentElFn` and friends) parse untrusted markup (e.g. via `innerHTML`); sanitize that markup first (e.g. with DOMPurify, or the browser's native Sanitizer API) - llselect does not do it for you.
-- **No asynchronous data-fetching API.** Fetch however you like, then call `setItems(...)`.
-- **No virtual scrolling.** llselect is a `<select>` replacement, not a data grid.
-- **No alphabetic prefix typeahead** (the native `<select>` behavior) - it is unusable for East Asian languages and IME input. Use the `searchable` option instead.
-- **No official React / Vue / Angular wrapper - on purpose.** A good wrapper is inseparable from choices only your project can make. llselect is generic over your item type `T` (`LLSelectSingle<T>`), so how your model objects are shaped, keyed and compared, and how `onChange` flows back into your state (Pinia, Redux, signals, a form library), depend on your schema and your performance budget. A one-size wrapper would have to pick a `T` and a sync strategy for everyone - wrong for someone - and a thorough one (typed generics, slot / render-prop bridging for custom trigger / item / tag content) would lag every framework's API churn. So llselect ships the library and the CSS themes and leaves the small, stable binding to you: create the instance in your mount hook, push state in with `setItems` / `setChosenItem(s)`, read it back through `onChange`, and `destroy()` on unmount. The Quick start above is the whole pattern; it ports to any framework in ~15 lines.
-- **You must call `destroy()`** when unmounting (e.g. in a framework wrapper): it removes the document / window listeners the instance owns.
+- **No HTML sanitizer.** llselect does not do HTML sanitizing for you. Remember to sanitize untrusted input via [DOMPurify](https://github.com/cure53/DOMPurify), or [browser's native Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/Sanitizer).
+- **No asynchronous data-fetching API.** llselect is aimed to be a simple `<select>` replacement. Fetch if you really want, then call `setItems(...)`.
+- **No virtual scrolling.** llselect is aimed to be a simple `<select>` replacement, not an omnipotent library.
+- **No alphabetic prefix typeahead** (the native `<select>` behavior) - because it is unusable for East Asian languages and IME input. Use the `searchable` option instead.
+- **No official React / Vue / Angular wrapper** - llselect provides the minimal library and the CSS themes only.
+  > Because:
+  >
+  > - What is the schema of data model (`string[]` or `Array<{ key: T, text: string, ... }>`...etc),
+  > - How data models are bound,
+  > - What APIs of llselect are needed to be exposed (especially the customizable HTML templates),
+  > - How to bind (or when to update) the i18n translation text of select and candidates,
+  >
+  > All of the above affects the performance, and complexity of wrapper.
+  > A generic wrapper for a frontend framework / library may unnecessarily increase complexity and impact performance (and surely I also have no interests to follow up these quickly-outdated libraries / frameworks). so I decide not to provide official wrapper for frontend frameworks / libraries.
+  >
+  > How you wrap llselect in your project and the trade-offs should be decided by yourself, according to your using scenario.
+- **No auto destroy.** - You *must* call `destroy()` manually when unmounting.
 
 ## Capabilities overview
 
-| Capability | Entry points |
-|---|---|
-| Search box + custom matching | `searchable` (bool or predicate), `filterFn` |
-| Accessible field naming (required) | `ariaLabel` / `ariaLabelledBy` |
-| Disabling - whole control / per item | `setDisabled()`, `focusableWhenDisabled`, `itemDisabledFn` |
-| Grouping (optgroup) | `itemToGroupKeyFn`, `groupKeyToLabelFn`, `groupDisabledFn` |
-| Multiple selection | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `selectAllRow`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
-| Popup width | `popupWidthPolicy: 'match-trigger' \| 'fit-content'` |
-| Rich rendering without subclassing | `createItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ... |
-| i18n | `texts` setting + `llselect/i18n` packs (en / ja / zh-TW / ar / he), RTL inherited from `dir` |
-| Lifecycle | `destroy()` (required on unmount), `rerender()`, `setItems()` |
-| Events | `onChange(current, previous)`, `onOpen`, `onClose` |
+| Capability                           | Entry points                                                                                                             |
+|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Search box + custom matching         | `searchable` (bool or predicate), `filterFn`                                                                             |
+| Accessible field naming (required)   | `ariaLabel` / `ariaLabelledBy`                                                                                           |
+| Disabling - whole control / per item | `setDisabled()`, `focusableWhenDisabled`, `itemDisabledFn`                                                               |
+| Grouping (optgroup)                  | `itemToGroupKeyFn`, `groupKeyToLabelFn`, `groupDisabledFn`                                                               |
+| Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `selectAllRow`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
+| Popup width                          | `popupWidthPolicy: 'match-trigger' \| 'fit-content'`                                                                     |
+| Rich rendering without subclassing   | `createItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
+| i18n                                 | `texts` setting + `llselect/i18n` packs (en / ja / zh-TW / ar / he), RTL inherited from `dir`                            |
+| Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
+| Events                               | `onChange(current, previous)`, `onOpen`, `onClose`                                                                       |
 
-Full contracts: [docs/DESIGN.md](https://gitlab.com/kuanyui/llselect/-/blob/master/docs/DESIGN.md) (API / architecture) and [docs/A11Y.md](https://gitlab.com/kuanyui/llselect/-/blob/master/docs/A11Y.md) (keyboard / focus / ARIA). The TypeScript declarations shipped in the package document every setting inline.
+Full contracts: [docs/DESIGN.md](docs/DESIGN.md) (API / architecture) and [docs/A11Y.md](docs/A11Y.md) (keyboard / focus / ARIA). The TypeScript declarations shipped in the package document every setting inline.
 
 ## Customization: settings or subclassing?
 
@@ -95,15 +164,15 @@ Quick test: "Am I making a new, named, reusable kind of select?"
 
 ### Settings (the common path - no subclass needed)
 
-| You want to customize | Setting |
-|---|---|
-| Item display text | `itemToStringFn` |
-| Trigger content (e.g. tag chips) | `createTriggerContentElFn` |
-| Disable individual items | `itemDisabledFn` |
-| Search matching | `filterFn` |
-| Equality for object items | `compareFn` |
-| Dropdown arrow | `createTriggerArrowContentElFn` |
-| Events | `onChange`, `onOpen`, `onClose` |
+| You want to customize            | Setting                         |
+|----------------------------------|---------------------------------|
+| Item display text                | `itemToStringFn`                |
+| Trigger content (e.g. tag chips) | `createTriggerContentElFn`      |
+| Disable individual items         | `itemDisabledFn`                |
+| Search matching                  | `filterFn`                      |
+| Equality for object items        | `compareFn`                     |
+| Dropdown arrow                   | `createTriggerArrowContentElFn` |
+| Events                           | `onChange`, `onOpen`, `onClose` |
 
 ```js
 const sel = new LLSelectSingle(el, {
@@ -121,19 +190,8 @@ Subclass only when settings cannot express it:
 2. **A framework wrapper** - e.g. `class VueLLSelect extends LLSelectSingle` for lifecycle glue (call `destroy()` on unmount). This is the main reason llselect is "low-level".
 3. **Core behavior with no setting** - e.g. replace `onItemActivated` semantics, or take full control of the item element via `createItemEl` (rich HTML, icons).
 
-How the two layers coexist: every customization point is a `protected` method whose default reads its `*Fn` setting. Overriding the method replaces that default - your override wins, plain OO, no hidden precedence. Rationale: [docs/DESIGN.md](https://gitlab.com/kuanyui/llselect/-/blob/master/docs/DESIGN.md).
+How the two layers coexist: every customization point is a `protected` method whose default reads its `*Fn` setting. Overriding the method replaces that default - your override wins, plain OO, no hidden precedence. Rationale: [docs/DESIGN.md](docs/DESIGN.md).
 
-## Design principles
-
-1. Minimal - no external JS / CSS dependency. Auditable.
-2. Performance - lazy popup rendering, and a single-item selection change replaces just the one affected option node in the popup list instead of rebuilding every row (the list update is O(1) in list size). The trigger is refreshed too; its cost depends on `triggerDisplay` (`count` is constant, `tags` rebuilds one chip per chosen item).
-3. Flexible
-   - Easy to integrate into an existing project / library / style.
-   - Settings configure one instance; subclassing extends the library. (See "Customization" above.)
-4. Explicit
-   - Explicit is better than implicit - API names are long, but hold no surprise or ambiguity.
-   - Single-select and multiple-select are separate classes, avoiding ambiguous / over-abstracted APIs (e.g. one `T[]` modeling both modes).
-   - Improves some UI/UX anti-patterns of the legacy `<select>` (e.g. `aria-disabled` instead of native `disabled`, so a disabled control still receives hover events and can show a "why is this disabled" tooltip).
 
 ## Acknowledgment
 
