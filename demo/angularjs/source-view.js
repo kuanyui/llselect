@@ -11,8 +11,8 @@
 import { highlightJs, highlightHtml, dedent } from '../highlight.js'
 
 const FILES = [
-  ['src-llselect-angularjs', 'llselect-angularjs.js'],
-  ['src-ui-llselect', 'ui-llselect.js'],
+  ['src-llselect-angularjs', '../../angularjs/llselect-angularjs.js'],
+  ['src-ui-llselect', '../../angularjs/llselect-ui-select.js'],
   ['src-app', 'app.js'],
 ]
 

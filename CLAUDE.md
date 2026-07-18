@@ -93,6 +93,15 @@ npm run check       # mechanical style checks (ASCII punctuation, doc links)
 npm pack --dry-run  # when package.json / exports / files changed
 ```
 
+The repo holds a SECOND package, `angularjs/` (`llselect-angularjs`), with its own tests and its own dependencies. The root `npm test` does not touch it, so a green root run says nothing about it. When changing anything under `angularjs/` (or anything in `src/` its directives lean on), also run:
+
+```sh
+cd angularjs && npm install && npm test   # jsdom + real angular; needs a root `npm run build` first
+cd angularjs && npm run build             # terser only, no bundler; also checked by prepublishOnly
+```
+
+`angularjs/*.min.js` and `angularjs/node_modules/` are build outputs / installs and are gitignored: change the source, rebuild. The `angularjs/` directives are plain ES5-style IIFEs on purpose (a legacy AngularJS app drops them into `vendor/` behind a `<script src>`), so the ES2020 / TypeScript rules above do not apply inside that directory - but the ASCII, brace and comment rules do.
+
 jsdom cannot test layout, native Tab focus navigation, scrollbar dragging, visual-viewport behavior, or assistive-technology output. Changes touching positioning, focus order, RTL, themes, or ARIA need a real-browser pass - record what to verify in `docs/TODO.md` ("manual verification") if it cannot happen in the same session.
 
 ### Generated and abandoned files (llselect)

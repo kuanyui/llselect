@@ -1,0 +1,134 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { boot } from './harness.mjs'
+
+const USERS = [
+  { id: 1, name: 'Alice', role: 'admin', bad: false },
+  { id: 2, name: 'Bob', role: 'user', bad: true },
+  { id: 3, name: 'Carol', role: 'user', bad: false },
+]
+
+function app(extraAttrs = '') {
+  return boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <form name="f" novalidate>
+          <ui-llselect ng-model="vm.person" name="person" required ${extraAttrs}>
+            <ui-select-match placeholder="Pick">{{$select.selected.name}}</ui-select-match>
+            <ui-select-choices repeat="p in vm.users | filter: $select.search"
+              ll-label="p.name" ui-disable-choice="p.bad">
+              <span>{{p.name}}</span>
+            </ui-select-choices>
+          </ui-llselect>
+        </form>
+      </div>`,
+    controller: function () {
+      this.users = USERS
+      this.person = undefined
+    },
+  })
+}
+
+test('links, builds llselect DOM, and strips its own template slots', () => {
+  const a = app()
+  assert.ok(a.$('ui-llselect .llselect-trigger'), 'no trigger inside <ui-llselect>')
+  assert.equal(a.$('ui-llselect ui-select-choices'), null, '<ui-select-choices> survived into the DOM')
+})
+
+test('name + required work here too', () => {
+  const a = app()
+  assert.ok(a.scope.f.person, 'myForm.person is not registered')
+  assert.equal(a.scope.f.person.$error.required, true)
+})
+
+test('the transcluded template renders per row', () => {
+  const a = app()
+  a.$('ui-llselect .llselect-trigger').click()
+  const rows = a.$$('ui-llselect .llselect-item')
+  assert.equal(rows.length, 3)
+  assert.ok(rows[0].textContent.includes('Alice'), `first row was "${rows[0].textContent}"`)
+})
+
+test('rows are interpolated BEFORE llselect measures them (no {{ }} flicker)', () => {
+  // Regression: $compile alone does not fill bindings - AngularJS does that on
+  // the next digest, and a native click never runs one. llselect then measured
+  // and positioned the popup against the literal "{{p.name}}" text and resized a
+  // tick later. Assert with NO digest in between: that is the whole point, and a
+  // check placed after any digest passes even with the fix removed.
+  const a = app()
+  a.$('ui-llselect .llselect-trigger').click()
+  const texts = a.$$('ui-llselect .llselect-item').map((r) => r.textContent)
+  assert.ok(texts.length > 0, 'no rows rendered')
+  const raw = texts.filter((t) => t.includes('{{'))
+  assert.deepEqual(raw, [], 'rows were still uninterpolated when llselect measured them')
+})
+
+test('ui-disable-choice reaches llselect', () => {
+  const a = app()
+  a.$('ui-llselect .llselect-trigger').click()
+  assert.equal(a.$$('ui-llselect .llselect-item-disabled').length, 1, 'expected Bob disabled')
+})
+
+test('ll-label becomes the option accessible name', () => {
+  // ui-select has no item-to-string concept, so llselect has nothing to name the
+  // option with unless the markup says. Without ll-label an object item would
+  // announce as [object Object].
+  const a = app()
+  a.$('ui-llselect .llselect-trigger').click()
+  assert.equal(a.$('ui-llselect .llselect-item').getAttribute('aria-label'), 'Alice')
+})
+
+test('choosing a row writes the model and renders the match template', () => {
+  const a = app()
+  a.$('ui-llselect .llselect-trigger').click()
+  a.$$('ui-llselect .llselect-item')[0].click()
+  assert.equal(a.scope.vm.person.name, 'Alice')
+  assert.equal(a.text('ui-llselect .llselect-trigger-content'), 'Alice')
+})
+
+test('ng-model keeps the parent scope (no scope: true shadowing)', () => {
+  // ui-select creates a child scope, which silently shadows a non-dotted
+  // ng-model: the parent never sees the value. This bridge does not.
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="plain">
+          <ui-select-match>{{$select.selected.name}}</ui-select-match>
+          <ui-select-choices repeat="p in vm.users" ll-label="p.name"><span>{{p.name}}</span></ui-select-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS },
+  })
+  a.$('ui-llselect .llselect-trigger').click()
+  a.$$('ui-llselect .llselect-item')[0].click()
+  assert.equal(a.scope.plain?.name, 'Alice', 'a non-dotted ng-model was shadowed onto a child scope')
+})
+
+test('a repeat expression without ll-label still names the option, via String(item)', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.s">
+          <ui-select-match>{{$select.selected}}</ui-select-match>
+          <ui-select-choices repeat="s in vm.strings"><span>{{s}}</span></ui-select-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.strings = ['a', 'b'] },
+  })
+  a.$('ui-llselect .llselect-trigger').click()
+  assert.equal(a.$('ui-llselect .llselect-item').getAttribute('aria-label'), 'a')
+})
+
+test('a missing <ui-select-choices> is reported, and no widget is left behind', () => {
+  const a = app()
+  const el = a.compile('<ui-llselect ng-model="x"></ui-llselect>')
+  assert.equal(a.errors.length, 1, 'nothing was reported to $exceptionHandler')
+  assert.match(a.errors[0].message, /expected one <ui-select-choices/)
+  assert.equal(el[0].querySelector('.llselect-trigger'), null, 'a half-built widget was left behind')
+})

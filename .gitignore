@@ -5,3 +5,5 @@ dist/
 .DS_Store
 .claude/settings.local.json
 REFS/
+angularjs/node_modules/
+angularjs/*.min.js

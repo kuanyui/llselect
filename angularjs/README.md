@@ -1,6 +1,25 @@
 # llselect + AngularJS 1.x
 
-Example directives binding llselect to AngularJS 1.x, plus the reasoning behind them. Everything here is demo material: copy `llselect-angularjs.js` into your project and adapt it. It is not part of the llselect package, has no semver contract, and is not a generic wrapper.
+AngularJS 1.x directives for [llselect](../README.md), published as `llselect-angularjs`. Two independent files: pick the one you need, or use both while migrating.
+
+```html
+<script src="node_modules/llselect/dist/index.umd.js"></script>
+<script src="node_modules/llselect-angularjs/llselect-angularjs.min.js"></script>
+<!-- or, from a CDN, or just dropped in vendor/ -->
+<script src="https://cdn.jsdelivr.net/npm/llselect-angularjs@0/llselect-angularjs.min.js"></script>
+```
+
+```js
+angular.module('app', ['llselect'])
+```
+
+```html
+<llselect-single name="fruit" ng-model="picked" required ll-searchable="true"
+  ll-options="f.id as f.name group by f.type disable when f.soldOut for f in fruits track by f.id">
+</llselect-single>
+```
+
+Both files are plain IIFEs reading `window.angular` and `window.llselect` - the same shape angular.js itself, ui-select and angular-validation all ship - so there is nothing to bundle or transpile, and a `<script src>` in `<head>` is a supported way to use this, not a fallback. It is not a generic wrapper: it handles what is documented here and reports the rest.
 
 Every claim below about AngularJS internals was verified against the AngularJS 1.8.3 source, and every claim about ui-select against ui-select 0.19.8. File:line references point at those versions.
 
@@ -18,18 +37,18 @@ Two practical reasons on top: AngularJS is still deployed widely enough to matte
 
 ## What this is not
 
-- Not a package export. Nothing here is importable from `llselect`; there is no `llselect/angularjs`.
-- Not a generic wrapper. It handles the cases the demo shows and throws on the rest.
+- Not part of `llselect` itself. It is a separate package with its own version, so llselect's build, types and `sideEffects` stay untouched by it.
+- Not a generic wrapper. It handles what is documented here and reports the rest.
 - Not a styling-compatible ui-select replacement. `<ui-llselect>` takes ui-select's markup, not its CSS. See "The ui-select bridge".
 
 ## Files
 
-| file | what |
-|---|---|
-| `llselect-angularjs.js` | `<llselect-single>` / `<llselect-multiple>`, driven by an `ng-options`-style `ll-options` expression. Start here. |
-| `ui-llselect.js` | `<ui-llselect>`, which accepts ui-select's call-site markup. For migrating an existing ui-select codebase. |
-| `index.html`, `app.js` | The live demo for both. |
-| `benchmark.html`, `benchmark.js` | `<llselect-single>` vs `<ui-llselect>` vs real ui-select. |
+| file | module | what |
+|---|---|---|
+| `llselect-angularjs.js` | `llselect` | `<llselect-single>` / `<llselect-multiple>`, driven by an `ng-options`-style `ll-options` expression. Start here. |
+| `llselect-ui-select.js` | `llselect.uiCompat` | `<ui-llselect>`, which accepts ui-select's call-site markup. For migrating an existing ui-select codebase; needs `llselect-angularjs.js` loaded too. |
+
+Each ships a `.min.js` beside it (built by `npm run build`, terser only - there is no bundler). The live demo and the benchmark are in [`demo/angularjs/`](../demo/angularjs/) and load these files directly, so what the demo shows is what the package ships.
 
 ## The two `name` attributes
 
@@ -267,7 +286,9 @@ For the record, reproducing ui-select exactly would also mean reproducing its bu
 
 ## Not supported
 
-Deliberate gaps. Each throws or is simply absent rather than silently half-working.
+Deliberate gaps. Each is reported or simply absent, never silently half-working.
+
+A caveat on "reported", verified rather than assumed: a directive's `throw` never reaches your code. `$compile`'s `invokeLinkFn` wraps every link function in its own `try`/`catch` and hands the error to `$exceptionHandler` (`angular.js:11374`), which by default logs it. So a bad `ll-options` does not crash the page - the widget simply never renders and the reason is in the console. This is not specific to these directives; every AngularJS directive works this way, `uiSelectMinErr` included.
 
 Both directive sets:
 
