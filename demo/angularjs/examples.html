@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>llselect + AngularJS - examples</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../../dist/themes/vanilla.css">
+</head>
+<body ng-app="demo" ng-controller="DemoCtrl as vm">
+  <nav class="demo-nav">
+    <a href="../index.html">&larr; llselect demo</a>
+    <a href="index.html">AngularJS home</a>
+    <a href="examples.html" class="current">Examples</a>
+    <a href="benchmark.html">Benchmark</a>
+  </nav>
+
+  <h1>llselect + AngularJS 1.x - examples</h1>
+  <p>
+    Example directives, not a supported wrapper. Copy
+    <code>llselect-angularjs.js</code> (or <code>ui-llselect.js</code>) into your
+    project and adapt it. The reasoning, the source references, and the list of
+    deliberate gaps are in <a href="README.md">README.md</a>.
+  </p>
+  <p class="hint">
+    Run <code>npm run build</code>, then <code>npm run serve</code>, and open
+    <code>/demo/angularjs/</code>. AngularJS itself comes from a CDN; nothing
+    AngularJS-related is in the package.
+  </p>
+
+  <section>
+    <h2>1. Basic: &lt;llselect-single&gt; and &lt;llselect-multiple&gt;</h2>
+    <p>
+      <code>ll-options</code> takes an <code>ng-options</code> expression. Every
+      clause maps onto an llselect setting; see the table in the README.
+    </p>
+    <div class="demo-split">
+      <div class="demo-pane">
+        <div class="demo-row" data-src="1a">
+          <llselect-single ng-model="vm.country" ll-searchable="true" ll-clearable="true"
+            ll-placeholder="'Pick a country'"
+            ll-options="c for c in vm.countries">
+          </llselect-single>
+        </div>
+        <div class="out">ng-model = {{ vm.country || 'undefined' }}</div>
+        <details class="code-toggle"><summary>markup</summary><pre data-src-for="1a"><code></code></pre></details>
+      </div>
+      <div class="demo-pane">
+        <div class="demo-row" data-src="1b">
+          <llselect-multiple ng-model="vm.langs" ll-searchable="true"
+            ll-trigger-display="'tags'"
+            ll-options="l.name for l in vm.languages track by l.name">
+          </llselect-multiple>
+        </div>
+        <div class="out">ng-model = {{ vm.langs | json }}</div>
+        <details class="code-toggle"><summary>markup</summary><pre data-src-for="1b"><code></code></pre></details>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Form validation: name + required + form.$valid</h2>
+    <p>
+      The point of this page. <code>myForm.fruit</code> resolves because
+      AngularJS reads <code>name</code> off <em>this element</em> as a plain
+      attribute - there is no native <code>&lt;select&gt;</code> and no hidden
+      input anywhere. Clear the selection to watch the form go invalid.
+    </p>
+    <form name="myForm" novalidate data-src="2">
+      <div class="demo-row">
+        <llselect-single name="fruit" ng-model="vm.fruit" required ll-clearable="true"
+          ll-options="f for f in vm.fruits">
+        </llselect-single>
+      </div>
+      <div class="demo-row">
+        <llselect-multiple name="toppings" ng-model="vm.toppings" required
+          ll-trigger-display="'tags'"
+          ll-options="t for t in vm.fruits">
+        </llselect-multiple>
+      </div>
+      <div class="out">
+        myForm.$valid = <b>{{ myForm.$valid }}</b> |
+        myForm.$dirty = <b>{{ myForm.$dirty }}</b><br>
+        myForm.fruit.$error = {{ myForm.fruit.$error | json }}<br>
+        myForm.toppings.$error = {{ myForm.toppings.$error | json }}
+        <span class="hint">(toppings shows the $isEmpty override: [] counts as empty)</span>
+      </div>
+      <div class="demo-row">
+        <button type="button" ng-click="vm.reloadFruits()">Reload list (drops the chosen one)</button>
+        <span class="hint">
+          $dirty must stay {{ myForm.$dirty }} - a data reload is not a user edit.
+        </span>
+      </div>
+    </form>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="2"><code></code></pre></details>
+  </section>
+
+  <section>
+    <h2>3. select as: the model holds an id, not the object</h2>
+    <p>
+      <code>select as</code> is the ngModel value projection. llselect has no
+      equivalent setting on purpose - the app declares it, exactly as
+      <code>ng-options</code> does.
+    </p>
+    <div class="demo-row" data-src="3">
+      <llselect-single ng-model="vm.userId" ll-searchable="true"
+        ll-options="u.id as u.name group by u.role disable when u.suspended for u in vm.users track by u.id">
+      </llselect-single>
+    </div>
+    <div class="out">ng-model = {{ vm.userId }} <span class="hint">(a number, not the object)</span></div>
+        <details class="code-toggle"><summary>markup</summary><pre data-src-for="3"><code></code></pre></details>
+  </section>
+
+  <section>
+    <h2>4. ll-disabled</h2>
+    <p>
+      Settings are frozen at construction, so only <code>ll-disabled</code> gets
+      a <code>$watch</code> - it maps onto the <code>setDisabled()</code> method.
+    </p>
+    <div class="demo-row" data-src="4">
+      <label><input type="checkbox" ng-model="vm.locked"> lock</label>
+      <llselect-single ng-model="vm.country2" ll-disabled="vm.locked"
+        ll-options="c for c in vm.countries">
+      </llselect-single>
+    </div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="4"><code></code></pre></details>
+  </section>
+
+  <section>
+    <h2>5. &lt;ui-llselect&gt;: ui-select's markup, llselect's DOM</h2>
+    <p>
+      The call-site markup and the transcluded templates carry over from
+      ui-select. Its CSS themes do not - llselect owns the DOM, so this is styled
+      by the llselect theme. <code>ll-label</code> is the one addition:
+      ui-select has no item-to-string concept, and llselect needs one for the
+      option's accessible name.
+    </p>
+    <div class="demo-split">
+      <div class="demo-pane">
+        <div data-src="5">
+        <ui-llselect ng-model="vm.person" name="person" required>
+          <ui-select-match placeholder="Pick a person">{{$select.selected.name}}</ui-select-match>
+          <ui-select-choices repeat="p in vm.users | filter: $select.search" ll-label="p.name"
+            ui-disable-choice="p.suspended">
+            <span ng-bind-html="p.name | highlight: $select.search"></span>
+            <small class="hint">{{p.role}}{{p.suspended ? ' - suspended' : ''}}</small>
+          </ui-select-choices>
+        </ui-llselect>
+        </div>
+        <div class="out">ng-model = {{ vm.person | json }}</div>
+        <details class="code-toggle"><summary>markup</summary><pre data-src-for="5"><code></code></pre></details>
+      </div>
+      <div class="demo-pane">
+        <div data-src="5b">
+        <ui-llselect ng-model="vm.people" multiple>
+          <ui-select-match>{{$item.name}}</ui-select-match>
+          <ui-select-choices repeat="p in vm.users | filter: $select.search" ll-label="p.name">
+            <span ng-bind-html="p.name | highlight: $select.search"></span>
+          </ui-select-choices>
+        </ui-llselect>
+        </div>
+        <div class="out">ng-model = {{ vm.people.length }} selected</div>
+        <details class="code-toggle"><summary>markup</summary><pre data-src-for="5b"><code></code></pre></details>
+      </div>
+    </div>
+    <p class="hint">
+      Not bridged, by rule (llselect has no such concept, so it is ignored rather
+      than half-implemented): tagging, sortable, append-to-body, async refresh,
+      limit, remove-selected, themes.
+    </p>
+  </section>
+
+  <section>
+    <h2>6. ghiscoding/angular-validation</h2>
+    <p>
+      A third-party validation library, included because it is the case that
+      started this: it <b>throws</b> unless the field has a <code>name</code>
+      (<code>validation-common.js:460</code>). It reads that name off the
+      <code>ng-model</code> element like everything else in AngularJS, so it
+      needs no native <code>&lt;select&gt;</code> either. Its
+      <code>validation</code> directive is <code>restrict: 'A'</code>,
+      <code>require: 'ngModel'</code>, and it revalidates from a watch on
+      <code>ctrl.$modelValue</code> - all element-agnostic.
+    </p>
+    <form name="avForm" novalidate data-src="6">
+      <div class="demo-row">
+        <llselect-single name="avFruit" ng-model="vm.avFruit" validation="required"
+          ll-clearable="true" ll-options="f for f in vm.fruits">
+        </llselect-single>
+      </div>
+      <div class="out">
+        avForm.$valid = <b>{{ avForm.$valid }}</b> |
+        avForm.avFruit.$error = {{ avForm.avFruit.$error | json }}
+      </div>
+    </form>
+    <p class="hint">
+      Three integration facts worth knowing: it hard-depends on
+      <code>pascalprecht.translate</code>; its messages need
+      <code>$translateProvider</code> pointed at its locale files or you get
+      "Could not translate: 'INVALID_REQUIRED'"; and validation is debounced by
+      <code>typingLimit</code> (default 1000 ms), so it is not instant. Its
+      <code>elm.bind('blur')</code> trigger is inert here - blur does not bubble
+      and the focusable element is llselect's inner trigger - but the
+      <code>$modelValue</code> watch is the path that matters for a select.
+    </p>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="6"><code></code></pre></details>
+  </section>
+
+  <section>
+    <h2>7. Full source</h2>
+    <p>
+      The whole of what this page loads. Nothing is generated and nothing is
+      minified: this is the file you copy.
+    </p>
+    <details class="code-toggle"><summary>llselect-angularjs.js - &lt;llselect-single&gt; / &lt;llselect-multiple&gt;</summary><pre><code id="src-llselect-angularjs"></code></pre></details>
+    <details class="code-toggle"><summary>ui-llselect.js - the ui-select-shaped bridge</summary><pre><code id="src-ui-llselect"></code></pre></details>
+    <details class="code-toggle"><summary>app.js - this demo's own controller</summary><pre><code id="src-app"></code></pre></details>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/angular@1.8.3/angular.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/angular-sanitize@1.8.3/angular-sanitize.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/angular-translate@2.19.1/dist/angular-translate.min.js"></script>
+  <!-- useStaticFilesLoader is NOT in angular-translate core; it is its own
+       package, and it lives at the package root, not under dist/. Without it,
+       $translateProvider.useStaticFilesLoader() throws $injector:unpr. -->
+  <script src="https://cdn.jsdelivr.net/npm/angular-translate-loader-static-files@2.19.1/angular-translate-loader-static-files.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/angular-validation-ghiscoding@1.5.28/dist/angular-validation.min.js"></script>
+  <script src="../../dist/index.umd.js"></script>
+  <script src="llselect-angularjs.js"></script>
+  <script src="ui-llselect.js"></script>
+  <script src="app.js"></script>
+  <!-- Source display only. A module script so it can share the demo's
+       highlighter; it runs after the classic scripts above. -->
+  <script type="module" src="source-view.js"></script>
+</body>
+</html>

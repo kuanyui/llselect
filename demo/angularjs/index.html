@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>llselect + AngularJS 1.x</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <nav class="demo-nav">
+    <a href="../index.html">&larr; llselect demo</a>
+    <a href="index.html" class="current">AngularJS home</a>
+    <a href="examples.html">Examples</a>
+    <a href="benchmark.html">Benchmark</a>
+  </nav>
+
+  <h1>llselect + AngularJS 1.x</h1>
+  <p>
+    Directives binding llselect to AngularJS 1.x, and a bridge that takes
+    ui-select's markup. Copy the files into your project - there is no npm
+    install and no wrapper to depend on.
+  </p>
+  <pre class="hub-cmd"><code>npm run build
+npm run serve   # then open /demo/angularjs/</code></pre>
+
+  <div class="hub-cards">
+    <a class="hub-card" href="examples.html">
+      <h2>Examples</h2>
+      <p>Live, each with its own markup: <code>ll-options</code>,
+        <code>name</code> + <code>required</code> + <code>form.$valid</code>,
+        <code>select as</code>, <code>&lt;ui-llselect&gt;</code>, and
+        ghiscoding/angular-validation. Full source at the bottom.</p>
+    </a>
+    <a class="hub-card" href="benchmark.html">
+      <h2>Benchmark</h2>
+      <p><code>&lt;select ng-options&gt;</code> vs
+        <code>&lt;llselect-single&gt;</code> vs <code>&lt;ui-llselect&gt;</code>
+        vs real ui-select, on a 417-zone timezone list. Includes the question
+        that decides the port: does angular-validation cost more here than on
+        the select it replaces?</p>
+    </a>
+    <a class="hub-card" href="README.md">
+      <h2>README</h2>
+      <p>Why AngularJS gets a page when React and Vue do not, the two unrelated
+        things both spelled <code>name</code>, the ng-options-to-llselect
+        mapping, the gotchas, and every deliberate gap.</p>
+    </a>
+  </div>
+
+  <h2>Why this exists when React and Vue do not</h2>
+  <p>
+    llselect ships no framework wrappers. All three reasons for that fail for
+    AngularJS specifically:
+  </p>
+  <ul>
+    <li><b>It cannot rot.</b> AngularJS is end-of-life and frozen, so there is no API churn to chase.</li>
+    <li><b>It does not have to guess your data.</b> The <code>ng-options</code> grammar is the app declaring its own item type: <code>c.id as c.name for c in colors track by c.id</code> states the label, the identity and the model value in one line.</li>
+    <li><b>There is only one way to sync state.</b> <code>ngModel</code> plus the digest - no Pinia / Redux / signals / form-library choice to get wrong.</li>
+  </ul>
+  <p class="hint">
+    React and Vue fail the last two (no standard expression grammar, no standard
+    state layer), so the boundary holds for them. This is not an exception carved
+    out of the rule; the rule's premises just do not apply here.
+  </p>
+</body>
+</html>

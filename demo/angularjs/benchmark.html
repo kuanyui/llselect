@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>llselect + AngularJS - benchmark</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../../dist/themes/vanilla.css">
+  <!-- ui-select's bootstrap theme needs Bootstrap's own CSS. Demo-only CDN. -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ui-select@0.19.8/dist/select.min.css">
+  <style>
+    .bench-table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    .bench-table th, .bench-table td { border: 1px solid #d5dae2; padding: 0.4rem 0.6rem; text-align: right; }
+    .bench-table th:first-child, .bench-table td:first-child { text-align: left; }
+    .bench-table small { color: #666; font-weight: normal; }
+    .bench-best { background: #e6f6e6; font-weight: bold; }
+    #stage { position: absolute; left: -9999px; top: 0; width: 300px; }
+  </style>
+</head>
+<body>
+  <nav class="demo-nav">
+    <a href="../index.html">&larr; llselect demo</a>
+    <a href="index.html">AngularJS home</a>
+    <a href="examples.html">Examples</a>
+    <a href="benchmark.html" class="current">Benchmark</a>
+  </nav>
+
+  <h1>llselect + AngularJS 1.x - benchmark</h1>
+  <p>
+    Three ways to put a select in an AngularJS 1.x app, on the same data and the
+    same page. See <a href="README.md">README.md</a> for what each one is.
+  </p>
+
+  <p class="hint">
+    Defaults: 3000 items, 20 widgets. Override with
+    <code>?items=500&amp;widgets=30</code> to watch the ratios move: the
+    incumbent's build is linear in the item count while llselect's is flat (it
+    builds the list only on open), so the gap between them widens as the list
+    grows. ui-select is the one that is genuinely superlinear, per digest.
+  </p>
+  <button id="run">Run benchmark</button>
+  <div id="results"></div>
+
+  <h2>What the numbers mean</h2>
+  <ul>
+    <li>
+      <b>digest while open</b> is the interesting column. With the dropdown open,
+      ui-select's theme template runs
+      <code>ng-class="{active: $select.isActive(this), disabled: $select.isDisabled(this)}"</code>
+      on every row, every digest. Both functions do an
+      <code>indexOf</code> over the whole item list
+      (<code>uiSelectController.js:317</code> and <code>:358</code>), so the cost
+      is O(n^2) per digest. llselect has no watchers on the list at all, so a
+      digest does not touch it.
+    </li>
+    <li>
+      <b>&lt;ui-llselect&gt;</b> is expected to land between the two: it fixes
+      the O(n^2) by using llselect's DOM, but ui-select's markup contract forces
+      one child scope plus one <code>$compile</code> link per row, which
+      <code>&lt;llselect-single&gt;</code> does not pay.
+    </li>
+    <li>
+      The second table is the acceptance question: putting the same
+      <code>validation="required"</code> on <code>&lt;llselect-single&gt;</code>
+      must not cost more than putting it on the <code>&lt;select ng-options&gt;</code>
+      it replaces. angular-validation is element-agnostic (it watches
+      <code>ctrl.$modelValue</code>), so the difference should be widget cost
+      only, not validation cost.
+    </li>
+    <li>
+      <b>&lt;select ng-options&gt;</b> is the incumbent baseline. Its dropdown is
+      an OS widget, so its open and filter are <b>n/a</b>, not a fake 0 - the
+      same rule <code>docs/SPEC_BENCHMARK.md</code> applies to the native select
+      in the main benchmark. Its build and digest are real, and it renders every
+      option up front rather than lazily.
+    </li>
+    <li>
+      <b>build</b> creates 30 widgets over 500 items each. llselect renders the
+      item list lazily (only on open), and so does ui-select
+      (<code>ng-if="$select.open"</code> on its rows), so this column is mostly
+      trigger cost.
+    </li>
+  </ul>
+
+  <h2>Honest limits of this page</h2>
+  <ul>
+    <li>One run, one browser, no warmup discipline. Read it as an order of magnitude, not a score.</li>
+    <li>All three are measured through <code>scope.$digest()</code> and synthetic clicks, not real input, so it is a lower bound on real perceived latency for all of them equally.</li>
+    <li>ui-select is loaded with its Bootstrap theme and Bootstrap's CSS; llselect uses its vanilla theme. Layout cost is not identical, and no attempt is made to equalize it.</li>
+    <li>The stage is off-screen, so paint is largely excluded for everyone.</li>
+  </ul>
+
+  <div id="stage"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/angular@1.8.3/angular.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/angular-sanitize@1.8.3/angular-sanitize.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/angular-translate@2.19.1/dist/angular-translate.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/angular-validation-ghiscoding@1.5.28/dist/angular-validation.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ui-select@0.19.8/dist/select.min.js"></script>
+  <script src="../../dist/index.umd.js"></script>
+  <script src="llselect-angularjs.js"></script>
+  <script src="ui-llselect.js"></script>
+  <script src="benchmark.js"></script>
+  <script>
+    document.getElementById('run').addEventListener('click', function () {
+      window.runAngularBench(document.getElementById('stage'), document.getElementById('results'))
+    })
+  </script>
+</body>
+</html>
