@@ -69,9 +69,11 @@
   <p id="try-note" hidden>
     One live widget each, on the same
     <span class="zone-count-inline">417</span>-zone list, left here after the run.
-    Open each one and type in its search box: the table says ui-select costs
-    <b>220x</b> more per digest, and this is what that actually feels like. The
-    numbers are the argument; these are the evidence you can feel.
+    Open each one and type in its search box. The table above says ui-select
+    costs around <b>100x</b> more per digest than <code>&lt;llselect-single&gt;</code>
+    on this list; this is what that actually feels like. The numbers are the
+    argument, these are the evidence you can feel - and the gap grows with the
+    list, so try <code>?items=3000</code>.
   </p>
   <div id="playground"></div>
 
@@ -85,7 +87,9 @@
       <code>indexOf</code> over the whole item list
       (<code>uiSelectController.js:317</code> and <code>:358</code>), so the cost
       is O(n^2) per digest. llselect has no watchers on the list at all, so a
-      digest does not touch it.
+      digest does not touch it. Measured in microseconds because that is the unit
+      it lives in: reported in ms, the fastest contestant printed 0.00 and the
+      column said nothing.
     </li>
     <li>
       <b>&lt;ui-llselect&gt;</b> is expected to land between the two: it fixes
@@ -119,7 +123,8 @@
 
   <h2>Honest limits of this page</h2>
   <ul>
-    <li>One run, one browser, no warmup discipline. Read it as an order of magnitude, not a score.</li>
+    <li>One run, one browser, no warmup discipline. Read it as an order of magnitude, not a score - the ratios move by tens of percent between runs.</li>
+    <li>Each digest is timed as a batch of 200 and divided, not timed individually: browsers clamp <code>performance.now()</code> to 100us, which a single digest lands under. Timed one at a time, every contestant here reads 0.</li>
     <li>All three are measured through <code>scope.$digest()</code> and synthetic clicks, not real input, so it is a lower bound on real perceived latency for all of them equally.</li>
     <li>ui-select is loaded with its Bootstrap theme and Bootstrap's CSS; llselect uses its vanilla theme. Layout cost is not identical, and no attempt is made to equalize it.</li>
     <li>The stage is on-screen and painted, because it has to be: llselect refuses to open a trigger that is off-screen or clipped (<code>positioning.ts</code> <code>isAnchorHidden</code>), so an off-screen stage would measure an open that never happened. Paint is therefore included, for everyone equally.</li>

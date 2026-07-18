@@ -14,7 +14,10 @@
 
   var ITEM_COUNT = Number(new URLSearchParams(location.search).get('items')) || ZONES.length
   var WIDGET_COUNT = Number(new URLSearchParams(location.search).get('widgets')) || 20
-  var DIGEST_ROUNDS = 20
+  // High enough that even llselect's digest - which is below the clock's 100us
+  // clamp for any small batch - totals into something measurable rather than
+  // reading 0.00 and making its own ratio meaningless.
+  var DIGEST_ROUNDS = 200
 
   // Repeat the zone list if a reader asks for more than there are zones.
   var ITEMS = Array.from({ length: ITEM_COUNT }, function (_, i) {
@@ -79,11 +82,6 @@
 
   var now = function () { return performance.now() }
 
-  function median(xs) {
-    var s = xs.slice().sort(function (a, b) { return a - b })
-    return s[Math.floor(s.length / 2)]
-  }
-
   function run($compile, $rootScope, stage, c) {
     var out = { label: c.label, note: c.note }
 
@@ -135,13 +133,15 @@
     }
 
     // --- digest while open: the O(n^2) exposure ---------------------------
-    var ds = []
-    for (var d = 0; d < DIGEST_ROUNDS; d++) {
-      t0 = now()
-      scope.$digest()
-      ds.push(now() - t0)
-    }
-    out.digest = median(ds)
+    // Time the whole batch and divide, rather than timing each digest and taking
+    // a median. Browsers clamp performance.now() to 100us (Spectre mitigation),
+    // and a single digest lands at or under that: measured per-digest in real
+    // Chromium, every contestant read 0.00 or 0.10 and the column - the most
+    // important one on this page - said nothing at all. jsdom hid this by having
+    // a much finer clock and a much slower DOM.
+    t0 = now()
+    for (var d = 0; d < DIGEST_ROUNDS; d++) { scope.$digest() }
+    out.digest = (now() - t0) / DIGEST_ROUNDS
 
     // --- filter: one query, list re-renders --------------------------------
     var search = c.searchSel ? host.querySelector(c.searchSel) : null
@@ -196,25 +196,37 @@
     })
   }
 
-  function fmt(v) { return v === null || v === undefined ? '-' : v.toFixed(2) }
+  // A digest is naturally sub-millisecond - llselect's is a few microseconds -
+  // so reporting it in ms printed "0.00" for the fastest contestant and made its
+  // own column unreadable. Each metric is shown in the unit it actually lives in.
+  var METRICS = [
+    { key: 'build', label: function () { return 'build ' + WIDGET_COUNT + ' (ms)' }, scale: 1, dp: 1 },
+    { key: 'open', label: function () { return 'open (ms)' }, scale: 1, dp: 1 },
+    { key: 'digest', label: function () { return 'digest while open (us)' }, scale: 1000, dp: 0 },
+    { key: 'filter', label: function () { return 'filter (ms)' }, scale: 1, dp: 1 },
+    { key: 'teardown', label: function () { return 'teardown (ms)' }, scale: 1, dp: 1 },
+  ]
+
+  function fmt(v, m) {
+    return v === null || v === undefined ? '-' : (v * m.scale).toFixed(m.dp)
+  }
 
   function render(rows) {
     var best = {}
-    var metrics = ['build', 'open', 'digest', 'filter', 'teardown']
-    metrics.forEach(function (m) {
-      var vals = rows.map(function (r) { return r[m] }).filter(function (v) { return v != null })
-      best[m] = Math.min.apply(Math, vals)
+    METRICS.forEach(function (m) {
+      var vals = rows.map(function (r) { return r[m.key] }).filter(function (v) { return v != null })
+      best[m.key] = Math.min.apply(Math, vals)
     })
     var html = '<table class="bench-table"><thead><tr><th>implementation</th>' +
-      '<th>build ' + WIDGET_COUNT + ' (ms)</th><th>open (ms)</th>' +
-      '<th>digest while open (ms)</th><th>filter (ms)</th><th>teardown (ms)</th>' +
+      METRICS.map(function (m) { return '<th>' + m.label() + '</th>' }).join('') +
       '<th>DOM nodes</th><th>rows</th></tr></thead><tbody>'
     rows.forEach(function (r) {
       html += '<tr><td><b>' + r.label + '</b><br><small>' + r.note + '</small></td>'
-      metrics.forEach(function (m) {
-        var isBest = r[m] != null && Math.abs(r[m] - best[m]) < 1e-9
-        var ratio = r[m] != null && best[m] > 0 ? ' <small>(' + (r[m] / best[m]).toFixed(1) + 'x)</small>' : ''
-        html += '<td' + (isBest ? ' class="bench-best"' : '') + '>' + fmt(r[m]) +
+      METRICS.forEach(function (m) {
+        var v = r[m.key]
+        var isBest = v != null && Math.abs(v - best[m.key]) < 1e-9
+        var ratio = v != null && best[m.key] > 0 ? ' <small>(' + (v / best[m.key]).toFixed(1) + 'x)</small>' : ''
+        html += '<td' + (isBest ? ' class="bench-best"' : '') + '>' + fmt(v, m) +
           (isBest ? '' : ratio) + '</td>'
       })
       html += '<td>' + r.nodes + '</td><td>' + r.rows + '</td></tr>'
