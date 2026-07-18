@@ -15,7 +15,15 @@
     .bench-table th:first-child, .bench-table td:first-child { text-align: left; }
     .bench-table small { color: #666; font-weight: normal; }
     .bench-best { background: #e6f6e6; font-weight: bold; }
-    #stage { position: absolute; left: -9999px; top: 0; width: 300px; }
+    /* The stage MUST be on-screen and laid out, and MUST NOT be a scroll
+       container. llselect refuses to open a trigger that is outside the layout
+       viewport OR clipped by a scroll ancestor (positioning.ts isAnchorHidden),
+       and it closes an open popup that later becomes clipped - and its popup
+       renders inside the mount, so an `overflow: auto` stage would clip that
+       too. A plain visible block avoids both. The measured widget is scrolled
+       into view first; the rest just sits there. */
+    #stage { width: 320px; margin: 1rem 0; }
+    #stage:empty { display: none; }
   </style>
 </head>
 <body>
@@ -41,6 +49,7 @@
   </p>
   <button id="run">Run benchmark</button>
   <div id="results"></div>
+  <div id="stage"></div>
 
   <h2>What the numbers mean</h2>
   <ul>
@@ -88,10 +97,8 @@
     <li>One run, one browser, no warmup discipline. Read it as an order of magnitude, not a score.</li>
     <li>All three are measured through <code>scope.$digest()</code> and synthetic clicks, not real input, so it is a lower bound on real perceived latency for all of them equally.</li>
     <li>ui-select is loaded with its Bootstrap theme and Bootstrap's CSS; llselect uses its vanilla theme. Layout cost is not identical, and no attempt is made to equalize it.</li>
-    <li>The stage is off-screen, so paint is largely excluded for everyone.</li>
+    <li>The stage is on-screen and painted, because it has to be: llselect refuses to open a trigger that is off-screen or clipped (<code>positioning.ts</code> <code>isAnchorHidden</code>), so an off-screen stage would measure an open that never happened. Paint is therefore included, for everyone equally.</li>
   </ul>
-
-  <div id="stage"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/angular@1.8.3/angular.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/angular-sanitize@1.8.3/angular-sanitize.min.js"></script>

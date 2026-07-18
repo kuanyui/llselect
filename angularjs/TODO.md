@@ -35,6 +35,10 @@ Findings are named by what they are, never by a bare code.
 
 ## Lessons
 
+- Q: Why did the benchmark's off-screen stage pass every jsdom run and then fail instantly in a browser?
+  - A: Because llselect refuses to open a trigger that is off-screen or clipped (`positioning.ts` `isAnchorHidden`), and jsdom is structurally blind to it: every rect is 0x0 at 0,0, and the check uses strict comparisons *precisely* so an unsized jsdom anchor reads as "in viewport, no rect yet". So `position: absolute; left: -9999px` - written to exclude paint - silently measured an open that never happened, and no jsdom test could ever have caught it. `test/offscreen.test.mjs` now stubs the rect so the path is at least observable.
+  - The deeper miss: `demo/benchmark.js` had already learned this the hard way (`6d7a29f`, "scroll a widget on-screen before measuring it - off-screen open() no-ops") and says so in a comment. A second benchmark was written in the same repo without reading what the first one paid for. Read the existing one's caveats before writing a new one.
+
 - Q: Why does the benchmark harness fail on console output instead of just printing it?
   - A: Because filtering it is how a real defect stayed hidden. The runner piped its output through `grep -v "Could not translate"` for several runs, so 100 rejected promises per run - real work inside the timed section - read as a clean pass. What a page says is part of the test; silencing it is not tidying, it is deleting the evidence.
 - Q: Why inline translations in the benchmark rather than the `useStaticFilesLoader` the demo uses?

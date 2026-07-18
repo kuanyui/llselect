@@ -114,6 +114,11 @@
     } else {
       var trigger = host.querySelector(c.triggerSel)
       if (!trigger) { throw new Error('trigger not found: ' + c.triggerSel) }
+      // llselect refuses to open a trigger that is outside the layout viewport
+      // or clipped by a scroll ancestor (positioning.ts isAnchorHidden), and
+      // this one is inside a short scrollable stage. Same reason the main
+      // benchmark does this before every timed interaction.
+      trigger.scrollIntoView({ block: 'center', behavior: 'instant' })
       t0 = now()
       trigger.click()
       scope.$digest()
@@ -122,7 +127,9 @@
       // A click that silently did nothing would otherwise report an unopened
       // widget as the fastest one, and time its digests against an empty list.
       if (out.rows === 0) {
-        throw new Error('open was a no-op: 0 rows matched ' + c.rowSel)
+        throw new Error('open was a no-op: 0 rows matched ' + c.rowSel +
+          '. If this is llselect, the trigger was most likely off-screen or clipped: ' +
+          'llselect deliberately refuses to open then (positioning.ts isAnchorHidden).')
       }
     }
 
