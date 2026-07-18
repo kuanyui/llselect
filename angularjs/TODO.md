@@ -35,6 +35,11 @@ Findings are named by what they are, never by a bare code.
 
 ## Lessons
 
+- Q: Why does the benchmark harness fail on console output instead of just printing it?
+  - A: Because filtering it is how a real defect stayed hidden. The runner piped its output through `grep -v "Could not translate"` for several runs, so 100 rejected promises per run - real work inside the timed section - read as a clean pass. What a page says is part of the test; silencing it is not tidying, it is deleting the evidence.
+- Q: Why inline translations in the benchmark rather than the `useStaticFilesLoader` the demo uses?
+  - A: The loader does an `$http` GET. A benchmark must not put network I/O in the middle of what it measures. The demo wants real messages, so it pays the fetch; the benchmark only needs the validator to resolve without extra work.
+
 - Q: Why do the "invalid input" tests assert on `$exceptionHandler` instead of `assert.throws`?
   - A: Because a directive can never throw at the caller. `$compile`'s `invokeLinkFn` wraps every link fn in its own try/catch and hands the error to `$exceptionHandler` (`angular.js:11374`). The first version of these tests asserted a throw and failed; the second blamed `$apply`'s try/catch and bypassed it, and still failed. The observable contract is "reported, and nothing rendered" - which is also why the README no longer claims the directives "throw".
 - Q: Why is `llselect` a `file:..` devDependency when the tests never import it?

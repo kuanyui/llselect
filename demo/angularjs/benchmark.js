@@ -221,9 +221,28 @@
     })
   }
 
+  /**
+   * angular-validation reads its messages through angular-translate, so without
+   * this every validator rejects a promise per field with "Could not translate:
+   * 'INVALID_REQUIRED'" - which is not just console noise here: it is real work
+   * inside the timed section, one rejection per validated widget.
+   *
+   * Inline, deliberately NOT useStaticFilesLoader like the demo page uses: that
+   * does an $http GET, and a benchmark must not put network I/O in the middle of
+   * what it is measuring. The demo wants real messages; this only needs the
+   * validator to resolve without doing extra work.
+   */
+  angular.module('llselectBenchConfig', [])
+    .config(['$translateProvider', function ($translateProvider) {
+      $translateProvider.translations('en', { INVALID_REQUIRED: 'required' })
+      $translateProvider.preferredLanguage('en')
+      $translateProvider.useSanitizeValueStrategy(null)
+    }])
+
   window.runAngularBench = function (stage, resultsEl) {
     resultsEl.innerHTML = '<p>Running...</p>'
-    var modules = ['ng', 'ngSanitize', 'llselect', 'llselect.uiCompat', 'ui.select', 'ghiscoding.validation']
+    var modules = ['ng', 'ngSanitize', 'llselect', 'llselect.uiCompat', 'ui.select',
+      'ghiscoding.validation', 'llselectBenchConfig']
     var injector = angular.injector(modules)
     injector.invoke(['$compile', '$rootScope', function ($compile, $rootScope) {
       var main = runSet($compile, $rootScope, stage, CONTESTANTS)
