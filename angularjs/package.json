@@ -9,6 +9,8 @@
     "llselect-ui-select.js",
     "llselect-ui-select.min.js",
     "README.md",
+    "DESIGN.md",
+    "SPEC.md",
     "LICENSE"
   ],
   "scripts": {
