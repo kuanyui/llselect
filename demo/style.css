@@ -78,7 +78,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
   margin-bottom: 0.4rem;
 }
 
-pre[data-demo] {
+.code-toggle > pre {
   margin: 0;
   background: #282c34;
   color: #abb2bf;
@@ -91,7 +91,7 @@ pre[data-demo] {
   max-height: 24rem;
 }
 
-pre[data-demo] code {
+.code-toggle > pre code {
   background: transparent;
   padding: 0;
   color: inherit;
@@ -133,7 +133,9 @@ pre[data-demo] code {
   margin-bottom: 0.25rem;
 }
 
-.demo-row button {
+/* Direct child only: a descendant selector also styles the buttons llselect
+   builds inside its own trigger (the clear x), which the widget's theme owns. */
+.demo-row > button {
   padding: 0.4rem 0.8rem;
   border: 1px solid #888;
   border-radius: 4px;
