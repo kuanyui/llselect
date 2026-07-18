@@ -134,3 +134,72 @@ test('a valid app reports nothing to $exceptionHandler', () => {
   const a = app()
   assert.deepEqual(a.errors, [])
 })
+
+test('ll-arrow renders a built-in arrow, and a fresh one per trigger', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.a" ll-arrow="chevron" ll-options="f for f in vm.fruits"></llselect-single>
+      <llselect-single ng-model="vm.b" ll-arrow="triangle" ll-options="f for f in vm.fruits"></llselect-single>
+      <llselect-single ng-model="vm.c" ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice() },
+  })
+  const arrows = a.$$('.llselect-trigger-arrow')
+  assert.equal(arrows.length, 3)
+  // One SVG cannot live in two triggers, so each render must build its own.
+  assert.ok(arrows[0].querySelector('svg'), 'chevron did not render')
+  assert.ok(arrows[1].querySelector('svg'), 'triangle did not render')
+  assert.equal(arrows[2].querySelector('svg'), null, 'no ll-arrow must leave the slot to the theme')
+})
+
+test('an unknown ll-arrow is reported and names the built-ins', () => {
+  const a = app()
+  a.compile('<llselect-single ng-model="x" ll-arrow="sparkle" ll-options="f for f in vm.fruits"></llselect-single>')
+  assert.equal(a.errors.length, 1)
+  assert.match(a.errors[0].message, /unknown arrow "sparkle".*chevron, triangle/)
+})
+
+test('llselectConfigProvider sets app-wide defaults, and ll-* attributes win', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.a" ll-options="f for f in vm.fruits"></llselect-single>
+      <llselect-single ng-model="vm.b" ll-arrow="triangle" ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice() },
+    config: ['llselectConfigProvider', function (llselectConfigProvider) {
+      llselectConfigProvider.defaults({ arrow: 'chevron', searchable: true })
+    }],
+  })
+  const arrows = a.$$('.llselect-trigger-arrow')
+  assert.ok(arrows[0].querySelector('svg'), 'the default arrow did not reach an element with no ll-arrow')
+  assert.ok(arrows[1].querySelector('svg'), 'the per-element arrow did not render')
+  // searchable: true from config means a search input is built and shown.
+  a.$('.llselect-trigger').click()
+  assert.equal(a.$('.llselect-popup input').hasAttribute('hidden'), false, 'config searchable did not reach the widget')
+})
+
+test('llselectConfigProvider.defaults rejects an unknown key instead of ignoring it', () => {
+  assert.throws(() => boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm"></div>`,
+    controller: function () {},
+    config: ['llselectConfigProvider', function (llselectConfigProvider) {
+      llselectConfigProvider.defaults({ plcaeholder: 'typo' })
+    }],
+  }), /unknown key\(s\): plcaeholder/)
+})
+
+test('config texts reach the widget (the case that makes a provider worth having)', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.a" ll-options="f for f in vm.fruits"></llselect-single></div>`,
+    controller: function () { this.fruits = FRUITS.slice() },
+    config: ['llselectConfigProvider', function (llselectConfigProvider) {
+      llselectConfigProvider.defaults({ texts: { triggerPlaceholder: 'Bitte auswaehlen' } })
+    }],
+  })
+  assert.equal(a.text('.llselect-trigger-content'), 'Bitte auswaehlen')
+})

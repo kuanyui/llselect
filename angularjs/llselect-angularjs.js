@@ -91,15 +91,53 @@
     }
   }
 
-  /** Settings shared by both directives, read from ll-* attributes. */
-  function commonSettings(scope, attrs, parsed) {
+  /**
+   * The built-in arrows, by name. Only llselect's own icons are offered: a
+   * custom arrow means editing this file, which is the point of a package you
+   * copy. `createTriggerArrowContentElFn` is called per render, so each call
+   * must build a fresh element - one SVG cannot be in two triggers at once.
+   */
+  var ARROWS = {
+    chevron: llselect.createChevronDownSvgEl,
+    triangle: llselect.createTriangleDownSvgEl,
+  }
+
+  function resolveArrow(name) {
+    if (!name) { return null }
+    var create = ARROWS[name]
+    if (!create) {
+      throw new Error('llselect-angularjs: unknown arrow "' + name +
+        '"; built-in arrows are: ' + Object.keys(ARROWS).join(', '))
+    }
+    return function () { return create() }
+  }
+
+  /**
+   * Settings shared by both directives: config defaults first, then this
+   * element's ll-* attributes on top.
+   *
+   * Only settings that are genuinely app-wide have a default. `placeholder` has
+   * none on purpose - it is per-field copy, not a house style - and neither do
+   * items / disabled, which are per-field state.
+   */
+  function commonSettings(scope, attrs, parsed, config) {
     var settings = parsed.settings(scope)
     settings.ariaLabelledBy = attrs.llAriaLabelledby || null
     settings.ariaLabel = attrs.llAriaLabel || null
+
+    if (config.texts) { settings.texts = config.texts }
+    if (config.searchable !== null) { settings.searchable = config.searchable }
+    if (config.popupWidthPolicy) { settings.popupWidthPolicy = config.popupWidthPolicy }
+    var arrow = config.arrow
+
     // Settings are immutable in llselect, so these are read once at link time.
+    // Only ll-disabled gets a watcher, because it maps onto a method.
     if (attrs.llPlaceholder) { settings.placeholder = scope.$eval(attrs.llPlaceholder) }
     if (attrs.llSearchable) { settings.searchable = scope.$eval(attrs.llSearchable) }
     if (attrs.llPopupWidthPolicy) { settings.popupWidthPolicy = scope.$eval(attrs.llPopupWidthPolicy) }
+    if (attrs.llArrow) { arrow = attrs.llArrow }
+
+    settings.createTriggerArrowContentElFn = resolveArrow(arrow)
     return settings
   }
 
@@ -129,13 +167,50 @@
 
   angular.module('llselect', [])
 
-    .directive('llselectSingle', ['$parse', function ($parse) {
+    /**
+     * App-wide defaults, set once in .config(). Without this a 40-select app
+     * repeats the same house style 40 times.
+     *
+     * Only settings that are app-wide by nature are here. `texts` is the
+     * clearest case - an app picks its language once, and llselect's chrome
+     * strings are not per-field copy. `placeholder` is deliberately absent: it
+     * IS per-field copy. Per-element ll-* attributes always win.
+     *
+     *   angular.module('app', ['llselect'])
+     *     .config(['llselectConfigProvider', function (llselectConfigProvider) {
+     *       llselectConfigProvider.defaults({ arrow: 'chevron', searchable: true, texts: llselectI18n.zhTW })
+     *     }])
+     */
+    .provider('llselectConfig', function () {
+      var config = {
+        /** 'chevron' | 'triangle' | null. null = whatever the theme draws. */
+        arrow: null,
+        /** boolean | ((items) => boolean) | null. null = llselect's own default (off). */
+        searchable: null,
+        /** 'match-trigger' | 'fit-content' | null. null = llselect's own default. */
+        popupWidthPolicy: null,
+        /** An llselect texts pack (llselect/i18n), or null for the English defaults. */
+        texts: null,
+      }
+      this.defaults = function (overrides) {
+        var unknown = Object.keys(overrides).filter(function (k) { return !(k in config) })
+        if (unknown.length) {
+          throw new Error('llselectConfigProvider.defaults: unknown key(s): ' + unknown.join(', ') +
+            '; supported: ' + Object.keys(config).join(', '))
+        }
+        angular.extend(config, overrides)
+        return this
+      }
+      this.$get = function () { return config }
+    })
+
+    .directive('llselectSingle', ['$parse', 'llselectConfig', function ($parse, llselectConfig) {
       return {
         restrict: 'E',
         require: 'ngModel',
         link: function (scope, element, attrs, ngModelCtrl) {
           var parsed = compileLlOptions($parse, attrs.llOptions)
-          var settings = commonSettings(scope, attrs, parsed)
+          var settings = commonSettings(scope, attrs, parsed, llselectConfig)
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
 
@@ -174,13 +249,13 @@
       }
     }])
 
-    .directive('llselectMultiple', ['$parse', function ($parse) {
+    .directive('llselectMultiple', ['$parse', 'llselectConfig', function ($parse, llselectConfig) {
       return {
         restrict: 'E',
         require: 'ngModel',
         link: function (scope, element, attrs, ngModelCtrl) {
           var parsed = compileLlOptions($parse, attrs.llOptions)
-          var settings = commonSettings(scope, attrs, parsed)
+          var settings = commonSettings(scope, attrs, parsed, llselectConfig)
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
           if (attrs.llTriggerDisplay) { settings.triggerDisplay = scope.$eval(attrs.llTriggerDisplay) }

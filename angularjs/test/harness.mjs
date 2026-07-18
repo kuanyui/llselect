@@ -31,7 +31,7 @@ if (!existsSync(LLSELECT_UMD)) {
  * Boot a jsdom page with angular + llselect + this package's directives.
  * `files` names which of the package's own files to load.
  */
-export function boot({ html, module: moduleName, deps, controller, files = ['llselect-angularjs.js'] }) {
+export function boot({ html, deps, controller, config, files = ['llselect-angularjs.js'] }) {
   const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {
     runScripts: 'dangerously',
     url: 'http://localhost/',
@@ -54,6 +54,7 @@ export function boot({ html, module: moduleName, deps, controller, files = ['lls
   const ng = window.angular
   const mod = ng.module('test', deps)
   if (controller) { mod.controller('C', controller) }
+  if (config) { mod.config(config) }
 
   // $compile's invokeLinkFn wraps EVERY link fn in its own try/catch and hands
   // whatever it throws to $exceptionHandler (angular.js:11374). So a directive

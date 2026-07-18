@@ -89,6 +89,12 @@ Bugs found while reading it, listed so nobody reproduces them in the name of com
 - **Row scopes are released in `renderPopupList`**, the single entry point for a list rebuild (open / filter / `setItems` / `rerender`). Without it every filter keystroke leaks a scope per row.
 - **`<ui-llselect>` must not create a child scope.** ui-select's `scope: true` silently shadows a non-dotted `ng-model`. Every template this bridge compiles gets its own child scope anyway, so `$select` lives there instead.
 
+### App-wide defaults
+
+`llselectConfigProvider.defaults({...})` holds only settings that are app-wide by nature: `arrow`, `searchable`, `popupWidthPolicy`, `texts`. The test for admission is whether an app would plausibly set it once as a house style - `texts` obviously would (i18n is definitionally app-wide), `placeholder` obviously would not (it is per-field copy). Unknown keys throw, so a typo cannot silently do nothing. Precedence is defaults, then this element's `ll-*` attributes.
+
+`ARROWS` maps `'chevron'` / `'triangle'` onto llselect's `createChevronDownSvgEl` / `createTriangleDownSvgEl`. `createTriggerArrowContentElFn` is called per render, so the wrapper must build a fresh element on each call - one SVG cannot be in two triggers at once.
+
 ### Settings are frozen; only methods are watched
 
 llselect resolves its settings bag once at construction, so `ll-placeholder` / `ll-searchable` / `ll-popup-width-policy` / `ll-arrow` are read once at link time and a later scope change does not move them. Only `ll-disabled` gets a `$watch`, because it maps onto the `setDisabled()` method rather than a setting. Any new attribute has to be classified this way before it is added.

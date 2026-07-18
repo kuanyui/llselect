@@ -31,6 +31,11 @@
 
   angular.module('demo', ['llselect', 'llselect.uiCompat', 'ngSanitize', 'ghiscoding.validation'])
 
+    // The house style, set once. Per-element ll-* attributes still win.
+    .config(['llselectConfigProvider', function (llselectConfigProvider) {
+      llselectConfigProvider.defaults({ arrow: 'chevron' })
+    }])
+
     // ghiscoding/angular-validation hard-depends on angular-translate and reads
     // its messages through it; without this its validators still run but every
     // message is "Could not translate: 'INVALID_REQUIRED'".
@@ -79,6 +84,7 @@
       vm.people = []
       vm.locked = false
       vm.avFruit = undefined
+      vm.country3 = undefined
 
       /**
        * Drops the currently chosen fruit from the list, which is the case that

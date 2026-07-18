@@ -127,6 +127,24 @@
   </section>
 
   <section>
+    <h2>4b. Arrow, and app-wide defaults</h2>
+    <p>
+      <code>ll-arrow</code> takes llselect's two built-in arrows and nothing
+      else; a custom one means editing your copy of the file. The house style
+      comes from <code>llselectConfigProvider</code> in <code>.config()</code>
+      (see <code>app.js</code>) - this demo sets <code>arrow: 'chevron'</code>
+      app-wide, which is why the selects above have one without saying so. A
+      per-element <code>ll-arrow</code> wins over it.
+    </p>
+    <div class="demo-row" data-src="4b">
+      <llselect-single ng-model="vm.country3" ll-arrow="triangle"
+        ll-options="c for c in vm.countries">
+      </llselect-single>
+    </div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="4b"><code></code></pre></details>
+  </section>
+
+  <section>
     <h2>5. &lt;ui-llselect&gt;: ui-select's markup, llselect's DOM</h2>
     <p>
       The call-site markup and the transcluded templates carry over from

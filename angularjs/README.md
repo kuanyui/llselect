@@ -122,6 +122,28 @@ Four things to know when wiring it up:
 - Validation is debounced by `typingLimit` (`_INACTIVITY_LIMIT`, default 1000 ms in `validation-common.js:14`). It is not instant, which is easy to misread as "it did not fire".
 - Its `elm.bind('blur', ...)` trigger is inert on these directives: blur does not bubble, and the focusable element is llselect's inner trigger, not the custom element the attribute sits on. The `$modelValue` watch is the path that matters for a select, and it works.
 
+## App-wide defaults
+
+A house style set once, rather than repeated on 40 elements. Per-element `ll-*` attributes always win over it.
+
+```js
+angular.module('app', ['llselect'])
+  .config(['llselectConfigProvider', function (llselectConfigProvider) {
+    llselectConfigProvider.defaults({
+      arrow: 'chevron',          // 'chevron' | 'triangle' | null (null = the theme draws it)
+      searchable: true,          // boolean, or a predicate (items) => boolean
+      popupWidthPolicy: 'fit-content',
+      texts: llselectI18n.zhTW,  // an llselect language pack
+    })
+  }])
+```
+
+Only settings that are app-wide **by nature** are here, and `texts` is the clearest case: an app picks its language once, and llselect's chrome strings are not per-field copy. `placeholder` is deliberately absent for the mirror-image reason - it IS per-field copy. An unknown key throws rather than being ignored, so a typo cannot silently do nothing.
+
+## The arrow
+
+`ll-arrow="chevron"` or `ll-arrow="triangle"` - llselect's two built-in arrow icons, and nothing else. A custom arrow means editing your copy of `llselect-angularjs.js`, which is what a copy-paste package is for. Omit it and the slot is left to the theme.
+
 ## The ui-select bridge
 
 `<ui-llselect>` (`ui-llselect.js`) exists so an existing ui-select codebase can migrate without rewriting every call site. The scoping rule is: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible.
