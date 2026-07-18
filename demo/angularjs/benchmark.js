@@ -115,10 +115,11 @@
       var trigger = host.querySelector(c.triggerSel)
       if (!trigger) { throw new Error('trigger not found: ' + c.triggerSel) }
       // llselect refuses to open a trigger that is outside the layout viewport
-      // or clipped by a scroll ancestor (positioning.ts isAnchorHidden), and
-      // this one is inside a short scrollable stage. Same reason the main
-      // benchmark does this before every timed interaction.
-      trigger.scrollIntoView({ block: 'center', behavior: 'instant' })
+      // or clipped by a scroll ancestor (positioning.ts isAnchorHidden), so the
+      // widget about to be measured has to be on-screen first. Same reason the
+      // main benchmark does this before every timed interaction.
+      // Guarded: jsdom has no scrollIntoView, and it has no layout to scroll.
+      if (trigger.scrollIntoView) { trigger.scrollIntoView({ block: 'center', behavior: 'instant' }) }
       t0 = now()
       trigger.click()
       scope.$digest()
@@ -162,6 +163,37 @@
     out.teardown = now() - t0
 
     return out
+  }
+
+  /**
+   * One live widget per contestant, left on the page after the run. Numbers do
+   * not convey what 220x on a digest actually feels like; typing in ui-select's
+   * search box next to llselect's does, in about two seconds. Built AFTER every
+   * measurement so these instances cannot contend with a timed one.
+   */
+  function buildPlayground($compile, $rootScope, el) {
+    el.innerHTML = ''
+    CONTESTANTS.forEach(function (c) {
+      var box = document.createElement('div')
+      box.className = 'try-box'
+      var h = document.createElement('h4')
+      h.textContent = c.label
+      var note = document.createElement('small')
+      note.textContent = c.note
+      box.appendChild(h)
+      box.appendChild(note)
+
+      var mount = document.createElement('div')
+      mount.className = 'try-mount'
+      box.appendChild(mount)
+      el.appendChild(box)
+
+      var scope = $rootScope.$new()
+      scope.items = ITEMS
+      scope.picked = undefined
+      mount.appendChild($compile(c.markup)(scope)[0])
+      scope.$digest()
+    })
   }
 
   function fmt(v) { return v === null || v === undefined ? '-' : v.toFixed(2) }
@@ -246,7 +278,18 @@
       $translateProvider.useSanitizeValueStrategy(null)
     }])
 
-  window.runAngularBench = function (stage, resultsEl) {
+  /** The page states the dataset size; keep it honest rather than hardcoded. */
+  window.describeAngularBench = function () {
+    var counts = { 'zone-count': ITEM_COUNT, 'widget-count': WIDGET_COUNT, 'widget-count-2': WIDGET_COUNT }
+    Object.keys(counts).forEach(function (id) {
+      var el = document.getElementById(id)
+      if (el) { el.textContent = String(counts[id]) }
+    })
+    var inline = document.querySelectorAll('.zone-count-inline')
+    for (var i = 0; i < inline.length; i++) { inline[i].textContent = String(ITEM_COUNT) }
+  }
+
+  window.runAngularBench = function (stage, resultsEl, playgroundEl) {
     resultsEl.innerHTML = '<p>Running...</p>'
     var modules = ['ng', 'ngSanitize', 'llselect', 'llselect.uiCompat', 'ui.select',
       'ghiscoding.validation', 'llselectBenchConfig']
@@ -257,6 +300,7 @@
       resultsEl.innerHTML =
         '<h3>Widgets</h3>' + render(main) +
         '<h3>angular-validation: llselect vs the select it replaces</h3>' + render(av)
+      if (playgroundEl) { buildPlayground($compile, $rootScope, playgroundEl) }
     }])
   }
 })(window.angular)

@@ -24,6 +24,12 @@
        into view first; the rest just sits there. */
     #stage { width: 320px; margin: 1rem 0; }
     #stage:empty { display: none; }
+    #playground { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1.5rem; margin: 1rem 0 2rem; }
+    #playground:empty { display: none; }
+    .try-box h4 { margin: 0 0 0.2rem; font-size: 1rem; }
+    .try-box small { color: #666; display: block; margin-bottom: 0.6rem; min-height: 2.4em; }
+    /* Each widget needs room below it for its own popup. */
+    .try-mount { min-height: 3rem; }
   </style>
 </head>
 <body>
@@ -40,16 +46,34 @@
     same page. See <a href="../../angularjs/README.md">angularjs/README.md</a> for what each one is.
   </p>
 
-  <p class="hint">
-    Defaults: 3000 items, 20 widgets. Override with
-    <code>?items=500&amp;widgets=30</code> to watch the ratios move: the
-    incumbent's build is linear in the item count while llselect's is flat (it
-    builds the list only on open), so the gap between them widens as the list
-    grows. ui-select is the one that is genuinely superlinear, per digest.
+  <p>
+    The dataset is a real timezone picker: every IANA zone your browser knows
+    (<code>Intl.supportedValuesOf('timeZone')</code>, <span id="zone-count">417</span>
+    of them), built <span id="widget-count">20</span> times over. A field real
+    apps ship, and already enough to make ui-select crawl.
   </p>
+  <p>
+    Override with <code>?items=3000&amp;widgets=30</code> to watch the ratios
+    move. The incumbent <code>&lt;select ng-options&gt;</code> builds every
+    option up front, so its cost is linear in the item count; llselect builds the
+    list only on open, so its cost is flat. That is what widens the gap as the
+    list grows - not superlinearity. ui-select is the one that is genuinely
+    superlinear, and only per digest.
+  </p>
+
   <button id="run">Run benchmark</button>
   <div id="results"></div>
   <div id="stage"></div>
+
+  <h2 id="try-heading" hidden>Try them yourself</h2>
+  <p id="try-note" hidden>
+    One live widget each, on the same
+    <span class="zone-count-inline">417</span>-zone list, left here after the run.
+    Open each one and type in its search box: the table says ui-select costs
+    <b>220x</b> more per digest, and this is what that actually feels like. The
+    numbers are the argument; these are the evidence you can feel.
+  </p>
+  <div id="playground"></div>
 
   <h2>What the numbers mean</h2>
   <ul>
@@ -85,7 +109,8 @@
       option up front rather than lazily.
     </li>
     <li>
-      <b>build</b> creates 30 widgets over 500 items each. llselect renders the
+      <b>build</b> creates <span id="widget-count-2">20</span> widgets over the
+      whole zone list each. llselect renders the
       item list lazily (only on open), and so does ui-select
       (<code>ng-if="$select.open"</code> on its rows), so this column is mostly
       trigger cost.
@@ -110,8 +135,14 @@
   <script src="../../angularjs/llselect-ui-select.js"></script>
   <script src="benchmark.js"></script>
   <script>
+    window.describeAngularBench()
     document.getElementById('run').addEventListener('click', function () {
-      window.runAngularBench(document.getElementById('stage'), document.getElementById('results'))
+      window.runAngularBench(
+        document.getElementById('stage'),
+        document.getElementById('results'),
+        document.getElementById('playground'))
+      document.getElementById('try-heading').hidden = false
+      document.getElementById('try-note').hidden = false
     })
   </script>
 </body>
