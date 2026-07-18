@@ -13,7 +13,12 @@
     .bench-table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
     .bench-table th, .bench-table td { border: 1px solid #d5dae2; padding: 0.4rem 0.6rem; text-align: right; }
     .bench-table th:first-child, .bench-table td:first-child { text-align: left; }
-    .bench-table small { color: #666; font-weight: normal; }
+    .bench-table small { color: #666; font-weight: normal; display: block; margin-top: 0.2rem; }
+    .bench-name { background: #eef3fb; font-weight: bold; white-space: nowrap; }
+    .bench-table td:first-child { max-width: 22rem; }
+    .bench-controls { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin: 1rem 0; }
+    .bench-controls label { display: block; font-size: 0.85rem; color: #555; }
+    .bench-controls input { width: 7rem; padding: 0.3rem; font: inherit; }
     .bench-best { background: #e6f6e6; font-weight: bold; }
     /* The stage MUST be on-screen and laid out, and MUST NOT be a scroll
        container. llselect refuses to open a trigger that is outside the layout
@@ -30,6 +35,9 @@
     .try-box small { color: #666; display: block; margin-bottom: 0.6rem; min-height: 2.4em; }
     /* Each widget needs room below it for its own popup. */
     .try-mount { min-height: 3rem; }
+    .model-panel { border-top: 2px solid #2456a6; padding-top: 0.8rem; margin-bottom: 2rem; }
+    .model-panel .out b { font-size: 1.1rem; }
+    .model-panel small { color: #888; }
   </style>
 </head>
 <body>
@@ -48,34 +56,83 @@
 
   <p>
     The dataset is a real timezone picker: every IANA zone your browser knows
-    (<code>Intl.supportedValuesOf('timeZone')</code>, <span id="zone-count">417</span>
-    of them), built <span id="widget-count">20</span> times over. A field real
-    apps ship, and already enough to make ui-select crawl.
+    (<code>Intl.supportedValuesOf('timeZone')</code>, <span id="zone-count">...</span>
+    of them - the exact count is your browser's), built
+    <span id="widget-count">...</span> times over. A field real apps ship, and
+    already enough to make ui-select crawl.
   </p>
   <p>
-    Override with <code>?items=3000&amp;widgets=30</code> to watch the ratios
-    move. The incumbent <code>&lt;select ng-options&gt;</code> builds every
+    Change the two numbers below and re-run to watch the ratios move (they are
+    also the <code>?items=</code> and <code>?widgets=</code> query parameters, so
+    a run is linkable). The incumbent <code>&lt;select ng-options&gt;</code> builds every
     option up front, so its cost is linear in the item count; llselect builds the
     list only on open, so its cost is flat. That is what widens the gap as the
     list grows - not superlinearity. ui-select is the one that is genuinely
     superlinear, and only per digest.
   </p>
 
-  <button id="run">Run benchmark</button>
+  <div class="bench-controls">
+    <div>
+      <label for="in-items">Candidates per select</label>
+      <input id="in-items" type="number" min="1" max="20000" step="1">
+    </div>
+    <div>
+      <label for="in-widgets">Selects built</label>
+      <input id="in-widgets" type="number" min="1" max="500" step="1">
+    </div>
+    <button id="run">Run benchmark</button>
+    <button id="reset" type="button">Reset</button>
+  </div>
   <div id="results"></div>
   <div id="stage"></div>
 
-  <h2 id="try-heading" hidden>Try them yourself</h2>
-  <p id="try-note" hidden>
-    One live widget each, on the same
-    <span class="zone-count-inline">417</span>-zone list, left here after the run.
-    Open each one and type in its search box. The table above says ui-select
-    costs around <b>100x</b> more per digest than <code>&lt;llselect-single&gt;</code>
-    on this list; this is what that actually feels like. The numbers are the
-    argument, these are the evidence you can feel - and the gap grows with the
-    list, so try <code>?items=3000</code>.
-  </p>
+  <h2 id="try-heading" hidden>Try them yourself - one shared ng-model</h2>
+  <div id="try-note" hidden>
+    <p>
+      One live widget each, all four bound to the <b>same</b>
+      <code>ng-model</code>, on the same <span class="zone-count-inline">...</span>-zone
+      list. Two things to do with them.
+    </p>
+    <p>
+      <b>Feel the difference.</b> Open each one and type in its search box. The
+      table above says ui-select costs around 100x more per digest than
+      <code>&lt;llselect-single&gt;</code>; this is what that number actually
+      feels like. Raise the candidate count and re-run to widen it.
+    </p>
+    <p>
+      <b>Check the binding both ways.</b> Choosing in any one of them must move
+      all four, and the model is printed below. The two buttons are the
+      interesting part, because they ask each widget what it thinks "the same
+      item" means:
+    </p>
+    <ul>
+      <li>
+        <b>Set to items[3]</b> - the same object reference that is in the list.
+        Every widget resolves this.
+      </li>
+      <li>
+        <b>Set to a COPY of items[3]</b> - deep-equal, different reference. This
+        is what an app has after an HTTP round trip, or after
+        <code>angular.copy</code>. Watch the two booleans, not the text: every
+        widget still displays "the right thing", which is exactly what makes this
+        worth checking.
+        <br>
+        ui-select resolves its model with strict <code>===</code> on the
+        <code>modelMapper</code> (<code>uiSelectSingleDirective.js:38</code>) -
+        not <code>angular.equals</code>, and its <code>track by</code> does not
+        enter into it. So it cannot match the copy, and falls back to
+        <code>return inputValue</code>: it displays the copy, and
+        <code>$select.selected</code> is an object that is not in its own list.
+        The text looks right and the state is wrong.
+        <br>
+        <code>&lt;llselect-single&gt;</code> is given <code>track by i.id</code>,
+        which becomes llselect's <code>compareFn</code>, so it treats the copy as
+        the same item - the popup still marks the right row.
+      </li>
+    </ul>
+  </div>
   <div id="playground"></div>
+  <div id="model-out"></div>
 
   <h2>What the numbers mean</h2>
   <ul>
@@ -141,14 +198,32 @@
   <script src="benchmark.js"></script>
   <script>
     window.describeAngularBench()
+    // The dataset is built at load, so a CHANGED count needs a reload to take
+    // effect. Compare against what this run actually used - comparing query
+    // strings instead would reload even on a first click, where the query is
+    // empty but the values are simply the defaults.
     document.getElementById('run').addEventListener('click', function () {
+      var items = Number(document.getElementById('in-items').value)
+      var widgets = Number(document.getElementById('in-widgets').value)
+      var live = window.angularBenchParams
+      if (items !== live.items || widgets !== live.widgets) {
+        location.search = '?items=' + items + '&widgets=' + widgets + '&autorun=1'
+        return
+      }
+      start()
+    })
+    document.getElementById('reset').addEventListener('click', function () {
+      location.search = ''
+    })
+    function start() {
       window.runAngularBench(
         document.getElementById('stage'),
         document.getElementById('results'),
         document.getElementById('playground'))
       document.getElementById('try-heading').hidden = false
       document.getElementById('try-note').hidden = false
-    })
+    }
+    if (new URLSearchParams(location.search).get('autorun')) { start() }
   </script>
 </body>
 </html>

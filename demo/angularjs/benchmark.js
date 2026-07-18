@@ -2,15 +2,17 @@
 ;(function (angular) {
   'use strict'
 
-  // A real timezone picker: 417 IANA zones, which is a field real apps ship and
-  // is already enough to make ui-select crawl. Preferred over a synthetic 3000:
-  // a number nobody would recognise invites "well, nobody has 3000 options".
+  // A real timezone picker: every IANA zone this browser knows. Around 420, but
+  // the exact count is the browser's and changes with its version - the page
+  // reads it back rather than stating a number. A field real apps ship, and
+  // already enough to make ui-select crawl. Preferred over a synthetic 3000: a
+  // number nobody would recognise invites "well, nobody has 3000 options".
   // Intl.supportedValuesOf is ES2022 - above llselect's stated browser floor,
   // but this is a demo page, not the library. Falls back to a padded list so an
   // older browser still gets a comparable item count rather than an error.
   var ZONES = (typeof Intl.supportedValuesOf === 'function')
     ? Intl.supportedValuesOf('timeZone')
-    : Array.from({ length: 417 }, function (_, i) { return 'Etc/Zone_' + i })
+    : Array.from({ length: 420 }, function (_, i) { return 'Etc/Zone_' + i })
 
   var ITEM_COUNT = Number(new URLSearchParams(location.search).get('items')) || ZONES.length
   var WIDGET_COUNT = Number(new URLSearchParams(location.search).get('widgets')) || 20
@@ -34,7 +36,7 @@
       // and digest is the one that decides "is validation slower than before".
       key: 'native',
       label: '<select ng-options>',
-      note: 'the incumbent. Renders every <option> up front; no lazy list',
+      note: 'What the app already has. Builds every <option> into the DOM up front, so its cost is linear in the item count.',
       markup: '<select ng-model="picked" ng-options="i.name for i in items track by i.id"></select>',
       rowSel: 'option',
       skipInteraction: true,
@@ -42,7 +44,7 @@
     {
       key: 'llselect',
       label: '<llselect-single>',
-      note: 'llselect DOM, no per-row scope',
+      note: 'This package. Builds the list only on open, and puts no scope or watcher on any row.',
       markup: '<llselect-single ng-model="picked" ll-searchable="true"' +
         ' ll-options="i.name for i in items track by i.id"></llselect-single>',
       triggerSel: '.llselect-trigger',
@@ -52,7 +54,7 @@
     {
       key: 'ui-llselect',
       label: '<ui-llselect>',
-      note: 'ui-select markup, llselect DOM, one child scope + $compile per row',
+      note: 'This package, taking ui-select\'s markup. llselect underneath, but that markup forces one child scope and one $compile per row.',
       markup: '<ui-llselect ng-model="picked">' +
         '<ui-select-match placeholder="Pick">{{$select.selected.name}}</ui-select-match>' +
         '<ui-select-choices repeat="i in items | filter: $select.search" ll-label="i.name">' +
@@ -65,7 +67,7 @@
     {
       key: 'ui-select',
       label: 'ui-select 0.19.8',
-      note: 'ng-repeat + transclusion; isActive/isDisabled are O(n) each, per row, per digest',
+      note: 'What you are replacing. ng-repeat + transclusion, and its ng-class calls isActive/isDisabled per row per digest - each an indexOf over the whole list.',
       markup: '<ui-select ng-model="picked" theme="bootstrap">' +
         '<ui-select-match placeholder="Pick">{{$select.selected.name}}</ui-select-match>' +
         '<ui-select-choices repeat="i in items | filter: $select.search">' +
@@ -166,34 +168,67 @@
   }
 
   /**
-   * One live widget per contestant, left on the page after the run. Numbers do
-   * not convey what 220x on a digest actually feels like; typing in ui-select's
-   * search box next to llselect's does, in about two seconds. Built AFTER every
-   * measurement so these instances cannot contend with a timed one.
+   * Every contestant bound to ONE shared ng-model, left live on the page.
+   *
+   * Two jobs. First, feel the difference: a table saying ui-select costs ~100x
+   * more per digest is an argument; typing in its search box next to
+   * llselect's is evidence, and it takes two seconds.
+   *
+   * Second, and the reason they share a model: prove the binding actually works
+   * both ways, and show what each one means by "the same item". They all bind
+   * `picked`, so choosing in any one must move all the others.
    */
-  function buildPlayground($compile, $rootScope, el) {
+  function buildPlayground($compile, $rootScope, el, out) {
     el.innerHTML = ''
+    var scope = $rootScope.$new()
+    scope.items = ITEMS
+    scope.picked = undefined
+
     CONTESTANTS.forEach(function (c) {
       var box = document.createElement('div')
       box.className = 'try-box'
       var h = document.createElement('h4')
-      h.textContent = c.label
+      h.appendChild(document.createElement('code')).textContent = c.label
       var note = document.createElement('small')
       note.textContent = c.note
       box.appendChild(h)
       box.appendChild(note)
-
       var mount = document.createElement('div')
       mount.className = 'try-mount'
       box.appendChild(mount)
       el.appendChild(box)
-
-      var scope = $rootScope.$new()
-      scope.items = ITEMS
-      scope.picked = undefined
       mount.appendChild($compile(c.markup)(scope)[0])
-      scope.$digest()
     })
+
+    // The shared model, and the two identity probes it exists to demonstrate.
+    scope.sameRef = function () { scope.picked = ITEMS[3] }
+    scope.equalCopy = function () { scope.picked = angular.copy(ITEMS[3]) }
+    scope.clear = function () { scope.picked = undefined }
+    scope.isListRef = function () { return scope.picked === ITEMS[3] }
+    // What each widget RESOLVED the model to - the point of the copy probe,
+    // since every one of them displays the right text either way.
+    scope.resolved = function (i) {
+      var boxes = document.querySelectorAll('.try-box .ui-select-container')
+      if (!boxes.length) { return null }
+      var s2 = angular.element(boxes[0]).scope()
+      return s2 && s2.$select ? s2.$select.selected : null
+    }
+    scope.uiSelectHasListItem = function () { return scope.resolved() === ITEMS[3] }
+
+    var panel = $compile(
+      '<div class="model-panel">' +
+      '<div class="out">shared ng-model = <b>{{ picked ? picked.name : \'undefined\' }}</b>' +
+      '<br><small>{{ picked | json }}</small>' +
+      '<br>model IS the object in items[]: <b>{{ isListRef() }}</b>' +
+      '<br>ui-select resolved it to the object in items[]: <b>{{ uiSelectHasListItem() }}</b>' +
+      '</div>' +
+      '<div class="demo-row">' +
+      '<button ng-click="sameRef()">Set to items[3]</button>' +
+      '<button ng-click="equalCopy()">Set to a COPY of items[3]</button>' +
+      '<button ng-click="clear()">Clear</button>' +
+      '</div></div>')(scope)[0]
+    out.appendChild(panel)
+    scope.$digest()
   }
 
   // A digest is naturally sub-millisecond - llselect's is a few microseconds -
@@ -211,6 +246,18 @@
     return v === null || v === undefined ? '-' : (v * m.scale).toFixed(m.dp)
   }
 
+  /**
+   * The labels and notes are literally tag names - '<llselect-single>',
+   * 'every <option> up front'. Injected raw into innerHTML the browser parsed
+   * them as elements and they rendered as nothing, which is how the whole first
+   * column of this table came out unreadable.
+   */
+  function esc(str) {
+    return String(str).replace(/[&<>]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]
+    })
+  }
+
   function render(rows) {
     var best = {}
     METRICS.forEach(function (m) {
@@ -221,7 +268,8 @@
       METRICS.map(function (m) { return '<th>' + m.label() + '</th>' }).join('') +
       '<th>DOM nodes</th><th>rows</th></tr></thead><tbody>'
     rows.forEach(function (r) {
-      html += '<tr><td><b>' + r.label + '</b><br><small>' + r.note + '</small></td>'
+      html += '<tr><td><code class="bench-name">' + esc(r.label) + '</code>' +
+        '<br><small>' + esc(r.note) + '</small></td>'
       METRICS.forEach(function (m) {
         var v = r[m.key]
         var isBest = v != null && Math.abs(v - best[m.key]) < 1e-9
@@ -290,8 +338,15 @@
       $translateProvider.useSanitizeValueStrategy(null)
     }])
 
+  /** What this run is actually using, so the page can compare against it. */
+  window.angularBenchParams = { items: ITEM_COUNT, widgets: WIDGET_COUNT }
+
   /** The page states the dataset size; keep it honest rather than hardcoded. */
   window.describeAngularBench = function () {
+    var itemsIn = document.getElementById('in-items')
+    var widgetsIn = document.getElementById('in-widgets')
+    if (itemsIn) { itemsIn.value = String(ITEM_COUNT) }
+    if (widgetsIn) { widgetsIn.value = String(WIDGET_COUNT) }
     var counts = { 'zone-count': ITEM_COUNT, 'widget-count': WIDGET_COUNT, 'widget-count-2': WIDGET_COUNT }
     Object.keys(counts).forEach(function (id) {
       var el = document.getElementById(id)
@@ -312,7 +367,10 @@
       resultsEl.innerHTML =
         '<h3>Widgets</h3>' + render(main) +
         '<h3>angular-validation: llselect vs the select it replaces</h3>' + render(av)
-      if (playgroundEl) { buildPlayground($compile, $rootScope, playgroundEl) }
+      if (playgroundEl) {
+        buildPlayground($compile, $rootScope, playgroundEl,
+          document.getElementById('model-out') || playgroundEl)
+      }
     }])
   }
 })(window.angular)
