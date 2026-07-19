@@ -85,6 +85,16 @@ It does **not** provide:
 
 When in doubt, the answer is "lib provides a structural slot; the user fills it". This keeps API surface tight and avoids feature creep.
 
+## `<form>` integration (ruled out of core)
+
+RULED: no form-integration setting; the library never creates form controls. README "`<form>` integration" ships a hidden-`<input>` recipe instead. A "minimal hidden `<select>` + `<option>` mirror" setting was considered and rejected:
+
+- **Form compatibility is an iceberg, not a serializer.** Honest parity needs: a `name` setting, an item-to-submit-string mapping (a new setting - `itemToString` is display text, "Taiwan" not "TW"), `form.reset()` re-sync, constraint validation, `<label for>` focus redirection, autofill reverse-sync, and the multi `name` spelling the backend dictates (`countries[]` for PHP / Rails, bare repeated `name` for Go / Python - no correct library default exists). Shipping only the submission tip turns a documented limitation into surprise bugs; shipping it all is framework-wrapper territory ("Library scope") - the AngularJS package already gets full form semantics via `ngModel` / `form.$valid` with zero hidden DOM.
+- **A hidden `<select>` is the worst mirror shape.** Everything a `<select>` offers over hidden inputs requires the FULL option list plus focusability: autofill needs options to pick and a `change` listener syncing back; `required` on a `display:none` control blocks submit with a console-only "not focusable" error (select2 resorts to sr-only hiding to keep the bubble reachable); `<label for>` sends clicks/focus to the hidden element. A chosen-values-only "minimal" select keeps all of those traps and adds nothing over `<input type="hidden">`, which is inert by spec: unfocusable, no tab stop, outside the a11y tree, excluded from constraint validation.
+- **Full-option mirror (the Radix / React Aria shape) also rejected.** It is O(items) resting DOM per instance - the node count the benchmark tables lead with - plus the reverse-sync / reset / validation contract above. Those libs sit inside component frameworks where that contract is cheap to maintain; llselect is the layer such wrappers are built on.
+- **A shipped `llselect/form` helper would degenerate into the recipe.** `onChange` is a single callback slot: an attach-style helper fights the app for it, and a helper the app must call from its own `onChange` is just the recipe with a dependency. Revisit only on real demand.
+- **`formdata` event rejected as the recipe mainline**: `form.addEventListener('formdata', ...)` would need no hidden DOM at all, but it is Safari 15+, above the Safari 14.1 floor. Hidden inputs are floor-safe.
+
 ## Texts (i18n)
 
 All chrome strings (AT labels + generated text) live in ONE base setting `texts` (`src/texts.ts`): input is `Partial<LLSelectTexts>`, resolved against the English defaults (`en` - the same object the `llselect/i18n` subpath exports). Static strings are plain strings; parameterized messages are functions taking RESOLVED primitives (`itemLabel: string`, counts) - never `T` - so a language pack can implement them without knowing the item type. Per-`T` control stays on the protected methods (e.g. `itemToTagRemoveButtonAriaLabel`). Key naming rules: naming-conventions.md s7a.4.

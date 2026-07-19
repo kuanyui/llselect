@@ -108,16 +108,7 @@ No build tool? The UMD bundle exposes `window.llselect` (`<script src="https://u
 
 ## Limitation: What llselect deliberately decides **not** to do?
 
-- **No native form integration.** llselect renders plain `div`s, not a form control: nothing is submitted with a `<form>`, and `name`/value serialization, form reset, constraint validation (`required` etc.), and `<label for>` association do not apply. Name the field through the `ariaLabel` / `ariaLabelledBy` setting, and mirror the selection into your own form state (or a hidden input) yourself:
-
-  ```js
-  const hidden = document.querySelector('input[name="fruit"]')
-  const sel = new LLSelectSingle(mountEl, {
-    ariaLabelledBy: 'fruit-label',
-    onChange: (item) => { hidden.value = item ?? '' },
-  })
-  ```
-
+- **No native form integration.** llselect renders plain `div`s, not a form control: nothing is submitted with a `<form>`, and `name`/value serialization, form reset, constraint validation (`required` etc.), and `<label for>` association do not apply. What to do instead: [`<form>` integration](#form-integration).
 - **No HTML sanitizer.** llselect does not do HTML sanitizing for you. Remember to sanitize untrusted input via [DOMPurify](https://github.com/cure53/DOMPurify), or [browser's native Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/Sanitizer).
 - **No asynchronous data-fetching API.** llselect is aimed to be a simple `<select>` replacement. Fetch if you really want, then call `setItems(...)`.
 - **No virtual scrolling.** llselect is aimed to be a simple `<select>` replacement, not an omnipotent library.
@@ -135,6 +126,56 @@ No build tool? The UMD bundle exposes `window.llselect` (`<script src="https://u
   >
   > How you wrap llselect in your project and the trade-offs should be decided by yourself, according to your using scenario.
 - **No auto destroy.** - You *must* call `destroy()` manually when unmounting.
+
+## `<form>` integration
+
+llselect's selection state lives in JS (`getChosenItem()` / `getChosenItems()` / `onChange`), not in a form control. That is already enough for most apps:
+
+- Pure UI state (sort order, page size, language switcher): the value never leaves the page - nothing to submit.
+- Sending via `fetch` / XHR: build the request body (JSON or `FormData`) from that state directly.
+- A `<form>` whose JS submit handler builds the payload: `new FormData(form)` then `formData.append('country', chosenCode)` - no extra DOM needed.
+
+A bridge is needed only for classic full-page form submission, where the browser builds the payload and serializes native form controls only. Mirror the selection into `<input type="hidden">` - hidden inputs are inert by spec (unfocusable, no tab stop, outside the accessibility tree, excluded from constraint validation), so the mirror cannot leak into a11y or focus order:
+
+```js
+const hidden = document.querySelector('input[name="country"]') // <input type="hidden" name="country"> inside the form
+const sel = new LLSelectSingle(mountEl, {
+  ariaLabelledBy: 'country-label',
+  itemToStringFn: (c) => c.name,
+  // a form value is a string - map it yourself; itemToStringFn is display text ("Taiwan"), not a submit value ("TW")
+  onChange: (c) => { hidden.value = c?.code ?? '' },
+})
+sel.setItems([{ code: 'TW', name: 'Taiwan' }, { code: 'JP', name: 'Japan' }])
+```
+
+Multi select submits one hidden input per chosen value, all with the same `name` (spell it `countries[]` if your backend is PHP / Rails; keep it bare for Go / Python):
+
+```js
+const form = document.querySelector('form')
+const sel = new LLSelectMultiple(mountEl, {
+  ariaLabelledBy: 'countries-label',
+  itemToStringFn: (c) => c.name,
+  onChange: (chosen) => {
+    form.querySelectorAll('input[name="countries[]"]').forEach((el) => { el.remove() })
+    for (const c of chosen) {
+      const hidden = document.createElement('input')
+      hidden.type = 'hidden'
+      hidden.name = 'countries[]'
+      hidden.value = c.code
+      form.append(hidden)
+    }
+  },
+})
+```
+
+The mirror covers submission only. The rest of native form behavior stays yours to handle:
+
+- **Initial value**: if the server renders a pre-filled `value` attribute, apply the same value to llselect with `setChosenItem()` / `setChosenItems()` - the setters fire `onChange`, so the mirror stays in sync from then on.
+- **`form.reset()`** restores hidden inputs to their markup `value` attribute and does not touch llselect, so the two drift apart. Listen for the form's `reset` event and re-sync with `setChosenItem()` / `setChosenItems()`, or avoid reset.
+- **Constraint validation** (`required` etc.) never fires on hidden inputs - validate the llselect state in your submit handler.
+- **`<label for>`** cannot target llselect - set the accessible name with `ariaLabel` / `ariaLabelledBy`; for label-click-to-focus, add a `click` handler on the label yourself.
+
+Why there is no built-in setting for this, and why the recipe uses hidden inputs rather than a hidden `<select>` mirror: [docs/DESIGN.md](docs/DESIGN.md) "`<form>` integration (ruled out of core)".
 
 ## Capabilities overview
 
