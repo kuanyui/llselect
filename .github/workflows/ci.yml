@@ -1,0 +1,39 @@
+# Test on every push and PR. On a green master push, ping the `projects`
+# repo (repository_dispatch) so it rebuilds the demo site at
+# /projects/llselect/. The ping needs a PAGES_TRIGGER_TOKEN secret
+# (fine-grained PAT, `projects` repo only, Contents read/write); without
+# it the step skips and the site is redeployed manually from `projects`.
+name: ci
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      - run: npm test
+      - run: cd angularjs && npm ci && npm test
+  trigger-pages:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          TOKEN: ${{ secrets.PAGES_TRIGGER_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          if [ -z "$TOKEN" ]; then echo "PAGES_TRIGGER_TOKEN not set; skipping pages trigger"; exit 0; fi
+          curl -sS -f -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$OWNER/projects/dispatches" \
+            -d '{"event_type":"deploy-demos"}'
