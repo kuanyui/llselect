@@ -22,6 +22,8 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: cd angularjs && npm ci && npm test
+      # site assembly must stay deployable; the projects repo runs the same script
+      - run: npm run build:site
   trigger-pages:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
