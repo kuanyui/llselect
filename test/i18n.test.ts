@@ -14,18 +14,40 @@ function mount(): HTMLElement {
 }
 
 test('every pack is a complete LLSelectTexts (same keys as en)', () => {
-  for (const pack of [ar, he, ja, zhTW]) {
-    assert.deepEqual(Object.keys(pack).sort(), Object.keys(en).sort())
+  for (const [tag, pack] of Object.entries(textsByLocale)) {
+    assert.deepEqual(Object.keys(pack).sort(), Object.keys(en).sort(), `pack ${tag}`)
   }
 })
 
-test('textsByLocale maps minimal BCP 47 tags to the packs', () => {
+test('textsByLocale maps minimal BCP 47 tags to the packs, aliases share the object', () => {
   assert.equal(textsByLocale['ar'], ar)
   assert.equal(textsByLocale['en'], en)
   assert.equal(textsByLocale['he'], he)
   assert.equal(textsByLocale['ja'], ja)
   assert.equal(textsByLocale['zh-TW'], zhTW)
-  assert.deepEqual(Object.keys(textsByLocale).sort(), ['ar', 'en', 'he', 'ja', 'zh-TW'])
+  // Aliases: macrolanguage / same-written-form tags resolve to the same pack.
+  assert.equal(textsByLocale['no'], textsByLocale['nb'])
+  assert.equal(textsByLocale['zh-HK'], textsByLocale['zh-TW'])
+  // Keys stay sorted (aliases sit at their own alphabetical spot).
+  const keys = Object.keys(textsByLocale)
+  assert.deepEqual(keys, [...keys].sort())
+})
+
+test('every pack: strings non-empty, message functions total over count shapes', () => {
+  for (const [tag, pack] of Object.entries(textsByLocale)) {
+    assert.ok(pack.triggerPlaceholder.length > 0, `${tag} triggerPlaceholder`)
+    assert.ok(pack.searchInputAriaLabel.length > 0, `${tag} searchInputAriaLabel`)
+    assert.ok((pack.searchInputPlaceholder ?? '').length > 0, `${tag} searchInputPlaceholder`)
+    assert.ok(pack.popupListNoResults.length > 0, `${tag} popupListNoResults`)
+    assert.ok(pack.triggerClearButtonAriaLabel.length > 0, `${tag} triggerClearButtonAriaLabel`)
+    assert.ok(pack.tagRemoveButtonAriaLabel('XQ').includes('XQ'), `${tag} tagRemoveButtonAriaLabel embeds the label`)
+    // Singular / partial / all / degenerate single-item shapes all render.
+    for (const [chosen, total] of [[1, 5], [3, 5], [5, 5], [1, 1]] as const) {
+      assert.ok(pack.triggerCountSummary(chosen, total).length > 0, `${tag} triggerCountSummary(${chosen}, ${total})`)
+      assert.ok(pack.selectAllRowLabel(chosen, total).length > 0, `${tag} selectAllRowLabel(${chosen}, ${total})`)
+    }
+    assert.notEqual(pack.triggerCountSummary(3, 5), pack.triggerCountSummary(5, 5), `${tag} partial vs all differ`)
+  }
 })
 
 test('a whole language pack applies to every chrome string (zhTW)', () => {

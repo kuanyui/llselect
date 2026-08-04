@@ -188,7 +188,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `selectAllRow`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
 | Popup width                          | `popupWidthPolicy: 'match-trigger' \| 'fit-content'`                                                                     |
 | Rich rendering without subclassing   | `createItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
-| i18n                                 | `texts` setting + `llselect/i18n` packs (en / ja / zh-TW / ar / he), RTL inherited from `dir`                            |
+| i18n                                 | `texts` setting + `llselect/i18n` packs (`textsByLocale`, keyed by BCP 47 tag), RTL inherited from `dir`                 |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
 | Events                               | `onChange(current, previous)`, `onOpen`, `onClose`                                                                       |
 
