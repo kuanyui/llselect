@@ -7,8 +7,9 @@
 // Typography: zh-TW strings put a space between CJK and half-width characters
 // (Pangu spacing); ja strings follow Japanese convention (no such spacing).
 // ar / he strings are RTL; embedded Latin runs ("Esc") reorder via the Unicode
-// Bidi Algorithm. TRANSLATION STATUS: ar / he are LLM-drafted - have a native
-// speaker review them before a release.
+// Bidi Algorithm. TRANSLATION STATUS: ja / ar / he are LLM-drafted and were
+// cross-reviewed by a second model; a human native-speaker sign-off is still
+// pending. zh-TW is user-vetted.
 
 import { en, type LLSelectTexts } from './texts.js'
 
@@ -24,7 +25,7 @@ export const ja: LLSelectTexts = {
   triggerClearButtonAriaLabel: '選択をクリア',
   tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel}を削除`,
   triggerCountSummary: (chosenCount, totalCount) =>
-    chosenCount === totalCount ? `全${chosenCount}件を選択` : `${totalCount}件中${chosenCount}件を選択`,
+    chosenCount === totalCount ? `全${chosenCount}件を選択中` : `${totalCount}件中${chosenCount}件を選択中`,
   selectAllRowLabel: (chosenCount, totalCount) => `すべて選択（${chosenCount} / ${totalCount}）`,
 }
 
@@ -62,8 +63,13 @@ export const he: LLSelectTexts = {
   popupListNoResults: 'לא נמצאו תוצאות',
   triggerClearButtonAriaLabel: 'נקה בחירה',
   tagRemoveButtonAriaLabel: (itemLabel) => `הסר ${itemLabel}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
-    chosenCount === totalCount ? `נבחרו כל ${chosenCount}` : `נבחרו ${chosenCount} מתוך ${totalCount}`,
+  // Hebrew number agreement: singular past (nivchar) for 1, plural (nivcheru)
+  // otherwise; the all-chosen form needs the noun (kol X ha-pritim).
+  triggerCountSummary: (chosenCount, totalCount) => {
+    if (chosenCount === 1) { return `נבחר פריט אחד מתוך ${totalCount}` }
+    if (chosenCount === totalCount) { return `נבחרו כל ${totalCount} הפריטים` }
+    return `נבחרו ${chosenCount} מתוך ${totalCount}`
+  },
   selectAllRowLabel: (chosenCount, totalCount) => `בחר הכל (${chosenCount} מתוך ${totalCount})`,
 }
 
