@@ -1,8 +1,10 @@
-# Test on every push and PR. On a green master push, ping the `projects`
-# repo (repository_dispatch) so it rebuilds the demo site at
-# /projects/llselect/. The ping needs a PAGES_TRIGGER_TOKEN secret
-# (fine-grained PAT, `projects` repo only, Contents read/write); without
-# it the step skips and the site is redeployed manually from `projects`.
+# Test on every push and PR. On a green master push, assemble the static
+# site (README-rendered landing + demo + dist + angularjs) and deploy it to
+# this repo's own GitHub Pages: https://<owner>.github.io/llselect/.
+# The user-site repo (<owner>.github.io, the blog) is never touched: a
+# project site owns its /llselect/ path and takes priority over any
+# same-named path in the user site. One-time setup on the GitHub mirror:
+# Settings -> Pages -> Source: GitHub Actions.
 name: ci
 on:
   push:
@@ -22,20 +24,24 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: cd angularjs && npm ci && npm test
-      # site assembly must stay deployable; the projects repo runs the same script
       - run: npm run build:site
-  trigger-pages:
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        with:
+          path: public
+  deploy-pages:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - env:
-          TOKEN: ${{ secrets.PAGES_TRIGGER_TOKEN }}
-          OWNER: ${{ github.repository_owner }}
-        run: |
-          if [ -z "$TOKEN" ]; then echo "PAGES_TRIGGER_TOKEN not set; skipping pages trigger"; exit 0; fi
-          curl -sS -f -X POST \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/$OWNER/projects/dispatches" \
-            -d '{"event_type":"deploy-demos"}'
+      - id: deployment
+        uses: actions/deploy-pages@v4
