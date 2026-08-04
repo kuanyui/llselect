@@ -2,6 +2,21 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (real-browser acceptance run)
+
+- [x] **[MEDIUM-31] - searchable tags trigger accname duplicated chip labels ("Apple Remove Apple")**
+  - Symptom: with `searchable: true` + `triggerDisplay: 'tags'`, the closed trigger's computed accessible name repeated every chip (label text + the remove button's `aria-label`): `Toppings Apple Remove Apple Banana Remove Banana`. Measured identically in Chromium and Firefox accessibility trees - the exact duplication [NEEDS-VERIFICATION-27] flagged as unverifiable in jsdom.
+  - Cause: the searchable-mode `aria-labelledby` chain referenced the visible content span, and accname traversal descends into it, collecting every labelled control inside (the per-chip remove buttons).
+  - Fix: the chain now references a hidden root-level plain-text value span kept in sync by `commitTriggerContentToDom` (tags: labels joined with `", "`; count summary / single label / placeholder analogous; explicit `plainTextValue` param for rich content). base.ts `triggerValueEl` / `syncFieldNameToDom`, single.ts / multiple.ts `renderTriggerContent`, contract in A11Y.md "Accessible name".
+  - Verified: Chromium + Firefox aria snapshots now read `button "Toppings Apple, Banana"`; test/aria-name.test.ts pins the span, the chain, and the tags plain-text value; full suite green.
+  - Q: Why a hidden sibling span, not `aria-label` on the content span or `aria-hidden` on the remove buttons?
+    - A: `aria-label` on a `generic` span is ARIA-prohibited (validators flag it), and `aria-hidden` on the remove buttons would erase the chips' guaranteed AT name (A11Y.md "Tags") to fix a different channel. A root-level `hidden` span referenced by the chain is validator-clean, keeps `triggerEl.textContent` equal to the visible content (inside the trigger it doubled it), and accname includes referenced hidden nodes by design.
+
+- [x] **[QUALITY-32] - ja / he count summaries were grammatically off (i18n review)**
+  - Symptom: ja `triggerCountSummary` read as an action ("N件を選択" - "select N items"), not a state; he used plural `נבחרו` even for 1 chosen item and an unidiomatic bare "all N" with no noun.
+  - Fix: ja appends `中` (state phrasing); he branches on count (singular `נבחר פריט אחד מתוך N`, all-case `נבחרו כל N הפריטים`). ar reviewed clean. i18n.ts.
+  - Verified: npm test (i18n tests call the pack functions, no fixture drift); human native-speaker sign-off remains tracked in TODO.md.
+
 ## review (release-readiness follow-up)
 
 - [x] **[HIGH-26] - opening against an off-screen trigger leaked listeners re-entrantly**
@@ -10,17 +25,21 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
   - Fix: `open()` refuses up front when `isAnchorHidden(triggerEl)` (new exported predicate reusing the positioner's own layout-viewport test), mirroring the disabled guard, so the positioner is never built for a hidden anchor. base.ts `open`, positioning.ts `isAnchorHidden`.
   - Verified: test/positioning.test.ts (no-op open, no callbacks, later resize does not mutate the hidden popup, `destroy()` clean).
 
-- [ ] **[NEEDS-VERIFICATION-27] - release acceptance gates are not signed off**
-  - Impact: the code / doc fixes for accessible names, searchable Tab order, and CSS retention are in and unit-covered, but their real-browser / screen-reader / real-bundler acceptance is still open, so the original release blockers are only conditionally closed.
-  - Fix: the actionable checklist lives in `TODO.md` "release readiness - manual verification". Expand the screen-reader pass to `clearable: true` and `triggerDisplay: 'tags'`: in searchable mode the trigger is `role="button"` and the clear / tag-remove buttons are its descendants (presentational to AT), so only a real AT run can rule out a hidden control or a duplicated name like `Apple Remove Apple`.
+- [x] **[NEEDS-VERIFICATION-27] - release acceptance gates are not signed off**
+  - Impact: the code / doc fixes for accessible names, searchable Tab order, and CSS retention were in and unit-covered, but their real-browser / screen-reader / real-bundler acceptance was still open, so the original release blockers were only conditionally closed.
+  - Fix: the automatable layer of every gate ran in real Chromium + Firefox (Playwright, real layout / native Tab / accessibility trees): accessible names in all modes including `clearable` and tags (which surfaced and fixed [MEDIUM-31]), the full Tab / Shift+Tab and one-tab-stop contract, RTL mirroring, placement stickiness, Firefox no-jolt + scrolled-to-chosen, clipped-trigger no-op open + clean destroy, no-results / tri-state, both benchmark pages against the pinned CDN builds, and CSS retention verified against the packed tarball in vite AND webpack production builds. The remaining human-only residue is narrowed in TODO.md: AT announcement pass, headed scrollbar drag, i18n sign-off.
+  - Verified: session Playwright runners (a11y / focus / visual / angularjs / benchmark) all green in both engines; bundler outputs contain the theme CSS.
 
 - [x] **[DOCUMENTATION-28] - generated API docstrings described the trigger as always a combobox**
   - Symptom: `triggerClass` and `triggerEl` docstrings (emitted into `dist/base.d.ts`, so consumer-facing) gave a fixed `role="combobox"` and put `aria-activedescendant` on the trigger unconditionally.
   - Fix: both now state the role per search mode (combobox inactive / button while a searchable popup is open) and where `aria-activedescendant` lives. base.ts `triggerClass`, `triggerEl`.
 
-- [ ] **[QUALITY-29] - the mechanical check covers only part of its policy**
-  - Impact: `scripts/check.mjs` catches punctuation and relative links, but its collectors are non-recursive, skip all of `test/`, and do not enforce the explicit-brace or unexplained-`any` rules.
-  - Fix (proposed): make file discovery recursive and scan test source (exempting only intentional fixture data). Brace / explicit-`any` enforcement wants an ESLint or TypeScript-aware rule, not a text scan - decide whether that dependency is worth it before building it.
+- [x] **[QUALITY-29] - the mechanical check covers only part of its policy**
+  - Impact: `scripts/check.mjs` caught punctuation and relative links, but its collectors were non-recursive, skipped all of `test/`, and did not enforce the explicit-brace or unexplained-`any` rules.
+  - Fix: file discovery is recursive; `test/` is punctuation-scanned with string literals AST-masked (fixture unicode stays exempt with no pragma invention); the brace and unexplained-`any` rules run as AST checks. scripts/check.mjs.
+  - Verified: deliberate violations (uncommented `any`, braceless `if`, braceless `for`) are each flagged; CJK punctuation inside a test string literal is not; suite and check green.
+  - Q: Why not the proposed ESLint / TS-aware rule?
+    - A: The `typescript` package is already a devDependency and its parser answers both rules in ~40 lines; an ESLint stack would add a dependency tree and config surface to express the same two checks. The "is that dependency worth it" question dissolves - no new dependency was needed.
 
 - [x] **[PERFORMANCE-30] - natural-height reconstruction assumed no author clamp on the inner list**
   - Symptom: the height reconstruction adds back all of `popupList.scrollHeight - clientHeight`; a consumer `max-height` on `.llselect-popup-list` would be read as extra natural height and could pick a placement side as if the popup were taller than it can render.
