@@ -234,19 +234,22 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    */
   protected override renderTriggerContent(): void {
     this.syncEmptyStateToDom()
+    const chosenCount = this.chosenItems.length
+    const countValue = chosenCount === 0
+      ? this.settings.placeholder
+      : this.settings.texts.triggerCountSummary(chosenCount, this.items.length)
     const custom = this.settings.createTriggerContentElFn?.({ chosenItems: this.getChosenItems(), items: this.getItems() }) ?? null
     if (custom !== null) {
-      this.commitTriggerContentToDom(custom)
+      this.commitTriggerContentToDom(custom, countValue)
       return
     }
-    if (this.settings.triggerDisplay === 'tags' && this.chosenItems.length > 0) {
-      this.commitTriggerContentToDom(this.createTagsEl())
+    if (this.settings.triggerDisplay === 'tags' && chosenCount > 0) {
+      // Accessible value = the labels themselves; the chips (with their
+      // labelled remove buttons) must not name the field.
+      this.commitTriggerContentToDom(this.createTagsEl(), this.chosenItems.map((item) => this.itemToString(item)).join(', '))
       return
     }
-    const chosenCount = this.chosenItems.length
-    this.commitTriggerContentToDom(chosenCount === 0
-      ? this.settings.placeholder
-      : this.settings.texts.triggerCountSummary(chosenCount, this.items.length))
+    this.commitTriggerContentToDom(countValue)
   }
 
   /**

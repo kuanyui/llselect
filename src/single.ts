@@ -100,14 +100,13 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
    */
   protected override renderTriggerContent(): void {
     this.syncEmptyStateToDom()
+    const plainValue = this.chosenItem === undefined ? this.settings.placeholder : this.itemToString(this.chosenItem!)
     const custom = this.settings.createTriggerContentElFn?.({ chosenItem: this.chosenItem, items: this.getItems() }) ?? null
     if (custom !== null) {
-      this.commitTriggerContentToDom(custom)
+      this.commitTriggerContentToDom(custom, plainValue)
       return
     }
-    this.commitTriggerContentToDom(
-      this.chosenItem === undefined ? this.settings.placeholder : this.itemToString(this.chosenItem!),
-    )
+    this.commitTriggerContentToDom(plainValue)
   }
 
   /** No selection iff `chosenItem` is unset. Drives the trigger's `data-empty`. */

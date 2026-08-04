@@ -53,13 +53,19 @@ test('neither set: no name on trigger/listbox; search input keeps the texts fall
 
 // --- searchable (trigger is a button; input is the combobox) -------------
 
-test('searchable + ariaLabelledBy: trigger button name chains label ids + content span', () => {
+test('searchable + ariaLabelledBy: trigger button name chains label ids + hidden value span', () => {
   const sel = new LLSelectSingle<string>(mount(), { searchable: true, ariaLabelledBy: 'field-label' })
   sel.setItems(['a', 'b'])
-  const contentId = sel.classIdMap.triggerContentId
-  assert.equal(sel.triggerEl.getAttribute('aria-labelledby'), `field-label ${contentId}`)
-  // The content span the chain points at exists and carries the id.
-  assert.ok(sel.triggerEl.querySelector(`#${contentId}`))
+  const valueId = sel.classIdMap.triggerValueId
+  assert.equal(sel.triggerEl.getAttribute('aria-labelledby'), `field-label ${valueId}`)
+  // The value span the chain points at exists (root level, outside the
+  // trigger so triggerEl.textContent stays clean), is hidden, and mirrors
+  // the value.
+  const valueEl = document.getElementById(valueId)!
+  assert.ok(!sel.triggerEl.contains(valueEl))
+  assert.ok(valueEl.hidden)
+  sel.setChosenItem('b')
+  assert.equal(valueEl.textContent, 'b')
   assert.equal(searchInput(sel).getAttribute('aria-labelledby'), 'field-label')
   assert.equal(searchInput(sel).getAttribute('aria-label'), null)
   assert.equal(listbox(sel).getAttribute('aria-labelledby'), 'field-label')
@@ -68,9 +74,9 @@ test('searchable + ariaLabelledBy: trigger button name chains label ids + conten
 test('searchable + ariaLabel: trigger keeps aria-label and self-references it in the chain', () => {
   const sel = new LLSelectSingle<string>(mount(), { searchable: true, ariaLabel: 'Country' })
   sel.setItems(['a', 'b'])
-  const { triggerId, triggerContentId } = sel.classIdMap
+  const { triggerId, triggerValueId } = sel.classIdMap
   assert.equal(sel.triggerEl.getAttribute('aria-label'), 'Country')
-  assert.equal(sel.triggerEl.getAttribute('aria-labelledby'), `${triggerId} ${triggerContentId}`)
+  assert.equal(sel.triggerEl.getAttribute('aria-labelledby'), `${triggerId} ${triggerValueId}`)
   // Field name replaces the generic "Search" fallback on the input.
   assert.equal(searchInput(sel).getAttribute('aria-label'), 'Country')
   assert.equal(listbox(sel).getAttribute('aria-label'), 'Country')
@@ -88,10 +94,10 @@ test('predicate searchable: name wiring re-syncs per open cycle', () => {
   sel.close()
   sel.setItems(['a', 'b', 'c'])
   sel.open()
-  // Active cycle: button wiring, chain includes the content span.
+  // Active cycle: button wiring, chain includes the hidden value span.
   assert.equal(
     sel.triggerEl.getAttribute('aria-labelledby'),
-    `field-label ${sel.classIdMap.triggerContentId}`,
+    `field-label ${sel.classIdMap.triggerValueId}`,
   )
   sel.close()
 })
@@ -107,4 +113,23 @@ test('LLSelectMultiple: same wiring, multiselectable listbox is named', () => {
   assert.equal(lb.getAttribute('aria-label'), 'Tags')
   assert.equal(lb.getAttribute('aria-multiselectable'), 'true')
   sel.close()
+})
+
+test('tags mode: hidden value span carries plain labels, not remove-button names', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    searchable: true, triggerDisplay: 'tags', ariaLabelledBy: 'field-label',
+  })
+  sel.setItems(['Apple', 'Banana', 'Cherry'])
+  sel.setChosenItems(['Apple', 'Banana'])
+  const valueEl = document.getElementById(sel.classIdMap.triggerValueId)!
+  // Plain labels only - the chips' "Remove <label>" button names must not
+  // reach the accessible-name chain (they live in the content span, which the
+  // chain no longer references).
+  assert.equal(valueEl.textContent, 'Apple, Banana')
+  assert.equal(
+    sel.triggerEl.getAttribute('aria-labelledby'),
+    `field-label ${sel.classIdMap.triggerValueId}`,
+  )
+  // The visible chips are still there, remove buttons intact.
+  assert.equal(sel.triggerContentEl.querySelectorAll('button').length, 2)
 })

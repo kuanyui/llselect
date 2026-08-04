@@ -354,13 +354,17 @@ export interface LLSelectClassIdMap {
   openClass: string
   /** DOM `id` of `triggerEl`. Unique across instances. */
   triggerId: string
-  /**
-   * DOM `id` of the trigger content span. Unique across instances. Referenced
-   * by the searchable-mode trigger's `aria-labelledby` chain so the closed
-   * button's accessible name includes the current value (see the `ariaLabel` /
-   * `ariaLabelledBy` settings).
-   */
+  /** DOM `id` of the trigger content span. Unique across instances. */
   triggerContentId: string
+  /**
+   * DOM `id` of the hidden plain-text value span (root-level sibling of the
+   * trigger). Unique across instances. Referenced by the searchable-mode
+   * trigger's `aria-labelledby` chain so the closed button's accessible name
+   * includes the current value as PLAIN TEXT - rich trigger content (tag
+   * chips with labelled remove buttons) must not leak control names into the
+   * field name (see the `ariaLabel` / `ariaLabelledBy` settings).
+   */
+  triggerValueId: string
   /**
    * DOM `id` of `popupListEl` (the inner listbox). Unique across instances.
    * Referenced by the trigger's `aria-controls` attribute.
@@ -403,6 +407,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     openClass: `${prefix}-open`,
     triggerId: `${uniq}-trigger`,
     triggerContentId: `${uniq}-trigger-content`,
+    triggerValueId: `${uniq}-trigger-value`,
     popupListId: `${uniq}-popup-list`,
     searchInputClass: `${prefix}-search-input`,
     searchInputId: `${uniq}-search-input`,
@@ -451,6 +456,14 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * is preserved across re-renders.
    */
   public readonly triggerContentEl: HTMLElement
+  /**
+   * Hidden root-level span (sibling of the trigger) mirroring the current
+   * value as plain text. Kept in sync by `commitTriggerContentToDom`;
+   * referenced by the searchable-mode `aria-labelledby` chain (see
+   * `classIdMap.triggerValueId`). Outside the trigger so
+   * `triggerEl.textContent` stays exactly the visible content.
+   */
+  protected readonly triggerValueEl: HTMLElement
   /**
    * The outer popup wrapper. Has no ARIA role itself - it just hosts the
    * popup chrome (future: filter input, toggle-all control) and the inner
@@ -606,6 +619,16 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.triggerEl = this.createTriggerEl()
     this.triggerContentEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerContentClass}`) as HTMLElement
     this.triggerArrowEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerArrowClass}`) as HTMLElement
+    // Hidden plain-text mirror of the current value, kept in sync by
+    // commitTriggerContentToDom. The searchable-mode aria-labelledby chain
+    // references THIS span (not the content span) so labelled controls in rich
+    // content (tag remove buttons) never enter the field's accessible name.
+    // A root-level sibling, NOT inside triggerEl: hidden-but-referenced text
+    // still names the field, while `triggerEl.textContent` stays exactly the
+    // visible content (no doubled text for consumers reading it).
+    this.triggerValueEl = document.createElement('span')
+    this.triggerValueEl.id = this.classIdMap.triggerValueId
+    this.triggerValueEl.hidden = true
 
     this.popupEl = this.createPopupEl()
     this.popupListEl = this.createPopupListEl()
@@ -631,7 +654,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.popupListEl.style.minHeight = '0'
     this.popupListEl.style.overflowY = 'auto'
 
-    this.rootEl.append(this.triggerEl, this.popupEl)
+    this.rootEl.append(this.triggerEl, this.triggerValueEl, this.popupEl)
 
     this.triggerEl.addEventListener('click', () => this.toggle())
     this.triggerEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
@@ -700,13 +723,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       if (label !== null) { el.setAttribute('aria-label', label) } else { el.removeAttribute('aria-label') }
     }
     const { ariaLabel, ariaLabelledBy } = this.settings
-    const { triggerId, triggerContentId } = this.classIdMap
+    const { triggerId, triggerValueId } = this.classIdMap
     if (ariaLabelledBy !== null) {
-      apply(this.triggerEl, this.searchActive ? `${ariaLabelledBy} ${triggerContentId}` : ariaLabelledBy, null)
+      apply(this.triggerEl, this.searchActive ? `${ariaLabelledBy} ${triggerValueId}` : ariaLabelledBy, null)
       apply(this.searchInputEl, ariaLabelledBy, null)
       apply(this.popupListEl, ariaLabelledBy, null)
     } else if (ariaLabel !== null) {
-      apply(this.triggerEl, this.searchActive ? `${triggerId} ${triggerContentId}` : null, ariaLabel)
+      apply(this.triggerEl, this.searchActive ? `${triggerId} ${triggerValueId}` : null, ariaLabel)
       apply(this.searchInputEl, null, ariaLabel)
       apply(this.popupListEl, null, ariaLabel)
     } else {
@@ -993,14 +1016,21 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    *   for the default placeholder / `itemToString` label / count summary.
    * - `HTMLElement` -> inserted as-is via `replaceChildren`; caller owns the
    *   node. Used for whatever the `createTriggerContentElFn` setting returned.
+   * - Also mirrors the value into the hidden `triggerValueEl` (the accessible
+   *   name source): the string itself, else `plainTextValue`, else the
+   *   element's `textContent`. Pass `plainTextValue` whenever the element
+   *   contains labelled controls (tag remove buttons) or icon-only content -
+   *   the mirror is what AT announces as the field's value.
    * Called by `renderTriggerContent` - the base default and the `LLSelectSingle`
    * / `LLSelectMultiple` overrides.
    */
-  protected commitTriggerContentToDom(content: HTMLElement | string): void {
+  protected commitTriggerContentToDom(content: HTMLElement | string, plainTextValue?: string): void {
     if (typeof content === 'string') {
       this.triggerContentEl.textContent = content
+      this.triggerValueEl.textContent = content
     } else {
       this.triggerContentEl.replaceChildren(content)
+      this.triggerValueEl.textContent = plainTextValue ?? content.textContent
     }
   }
 

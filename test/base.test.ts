@@ -72,12 +72,16 @@ test('popup contains the (hidden) search input, the popup list, and the no-resul
   assert.equal(popupChildren[2]!.hidden, true)
 })
 
-test('trigger and popup are children of rootEl in order', () => {
+test('trigger, hidden value span, and popup are children of rootEl in order', () => {
   const inst = new TestSelect<string>(mount())
-  const children = Array.from(inst.rootEl.children)
-  assert.equal(children.length, 2)
+  const children = Array.from(inst.rootEl.children) as HTMLElement[]
+  assert.equal(children.length, 3)
   assert.equal(children[0], inst.triggerEl)
-  assert.equal(children[1], inst.popupEl)
+  // The accessible-name value mirror (docs/A11Y.md "Accessible name"): root
+  // level so triggerEl.textContent stays the visible content only.
+  assert.equal(children[1]!.id, inst.classIdMap.triggerValueId)
+  assert.equal(children[1]!.hidden, true)
+  assert.equal(children[2], inst.popupEl)
 })
 
 test('item elements do NOT carry a `title` attribute by default (avoids fighting third-party tooltip libs)', () => {
