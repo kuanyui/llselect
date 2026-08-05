@@ -81,6 +81,8 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 npm install @llselect/core
 ```
 
+Published on npm as [`@llselect/core`](https://www.npmjs.com/package/@llselect/core). For AngularJS 1.x there is [`@llselect/angularjs`](https://www.npmjs.com/package/@llselect/angularjs), a separate package with its own setup - see [angularjs/README.md](angularjs/README.md).
+
 ## Quick start
 
 ```js
