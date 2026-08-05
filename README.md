@@ -1,10 +1,13 @@
 # LLSelect - Low-Level Select
 
+[![npm version](https://img.shields.io/npm/v/@llselect/core)](https://www.npmjs.com/package/@llselect/core)
+
 A JavaScript library that replaces the native HTML `<select>` element.
 
 It is a minimal but flexible implementation of `<select>` in JavaScript that you can easily wrap and integrate into your existing UI library / framework / style.
 
-[Demo](https://kuanyui.github.io/llselect/demo/) | [npm](https://www.npmjs.com/package/@llselect/core) | [GitHub](https://github.com/kuanyui/llselect) | [GitLab](https://gitlab.com/kuanyui/llselect)
+- GitHub: [Git](https://github.com/kuanyui/llselect) | [Demo](https://kuanyui.github.io/llselect/demo/)
+- GitLab: [Git](https://gitlab.com/kuanyui/llselect) | [Demo](https://kuanyui.gitlab.io/llselect/demo/)
 
 > [!TIP]
 > #### Why not native `<select>`?
@@ -15,6 +18,21 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 > - No filter feature, especially for East-Asian languages.
 > - Values can only be stored as `string`.
 > - Unable to accept mouse event when `<select disabled="true">` (to show tooltip to explain why it's disabled, for example).
+
+**Contents**
+
+- [Features](#features)
+- [Design principles](#design-principles)
+- [Benchmark](#benchmark)
+- [Demo](#demo)
+- [Install](#install)
+- [Quick start](#quick-start)
+- [Limitation: What llselect deliberately decides not to do?](#limitation-what-llselect-deliberately-decides-not-to-do)
+- [`<form>` integration](#form-integration)
+- [Capabilities overview](#capabilities-overview)
+- [Customization: settings or subclassing?](#customization-settings-or-subclassing)
+- [Acknowledgment](#acknowledgment)
+- [License](#license)
 
 ## Features
 
