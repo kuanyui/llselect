@@ -1,16 +1,14 @@
 # GitLab Pages: verify, build, publish the site assembled by build:site
 # (README-rendered landing page + demo + dist + angularjs, all static).
-# Tests gate the deploy: a red suite never replaces a working demo site.
+# The whole pipeline is `npm run verify` - the same single command run
+# locally and by the GitHub workflow. Tests gate the deploy: a red suite
+# never replaces a working demo site.
 pages:
   image: node:22
   stage: deploy
   script:
     - npm ci
-    - npm run check
-    - npm run build
-    - npm test
-    - (cd angularjs && npm ci && npm test)
-    - npm run build:site
+    - npm run verify
   artifacts:
     paths:
       - public

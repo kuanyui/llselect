@@ -20,11 +20,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run check
-      - run: npm run build
-      - run: npm test
-      - run: cd angularjs && npm ci && npm test
-      - run: npm run build:site
+      # same single pipeline as local dev and .gitlab-ci.yml
+      - run: npm run verify
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:

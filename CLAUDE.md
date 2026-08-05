@@ -88,6 +88,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 Run before claiming a change is done; all must pass:
 
 ```sh
+npm run verify      # one shot: check + build + test + angularjs (npm ci + test) + build:site; exactly what CI runs
 npm test            # tsc test compile + node:test under jsdom
 npm run build       # d.ts + rollup bundles + themes
 npm run check       # mechanical style checks (ASCII punctuation, doc links)
