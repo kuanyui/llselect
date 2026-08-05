@@ -97,13 +97,13 @@ RULED: no form-integration setting; the library never creates form controls. REA
 
 ## Texts (i18n)
 
-All chrome strings (AT labels + generated text) live in ONE base setting `texts` (`src/texts.ts`): input is `Partial<LLSelectTexts>`, resolved against the English defaults (`en` - the same object the `llselect/i18n` subpath exports). Static strings are plain strings; parameterized messages are functions taking RESOLVED primitives (`itemLabel: string`, counts) - never `T` - so a language pack can implement them without knowing the item type. Per-`T` control stays on the protected methods (e.g. `itemToTagRemoveButtonAriaLabel`). Key naming rules: naming-conventions.md s7a.4.
+All chrome strings (AT labels + generated text) live in ONE base setting `texts` (`src/texts.ts`): input is `Partial<LLSelectTexts>`, resolved against the English defaults (`en` - the same object the `@llselect/core/i18n` subpath exports). Static strings are plain strings; parameterized messages are functions taking RESOLVED primitives (`itemLabel: string`, counts) - never `T` - so a language pack can implement them without knowing the item type. Per-`T` control stays on the protected methods (e.g. `itemToTagRemoveButtonAriaLabel`). Key naming rules: naming-conventions.md s7a.4.
 
 The `placeholder` SETTING stays app copy - an explicit value always wins and packs never set it. But its library DEFAULT (`'Please select'`) is chrome, so it lives in `texts` as `triggerPlaceholder` and localizes with the pack; resolution is `settings.placeholder ?? texts.triggerPlaceholder`. (select2 has no such key only because it ships no default placeholder at all; llselect does, so the default must be translatable.)
 
 The resolved bag is publicly readable via `getTexts()` (defaults + pack + overrides merged), so app code can reuse the library's translations - e.g. an app-owned tooltip on a remove button - instead of keeping a second translation source.
 
-Language packs are pure data under `llselect/i18n` (`en` / `ja` / `zhTW`): opt-in, tree-shakeable, zero behavior, so bundling translations does not violate "low-level". `i18n.ts` inlines only the tiny `texts.ts` module, never `base.ts`, and the main bundle carries only `en`. Usage: `texts: zhTW`, or a per-key override on top: `texts: { ...zhTW, searchInputPlaceholder: '...' }`.
+Language packs are pure data under `@llselect/core/i18n` (`en` / `ja` / `zhTW`): opt-in, tree-shakeable, zero behavior, so bundling translations does not violate "low-level". `i18n.ts` inlines only the tiny `texts.ts` module, never `base.ts`, and the main bundle carries only `en`. Usage: `texts: zhTW`, or a per-key override on top: `texts: { ...zhTW, searchInputPlaceholder: '...' }`.
 
 ## RTL
 

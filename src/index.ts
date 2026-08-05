@@ -8,7 +8,7 @@ export type {
 } from './base.js'
 
 // The texts contract (the `texts` setting / language-pack shape). The packs
-// themselves live under the `llselect/i18n` subpath.
+// themselves live under the `@llselect/core/i18n` subpath.
 export type { LLSelectTexts } from './texts.js'
 
 export { LLSelectSingle } from './single.js'

@@ -189,7 +189,7 @@
         searchable: null,
         /** 'match-trigger' | 'fit-content' | null. null = llselect's own default. */
         popupWidthPolicy: null,
-        /** An llselect texts pack (llselect/i18n), or null for the English defaults. */
+        /** An llselect texts pack (@llselect/core/i18n), or null for the English defaults. */
         texts: null,
       }
       this.defaults = function (overrides) {

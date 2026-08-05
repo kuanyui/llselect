@@ -681,7 +681,7 @@ selTagIcons.setChosenItems([PROGRAMMING_LANGUAGES[1], PROGRAMMING_LANGUAGES[3]])
 
 //#region 12.1
 // Language packs (imported at the top: `import { en, ja, zhTW } from
-// 'llselect/i18n'`) fill the `texts` setting whole; per-key overrides spread
+// '@llselect/core/i18n'`) fill the `texts` setting whole; per-key overrides spread
 // on top (`texts: { ...zhTW, searchInputPlaceholder: '...' }`). Settings are
 // constructor-frozen, so switching locale recreates the instances - the usual
 // app pattern. Deliberately NO `placeholder` (so the pack's localized

@@ -95,7 +95,7 @@ npm run check       # mechanical style checks (ASCII punctuation, doc links)
 npm pack --dry-run  # when package.json / exports / files changed
 ```
 
-The repo holds a SECOND package, `angularjs/` (`llselect-angularjs`), with its own tests and its own dependencies. The root `npm test` does not touch it, so a green root run says nothing about it. When changing anything under `angularjs/` (or anything in `src/` its directives lean on), also run:
+The repo holds a SECOND package, `angularjs/` (`@llselect/angularjs`), with its own tests and its own dependencies. The root `npm test` does not touch it, so a green root run says nothing about it. When changing anything under `angularjs/` (or anything in `src/` its directives lean on), also run:
 
 ```sh
 cd angularjs && npm install && npm test   # jsdom + real angular; needs a root `npm run build` first

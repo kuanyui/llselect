@@ -78,14 +78,14 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 ## Install
 
 ```sh
-npm install llselect
+npm install @llselect/core
 ```
 
 ## Quick start
 
 ```js
-import { LLSelectSingle, LLSelectMultiple } from 'llselect'
-import 'llselect/themes/vanilla.css' // optional: any shipped theme, or bring your own CSS
+import { LLSelectSingle, LLSelectMultiple } from '@llselect/core'
+import '@llselect/core/themes/vanilla.css' // optional: any shipped theme, or bring your own CSS
 
 const sel = new LLSelectSingle(document.querySelector('#mount'), {
   ariaLabel: 'Fruit', // accessible name (or ariaLabelledBy: id of your visible label) - always set one
@@ -100,11 +100,11 @@ Multi select: `new LLSelectMultiple(el, { ... })` - `getChosenItems()` / `toggle
 Language packs (optional, tree-shakeable pure data):
 
 ```js
-import { zhTW } from 'llselect/i18n'
+import { zhTW } from '@llselect/core/i18n'
 new LLSelectSingle(el, { texts: zhTW })
 ```
 
-No build tool? The UMD bundle exposes `window.llselect` (`<script src="https://unpkg.com/llselect"></script>`), themes via `<link>`.
+No build tool? The UMD bundle exposes `window.llselect` (`<script src="https://unpkg.com/@llselect/core"></script>`), themes via `<link>`.
 
 ## Limitation: What llselect deliberately decides **not** to do?
 
@@ -188,7 +188,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `selectAllRow`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
 | Popup width                          | `popupWidthPolicy: 'match-trigger' \| 'fit-content'`                                                                     |
 | Rich rendering without subclassing   | `createItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
-| i18n                                 | `texts` setting + `llselect/i18n` packs (`textsByLocale`, keyed by BCP 47 tag), RTL inherited from `dir`                 |
+| i18n                                 | `texts` setting + `@llselect/core/i18n` packs (`textsByLocale`, keyed by BCP 47 tag), RTL inherited from `dir`                 |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
 | Events                               | `onChange(current, previous)`, `onOpen`, `onClose`                                                                       |
 

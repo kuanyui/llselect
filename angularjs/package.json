@@ -1,5 +1,5 @@
 {
-  "name": "llselect-angularjs",
+  "name": "@llselect/angularjs",
   "version": "0.0.1",
   "description": "AngularJS 1.x directives for llselect: <llselect-single> / <llselect-multiple> driven by an ng-options expression, plus a bridge that accepts ui-select's markup.",
   "main": "./llselect-angularjs.js",
@@ -21,12 +21,12 @@
   },
   "peerDependencies": {
     "angular": "^1.5.0",
-    "llselect": "^0.0.1"
+    "@llselect/core": "^0.0.1"
   },
   "devDependencies": {
     "angular": "1.8.3",
     "jsdom": "^25.0.0",
-    "llselect": "file:..",
+    "@llselect/core": "file:..",
     "terser": "^5.37.0"
   },
   "repository": {
@@ -48,5 +48,8 @@
     "combobox"
   ],
   "author": "kuanyui (ono ono)",
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

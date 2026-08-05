@@ -1,6 +1,6 @@
 // Chrome strings (AT labels + generated text) - the i18n surface. One bag a
 // language pack fills; `en` is the library default and the single source of
-// the English strings. Non-English packs live in i18n.ts (the `llselect/i18n`
+// the English strings. Non-English packs live in i18n.ts (the `@llselect/core/i18n`
 // subpath entry), which inlines only this small module - never base.ts.
 
 /**

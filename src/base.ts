@@ -114,7 +114,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
   /**
    * Chrome strings (AT labels + generated text) - the i18n seam. Resolved
    * against English: pass a language pack whole (`texts: zhTW` from
-   * `llselect/i18n`) or override single keys
+   * `@llselect/core/i18n`) or override single keys
    * (`texts: { ...zhTW, searchInputPlaceholder: '...' }`).
    * Key-by-key contract (incl. what `null` means where allowed):
    * {@link LLSelectTexts}.

@@ -1,12 +1,12 @@
 # llselect + AngularJS 1.x
 
-AngularJS 1.x directives for [llselect](../README.md), published as `llselect-angularjs`. Two independent files: pick the one you need, or use both while migrating.
+AngularJS 1.x directives for [llselect](../README.md), published as `@llselect/angularjs`. Two independent files: pick the one you need, or use both while migrating.
 
 ```html
-<script src="node_modules/llselect/dist/index.umd.js"></script>
-<script src="node_modules/llselect-angularjs/llselect-angularjs.min.js"></script>
+<script src="node_modules/@llselect/core/dist/index.umd.js"></script>
+<script src="node_modules/@llselect/angularjs/llselect-angularjs.min.js"></script>
 <!-- or, from a CDN, or just dropped in vendor/ -->
-<script src="https://cdn.jsdelivr.net/npm/llselect-angularjs@0/llselect-angularjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@llselect/angularjs@0/llselect-angularjs.min.js"></script>
 ```
 
 ```js

@@ -4,7 +4,7 @@ import { setupDom } from '../test-utils/dom.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 import { ar, en, he, ja, zhTW, textsByLocale } from '../src/i18n.js'
 
-// Language packs (`llselect/i18n`): pure LLSelectTexts data spreadable into
+// Language packs (`@llselect/core/i18n`): pure LLSelectTexts data spreadable into
 // the `texts` setting. Assertions compare against the pack values themselves,
 // so this file needs no CJK literals of its own.
 

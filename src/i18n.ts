@@ -1,4 +1,4 @@
-// Language packs - the `llselect/i18n` subpath entry. Pure data: each pack is
+// Language packs - the `@llselect/core/i18n` subpath entry. Pure data: each pack is
 // a complete LLSelectTexts spreadable into the `texts` setting (`texts: zhTW`,
 // or `texts: { ...zhTW, searchInputPlaceholder: '...' }` for per-key
 // overrides). This module inlines only texts.ts, never base.ts, so importing

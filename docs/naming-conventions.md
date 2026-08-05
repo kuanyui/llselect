@@ -236,7 +236,7 @@ All user/AT-visible chrome strings live in ONE base setting `texts: LLSelectText
 | `triggerCountSummary`         | `(chosenCount: number, totalCount: number) => string` |
 | `selectAllRowLabel`           | `(chosenCount: number, totalCount: number) => string` |
 
-`tagRemoveButtonAriaLabel` is backed by `protected itemToTagRemoveButtonAriaLabel(item)` (`itemTo*`, mirrors `itemToString`); string keys need no method (cf. `placeholder`). Language packs (`en` / `ja` / `zhTW`) live under `llselect/i18n`; export names are camelCase only because `-` is illegal in JS identifiers - `textsByLocale` indexes the same packs by their real (minimal) BCP 47 tags (`'zh-TW'`) for `navigator.language` lookup. `LLSelectSettingsInputOf<S>` is the shared input shape (everything optional, `texts` deep-partial). The resolved bag is public via `getTexts(): Readonly<LLSelectTexts>` (`get*`, live object).
+`tagRemoveButtonAriaLabel` is backed by `protected itemToTagRemoveButtonAriaLabel(item)` (`itemTo*`, mirrors `itemToString`); string keys need no method (cf. `placeholder`). Language packs (`en` / `ja` / `zhTW`) live under `@llselect/core/i18n`; export names are camelCase only because `-` is illegal in JS identifiers - `textsByLocale` indexes the same packs by their real (minimal) BCP 47 tags (`'zh-TW'`) for `navigator.language` lookup. `LLSelectSettingsInputOf<S>` is the shared input shape (everything optional, `texts` deep-partial). The resolved bag is public via `getTexts(): Readonly<LLSelectTexts>` (`get*`, live object).
 
 ## 5. Decisions log
 
