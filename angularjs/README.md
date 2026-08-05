@@ -2,6 +2,8 @@
 
 AngularJS 1.x directives for [llselect](../README.md), published as `@llselect/angularjs`. Two independent files: pick the one you need, or use both while migrating.
 
+[Demo](https://kuanyui.github.io/llselect/demo/angularjs/) | [npm](https://www.npmjs.com/package/@llselect/angularjs) | [GitHub](https://github.com/kuanyui/llselect/tree/master/angularjs) | [GitLab](https://gitlab.com/kuanyui/llselect/-/tree/master/angularjs)
+
 ```html
 <script src="node_modules/@llselect/core/dist/index.umd.js"></script>
 <script src="node_modules/@llselect/angularjs/llselect-angularjs.min.js"></script>

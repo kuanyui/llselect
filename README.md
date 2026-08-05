@@ -4,6 +4,8 @@ A JavaScript library that replaces the native HTML `<select>` element.
 
 It is a minimal but flexible implementation of `<select>` in JavaScript that you can easily wrap and integrate into your existing UI library / framework / style.
 
+[Demo](https://kuanyui.github.io/llselect/demo/) | [npm](https://www.npmjs.com/package/@llselect/core) | [GitHub](https://github.com/kuanyui/llselect) | [GitLab](https://gitlab.com/kuanyui/llselect)
+
 > [!TIP]
 > #### Why not native `<select>`?
 >
@@ -74,6 +76,12 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 | Tom Select        | 539                           | 8,000                    | 23                               |
 | Slim Select       | 171                           | 20,000                   | 32                               |
 
+
+## Demo
+
+- Live: [GitHub Pages](https://kuanyui.github.io/llselect/demo/) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/)
+- AngularJS directives: [GitHub Pages](https://kuanyui.github.io/llselect/demo/angularjs/) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/angularjs/)
+- Local: clone this repo, `npm install && npm run build`, then `npm run serve` and open `http://localhost:8080/demo/`
 
 ## Install
 
