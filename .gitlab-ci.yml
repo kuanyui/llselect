@@ -9,7 +9,7 @@ pages:
     - npm run check
     - npm run build
     - npm test
-    - cd angularjs && npm ci && npm test && cd ..
+    - (cd angularjs && npm ci && npm test)
     - npm run build:site
   artifacts:
     paths:
