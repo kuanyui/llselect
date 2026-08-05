@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "build": "terser llselect-angularjs.js -c -m --comments '/^!/' -o llselect-angularjs.min.js && terser llselect-ui-select.js -c -m --comments '/^!/' -o llselect-ui-select.min.js",
-    "test": "node --test test/",
+    "test": "node --test test/*.test.mjs",
     "prepublishOnly": "npm test",
     "prepack": "npm run build"
   },
