@@ -1,5 +1,5 @@
 import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, createChevronDownSvgEl, createTriangleDownSvgEl, createCheckboxSvgEl } from '../dist/index.mjs'
-import { ar, en, he, ja, zhTW } from '../dist/i18n.mjs'
+import { ar, en, he, ja, zhTW, textsByLocale } from '../dist/i18n.mjs'
 import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS, MIXED_DIRECTION_COUNTRIES } from './data.js'
 import { highlightJs } from './highlight.js'
 
@@ -740,6 +740,38 @@ function createI18nSelects(packName) {
 }
 i18nPackSelect.addEventListener('change', () => createI18nSelects(i18nPackSelect.value))
 createI18nSelects(i18nPackSelect.value)
+//#endregion
+
+//#region 12.2
+// Every pack, straight out of `textsByLocale` (BCP 47 keys), so new packs
+// appear here without demo edits. One single per pack: closed it shows the
+// pack's `triggerPlaceholder`, open it the search placeholder / clear x /
+// no-results status. RTL tags put `dir="rtl"` on their mount; the card label
+// uses `Intl.DisplayNames` where available (Firefox < 86 gets the bare tag).
+const RTL_TAGS = new Set(['ar', 'fa', 'he', 'ur'])
+const i18nAllGrid = document.getElementById('i18n-all-grid')
+const displayNames = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['en'], { type: 'language' }) : null
+function languageLabel(tag) {
+  if (!displayNames) { return tag }
+  try { return `${tag} - ${displayNames.of(tag)}` } catch { return tag }
+}
+for (const [tag, pack] of Object.entries(textsByLocale)) {
+  const card = document.createElement('div')
+  const cardLabel = document.createElement('div')
+  cardLabel.className = 'out'
+  cardLabel.textContent = languageLabel(tag)
+  const mount = document.createElement('div')
+  if (RTL_TAGS.has(tag)) { mount.dir = 'rtl' }
+  card.append(cardLabel, mount)
+  i18nAllGrid.append(card)
+  const allSel = new LLSelectSingle(mount, {
+    searchable: true,
+    clearable: true,
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+    texts: pack,
+  })
+  allSel.setItems(MIXED_DIRECTION_COUNTRIES)
+}
 //#endregion
 
 // --- Inject demo snippets into <pre data-demo="X"><code></code></pre> -----

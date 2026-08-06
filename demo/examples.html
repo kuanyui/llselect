@@ -745,6 +745,22 @@
         <details class="code-toggle"><summary>code</summary><pre data-demo="12.1"><code></code></pre></details>
       </div>
     </article>
+
+    <article>
+      <h3>12.2 Every language pack</h3>
+      <p class="hint">
+        One <code>LLSelectSingle</code> per entry in
+        <code>textsByLocale</code>, so this grid grows with the library.
+        Nothing is preselected and no <code>placeholder</code> is passed -
+        each trigger shows its pack's own <code>triggerPlaceholder</code>;
+        open one and the search placeholder, the clear x and the no-results
+        status are translated too. RTL packs (<code>ar</code> /
+        <code>fa</code> / <code>he</code> / <code>ur</code>) set
+        <code>dir="rtl"</code> on their mounts.
+      </p>
+      <div id="i18n-all-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0.8rem"></div>
+      <details class="code-toggle"><summary>code</summary><pre data-demo="12.2"><code></code></pre></details>
+    </article>
   </section>
 
   <script type="module" src="main.js"></script>
