@@ -137,7 +137,7 @@ No build tool? The UMD bundle exposes `window.llselect` (`<script src="https://u
 
 ## Limitation: What llselect deliberately decides **not** to do?
 
-- **No native form integration.** llselect renders plain `div`s, not a form control: nothing is submitted with a `<form>`, and `name`/value serialization, form reset, constraint validation (`required` etc.), and `<label for>` association do not apply. What to do instead: [`<form>` integration](#form-integration).
+- **No native form integration.** llselect renders plain `div`s, not a form control: nothing is submitted with a `<form>`, and `name`/value serialization, form reset, constraint validation (`required` etc.), and `<label for>` association do not apply (the label half ships separately: the `labelEl` setting provides the accessible name + label-click-to-focus). What to do instead: [`<form>` integration](#form-integration).
 - **No HTML sanitizer.** llselect does not do HTML sanitizing for you. Remember to sanitize untrusted input via [DOMPurify](https://github.com/cure53/DOMPurify), or [browser's native Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/Sanitizer).
 - **No asynchronous data-fetching API.** llselect is aimed to be a simple `<select>` replacement. Fetch if you really want, then call `setItems(...)`.
 - **No virtual scrolling.** llselect is aimed to be a simple `<select>` replacement, not an omnipotent library.
@@ -202,7 +202,7 @@ The mirror covers submission only. The rest of native form behavior stays yours 
 - **Initial value**: if the server renders a pre-filled `value` attribute, apply the same value to llselect with `setChosenItem()` / `setChosenItems()` - the setters fire `onChange`, so the mirror stays in sync from then on.
 - **`form.reset()`** restores hidden inputs to their markup `value` attribute and does not touch llselect, so the two drift apart. Listen for the form's `reset` event and re-sync with `setChosenItem()` / `setChosenItems()`, or avoid reset.
 - **Constraint validation** (`required` etc.) never fires on hidden inputs - validate the llselect state in your submit handler.
-- **`<label for>`** cannot target llselect - set the accessible name with `ariaLabel` / `ariaLabelledBy`; for label-click-to-focus, add a `click` handler on the label yourself.
+- **`<label for>`** cannot target llselect (plain `div`s are not labelable) - pass the element instead: `labelEl: document.querySelector('label[for="country"]')` covers both halves (accessible name via a live `aria-labelledby` reference, and label clicks focus the trigger).
 
 Why there is no built-in setting for this, and why the recipe uses hidden inputs rather than a hidden `<select>` mirror: [docs/DESIGN.md](docs/DESIGN.md) "`<form>` integration (ruled out of core)".
 
@@ -211,7 +211,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Capability                           | Entry points                                                                                                             |
 |--------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Search box + custom matching         | `searchable` (bool or predicate), `filterFn`                                                                             |
-| Accessible field naming (required)   | `ariaLabel` / `ariaLabelledBy`                                                                                           |
+| Accessible field naming (required)   | `ariaLabel` / `ariaLabelledBy` / `labelEl` (visible label element: name + label-click-to-focus)                          |
 | Disabling - whole control / per item | `setDisabled()`, `focusableWhenDisabled`, `itemDisabledFn`                                                               |
 | Grouping (optgroup)                  | `itemToGroupKeyFn`, `groupKeyToLabelFn`, `groupDisabledFn`                                                               |
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `selectAllRow`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |

@@ -65,6 +65,21 @@ export interface LLSelectBaseSettings<T, GK = string> {
    */
   ariaLabelledBy: string | null
   /**
+   * The widget's visible label element - the one foreign element the library
+   * touches. Emulates native `<label for>` (which cannot target these divs)
+   * in both directions:
+   * - clicking it focuses the trigger (focus ONLY; native `<select>` does not
+   *   open on label click, neither does this);
+   * - it feeds the accessible name at the BOTTOM of the ladder
+   *   `ariaLabelledBy` > `ariaLabel` > `labelEl`: with neither aria setting
+   *   given, the label's id becomes the resolved `ariaLabelledBy` (an id is
+   *   minted from `classIdMap.labelId` if the element has none) - a live
+   *   reference, so later label text changes stay correct.
+   * - `null` = no label element; the name ladder just skips this rung.
+   * - `destroy()` removes the click listener and a minted id.
+   */
+  labelEl: HTMLElement | null
+  /**
    * Equality predicate for item values - return `true` when `a` and `b` are the
    * same item.
    * - Required for non-primitive `T` (the default `===` compares references).
@@ -355,6 +370,12 @@ export interface LLSelectClassIdMap {
   openClass: string
   /** DOM `id` of `triggerEl`. Unique across instances. */
   triggerId: string
+  /**
+   * DOM `id` minted onto the `labelEl` setting's element when it has none
+   * (the resolved `ariaLabelledBy` then references it). Unique across
+   * instances. Unused when `labelEl` is null or already carries an id.
+   */
+  labelId: string
   /** DOM `id` of the trigger content span. Unique across instances. */
   triggerContentId: string
   /**
@@ -407,6 +428,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     tagRemoveButtonClass: `${prefix}-tag-remove-button`,
     openClass: `${prefix}-open`,
     triggerId: `${uniq}-trigger`,
+    labelId: `${uniq}-label`,
     triggerContentId: `${uniq}-trigger-content`,
     triggerValueId: `${uniq}-trigger-value`,
     popupListId: `${uniq}-popup-list`,
@@ -491,6 +513,10 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   protected readonly settings: LLSelectBaseSettings<T, GK>
   /** Raw constructor `placeholder` input; `setUiTranslationPack` re-resolves against it. */
   private readonly explicitPlaceholder: string | null
+  /** True when the constructor minted `classIdMap.labelId` onto `labelEl`; `destroy()` then removes it. */
+  private labelElIdMinted = false
+  /** Click handler bound to `labelEl`: focus the trigger, never open (native label parity). */
+  private readonly handleLabelElClick = (): void => { this.triggerEl.focus() }
   /** Current item list. Defensive copy of what `setItems` was given. */
   protected items: T[] = []
   /** Whether the popup is currently open. */
@@ -568,17 +594,29 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     settings?: LLSelectBaseSettingsInput<T, GK>,
     subclassSettings?: Record<string, unknown>,
   ) {
+    // classIdMap first: labelEl id minting below needs labelId.
+    this.classIdMap = createClassIdMap(settings?.cssClassPrefix ?? DEFAULT_PREFIX)
     // The pack resolves first: the placeholder's library default is localized
     // chrome (uiTranslationPack.triggerPlaceholder), while an explicit `placeholder` is
     // app copy and wins. The raw input placeholder is kept so
     // setUiTranslationPack can re-run this exact resolution.
     this.explicitPlaceholder = settings?.placeholder ?? null
     const uiTranslationPack: LLSelectUiTranslationPack = { ...DEFAULT_UI_TRANSLATION_PACK, ...settings?.uiTranslationPack }
+    // labelEl resolves before the name ladder: with neither `ariaLabelledBy`
+    // nor `ariaLabel` given, the label's id becomes the resolved
+    // `ariaLabelledBy`, and every downstream consumer (trigger chain, search
+    // input, listbox) works unchanged.
+    const labelEl = settings?.labelEl ?? null
+    if (labelEl !== null && labelEl.id === '') {
+      labelEl.id = this.classIdMap.labelId
+      this.labelElIdMinted = true
+    }
     this.settings = {
       cssClassPrefix: settings?.cssClassPrefix ?? DEFAULT_PREFIX,
       placeholder: this.explicitPlaceholder ?? uiTranslationPack.triggerPlaceholder,
       ariaLabel: settings?.ariaLabel ?? null,
-      ariaLabelledBy: settings?.ariaLabelledBy ?? null,
+      ariaLabelledBy: settings?.ariaLabelledBy ?? (settings?.ariaLabel == null && labelEl !== null ? labelEl.id : null),
+      labelEl,
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
       createTriggerArrowContentElFn: settings?.createTriggerArrowContentElFn ?? null,
@@ -605,7 +643,9 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       // `satisfies`-checked at each subclass call site.
       ...subclassSettings,
     } as LLSelectBaseSettings<T, GK>
-    this.classIdMap = createClassIdMap(this.settings.cssClassPrefix)
+    // Label click focuses the trigger (native <select> label behavior: focus
+    // only, never open). The one listener destroy() must undo outside the root.
+    if (labelEl !== null) { labelEl.addEventListener('click', this.handleLabelElClick) }
     // Initial evaluation runs against the empty item list (setItems has not
     // happened yet); every open() re-evaluates.
     this.searchActive = this.computeSearchActive()
@@ -871,7 +911,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
 
   /**
    * Tear down the instance: close the popup (which detaches every document /
-   * window listener and the positioner), remove the library's class and
+   * window listener and the positioner), unwire `labelEl` (click listener
+   * removed, a minted id removed), remove the library's class and
    * inline styles from the caller's mount element, and empty it. Idempotent.
    * The instance must not be used afterwards.
    * - REQUIRED before discarding an instance that might be OPEN (framework
@@ -882,6 +923,10 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    */
   public destroy(): void {
     this.close()
+    if (this.settings.labelEl !== null) {
+      this.settings.labelEl.removeEventListener('click', this.handleLabelElClick)
+      if (this.labelElIdMinted) { this.settings.labelEl.removeAttribute('id') }
+    }
     this.rootEl.classList.remove(this.classIdMap.rootClass, this.classIdMap.openClass)
     this.rootEl.style.overflowAnchor = ''
     this.rootEl.replaceChildren()

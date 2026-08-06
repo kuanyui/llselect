@@ -765,6 +765,21 @@ for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
 }
 //#endregion
 
+//#region 13
+// labelEl: native <label for> cannot target these divs, so the setting
+// emulates both halves - the label is the bottom name rung (live
+// aria-labelledby reference; an id is minted if the label has none) and
+// clicking it focuses the trigger (focus only, never open - native <select>
+// label parity). destroy() unwires the click and a minted id.
+const labelDemoSel = new LLSelectSingle(document.getElementById('mount-label-demo'), {
+  labelEl: document.getElementById('fruit-label'),
+  searchable: true,
+  clearable: true,
+  createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+})
+labelDemoSel.setItems(['Apple', 'Banana', 'Cherry', 'Durian'])
+//#endregion
+
 // --- Inject demo snippets into <pre data-demo="X"><code></code></pre> -----
 // Self-extraction: fetch this file's source, locate `//#region NAME` ...
 // `//#endregion` blocks, and write each into the matching <code>.

@@ -765,6 +765,30 @@
     </article>
   </section>
 
+  <section>
+    <h2>13. Label integration (labelEl)</h2>
+    <p class="hint">
+      Native <code>&lt;label for&gt;</code> cannot target these plain
+      <code>div</code>s, so the <code>labelEl</code> setting emulates both of
+      its halves: the label feeds the accessible name (bottom rung of the
+      <code>ariaLabelledBy</code> &gt; <code>ariaLabel</code> &gt;
+      <code>labelEl</code> ladder, wired as a live
+      <code>aria-labelledby</code> reference), and clicking it focuses the
+      trigger - focus only, like a native <code>&lt;select&gt;</code> label,
+      never opening the popup. <code>destroy()</code> unwires it.
+    </p>
+    <article>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <label id="fruit-label">Favorite fruit</label>
+          <div id="mount-label-demo" style="margin-top:0.3rem"></div>
+          <div class="out">^ click the label above: the trigger receives focus; inspect it to see <code>aria-labelledby</code> referencing the label</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="13"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
+
   <script type="module" src="main.js"></script>
 </body>
 </html>
