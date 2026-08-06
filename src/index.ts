@@ -7,9 +7,9 @@ export type {
   LLSelectSettingsInputOf,
 } from './base.js'
 
-// The texts contract (the `texts` setting / language-pack shape). The packs
+// The pack contract (the `uiTranslationPack` setting / language-pack shape). The packs
 // themselves live under the `@llselect/core/i18n` subpath.
-export type { LLSelectTexts } from './texts.js'
+export type { LLSelectUiTranslationPack } from './ui-translation-pack.js'
 
 export { LLSelectSingle } from './single.js'
 export type {

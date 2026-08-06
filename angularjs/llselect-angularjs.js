@@ -125,13 +125,14 @@
     settings.ariaLabelledBy = attrs.llAriaLabelledby || null
     settings.ariaLabel = attrs.llAriaLabel || null
 
-    if (config.texts) { settings.texts = config.texts }
+    if (config.uiTranslationPack) { settings.uiTranslationPack = config.uiTranslationPack }
     if (config.searchable !== null) { settings.searchable = config.searchable }
     if (config.popupWidthPolicy) { settings.popupWidthPolicy = config.popupWidthPolicy }
     var arrow = config.arrow
 
-    // Settings are immutable in llselect, so these are read once at link time.
-    // Only ll-disabled gets a watcher, because it maps onto a method.
+    // Read once at link time; only ll-disabled gets a watcher, because it
+    // maps onto a method. (llselect's uiTranslationPack is runtime-swappable
+    // too, but as an app-wide config it has no per-element binding here.)
     if (attrs.llPlaceholder) { settings.placeholder = scope.$eval(attrs.llPlaceholder) }
     if (attrs.llSearchable) { settings.searchable = scope.$eval(attrs.llSearchable) }
     if (attrs.llPopupWidthPolicy) { settings.popupWidthPolicy = scope.$eval(attrs.llPopupWidthPolicy) }
@@ -171,14 +172,14 @@
      * App-wide defaults, set once in .config(). Without this a 40-select app
      * repeats the same house style 40 times.
      *
-     * Only settings that are app-wide by nature are here. `texts` is the
+     * Only settings that are app-wide by nature are here. `uiTranslationPack` is the
      * clearest case - an app picks its language once, and llselect's chrome
      * strings are not per-field copy. `placeholder` is deliberately absent: it
      * IS per-field copy. Per-element ll-* attributes always win.
      *
      *   angular.module('app', ['llselect'])
      *     .config(['llselectConfigProvider', function (llselectConfigProvider) {
-     *       llselectConfigProvider.defaults({ arrow: 'chevron', searchable: true, texts: llselectI18n.zhTW })
+     *       llselectConfigProvider.defaults({ arrow: 'chevron', searchable: true, uiTranslationPack: llselectI18n.zhTW })
      *     }])
      */
     .provider('llselectConfig', function () {
@@ -189,8 +190,8 @@
         searchable: null,
         /** 'match-trigger' | 'fit-content' | null. null = llselect's own default. */
         popupWidthPolicy: null,
-        /** An llselect texts pack (@llselect/core/i18n), or null for the English defaults. */
-        texts: null,
+        /** A UI-translation pack (@llselect/core/i18n), or null for the English defaults. */
+        uiTranslationPack: null,
       }
       this.defaults = function (overrides) {
         var unknown = Object.keys(overrides).filter(function (k) { return !(k in config) })

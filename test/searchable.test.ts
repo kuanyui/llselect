@@ -70,19 +70,19 @@ test('search input has a default accessible name and the default filter placehol
   assert.equal(input.placeholder, 'Filter (Esc to clear)')
 })
 
-test('texts.searchInputPlaceholder null removes the placeholder entirely', () => {
+test('uiTranslationPack.searchInputPlaceholder null removes the placeholder entirely', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     searchable: true,
-    texts: { searchInputPlaceholder: null },
+    uiTranslationPack: { searchInputPlaceholder: null },
   })
   assert.equal(searchInput(sel).hasAttribute('placeholder'), false)
 })
 
-test('texts.searchInputAriaLabel / searchInputPlaceholder are applied; other keys keep defaults', () => {
+test('uiTranslationPack.searchInputAriaLabel / searchInputPlaceholder are applied; other keys keep defaults', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     searchable: true,
     clearable: true,
-    texts: {
+    uiTranslationPack: {
       searchInputAriaLabel: 'Find a country',
       searchInputPlaceholder: 'Type to filter',
     },
@@ -90,7 +90,7 @@ test('texts.searchInputAriaLabel / searchInputPlaceholder are applied; other key
   const input = searchInput(sel)
   assert.equal(input.getAttribute('aria-label'), 'Find a country')
   assert.equal(input.placeholder, 'Type to filter')
-  // Partial texts merge: unspecified keys fall back to the English defaults.
+  // Partial pack merge: unspecified keys fall back to the English defaults.
   const clearBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.triggerClearButtonClass}`)!
   assert.equal(clearBtn.getAttribute('aria-label'), 'Clear selection')
 })
@@ -238,7 +238,7 @@ test('createPopupListNoResultsContentElFn fills the message with rich content (r
   assert.equal(msg.querySelector('.rich-empty')!.textContent, 'Nothing matches "zzz"')
 })
 
-test('createPopupListNoResultsContentElFn returning null falls back to texts.popupListNoResults', () => {
+test('createPopupListNoResultsContentElFn returning null falls back to uiTranslationPack.popupListNoResults', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     searchable: true,
     createPopupListNoResultsContentElFn: () => null,

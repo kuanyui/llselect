@@ -95,7 +95,7 @@ Grammar: `select as label group by group disable when disable for (key, value) i
 | `track by` (group 9) | `compareFn` |
 | `select as` (group 1, when ` as ` is present) | no equivalent, by design |
 
-`select as` is the ngModel value projection - the "what string/id does this item become in the model" question. It has no llselect setting because that projection belongs to the app, not the library, and `ng-options` is the app stating it. This is also why the library core has no `itemToValueFn`: using `itemToString` for it would conflate display with identity, so switching `texts` to another language would change your submitted values.
+`select as` is the ngModel value projection - the "what string/id does this item become in the model" question. It has no llselect setting because that projection belongs to the app, not the library, and `ng-options` is the app stating it. This is also why the library core has no `itemToValueFn`: using `itemToString` for it would conflate display with identity, so switching `uiTranslationPack` to another language would change your submitted values.
 
 `track by` is a per-item hash; `compareFn` is pairwise equality. Same semantic, different shape: `compareFn: (a, b) => trackBy(a) === trackBy(b)`.
 
@@ -138,12 +138,12 @@ angular.module('app', ['llselect'])
       arrow: 'chevron',          // 'chevron' | 'triangle' | null (null = the theme draws it)
       searchable: true,          // boolean, or a predicate (items) => boolean
       popupWidthPolicy: 'fit-content',
-      texts: llselectI18n.zhTW,  // an llselect language pack
+      uiTranslationPack: llselectI18n.zhTW,  // an llselect language pack
     })
   }])
 ```
 
-Only settings that are app-wide **by nature** are here, and `texts` is the clearest case: an app picks its language once, and llselect's chrome strings are not per-field copy. `placeholder` is deliberately absent for the mirror-image reason - it IS per-field copy. An unknown key throws rather than being ignored, so a typo cannot silently do nothing.
+Only settings that are app-wide **by nature** are here, and `uiTranslationPack` is the clearest case: an app picks its language once, and llselect's chrome strings are not per-field copy. `placeholder` is deliberately absent for the mirror-image reason - it IS per-field copy. An unknown key throws rather than being ignored, so a typo cannot silently do nothing.
 
 ## The arrow
 

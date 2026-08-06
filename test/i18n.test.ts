@@ -2,10 +2,10 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectMultiple } from '../src/multiple.js'
-import { ar, en, he, ja, zhTW, textsByLocale } from '../src/i18n.js'
+import { ar, en, he, ja, zhTW, uiTranslationPackByLocale } from '../src/i18n.js'
 
-// Language packs (`@llselect/core/i18n`): pure LLSelectTexts data spreadable into
-// the `texts` setting. Assertions compare against the pack values themselves,
+// Language packs (`@llselect/core/i18n`): pure LLSelectUiTranslationPack data spreadable into
+// the `uiTranslationPack` setting. Assertions compare against the pack values themselves,
 // so this file needs no CJK literals of its own.
 
 function mount(): HTMLElement {
@@ -13,28 +13,28 @@ function mount(): HTMLElement {
   return document.getElementById('mount')!
 }
 
-test('every pack is a complete LLSelectTexts (same keys as en)', () => {
-  for (const [tag, pack] of Object.entries(textsByLocale)) {
+test('every pack is a complete LLSelectUiTranslationPack (same keys as en)', () => {
+  for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
     assert.deepEqual(Object.keys(pack).sort(), Object.keys(en).sort(), `pack ${tag}`)
   }
 })
 
-test('textsByLocale maps minimal BCP 47 tags to the packs, aliases share the object', () => {
-  assert.equal(textsByLocale['ar'], ar)
-  assert.equal(textsByLocale['en'], en)
-  assert.equal(textsByLocale['he'], he)
-  assert.equal(textsByLocale['ja'], ja)
-  assert.equal(textsByLocale['zh-TW'], zhTW)
+test('uiTranslationPackByLocale maps minimal BCP 47 tags to the packs, aliases share the object', () => {
+  assert.equal(uiTranslationPackByLocale['ar'], ar)
+  assert.equal(uiTranslationPackByLocale['en'], en)
+  assert.equal(uiTranslationPackByLocale['he'], he)
+  assert.equal(uiTranslationPackByLocale['ja'], ja)
+  assert.equal(uiTranslationPackByLocale['zh-TW'], zhTW)
   // Aliases: macrolanguage / same-written-form tags resolve to the same pack.
-  assert.equal(textsByLocale['no'], textsByLocale['nb'])
-  assert.equal(textsByLocale['zh-HK'], textsByLocale['zh-TW'])
+  assert.equal(uiTranslationPackByLocale['no'], uiTranslationPackByLocale['nb'])
+  assert.equal(uiTranslationPackByLocale['zh-HK'], uiTranslationPackByLocale['zh-TW'])
   // Keys stay sorted (aliases sit at their own alphabetical spot).
-  const keys = Object.keys(textsByLocale)
+  const keys = Object.keys(uiTranslationPackByLocale)
   assert.deepEqual(keys, [...keys].sort())
 })
 
 test('every pack: strings non-empty, message functions total over count shapes', () => {
-  for (const [tag, pack] of Object.entries(textsByLocale)) {
+  for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
     assert.ok(pack.triggerPlaceholder.length > 0, `${tag} triggerPlaceholder`)
     assert.ok(pack.searchInputAriaLabel.length > 0, `${tag} searchInputAriaLabel`)
     assert.ok((pack.searchInputPlaceholder ?? '').length > 0, `${tag} searchInputPlaceholder`)
@@ -55,7 +55,7 @@ test('a whole language pack applies to every chrome string (zhTW)', () => {
     searchable: true,
     clearable: true,
     triggerDisplay: 'tags',
-    texts: zhTW,
+    uiTranslationPack: zhTW,
   })
   sel.setItems(['a', 'b', 'c'])
   // No `placeholder` passed -> the pack's localized trigger default shows.
@@ -78,7 +78,7 @@ test('a whole language pack applies to every chrome string (zhTW)', () => {
 })
 
 test('the count summary comes from the pack (ja)', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { texts: ja })
+  const sel = new LLSelectMultiple<string>(mount(), { uiTranslationPack: ja })
   sel.setItems(['a', 'b', 'c'])
   sel.setChosenItems(['a'])
   assert.equal(sel.triggerContentEl.textContent, ja.triggerCountSummary(1, 3))
@@ -89,31 +89,90 @@ test('the count summary comes from the pack (ja)', () => {
 test('an explicit placeholder setting (app copy) wins over the pack default', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     placeholder: 'Pick some',
-    texts: zhTW,
+    uiTranslationPack: zhTW,
   })
   sel.setItems(['a', 'b'])
   assert.equal(sel.triggerContentEl.textContent, 'Pick some')
 })
 
-test('getTexts exposes the resolved bag (defaults + pack + overrides merged)', () => {
+test('getUiTranslationPack exposes the resolved bag (defaults + pack + overrides merged)', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
-    texts: { ...zhTW, searchInputAriaLabel: 'custom' },
+    uiTranslationPack: { ...zhTW, searchInputAriaLabel: 'custom' },
   })
-  const texts = sel.getTexts()
-  assert.equal(texts.searchInputAriaLabel, 'custom') // per-key override
-  assert.equal(texts.triggerPlaceholder, zhTW.triggerPlaceholder) // from the pack
+  const pack = sel.getUiTranslationPack()
+  assert.equal(pack.searchInputAriaLabel, 'custom') // per-key override
+  assert.equal(pack.triggerPlaceholder, zhTW.triggerPlaceholder) // from the pack
   // App reuse case: the library's translation drives an app-owned tooltip.
-  assert.equal(texts.tagRemoveButtonAriaLabel('x'), zhTW.tagRemoveButtonAriaLabel('x'))
+  assert.equal(pack.tagRemoveButtonAriaLabel('x'), zhTW.tagRemoveButtonAriaLabel('x'))
 
   const sel2 = new LLSelectMultiple<string>(mount())
-  assert.equal(sel2.getTexts().searchInputAriaLabel, en.searchInputAriaLabel) // en fallback
+  assert.equal(sel2.getUiTranslationPack().searchInputAriaLabel, en.searchInputAriaLabel) // en fallback
 })
 
 test('a pack composes with per-key overrides (spread order wins)', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     searchable: true,
-    texts: { ...zhTW, searchInputAriaLabel: 'custom' },
+    uiTranslationPack: { ...zhTW, searchInputAriaLabel: 'custom' },
   })
   const input = sel.popupEl.querySelector('input')!
   assert.equal(input.getAttribute('aria-label'), 'custom')
+})
+
+test('setUiTranslationPack switches every chrome string at runtime (en -> zhTW)', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { searchable: true, clearable: true, triggerDisplay: 'tags' })
+  sel.setItems(['a', 'b', 'c'])
+  assert.equal(sel.triggerContentEl.textContent, en.triggerPlaceholder)
+  sel.setUiTranslationPack(zhTW)
+  assert.equal(sel.triggerContentEl.textContent, zhTW.triggerPlaceholder)
+  // Elements rerender() does not rebuild get their attributes re-applied:
+  const input = sel.popupEl.querySelector('input')!
+  assert.equal(input.getAttribute('aria-label'), zhTW.searchInputAriaLabel)
+  assert.equal(input.placeholder, zhTW.searchInputPlaceholder)
+  const clearBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  assert.equal(clearBtn.getAttribute('aria-label'), zhTW.triggerClearButtonAriaLabel)
+  // Chips rebuild through the normal trigger render.
+  sel.setChosenItems(['a'])
+  const removeBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.tagRemoveButtonClass}`)!
+  assert.equal(removeBtn.getAttribute('aria-label'), zhTW.tagRemoveButtonAriaLabel('a'))
+})
+
+test('setUiTranslationPack resolves against the built-in English pack, not the previous pack', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { uiTranslationPack: zhTW })
+  sel.setItems(['a'])
+  sel.setUiTranslationPack({})
+  assert.equal(sel.triggerContentEl.textContent, en.triggerPlaceholder)
+  assert.equal(sel.getUiTranslationPack().popupListNoResults, en.popupListNoResults)
+})
+
+test('setUiTranslationPack: an explicit constructor placeholder keeps winning', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { placeholder: 'Pick some', uiTranslationPack: zhTW })
+  sel.setItems(['a'])
+  sel.setUiTranslationPack(ja)
+  assert.equal(sel.triggerContentEl.textContent, 'Pick some')
+})
+
+test('setUiTranslationPack: searchInputPlaceholder null removes the attribute, a later pack restores it', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { searchable: true })
+  const input = sel.popupEl.querySelector('input')!
+  assert.equal(input.placeholder, en.searchInputPlaceholder)
+  sel.setUiTranslationPack({ searchInputPlaceholder: null })
+  assert.equal(input.hasAttribute('placeholder'), false)
+  sel.setUiTranslationPack(zhTW)
+  assert.equal(input.placeholder, zhTW.searchInputPlaceholder)
+})
+
+test('setUiTranslationPack while open re-renders the popup (no-results + count summary)', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { searchable: true })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a'])
+  assert.equal(sel.triggerContentEl.textContent, en.triggerCountSummary(1, 2))
+  sel.open()
+  const input = sel.popupEl.querySelector('input')!
+  input.value = 'zzz'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  const noResults = sel.popupEl.querySelector(`.${sel.classIdMap.popupListNoResultsClass}`)!
+  assert.equal(noResults.textContent, en.popupListNoResults)
+  sel.setUiTranslationPack(ja)
+  assert.equal(noResults.textContent, ja.popupListNoResults)
+  assert.equal(sel.triggerContentEl.textContent, ja.triggerCountSummary(1, 2))
 })

@@ -88,7 +88,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * Whether the popup shows a select-all row as the FIRST option of the
    * listbox (`false` default). Tri-state (none / some / all chosen, via the
    * `data-chosen-state` attribute themes draw + the accessible name from
-   * `texts.selectAllRowLabel`); Enter / click toggles. Acts on the VISIBLE
+   * `uiTranslationPack.selectAllRowLabel`); Enter / click toggles. Acts on the VISIBLE
    * enabled subset (the filtered list while a search query is active) - the
    * public `chooseAll` / `unchooseAll` / `toggleAll` keep their whole-list
    * semantics. See `docs/A11Y.md` "Select-all".
@@ -100,10 +100,10 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * `createItemContentElFn`. Only used with `selectAllRow: true`.
    * - Receives the tri-state and the counts of the visible enabled subset.
    * - Return an `HTMLElement`: inserted as the row's content; the accessible
-   *   name stays pinned to `texts.selectAllRowLabel` via `aria-label`, so
+   *   name stays pinned to `uiTranslationPack.selectAllRowLabel` via `aria-label`, so
    *   icon-only content is still announced with the counts.
    * - `null` (setting default, or returned): plain text from
-   *   `texts.selectAllRowLabel` (themes then draw a text glyph tri-state).
+   *   `uiTranslationPack.selectAllRowLabel` (themes then draw a text glyph tri-state).
    */
   createSelectAllRowContentElFn:
     ((chosenState: LLSelectChosenState, chosenCount: number, totalCount: number) => HTMLElement | null) | null
@@ -229,7 +229,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * setting) to display tags / custom markup / etc.
    *
    * - 0 chosen: `placeholder`
-   * - n > 0: `texts.triggerCountSummary(n, total)` (English default:
+   * - n > 0: `uiTranslationPack.triggerCountSummary(n, total)` (English default:
    *   `"n / total selected"`, or `"All n selected"` when all are chosen)
    */
   protected override renderTriggerContent(): void {
@@ -237,7 +237,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     const chosenCount = this.chosenItems.length
     const countValue = chosenCount === 0
       ? this.settings.placeholder
-      : this.settings.texts.triggerCountSummary(chosenCount, this.items.length)
+      : this.settings.uiTranslationPack.triggerCountSummary(chosenCount, this.items.length)
     const custom = this.settings.createTriggerContentElFn?.({ chosenItems: this.getChosenItems(), items: this.getItems() }) ?? null
     if (custom !== null) {
       this.commitTriggerContentToDom(custom, countValue)
@@ -334,12 +334,12 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
 
   /**
    * Item -> its remove button's accessible name in `'tags'` mode.
-   * - Default: `texts.tagRemoveButtonAriaLabel(itemToString(item))`.
+   * - Default: `uiTranslationPack.tagRemoveButtonAriaLabel(itemToString(item))`.
    * - Override only when extending (e.g. a name from another item field);
-   *   per-locale text goes through the `texts` setting.
+   *   per-locale text goes through the `uiTranslationPack` setting.
    */
   protected itemToTagRemoveButtonAriaLabel(item: T): string {
-    return this.settings.texts.tagRemoveButtonAriaLabel(this.itemToString(item))
+    return this.settings.uiTranslationPack.tagRemoveButtonAriaLabel(this.itemToString(item))
   }
 
   /** No selection iff the chosen set is empty. Drives the trigger's `data-empty`. */
@@ -362,7 +362,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * leading `role="option"` row: `data-chosen-state="none|some|all"` (themes
    * draw the tri-state icon from it), `aria-selected` only when ALL visible
    * enabled items are chosen, accessible name + visible text from
-   * `texts.selectAllRowLabel(chosenCount, totalCount)` over the visible
+   * `uiTranslationPack.selectAllRowLabel(chosenCount, totalCount)` over the visible
    * enabled subset. `null` when the setting is off or nothing is actionable.
    */
   protected override createPopupListLeadingRowEl(): HTMLElement | null {
@@ -379,7 +379,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     // ARIA option has no `mixed`: the indeterminate state is conveyed by the
     // visual (data-chosen-state) + the counting accessible name only.
     el.setAttribute('aria-selected', String(state === 'all'))
-    const label = this.settings.texts.selectAllRowLabel(chosenCount, actionable.length)
+    const label = this.settings.uiTranslationPack.selectAllRowLabel(chosenCount, actionable.length)
     const content = this.createSelectAllRowContentEl(state, chosenCount, actionable.length)
     if (content === null) {
       el.textContent = label
@@ -401,7 +401,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * The select-all row's visible content (rich tri-state). Mirrors
    * `createItemContentEl`.
    * - Default reads `createSelectAllRowContentElFn`; `null` (setting unset,
-   *   or returned) = plain text from `texts.selectAllRowLabel`.
+   *   or returned) = plain text from `uiTranslationPack.selectAllRowLabel`.
    * - Override only when extending; for one-off content pass the setting.
    */
   protected createSelectAllRowContentEl(

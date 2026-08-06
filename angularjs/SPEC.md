@@ -91,7 +91,7 @@ Bugs found while reading it, listed so nobody reproduces them in the name of com
 
 ### App-wide defaults
 
-`llselectConfigProvider.defaults({...})` holds only settings that are app-wide by nature: `arrow`, `searchable`, `popupWidthPolicy`, `texts`. The test for admission is whether an app would plausibly set it once as a house style - `texts` obviously would (i18n is definitionally app-wide), `placeholder` obviously would not (it is per-field copy). Unknown keys throw, so a typo cannot silently do nothing. Precedence is defaults, then this element's `ll-*` attributes.
+`llselectConfigProvider.defaults({...})` holds only settings that are app-wide by nature: `arrow`, `searchable`, `popupWidthPolicy`, `uiTranslationPack`. The test for admission is whether an app would plausibly set it once as a house style - `uiTranslationPack` obviously would (i18n is definitionally app-wide), `placeholder` obviously would not (it is per-field copy). Unknown keys throw, so a typo cannot silently do nothing. Precedence is defaults, then this element's `ll-*` attributes.
 
 `ARROWS` maps `'chevron'` / `'triangle'` onto llselect's `createChevronDownSvgEl` / `createTriangleDownSvgEl`. `createTriggerArrowContentElFn` is called per render, so the wrapper must build a fresh element on each call - one SVG cannot be in two triggers at once.
 

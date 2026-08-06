@@ -81,10 +81,10 @@ test('createTriggerClearButtonContentElFn fills the icon; library still owns cli
   assert.equal(sel.getChosenItem(), undefined)
 })
 
-test('texts.triggerClearButtonAriaLabel customizes the clear button accessible name', () => {
+test('uiTranslationPack.triggerClearButtonAriaLabel customizes the clear button accessible name', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     clearable: true,
-    texts: { triggerClearButtonAriaLabel: 'Reset choice' },
+    uiTranslationPack: { triggerClearButtonAriaLabel: 'Reset choice' },
   })
   assert.equal(clearBtn(sel)!.getAttribute('aria-label'), 'Reset choice')
 })

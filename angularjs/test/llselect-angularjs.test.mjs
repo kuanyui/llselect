@@ -191,14 +191,14 @@ test('llselectConfigProvider.defaults rejects an unknown key instead of ignoring
   }), /unknown key\(s\): plcaeholder/)
 })
 
-test('config texts reach the widget (the case that makes a provider worth having)', () => {
+test('config uiTranslationPack reaches the widget (the case that makes a provider worth having)', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm">
       <llselect-single ng-model="vm.a" ll-options="f for f in vm.fruits"></llselect-single></div>`,
     controller: function () { this.fruits = FRUITS.slice() },
     config: ['llselectConfigProvider', function (llselectConfigProvider) {
-      llselectConfigProvider.defaults({ texts: { triggerPlaceholder: 'Bitte auswaehlen' } })
+      llselectConfigProvider.defaults({ uiTranslationPack: { triggerPlaceholder: 'Bitte auswaehlen' } })
     }],
   })
   assert.equal(a.text('.llselect-trigger-content'), 'Bitte auswaehlen')

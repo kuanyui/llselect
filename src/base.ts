@@ -10,7 +10,7 @@ import {
   getActionFromKey,
   getUpdatedIndex,
 } from './keyboard.js'
-import { en as DEFAULT_TEXTS, type LLSelectTexts } from './texts.js'
+import { en as DEFAULT_UI_TRANSLATION_PACK, type LLSelectUiTranslationPack } from './ui-translation-pack.js'
 
 /**
  * What happens when the user clicks outside an open popup.
@@ -39,7 +39,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
   /**
    * Text shown in the trigger when nothing is selected. App copy: an explicit
    * value always wins; when unset, the locale default
-   * `texts.triggerPlaceholder` is used (`'Please select'` in English).
+   * `uiTranslationPack.triggerPlaceholder` is used (`'Please select'` in English).
    */
   placeholder: string
   /**
@@ -113,13 +113,13 @@ export interface LLSelectBaseSettings<T, GK = string> {
   searchable: boolean | ((items: readonly T[]) => boolean)
   /**
    * Chrome strings (AT labels + generated text) - the i18n seam. Resolved
-   * against English: pass a language pack whole (`texts: zhTW` from
+   * against English: pass a language pack whole (`uiTranslationPack: zhTW` from
    * `@llselect/core/i18n`) or override single keys
-   * (`texts: { ...zhTW, searchInputPlaceholder: '...' }`).
+   * (`uiTranslationPack: { ...zhTW, searchInputPlaceholder: '...' }`).
    * Key-by-key contract (incl. what `null` means where allowed):
-   * {@link LLSelectTexts}.
+   * {@link LLSelectUiTranslationPack}.
    */
-  texts: LLSelectTexts
+  uiTranslationPack: LLSelectUiTranslationPack
   /**
    * Predicate used by the search input; return `true` to keep the item.
    * `null` (default) means the built-in case-insensitive substring match
@@ -140,7 +140,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * - Return an `HTMLElement`: inserted as the content (you own it; include
    *   real text - the status region announces its TEXT content).
    * - `null` (setting default, or returned): plain text from
-   *   `texts.popupListNoResults`.
+   *   `uiTranslationPack.popupListNoResults`.
    * Re-evaluated every time the message is shown (the query may differ).
    */
   createPopupListNoResultsContentElFn: ((query: string) => HTMLElement | null) | null
@@ -269,13 +269,13 @@ export interface LLSelectBaseSettings<T, GK = string> {
 
 /**
  * Constructor input for a resolved settings bag `S`: every field optional,
- * and `texts` accepts a PARTIAL texts object (missing keys fall back to
+ * and `uiTranslationPack` accepts a PARTIAL pack (missing keys fall back to
  * English). Shared by the base / single / multiple `*SettingsInput` types;
  * use it for a subclass wrapper that extends the settings bag.
  */
-export type LLSelectSettingsInputOf<S extends { texts: LLSelectTexts }> =
-  & Partial<Omit<S, 'texts'>>
-  & { texts?: Partial<LLSelectTexts> }
+export type LLSelectSettingsInputOf<S extends { uiTranslationPack: LLSelectUiTranslationPack }> =
+  & Partial<Omit<S, 'uiTranslationPack'>>
+  & { uiTranslationPack?: Partial<LLSelectUiTranslationPack> }
 
 /**
  * Constructor-time settings input - every field is optional and missing
@@ -488,6 +488,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * `declare` (see `LLSelectSingle` / `LLSelectMultiple`).
    */
   protected readonly settings: LLSelectBaseSettings<T, GK>
+  /** Raw constructor `placeholder` input; `setUiTranslationPack` re-resolves against it. */
+  private readonly explicitPlaceholder: string | null
   /** Current item list. Defensive copy of what `setItems` was given. */
   protected items: T[] = []
   /** Whether the popup is currently open. */
@@ -565,13 +567,15 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     settings?: LLSelectBaseSettingsInput<T, GK>,
     subclassSettings?: Record<string, unknown>,
   ) {
-    // Texts resolve first: the placeholder's library default is localized
-    // chrome (texts.triggerPlaceholder), while an explicit `placeholder` is
-    // app copy and wins.
-    const texts: LLSelectTexts = { ...DEFAULT_TEXTS, ...settings?.texts }
+    // The pack resolves first: the placeholder's library default is localized
+    // chrome (uiTranslationPack.triggerPlaceholder), while an explicit `placeholder` is
+    // app copy and wins. The raw input placeholder is kept so
+    // setUiTranslationPack can re-run this exact resolution.
+    this.explicitPlaceholder = settings?.placeholder ?? null
+    const uiTranslationPack: LLSelectUiTranslationPack = { ...DEFAULT_UI_TRANSLATION_PACK, ...settings?.uiTranslationPack }
     this.settings = {
       cssClassPrefix: settings?.cssClassPrefix ?? DEFAULT_PREFIX,
-      placeholder: settings?.placeholder ?? texts.triggerPlaceholder,
+      placeholder: this.explicitPlaceholder ?? uiTranslationPack.triggerPlaceholder,
       ariaLabel: settings?.ariaLabel ?? null,
       ariaLabelledBy: settings?.ariaLabelledBy ?? null,
       compareFn: settings?.compareFn ?? defaultCompareFn,
@@ -580,7 +584,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       clearable: settings?.clearable ?? false,
       createTriggerClearButtonContentElFn: settings?.createTriggerClearButtonContentElFn ?? null,
       searchable: settings?.searchable ?? false,
-      texts,
+      uiTranslationPack,
       filterFn: settings?.filterFn ?? null,
       createPopupListNoResultsContentElFn: settings?.createPopupListNoResultsContentElFn ?? null,
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'match-trigger',
@@ -713,7 +717,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    *   `aria-labelledby` chains label + content span. With only `ariaLabel`
    *   there is no label element to reference, so the chain starts at the
    *   trigger itself - the accname algorithm substitutes its `aria-label`.
-   * - Search input: the field name replaces the `texts.searchInputAriaLabel`
+   * - Search input: the field name replaces the `uiTranslationPack.searchInputAriaLabel`
    *   fallback (while search is active the input IS the field's combobox).
    * - Listbox: the field name, both modes.
    */
@@ -734,7 +738,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       apply(this.popupListEl, null, ariaLabel)
     } else {
       apply(this.triggerEl, null, null)
-      apply(this.searchInputEl, null, this.settings.texts.searchInputAriaLabel)
+      apply(this.searchInputEl, null, this.settings.uiTranslationPack.searchInputAriaLabel)
       apply(this.popupListEl, null, null)
     }
   }
@@ -905,14 +909,42 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Resolved chrome strings (English defaults + the `texts` setting merged).
+   * Resolved chrome strings (English defaults + the `uiTranslationPack` setting merged).
    * Reuse the library's translations in your own UI - e.g. a tooltip on a tag
-   * remove button: `sel.getTexts().tagRemoveButtonAriaLabel(label)` - instead
+   * remove button: `sel.getUiTranslationPack().tagRemoveButtonAriaLabel(label)` - instead
    * of maintaining a second translation source. Live object, treat as
    * immutable (same contract as `getItems`).
    */
-  public getTexts(): Readonly<LLSelectTexts> {
-    return this.settings.texts
+  public getUiTranslationPack(): Readonly<LLSelectUiTranslationPack> {
+    return this.settings.uiTranslationPack
+  }
+
+  /**
+   * Replace the UI-translation pack at runtime, so switching language needs no
+   * re-`new` - a deliberate exception (like `setDisabled`) to
+   * constructor-frozen settings.
+   * - Resolved exactly like the constructor: merged over the built-in English
+   *   pack, NOT over the previously set pack.
+   * - An explicit constructor `placeholder` keeps winning over the new pack's
+   *   `triggerPlaceholder`.
+   * - Re-renders the trigger and the open popup, and re-applies the pack-owned
+   *   attributes `rerender()` cannot reach (search input placeholder and
+   *   fallback `aria-label`, clear button `aria-label`).
+   */
+  public setUiTranslationPack(uiTranslationPack: Partial<LLSelectUiTranslationPack>): void {
+    const pack: LLSelectUiTranslationPack = { ...DEFAULT_UI_TRANSLATION_PACK, ...uiTranslationPack }
+    this.settings.uiTranslationPack = pack
+    this.settings.placeholder = this.explicitPlaceholder ?? pack.triggerPlaceholder
+    // Constructor-built elements that rerender() does not rebuild:
+    this.syncFieldNameToDom()
+    if (pack.searchInputPlaceholder !== null) {
+      this.searchInputEl.placeholder = pack.searchInputPlaceholder
+    } else {
+      this.searchInputEl.removeAttribute('placeholder')
+    }
+    const clearButtonEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerClearButtonClass}`)
+    if (clearButtonEl !== null) { clearButtonEl.setAttribute('aria-label', pack.triggerClearButtonAriaLabel) }
+    this.rerender()
   }
 
   /**
@@ -1725,7 +1757,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * Build the clear (x) button for the `clearable` trigger slot. The library owns
    * the button + its click (stops propagation so it never toggles the popup, then
-   * `clearSelection`) + `aria-label` (text from `texts.triggerClearButtonAriaLabel`);
+   * `clearSelection`) + `aria-label` (text from `uiTranslationPack.triggerClearButtonAriaLabel`);
    * `createTriggerClearButtonContentElFn` optionally fills the icon,
    * else the theme's CSS glyph. The theme hides it via `data-empty` when empty.
    */
@@ -1734,7 +1766,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     btn.type = 'button'
     btn.className = this.classIdMap.triggerClearButtonClass
     btn.tabIndex = -1
-    btn.setAttribute('aria-label', this.settings.texts.triggerClearButtonAriaLabel)
+    btn.setAttribute('aria-label', this.settings.uiTranslationPack.triggerClearButtonAriaLabel)
     const icon = this.createTriggerClearButtonContentEl()
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
@@ -1782,8 +1814,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     el.setAttribute('spellcheck', 'false')
     // Accessible name (aria-label / aria-labelledby) is owned by
     // syncFieldNameToDom, which runs right after construction.
-    if (this.settings.texts.searchInputPlaceholder !== null) {
-      el.placeholder = this.settings.texts.searchInputPlaceholder
+    if (this.settings.uiTranslationPack.searchInputPlaceholder !== null) {
+      el.placeholder = this.settings.uiTranslationPack.searchInputPlaceholder
     }
     return el
   }
@@ -1848,7 +1880,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * Build the no-results message element. `role="status"` announces its
    * appearance politely; it lives OUTSIDE the listbox (options-only children)
-   * and its text comes from `texts.popupListNoResults`.
+   * and its text comes from `uiTranslationPack.popupListNoResults`.
    */
   private createPopupListNoResultsEl(): HTMLElement {
     const el = document.createElement('div')
@@ -1861,7 +1893,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * The no-results message's visible content (rich empty-state).
    * - Default reads `createPopupListNoResultsContentElFn`; `null` (setting
-   *   unset, or returned) = plain text from `texts.popupListNoResults`.
+   *   unset, or returned) = plain text from `uiTranslationPack.popupListNoResults`.
    * - Override only when extending; for one-off content pass the setting.
    */
   protected createPopupListNoResultsContentEl(query: string): HTMLElement | null {
@@ -1874,7 +1906,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Mirror the visible-list-empty state onto the no-results message element:
    * `hidden` while there is at least one visible item; when shown, (re)fill
    * its content - `createPopupListNoResultsContentEl(query)` first, else the
-   * plain text from `texts.popupListNoResults`. Same null-branch shape as
+   * plain text from `uiTranslationPack.popupListNoResults`. Same null-branch shape as
    * `createItemEl` / `createGroupEl`.
    */
   private syncPopupListNoResultsToDom(): void {
@@ -1883,7 +1915,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     if (!empty) { return }
     const content = this.createPopupListNoResultsContentEl(this.query)
     if (content === null) {
-      this.popupListNoResultsEl.textContent = this.settings.texts.popupListNoResults
+      this.popupListNoResultsEl.textContent = this.settings.uiTranslationPack.popupListNoResults
     } else {
       this.popupListNoResultsEl.replaceChildren(content)
     }

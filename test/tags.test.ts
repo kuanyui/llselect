@@ -131,17 +131,17 @@ test('createTagRemoveButtonEl can be overridden for full control of the remove b
   assert.equal(removeBtn(sel).getAttribute('data-remove'), 'a')
 })
 
-test('texts.tagRemoveButtonAriaLabel customizes the remove button accessible name', () => {
+test('uiTranslationPack.tagRemoveButtonAriaLabel customizes the remove button accessible name', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     triggerDisplay: 'tags',
-    texts: { tagRemoveButtonAriaLabel: (itemLabel) => `Drop ${itemLabel}` },
+    uiTranslationPack: { tagRemoveButtonAriaLabel: (itemLabel) => `Drop ${itemLabel}` },
   })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a'])
   assert.equal(removeBtn(sel).getAttribute('aria-label'), 'Drop a')
 })
 
-test('a subclass itemToTagRemoveButtonAriaLabel override replaces the texts default (override wins)', () => {
+test('a subclass itemToTagRemoveButtonAriaLabel override replaces the pack default (override wins)', () => {
   class Derived extends LLSelectMultiple<string> {
     protected override itemToTagRemoveButtonAriaLabel(item: string): string {
       return `Discard ${item}`
@@ -149,7 +149,7 @@ test('a subclass itemToTagRemoveButtonAriaLabel override replaces the texts defa
   }
   const sel = new Derived(mount(), {
     triggerDisplay: 'tags',
-    texts: { tagRemoveButtonAriaLabel: (itemLabel) => `Drop ${itemLabel}` },
+    uiTranslationPack: { tagRemoveButtonAriaLabel: (itemLabel) => `Drop ${itemLabel}` },
   })
   sel.setItems(['a'])
   sel.setChosenItems(['a'])

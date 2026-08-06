@@ -51,7 +51,7 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 - [x] **[HIGH-1] - trigger / listbox / search input had no author-supplied accessible name**
   - Cause: no `ariaLabel` / `ariaLabelledBy` setting existed (violates WAI-ARIA 1.2).
-  - Fix: field-name settings wired per mode. base.ts `syncFieldNameToDom`, texts.ts, test/aria-name.test.ts. Screen-reader acceptance: [NEEDS-VERIFICATION-27].
+  - Fix: field-name settings wired per mode. base.ts `syncFieldNameToDom`, ui-translation-pack.ts, test/aria-name.test.ts. Screen-reader acceptance: [NEEDS-VERIFICATION-27].
 - [x] **[HIGH-2] - searchable open-state focus contract did not match the code**
   - Cause: the trigger kept `tabindex="0"` while the search input held focus, so Shift+Tab landed back on it with the popup open.
   - Fix: trigger leaves the tab order for the searchable open cycle. base.ts `syncTriggerTabindex`. Native Tab acceptance: [NEEDS-VERIFICATION-27].

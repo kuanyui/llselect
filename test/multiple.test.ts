@@ -86,10 +86,10 @@ test('trigger content: 0 → placeholder, partial → "n / m", full → "All n"'
   assert.equal(sel.triggerContentEl.textContent, 'All 3 selected')
 })
 
-test('texts.triggerCountSummary customizes the count summary text', () => {
+test('uiTranslationPack.triggerCountSummary customizes the count summary text', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     placeholder: 'Pick',
-    texts: { triggerCountSummary: (chosenCount, totalCount) => `${chosenCount} of ${totalCount}` },
+    uiTranslationPack: { triggerCountSummary: (chosenCount, totalCount) => `${chosenCount} of ${totalCount}` },
   })
   sel.setItems(['a', 'b', 'c'])
   assert.equal(sel.triggerContentEl.textContent, 'Pick') // 0 chosen -> placeholder, not the summary

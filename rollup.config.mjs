@@ -44,7 +44,7 @@ function copyThemes() {
 
 /**
 * Two independent bundles (config array): the library, and the language packs
-* (`@llselect/core/i18n`). i18n only inlines the tiny texts.ts module, so importing
+* (`@llselect/core/i18n`). i18n only inlines the tiny ui-translation-pack.ts module, so importing
 * a pack never drags in the library - and vice versa the main bundle carries
 * only the English defaults.
 * https://rollupjs.org/command-line-interface/#config-intellisense

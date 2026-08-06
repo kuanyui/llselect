@@ -43,7 +43,7 @@ test('both set: ariaLabelledBy wins, aria-label is not emitted', () => {
   assert.equal(sel.triggerEl.getAttribute('aria-label'), null)
 })
 
-test('neither set: no name on trigger/listbox; search input keeps the texts fallback', () => {
+test('neither set: no name on trigger/listbox; search input keeps the pack fallback', () => {
   const sel = new LLSelectSingle<string>(mount())
   assert.equal(sel.triggerEl.getAttribute('aria-label'), null)
   assert.equal(sel.triggerEl.getAttribute('aria-labelledby'), null)

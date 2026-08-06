@@ -323,7 +323,7 @@
         same checkbox treatment (5.4's subclass pattern) for one consistent
         visual language; without the hook, themes draw a text glyph from the
         <code>data-chosen-state</code> attribute. The accessible name stays
-        the counting <code>texts.selectAllRowLabel</code> either way.
+        the counting <code>uiTranslationPack.selectAllRowLabel</code> either way.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -696,8 +696,8 @@
     <p class="hint">
       All chrome strings (trigger placeholder default, search aria-label +
       placeholder, clear x, tag remove buttons, count summary) live in the
-      <code>texts</code> setting; packs from <code>@llselect/core/i18n</code> fill it
-      whole (<code>texts: zhTW</code>), with per-key overrides via spread. An
+      <code>uiTranslationPack</code> setting; packs from <code>@llselect/core/i18n</code> fill it
+      whole (<code>uiTranslationPack: zhTW</code>), with per-key overrides via spread. An
       explicit <code>placeholder</code> setting is app copy and wins over the
       pack's <code>triggerPlaceholder</code> default.
     </p>
@@ -705,8 +705,10 @@
     <article>
       <h3>12.1 Pack switcher: zhTW / ja / en / ar / he (single + multi)</h3>
       <p class="hint">
-        Switch the pack - the instances are recreated (settings are
-        constructor-frozen). No <code>placeholder</code> is passed, so every
+        Switch the pack - the instances stay put and
+        <code>setUiTranslationPack</code> re-renders them in place (the one
+        deliberate exception to constructor-frozen settings), so a chosen
+        value survives the switch. No <code>placeholder</code> is passed, so every
         trigger shows the pack's localized <code>triggerPlaceholder</code>
         default; nothing is preselected, so every change on switch comes from
         the pack alone. The single shows the chosen (possibly RTL) label in
@@ -750,7 +752,7 @@
       <h3>12.2 Every language pack</h3>
       <p class="hint">
         One <code>LLSelectSingle</code> per entry in
-        <code>textsByLocale</code>, so this grid grows with the library.
+        <code>uiTranslationPackByLocale</code>, so this grid grows with the library.
         Nothing is preselected and no <code>placeholder</code> is passed -
         each trigger shows its pack's own <code>triggerPlaceholder</code>;
         open one and the search placeholder, the clear x and the no-results

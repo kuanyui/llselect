@@ -1,10 +1,10 @@
 // Language packs - the `@llselect/core/i18n` subpath entry. Pure data: each pack is
-// a complete LLSelectTexts spreadable into the `texts` setting (`texts: zhTW`,
-// or `texts: { ...zhTW, searchInputPlaceholder: '...' }` for per-key
-// overrides). This module inlines only texts.ts, never base.ts, so importing
+// a complete LLSelectUiTranslationPack spreadable into the `uiTranslationPack` setting (`uiTranslationPack: zhTW`,
+// or `uiTranslationPack: { ...zhTW, searchInputPlaceholder: '...' }` for per-key
+// overrides). This module inlines only ui-translation-pack.ts, never base.ts, so importing
 // a pack costs bytes, not behavior.
 //
-// Ordering: packs and the textsByLocale keys are sorted alphabetically by
+// Ordering: packs and the uiTranslationPackByLocale keys are sorted alphabetically by
 // BCP 47 tag (CLDR convention; keeps diffs mechanical).
 //
 // Typography: the Chinese-script packs (zh-TW / zh-CN / yue / nan-TW) put a
@@ -19,7 +19,7 @@
 // kaldir"); fr / es / it / pt / ro / sv / hi branch on chosenCount === 1.
 //
 // TRANSLATION STATUS:
-// - user-vetted: zh-TW. Library source: en (texts.ts).
+// - user-vetted: zh-TW. Library source: en (ui-translation-pack.ts).
 // - LLM-drafted, cross-reviewed by a second model, native sign-off pending:
 //   all remaining packs. Within those, LOWER CONFIDENCE (review first if you
 //   ship them prominently): ga, is, kk, mn, my, km, bn, ur, lt, lv, sw, ta,
@@ -27,13 +27,13 @@
 // - nan-TW and nan-Latn-tailo are DRAFTS for the maintainer's own native
 //   vetting; do not treat them as shipped-quality until this flag is removed.
 
-import { en, type LLSelectTexts } from './texts.js'
+import { en, type LLSelectUiTranslationPack } from './ui-translation-pack.js'
 
 export { en }
-export type { LLSelectTexts } from './texts.js'
+export type { LLSelectUiTranslationPack } from './ui-translation-pack.js'
 
-/** Arabic texts (RTL). */
-export const ar: LLSelectTexts = {
+/** Arabic pack (RTL). */
+export const ar: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'الرجاء الاختيار',
   searchInputAriaLabel: 'بحث',
   searchInputPlaceholder: 'تصفية (Esc للمسح)',
@@ -45,8 +45,8 @@ export const ar: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `تحديد الكل (${chosenCount} من ${totalCount})`,
 }
 
-/** Bulgarian texts. */
-export const bg: LLSelectTexts = {
+/** Bulgarian pack. */
+export const bg: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Изберете',
   searchInputAriaLabel: 'Търсене',
   searchInputPlaceholder: 'Филтър (Esc за изчистване)',
@@ -58,8 +58,8 @@ export const bg: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Избери всички (${chosenCount} / ${totalCount})`,
 }
 
-/** Bengali texts. */
-export const bn: LLSelectTexts = {
+/** Bengali pack. */
+export const bn: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'অনুগ্রহ করে নির্বাচন করুন',
   searchInputAriaLabel: 'অনুসন্ধান',
   searchInputPlaceholder: 'ফিল্টার (মুছতে Esc)',
@@ -71,8 +71,8 @@ export const bn: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `সব নির্বাচন করুন (${chosenCount} / ${totalCount})`,
 }
 
-/** Catalan texts. */
-export const ca: LLSelectTexts = {
+/** Catalan pack. */
+export const ca: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Seleccioneu una opció',
   searchInputAriaLabel: 'Cerca',
   searchInputPlaceholder: 'Filtra (Esc per esborrar)',
@@ -87,8 +87,8 @@ export const ca: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Selecciona-ho tot (${chosenCount} de ${totalCount})`,
 }
 
-/** Czech texts. */
-export const cs: LLSelectTexts = {
+/** Czech pack. */
+export const cs: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Vyberte',
   searchInputAriaLabel: 'Hledat',
   searchInputPlaceholder: 'Filtr (Esc pro vymazání)',
@@ -100,8 +100,8 @@ export const cs: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Vybrat vše (${chosenCount} / ${totalCount})`,
 }
 
-/** Danish texts. */
-export const da: LLSelectTexts = {
+/** Danish pack. */
+export const da: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Vælg en mulighed',
   searchInputAriaLabel: 'Søg',
   searchInputPlaceholder: 'Filtrer (Esc for at rydde)',
@@ -113,8 +113,8 @@ export const da: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Vælg alle (${chosenCount} / ${totalCount})`,
 }
 
-/** German texts. */
-export const de: LLSelectTexts = {
+/** German pack. */
+export const de: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Bitte auswählen',
   searchInputAriaLabel: 'Suchen',
   searchInputPlaceholder: 'Filtern (Esc zum Löschen)',
@@ -126,8 +126,8 @@ export const de: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Alle auswählen (${chosenCount} / ${totalCount})`,
 }
 
-/** Greek texts. */
-export const el: LLSelectTexts = {
+/** Greek pack. */
+export const el: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Επιλέξτε',
   searchInputAriaLabel: 'Αναζήτηση',
   searchInputPlaceholder: 'Φίλτρο (Esc για καθαρισμό)',
@@ -142,8 +142,8 @@ export const el: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Επιλογή όλων (${chosenCount} / ${totalCount})`,
 }
 
-/** Spanish texts (unsplit: these strings do not differ across regions). */
-export const es: LLSelectTexts = {
+/** Spanish pack (unsplit: these strings do not differ across regions). */
+export const es: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Seleccione una opción',
   searchInputAriaLabel: 'Buscar',
   searchInputPlaceholder: 'Filtrar (Esc para borrar)',
@@ -158,8 +158,8 @@ export const es: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Seleccionar todo (${chosenCount} de ${totalCount})`,
 }
 
-/** Estonian texts. */
-export const et: LLSelectTexts = {
+/** Estonian pack. */
+export const et: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Valige',
   searchInputAriaLabel: 'Otsi',
   searchInputPlaceholder: 'Filtreeri (Esc tühjendab)',
@@ -171,8 +171,8 @@ export const et: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Vali kõik (${chosenCount} / ${totalCount})`,
 }
 
-/** Persian texts (RTL). */
-export const fa: LLSelectTexts = {
+/** Persian pack (RTL). */
+export const fa: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'لطفاً انتخاب کنید',
   searchInputAriaLabel: 'جستجو',
   searchInputPlaceholder: 'فیلتر (Esc برای پاک کردن)',
@@ -184,8 +184,8 @@ export const fa: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `انتخاب همه (${chosenCount} از ${totalCount})`,
 }
 
-/** Finnish texts. */
-export const fi: LLSelectTexts = {
+/** Finnish pack. */
+export const fi: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Valitse',
   searchInputAriaLabel: 'Haku',
   searchInputPlaceholder: 'Suodata (Esc tyhjentää)',
@@ -197,8 +197,8 @@ export const fi: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Valitse kaikki (${chosenCount} / ${totalCount})`,
 }
 
-/** Filipino texts. */
-export const fil: LLSelectTexts = {
+/** Filipino pack. */
+export const fil: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Pumili',
   searchInputAriaLabel: 'Maghanap',
   searchInputPlaceholder: 'Salain (Esc para burahin)',
@@ -210,8 +210,8 @@ export const fil: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Piliin lahat (${chosenCount} / ${totalCount})`,
 }
 
-/** French texts. */
-export const fr: LLSelectTexts = {
+/** French pack. */
+export const fr: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Veuillez sélectionner',
   searchInputAriaLabel: 'Rechercher',
   searchInputPlaceholder: 'Filtrer (Échap pour effacer)',
@@ -226,8 +226,8 @@ export const fr: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Tout sélectionner (${chosenCount} / ${totalCount})`,
 }
 
-/** Irish texts. */
-export const ga: LLSelectTexts = {
+/** Irish pack. */
+export const ga: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Roghnaigh',
   searchInputAriaLabel: 'Cuardaigh',
   searchInputPlaceholder: 'Scag (Esc le glanadh)',
@@ -239,8 +239,8 @@ export const ga: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Roghnaigh uile (${chosenCount} / ${totalCount})`,
 }
 
-/** Hebrew texts (RTL). */
-export const he: LLSelectTexts = {
+/** Hebrew pack (RTL). */
+export const he: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'נא לבחור',
   searchInputAriaLabel: 'חיפוש',
   searchInputPlaceholder: 'סינון (Esc לניקוי)',
@@ -257,8 +257,8 @@ export const he: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `בחר הכל (${chosenCount} מתוך ${totalCount})`,
 }
 
-/** Hindi texts. */
-export const hi: LLSelectTexts = {
+/** Hindi pack. */
+export const hi: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'कृपया चुनें',
   searchInputAriaLabel: 'खोजें',
   searchInputPlaceholder: 'फ़िल्टर (साफ़ करने के लिए Esc)',
@@ -273,8 +273,8 @@ export const hi: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `सभी चुनें (${chosenCount} / ${totalCount})`,
 }
 
-/** Croatian texts. */
-export const hr: LLSelectTexts = {
+/** Croatian pack. */
+export const hr: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Odaberite',
   searchInputAriaLabel: 'Pretraži',
   searchInputPlaceholder: 'Filtriraj (Esc za brisanje)',
@@ -286,8 +286,8 @@ export const hr: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Odaberi sve (${chosenCount} / ${totalCount})`,
 }
 
-/** Hungarian texts. */
-export const hu: LLSelectTexts = {
+/** Hungarian pack. */
+export const hu: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Válasszon',
   searchInputAriaLabel: 'Keresés',
   searchInputPlaceholder: 'Szűrés (Esc: törlés)',
@@ -299,8 +299,8 @@ export const hu: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Összes kijelölése (${chosenCount} / ${totalCount})`,
 }
 
-/** Indonesian texts. */
-export const id: LLSelectTexts = {
+/** Indonesian pack. */
+export const id: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Silakan pilih',
   searchInputAriaLabel: 'Cari',
   searchInputPlaceholder: 'Saring (Esc untuk menghapus)',
@@ -312,8 +312,8 @@ export const id: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Pilih semua (${chosenCount} / ${totalCount})`,
 }
 
-/** Icelandic texts. */
-export const is: LLSelectTexts = {
+/** Icelandic pack. */
+export const is: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Veldu valkost',
   searchInputAriaLabel: 'Leita',
   searchInputPlaceholder: 'Sía (Esc til að hreinsa)',
@@ -325,8 +325,8 @@ export const is: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Velja allt (${chosenCount} / ${totalCount})`,
 }
 
-/** Italian texts. */
-export const it: LLSelectTexts = {
+/** Italian pack. */
+export const it: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Seleziona un elemento',
   searchInputAriaLabel: 'Cerca',
   searchInputPlaceholder: 'Filtra (Esc per cancellare)',
@@ -341,8 +341,8 @@ export const it: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Seleziona tutto (${chosenCount} / ${totalCount})`,
 }
 
-/** Japanese texts. */
-export const ja: LLSelectTexts = {
+/** Japanese pack. */
+export const ja: LLSelectUiTranslationPack = {
   triggerPlaceholder: '選択してください',
   searchInputAriaLabel: '検索',
   searchInputPlaceholder: '絞り込み（Escでクリア）',
@@ -354,8 +354,8 @@ export const ja: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `すべて選択（${chosenCount} / ${totalCount}）`,
 }
 
-/** Kazakh texts (Cyrillic). */
-export const kk: LLSelectTexts = {
+/** Kazakh pack (Cyrillic). */
+export const kk: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Таңдаңыз',
   searchInputAriaLabel: 'Іздеу',
   searchInputPlaceholder: 'Сүзгі (тазарту үшін Esc)',
@@ -369,8 +369,8 @@ export const kk: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Барлығын таңдау (${chosenCount} / ${totalCount})`,
 }
 
-/** Khmer texts. */
-export const km: LLSelectTexts = {
+/** Khmer pack. */
+export const km: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'សូមជ្រើសរើស',
   searchInputAriaLabel: 'ស្វែងរក',
   searchInputPlaceholder: 'ត្រង (Esc ដើម្បីសម្អាត)',
@@ -382,8 +382,8 @@ export const km: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `ជ្រើសរើសទាំងអស់ (${chosenCount} / ${totalCount})`,
 }
 
-/** Korean texts. */
-export const ko: LLSelectTexts = {
+/** Korean pack. */
+export const ko: LLSelectUiTranslationPack = {
   triggerPlaceholder: '선택하세요',
   searchInputAriaLabel: '검색',
   searchInputPlaceholder: '필터 (Esc로 지우기)',
@@ -395,8 +395,8 @@ export const ko: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `모두 선택 (${chosenCount} / ${totalCount})`,
 }
 
-/** Lithuanian texts. */
-export const lt: LLSelectTexts = {
+/** Lithuanian pack. */
+export const lt: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Pasirinkite',
   searchInputAriaLabel: 'Paieška',
   searchInputPlaceholder: 'Filtras (Esc išvalyti)',
@@ -408,8 +408,8 @@ export const lt: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Pasirinkti viską (${chosenCount} / ${totalCount})`,
 }
 
-/** Latvian texts. */
-export const lv: LLSelectTexts = {
+/** Latvian pack. */
+export const lv: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Izvēlieties',
   searchInputAriaLabel: 'Meklēt',
   searchInputPlaceholder: 'Filtrs (Esc notīra)',
@@ -421,8 +421,8 @@ export const lv: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Izvēlēties visu (${chosenCount} / ${totalCount})`,
 }
 
-/** Mongolian texts (Cyrillic; the traditional script needs vertical layout and is out of scope). */
-export const mn: LLSelectTexts = {
+/** Mongolian pack (Cyrillic; the traditional script needs vertical layout and is out of scope). */
+export const mn: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Сонгоно уу',
   searchInputAriaLabel: 'Хайх',
   searchInputPlaceholder: 'Шүүлтүүр (цэвэрлэхийн тулд Esc)',
@@ -436,8 +436,8 @@ export const mn: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Бүгдийг сонгох (${chosenCount} / ${totalCount})`,
 }
 
-/** Malay texts. */
-export const ms: LLSelectTexts = {
+/** Malay pack. */
+export const ms: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Sila pilih',
   searchInputAriaLabel: 'Cari',
   searchInputPlaceholder: 'Tapis (Esc untuk kosongkan)',
@@ -449,8 +449,8 @@ export const ms: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Pilih semua (${chosenCount} / ${totalCount})`,
 }
 
-/** Burmese texts. */
-export const my: LLSelectTexts = {
+/** Burmese pack. */
+export const my: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'ရွေးချယ်ပါ',
   searchInputAriaLabel: 'ရှာဖွေရန်',
   searchInputPlaceholder: 'စစ်ထုတ်ရန် (ရှင်းရန် Esc)',
@@ -463,12 +463,12 @@ export const my: LLSelectTexts = {
 }
 
 /**
- * Taiwanese Hokkien texts (Tai-lo romanization; IANA variant subtag `tailo`).
+ * Taiwanese Hokkien pack (Tai-lo romanization; IANA variant subtag `tailo`).
  * DRAFT - see TRANSLATION STATUS: needs the maintainer's native vetting.
  * Same language as `nan-TW`, distinguished by script (`Latn`) + variant, not
  * by a separate language id.
  */
-export const nanLatnTailo: LLSelectTexts = {
+export const nanLatnTailo: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Tshiánn kíng-suán',
   searchInputAriaLabel: 'Tshiau-tshuē',
   searchInputPlaceholder: 'Kuè-lī (tshi̍h Esc tshing-tiāu)',
@@ -481,10 +481,10 @@ export const nanLatnTailo: LLSelectTexts = {
 }
 
 /**
- * Taiwanese Hokkien texts (Taiwan; Han script, MOE recommended characters).
+ * Taiwanese Hokkien pack (Taiwan; Han script, MOE recommended characters).
  * DRAFT - see TRANSLATION STATUS: needs the maintainer's native vetting.
  */
-export const nanTW: LLSelectTexts = {
+export const nanTW: LLSelectUiTranslationPack = {
   triggerPlaceholder: '請揀選',
   searchInputAriaLabel: '搜揣',
   searchInputPlaceholder: '過濾（揤 Esc 清掉）',
@@ -496,8 +496,8 @@ export const nanTW: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `攏總揀（${chosenCount} / ${totalCount}）`,
 }
 
-/** Norwegian Bokmål texts (`no` resolves here in textsByLocale). */
-export const nb: LLSelectTexts = {
+/** Norwegian Bokmål pack (`no` resolves here in uiTranslationPackByLocale). */
+export const nb: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Velg et alternativ',
   searchInputAriaLabel: 'Søk',
   searchInputPlaceholder: 'Filtrer (Esc for å tømme)',
@@ -509,8 +509,8 @@ export const nb: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Velg alle (${chosenCount} / ${totalCount})`,
 }
 
-/** Dutch texts. */
-export const nl: LLSelectTexts = {
+/** Dutch pack. */
+export const nl: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Maak een keuze',
   searchInputAriaLabel: 'Zoeken',
   searchInputPlaceholder: 'Filteren (Esc om te wissen)',
@@ -522,8 +522,8 @@ export const nl: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Alles selecteren (${chosenCount} / ${totalCount})`,
 }
 
-/** Polish texts. */
-export const pl: LLSelectTexts = {
+/** Polish pack. */
+export const pl: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Wybierz',
   searchInputAriaLabel: 'Szukaj',
   searchInputPlaceholder: 'Filtruj (Esc, aby wyczyścić)',
@@ -535,8 +535,8 @@ export const pl: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Zaznacz wszystko (${chosenCount} / ${totalCount})`,
 }
 
-/** Portuguese texts (unsplit: vocabulary valid in both European and Brazilian usage). */
-export const pt: LLSelectTexts = {
+/** Portuguese pack (unsplit: vocabulary valid in both European and Brazilian usage). */
+export const pt: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Selecione uma opção',
   searchInputAriaLabel: 'Pesquisar',
   searchInputPlaceholder: 'Filtrar (Esc para limpar)',
@@ -551,8 +551,8 @@ export const pt: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Selecionar tudo (${chosenCount} de ${totalCount})`,
 }
 
-/** Romanian texts. */
-export const ro: LLSelectTexts = {
+/** Romanian pack. */
+export const ro: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Selectați',
   searchInputAriaLabel: 'Căutare',
   searchInputPlaceholder: 'Filtrare (Esc pentru golire)',
@@ -567,8 +567,8 @@ export const ro: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Selectează tot (${chosenCount} / ${totalCount})`,
 }
 
-/** Russian texts. */
-export const ru: LLSelectTexts = {
+/** Russian pack. */
+export const ru: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Выберите',
   searchInputAriaLabel: 'Поиск',
   searchInputPlaceholder: 'Фильтр (Esc, чтобы очистить)',
@@ -580,8 +580,8 @@ export const ru: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Выбрать все (${chosenCount} из ${totalCount})`,
 }
 
-/** Slovak texts. */
-export const sk: LLSelectTexts = {
+/** Slovak pack. */
+export const sk: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Vyberte',
   searchInputAriaLabel: 'Hľadať',
   searchInputPlaceholder: 'Filter (Esc na vymazanie)',
@@ -593,8 +593,8 @@ export const sk: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Vybrať všetko (${chosenCount} / ${totalCount})`,
 }
 
-/** Slovenian texts. */
-export const sl: LLSelectTexts = {
+/** Slovenian pack. */
+export const sl: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Izberite',
   searchInputAriaLabel: 'Iskanje',
   searchInputPlaceholder: 'Filtriraj (Esc za brisanje)',
@@ -606,8 +606,8 @@ export const sl: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Izberi vse (${chosenCount} / ${totalCount})`,
 }
 
-/** Serbian texts (Cyrillic). */
-export const sr: LLSelectTexts = {
+/** Serbian pack (Cyrillic). */
+export const sr: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Изаберите',
   searchInputAriaLabel: 'Претрага',
   searchInputPlaceholder: 'Филтер (Esc за брисање)',
@@ -619,8 +619,8 @@ export const sr: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Изабери све (${chosenCount} / ${totalCount})`,
 }
 
-/** Swedish texts. */
-export const sv: LLSelectTexts = {
+/** Swedish pack. */
+export const sv: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Välj ett alternativ',
   searchInputAriaLabel: 'Sök',
   searchInputPlaceholder: 'Filtrera (Esc för att rensa)',
@@ -635,8 +635,8 @@ export const sv: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Välj alla (${chosenCount} / ${totalCount})`,
 }
 
-/** Swahili texts. */
-export const sw: LLSelectTexts = {
+/** Swahili pack. */
+export const sw: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Tafadhali chagua',
   searchInputAriaLabel: 'Tafuta',
   searchInputPlaceholder: 'Chuja (Esc kufuta)',
@@ -650,8 +650,8 @@ export const sw: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Chagua zote (${chosenCount} / ${totalCount})`,
 }
 
-/** Tamil texts. */
-export const ta: LLSelectTexts = {
+/** Tamil pack. */
+export const ta: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'தேர்ந்தெடுக்கவும்',
   searchInputAriaLabel: 'தேடல்',
   searchInputPlaceholder: 'வடிகட்டு (அழிக்க Esc)',
@@ -667,8 +667,8 @@ export const ta: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `அனைத்தையும் தேர்ந்தெடு (${chosenCount} / ${totalCount})`,
 }
 
-/** Thai texts. */
-export const th: LLSelectTexts = {
+/** Thai pack. */
+export const th: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'โปรดเลือก',
   searchInputAriaLabel: 'ค้นหา',
   searchInputPlaceholder: 'กรอง (กด Esc เพื่อล้าง)',
@@ -680,8 +680,8 @@ export const th: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `เลือกทั้งหมด (${chosenCount} / ${totalCount})`,
 }
 
-/** Turkish texts. */
-export const tr: LLSelectTexts = {
+/** Turkish pack. */
+export const tr: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Lütfen seçin',
   searchInputAriaLabel: 'Ara',
   searchInputPlaceholder: 'Filtrele (temizlemek için Esc)',
@@ -695,8 +695,8 @@ export const tr: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Tümünü seç (${chosenCount} / ${totalCount})`,
 }
 
-/** Ukrainian texts. */
-export const uk: LLSelectTexts = {
+/** Ukrainian pack. */
+export const uk: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Виберіть',
   searchInputAriaLabel: 'Пошук',
   searchInputPlaceholder: 'Фільтр (Esc, щоб очистити)',
@@ -708,8 +708,8 @@ export const uk: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `Вибрати всі (${chosenCount} / ${totalCount})`,
 }
 
-/** Urdu texts (RTL). */
-export const ur: LLSelectTexts = {
+/** Urdu pack (RTL). */
+export const ur: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'براہ کرم منتخب کریں',
   searchInputAriaLabel: 'تلاش',
   searchInputPlaceholder: 'فلٹر (صاف کرنے کے لیے Esc)',
@@ -721,8 +721,8 @@ export const ur: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `سب منتخب کریں (${chosenCount} / ${totalCount})`,
 }
 
-/** Vietnamese texts. */
-export const vi: LLSelectTexts = {
+/** Vietnamese pack. */
+export const vi: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Vui lòng chọn',
   searchInputAriaLabel: 'Tìm kiếm',
   searchInputPlaceholder: 'Lọc (Esc để xóa)',
@@ -735,12 +735,12 @@ export const vi: LLSelectTexts = {
 }
 
 /**
- * Cantonese texts (written VERNACULAR Cantonese, Hong Kong). Deliberately a
+ * Cantonese pack (written VERNACULAR Cantonese, Hong Kong). Deliberately a
  * different register from `zh-HK` (which is formal written Chinese and
  * aliases to `zh-TW`): pick `yue` only when the product speaks colloquial
  * Cantonese on purpose.
  */
-export const yue: LLSelectTexts = {
+export const yue: LLSelectUiTranslationPack = {
   triggerPlaceholder: '請揀',
   searchInputAriaLabel: '搜尋',
   searchInputPlaceholder: '篩選（撳 Esc 清走）',
@@ -752,8 +752,8 @@ export const yue: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `全部揀晒（${chosenCount} / ${totalCount}）`,
 }
 
-/** Simplified Chinese (mainland) texts. */
-export const zhCN: LLSelectTexts = {
+/** Simplified Chinese (mainland) pack. */
+export const zhCN: LLSelectUiTranslationPack = {
   triggerPlaceholder: '请选择',
   searchInputAriaLabel: '搜索',
   searchInputPlaceholder: '筛选（按 Esc 清除）',
@@ -765,8 +765,8 @@ export const zhCN: LLSelectTexts = {
   selectAllRowLabel: (chosenCount, totalCount) => `全选（${chosenCount} / ${totalCount}）`,
 }
 
-/** Traditional Chinese (Taiwan) texts (`zh-HK` resolves here in textsByLocale). */
-export const zhTW: LLSelectTexts = {
+/** Traditional Chinese (Taiwan) pack (`zh-HK` resolves here in uiTranslationPackByLocale). */
+export const zhTW: LLSelectUiTranslationPack = {
   triggerPlaceholder: '請選擇',
   searchInputAriaLabel: '搜尋',
   searchInputPlaceholder: '篩選（按 Esc 清除）',
@@ -795,9 +795,9 @@ export const zhTW: LLSelectTexts = {
  * - Browsers may report longer or different tags (`en-GB`, `ja-JP`,
  *   `zh-Hant-TW`), so negotiate instead of indexing blindly - e.g. try the
  *   full tag, then the base language, then fall back:
- *   `textsByLocale[tag] ?? textsByLocale[tag.split('-')[0]!] ?? en`.
+ *   `uiTranslationPackByLocale[tag] ?? uiTranslationPackByLocale[tag.split('-')[0]!] ?? en`.
  */
-export const textsByLocale: Record<string, LLSelectTexts> = {
+export const uiTranslationPackByLocale: Record<string, LLSelectUiTranslationPack> = {
   ar,
   bg,
   bn,

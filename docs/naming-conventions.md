@@ -221,9 +221,9 @@ Methods (protected, overridable):
 
 `classIdMap` gained `triggerClearButtonClass`. All obey s1-s3 + s7.
 
-### 4g. texts (chrome strings / i18n)
+### 4g. uiTranslationPack (chrome strings / i18n)
 
-All user/AT-visible chrome strings live in ONE base setting `texts: LLSelectTexts` (input `Partial<LLSelectTexts>`, resolved against `en`). Keys are message ids per s7a.4 - no `Fn` suffix; attribute strings = `<elementFamily><Attribute>`, generated content = `<family><SemanticName>`; parameterized messages take resolved primitives, never `T`:
+All user/AT-visible chrome strings live in ONE base setting `uiTranslationPack: LLSelectUiTranslationPack` (input `Partial<LLSelectUiTranslationPack>`, resolved against `en`). Keys are message ids per s7a.4 - no `Fn` suffix; attribute strings = `<elementFamily><Attribute>`, generated content = `<family><SemanticName>`; parameterized messages take resolved primitives, never `T`:
 
 | Key                           | Type                                                  |
 | ----------------------------- | ----------------------------------------------------- |
@@ -236,7 +236,7 @@ All user/AT-visible chrome strings live in ONE base setting `texts: LLSelectText
 | `triggerCountSummary`         | `(chosenCount: number, totalCount: number) => string` |
 | `selectAllRowLabel`           | `(chosenCount: number, totalCount: number) => string` |
 
-`tagRemoveButtonAriaLabel` is backed by `protected itemToTagRemoveButtonAriaLabel(item)` (`itemTo*`, mirrors `itemToString`); string keys need no method (cf. `placeholder`). Language packs (`en` / `ja` / `zhTW`) live under `@llselect/core/i18n`; export names are camelCase only because `-` is illegal in JS identifiers - `textsByLocale` indexes the same packs by their real (minimal) BCP 47 tags (`'zh-TW'`) for `navigator.language` lookup. `LLSelectSettingsInputOf<S>` is the shared input shape (everything optional, `texts` deep-partial). The resolved bag is public via `getTexts(): Readonly<LLSelectTexts>` (`get*`, live object).
+`tagRemoveButtonAriaLabel` is backed by `protected itemToTagRemoveButtonAriaLabel(item)` (`itemTo*`, mirrors `itemToString`); string keys need no method (cf. `placeholder`). Language packs (`en` / `ja` / `zhTW`) live under `@llselect/core/i18n`; export names are camelCase only because `-` is illegal in JS identifiers - `uiTranslationPackByLocale` indexes the same packs by their real (minimal) BCP 47 tags (`'zh-TW'`) for `navigator.language` lookup. `LLSelectSettingsInputOf<S>` is the shared input shape (everything optional, `uiTranslationPack` deep-partial). The resolved bag is public via `getUiTranslationPack(): Readonly<LLSelectUiTranslationPack>` (`get*`, live object) and runtime-swappable via `setUiTranslationPack(pack: Partial<LLSelectUiTranslationPack>): void` (`set*`).
 
 ## 5. Decisions log
 
@@ -250,16 +250,16 @@ DONE - all three phases applied (npm test passes; npm run build green).
 2. protected: `createItemContentEl`, `create*El` family, `getVisibleItems`, `replacePopupListItemElInDom`, `findNextEnabledIndex`, `onItemsChanged`, the protected (ii) primitives, render* body refactor.
 3. public / settings: `create*SvgEl` factories, `createItemContentElFn`, 4b once decided.
 
-## 7. Precision audit - element nouns, Container-Content law, texts keys
+## 7. Precision audit - element nouns, Container-Content law, pack keys
 
 > STATUS: APPLIED (Button-system; long names accepted) - landed via roadmap R16-R19 (rename + texts bag + llselect/i18n + demo; archived in archive/roadmap-v0.0.1.md). Applies ON TOP of s1-s4.
 
 ### 7a. New rules
 
-1. **Element names are nouns, never bare verbs.** Any name denoting an ELEMENT (classIdMap key, `*El` field, `create*El` method, texts-key prefix) must read as a noun phrase. Verb-derived elements take `Button` - they are all real `<button>`s, and `<verb> button` is natural English (play button, submit button): `triggerClearButton`, `tagRemoveButton`. Verbs stay verbs on ACTIONS (`clearSelection`, `toggleItem`, `open`); `-able` adjectives stay on capability flags (`clearable`, `searchable`). When no natural `-able` adjective exists, an ELEMENT-PRESENCE flag uses the element's noun name as a boolean (`selectAllRow: boolean` - "selectAllable" would be nonsense).
+1. **Element names are nouns, never bare verbs.** Any name denoting an ELEMENT (classIdMap key, `*El` field, `create*El` method, pack-key prefix) must read as a noun phrase. Verb-derived elements take `Button` - they are all real `<button>`s, and `<verb> button` is natural English (play button, submit button): `triggerClearButton`, `tagRemoveButton`. Verbs stay verbs on ACTIONS (`clearSelection`, `toggleItem`, `open`); `-able` adjectives stay on capability flags (`clearable`, `searchable`). When no natural `-able` adjective exists, an ELEMENT-PRESENCE flag uses the element's noun name as a boolean (`selectAllRow: boolean` - "selectAllable" would be nonsense).
 2. **Family prefix (DESIGN.md "Element family naming") applies to ALL trigger children.** The clear button is a direct child of the trigger, like `triggerContent` / `triggerArrow`, so it carries the `trigger` prefix. Today's `clear*` family violated the existing rule. `tagRemoveButton` needs no extra prefix (`tag` is already in the name).
 3. **Container-Content law.** Every "library owns the container element + wiring; the hook fills only its visible content" customization point is named `create<Container>ContentElFn` (setting) + `create<Container>ContentEl` (protected, default reads the setting); `null` = that container's default content. Already conforming: trigger, item, tag, groupLabel. Brought into conformance by 7b: triggerArrow, triggerClearButton, tagRemoveButton. Later additions follow it: popupListNoResults (query-aware), selectAllRow (tri-state + counts). Plain `create<Element>El` (no `Content`) builds the WHOLE element.
-4. **texts keys are message ids, never `Fn`-suffixed** (values may be strings or functions; s3 governs settings fields only, and the setting here is `texts`). Attribute strings: `<elementFamily><Attribute>` (`searchInputAriaLabel`, `triggerClearButtonAriaLabel`, `tagRemoveButtonAriaLabel`). Generated content strings: `<family><SemanticName>` (`triggerCountSummary`). Parameterized messages take RESOLVED primitives (`itemLabel: string`, counts) - never `T` - so a language pack can implement them; per-`T` control stays on the protected method (`itemToTagRemoveButtonAriaLabel`).
+4. **pack keys are message ids, never `Fn`-suffixed** (values may be strings or functions; s3 governs settings fields only, and the setting here is `uiTranslationPack`). Attribute strings: `<elementFamily><Attribute>` (`searchInputAriaLabel`, `triggerClearButtonAriaLabel`, `tagRemoveButtonAriaLabel`). Generated content strings: `<family><SemanticName>` (`triggerCountSummary`). Parameterized messages take RESOLVED primitives (`itemLabel: string`, counts) - never `T` - so a language pack can implement them; per-`T` control stays on the protected method (`itemToTagRemoveButtonAriaLabel`).
 5. Private helpers may keep shorter names (they matter least) but still obey the s1 suffix rules.
 6. **A predicate that composes MULTIPLE settings must not reuse one setting's bare name.** `is<X>` reading exactly `<x>Fn` is a 1:1 reader (`isGroupDisabled` <-> `groupDisabledFn`); when the answer layers more than that one setting, qualify the name so it cannot be mistaken for the raw read: `isItemEffectivelyDisabled` = `itemDisabledFn` OR the item's group's `groupDisabledFn` ("effectively" = layered final value, layer count not hard-coded).
 
@@ -280,11 +280,11 @@ DONE - all three phases applied (npm test passes; npm run build green).
 | protected NEW      | -                                             | `createTagRemoveButtonContentEl` (thin, reads the setting)                       |
 | protected          | `itemToTagRemoveLabel`                        | `itemToTagRemoveButtonAriaLabel`                                                 |
 | private            | `commitArrowElToDom`                          | `commitTriggerArrowContentElToDom`                                               |
-| setting -> texts   | `searchInputAriaLabel` (flat)                 | `texts.searchInputAriaLabel`                                                     |
-| setting -> texts   | `searchInputPlaceholder` (flat)               | `texts.searchInputPlaceholder`                                                   |
-| setting -> texts   | `clearButtonAriaLabel` (flat)                 | `texts.triggerClearButtonAriaLabel`                                              |
-| setting -> texts   | `itemToTagRemoveLabelFn: (item: T) => string` | `texts.tagRemoveButtonAriaLabel: (itemLabel: string) => string`                  |
-| texts NEW          | - (hardcoded count summary)                   | `texts.triggerCountSummary: (chosenCount: number, totalCount: number) => string` |
+| setting -> pack    | `searchInputAriaLabel` (flat)                 | `uiTranslationPack.searchInputAriaLabel`                                                     |
+| setting -> pack    | `searchInputPlaceholder` (flat)               | `uiTranslationPack.searchInputPlaceholder`                                                   |
+| setting -> pack    | `clearButtonAriaLabel` (flat)                 | `uiTranslationPack.triggerClearButtonAriaLabel`                                              |
+| setting -> pack    | `itemToTagRemoveLabelFn: (item: T) => string` | `uiTranslationPack.tagRemoveButtonAriaLabel: (itemLabel: string) => string`                  |
+| pack NEW           | - (hardcoded count summary)                   | `uiTranslationPack.triggerCountSummary: (chosenCount: number, totalCount: number) => string` |
 
 `triggerCountSummary` params are named `chosenCount` / `totalCount`: the project vocabulary is `chosen*` (never `selected` - that is the ARIA spec string; never `all` - that is the bulk-action word).
 
@@ -292,7 +292,7 @@ DONE - all three phases applied (npm test passes; npm run build green).
 
 | Name                                         | Why kept                                                                                                                       |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `placeholder`                                | control-level concept (same as HTML input placeholder); the search input's is fully qualified (`texts.searchInputPlaceholder`) |
+| `placeholder`                                | control-level concept (same as HTML input placeholder); the search input's is fully qualified (`uiTranslationPack.searchInputPlaceholder`) |
 | `clearable` / `searchable`                   | capability flags describe the CONTROL, not an element; verbs/adjectives are correct on actions and abilities                   |
 | `clearSelection` / `toggleItem` / `open` ... | ACTIONS keep verbs (the noun rule is for elements only)                                                                        |
 | `openClass` (`.llselect-open`)               | a state class on root, not an element name                                                                                     |

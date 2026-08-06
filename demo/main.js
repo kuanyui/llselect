@@ -1,5 +1,5 @@
 import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, createChevronDownSvgEl, createTriangleDownSvgEl, createCheckboxSvgEl } from '../dist/index.mjs'
-import { ar, en, he, ja, zhTW, textsByLocale } from '../dist/i18n.mjs'
+import { ar, en, he, ja, zhTW, uiTranslationPackByLocale } from '../dist/i18n.mjs'
 import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS, MIXED_DIRECTION_COUNTRIES } from './data.js'
 import { highlightJs } from './highlight.js'
 
@@ -481,7 +481,7 @@ selTags.setChosenItems(['Japan', 'Brazil', 'Canada'])
 // their whole-list semantics. createSelectAllRowContentElFn fills the row
 // with a tri-state SVG checkbox (createCheckboxSvgEl) + the library's own
 // counting label (en pack); without the hook, themes draw a text glyph from
-// data-chosen-state. The accessible name stays texts.selectAllRowLabel.
+// data-chosen-state. The accessible name stays uiTranslationPack.selectAllRowLabel.
 // The ITEMS get the same visual language - a subclass prepends a checkbox
 // reflecting isChosen (same pattern as 5.4) - so the row and the items read
 // as one consistent list.
@@ -681,69 +681,60 @@ selTagIcons.setChosenItems([PROGRAMMING_LANGUAGES[1], PROGRAMMING_LANGUAGES[3]])
 
 //#region 12.1
 // Language packs (imported at the top: `import { en, ja, zhTW } from
-// '@llselect/core/i18n'`) fill the `texts` setting whole; per-key overrides spread
-// on top (`texts: { ...zhTW, searchInputPlaceholder: '...' }`). Settings are
-// constructor-frozen, so switching locale recreates the instances - the usual
-// app pattern. Deliberately NO `placeholder` (so the pack's localized
-// `triggerPlaceholder` default shows; an explicit `placeholder` is app copy
-// and would win) and NO preselection, so every change on switch comes from
-// the pack alone. Three instances: a single (localized placeholder + chosen
-// label in the trigger), and two multis because their displays are exclusive -
-// 'tags' shows the translated remove buttons (chips replace the count
-// summary), default 'count' shows the translated count summary.
+// '@llselect/core/i18n'`) fill the `uiTranslationPack` setting whole; per-key
+// overrides spread on top (`uiTranslationPack: { ...zhTW, ... }`). The three
+// instances are built ONCE; the switcher calls setUiTranslationPack - the one
+// deliberate exception to constructor-frozen settings - so chosen state
+// survives the language switch. Deliberately NO `placeholder` (so the pack's
+// localized `triggerPlaceholder` default shows; an explicit `placeholder` is
+// app copy and would win) and nothing preselected at load, so every visible
+// change comes from the pack alone. Three instances: a single (localized
+// placeholder + chosen label in the trigger), and two multis because their
+// displays are exclusive - 'tags' shows the translated remove buttons,
+// default 'count' the translated count summary.
 const I18N_PACKS = { en, ja, zhTW, ar, he }
 const RTL_PACKS = new Set(['ar', 'he'])
 const outI18n = document.getElementById('out-i18n')
 const i18nPackSelect = document.getElementById('i18n-pack-select')
-function createI18nSelects(packName) {
-  // The constructor wipes each mount's children, so re-mounting is just `new`.
-  const texts = I18N_PACKS[packName]
+const i18nMounts = ['mount-i18n-single', 'mount-i18n-tags', 'mount-i18n-count'].map((id) => document.getElementById(id))
+const i18nSelects = [
+  new LLSelectSingle(i18nMounts[0], {
+    searchable: true,
+    clearable: true,
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+  }),
+  new LLSelectMultiple(i18nMounts[1], {
+    searchable: true,
+    clearable: true,
+    triggerDisplay: 'tags',
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+    onChange: (chosen) => { outI18n.textContent = 'chosen: ' + chosen.join(', ') },
+  }),
+  new LLSelectMultiple(i18nMounts[2], {
+    searchable: true,
+    clearable: true,
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+  }),
+]
+// Mixed-direction labels: bidi reorders runs inside each item on its own; the
+// weak-character entries (parens / digits) show the base-direction caveat
+// that per-item dir="auto" / <bdi> would solve (DESIGN.md "RTL").
+for (const sel of i18nSelects) { sel.setItems(MIXED_DIRECTION_COUNTRIES) }
+function applyI18nPack(packName) {
   // RTL packs set `dir` on the mounts: the component inherits the
   // environment's direction like a native element (there is NO rtl setting).
   // Flex mirrors the trigger slots (arrow lands LEFT, like native <select>),
   // logical padding mirrors the chips, fit-content popups would grow leftward.
   const dir = RTL_PACKS.has(packName) ? 'rtl' : 'ltr'
-  const singleMount = document.getElementById('mount-i18n-single')
-  const tagsMount = document.getElementById('mount-i18n-tags')
-  const countMount = document.getElementById('mount-i18n-count')
-  singleMount.dir = dir
-  tagsMount.dir = dir
-  countMount.dir = dir
-  // Single: localized placeholder, and the chosen (possibly RTL) label
-  // rendered in the trigger.
-  const singleSel = new LLSelectSingle(singleMount, {
-    searchable: true,
-    clearable: true,
-    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
-    texts,
-  })
-  singleSel.setItems(MIXED_DIRECTION_COUNTRIES)
-  const tagsSel = new LLSelectMultiple(tagsMount, {
-    searchable: true,
-    clearable: true,
-    triggerDisplay: 'tags',
-    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
-    texts,
-    onChange: (chosen) => { outI18n.textContent = 'chosen: ' + chosen.join(', ') },
-  })
-  // Mixed-direction labels: bidi reorders runs inside each item on its own;
-  // the weak-character entries (parens / digits) show the base-direction
-  // caveat that per-item dir="auto" / <bdi> would solve (DESIGN.md "RTL").
-  tagsSel.setItems(MIXED_DIRECTION_COUNTRIES)
-  const countSel = new LLSelectMultiple(countMount, {
-    searchable: true,
-    clearable: true,
-    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
-    texts,
-  })
-  countSel.setItems(MIXED_DIRECTION_COUNTRIES)
+  for (const mountEl of i18nMounts) { mountEl.dir = dir }
+  for (const sel of i18nSelects) { sel.setUiTranslationPack(I18N_PACKS[packName]) }
 }
-i18nPackSelect.addEventListener('change', () => createI18nSelects(i18nPackSelect.value))
-createI18nSelects(i18nPackSelect.value)
+i18nPackSelect.addEventListener('change', () => applyI18nPack(i18nPackSelect.value))
+applyI18nPack(i18nPackSelect.value)
 //#endregion
 
 //#region 12.2
-// Every pack, straight out of `textsByLocale` (BCP 47 keys), so new packs
+// Every pack, straight out of `uiTranslationPackByLocale` (BCP 47 keys), so new packs
 // appear here without demo edits. One single per pack: closed it shows the
 // pack's `triggerPlaceholder`, open it the search placeholder / clear x /
 // no-results status. RTL tags put `dir="rtl"` on their mount; the card label
@@ -755,7 +746,7 @@ function languageLabel(tag) {
   if (!displayNames) { return tag }
   try { return `${tag} - ${displayNames.of(tag)}` } catch { return tag }
 }
-for (const [tag, pack] of Object.entries(textsByLocale)) {
+for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
   const card = document.createElement('div')
   const cardLabel = document.createElement('div')
   cardLabel.className = 'out'
@@ -768,7 +759,7 @@ for (const [tag, pack] of Object.entries(textsByLocale)) {
     searchable: true,
     clearable: true,
     createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
-    texts: pack,
+    uiTranslationPack: pack,
   })
   allSel.setItems(MIXED_DIRECTION_COUNTRIES)
 }

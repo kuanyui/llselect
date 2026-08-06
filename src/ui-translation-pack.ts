@@ -1,7 +1,8 @@
-// Chrome strings (AT labels + generated text) - the i18n surface. One bag a
-// language pack fills; `en` is the library default and the single source of
-// the English strings. Non-English packs live in i18n.ts (the `@llselect/core/i18n`
-// subpath entry), which inlines only this small module - never base.ts.
+// The UI-translation pack: the widget's own chrome strings (AT labels +
+// generated text) as one swappable bag. `en` below is the BUILT-IN pack and
+// the single source of the English strings; every other pack lives in i18n.ts
+// (the `@llselect/core/i18n` subpath entry), which inlines only this small
+// module - never base.ts - so the main bundle carries exactly one pack.
 
 /**
  * All chrome strings of one select instance.
@@ -12,7 +13,7 @@
  *   can implement them. Keys are message ids (no `Fn` suffix); see
  *   naming-conventions.md s7a.4.
  */
-export interface LLSelectTexts {
+export interface LLSelectUiTranslationPack {
   /**
    * Default text shown in the trigger while nothing is chosen, used only when
    * the app did not pass the `placeholder` setting. An explicit `placeholder`
@@ -30,7 +31,7 @@ export interface LLSelectTexts {
   /**
    * Placeholder text of the search input. Also teaches the Esc behavior
    * (first Esc clears the filter). `null` = no placeholder (pass
-   * `texts: { searchInputPlaceholder: null }` to remove the default).
+   * `uiTranslationPack: { searchInputPlaceholder: null }` to remove the default).
    */
   searchInputPlaceholder: string | null
   /**
@@ -58,8 +59,8 @@ export interface LLSelectTexts {
   selectAllRowLabel: (chosenCount: number, totalCount: number) => string
 }
 
-/** English texts - the library default. */
-export const en: LLSelectTexts = {
+/** The built-in English pack - the library default. */
+export const en: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Please select',
   searchInputAriaLabel: 'Search',
   searchInputPlaceholder: 'Filter (Esc to clear)',

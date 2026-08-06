@@ -128,8 +128,9 @@ Multi select: `new LLSelectMultiple(el, { ... })` - `getChosenItems()` / `toggle
 Language packs (optional, tree-shakeable pure data):
 
 ```js
-import { zhTW } from '@llselect/core/i18n'
-new LLSelectSingle(el, { texts: zhTW })
+import { ja, zhTW } from '@llselect/core/i18n'
+const sel = new LLSelectSingle(el, { uiTranslationPack: zhTW })
+sel.setUiTranslationPack(ja) // switch language at runtime - no rebuild, chosen state survives
 ```
 
 No build tool? The UMD bundle exposes `window.llselect` (`<script src="https://unpkg.com/@llselect/core"></script>`), themes via `<link>`.
@@ -216,7 +217,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `selectAllRow`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
 | Popup width                          | `popupWidthPolicy: 'match-trigger' \| 'fit-content'`                                                                     |
 | Rich rendering without subclassing   | `createItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
-| i18n                                 | `texts` setting + `@llselect/core/i18n` packs (`textsByLocale`, keyed by BCP 47 tag), RTL inherited from `dir`                 |
+| i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir` |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
 | Events                               | `onChange(current, previous)`, `onOpen`, `onClose`                                                                       |
 
