@@ -1,9 +1,9 @@
-import { LLSelectSingle, LLSelectMultiple, LLSELECT_VERSION, createChevronDownSvgEl, createTriangleDownSvgEl, createCheckboxSvgEl } from '../dist/index.mjs'
+import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createCheckboxSvgEl } from '../dist/index.mjs'
 import { ar, en, he, ja, zhTW, uiTranslationPackByLocale } from '../dist/i18n.mjs'
 import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS, MIXED_DIRECTION_COUNTRIES } from './data.js'
 import { highlightJs } from './highlight.js'
 
-console.log('llselect v' + LLSELECT_VERSION)
+console.log('llselect v' + version)
 
 // Theme picker: swap the visual theme and (for BS themes) load the matching
 // Bootstrap CSS from CDN. Bootstrap is intentionally NOT preloaded so its

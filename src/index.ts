@@ -43,4 +43,5 @@ export type {
   CheckboxIconOptions,
 } from './icons.js'
 
-export const LLSELECT_VERSION = '0.0.2'
+/** Library version. Mirrors package.json `version` (smoke-test guarded). */
+export const version = '0.0.2'

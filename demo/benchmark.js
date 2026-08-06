@@ -18,7 +18,7 @@ const BUDGET_MS = 20000
 // version actually under test (matches the CDN URLs in benchmark.html).
 const DISPLAY = {
   native: { name: 'Native <select>', url: 'https://developer.mozilla.org/en-US/docs/Web/HTML/Element/select', version: 'browser built-in' },
-  llselect: { name: 'llselect', url: 'https://gitlab.com/kuanyui/llselect', version: (window.llselect && window.llselect.LLSELECT_VERSION) || '(local build)' },
+  llselect: { name: 'llselect', url: 'https://gitlab.com/kuanyui/llselect', version: (window.llselect && window.llselect.version) || '(local build)' },
   choices: { name: 'Choices.js', url: 'https://github.com/Choices-js/Choices', version: '11.1.0' },
   select2: { name: 'Select2', url: 'https://select2.org/', version: '4.1.0-rc.0' },
   'tom-select': { name: 'Tom Select', url: 'https://tom-select.js.org/', version: '2.4.3' },
