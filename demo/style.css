@@ -455,3 +455,9 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 #bench-overlay-stop { display: block; margin: 0.7rem auto 0; font: inherit; padding: 0.4rem 1.4rem; cursor: pointer; border: 1px solid #fff; background: #c0392b; color: #fff; border-radius: 4px; font-weight: 600; }
 #bench-overlay-stop:hover { background: #a83226; }
 #bench-overlay-stop:disabled { opacity: 0.6; cursor: default; }
+
+/* --- 13. label integration ---------------------------------------------- */
+/* The demo styles its own label the way an app would: llselect themes touch
+   only .llselect-* elements, never the app's label. (Bootstrap 3/4 CDN themes
+   restyle bare <label> on their own; BS5 uses .form-label, Tailwind resets.) */
+.field-label { display: block; font-weight: 600; margin-bottom: 0.3rem; }
