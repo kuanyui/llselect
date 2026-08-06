@@ -10,7 +10,8 @@ import {
   getActionFromKey,
   getUpdatedIndex,
 } from './keyboard.js'
-import { en as DEFAULT_UI_TRANSLATION_PACK, type LLSelectUiTranslationPack } from './ui-translation-pack.js'
+import { en as DEFAULT_UI_TRANSLATION_PACK } from './i18n/en.js'
+import type { LLSelectUiTranslationPack } from './ui-translation-pack.js'
 
 /**
  * What happens when the user clicks outside an open popup.

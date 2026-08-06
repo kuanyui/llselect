@@ -42,7 +42,7 @@ const testTs = walk('test', '.ts')
 const scriptFiles = walk('scripts', '.mjs')
 
 const asciiFiles = [
-  ...srcTs.filter((f) => !f.endsWith('i18n.ts')),
+  ...srcTs.filter((f) => !f.startsWith('src/i18n/')),
   ...walk('src', '.css'),
   ...walk('docs', '.md'),
   ...scriptFiles,

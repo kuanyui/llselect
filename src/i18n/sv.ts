@@ -1,0 +1,17 @@
+import type { LLSelectUiTranslationPack } from '../ui-translation-pack.js'
+
+/** Swedish pack. */
+export const sv: LLSelectUiTranslationPack = {
+  triggerPlaceholder: 'Välj ett alternativ',
+  searchInputAriaLabel: 'Sök',
+  searchInputPlaceholder: 'Filtrera (Esc för att rensa)',
+  popupListNoResults: 'Inga resultat',
+  triggerClearButtonAriaLabel: 'Rensa valet',
+  tagRemoveButtonAriaLabel: (itemLabel) => `Ta bort ${itemLabel}`,
+  triggerCountSummary: (chosenCount, totalCount) => {
+    if (chosenCount === 1) { return `1 av ${totalCount} vald` }
+    if (chosenCount === totalCount) { return `Alla ${chosenCount} valda` }
+    return `${chosenCount} av ${totalCount} valda`
+  },
+  selectAllRowLabel: (chosenCount, totalCount) => `Välj alla (${chosenCount} / ${totalCount})`,
+}

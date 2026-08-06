@@ -1,8 +1,8 @@
-// The UI-translation pack: the widget's own chrome strings (AT labels +
-// generated text) as one swappable bag. `en` below is the BUILT-IN pack and
-// the single source of the English strings; every other pack lives in i18n.ts
-// (the `@llselect/core/i18n` subpath entry), which inlines only this small
-// module - never base.ts - so the main bundle carries exactly one pack.
+// The UI-translation pack CONTRACT - the type every language pack implements:
+// the widget's own chrome strings (AT labels + generated text) as one
+// swappable bag. Type-only module; the packs themselves (including `en`, the
+// built-in default) live one-per-file under src/i18n/, so importing this
+// contract costs nothing at runtime anywhere.
 
 /**
  * All chrome strings of one select instance.
@@ -57,17 +57,4 @@ export interface LLSelectUiTranslationPack {
    * row acts on.
    */
   selectAllRowLabel: (chosenCount: number, totalCount: number) => string
-}
-
-/** The built-in English pack - the library default. */
-export const en: LLSelectUiTranslationPack = {
-  triggerPlaceholder: 'Please select',
-  searchInputAriaLabel: 'Search',
-  searchInputPlaceholder: 'Filter (Esc to clear)',
-  popupListNoResults: 'No results found',
-  triggerClearButtonAriaLabel: 'Clear selection',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Remove ${itemLabel}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
-    chosenCount === totalCount ? `All ${chosenCount} selected` : `${chosenCount} / ${totalCount} selected`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Select all (${chosenCount} of ${totalCount})`,
 }

@@ -1,0 +1,14 @@
+import type { LLSelectUiTranslationPack } from '../ui-translation-pack.js'
+
+/** Simplified Chinese (mainland) pack. */
+export const zhCN: LLSelectUiTranslationPack = {
+  triggerPlaceholder: '请选择',
+  searchInputAriaLabel: '搜索',
+  searchInputPlaceholder: '筛选（按 Esc 清除）',
+  popupListNoResults: '没有匹配的结果',
+  triggerClearButtonAriaLabel: '清除选择',
+  tagRemoveButtonAriaLabel: (itemLabel) => `移除 ${itemLabel}`,
+  triggerCountSummary: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `已选全部 ${chosenCount} 项` : `已选 ${chosenCount} / ${totalCount} 项`,
+  selectAllRowLabel: (chosenCount, totalCount) => `全选（${chosenCount} / ${totalCount}）`,
+}

@@ -1,0 +1,14 @@
+import type { LLSelectUiTranslationPack } from '../ui-translation-pack.js'
+
+/** Croatian pack. */
+export const hr: LLSelectUiTranslationPack = {
+  triggerPlaceholder: 'Odaberite',
+  searchInputAriaLabel: 'Pretraži',
+  searchInputPlaceholder: 'Filtriraj (Esc za brisanje)',
+  popupListNoResults: 'Nema rezultata',
+  triggerClearButtonAriaLabel: 'Očisti odabir',
+  tagRemoveButtonAriaLabel: (itemLabel) => `Ukloni ${itemLabel}`,
+  triggerCountSummary: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Odabrano sve (${chosenCount})` : `Odabrano ${chosenCount} od ${totalCount}`,
+  selectAllRowLabel: (chosenCount, totalCount) => `Odaberi sve (${chosenCount} / ${totalCount})`,
+}

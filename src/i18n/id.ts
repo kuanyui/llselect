@@ -1,0 +1,14 @@
+import type { LLSelectUiTranslationPack } from '../ui-translation-pack.js'
+
+/** Indonesian pack. */
+export const id: LLSelectUiTranslationPack = {
+  triggerPlaceholder: 'Silakan pilih',
+  searchInputAriaLabel: 'Cari',
+  searchInputPlaceholder: 'Saring (Esc untuk menghapus)',
+  popupListNoResults: 'Tidak ada hasil',
+  triggerClearButtonAriaLabel: 'Hapus pilihan',
+  tagRemoveButtonAriaLabel: (itemLabel) => `Hapus ${itemLabel}`,
+  triggerCountSummary: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Semua dipilih (${chosenCount})` : `${chosenCount} dari ${totalCount} dipilih`,
+  selectAllRowLabel: (chosenCount, totalCount) => `Pilih semua (${chosenCount} / ${totalCount})`,
+}
