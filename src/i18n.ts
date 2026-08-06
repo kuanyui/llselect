@@ -1,9 +1,9 @@
 // Language packs - the `@llselect/core/i18n` subpath entry, as a barrel: one
 // file per pack lives under src/i18n/ (including `en`, the built-in default);
-// this module re-exports them and builds the locale index. Pure data: each pack is
+// this module defines the pack contract, re-exports them and builds the locale index. Pure data: each pack is
 // a complete LLSelectUiTranslationPack spreadable into the `uiTranslationPack` setting (`uiTranslationPack: zhTW`,
 // or `uiTranslationPack: { ...zhTW, searchInputPlaceholder: '...' }` for per-key
-// overrides). This module inlines only ui-translation-pack.ts, never base.ts, so importing
+// overrides). This module never imports base.ts, so importing
 // a pack costs bytes, not behavior.
 //
 // Ordering: packs and the uiTranslationPackByLocale keys are sorted alphabetically by
@@ -21,7 +21,7 @@
 // kaldir"); fr / es / it / pt / ro / sv / hi branch on chosenCount === 1.
 //
 // TRANSLATION STATUS:
-// - user-vetted: zh-TW. Library source: en (ui-translation-pack.ts).
+// - user-vetted: zh-TW. Library source: en (src/i18n/en.ts).
 // - LLM-drafted, cross-reviewed by a second model, native sign-off pending:
 //   all remaining packs. Within those, LOWER CONFIDENCE (review first if you
 //   ship them prominently): ga, is, kk, mn, my, km, bn, ur, lt, lv, sw, ta,
@@ -29,7 +29,61 @@
 // - nan-TW and nan-Latn-tailo are DRAFTS for the maintainer's own native
 //   vetting; do not treat them as shipped-quality until this flag is removed.
 
-import type { LLSelectUiTranslationPack } from './ui-translation-pack.js'
+/**
+ * All chrome strings of one select instance.
+ * - `placeholder` is NOT here: it is app copy, not chrome (language packs
+ *   never set it).
+ * - Static strings are plain strings; parameterized messages are functions
+ *   taking RESOLVED primitives (never the item type `T`), so a language pack
+ *   can implement them. Keys are message ids (no `Fn` suffix); see
+ *   naming-conventions.md s7a.4.
+ */
+export interface LLSelectUiTranslationPack {
+  /**
+   * Default text shown in the trigger while nothing is chosen, used only when
+   * the app did not pass the `placeholder` setting. An explicit `placeholder`
+   * always wins (app copy beats chrome); this key just localizes the library
+   * fallback.
+   */
+  triggerPlaceholder: string
+  /**
+   * Fallback accessible name (`aria-label`) of the search input, used only
+   * when the app supplies neither `ariaLabel` nor `ariaLabelledBy` (the field
+   * name then replaces this generic operation label). The input has no
+   * visible label, so screen readers rely on one of these.
+   */
+  searchInputAriaLabel: string
+  /**
+   * Placeholder text of the search input. Also teaches the Esc behavior
+   * (first Esc clears the filter). `null` = no placeholder (pass
+   * `uiTranslationPack: { searchInputPlaceholder: null }` to remove the default).
+   */
+  searchInputPlaceholder: string | null
+  /**
+   * Message shown (and announced via `role="status"`) when the visible item
+   * list is empty - a filter matched nothing, or there are no items at all.
+   */
+  popupListNoResults: string
+  /** Accessible name (`aria-label`) of the trigger's clear (x) button (`clearable`). */
+  triggerClearButtonAriaLabel: string
+  /**
+   * itemLabel (already `itemToString`-resolved) -> the accessible name
+   * (`aria-label`) of that tag's remove button. `'tags'` mode only.
+   */
+  tagRemoveButtonAriaLabel: (itemLabel: string) => string
+  /**
+   * Count summary shown in the multi trigger. Called only when
+   * `chosenCount > 0` (an empty selection shows `placeholder` instead).
+   */
+  triggerCountSummary: (chosenCount: number, totalCount: number) => string
+  /**
+   * Label (visible text + accessible name) of the multi select-all row
+   * (`selectAllRow` setting). Counts refer to the VISIBLE enabled subset the
+   * row acts on.
+   */
+  selectAllRowLabel: (chosenCount: number, totalCount: number) => string
+}
+
 import { ar } from './i18n/ar.js'
 import { bg } from './i18n/bg.js'
 import { bn } from './i18n/bn.js'
@@ -86,7 +140,6 @@ import { zhCN } from './i18n/zhCN.js'
 import { zhTW } from './i18n/zhTW.js'
 
 export { ar, bg, bn, ca, cs, da, de, el, en, es, et, fa, fi, fil, fr, ga, he, hi, hr, hu, id, is, it, ja, kk, km, ko, lt, lv, mn, ms, my, nanLatnTailo, nanTW, nb, nl, pl, pt, ro, ru, sk, sl, sr, sv, sw, ta, th, tr, uk, ur, vi, yue, zhCN, zhTW }
-export type { LLSelectUiTranslationPack } from './ui-translation-pack.js'
 
 /**
  * All packs keyed by their BCP 47 tag, for `navigator.language`-style lookup.

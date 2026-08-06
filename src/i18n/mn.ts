@@ -1,4 +1,4 @@
-import type { LLSelectUiTranslationPack } from '../ui-translation-pack.js'
+import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /** Mongolian pack (Cyrillic; the traditional script needs vertical layout and is out of scope). */
 export const mn: LLSelectUiTranslationPack = {

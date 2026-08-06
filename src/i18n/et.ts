@@ -1,4 +1,4 @@
-import type { LLSelectUiTranslationPack } from '../ui-translation-pack.js'
+import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /** Estonian pack. */
 export const et: LLSelectUiTranslationPack = {

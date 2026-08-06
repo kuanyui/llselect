@@ -1,4 +1,4 @@
-import type { LLSelectUiTranslationPack } from '../ui-translation-pack.js'
+import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Taiwanese Hokkien pack (Taiwan; Han script, MOE recommended characters).

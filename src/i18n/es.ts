@@ -1,4 +1,4 @@
-import type { LLSelectUiTranslationPack } from '../ui-translation-pack.js'
+import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /** Spanish pack (unsplit: these strings do not differ across regions). */
 export const es: LLSelectUiTranslationPack = {

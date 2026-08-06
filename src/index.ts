@@ -9,7 +9,7 @@ export type {
 
 // The pack contract (the `uiTranslationPack` setting / language-pack shape). The packs
 // themselves live under the `@llselect/core/i18n` subpath.
-export type { LLSelectUiTranslationPack } from './ui-translation-pack.js'
+export type { LLSelectUiTranslationPack } from './i18n.js'
 
 export { LLSelectSingle } from './single.js'
 export type {

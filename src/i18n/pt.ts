@@ -1,4 +1,4 @@
-import type { LLSelectUiTranslationPack } from '../ui-translation-pack.js'
+import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /** Portuguese pack (unsplit: vocabulary valid in both European and Brazilian usage). */
 export const pt: LLSelectUiTranslationPack = {

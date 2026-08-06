@@ -1,4 +1,4 @@
-import type { LLSelectUiTranslationPack } from '../ui-translation-pack.js'
+import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /** Traditional Chinese (Taiwan) pack (`zh-HK` resolves here in uiTranslationPackByLocale). */
 export const zhTW: LLSelectUiTranslationPack = {

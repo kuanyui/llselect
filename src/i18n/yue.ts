@@ -1,4 +1,4 @@
-import type { LLSelectUiTranslationPack } from '../ui-translation-pack.js'
+import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Cantonese pack (written VERNACULAR Cantonese, Hong Kong). Deliberately a
