@@ -1,6 +1,6 @@
 {
   "name": "@llselect/core",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Low-level select: a minimal, flexible, framework-agnostic replacement for the native HTML select element.",
   "type": "module",
   "sideEffects": [
