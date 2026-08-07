@@ -132,3 +132,8 @@ test('a missing <ui-select-choices> is reported, and no widget is left behind', 
   assert.match(a.errors[0].message, /expected one <ui-select-choices/)
   assert.equal(el[0].querySelector('.llselect-trigger'), null, 'a half-built widget was left behind')
 })
+
+test('the bridge renders the default chevron arrow', () => {
+  const a = app()
+  assert.ok(a.$('ui-llselect .llselect-trigger-arrow svg'), 'bridge arrow missing')
+})

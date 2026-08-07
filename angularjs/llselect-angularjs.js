@@ -103,11 +103,14 @@
   }
 
   function resolveArrow(name) {
-    if (!name) { return null }
+    // Batteries-included default: the chevron. Core deliberately ships no
+    // arrow (the app decides); these directives are the opposite trade.
+    if (name === 'none') { return null }
+    if (!name) { name = 'chevron' }
     var create = ARROWS[name]
     if (!create) {
       throw new Error('llselect-angularjs: unknown arrow "' + name +
-        '"; built-in arrows are: ' + Object.keys(ARROWS).join(', '))
+        '"; supported: ' + Object.keys(ARROWS).join(', ') + ', none')
     }
     return function () { return create() }
   }

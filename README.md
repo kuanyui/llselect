@@ -2,12 +2,12 @@
 
 [![npm version](https://img.shields.io/npm/v/@llselect/core)](https://www.npmjs.com/package/@llselect/core)
 
-A JavaScript library that replaces the native HTML `<select>` element.
+A JavaScript library aims to be a replacement of native HTML `<select>`. Focus on performance and flexibility.
 
 It is a minimal but flexible implementation of `<select>` in JavaScript that you can easily wrap and integrate into your existing UI library / framework / style.
 
-- GitHub: [Git](https://github.com/kuanyui/llselect) | [Demo](https://kuanyui.github.io/llselect/demo/)
-- GitLab: [Git](https://gitlab.com/kuanyui/llselect) | [Demo](https://kuanyui.gitlab.io/llselect/demo/)
+- GitHub: [Git Repo](https://github.com/kuanyui/llselect) | [Live Demo](https://kuanyui.github.io/llselect/demo/)
+- GitLab: [Git Repo](https://gitlab.com/kuanyui/llselect) | [Live Demo](https://kuanyui.gitlab.io/llselect/demo/)
 
 > [!TIP]
 > #### Why not native `<select>`?

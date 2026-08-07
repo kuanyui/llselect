@@ -150,7 +150,7 @@ test('ll-arrow renders a built-in arrow, and a fresh one per trigger', () => {
   // One SVG cannot live in two triggers, so each render must build its own.
   assert.ok(arrows[0].querySelector('svg'), 'chevron did not render')
   assert.ok(arrows[1].querySelector('svg'), 'triangle did not render')
-  assert.equal(arrows[2].querySelector('svg'), null, 'no ll-arrow must leave the slot to the theme')
+  assert.ok(arrows[2].querySelector('svg'), 'no ll-arrow must default to the chevron')
 })
 
 test('an unknown ll-arrow is reported and names the built-ins', () => {
@@ -202,4 +202,19 @@ test('config uiTranslationPack reaches the widget (the case that makes a provide
     }],
   })
   assert.equal(a.text('.llselect-trigger-content'), 'Bitte auswaehlen')
+})
+
+test('arrow defaults to the chevron; ll-arrow="none" leaves the slot empty', () => {
+  const a = app()
+  assert.ok(a.$('[name=fruit] .llselect-trigger-arrow svg'), 'default chevron missing')
+  const b = boot({
+    deps: ['llselect'],
+    html: `
+      <div ng-controller="C as vm">
+        <llselect-single ng-model="vm.fruit" ll-arrow="none"
+          ll-options="f for f in vm.fruits"></llselect-single>
+      </div>`,
+    controller: function () { this.fruits = ['a']; this.fruit = null },
+  })
+  assert.equal(b.$('.llselect-trigger-arrow svg'), null)
 })

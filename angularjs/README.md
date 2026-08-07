@@ -147,7 +147,7 @@ Only settings that are app-wide **by nature** are here, and `uiTranslationPack` 
 
 ## The arrow
 
-`ll-arrow="chevron"` or `ll-arrow="triangle"` - llselect's two built-in arrow icons, and nothing else. A custom arrow means editing your copy of `llselect-angularjs.js`, which is what a copy-paste package is for. Omit it and the slot is left to the theme.
+The chevron is the default - this package is batteries-included, unlike the core (which ships no arrow so the app decides). `ll-arrow="triangle"` picks the other built-in icon; `ll-arrow="none"` opts out and leaves the slot to the theme. A custom arrow means editing your copy of `llselect-angularjs.js`, which is what a copy-paste package is for. The ui-select bridge always renders the chevron (every ui-select theme has a caret, so a bare trigger would read as broken).
 
 ## The ui-select bridge
 

@@ -231,6 +231,9 @@
     settings.searchable = attrs.searchEnabled ? scope.$eval(attrs.searchEnabled) : true
     if (slots.matchAttrs['allow-clear']) { settings.clearable = true }
     if (settings.searchable) { settings.filterFn = filterFn }
+    // Batteries-included default arrow: every ui-select theme renders a caret,
+    // so a bare trigger would read as broken to a migrating call site.
+    settings.createTriggerArrowContentElFn = function () { return llselect.createChevronDownSvgEl() }
 
     var gate = { suppressed: false }
     function withoutWriteBack(fn) {
