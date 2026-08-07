@@ -3,7 +3,7 @@
 
 VERSION := $(shell node -p "require('./package.json').version")
 
-.PHONY: help verify check-version login push publish-core publish-angularjs publish release
+.PHONY: help verify check-version login push publish-core publish-angularjs publish tag release
 
 help: ## list targets
 	@grep -E '^[a-z-]+:.*##' Makefile | awk -F ':.*## ' '{ printf "  make %-18s %s\n", $$1, $$2 }'
@@ -36,5 +36,10 @@ publish-angularjs: ## publish @llselect/angularjs (AFTER core - its peer range n
 
 publish: publish-core publish-angularjs ## both packages, in dependency order
 
-release: check-version login push publish ## the whole flow: guard, auth, push, publish
+tag: ## annotated v<version> tag on HEAD, pushed to both remotes
+	git tag -a v$(VERSION) -m "$(VERSION)"
+	git push github v$(VERSION)
+	git push gitlab v$(VERSION)
+
+release: check-version login push publish tag ## the whole flow: guard, auth, push, publish, tag
 	@echo "released: @llselect/core@$$(npm view @llselect/core version) @llselect/angularjs@$$(npm view @llselect/angularjs version)"
