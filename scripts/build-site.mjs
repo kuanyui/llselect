@@ -95,7 +95,6 @@ th, td { border: 1px solid var(--line); padding: 0.3em 0.6em; }
 <body>
 <nav>
 <a href="./" class="current">Home</a>
-<a href="demo/">Demo</a>
 <a href="demo/examples.html">Examples</a>
 <a href="demo/benchmark.html">Benchmark</a>
 <a href="demo/angularjs/">AngularJS</a>

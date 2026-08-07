@@ -2,52 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The hub page retired: the shared navbar covers navigation. This stub
+       keeps old /demo/ links working. -->
+  <meta http-equiv="refresh" content="0; url=examples.html">
   <title>llselect demo</title>
-  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <nav class="demo-nav">
-    <a href="../">&larr; Home</a>
-    <a href="index.html" class="current">Demo</a>
-    <a href="examples.html">Examples</a>
-    <a href="benchmark.html">Benchmark</a>
-  </nav>
-
-  <h1>llselect demo</h1>
-  <p>
-    A minimal, framework-agnostic replacement for the native
-    <code>&lt;select&gt;</code>. Build the package first, then serve this folder:
-  </p>
-  <pre class="hub-cmd"><code>npm run build
-npm run serve   # then open /demo/</code></pre>
-  <p class="hub-version">Built against llselect <span id="version">...</span></p>
-
-  <div class="hub-cards">
-    <a class="hub-card" href="examples.html">
-      <h2>Examples</h2>
-      <p>Every capability, live and editable: single / multiple, search,
-        optgroups, tags, select-all, width policies, disabled, custom renderers,
-        i18n and RTL - each with its source.</p>
-    </a>
-    <a class="hub-card" href="benchmark.html">
-      <h2>Benchmark</h2>
-      <p>llselect against Choices.js, Select2, Tom Select and Slim Select on the
-        same dataset: initial render, open latency, filter, and single-item
-        selection. Runs in your browser.</p>
-    </a>
-    <a class="hub-card" href="angularjs/index.html">
-      <h2>AngularJS 1.x</h2>
-      <p>Example directives for the one framework that gets a page here, and why:
-        it is EOL, so a binding cannot rot, and <code>ng-options</code> already
-        lets the app declare its own item type. Includes a ui-select-shaped
-        bridge and a benchmark against ui-select. Copy-paste, not a wrapper.</p>
-    </a>
-  </div>
-
-  <script type="module">
-    import { LLSELECT_VERSION } from '../dist/index.mjs'
-    document.getElementById('version').textContent = LLSELECT_VERSION
-  </script>
+  <p>Moved to <a href="examples.html">examples.html</a>.</p>
 </body>
 </html>

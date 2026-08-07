@@ -353,9 +353,8 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .demo-nav a:hover { background: #eef3fb; }
 .demo-nav a.current { background: #2456a6; color: #fff; }
 
-/* --- hub (index.html) ---------------------------------------------------- */
+/* --- card grid (angularjs/index.html overview) ---------------------------- */
 .hub-cmd { background: #f4f4f4; padding: 0.75rem 1rem; border-radius: 6px; overflow-x: auto; }
-.hub-version { color: #555; font-size: 0.9rem; }
 .hub-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
 .hub-card {
   display: block;
