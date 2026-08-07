@@ -133,7 +133,23 @@ const sel = new LLSelectSingle(el, { uiTranslationPack: zhTW })
 sel.setUiTranslationPack(ja) // switch language at runtime - no rebuild, chosen state survives
 ```
 
-No build tool? The UMD bundle exposes `window.llselect` (`<script src="https://unpkg.com/@llselect/core"></script>`), themes via `<link>`.
+### CDN (no build tool)
+
+Everything in `dist/` is served by both CDNs; pin at least the major version (`@0`):
+
+```html
+<!-- library: window.llselect -->
+<script src="https://cdn.jsdelivr.net/npm/@llselect/core@0/dist/index.umd.js"></script>
+<!-- or: https://unpkg.com/@llselect/core@0/dist/index.umd.js -->
+
+<!-- language packs (optional): window.llselectI18n -->
+<script src="https://cdn.jsdelivr.net/npm/@llselect/core@0/dist/i18n.umd.js"></script>
+
+<!-- a theme (optional): vanilla / tailwind / bootstrap-3 / bootstrap-4 / bootstrap-5 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@llselect/core@0/dist/themes/vanilla.css">
+```
+
+The bare URLs `https://cdn.jsdelivr.net/npm/@llselect/core` and `https://unpkg.com/@llselect/core` resolve straight to the UMD (via the `jsdelivr` / `unpkg` package fields). Browse every published file: [jsdelivr file tree](https://www.jsdelivr.com/package/npm/@llselect/core?tab=files) or [unpkg browser](https://unpkg.com/browse/@llselect/core/). ESM and CJS entries ship unminified for bundlers (which minify your app themselves); the UMD is minified, and every file carries a source map.
 
 ## Limitation: What llselect deliberately decides **not** to do?
 
