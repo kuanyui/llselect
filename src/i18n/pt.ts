@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Portuguese pack (unsplit: vocabulary valid in both European and Brazilian usage). */
 export const pt: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Selecione uma opção',
-  searchInputAriaLabel: 'Pesquisar',
-  searchInputPlaceholder: 'Filtrar (Esc para limpar)',
+  filterInputAriaLabel: 'Pesquisar',
+  filterInputPlaceholder: 'Filtrar (Esc para limpar)',
   popupListNoResults: 'Nenhum resultado',
   triggerClearButtonAriaLabel: 'Limpar seleção',
   tagRemoveButtonAriaLabel: (itemLabel) => `Remover ${itemLabel}`,

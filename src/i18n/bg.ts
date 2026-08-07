@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Bulgarian pack. */
 export const bg: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Изберете',
-  searchInputAriaLabel: 'Търсене',
-  searchInputPlaceholder: 'Филтър (Esc за изчистване)',
+  filterInputAriaLabel: 'Търсене',
+  filterInputPlaceholder: 'Филтър (Esc за изчистване)',
   popupListNoResults: 'Няма резултати',
   triggerClearButtonAriaLabel: 'Изчистване на избора',
   tagRemoveButtonAriaLabel: (itemLabel) => `Премахване на ${itemLabel}`,

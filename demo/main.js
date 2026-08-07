@@ -358,7 +358,7 @@ const selSearchSingle = new LLSelectSingle(
   document.getElementById('mount-search-single'),
   {
     placeholder: 'Pick a country',
-    searchable: true,
+    filterable: true,
     onChange: (v) => { outSearchSingle.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
@@ -378,7 +378,7 @@ const selSearchMulti = new SearchCheckboxMulti(
   document.getElementById('mount-search-multi'),
   {
     placeholder: 'Pick countries',
-    searchable: true,
+    filterable: true,
     onChange: (chosen) => {
       outSearchMulti.textContent = 'chosen: ' + JSON.stringify(chosen)
     },
@@ -393,7 +393,7 @@ const selSearchUsers = new LLSelectSingle(
   document.getElementById('mount-search-users'),
   {
     placeholder: 'Search users by name OR role',
-    searchable: true,
+    filterable: true,
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: (u) => `#${u.id} ${u.name} (${u.role})`,
     // Default matches the visible label only. This custom fn lets the user
@@ -457,7 +457,7 @@ document.getElementById('btn-toggle-all')
 //#region 5.3
 // triggerDisplay: 'tags' shows each chosen item as a removable chip. The x
 // button removes it (toggleItem); the library owns the chip + x + aria +
-// tabindex. Composes with searchable. createTagContentElFn (unused here) would
+// tabindex. Composes with filterable. createTagContentElFn (unused here) would
 // fill each chip's content, mirroring createItemContentElFn; createTagRemoveButtonContentElFn
 // likewise swaps the remove-button icon, mirroring createTriggerClearButtonContentElFn.
 const outTags = document.getElementById('out-tags')
@@ -466,7 +466,7 @@ const selTags = new LLSelectMultiple(
   {
     placeholder: 'Pick countries',
     triggerDisplay: 'tags',
-    searchable: true,
+    filterable: true,
     onChange: (chosen) => { outTags.textContent = 'chosen: ' + chosen.join(', ') },
   }
 )
@@ -497,7 +497,7 @@ const selSelectAll = new SelectAllCheckboxMulti(
   document.getElementById('mount-select-all'),
   {
     placeholder: 'Pick countries',
-    searchable: true,
+    filterable: true,
     selectAllRow: true,
     createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
       const row = document.createElement('span')
@@ -598,7 +598,7 @@ selGroup.setItems(GROUPED_FOODS)
 //#endregion
 
 //#region 10.2
-// Group-level disabled + searchable. groupDisabledFn disables a whole group
+// Group-level disabled + filterable. groupDisabledFn disables a whole group
 // (layers on item-level disabled): its items are not selectable, skipped by
 // keyboard, aria-disabled. Filtering regroups survivors; empty groups vanish.
 const outGroupDisabled = document.getElementById('out-group-disabled')
@@ -606,7 +606,7 @@ const selGroupDisabled = new LLSelectMultiple(
   document.getElementById('mount-group-disabled'),
   {
     placeholder: 'Pick foods (Dairy group disabled)',
-    searchable: true,
+    filterable: true,
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (f) => f.name,
     itemToGroupKeyFn: (f) => f.category,
@@ -687,7 +687,7 @@ selTagIcons.setChosenItems([PROGRAMMING_LANGUAGES[1], PROGRAMMING_LANGUAGES[3]])
 // label parity). destroy() unwires the click and a minted id.
 const labelDemoSel = new LLSelectSingle(document.getElementById('mount-label-demo'), {
   labelEl: document.getElementById('fruit-label'),
-  searchable: true,
+  filterable: true,
   clearable: true,
   createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
 })
@@ -714,19 +714,19 @@ const i18nPackSelect = document.getElementById('i18n-pack-select')
 const i18nMounts = ['mount-i18n-single', 'mount-i18n-tags', 'mount-i18n-count'].map((id) => document.getElementById(id))
 const i18nSelects = [
   new LLSelectSingle(i18nMounts[0], {
-    searchable: true,
+    filterable: true,
     clearable: true,
     createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
   }),
   new LLSelectMultiple(i18nMounts[1], {
-    searchable: true,
+    filterable: true,
     clearable: true,
     triggerDisplay: 'tags',
     createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
     onChange: (chosen) => { outI18n.textContent = 'chosen: ' + chosen.join(', ') },
   }),
   new LLSelectMultiple(i18nMounts[2], {
-    searchable: true,
+    filterable: true,
     clearable: true,
     createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
   }),
@@ -771,7 +771,7 @@ for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
   card.append(cardLabel, mount)
   i18nAllGrid.append(card)
   const allSel = new LLSelectSingle(mount, {
-    searchable: true,
+    filterable: true,
     clearable: true,
     createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
     uiTranslationPack: pack,

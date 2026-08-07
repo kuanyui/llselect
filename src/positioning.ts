@@ -45,7 +45,7 @@ export interface PositionInput {
    * Placement currently in effect, for stickiness across repositions of one
    * open cycle. When set and the content still fits on that side, it is kept
    * even if the other side would also fit - so a transient content shrink
-   * (e.g. a search filter matching nothing) does not flip the popup back and
+   * (e.g. a filter query matching nothing) does not flip the popup back and
    * forth. Omit / `undefined` (first placement) to pick fresh.
    */
   currentPlacement?: Placement | undefined
@@ -401,7 +401,7 @@ export function createPositioner(
 
   return {
     // Public re-place: never auto-closes. Called after list re-renders (incl.
-    // every search keystroke), where dismissing would be wrong - especially on
+    // every filter keystroke), where dismissing would be wrong - especially on
     // mobile with the keyboard open. Dismissal is a scroll-only decision.
     reposition: () => reposition(false),
     detach(): void {

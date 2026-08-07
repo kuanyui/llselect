@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Dutch pack. */
 export const nl: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Maak een keuze',
-  searchInputAriaLabel: 'Zoeken',
-  searchInputPlaceholder: 'Filteren (Esc om te wissen)',
+  filterInputAriaLabel: 'Zoeken',
+  filterInputPlaceholder: 'Filteren (Esc om te wissen)',
   popupListNoResults: 'Geen resultaten',
   triggerClearButtonAriaLabel: 'Selectie wissen',
   tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel} verwijderen`,

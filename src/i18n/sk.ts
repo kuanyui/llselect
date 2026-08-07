@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Slovak pack. */
 export const sk: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Vyberte',
-  searchInputAriaLabel: 'Hľadať',
-  searchInputPlaceholder: 'Filter (Esc na vymazanie)',
+  filterInputAriaLabel: 'Hľadať',
+  filterInputPlaceholder: 'Filter (Esc na vymazanie)',
   popupListNoResults: 'Žiadne výsledky',
   triggerClearButtonAriaLabel: 'Vymazať výber',
   tagRemoveButtonAriaLabel: (itemLabel) => `Odstrániť ${itemLabel}`,

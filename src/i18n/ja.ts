@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Japanese pack. */
 export const ja: LLSelectUiTranslationPack = {
   triggerPlaceholder: '選択してください',
-  searchInputAriaLabel: '検索',
-  searchInputPlaceholder: '絞り込み（Escでクリア）',
+  filterInputAriaLabel: '検索',
+  filterInputPlaceholder: '絞り込み（Escでクリア）',
   popupListNoResults: '該当する結果はありません',
   triggerClearButtonAriaLabel: '選択をクリア',
   tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel}を削除`,

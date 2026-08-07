@@ -19,7 +19,7 @@ angular.module('app', ['llselect'])
 ```
 
 ```html
-<llselect-single name="fruit" ng-model="picked" required ll-searchable="true"
+<llselect-single name="fruit" ng-model="picked" required ll-filterable="true"
   ll-options="f.id as f.name group by f.type disable when f.soldOut for f in fruits track by f.id">
 </llselect-single>
 ```
@@ -107,7 +107,7 @@ All verified against AngularJS 1.8.3 source, not folk wisdom.
 - **`LLSelectMultiple` must override `$isEmpty`.** The default is `isUndefined(value) || value === '' || value === null || value !== value` (`angular.js:30570`), so `[]` is not empty and `required` silently passes on an empty multi-selection. AngularJS applies the same fix in its own `<select multiple>` branch (`angular.js:35932`), and `llselect-angularjs.js` copies it.
 - **Model -> view must not write back.** llselect's `setChosenItem` / `setChosenItems` fire `onChange` whenever the value really changes, including when *we* change it while rendering the model into the view. `setItems` compounds this: it drops a chosen item that is not in the new list and fires `onChange` for that too (`onItemsChanged` in `src/single.ts` / `src/multiple.ts`). Wired naively, loading data asynchronously marks the form `$dirty` and can null the model, for a field the user never touched. `llselect-angularjs.js` arms view -> model only around real interaction (`makeWriteBackGate`).
 - **A `select as` model value must be re-resolved after `setItems`.** It is a key pointing into the list, so a new list needs a fresh reverse lookup. Without the projection the model holds the item itself and llselect's own `setItems` already reconciled it - calling `$render` there would re-add an item that is no longer in the list.
-- **Settings are immutable; only methods are watched.** llselect resolves its settings bag once at construction, so `ll-placeholder` / `ll-searchable` / `ll-popup-width-policy` are read once at link time. Only `ll-disabled` gets a `$watch`, because it maps to the `setDisabled()` method.
+- **Settings are immutable; only methods are watched.** llselect resolves its settings bag once at construction, so `ll-placeholder` / `ll-filterable` / `ll-popup-width-policy` are read once at link time. Only `ll-disabled` gets a `$watch`, because it maps to the `setDisabled()` method.
 - **When the chosen item vanishes from the list, the model keeps its value and the view goes empty.** This matches `ngOptions`, which shows its "unknown option" in the same situation and does not null the model. Note the shared consequence: `required` still passes, because the model is not empty.
 
 ## ghiscoding/angular-validation
@@ -136,7 +136,7 @@ angular.module('app', ['llselect'])
   .config(['llselectConfigProvider', function (llselectConfigProvider) {
     llselectConfigProvider.defaults({
       arrow: 'chevron',          // 'chevron' | 'triangle' | null (null = the theme draws it)
-      searchable: true,          // boolean, or a predicate (items) => boolean
+      filterable: true,          // boolean, or a predicate (items) => boolean
       popupWidthPolicy: 'fit-content',
       uiTranslationPack: llselectI18n.zhTW,  // an llselect language pack
     })
@@ -167,7 +167,7 @@ The chevron is the default - this package is batteries-included, unlike the core
 | `group-by` | `itemToGroupKeyFn` |
 | `ui-disable-choice` | `itemDisabledFn` |
 | `multiple` | `LLSelectMultiple` (+ `triggerDisplay: 'tags'`) |
-| `search-enabled` | `searchable`. Defaults to `true`, following ui-select's default rather than llselect's `false` - it is ui-select's markup, so its defaults are what the call site expects |
+| `search-enabled` | `filterable`. Defaults to `true`, following ui-select's default rather than llselect's `false` - it is ui-select's markup, so its defaults are what the call site expects |
 | `placeholder`, `allow-clear` (on `<ui-select-match>`) | `placeholder`, `clearable` |
 | `on-select`, `on-remove` | derived from `onChange` by diffing against the previous set |
 | `ng-disabled` | `setDisabled()` |

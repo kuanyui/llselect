@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Irish pack. */
 export const ga: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Roghnaigh',
-  searchInputAriaLabel: 'Cuardaigh',
-  searchInputPlaceholder: 'Scag (Esc le glanadh)',
+  filterInputAriaLabel: 'Cuardaigh',
+  filterInputPlaceholder: 'Scag (Esc le glanadh)',
   popupListNoResults: 'Gan torthaí',
   triggerClearButtonAriaLabel: 'Glan an rogha',
   tagRemoveButtonAriaLabel: (itemLabel) => `Bain ${itemLabel}`,

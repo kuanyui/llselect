@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Croatian pack. */
 export const hr: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Odaberite',
-  searchInputAriaLabel: 'Pretraži',
-  searchInputPlaceholder: 'Filtriraj (Esc za brisanje)',
+  filterInputAriaLabel: 'Pretraži',
+  filterInputPlaceholder: 'Filtriraj (Esc za brisanje)',
   popupListNoResults: 'Nema rezultata',
   triggerClearButtonAriaLabel: 'Očisti odabir',
   tagRemoveButtonAriaLabel: (itemLabel) => `Ukloni ${itemLabel}`,

@@ -37,7 +37,7 @@
     <div class="demo-split">
       <div class="demo-pane">
         <div class="demo-row" data-src="1a">
-          <llselect-single ng-model="vm.country" ll-searchable="true" ll-clearable="true"
+          <llselect-single ng-model="vm.country" ll-filterable="true" ll-clearable="true"
             ll-placeholder="'Pick a country'"
             ll-options="c for c in vm.countries">
           </llselect-single>
@@ -47,7 +47,7 @@
       </div>
       <div class="demo-pane">
         <div class="demo-row" data-src="1b">
-          <llselect-multiple ng-model="vm.langs" ll-searchable="true"
+          <llselect-multiple ng-model="vm.langs" ll-filterable="true"
             ll-trigger-display="'tags'"
             ll-options="l.name for l in vm.languages track by l.name">
           </llselect-multiple>
@@ -103,7 +103,7 @@
       <code>ng-options</code> does.
     </p>
     <div class="demo-row" data-src="3">
-      <llselect-single ng-model="vm.userId" ll-searchable="true"
+      <llselect-single ng-model="vm.userId" ll-filterable="true"
         ll-options="u.id as u.name group by u.role disable when u.suspended for u in vm.users track by u.id">
       </llselect-single>
     </div>

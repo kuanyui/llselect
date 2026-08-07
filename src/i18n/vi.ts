@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Vietnamese pack. */
 export const vi: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Vui lòng chọn',
-  searchInputAriaLabel: 'Tìm kiếm',
-  searchInputPlaceholder: 'Lọc (Esc để xóa)',
+  filterInputAriaLabel: 'Tìm kiếm',
+  filterInputPlaceholder: 'Lọc (Esc để xóa)',
   popupListNoResults: 'Không có kết quả',
   triggerClearButtonAriaLabel: 'Xóa lựa chọn',
   tagRemoveButtonAriaLabel: (itemLabel) => `Bỏ ${itemLabel}`,

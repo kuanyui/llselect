@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Thai pack. */
 export const th: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'โปรดเลือก',
-  searchInputAriaLabel: 'ค้นหา',
-  searchInputPlaceholder: 'กรอง (กด Esc เพื่อล้าง)',
+  filterInputAriaLabel: 'ค้นหา',
+  filterInputPlaceholder: 'กรอง (กด Esc เพื่อล้าง)',
   popupListNoResults: 'ไม่พบผลลัพธ์',
   triggerClearButtonAriaLabel: 'ล้างการเลือก',
   tagRemoveButtonAriaLabel: (itemLabel) => `นำ ${itemLabel} ออก`,

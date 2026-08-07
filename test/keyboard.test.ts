@@ -54,7 +54,7 @@ test('open: PageUp/PageDown -> PageUp/PageDown', () => {
   assert.equal(getActionFromKey(makeEvent('PageDown'), true), LLSelectAction.PageDown)
 })
 
-// --- getActionFromKey (open, focus in the search text input) -------
+// --- getActionFromKey (open, focus in the filter text input) -------
 
 test('open + inTextInput: Space is left alone (types a space), Enter still selects', () => {
   assert.equal(getActionFromKey(makeEvent(' '), true, true), undefined)
@@ -246,7 +246,7 @@ test('Enter on closed select opens (does not select)', () => {
   assert.equal(sel.getChosenItem(), undefined)
 })
 
-test('typing letters when closed does NOT open (phase 5: type-to-search comes later)', () => {
+test('typing letters when closed does NOT open (phase 5: typeahead comes later)', () => {
   const sel = mountSelect(['apple', 'banana'])
   fireKey(sel.triggerEl, 'a')
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')

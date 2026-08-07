@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Lithuanian pack. */
 export const lt: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Pasirinkite',
-  searchInputAriaLabel: 'Paieška',
-  searchInputPlaceholder: 'Filtras (Esc išvalyti)',
+  filterInputAriaLabel: 'Paieška',
+  filterInputPlaceholder: 'Filtras (Esc išvalyti)',
   popupListNoResults: 'Rezultatų nerasta',
   triggerClearButtonAriaLabel: 'Išvalyti pasirinkimą',
   tagRemoveButtonAriaLabel: (itemLabel) => `Pašalinti ${itemLabel}`,

@@ -8,8 +8,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
  */
 export const yue: LLSelectUiTranslationPack = {
   triggerPlaceholder: '請揀',
-  searchInputAriaLabel: '搜尋',
-  searchInputPlaceholder: '篩選（撳 Esc 清走）',
+  filterInputAriaLabel: '搜尋',
+  filterInputPlaceholder: '篩選（撳 Esc 清走）',
   popupListNoResults: '搵唔到結果',
   triggerClearButtonAriaLabel: '清走揀咗嘅嘢',
   tagRemoveButtonAriaLabel: (itemLabel) => `移走 ${itemLabel}`,

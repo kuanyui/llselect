@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Icelandic pack. */
 export const is: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Veldu valkost',
-  searchInputAriaLabel: 'Leita',
-  searchInputPlaceholder: 'Sía (Esc til að hreinsa)',
+  filterInputAriaLabel: 'Leita',
+  filterInputPlaceholder: 'Sía (Esc til að hreinsa)',
   popupListNoResults: 'Engar niðurstöður',
   triggerClearButtonAriaLabel: 'Hreinsa val',
   tagRemoveButtonAriaLabel: (itemLabel) => `Fjarlægja ${itemLabel}`,

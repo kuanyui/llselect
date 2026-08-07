@@ -89,7 +89,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * listbox (`false` default). Tri-state (none / some / all chosen, via the
    * `data-chosen-state` attribute themes draw + the accessible name from
    * `uiTranslationPack.selectAllRowLabel`); Enter / click toggles. Acts on the VISIBLE
-   * enabled subset (the filtered list while a search query is active) - the
+   * enabled subset (the filtered list while a filter query is active) - the
    * public `chooseAll` / `unchooseAll` / `toggleAll` keep their whole-list
    * semantics. See `docs/A11Y.md` "Select-all".
    */

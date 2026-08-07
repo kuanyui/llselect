@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Filipino pack. */
 export const fil: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Pumili',
-  searchInputAriaLabel: 'Maghanap',
-  searchInputPlaceholder: 'Salain (Esc para burahin)',
+  filterInputAriaLabel: 'Maghanap',
+  filterInputPlaceholder: 'Salain (Esc para burahin)',
   popupListNoResults: 'Walang resulta',
   triggerClearButtonAriaLabel: 'Burahin ang pinili',
   tagRemoveButtonAriaLabel: (itemLabel) => `Alisin ang ${itemLabel}`,

@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Greek pack. */
 export const el: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Επιλέξτε',
-  searchInputAriaLabel: 'Αναζήτηση',
-  searchInputPlaceholder: 'Φίλτρο (Esc για καθαρισμό)',
+  filterInputAriaLabel: 'Αναζήτηση',
+  filterInputPlaceholder: 'Φίλτρο (Esc για καθαρισμό)',
   popupListNoResults: 'Κανένα αποτέλεσμα',
   triggerClearButtonAriaLabel: 'Καθαρισμός επιλογής',
   tagRemoveButtonAriaLabel: (itemLabel) => `Αφαίρεση ${itemLabel}`,

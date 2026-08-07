@@ -42,7 +42,7 @@ test('itemToStringFn customizes the chosen label in the trigger (single)', () =>
 
 test('default filter matches against the itemToStringFn label', () => {
   const sel = new LLSelectSingle<User>(mount(), {
-    searchable: true,
+    filterable: true,
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: u => u.name,
   })

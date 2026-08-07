@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Bengali pack. */
 export const bn: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'অনুগ্রহ করে নির্বাচন করুন',
-  searchInputAriaLabel: 'অনুসন্ধান',
-  searchInputPlaceholder: 'ফিল্টার (মুছতে Esc)',
+  filterInputAriaLabel: 'অনুসন্ধান',
+  filterInputPlaceholder: 'ফিল্টার (মুছতে Esc)',
   popupListNoResults: 'কোনো ফলাফল পাওয়া যায়নি',
   triggerClearButtonAriaLabel: 'নির্বাচন মুছুন',
   tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel} সরান`,

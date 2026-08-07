@@ -46,7 +46,7 @@ By RETURN TYPE (behaviour, not input):
 - maps one input to a value -> `<source>To<target>Fn`: `itemToStringFn` (item->string), `itemToGroupKeyFn` (item->key), `groupKeyToLabelFn` (key->string). `itemTo*Fn` is the common case; name the actual source when it is not the item, and the target is the return type (`*Key`, `*Label`, `*String`), not necessarily `string`.
 - returns an element -> `create*ElFn`: `createItemContentElFn`, `createTriggerArrowContentElFn`, `createTriggerContentElFn`.
 - fires an event -> `on*`: `onChange`, `onOpen`, `onClose`.
-- EXCEPTION: a capability FLAG may widen to `boolean | predicate` and keep its flag name (no `*Fn`): the name describes the capability, the TS union already declares the function form, and `searchableFn: boolean | fn` would be worse. Example: `searchable: boolean | ((items) => boolean)`.
+- EXCEPTION: a capability FLAG may widen to `boolean | predicate` and keep its flag name (no `*Fn`): the name describes the capability, the TS union already declares the function form, and `searchableFn: boolean | fn` would be worse. Example: `filterable: boolean | ((items) => boolean)`.
 - NAMED TYPE ALIASES are for enum-ish VALUE types only (`LLSelectOutsideClickBehavior`, `LLSelectTriggerDisplay`, `LLSelectChosenState`, `WidthPolicy`, `Placement`) - callers declare variables of those. Callback types stay INLINE on the settings field: inside a settings literal, contextual typing infers them, so an alias buys nothing (the one historical callback alias was removed in the RC review).
 - RULE (CLAUDE.md): any callback whose type includes `null` documents what `null` does.
 
@@ -61,7 +61,7 @@ By RETURN TYPE (behaviour, not input):
 | protected    | `renderItemContent`                      | `createItemContentEl`                                                 |
 | setting      | `renderItemContentFn`                    | `createItemContentElFn` (narrowed to `(item) => HTMLElement \| null`) |
 | private      | `buildTriggerEl`                         | `createTriggerEl`                                                     |
-| private      | `buildSearchInputEl`                     | `createSearchInputEl`                                                 |
+| private      | `buildFilterInputEl`                     | `createFilterInputEl`                                                 |
 | private      | `buildPopupEl`                           | `createPopupEl`                                                       |
 | private      | `buildPopupListEl`                       | `createPopupListEl`                                                   |
 | mod-fn       | `makeClassIdMap`                         | `createClassIdMap`                                                    |
@@ -228,8 +228,8 @@ All user/AT-visible chrome strings live in ONE base setting `uiTranslationPack: 
 | Key                           | Type                                                  |
 | ----------------------------- | ----------------------------------------------------- |
 | `triggerPlaceholder`          | `string`                                              |
-| `searchInputAriaLabel`        | `string`                                              |
-| `searchInputPlaceholder`      | `string \| null`                                      |
+| `filterInputAriaLabel`        | `string`                                              |
+| `filterInputPlaceholder`      | `string \| null`                                      |
 | `popupListNoResults`          | `string`                                              |
 | `triggerClearButtonAriaLabel` | `string`                                              |
 | `tagRemoveButtonAriaLabel`    | `(itemLabel: string) => string`                       |
@@ -240,7 +240,7 @@ All user/AT-visible chrome strings live in ONE base setting `uiTranslationPack: 
 
 ## 5. Decisions log
 
-Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator (DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). Consistency-review follow-up (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createTriggerArrowContentEl(state)` reading `createTriggerArrowContentElFn` (mirrors the clear button's content method); `renderTriggerArrow` stays a private orchestrator and `commitTriggerArrowContentElToDom` a private primitive. (Names shown post-s7b.) R20 added private `computeSearchActive` (compute*) + `syncSearchModeToDom` (sync*ToDom). R26 added public `destroy` (domain lifecycle op, industry-standard name; joins `open`/`close`/`toggle` on the DOM-touching exception list). R29 (Phase 13) added base protected `createPopupListLeadingRowEl` (create*El), `onLeadingRowActivated` (on-hook), `focusLeadingRow` (focus*), `replaceLeadingRowElInDom` (replace*ElInDom); multi flag setting `selectAllRow`; classIdMap `selectAllRowClass`. RC review follow-up (F7, user ruling): `isItemDisabled` -> `isItemEffectivelyDisabled` - it composes `itemDisabledFn` OR the group layer, so its name must not mimic a 1:1 `<setting minus Fn>` reader; rule in s7a.6.
+Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator (DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). Consistency-review follow-up (R3): `matchesQuery` private -> protected (the subclass seam for `filterFn`); added `protected createTriggerArrowContentEl(state)` reading `createTriggerArrowContentElFn` (mirrors the clear button's content method); `renderTriggerArrow` stays a private orchestrator and `commitTriggerArrowContentElToDom` a private primitive. (Names shown post-s7b.) R20 added private `computeFilterActive` (compute*) + `syncFilterModeToDom` (sync*ToDom). R26 added public `destroy` (domain lifecycle op, industry-standard name; joins `open`/`close`/`toggle` on the DOM-touching exception list). R29 (Phase 13) added base protected `createPopupListLeadingRowEl` (create*El), `onLeadingRowActivated` (on-hook), `focusLeadingRow` (focus*), `replaceLeadingRowElInDom` (replace*ElInDom); multi flag setting `selectAllRow`; classIdMap `selectAllRowClass`. RC review follow-up (F7, user ruling): `isItemDisabled` -> `isItemEffectivelyDisabled` - it composes `itemDisabledFn` OR the group layer, so its name must not mimic a 1:1 `<setting minus Fn>` reader; rule in s7a.6.
 
 ## 6. Phasing
 
@@ -256,10 +256,10 @@ DONE - all three phases applied (npm test passes; npm run build green).
 
 ### 7a. New rules
 
-1. **Element names are nouns, never bare verbs.** Any name denoting an ELEMENT (classIdMap key, `*El` field, `create*El` method, pack-key prefix) must read as a noun phrase. Verb-derived elements take `Button` - they are all real `<button>`s, and `<verb> button` is natural English (play button, submit button): `triggerClearButton`, `tagRemoveButton`. Verbs stay verbs on ACTIONS (`clearSelection`, `toggleItem`, `open`); `-able` adjectives stay on capability flags (`clearable`, `searchable`). When no natural `-able` adjective exists, an ELEMENT-PRESENCE flag uses the element's noun name as a boolean (`selectAllRow: boolean` - "selectAllable" would be nonsense).
+1. **Element names are nouns, never bare verbs.** Any name denoting an ELEMENT (classIdMap key, `*El` field, `create*El` method, pack-key prefix) must read as a noun phrase. Verb-derived elements take `Button` - they are all real `<button>`s, and `<verb> button` is natural English (play button, submit button): `triggerClearButton`, `tagRemoveButton`. Verbs stay verbs on ACTIONS (`clearSelection`, `toggleItem`, `open`); `-able` adjectives stay on capability flags (`clearable`, `filterable`). When no natural `-able` adjective exists, an ELEMENT-PRESENCE flag uses the element's noun name as a boolean (`selectAllRow: boolean` - "selectAllable" would be nonsense).
 2. **Family prefix (DESIGN.md "Element family naming") applies to ALL trigger children.** The clear button is a direct child of the trigger, like `triggerContent` / `triggerArrow`, so it carries the `trigger` prefix. Today's `clear*` family violated the existing rule. `tagRemoveButton` needs no extra prefix (`tag` is already in the name).
 3. **Container-Content law.** Every "library owns the container element + wiring; the hook fills only its visible content" customization point is named `create<Container>ContentElFn` (setting) + `create<Container>ContentEl` (protected, default reads the setting); `null` = that container's default content. Already conforming: trigger, item, tag, groupLabel. Brought into conformance by 7b: triggerArrow, triggerClearButton, tagRemoveButton. Later additions follow it: popupListNoResults (query-aware), selectAllRow (tri-state + counts). Plain `create<Element>El` (no `Content`) builds the WHOLE element.
-4. **pack keys are message ids, never `Fn`-suffixed** (values may be strings or functions; s3 governs settings fields only, and the setting here is `uiTranslationPack`). Attribute strings: `<elementFamily><Attribute>` (`searchInputAriaLabel`, `triggerClearButtonAriaLabel`, `tagRemoveButtonAriaLabel`). Generated content strings: `<family><SemanticName>` (`triggerCountSummary`). Parameterized messages take RESOLVED primitives (`itemLabel: string`, counts) - never `T` - so a language pack can implement them; per-`T` control stays on the protected method (`itemToTagRemoveButtonAriaLabel`).
+4. **pack keys are message ids, never `Fn`-suffixed** (values may be strings or functions; s3 governs settings fields only, and the setting here is `uiTranslationPack`). Attribute strings: `<elementFamily><Attribute>` (`filterInputAriaLabel`, `triggerClearButtonAriaLabel`, `tagRemoveButtonAriaLabel`). Generated content strings: `<family><SemanticName>` (`triggerCountSummary`). Parameterized messages take RESOLVED primitives (`itemLabel: string`, counts) - never `T` - so a language pack can implement them; per-`T` control stays on the protected method (`itemToTagRemoveButtonAriaLabel`).
 5. Private helpers may keep shorter names (they matter least) but still obey the s1 suffix rules.
 6. **A predicate that composes MULTIPLE settings must not reuse one setting's bare name.** `is<X>` reading exactly `<x>Fn` is a 1:1 reader (`isGroupDisabled` <-> `groupDisabledFn`); when the answer layers more than that one setting, qualify the name so it cannot be mistaken for the raw read: `isItemEffectivelyDisabled` = `itemDisabledFn` OR the item's group's `groupDisabledFn` ("effectively" = layered final value, layer count not hard-coded).
 
@@ -280,8 +280,8 @@ DONE - all three phases applied (npm test passes; npm run build green).
 | protected NEW      | -                                             | `createTagRemoveButtonContentEl` (thin, reads the setting)                       |
 | protected          | `itemToTagRemoveLabel`                        | `itemToTagRemoveButtonAriaLabel`                                                 |
 | private            | `commitArrowElToDom`                          | `commitTriggerArrowContentElToDom`                                               |
-| setting -> pack    | `searchInputAriaLabel` (flat)                 | `uiTranslationPack.searchInputAriaLabel`                                                     |
-| setting -> pack    | `searchInputPlaceholder` (flat)               | `uiTranslationPack.searchInputPlaceholder`                                                   |
+| setting -> pack    | `filterInputAriaLabel` (flat)                 | `uiTranslationPack.filterInputAriaLabel`                                                     |
+| setting -> pack    | `filterInputPlaceholder` (flat)               | `uiTranslationPack.filterInputPlaceholder`                                                   |
 | setting -> pack    | `clearButtonAriaLabel` (flat)                 | `uiTranslationPack.triggerClearButtonAriaLabel`                                              |
 | setting -> pack    | `itemToTagRemoveLabelFn: (item: T) => string` | `uiTranslationPack.tagRemoveButtonAriaLabel: (itemLabel: string) => string`                  |
 | pack NEW           | - (hardcoded count summary)                   | `uiTranslationPack.triggerCountSummary: (chosenCount: number, totalCount: number) => string` |
@@ -292,8 +292,8 @@ DONE - all three phases applied (npm test passes; npm run build green).
 
 | Name                                         | Why kept                                                                                                                       |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `placeholder`                                | control-level concept (same as HTML input placeholder); the search input's is fully qualified (`uiTranslationPack.searchInputPlaceholder`) |
-| `clearable` / `searchable`                   | capability flags describe the CONTROL, not an element; verbs/adjectives are correct on actions and abilities                   |
+| `placeholder`                                | control-level concept (same as HTML input placeholder); the filter input's is fully qualified (`uiTranslationPack.filterInputPlaceholder`) |
+| `clearable` / `filterable`                   | capability flags describe the CONTROL, not an element; verbs/adjectives are correct on actions and abilities                   |
 | `clearSelection` / `toggleItem` / `open` ... | ACTIONS keep verbs (the noun rule is for elements only)                                                                        |
 | `openClass` (`.llselect-open`)               | a state class on root, not an element name                                                                                     |
 | `triggerDisplay`                             | already family-prefixed                                                                                                        |

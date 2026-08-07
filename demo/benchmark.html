@@ -352,7 +352,7 @@
       "the benchmark says fast but I can see it hang" case: a library cannot look
       instant while you are still waiting for the list to appear.</li>
     <li><strong>Debounce is measured, not hidden</strong> (filter / choose). Tom
-      Select and Slim Select debounce the search input. Rather than disabling the
+      Select and Slim Select debounce the filter input. Rather than disabling the
       debounce (which would hide latency the user really feels), the timer watches
       the DOM and waits until it stops mutating, so the debounce delay is included
       - and a debounced render is never mis-read as 0 ms. llselect filters
@@ -443,7 +443,7 @@
       <code>::before</code> could fake the look but that is free compositor work,
       not the per-tag rendering the others do, so it is deliberately not used -
       Slim Select simply does less tag work here, which its Choose number
-      reflects. This benches a plain searchable select otherwise; tagging, remote
+      reflects. This benches a plain filterable select otherwise; tagging, remote
       data and templating are out of scope.</li>
     <li>A <strong>"-"</strong> or <strong>error</strong> means the adapter could
       not drive that library on the loaded CDN version - tell me which cell.</li>

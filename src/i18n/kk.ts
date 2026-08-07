@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Kazakh pack (Cyrillic). */
 export const kk: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Таңдаңыз',
-  searchInputAriaLabel: 'Іздеу',
-  searchInputPlaceholder: 'Сүзгі (тазарту үшін Esc)',
+  filterInputAriaLabel: 'Іздеу',
+  filterInputPlaceholder: 'Сүзгі (тазарту үшін Esc)',
   popupListNoResults: 'Нәтиже табылмады',
   triggerClearButtonAriaLabel: 'Таңдауды тазарту',
   // Label-colon frames: Kazakh case suffixes vary with the stem, so nothing

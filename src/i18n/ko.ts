@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Korean pack. */
 export const ko: LLSelectUiTranslationPack = {
   triggerPlaceholder: '선택하세요',
-  searchInputAriaLabel: '검색',
-  searchInputPlaceholder: '필터 (Esc로 지우기)',
+  filterInputAriaLabel: '검색',
+  filterInputPlaceholder: '필터 (Esc로 지우기)',
   popupListNoResults: '결과가 없습니다',
   triggerClearButtonAriaLabel: '선택 지우기',
   tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel} 제거`,

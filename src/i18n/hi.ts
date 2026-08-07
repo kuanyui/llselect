@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Hindi pack. */
 export const hi: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'कृपया चुनें',
-  searchInputAriaLabel: 'खोजें',
-  searchInputPlaceholder: 'फ़िल्टर (साफ़ करने के लिए Esc)',
+  filterInputAriaLabel: 'खोजें',
+  filterInputPlaceholder: 'फ़िल्टर (साफ़ करने के लिए Esc)',
   popupListNoResults: 'कोई परिणाम नहीं मिला',
   triggerClearButtonAriaLabel: 'चयन साफ़ करें',
   tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel} हटाएँ`,

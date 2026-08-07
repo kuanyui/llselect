@@ -63,9 +63,9 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
    - Settings configure one instance; subclassing extends the library.
 4. Explicit
    - Explicit is better than implicit - API names are long, but hold no surprise or ambiguity.
-   - *Single-select* and *multiple-select* are separate classes, avoiding ambiguous / over-abstracted APIs (e.g. one `T[]` adopted on both modes).
+   - Consistent & comprehensible API naming convention, avoid user from guessing the meaning of APIs.
+   - *Single-select* and *multiple-select* are separate classes, avoiding ambiguous / over-abstracted APIs (for example, `select2` uses `T[]` adopted on single & multiple modes.).
    - Improves some UI/UX anti-patterns of the legacy `<select>` (e.g. `aria-disabled` instead of native `disabled`, so a disabled control still receives hover events and can show a "why is this disabled" tooltip).
-
 ## Benchmark
 
 > [!NOTE]
@@ -157,7 +157,7 @@ The bare URLs `https://cdn.jsdelivr.net/npm/@llselect/core` and `https://unpkg.c
 - **No HTML sanitizer.** llselect does not do HTML sanitizing for you. Remember to sanitize untrusted input via [DOMPurify](https://github.com/cure53/DOMPurify), or [browser's native Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/Sanitizer).
 - **No asynchronous data-fetching API.** llselect is aimed to be a simple `<select>` replacement. Fetch if you really want, then call `setItems(...)`.
 - **No virtual scrolling.** llselect is aimed to be a simple `<select>` replacement, not an omnipotent library.
-- **No alphabetic prefix typeahead** (the native `<select>` behavior) - because it is unusable for East Asian languages and IME input. Use the `searchable` option instead.
+- **No alphabetic prefix typeahead** (the native `<select>` behavior) - because it is unusable for East Asian languages and IME input. Use the `filterable` option instead.
 - **No official React / Vue / Angular wrapper** - llselect provides the minimal library and the CSS themes only.
   > Because:
   >
@@ -226,7 +226,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 
 | Capability                           | Entry points                                                                                                             |
 |--------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| Search box + custom matching         | `searchable` (bool or predicate), `filterFn`                                                                             |
+| Search box + custom matching         | `filterable` (bool or predicate), `filterFn`                                                                             |
 | Accessible field naming (required)   | `ariaLabel` / `ariaLabelledBy` / `labelEl` (visible label element: name + label-click-to-focus)                          |
 | Disabling - whole control / per item | `setDisabled()`, `focusableWhenDisabled`, `itemDisabledFn`                                                               |
 | Grouping (optgroup)                  | `itemToGroupKeyFn`, `groupKeyToLabelFn`, `groupDisabledFn`                                                               |

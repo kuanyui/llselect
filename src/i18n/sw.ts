@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Swahili pack. */
 export const sw: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Tafadhali chagua',
-  searchInputAriaLabel: 'Tafuta',
-  searchInputPlaceholder: 'Chuja (Esc kufuta)',
+  filterInputAriaLabel: 'Tafuta',
+  filterInputPlaceholder: 'Chuja (Esc kufuta)',
   popupListNoResults: 'Hakuna matokeo',
   triggerClearButtonAriaLabel: 'Futa uteuzi',
   tagRemoveButtonAriaLabel: (itemLabel) => `Ondoa ${itemLabel}`,

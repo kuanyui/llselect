@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Finnish pack. */
 export const fi: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Valitse',
-  searchInputAriaLabel: 'Haku',
-  searchInputPlaceholder: 'Suodata (Esc tyhjentää)',
+  filterInputAriaLabel: 'Haku',
+  filterInputPlaceholder: 'Suodata (Esc tyhjentää)',
   popupListNoResults: 'Ei tuloksia',
   triggerClearButtonAriaLabel: 'Tyhjennä valinta',
   tagRemoveButtonAriaLabel: (itemLabel) => `Poista ${itemLabel}`,

@@ -15,7 +15,7 @@ Tuned only to match the competitors, so it is not doing less work than they do.
 
 ## Choices.js
 
-- **Filter only runs on a FOCUSED input.** `_handleSearch` begins with `if (this.input.isFocussed)`, so a programmatic `input` event on an unfocused input never searches (Filter read ~0). The harness `.focus()`es the search input (`input.choices__input--cloned`) before typing.
+- **Filter only runs on a FOCUSED input.** `_handleSearch` begins with `if (this.input.isFocussed)`, so a programmatic `input` event on an unfocused input never searches (Filter read ~0). The harness `.focus()`es the filter input (`input.choices__input--cloned`) before typing.
 - **`searchResultLimit: 4` caps rendered search results.** Like Tom Select's `maxOptions: 50` - it would draw a handful while others draw every match. Set to `items.length` to render all matches. (At 1k the effect on the number is small - the cost is the Fuse.js search over all items, not the render - but it matters at 10k.)
 - **Search is a Fuse.js FUZZY match over all items, synchronous (no debounce).** The Filter cost is dominated by that search, not the render (Choices does a fast INCREMENTAL DOM diff). But rendering / clearing a big list then LAYS OUT + PAINTS it, which is the perceived cost - see the to-settle-to-paint note in the spec.
 - **`renderSelectedChoices: 'always'` in multi** keeps a chosen option in the dropdown; its default drops it, which would shrink the list and do less work per choose / filter.
@@ -46,7 +46,7 @@ Tuned only to match the competitors, so it is not doing less work than they do.
 
 - **`allowDeselect: true` in multi** - without it, clicking a chosen option in the open list is ignored (the option-click handler early-returns on `option.selected && !allowDeselect`). With it, the click toggles off.
 - **`maxValuesShown: Infinity`** - past `maxValuesShown` (default 20) selected, Slim collapses ALL tags into one `{n} selected` summary (one node instead of n), which would make its multi DOM-node / tag work collapse to near-nothing.
-- **`closeOnSelect: false` in multi**; search input debounces ~100 ms (`input.oninput = debounce(fn, 100)`).
+- **`closeOnSelect: false` in multi**; filter input debounces ~100 ms (`input.oninput = debounce(fn, 100)`).
 - **The dropdown (`.ss-content`) portals to `document.body`** and every widget leaves one, so option / search selectors target only the OPEN content (`.ss-open-below` / `.ss-open-above`) - a mount-scoped one misses it and a plain document one hits the wrong widget.
 - **`setSelected` rebuilds everything on every change** - `updateOptions` (rebuilds the whole native `<select>`), `renderValues` (all tags), `renderOptions` (all option divs). So its Choose / Unchoose / Filter numbers are genuinely high, real work, not animation.
 - **A removed tag's `removeChild` is deferred by a hardcoded 100 ms `setTimeout`** (its exit animation), which `animation:none` cannot reach - the remove / unchoose click runs short timers immediately so only work is timed. Slim 2.10.0 does NOT respect `prefers-reduced-motion` (no `matchMedia` in its JS, none in its CSS), and a page cannot force that setting, so the flush is the fix.

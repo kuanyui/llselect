@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Arabic pack (RTL). */
 export const ar: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'الرجاء الاختيار',
-  searchInputAriaLabel: 'بحث',
-  searchInputPlaceholder: 'تصفية (Esc للمسح)',
+  filterInputAriaLabel: 'بحث',
+  filterInputPlaceholder: 'تصفية (Esc للمسح)',
   popupListNoResults: 'لا توجد نتائج',
   triggerClearButtonAriaLabel: 'مسح التحديد',
   tagRemoveButtonAriaLabel: (itemLabel) => `إزالة ${itemLabel}`,

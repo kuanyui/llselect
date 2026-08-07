@@ -34,7 +34,7 @@ const PAGE_SIZE = 10
  * alone (no preventDefault, no library reaction). Maps according to the
  * ARIA APG combobox pattern.
  *
- * @param inTextInput - true when focus is in the editable search input. There,
+ * @param inTextInput - true when focus is in the editable filter input. There,
  *   Space must type a space and Home/End must move the text caret, so those
  *   keys are NOT mapped to selection / first-last navigation. Selection is
  *   Enter only; option navigation is the arrow / page keys.

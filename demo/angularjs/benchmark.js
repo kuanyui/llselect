@@ -45,7 +45,7 @@
       key: 'llselect',
       label: '<llselect-single>',
       note: 'This package. Builds the list only on open, and puts no scope or watcher on any row.',
-      markup: '<llselect-single ng-model="picked" ll-searchable="true"' +
+      markup: '<llselect-single ng-model="picked" ll-filterable="true"' +
         ' ll-options="i.name for i in items track by i.id"></llselect-single>',
       triggerSel: '.llselect-trigger',
       rowSel: '.llselect-item',

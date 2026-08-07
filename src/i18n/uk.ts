@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Ukrainian pack. */
 export const uk: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Виберіть',
-  searchInputAriaLabel: 'Пошук',
-  searchInputPlaceholder: 'Фільтр (Esc, щоб очистити)',
+  filterInputAriaLabel: 'Пошук',
+  filterInputPlaceholder: 'Фільтр (Esc, щоб очистити)',
   popupListNoResults: 'Нічого не знайдено',
   triggerClearButtonAriaLabel: 'Очистити вибір',
   tagRemoveButtonAriaLabel: (itemLabel) => `Вилучити ${itemLabel}`,

@@ -103,7 +103,7 @@ Those child chains, element types, and the `[theme=]` attribute selector do not 
 </ui-llselect>
 
 <!-- <llselect-single>: the destination -->
-<llselect-single ng-model="p" ll-searchable="true" ll-options="p.name for p in people"></llselect-single>
+<llselect-single ng-model="p" ll-filterable="true" ll-options="p.name for p in people"></llselect-single>
 ```
 
 For the record, reproducing ui-select exactly would also mean reproducing its bugs, since real apps depend on observed behavior. A sample found while reading the source: `uiSelectConfig` has no `paste` key but the controller reads it (`uiSelectController.js:19`, always `undefined`); `close-on-select` is `$parse(attrs.closeOnSelect)()` with no scope, so only literals work; `scope.$watch('sortable', ...)` watches a scope property of that literal name which normally never exists, so `sortable` / `removeSelected` / `skipFocusser` effectively evaluate once and never react; select2 + multiple never renders `no-choice` because that template lacks the slot; and `on-highlight` fires from inside `isActive`, i.e. once per digest per active row rather than once per highlight change.

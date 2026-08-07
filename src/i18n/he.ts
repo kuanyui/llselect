@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Hebrew pack (RTL). */
 export const he: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'נא לבחור',
-  searchInputAriaLabel: 'חיפוש',
-  searchInputPlaceholder: 'סינון (Esc לניקוי)',
+  filterInputAriaLabel: 'חיפוש',
+  filterInputPlaceholder: 'סינון (Esc לניקוי)',
   popupListNoResults: 'לא נמצאו תוצאות',
   triggerClearButtonAriaLabel: 'נקה בחירה',
   tagRemoveButtonAriaLabel: (itemLabel) => `הסר ${itemLabel}`,

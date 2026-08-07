@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Swedish pack. */
 export const sv: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Välj ett alternativ',
-  searchInputAriaLabel: 'Sök',
-  searchInputPlaceholder: 'Filtrera (Esc för att rensa)',
+  filterInputAriaLabel: 'Sök',
+  filterInputPlaceholder: 'Filtrera (Esc för att rensa)',
   popupListNoResults: 'Inga resultat',
   triggerClearButtonAriaLabel: 'Rensa valet',
   tagRemoveButtonAriaLabel: (itemLabel) => `Ta bort ${itemLabel}`,

@@ -34,7 +34,7 @@ Recorded before fixing (do not lose these). All fixed and VERIFIED by driving th
 
 ## Measurement accuracy
 
-- [x] Debounced filter: Tom Select and Slim Select debounce the search input, so a to-paint timer misses the deferred render and reads fast. Filter is now measured by waiting until the DOM settles, which catches the debounced render. (llselect filters synchronously - no debounce - confirmed in `src/base.ts` `handleSearchInputEvent`.)
+- [x] Debounced filter: Tom Select and Slim Select debounce the filter input, so a to-paint timer misses the deferred render and reads fast. Filter is now measured by waiting until the DOM settles, which catches the debounced render. (llselect filters synchronously - no debounce - confirmed in `src/base.ts` `handleSearchInputEvent`.)
 - [x] Slim Select open/close transition animation adds perceived time that is not work. Transitions / animations are disabled on everything during a run (an injected `* { transition:none; animation:none }` style), so the number reflects work, not animation.
 - [x] Keep the to-paint measurement for open / close (Choices reveals a `display:none` pre-rendered list; the cost is layout + paint on the frame, not in the synchronous call).
 

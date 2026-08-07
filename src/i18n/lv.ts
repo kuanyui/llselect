@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Latvian pack. */
 export const lv: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Izvēlieties',
-  searchInputAriaLabel: 'Meklēt',
-  searchInputPlaceholder: 'Filtrs (Esc notīra)',
+  filterInputAriaLabel: 'Meklēt',
+  filterInputPlaceholder: 'Filtrs (Esc notīra)',
   popupListNoResults: 'Nav rezultātu',
   triggerClearButtonAriaLabel: 'Notīrīt izvēli',
   tagRemoveButtonAriaLabel: (itemLabel) => `Noņemt ${itemLabel}`,

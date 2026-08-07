@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Simplified Chinese (mainland) pack. */
 export const zhCN: LLSelectUiTranslationPack = {
   triggerPlaceholder: '请选择',
-  searchInputAriaLabel: '搜索',
-  searchInputPlaceholder: '筛选（按 Esc 清除）',
+  filterInputAriaLabel: '搜索',
+  filterInputPlaceholder: '筛选（按 Esc 清除）',
   popupListNoResults: '没有匹配的结果',
   triggerClearButtonAriaLabel: '清除选择',
   tagRemoveButtonAriaLabel: (itemLabel) => `移除 ${itemLabel}`,

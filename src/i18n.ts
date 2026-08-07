@@ -2,7 +2,7 @@
 // file per pack lives under src/i18n/ (including `en`, the built-in default);
 // this module defines the pack contract, re-exports them and builds the locale index. Pure data: each pack is
 // a complete LLSelectUiTranslationPack spreadable into the `uiTranslationPack` setting (`uiTranslationPack: zhTW`,
-// or `uiTranslationPack: { ...zhTW, searchInputPlaceholder: '...' }` for per-key
+// or `uiTranslationPack: { ...zhTW, filterInputPlaceholder: '...' }` for per-key
 // overrides). This module never imports base.ts, so importing
 // a pack costs bytes, not behavior.
 //
@@ -47,18 +47,18 @@ export interface LLSelectUiTranslationPack {
    */
   triggerPlaceholder: string
   /**
-   * Fallback accessible name (`aria-label`) of the search input, used only
+   * Fallback accessible name (`aria-label`) of the filter input, used only
    * when the app supplies neither `ariaLabel` nor `ariaLabelledBy` (the field
    * name then replaces this generic operation label). The input has no
    * visible label, so screen readers rely on one of these.
    */
-  searchInputAriaLabel: string
+  filterInputAriaLabel: string
   /**
-   * Placeholder text of the search input. Also teaches the Esc behavior
+   * Placeholder text of the filter input. Also teaches the Esc behavior
    * (first Esc clears the filter). `null` = no placeholder (pass
-   * `uiTranslationPack: { searchInputPlaceholder: null }` to remove the default).
+   * `uiTranslationPack: { filterInputPlaceholder: null }` to remove the default).
    */
-  searchInputPlaceholder: string | null
+  filterInputPlaceholder: string | null
   /**
    * Message shown (and announced via `role="status"`) when the visible item
    * list is empty - a filter matched nothing, or there are no items at all.

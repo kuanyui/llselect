@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Turkish pack. */
 export const tr: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Lütfen seçin',
-  searchInputAriaLabel: 'Ara',
-  searchInputPlaceholder: 'Filtrele (temizlemek için Esc)',
+  filterInputAriaLabel: 'Ara',
+  filterInputPlaceholder: 'Filtrele (temizlemek için Esc)',
   popupListNoResults: 'Sonuç bulunamadı',
   triggerClearButtonAriaLabel: 'Seçimi temizle',
   // The case suffix lands on the carrier noun "oge" (item), never on the

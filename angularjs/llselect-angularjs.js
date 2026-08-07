@@ -129,7 +129,7 @@
     settings.ariaLabel = attrs.llAriaLabel || null
 
     if (config.uiTranslationPack) { settings.uiTranslationPack = config.uiTranslationPack }
-    if (config.searchable !== null) { settings.searchable = config.searchable }
+    if (config.filterable !== null) { settings.filterable = config.filterable }
     if (config.popupWidthPolicy) { settings.popupWidthPolicy = config.popupWidthPolicy }
     var arrow = config.arrow
 
@@ -137,7 +137,7 @@
     // maps onto a method. (llselect's uiTranslationPack is runtime-swappable
     // too, but as an app-wide config it has no per-element binding here.)
     if (attrs.llPlaceholder) { settings.placeholder = scope.$eval(attrs.llPlaceholder) }
-    if (attrs.llSearchable) { settings.searchable = scope.$eval(attrs.llSearchable) }
+    if (attrs.llFilterable) { settings.filterable = scope.$eval(attrs.llFilterable) }
     if (attrs.llPopupWidthPolicy) { settings.popupWidthPolicy = scope.$eval(attrs.llPopupWidthPolicy) }
     if (attrs.llArrow) { arrow = attrs.llArrow }
 
@@ -182,7 +182,7 @@
      *
      *   angular.module('app', ['llselect'])
      *     .config(['llselectConfigProvider', function (llselectConfigProvider) {
-     *       llselectConfigProvider.defaults({ arrow: 'chevron', searchable: true, uiTranslationPack: llselectI18n.zhTW })
+     *       llselectConfigProvider.defaults({ arrow: 'chevron', filterable: true, uiTranslationPack: llselectI18n.zhTW })
      *     }])
      */
     .provider('llselectConfig', function () {
@@ -190,7 +190,7 @@
         /** 'chevron' | 'triangle' | null. null = whatever the theme draws. */
         arrow: null,
         /** boolean | ((items) => boolean) | null. null = llselect's own default (off). */
-        searchable: null,
+        filterable: null,
         /** 'match-trigger' | 'fit-content' | null. null = llselect's own default. */
         popupWidthPolicy: null,
         /** A UI-translation pack (@llselect/core/i18n), or null for the English defaults. */

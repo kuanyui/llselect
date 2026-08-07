@@ -8,8 +8,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
  */
 export const nanLatnTailo: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Tshiánn kíng-suán',
-  searchInputAriaLabel: 'Tshiau-tshuē',
-  searchInputPlaceholder: 'Kuè-lī (tshi̍h Esc tshing-tiāu)',
+  filterInputAriaLabel: 'Tshiau-tshuē',
+  filterInputPlaceholder: 'Kuè-lī (tshi̍h Esc tshing-tiāu)',
   popupListNoResults: 'Tshuē bô kiat-kó',
   triggerClearButtonAriaLabel: 'Tshing-tiāu kíng--ê',
   tagRemoveButtonAriaLabel: (itemLabel) => `Kā ${itemLabel} the̍h-tiāu`,

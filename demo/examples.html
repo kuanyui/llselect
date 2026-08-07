@@ -293,7 +293,7 @@
         <code>triggerDisplay: 'tags'</code> shows each chosen item as a chip with
         a remove (x) button. The library owns the chip, the x button, its
         <code>aria-label</code> and <code>tabindex="-1"</code> - you write none of
-        it. Composes with <code>searchable</code>; per-chip content is
+        it. Composes with <code>filterable</code>; per-chip content is
         customizable via <code>createTagContentElFn</code> (mirrors
         <code>createItemContentElFn</code>); the remove-button icon via
         <code>createTagRemoveButtonContentElFn</code> (mirrors <code>createTriggerClearButtonContentElFn</code>).
@@ -420,7 +420,7 @@
   <section>
     <h2>7. Search (filter)</h2>
     <p class="hint">
-      Set <code>searchable: true</code> to add a filter input inside the popup.
+      Set <code>filterable: true</code> to add a filter input inside the popup.
       Trigger becomes <code>role="button"</code>, the input becomes
       <code>role="combobox"</code> with <code>aria-activedescendant</code>; Tab
       leaves the widget, Esc clears the filter then closes. IME composition is
@@ -429,7 +429,7 @@
     </p>
 
     <article>
-      <h3>7.1 Single + searchable (default filter)</h3>
+      <h3>7.1 Single + filterable (default filter)</h3>
       <p class="hint">
         Default <code>filterFn</code> is case-insensitive substring on the
         item's <code>itemToStringFn</code> string.
@@ -444,7 +444,7 @@
     </article>
 
     <article>
-      <h3>7.2 Multi + searchable + checkboxes</h3>
+      <h3>7.2 Multi + filterable + checkboxes</h3>
       <p class="hint">
         Filtering does not change the chosen set: a chosen item hidden by the
         current query stays chosen and reappears when cleared.
@@ -587,7 +587,7 @@
     </article>
 
     <article>
-      <h3>10.2 Group-level disabled + searchable (multiple)</h3>
+      <h3>10.2 Group-level disabled + filterable (multiple)</h3>
       <p class="hint">
         <code>groupDisabledFn</code> disables the whole Dairy group (layers on
         item-level disabled): not selectable, skipped by keyboard, aria-disabled,
@@ -738,7 +738,7 @@
         its trigger; the <code>'tags'</code> multi gets translated remove-x
         buttons (inspect their <code>aria-label</code>); the
         <code>'count'</code> multi shows the translated count summary
-        directly. Open any popup - the search input's placeholder (and
+        directly. Open any popup - the filter input's placeholder (and
         <code>aria-label</code>) and the clear x are translated everywhere.
         Picking <code>ar</code> / <code>he</code> also sets
         <code>dir="rtl"</code> on the mounts (the component inherits the

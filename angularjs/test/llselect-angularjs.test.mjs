@@ -169,15 +169,15 @@ test('llselectConfigProvider sets app-wide defaults, and ll-* attributes win', (
     </div>`,
     controller: function () { this.fruits = FRUITS.slice() },
     config: ['llselectConfigProvider', function (llselectConfigProvider) {
-      llselectConfigProvider.defaults({ arrow: 'chevron', searchable: true })
+      llselectConfigProvider.defaults({ arrow: 'chevron', filterable: true })
     }],
   })
   const arrows = a.$$('.llselect-trigger-arrow')
   assert.ok(arrows[0].querySelector('svg'), 'the default arrow did not reach an element with no ll-arrow')
   assert.ok(arrows[1].querySelector('svg'), 'the per-element arrow did not render')
-  // searchable: true from config means a search input is built and shown.
+  // filterable: true from config means a filter input is built and shown.
   a.$('.llselect-trigger').click()
-  assert.equal(a.$('.llselect-popup input').hasAttribute('hidden'), false, 'config searchable did not reach the widget')
+  assert.equal(a.$('.llselect-popup input').hasAttribute('hidden'), false, 'config filterable did not reach the widget')
 })
 
 test('llselectConfigProvider.defaults rejects an unknown key instead of ignoring it', () => {

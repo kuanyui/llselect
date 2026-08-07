@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Mongolian pack (Cyrillic; the traditional script needs vertical layout and is out of scope). */
 export const mn: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Сонгоно уу',
-  searchInputAriaLabel: 'Хайх',
-  searchInputPlaceholder: 'Шүүлтүүр (цэвэрлэхийн тулд Esc)',
+  filterInputAriaLabel: 'Хайх',
+  filterInputPlaceholder: 'Шүүлтүүр (цэвэрлэхийн тулд Esc)',
   popupListNoResults: 'Илэрц олдсонгүй',
   triggerClearButtonAriaLabel: 'Сонголтыг арилгах',
   // Label-colon frame: Mongolian case suffixes vary with the stem (vowel

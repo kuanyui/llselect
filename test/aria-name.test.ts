@@ -20,7 +20,7 @@ function listbox(sel: { popupEl: HTMLElement }): HTMLElement {
   return sel.popupEl.querySelector('[role="listbox"]') as HTMLElement
 }
 
-// --- non-searchable (trigger is the combobox) ----------------------------
+// --- non-filterable (trigger is the combobox) ----------------------------
 
 test('ariaLabel: named on the trigger combobox and the listbox', () => {
   const sel = new LLSelectSingle<string>(mount(), { ariaLabel: 'Country' })
@@ -43,7 +43,7 @@ test('both set: ariaLabelledBy wins, aria-label is not emitted', () => {
   assert.equal(sel.triggerEl.getAttribute('aria-label'), null)
 })
 
-test('neither set: no name on trigger/listbox; search input keeps the pack fallback', () => {
+test('neither set: no name on trigger/listbox; filter input keeps the pack fallback', () => {
   const sel = new LLSelectSingle<string>(mount())
   assert.equal(sel.triggerEl.getAttribute('aria-label'), null)
   assert.equal(sel.triggerEl.getAttribute('aria-labelledby'), null)
@@ -51,10 +51,10 @@ test('neither set: no name on trigger/listbox; search input keeps the pack fallb
   assert.equal(searchInput(sel).getAttribute('aria-label'), 'Search')
 })
 
-// --- searchable (trigger is a button; input is the combobox) -------------
+// --- filterable (trigger is a button; input is the combobox) -------------
 
-test('searchable + ariaLabelledBy: trigger button name chains label ids + hidden value span', () => {
-  const sel = new LLSelectSingle<string>(mount(), { searchable: true, ariaLabelledBy: 'field-label' })
+test('filterable + ariaLabelledBy: trigger button name chains label ids + hidden value span', () => {
+  const sel = new LLSelectSingle<string>(mount(), { filterable: true, ariaLabelledBy: 'field-label' })
   sel.setItems(['a', 'b'])
   const valueId = sel.classIdMap.triggerValueId
   assert.equal(sel.triggerEl.getAttribute('aria-labelledby'), `field-label ${valueId}`)
@@ -71,8 +71,8 @@ test('searchable + ariaLabelledBy: trigger button name chains label ids + hidden
   assert.equal(listbox(sel).getAttribute('aria-labelledby'), 'field-label')
 })
 
-test('searchable + ariaLabel: trigger keeps aria-label and self-references it in the chain', () => {
-  const sel = new LLSelectSingle<string>(mount(), { searchable: true, ariaLabel: 'Country' })
+test('filterable + ariaLabel: trigger keeps aria-label and self-references it in the chain', () => {
+  const sel = new LLSelectSingle<string>(mount(), { filterable: true, ariaLabel: 'Country' })
   sel.setItems(['a', 'b'])
   const { triggerId, triggerValueId } = sel.classIdMap
   assert.equal(sel.triggerEl.getAttribute('aria-label'), 'Country')
@@ -82,9 +82,9 @@ test('searchable + ariaLabel: trigger keeps aria-label and self-references it in
   assert.equal(listbox(sel).getAttribute('aria-label'), 'Country')
 })
 
-test('predicate searchable: name wiring re-syncs per open cycle', () => {
+test('predicate filterable: name wiring re-syncs per open cycle', () => {
   const sel = new LLSelectSingle<string>(mount(), {
-    searchable: (items) => items.length > 2,
+    filterable: (items) => items.length > 2,
     ariaLabelledBy: 'field-label',
   })
   sel.setItems(['a', 'b'])
@@ -117,7 +117,7 @@ test('LLSelectMultiple: same wiring, multiselectable listbox is named', () => {
 
 test('tags mode: hidden value span carries plain labels, not remove-button names', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
-    searchable: true, triggerDisplay: 'tags', ariaLabelledBy: 'field-label',
+    filterable: true, triggerDisplay: 'tags', ariaLabelledBy: 'field-label',
   })
   sel.setItems(['Apple', 'Banana', 'Cherry'])
   sel.setChosenItems(['Apple', 'Banana'])

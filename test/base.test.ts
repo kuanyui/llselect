@@ -58,12 +58,12 @@ test('popup list has correct ARIA attributes', () => {
   assert.ok(lb.className.includes('llselect-popup-list'))
 })
 
-test('popup contains the (hidden) search input, the popup list, and the no-results message, in order', () => {
+test('popup contains the (hidden) filter input, the popup list, and the no-results message, in order', () => {
   const inst = new TestSelect<string>(mount())
   const popupChildren = Array.from(inst.popupEl.children) as HTMLElement[]
   assert.equal(popupChildren.length, 3)
-  // The search input is always built (see docs/DESIGN.md) but `hidden` when
-  // search is inactive. The listbox follows it; the no-results message
+  // The filter input is always built (see docs/DESIGN.md) but `hidden` when
+  // the filter is inactive. The listbox follows it; the no-results message
   // (also always built, `hidden` while items are visible) comes last.
   assert.equal(popupChildren[0]!.tagName, 'INPUT')
   assert.equal(popupChildren[0]!.hidden, true)

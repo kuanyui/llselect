@@ -56,11 +56,11 @@ test('explicit ariaLabelledBy and ariaLabel win over labelEl for the name; the c
   assert.equal(document.activeElement, sel2.triggerEl)
 })
 
-test('searchable mode: the search input carries the label reference', () => {
-  const { mount, label } = mountWithLabel('search-lbl')
-  const sel = new LLSelectSingle<string>(mount, { labelEl: label, searchable: true })
+test('filterable mode: the filter input carries the label reference', () => {
+  const { mount, label } = mountWithLabel('filter-lbl')
+  const sel = new LLSelectSingle<string>(mount, { labelEl: label, filterable: true })
   const input = sel.popupEl.querySelector('input')!
-  assert.equal(input.getAttribute('aria-labelledby'), 'search-lbl')
+  assert.equal(input.getAttribute('aria-labelledby'), 'filter-lbl')
 })
 
 test('destroy removes the click listener and only a MINTED id', () => {

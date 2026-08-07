@@ -362,7 +362,7 @@ test('public reposition() never auto-closes, even when the anchor is out of view
   const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
   assert.equal(calls, 0)
   // Trigger now out of view (e.g. keyboard pushed it). A list re-render after a
-  // search keystroke calls positioner.reposition() - it must NOT dismiss.
+  // filter keystroke calls positioner.reposition() - it must NOT dismiss.
   withMockedRect(anchor, { top: 900, left: 50, right: 250, bottom: 930, width: 200, height: 30 })
   p.reposition()
   assert.equal(calls, 0)

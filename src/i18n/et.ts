@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Estonian pack. */
 export const et: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Valige',
-  searchInputAriaLabel: 'Otsi',
-  searchInputPlaceholder: 'Filtreeri (Esc tühjendab)',
+  filterInputAriaLabel: 'Otsi',
+  filterInputPlaceholder: 'Filtreeri (Esc tühjendab)',
   popupListNoResults: 'Tulemusi pole',
   triggerClearButtonAriaLabel: 'Tühjenda valik',
   tagRemoveButtonAriaLabel: (itemLabel) => `Eemalda ${itemLabel}`,

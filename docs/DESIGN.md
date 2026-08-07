@@ -67,7 +67,7 @@ Direct children of a major family get the family's prefix (`triggerContentEl`, `
 
 ARIA role attribute values (`"combobox"`, `"listbox"`, `"option"`, `"group"`, `"searchbox"`, `"checkbox"`) are spec strings and stay verbatim in `setAttribute` calls. JS-side names are independent and follow the rules above (e.g. our `role="listbox"` element is called `popupListEl`).
 
-The full keyboard / focus / ARIA behavior contract is in `A11Y.md`. The `combobox` role sits on the search input when `searchable: true` (the trigger demotes to a `button`); with `searchable: false` the trigger itself is the `role="combobox"` host. Both modes shipped with Phase 8 and are final by design, not transitional.
+The full keyboard / focus / ARIA behavior contract is in `A11Y.md`. The `combobox` role sits on the filter input when `filterable: true` (the trigger demotes to a `button`); with `filterable: false` the trigger itself is the `role="combobox"` host. Both modes shipped with Phase 8 and are final by design, not transitional.
 
 ## Library scope
 
@@ -103,9 +103,9 @@ The `placeholder` SETTING stays app copy - an explicit value always wins and pac
 
 The resolved bag is publicly readable via `getUiTranslationPack()` (defaults + pack + overrides merged), so app code can reuse the library's translations - e.g. an app-owned tooltip on a remove button - instead of keeping a second translation source.
 
-The pack is also the ONE settings field mutable after construction: `setUiTranslationPack(pack: Partial<LLSelectUiTranslationPack>): void` re-runs the constructor's resolution (merged over the built-in `en`, NOT over the previous pack; an explicit `placeholder` keeps winning), re-applies the pack-owned attributes `rerender()` cannot reach (search input placeholder / fallback `aria-label`, clear button `aria-label`), then re-renders - so switching language needs no re-`new` and chosen state survives. A deliberate, narrow exception to constructor-frozen settings, in the same spirit as `setDisabled`.
+The pack is also the ONE settings field mutable after construction: `setUiTranslationPack(pack: Partial<LLSelectUiTranslationPack>): void` re-runs the constructor's resolution (merged over the built-in `en`, NOT over the previous pack; an explicit `placeholder` keeps winning), re-applies the pack-owned attributes `rerender()` cannot reach (filter input placeholder / fallback `aria-label`, clear button `aria-label`), then re-renders - so switching language needs no re-`new` and chosen state survives. A deliberate, narrow exception to constructor-frozen settings, in the same spirit as `setDisabled`.
 
-Language packs are pure data under `@llselect/core/i18n` (50+ locales; `uiTranslationPackByLocale` indexes them by minimal BCP 47 tag): opt-in, tree-shakeable, zero behavior, so bundling translations does not violate "low-level". Layout: one file per pack under `src/i18n/<export>.ts` (`en` included - it is just the built-in pack), and `src/i18n.ts` as the barrel (the contract interface + re-exports + the locale index; pack files type-import the barrel - erased at compile time, so no runtime cycle). `base.ts` imports exactly `src/i18n/en.ts`, never the barrel, so the main bundle carries exactly one pack. Usage: `uiTranslationPack: zhTW`, or a per-key override on top: `uiTranslationPack: { ...zhTW, searchInputPlaceholder: '...' }`.
+Language packs are pure data under `@llselect/core/i18n` (50+ locales; `uiTranslationPackByLocale` indexes them by minimal BCP 47 tag): opt-in, tree-shakeable, zero behavior, so bundling translations does not violate "low-level". Layout: one file per pack under `src/i18n/<export>.ts` (`en` included - it is just the built-in pack), and `src/i18n.ts` as the barrel (the contract interface + re-exports + the locale index; pack files type-import the barrel - erased at compile time, so no runtime cycle). `base.ts` imports exactly `src/i18n/en.ts`, never the barrel, so the main bundle carries exactly one pack. Usage: `uiTranslationPack: zhTW`, or a per-key override on top: `uiTranslationPack: { ...zhTW, filterInputPlaceholder: '...' }`.
 
 ## RTL
 
@@ -126,16 +126,16 @@ Demo: section 12 (the ar / he packs set `dir="rtl"` on the mounts and use a mixe
   - Single-item changes (multi-select `toggleItem`) use `replacePopupListItemElInDom(item)`, which replaces just that one item's element. DOM work stays O(1) regardless of list size, so toggling one selection in a 10k-item list does not recreate 10k nodes. (The lookup to find the item is O(n), but a comparison loop is negligible next to DOM mutation + reflow.) A vdom framework would instead diff the list render on each state change; llselect skips that by knowing exactly which item changed. (No published benchmark - this is an implementation description, not a measured comparison.)
 - External mutation of an item object's properties (e.g. `users[0].name = 'X'`) is **not** auto-detected. Call `rerender()` to reflect the change in the DOM. `rerender` is a pure visual refresh: it does not fire `onChange` and does not run `afterItemsChange`.
 
-## Search box (Phase 8) architecture
+## Filter box (Phase 8) architecture
 
-Locked decisions for the searchable variant. Keyboard / focus / ARIA contract is in `A11Y.md`.
+Locked decisions for the filterable variant. Keyboard / focus / ARIA contract is in `A11Y.md`.
 
-- **`<input>` is always built** into `popupEl` above `popupListEl`, even when `searchable: false`. The non-searchable case carries the `hidden` attribute (not `disabled`, not `readonly`). Cost: one unused element when not needed. Benefit: future runtime toggle (select2-style `minimumResultsForSearch`, setItems crossing a threshold, ...) is a CSS flip rather than a DOM rebuild.
-- **Focus host branches by current searchable state**, not by DOM existence:
-  - `searchable: true`: trigger becomes `role="button"` (`aria-haspopup="listbox"`), focus moves to the input on open, `aria-activedescendant` lives on the input.
-  - `searchable: false`: trigger stays `role="combobox"`, focus stays on the trigger, `aria-activedescendant` lives on the trigger. Identical to the pre-Phase-8 behaviour - non-search selects regress nowhere.
-- **No subclass split.** Search is a capability setting on the existing `LLSelectSingle` / `LLSelectMultiple`. Subclassing per feature would multiply combinatorially (search x optgroup x ...); a setting composes.
-- **Settings:** `searchable: boolean | ((items: readonly T[]) => boolean)` (default `false`). The predicate form is the conditional-display knob (select2's `minimumResultsForSearch`, rewritten as a caller-authored predicate so the condition is self-documenting and not count-only): evaluated against the full item list on every `open()`, never mid-open - crossing the threshold via `setItems` applies on the next open, so the focus host is never yanked while the popup is up. Also: `filterFn: ((item, query) => boolean) | null` (default `null` = case-insensitive substring on `itemToString`); `uiTranslationPack.searchInputAriaLabel` (default `'Search'` - a FALLBACK accessible name for the input, used only when the app supplies neither `ariaLabel` nor `ariaLabelledBy`; the field name replaces it otherwise) and `uiTranslationPack.searchInputPlaceholder` (default `'Filter (Esc to clear)'` - also teaches the Esc-clears-filter behavior; `null` = no placeholder) - see "Texts (i18n)" below. IME-aware filtering (composition-guarded) is part of the contract; see `A11Y.md`.
+- **`<input>` is always built** into `popupEl` above `popupListEl`, even when `filterable: false`. The non-filterable case carries the `hidden` attribute (not `disabled`, not `readonly`). Cost: one unused element when not needed. Benefit: future runtime toggle (select2-style `minimumResultsForSearch`, setItems crossing a threshold, ...) is a CSS flip rather than a DOM rebuild.
+- **Focus host branches by current filterable state**, not by DOM existence:
+  - `filterable: true`: trigger becomes `role="button"` (`aria-haspopup="listbox"`), focus moves to the input on open, `aria-activedescendant` lives on the input.
+  - `filterable: false`: trigger stays `role="combobox"`, focus stays on the trigger, `aria-activedescendant` lives on the trigger. Identical to the pre-Phase-8 behaviour - non-filter selects regress nowhere.
+- **No subclass split.** Filtering is a capability setting on the existing `LLSelectSingle` / `LLSelectMultiple`. Subclassing per feature would multiply combinatorially (filter x optgroup x ...); a setting composes.
+- **Settings:** `filterable: boolean | ((items: readonly T[]) => boolean)` (default `false`). The predicate form is the conditional-display knob (select2's `minimumResultsForSearch`, rewritten as a caller-authored predicate so the condition is self-documenting and not count-only): evaluated against the full item list on every `open()`, never mid-open - crossing the threshold via `setItems` applies on the next open, so the focus host is never yanked while the popup is up. Also: `filterFn: ((item, query) => boolean) | null` (default `null` = case-insensitive substring on `itemToString`); `uiTranslationPack.filterInputAriaLabel` (default `'Search'` - a FALLBACK accessible name for the input, used only when the app supplies neither `ariaLabel` nor `ariaLabelledBy`; the field name replaces it otherwise) and `uiTranslationPack.filterInputPlaceholder` (default `'Filter (Esc to clear)'` - also teaches the Esc-clears-filter behavior; `null` = no placeholder) - see "Texts (i18n)" below. IME-aware filtering (composition-guarded) is part of the contract; see `A11Y.md`.
 
 ## Disabled (Phase 9)
 
@@ -184,7 +184,7 @@ Why this shape, in this codebase specifically:
 - **Identity, not display, drives behavior.** `itemDisabledFn` takes the item `T` (identity), never `itemToString(item)` (display). Grouping obeys the same rule: membership and group-disabled are keyed on `GK`; the human label is a separate `GK -> string` projection. So renaming a label (i18n) never changes which items group together or which group is disabled.
 - **`GK` is fully generic, mirroring `T`.** The class is `<T, GK = string>`; the default leaves every existing `LLSelect*<T>` call unchanged. A number / object key is allowed exactly as `T` is - equality is asked via `groupKeyCompareFn` (default strict `===`), the same way `compareFn` handles arbitrary `T`. This dodges the hard-coded-string-key trap where widening the key type later would be a breaking change.
 - **`GK` never touches the DOM.** Group containers get an index-based id (`-group${index}`, like items' `-item${index}`); the `aria-label` comes from `groupKeyToLabelFn` (visible content optionally from `createGroupLabelContentElFn`), disabled state from a computed boolean. So an object key needs no `String(key)` serialization anywhere.
-- **Settings compose; no subclass split.** Same reasoning as the search box: a capability that combines with others (search x optgroup x ...) must be a setting, not a subclass, or the class count multiplies.
+- **Settings compose; no subclass split.** Same reasoning as the filter box: a capability that combines with others (filter x optgroup x ...) must be a setting, not a subclass, or the class count multiplies.
 - **Nested's unique wins are out of scope.** A nested shape is only strictly needed for empty groups (a header with no items), one item in multiple groups, or group order decoupled from item order. Native `<select>` supports none of these and neither do we ("Library scope"), so we give up nothing real.
 
 Honest cost (accepted): grouping requires the data to be pre-sorted by group (see contiguous-run below); llselect does not reorder items to gather groups.
@@ -224,12 +224,12 @@ Matches the APG grouped-listbox example. Each group is a container `role="group"
 
 ## Tags (triggerDisplay)
 
-`LLSelectMultiple` shows chosen items two ways, picked by the `triggerDisplay` setting: `'count'` (default, a "3 / 10 selected" summary) or `'tags'` (one removable chip per chosen item). Tags is a capability ON `LLSelectMultiple`, not a subclass - same rule as searchable.
+`LLSelectMultiple` shows chosen items two ways, picked by the `triggerDisplay` setting: `'count'` (default, a "3 / 10 selected" summary) or `'tags'` (one removable chip per chosen item). Tags is a capability ON `LLSelectMultiple`, not a subclass - same rule as filterable.
 
 ### Why on LLSelectMultiple, not a subclass
 
 - **Not a new kind of select** - still a multi-select, just a different trigger display. `renderTriggerContent` already owns the trigger's look (it renders the count summary); tags is another branch of it, not a new type.
-- **Capability = setting** (DESIGN "Search box"): tags must combine with searchable / optgroup; a subclass would explode into `LLSelectTags` x `LLSelectSearchable` x ... A setting composes.
+- **Capability = setting** (DESIGN "Filter box"): tags must combine with filterable / optgroup; a subclass would explode into `LLSelectTags` x `LLSelectFilterable` x ... A setting composes.
 - **Single has no tags** (one chip is meaningless), so it lives on Multiple, not Base.
 
 ### Two-layer content, mirroring the item layer

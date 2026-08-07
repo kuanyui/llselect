@@ -226,11 +226,11 @@
 
     if (slots.matchAttrs.placeholder) { settings.placeholder = slots.matchAttrs.placeholder }
     // ui-select defaults searchEnabled to true (uiSelectConfig.searchEnabled);
-    // llselect defaults searchable to false. Follow ui-select here - this is its
+    // llselect defaults filterable to false. Follow ui-select here - this is its
     // markup, so its defaults are what the call site expects.
-    settings.searchable = attrs.searchEnabled ? scope.$eval(attrs.searchEnabled) : true
+    settings.filterable = attrs.searchEnabled ? scope.$eval(attrs.searchEnabled) : true
     if (slots.matchAttrs['allow-clear']) { settings.clearable = true }
-    if (settings.searchable) { settings.filterFn = filterFn }
+    if (settings.filterable) { settings.filterFn = filterFn }
     // Batteries-included default arrow: every ui-select theme renders a caret,
     // so a bare trigger would read as broken to a migrating call site.
     settings.createTriggerArrowContentElFn = function () { return llselect.createChevronDownSvgEl() }

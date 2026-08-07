@@ -150,7 +150,7 @@ const ADAPTERS = {
   llselect: {
     setup(mount, items, opts) {
       const Ctor = opts.multi ? window.llselect.LLSelectMultiple : window.llselect.LLSelectSingle
-      const o = { searchable: true }
+      const o = { filterable: true }
       // Match the competitors: their multi-selects render each chosen item as a
       // tag, so llselect renders tags too (not the lighter count summary),
       // otherwise it would be doing less per-selection work than they do.
@@ -784,7 +784,7 @@ async function measureInteraction(mode, key, stageEl, closeBtn) {
   const d = DRIVER[key]
   if (!d) { return null }
   const safeOp = (fn) => { try { fn() } catch (e) { /* ignore */ } }
-  // Focus the search input and type - the real filter path (Choices only searches
+  // Focus the filter input and type - the real filter path (Choices only searches
   // a FOCUSED input; Tom Select debounces the real keystroke). No-op if no search.
   const typeQuery = (q) => { const i = safe(() => d.searchInput(h)); if (i) { i.focus(); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })) } }
   // A real click on an option element. Slim Select defers a removed tag's

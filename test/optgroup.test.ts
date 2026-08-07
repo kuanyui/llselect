@@ -210,7 +210,7 @@ test('a non-contiguous key reappearance warns once', () => {
 
 test('filtering regroups survivors and drops now-empty groups', () => {
   const sel = new LLSelectSingle<string>(mount(), {
-    searchable: true,
+    filterable: true,
     itemToGroupKeyFn: (s) => s[0]!,
   })
   sel.setItems(['apple', 'avocado', 'banana']) // groups a, b

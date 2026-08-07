@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Romanian pack. */
 export const ro: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Selectați',
-  searchInputAriaLabel: 'Căutare',
-  searchInputPlaceholder: 'Filtrare (Esc pentru golire)',
+  filterInputAriaLabel: 'Căutare',
+  filterInputPlaceholder: 'Filtrare (Esc pentru golire)',
   popupListNoResults: 'Niciun rezultat',
   triggerClearButtonAriaLabel: 'Golește selecția',
   tagRemoveButtonAriaLabel: (itemLabel) => `Elimină ${itemLabel}`,

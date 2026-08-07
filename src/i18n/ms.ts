@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Malay pack. */
 export const ms: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Sila pilih',
-  searchInputAriaLabel: 'Cari',
-  searchInputPlaceholder: 'Tapis (Esc untuk kosongkan)',
+  filterInputAriaLabel: 'Cari',
+  filterInputPlaceholder: 'Tapis (Esc untuk kosongkan)',
   popupListNoResults: 'Tiada hasil',
   triggerClearButtonAriaLabel: 'Kosongkan pilihan',
   tagRemoveButtonAriaLabel: (itemLabel) => `Alih keluar ${itemLabel}`,

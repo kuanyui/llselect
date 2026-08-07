@@ -55,7 +55,7 @@ test('click toggles the visible enabled subset; tri-state and label update', () 
 })
 
 test('filtered scope: acts on visible matches only; hidden choices preserved', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true, searchable: true })
+  const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true, filterable: true })
   sel.setItems(['apple', 'banana', 'cherry'])
   sel.setChosenItems(['cherry'])
   sel.open()
@@ -94,7 +94,7 @@ test('keyboard ring: opens ON the row when nothing is chosen; ArrowDown/Up + Hom
   fireKey(sel.triggerEl, 'ArrowUp') // back up to the row
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), row(sel)!.id)
   fireKey(sel.triggerEl, 'ArrowDown')
-  fireKey(sel.triggerEl, 'Home') // Home lands on the row (non-search mode)
+  fireKey(sel.triggerEl, 'Home') // Home lands on the row (non-filter mode)
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), row(sel)!.id)
   fireKey(sel.triggerEl, 'Enter')
   assert.deepEqual([...sel.getChosenItems()], ['a', 'b'])

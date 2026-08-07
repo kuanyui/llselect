@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Tamil pack. */
 export const ta: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'தேர்ந்தெடுக்கவும்',
-  searchInputAriaLabel: 'தேடல்',
-  searchInputPlaceholder: 'வடிகட்டு (அழிக்க Esc)',
+  filterInputAriaLabel: 'தேடல்',
+  filterInputPlaceholder: 'வடிகட்டு (அழிக்க Esc)',
   popupListNoResults: 'முடிவுகள் இல்லை',
   triggerClearButtonAriaLabel: 'தேர்வை அழி',
   tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel} ஐ அகற்று`,

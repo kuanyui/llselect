@@ -4,9 +4,9 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (real-browser acceptance run)
 
-- [x] **[MEDIUM-31] - searchable tags trigger accname duplicated chip labels ("Apple Remove Apple")**
-  - Symptom: with `searchable: true` + `triggerDisplay: 'tags'`, the closed trigger's computed accessible name repeated every chip (label text + the remove button's `aria-label`): `Toppings Apple Remove Apple Banana Remove Banana`. Measured identically in Chromium and Firefox accessibility trees - the exact duplication [NEEDS-VERIFICATION-27] flagged as unverifiable in jsdom.
-  - Cause: the searchable-mode `aria-labelledby` chain referenced the visible content span, and accname traversal descends into it, collecting every labelled control inside (the per-chip remove buttons).
+- [x] **[MEDIUM-31] - filterable tags trigger accname duplicated chip labels ("Apple Remove Apple")**
+  - Symptom: with `filterable: true` + `triggerDisplay: 'tags'`, the closed trigger's computed accessible name repeated every chip (label text + the remove button's `aria-label`): `Toppings Apple Remove Apple Banana Remove Banana`. Measured identically in Chromium and Firefox accessibility trees - the exact duplication [NEEDS-VERIFICATION-27] flagged as unverifiable in jsdom.
+  - Cause: the filterable-mode `aria-labelledby` chain referenced the visible content span, and accname traversal descends into it, collecting every labelled control inside (the per-chip remove buttons).
   - Fix: the chain now references a hidden root-level plain-text value span kept in sync by `commitTriggerContentToDom` (tags: labels joined with `", "`; count summary / single label / placeholder analogous; explicit `plainTextValue` param for rich content). base.ts `triggerValueEl` / `syncFieldNameToDom`, single.ts / multiple.ts `renderTriggerContent`, contract in A11Y.md "Accessible name".
   - Verified: Chromium + Firefox aria snapshots now read `button "Toppings Apple, Banana"`; test/aria-name.test.ts pins the span, the chain, and the tags plain-text value; full suite green.
   - Q: Why a hidden sibling span, not `aria-label` on the content span or `aria-hidden` on the remove buttons?
@@ -26,13 +26,13 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
   - Verified: test/positioning.test.ts (no-op open, no callbacks, later resize does not mutate the hidden popup, `destroy()` clean).
 
 - [x] **[NEEDS-VERIFICATION-27] - release acceptance gates are not signed off**
-  - Impact: the code / doc fixes for accessible names, searchable Tab order, and CSS retention were in and unit-covered, but their real-browser / screen-reader / real-bundler acceptance was still open, so the original release blockers were only conditionally closed.
+  - Impact: the code / doc fixes for accessible names, filterable Tab order, and CSS retention were in and unit-covered, but their real-browser / screen-reader / real-bundler acceptance was still open, so the original release blockers were only conditionally closed.
   - Fix: the automatable layer of every gate ran in real Chromium + Firefox (Playwright, real layout / native Tab / accessibility trees): accessible names in all modes including `clearable` and tags (which surfaced and fixed [MEDIUM-31]), the full Tab / Shift+Tab and one-tab-stop contract, RTL mirroring, placement stickiness, Firefox no-jolt + scrolled-to-chosen, clipped-trigger no-op open + clean destroy, no-results / tri-state, both benchmark pages against the pinned CDN builds, and CSS retention verified against the packed tarball in vite AND webpack production builds. The remaining human-only residue is narrowed in TODO.md: AT announcement pass, headed scrollbar drag, i18n sign-off.
   - Verified: session Playwright runners (a11y / focus / visual / angularjs / benchmark) all green in both engines; bundler outputs contain the theme CSS.
 
 - [x] **[DOCUMENTATION-28] - generated API docstrings described the trigger as always a combobox**
   - Symptom: `triggerClass` and `triggerEl` docstrings (emitted into `dist/base.d.ts`, so consumer-facing) gave a fixed `role="combobox"` and put `aria-activedescendant` on the trigger unconditionally.
-  - Fix: both now state the role per search mode (combobox inactive / button while a searchable popup is open) and where `aria-activedescendant` lives. base.ts `triggerClass`, `triggerEl`.
+  - Fix: both now state the role per search mode (combobox inactive / button while a filterable popup is open) and where `aria-activedescendant` lives. base.ts `triggerClass`, `triggerEl`.
 
 - [x] **[QUALITY-29] - the mechanical check covers only part of its policy**
   - Impact: `scripts/check.mjs` caught punctuation and relative links, but its collectors were non-recursive, skipped all of `test/`, and did not enforce the explicit-brace or unexplained-`any` rules.
@@ -49,19 +49,19 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (documentation and release readiness)
 
-- [x] **[HIGH-1] - trigger / listbox / search input had no author-supplied accessible name**
+- [x] **[HIGH-1] - trigger / listbox / filter input had no author-supplied accessible name**
   - Cause: no `ariaLabel` / `ariaLabelledBy` setting existed (violates WAI-ARIA 1.2).
   - Fix: field-name settings wired per mode. base.ts `syncFieldNameToDom`, src/i18n/en.ts, test/aria-name.test.ts. Screen-reader acceptance: [NEEDS-VERIFICATION-27].
-- [x] **[HIGH-2] - searchable open-state focus contract did not match the code**
-  - Cause: the trigger kept `tabindex="0"` while the search input held focus, so Shift+Tab landed back on it with the popup open.
-  - Fix: trigger leaves the tab order for the searchable open cycle. base.ts `syncTriggerTabindex`. Native Tab acceptance: [NEEDS-VERIFICATION-27].
+- [x] **[HIGH-2] - filterable open-state focus contract did not match the code**
+  - Cause: the trigger kept `tabindex="0"` while the filter input held focus, so Shift+Tab landed back on it with the popup open.
+  - Fix: trigger leaves the tab order for the filterable open cycle. base.ts `syncTriggerTabindex`. Native Tab acceptance: [NEEDS-VERIFICATION-27].
 - [x] **[MEDIUM-3] - `sideEffects: false` let bundlers drop the theme CSS import**
   - Fix: `sideEffects: ["**/*.css"]`. package.json. Bundler acceptance: [NEEDS-VERIFICATION-27].
 - [x] **[DOCUMENTATION-4] - popup width policy section contradicted itself**
   - Fix: `match-trigger` (default) and `fit-content` described separately; dropped the "always = trigger width" claims. DESIGN.md "Popup width policy".
 - [x] **[DOCUMENTATION-5] - ARIA element table collapsed the two trigger modes**
   - Fix: one row per mode (combobox / button) with the open-cycle tabindex. A11Y.md "Elements, roles, ARIA".
-- [x] **[DOCUMENTATION-6] - the non-searchable open-state keyboard table was missing**
+- [x] **[DOCUMENTATION-6] - the non-filterable open-state keyboard table was missing**
   - Fix: added it. A11Y.md "Keyboard - open, search inactive".
 - [x] **[DOCUMENTATION-7] - close-time focus wording was too broad**
   - Fix: separated keyboard cancel from pointer / focusout dismissal to match `close()`'s `shouldReturnFocus`. A11Y.md "Focus".

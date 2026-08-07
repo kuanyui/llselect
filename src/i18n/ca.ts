@@ -3,8 +3,8 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /** Catalan pack. */
 export const ca: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Seleccioneu una opció',
-  searchInputAriaLabel: 'Cerca',
-  searchInputPlaceholder: 'Filtra (Esc per esborrar)',
+  filterInputAriaLabel: 'Cerca',
+  filterInputPlaceholder: 'Filtra (Esc per esborrar)',
   popupListNoResults: 'Cap resultat',
   triggerClearButtonAriaLabel: 'Esborra la selecció',
   tagRemoveButtonAriaLabel: (itemLabel) => `Suprimeix ${itemLabel}`,
