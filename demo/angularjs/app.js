@@ -77,6 +77,8 @@
       vm.country = undefined
       vm.country2 = 'Japan'
       vm.langs = []
+      vm.langsCount = []
+      vm.langsAll = []
       vm.fruit = 'Cherry'
       vm.toppings = []
       vm.userId = 3
