@@ -99,6 +99,37 @@ Grammar: `select as label group by group disable when disable for (key, value) i
 
 `track by` is a per-item hash; `compareFn` is pairwise equality. Same semantic, different shape: `compareFn: (a, b) => trackBy(a) === trackBy(b)`.
 
+## Attribute reference
+
+The complete attribute surface of `<llselect-single>` and `<llselect-multiple>`. "expression" values are `$eval`'d against the scope once at link time (settings are immutable - see Gotchas - and string values need their own quotes: `ll-placeholder="'Pick one'"`); `ll-disabled` is the one watched attribute. "literal" values are plain attribute text. `<ui-llselect>` takes ui-select's markup instead - its table is under "The ui-select bridge".
+
+Both directives:
+
+| attribute | value | maps to | notes |
+|---|---|---|---|
+| `ng-model` | expression | the chosen item (single) / array of chosen items (multiple) | required. With `select as`: the projected value(s) instead |
+| `ll-options` | ng-options grammar | see the mapping table above | required. `(key, value) in object` throws - pass an array |
+| `name` | literal | AngularJS form registration (`myForm.<name>`) | never generated for you; see "The two `name` attributes" |
+| `required` | flag | ngModel `required` validator | on `<llselect-multiple>`, `[]` counts as empty (`$isEmpty` override) |
+| `ll-disabled` | expression, watched | `setDisabled()` | the only watched attribute |
+| `ll-placeholder` | expression | `placeholder` | per-field copy, so it has no app-wide default |
+| `ll-filterable` | expression | `filterable` | `true` / `false` / a predicate `(items) => boolean` |
+| `ll-clearable` | expression | `clearable` | trigger clear (x) button |
+| `ll-popup-width-policy` | expression | `popupWidthPolicy` | `'match-trigger'` / `'fit-content'` |
+| `ll-arrow` | literal | the trigger arrow | `chevron` (default) / `triangle` / `none`; see "The arrow" |
+| `ll-aria-label` | literal | `ariaLabel` | accessible name; always set this or `ll-aria-labelledby` |
+| `ll-aria-labelledby` | literal | `ariaLabelledBy` | space-separated element id(s) of the visible label |
+
+`<llselect-multiple>` only:
+
+| attribute | value | maps to | notes |
+|---|---|---|---|
+| `ll-trigger-display` | expression | `triggerDisplay` | `'count'` (default) / `'tags'` - quoted: `ll-trigger-display="'tags'"` |
+| `ll-select-all-row` | expression | `selectAllRow` | tri-state select-all as the first row; see "Checkboxes" |
+| `ll-checkboxes` | expression | per-row checkbox icons | default `true`; `ll-checkboxes="false"` opts out; see "Checkboxes" |
+
+App-wide defaults for `arrow` / `filterable` / `popupWidthPolicy` / `uiTranslationPack` are set once via `llselectConfigProvider` (see "App-wide defaults"); a per-element attribute always wins.
+
 ## Gotchas
 
 All verified against AngularJS 1.8.3 source, not folk wisdom.

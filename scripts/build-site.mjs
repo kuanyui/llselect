@@ -3,11 +3,17 @@
 //   index.html  - landing page rendered from README.md
 //   demo/       - copied as-is
 //   dist/       - built library (run `npm run build` first)
-//   angularjs/  - the directive sources the angularjs demo loads
-// Relative README links point at repo files that are not published, so they
-// are rewritten to GitLab blob URLs; heading ids are generated so the
-// README's own #anchors keep working.
+//   angularjs/  - the directive sources the angularjs demo loads, plus
+//                 index.html rendered from angularjs/README.md
+//   api/        - core API reference; typedoc writes it AFTER this script
+//                 (the `build:site` npm script chains the two)
+// Relative README links are kept when they point at published content
+// (demo/, dist/, the directive files, the other rendered README); everything
+// else is a repo file that is not published, so it is rewritten to a GitLab
+// blob URL. Heading ids are generated so the READMEs' own #anchors keep
+// working.
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { posix } from 'node:path'
 import { marked } from 'marked'
 
 const REPO_URL = 'https://gitlab.com/kuanyui/llselect'
@@ -21,7 +27,7 @@ rmSync('public', { recursive: true, force: true })
 mkdirSync('public/angularjs', { recursive: true })
 cpSync('demo', 'public/demo', { recursive: true })
 cpSync('dist', 'public/dist', { recursive: true })
-for (const f of ['llselect-angularjs.js', 'llselect-ui-select.js', 'README.md']) {
+for (const f of ['llselect-angularjs.js', 'llselect-ui-select.js']) {
   copyFileSync(`angularjs/${f}`, `public/angularjs/${f}`)
 }
 
@@ -50,17 +56,45 @@ marked.use({
   },
 })
 
-const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
-let body = marked.parse(readFileSync('README.md', 'utf8'))
-body = body.replace(/href="(?!https?:|#|mailto:)([^"]+)"/g, (_m, path) => `href="${REPO_BLOB}${path.replace(/^\.\//, '')}"`)
+// mdDir is the source README's directory relative to the repo root ('' for the
+// root README, 'angularjs' for the other). Both rendered pages mirror their
+// source's directory in public/, so a kept relative href works unchanged.
+function rewriteLinks(body, mdDir) {
+  return body.replace(/href="(?!https?:|#|mailto:)([^"]+)"/g, (_m, target) => {
+    const hashIndex = target.indexOf('#')
+    const path = hashIndex === -1 ? target : target.slice(0, hashIndex)
+    const hash = hashIndex === -1 ? '' : target.slice(hashIndex)
+    const repoPath = posix.normalize(posix.join(mdDir, path))
+    if (repoPath === 'README.md') { return `href="${mdDir ? '../' : './'}${hash}"` }
+    if (repoPath === 'angularjs/README.md') { return `href="${mdDir ? './' : 'angularjs/'}${hash}"` }
+    if (/^(demo|dist)\//.test(repoPath) || /^angularjs\/llselect-.+\.js$/.test(repoPath)) { return `href="${target}"` }
+    return `href="${REPO_BLOB}${repoPath}${hash}"`
+  })
+}
 
-const html = `<!doctype html>
+// prefix walks from the page back up to the site root ('./' or '../').
+const NAV = [
+  ['Home', ''],
+  ['Examples', 'demo/examples.html'],
+  ['Benchmark', 'demo/benchmark.html'],
+  ['AngularJS', 'demo/angularjs/'],
+  ['API', 'api/'],
+]
+function navHtml(prefix, current) {
+  const items = NAV.map(([label, path]) =>
+    `<a href="${path ? prefix + path : prefix}"${label === current ? ' class="current"' : ''}>${label}</a>`)
+  items.push(`<a href="${REPO_URL}">GitLab</a>`)
+  return items.join('\n')
+}
+
+function renderPage({ title, description, nav, body }) {
+  return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="${pkg.description}">
-<title>llselect</title>
+<meta name="description" content="${description}">
+<title>${title}</title>
 <style>
 :root { color-scheme: light dark; --fg: #1a1a1a; --bg: #ffffff; --muted: #f4f4f4; --line: #d0d0d0; --link: #0550ae; --nav-link: #2456a6; --nav-hover: #eef3fb; }
 @media (prefers-color-scheme: dark) { :root { --fg: #d8d8d8; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --nav-link: #7fb1f5; --nav-hover: #263344; } }
@@ -94,15 +128,21 @@ th, td { border: 1px solid var(--line); padding: 0.3em 0.6em; }
 </head>
 <body>
 <nav>
-<a href="./" class="current">Home</a>
-<a href="demo/examples.html">Examples</a>
-<a href="demo/benchmark.html">Benchmark</a>
-<a href="demo/angularjs/">AngularJS</a>
-<a href="${REPO_URL}">GitLab</a>
+${nav}
 </nav>
 ${body}
 </body>
 </html>
 `
-writeFileSync('public/index.html', html)
+}
+
+function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current }) {
+  const body = rewriteLinks(marked.parse(readFileSync(mdPath, 'utf8')), posix.dirname(mdPath).replace(/^\.$/, ''))
+  writeFileSync(outPath, renderPage({ title, description, nav: navHtml(prefix, current), body }))
+}
+
+const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
+const ngPkg = JSON.parse(readFileSync('angularjs/package.json', 'utf8'))
+renderMarkdownPage('README.md', 'public/index.html', { title: 'llselect', description: pkg.description, prefix: './', current: 'Home' })
+renderMarkdownPage('angularjs/README.md', 'public/angularjs/index.html', { title: 'llselect + AngularJS 1.x', description: ngPkg.description, prefix: '../', current: null })
 console.log('build:site: OK (public/)')
