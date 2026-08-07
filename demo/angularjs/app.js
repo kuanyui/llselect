@@ -83,6 +83,7 @@
       vm.toppings = []
       vm.userId = 3
       vm.person = undefined
+      vm.person2 = USERS[2] // preset so allow-clear's x is visible on load
       vm.people = []
       vm.locked = false
       vm.avFruit = undefined

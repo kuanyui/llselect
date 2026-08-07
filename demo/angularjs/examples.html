@@ -201,6 +201,17 @@
     </div>
     <div class="out">ng-model = {{ vm.people.length }} selected</div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="6b"><code></code></pre></details>
+
+    <div data-src="6c">
+    <ui-llselect ng-model="vm.person2">
+      <ui-select-match placeholder="Pick a person" allow-clear="true">{{$select.selected.name}}</ui-select-match>
+      <ui-select-choices repeat="p in vm.users | filter: $select.search" ll-label="p.name">
+        <span ng-bind-html="p.name | highlight: $select.search"></span>
+      </ui-select-choices>
+    </ui-llselect>
+    </div>
+    <div class="out">ng-model = {{ vm.person2.name || 'undefined' }} <span class="hint">(ui-select's own allow-clear carries over: the x clears back to undefined)</span></div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="6c"><code></code></pre></details>
     <p class="hint">
       Not bridged, by rule (llselect has no such concept, so it is ignored rather
       than half-implemented): tagging, sortable, append-to-body, async refresh,
