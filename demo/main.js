@@ -679,7 +679,22 @@ selTagIcons.setItems(PROGRAMMING_LANGUAGES)
 selTagIcons.setChosenItems([PROGRAMMING_LANGUAGES[1], PROGRAMMING_LANGUAGES[3]])
 //#endregion
 
-//#region 12.1
+//#region 12
+// labelEl: native <label for> cannot target these divs, so the setting
+// emulates both halves - the label is the bottom name rung (live
+// aria-labelledby reference; an id is minted if the label has none) and
+// clicking it focuses the trigger (focus only, never open - native <select>
+// label parity). destroy() unwires the click and a minted id.
+const labelDemoSel = new LLSelectSingle(document.getElementById('mount-label-demo'), {
+  labelEl: document.getElementById('fruit-label'),
+  searchable: true,
+  clearable: true,
+  createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+})
+labelDemoSel.setItems(['Apple', 'Banana', 'Cherry', 'Durian'])
+//#endregion
+
+//#region 13.1
 // Language packs (imported at the top: `import { en, ja, zhTW } from
 // '@llselect/core/i18n'`) fill the `uiTranslationPack` setting whole; per-key
 // overrides spread on top (`uiTranslationPack: { ...zhTW, ... }`). The three
@@ -733,7 +748,7 @@ i18nPackSelect.addEventListener('change', () => applyI18nPack(i18nPackSelect.val
 applyI18nPack(i18nPackSelect.value)
 //#endregion
 
-//#region 12.2
+//#region 13.2
 // Every pack, straight out of `uiTranslationPackByLocale` (BCP 47 keys), so new packs
 // appear here without demo edits. One single per pack: closed it shows the
 // pack's `triggerPlaceholder`, open it the search placeholder / clear x /
@@ -763,21 +778,6 @@ for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
   })
   allSel.setItems(MIXED_DIRECTION_COUNTRIES)
 }
-//#endregion
-
-//#region 13
-// labelEl: native <label for> cannot target these divs, so the setting
-// emulates both halves - the label is the bottom name rung (live
-// aria-labelledby reference; an id is minted if the label has none) and
-// clicking it focuses the trigger (focus only, never open - native <select>
-// label parity). destroy() unwires the click and a minted id.
-const labelDemoSel = new LLSelectSingle(document.getElementById('mount-label-demo'), {
-  labelEl: document.getElementById('fruit-label'),
-  searchable: true,
-  clearable: true,
-  createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
-})
-labelDemoSel.setItems(['Apple', 'Banana', 'Cherry', 'Durian'])
 //#endregion
 
 // --- Inject demo snippets into <pre data-demo="X"><code></code></pre> -----

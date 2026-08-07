@@ -691,7 +691,31 @@
   </section>
 
   <section>
-    <h2>12. i18n (language packs) + RTL</h2>
+    <h2>12. Label integration (labelEl)</h2>
+    <p class="hint">
+      Native <code>&lt;label for&gt;</code> cannot target these plain
+      <code>div</code>s, so the <code>labelEl</code> setting emulates both of
+      its halves: the label feeds the accessible name (bottom rung of the
+      <code>ariaLabelledBy</code> &gt; <code>ariaLabel</code> &gt;
+      <code>labelEl</code> ladder, wired as a live
+      <code>aria-labelledby</code> reference), and clicking it focuses the
+      trigger - focus only, like a native <code>&lt;select&gt;</code> label,
+      never opening the popup. <code>destroy()</code> unwires it.
+    </p>
+    <article>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <label id="fruit-label" class="field-label">Favorite fruit</label>
+          <div id="mount-label-demo" style="margin-top:0.3rem"></div>
+          <div class="out">^ click the label above: the trigger receives focus; inspect it to see <code>aria-labelledby</code> referencing the label</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="12"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h2>13. i18n (language packs) + RTL</h2>
     <p class="hint">
       All chrome strings (trigger placeholder default, search aria-label +
       placeholder, clear x, tag remove buttons, count summary) live in the
@@ -702,7 +726,7 @@
     </p>
 
     <article>
-      <h3>12.1 Pack switcher: zhTW / ja / en / ar / he (single + multi)</h3>
+      <h3>13.1 Pack switcher: zhTW / ja / en / ar / he (single + multi)</h3>
       <p class="hint">
         Switch the pack - the instances stay put and
         <code>setUiTranslationPack</code> re-renders them in place (the one
@@ -743,12 +767,12 @@
           <div class="out">^ multi, default <code>'count'</code> - translated count summary</div>
           <div class="out" id="out-i18n">chosen: </div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="12.1"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="13.1"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>12.2 Every language pack</h3>
+      <h3>13.2 Every language pack</h3>
       <p class="hint">
         One <code>LLSelectSingle</code> per entry in
         <code>uiTranslationPackByLocale</code>, so this grid grows with the library.
@@ -760,31 +784,7 @@
         <code>dir="rtl"</code> on their mounts.
       </p>
       <div id="i18n-all-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0.8rem"></div>
-      <details class="code-toggle"><summary>code</summary><pre data-demo="12.2"><code></code></pre></details>
-    </article>
-  </section>
-
-  <section>
-    <h2>13. Label integration (labelEl)</h2>
-    <p class="hint">
-      Native <code>&lt;label for&gt;</code> cannot target these plain
-      <code>div</code>s, so the <code>labelEl</code> setting emulates both of
-      its halves: the label feeds the accessible name (bottom rung of the
-      <code>ariaLabelledBy</code> &gt; <code>ariaLabel</code> &gt;
-      <code>labelEl</code> ladder, wired as a live
-      <code>aria-labelledby</code> reference), and clicking it focuses the
-      trigger - focus only, like a native <code>&lt;select&gt;</code> label,
-      never opening the popup. <code>destroy()</code> unwires it.
-    </p>
-    <article>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <label id="fruit-label" class="field-label">Favorite fruit</label>
-          <div id="mount-label-demo" style="margin-top:0.3rem"></div>
-          <div class="out">^ click the label above: the trigger receives focus; inspect it to see <code>aria-labelledby</code> referencing the label</div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="13"><code></code></pre></details>
-      </div>
+      <details class="code-toggle"><summary>code</summary><pre data-demo="13.2"><code></code></pre></details>
     </article>
   </section>
 
