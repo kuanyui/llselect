@@ -265,6 +265,31 @@
           if (attrs.llTriggerDisplay) { settings.triggerDisplay = scope.$eval(attrs.llTriggerDisplay) }
           if (attrs.llSelectAllRow) { settings.selectAllRow = scope.$eval(attrs.llSelectAllRow) }
 
+          // Batteries-included checkboxes: every row gets a live checkbox icon,
+          // and (with ll-select-all-row) the row gets the matching tri-state
+          // one plus the pack's counting label. ll-checkboxes="false" opts out.
+          // Core deliberately ships neither - its answer is the subclass recipe
+          // (demo 5.4 / 5.5); this package's answer is a default. Rows render
+          // only after construction, so reading `sel` here is safe.
+          var checkboxes = attrs.llCheckboxes ? scope.$eval(attrs.llCheckboxes) : true
+          if (checkboxes) {
+            var checkboxRowEl = function (state, text) {
+              var row = document.createElement('span')
+              row.style.display = 'inline-flex'
+              row.style.alignItems = 'center'
+              row.style.gap = '0.4em'
+              row.appendChild(llselect.createCheckboxSvgEl({ state: state }))
+              row.appendChild(document.createTextNode(text))
+              return row
+            }
+            settings.createItemContentElFn = function (item) {
+              return checkboxRowEl(sel && sel.isChosen(item) ? 'checked' : 'unchecked', settings.itemToStringFn(item))
+            }
+            settings.createSelectAllRowContentElFn = function (chosenState, chosenCount, totalCount) {
+              return checkboxRowEl(chosenState, sel.getUiTranslationPack().selectAllRowLabel(chosenCount, totalCount))
+            }
+          }
+
           var gate = makeWriteBackGate()
           settings.onChange = function (items) {
             if (gate.isSuppressed()) { return }

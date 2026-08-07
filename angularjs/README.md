@@ -149,6 +149,10 @@ Only settings that are app-wide **by nature** are here, and `uiTranslationPack` 
 
 The chevron is the default - this package is batteries-included, unlike the core (which ships no arrow so the app decides). `ll-arrow="triangle"` picks the other built-in icon; `ll-arrow="none"` opts out and leaves the slot to the theme. A custom arrow means editing your copy of `llselect-angularjs.js`, which is what a copy-paste package is for. The ui-select bridge always renders the chevron (every ui-select theme has a caret, so a bare trigger would read as broken).
 
+## Checkboxes
+
+`<llselect-multiple>` rows get a live checkbox icon by default - the same batteries-included trade as the arrow. `ll-checkboxes="false"` opts out. With `ll-select-all-row="true"` the select-all row gets the matching tri-state icon plus the pack's counting label. Core ships neither: its answer is the subclass recipe (demo 5.4 / 5.5). Single-select never gets checkboxes - a radio-like look would misstate multiplicity.
+
 ## The ui-select bridge
 
 `<ui-llselect>` (`ui-llselect.js`) exists so an existing ui-select codebase can migrate without rewriting every call site. The scoping rule is: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible.

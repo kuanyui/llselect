@@ -218,3 +218,37 @@ test('arrow defaults to the chevron; ll-arrow="none" leaves the slot empty', () 
   })
   assert.equal(b.$('.llselect-trigger-arrow svg'), null)
 })
+
+test('multiple defaults to checkbox rows, live state; ll-checkboxes="false" opts out; select-all matches', () => {
+  const a = app()
+  a.$('[name=tops] .llselect-trigger').click()
+  const items = a.$$('[name=tops] .llselect-item')
+  assert.ok(items.length > 0 && items[0].querySelector('svg'), 'default checkbox missing')
+  const before = items[0].innerHTML
+  items[0].click()
+  const after = a.$$('[name=tops] .llselect-item')[0].innerHTML
+  assert.notEqual(after, before, 'checkbox did not re-render as checked')
+
+  const b = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-multiple ng-model="vm.t" ll-checkboxes="false" ll-select-all-row="true"
+        ll-options="f for f in vm.fruits"></llselect-multiple>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.t = [] },
+  })
+  b.$('.llselect-trigger').click()
+  assert.equal(b.$('.llselect-item svg'), null, 'opt-out still rendered checkboxes')
+  assert.equal(b.$('.llselect-select-all-row svg'), null, 'opt-out must also strip the select-all icon')
+
+  const c = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-multiple ng-model="vm.t" ll-select-all-row="true"
+        ll-options="f for f in vm.fruits"></llselect-multiple>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.t = [] },
+  })
+  c.$('.llselect-trigger').click()
+  assert.ok(c.$('.llselect-select-all-row svg'), 'select-all tri-state icon missing')
+})
