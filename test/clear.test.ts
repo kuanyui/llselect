@@ -5,7 +5,7 @@ import { LLSelectSingle } from '../src/single.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 
 // clearable: an x button in its own trigger slot that empties the selection.
-// See docs/DESIGN.md "Clear button (clearable)".
+// See docs/llm/DESIGN.md "Clear button (clearable)".
 
 function mount(): HTMLElement {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')

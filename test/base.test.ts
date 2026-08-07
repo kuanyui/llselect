@@ -62,7 +62,7 @@ test('popup contains the (hidden) filter input, the popup list, and the no-resul
   const inst = new TestSelect<string>(mount())
   const popupChildren = Array.from(inst.popupEl.children) as HTMLElement[]
   assert.equal(popupChildren.length, 3)
-  // The filter input is always built (see docs/DESIGN.md) but `hidden` when
+  // The filter input is always built (see docs/llm/DESIGN.md) but `hidden` when
   // the filter is inactive. The listbox follows it; the no-results message
   // (also always built, `hidden` while items are visible) comes last.
   assert.equal(popupChildren[0]!.tagName, 'INPUT')
@@ -77,7 +77,7 @@ test('trigger, hidden value span, and popup are children of rootEl in order', ()
   const children = Array.from(inst.rootEl.children) as HTMLElement[]
   assert.equal(children.length, 3)
   assert.equal(children[0], inst.triggerEl)
-  // The accessible-name value mirror (docs/A11Y.md "Accessible name"): root
+  // The accessible-name value mirror (docs/llm/A11Y.md "Accessible name"): root
   // level so triggerEl.textContent stays the visible content only.
   assert.equal(children[1]!.id, inst.classIdMap.triggerValueId)
   assert.equal(children[1]!.hidden, true)

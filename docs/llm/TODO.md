@@ -23,6 +23,6 @@ The automatable layer of the original checklist ran green in real Chromium and F
 - Keyboard / focus / ARIA behavior contract: see `A11Y.md`.
 - Method naming conventions (suffixes, callback naming): see `naming-conventions.md`.
 - `render*` orchestrator vs `*ToDom` / `*El` primitive split: see `render-responsibilities.md`.
-- Code style rules: see `../CLAUDE.md`.
+- Code style rules: see `../../CLAUDE.md`.
 - Review findings (open + resolved): see `FIXME.md`.
 - Completed roadmap + rulings: see `archive/roadmap-v0.0.1.md`; pre-publish API review: see `archive/review-release-candidate.md`.

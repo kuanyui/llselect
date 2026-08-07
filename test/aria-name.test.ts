@@ -5,7 +5,7 @@ import { LLSelectSingle } from '../src/single.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 
 // Accessible-name contract (ariaLabel / ariaLabelledBy settings): see
-// docs/A11Y.md "Accessible name" for the per-mode wiring these tests pin down.
+// docs/llm/A11Y.md "Accessible name" for the per-mode wiring these tests pin down.
 
 function mount(): HTMLElement {
   setupDom('<!doctype html><html><body><span id="field-label">Country</span><div id="mount"></div></body></html>')

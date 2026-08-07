@@ -4,7 +4,7 @@ import { setupDom } from '../test-utils/dom.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 
 // Phase 13 select-all row: opt-in tri-state leading row acting on the VISIBLE
-// enabled subset. Contract: docs/A11Y.md "Select-all"; design: docs/TODO.md.
+// enabled subset. Contract: docs/llm/A11Y.md "Select-all"; design: docs/llm/TODO.md.
 
 function mount(): HTMLElement {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')

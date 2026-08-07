@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle } from '../src/single.js'
 
-// Focus management (see docs/A11Y.md "Focus"): how the popup reacts to focus
+// Focus management (see docs/llm/A11Y.md "Focus"): how the popup reacts to focus
 // moving in and out of the widget. Distinct from outside-click (pointer
 // dismissal) and keyboard (key -> action mapping).
 

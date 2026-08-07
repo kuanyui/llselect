@@ -2,7 +2,7 @@
 
 Why this package exists and why each piece is shaped the way it is. Written for an agent picking the work up cold: it records the reasoning and the rejected alternatives, not the usage - that is [`README.md`](README.md). The evidence behind every factual claim here is in [`SPEC.md`](SPEC.md), with file:line references.
 
-Conventions follow the root [`CLAUDE.md`](../CLAUDE.md) and [`docs/DESIGN.md`](../docs/DESIGN.md); where they disagree about llselect itself, the root wins.
+Conventions follow the root [`CLAUDE.md`](../CLAUDE.md) and [`docs/llm/DESIGN.md`](../docs/llm/DESIGN.md); where they disagree about llselect itself, the root wins.
 
 ## Why AngularJS gets a package when React / Vue do not
 

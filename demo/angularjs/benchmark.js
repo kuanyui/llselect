@@ -32,7 +32,7 @@
       // The baseline the AngularJS port has to beat: what the app already has.
       // Its dropdown is an OS widget, so JS cannot time its open or filter -
       // those are n/a rather than a fake 0 (same rule as the main benchmark's
-      // native <select>, docs/SPEC_BENCHMARK.md). Build and digest are real,
+      // native <select>, docs/llm/SPEC_BENCHMARK.md). Build and digest are real,
       // and digest is the one that decides "is validation slower than before".
       key: 'native',
       label: '<select ng-options>',

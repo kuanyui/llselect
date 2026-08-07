@@ -1,6 +1,6 @@
 # Design notes
 
-Architecture and API conventions for llselect. Code-style rules (braces, language, dash characters, etc.) live in `../CLAUDE.md`; the keyboard / focus / ARIA behavior contract lives in `A11Y.md`. This file documents **what** to build and **why**, not how to write each line.
+Architecture and API conventions for llselect. Code-style rules (braces, language, dash characters, etc.) live in `../../CLAUDE.md`; the keyboard / focus / ARIA behavior contract lives in `A11Y.md`. This file documents **what** to build and **why**, not how to write each line.
 
 ## API naming conventions
 

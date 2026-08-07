@@ -76,7 +76,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Browser support floor (fixed baseline, update deliberately - never let it drift with the calendar): Firefox 78+, Chrome/Edge 87+, Safari 14.1+. This is the measured floor of what the code actually uses (ES2020 output per tsconfig `target`, `replaceChildren`, flex `gap`, `padding-block` / `padding-inline` / `inset` shorthands; `visualViewport` and scroll anchoring degrade gracefully). Do not add polyfills, vendor prefixes, or workarounds for older versions; raising the floor for a new API is fine if it is called out in the commit.
 - TypeScript: write explicit, precise types. Do not use `any` unless genuinely unavoidable; when you must, add a short comment explaining why.
 - Always wrap the body of `if` / `else` / `while` / `for` / `do` in `{ }`, even when the body is a single statement, and even when written on the same line. Example: `if (x) { return }` not `if (x) return`. This avoids the "next line gets accidentally added but isn't actually in the body" class of bugs.
-- Document authority: CLAUDE.md governs agent behavior and enforceable code-style constraints. `docs/DESIGN.md` owns API / architecture decisions (naming conventions, module boundaries, settings vs methods, ARIA mapping, etc.). `docs/A11Y.md` owns the keyboard / focus / ARIA behavior contract. When these disagree, the owning document wins; fix the others to match it.
+- Document authority: CLAUDE.md governs agent behavior and enforceable code-style constraints. `docs/llm/DESIGN.md` owns API / architecture decisions (naming conventions, module boundaries, settings vs methods, ARIA mapping, etc.). `docs/llm/A11Y.md` owns the keyboard / focus / ARIA behavior contract. When these disagree, the owning document wins; fix the others to match it.
+- Doc placement: `docs/llm/` holds agent-facing material (contracts, specs, findings logs, decision archives); `docs/` itself is for human-facing documentation only. New agent-facing docs go under `docs/llm/`, never the docs/ root. Human API reference is GENERATED (TypeDoc -> `public/api/`, from the TSDoc in src/) - do not hand-write a parallel core API doc; the AngularJS directive reference is hand-written in `angularjs/README.md`.
 - When asking the user to decide a name (method / function / setting / type), ALWAYS give its full TypeScript signature (param + return types) and one line on what it actually does. Never ask for a naming decision on insufficient information - the user should not have to go look it up.
 - Any callback / setting whose type includes `null` must have its docstring state exactly what `null` means; it differs per case (e.g. "fall back to the default text" vs "render nothing") and is never self-evident.
 - When explicit naming / structure conflicts with brevity or "fewer abstractions" (including s2 Simplicity First), prefer explicit. The cost of guessing while reading the API outweighs a few extra methods or longer names.
@@ -105,17 +106,17 @@ cd angularjs && npm run build             # terser only, no bundler; also checke
 
 `angularjs/*.min.js` and `angularjs/node_modules/` are build outputs / installs and are gitignored: change the source, rebuild. The `angularjs/` directives are plain ES5-style IIFEs on purpose (a legacy AngularJS app drops them into `vendor/` behind a `<script src>`), so the ES2020 / TypeScript rules above do not apply inside that directory - but the ASCII, brace and comment rules do.
 
-jsdom cannot test layout, native Tab focus navigation, scrollbar dragging, visual-viewport behavior, or assistive-technology output. Changes touching positioning, focus order, RTL, themes, or ARIA need a real-browser pass - record what to verify in `docs/TODO.md` ("manual verification") if it cannot happen in the same session.
+jsdom cannot test layout, native Tab focus navigation, scrollbar dragging, visual-viewport behavior, or assistive-technology output. Changes touching positioning, focus order, RTL, themes, or ARIA need a real-browser pass - record what to verify in `docs/llm/TODO.md` ("manual verification") if it cannot happen in the same session.
 
 ### Generated and abandoned files (llselect)
 
 - `dist/` and `.build/` are build outputs. Never edit them manually; change `src/` (or the build config) and rebuild.
 - `src/draft.ts` is an abandoned early reference, excluded from builds and tests. Do not repair, extend, or "clean it up".
-- A public API change is not done until everything it touches moves together: exports (`src/index.ts`), declarations, README examples, tests, and the owning contract doc (`docs/DESIGN.md` / `docs/A11Y.md`).
+- A public API change is not done until everything it touches moves together: exports (`src/index.ts`), declarations, README examples, tests, and the owning contract doc (`docs/llm/DESIGN.md` / `docs/llm/A11Y.md`).
 
-### Review-findings log (`docs/FIXME.md`)
+### Review-findings log (`docs/llm/FIXME.md`)
 
-Findings from reviews (external, `/code-review`, audits) are tracked in `docs/FIXME.md`, newest round on top under a `## review (<topic>)` heading. No date in the heading, or anywhere in the file - `git log` carries the when (see the no-dates-in-docs rule). Each finding is one entry:
+Findings from reviews (external, `/code-review`, audits) are tracked in `docs/llm/FIXME.md`, newest round on top under a `## review (<topic>)` heading. No date in the heading, or anywhere in the file - `git log` carries the when (see the no-dates-in-docs rule). Each finding is one entry:
 
 `- [ ] **[SEVERITY-N] - title**` - `[ ]` open, `[x]` resolved. SEVERITY is a full word, never abbreviated: HIGH / MEDIUM / PERFORMANCE / QUALITY / DOCUMENTATION / NEEDS-VERIFICATION / LINT. N is a number unique across all rounds (e.g. `[QUALITY-7]`).
 

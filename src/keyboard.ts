@@ -102,7 +102,7 @@ export function getUpdatedIndex(
  * `position: relative` (optgroup), silently breaking the math. Rect deltas are
  * correct regardless of nesting / theme CSS. `clientTop` / `clientHeight`
  * exclude the parent's border so a bordered list stays exact. Measured to cost
- * the same as the old `offsetTop` path (see docs/DESIGN.md "Optgroup").
+ * the same as the old `offsetTop` path (see docs/llm/DESIGN.md "Optgroup").
  */
 export function ensureVisibleInScroll(child: HTMLElement, scrollParent: HTMLElement): void {
   const c = child.getBoundingClientRect()

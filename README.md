@@ -220,7 +220,7 @@ The mirror covers submission only. The rest of native form behavior stays yours 
 - **Constraint validation** (`required` etc.) never fires on hidden inputs - validate the llselect state in your submit handler.
 - **`<label for>`** cannot target llselect (plain `div`s are not labelable) - pass the element instead: `labelEl: document.querySelector('label[for="country"]')` covers both halves (accessible name via a live `aria-labelledby` reference, and label clicks focus the trigger).
 
-Why there is no built-in setting for this, and why the recipe uses hidden inputs rather than a hidden `<select>` mirror: [docs/DESIGN.md](docs/DESIGN.md) "`<form>` integration (ruled out of core)".
+Why there is no built-in setting for this, and why the recipe uses hidden inputs rather than a hidden `<select>` mirror: [docs/llm/DESIGN.md](docs/llm/DESIGN.md) "`<form>` integration (ruled out of core)".
 
 ## Capabilities overview
 
@@ -237,7 +237,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
 | Events                               | `onChange(current, previous)`, `onOpen`, `onClose`                                                                       |
 
-Full contracts: [docs/DESIGN.md](docs/DESIGN.md) (API / architecture) and [docs/A11Y.md](docs/A11Y.md) (keyboard / focus / ARIA). The TypeScript declarations shipped in the package document every setting inline.
+Full contracts: [docs/llm/DESIGN.md](docs/llm/DESIGN.md) (API / architecture) and [docs/llm/A11Y.md](docs/llm/A11Y.md) (keyboard / focus / ARIA). The TypeScript declarations shipped in the package document every setting inline.
 
 ## Customization: settings or subclassing?
 
@@ -276,7 +276,7 @@ Subclass only when settings cannot express it:
 2. **A framework wrapper** - e.g. `class VueLLSelect extends LLSelectSingle` for lifecycle glue (call `destroy()` on unmount). This is the main reason llselect is "low-level".
 3. **Core behavior with no setting** - e.g. replace `onItemActivated` semantics, or take full control of the item element via `createItemEl` (rich HTML, icons).
 
-How the two layers coexist: every customization point is a `protected` method whose default reads its `*Fn` setting. Overriding the method replaces that default - your override wins, plain OO, no hidden precedence. Rationale: [docs/DESIGN.md](docs/DESIGN.md).
+How the two layers coexist: every customization point is a `protected` method whose default reads its `*Fn` setting. Overriding the method replaces that default - your override wins, plain OO, no hidden precedence. Rationale: [docs/llm/DESIGN.md](docs/llm/DESIGN.md).
 
 
 ## Acknowledgment

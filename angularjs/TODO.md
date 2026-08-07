@@ -1,6 +1,6 @@
 # TODO - angularjs-llselect
 
-Remaining work for the AngularJS 1.x package. Same conventions as the root `docs/TODO.md`: `[ ]` todo, `[~]` in progress, `[x]` done. No dates anywhere - `git log` carries the when.
+Remaining work for the AngularJS 1.x package. Same conventions as the root `docs/llm/TODO.md`: `[ ]` todo, `[~]` in progress, `[x]` done. No dates anywhere - `git log` carries the when.
 
 Findings are named by what they are, never by a bare code.
 
@@ -59,7 +59,7 @@ Findings are named by what they are, never by a bare code.
 ## Benchmark
 
 - [x] **Raise the item count.** Now 3000 items / 20 widgets, both overridable via `?items=&widgets=` so a reader can find the knee. Measured under jsdom (absolute numbers are inflated for everyone there - it has no real layout - but the shape is real): at 500 items the incumbent's build was 13.7x llselect's; at 3000 it is 197.7x, and with `validation="required"` on both it is 225x. Corrected while writing it up: the incumbent is NOT superlinear - its build is linear (it renders every option up front) while llselect's is flat (the list is built only on open), and that flat-vs-linear split is what widens the ratio. ui-select is the genuinely superlinear one, and only per digest.
-- [ ] **Real-browser pass.** jsdom has no layout, so only the digest column is meaningful there; build / open / filter need a real browser before being cited anywhere. Already tracked in the root `docs/TODO.md`.
+- [ ] **Real-browser pass.** jsdom has no layout, so only the digest column is meaningful there; build / open / filter need a real browser before being cited anywhere. Already tracked in the root `docs/llm/TODO.md`.
 
 ## Notes
 

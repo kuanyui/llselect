@@ -4,8 +4,8 @@ import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle } from '../src/single.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 
-// Phase 8 filter box: see docs/DESIGN.md ("Filter box architecture") and
-// docs/A11Y.md for the contract these tests pin down.
+// Phase 8 filter box: see docs/llm/DESIGN.md ("Filter box architecture") and
+// docs/llm/A11Y.md for the contract these tests pin down.
 
 function mount(): HTMLElement {
   setupDom('<!doctype html><html><body><div id="mount"></div><button id="outside">x</button></body></html>')

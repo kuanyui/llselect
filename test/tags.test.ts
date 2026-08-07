@@ -4,7 +4,7 @@ import { setupDom } from '../test-utils/dom.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 
 // triggerDisplay: 'tags' - removable tag chips in the multi-select trigger.
-// See docs/DESIGN.md "Tags (triggerDisplay)" and docs/A11Y.md "Tags".
+// See docs/llm/DESIGN.md "Tags (triggerDisplay)" and docs/llm/A11Y.md "Tags".
 
 function mount(): HTMLElement {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')

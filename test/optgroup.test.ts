@@ -5,7 +5,7 @@ import { LLSelectSingle } from '../src/single.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 
 // Phase 10 optgroup: flat items + itemToGroupKeyFn (contiguous-run) + a generic
-// key GK mirroring the item layer. See docs/DESIGN.md "Optgroup (Phase 10)".
+// key GK mirroring the item layer. See docs/llm/DESIGN.md "Optgroup (Phase 10)".
 
 function mount(): HTMLElement {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')

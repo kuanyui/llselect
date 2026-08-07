@@ -47,7 +47,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * Accessible name of the field, like the `<label>` text of a native
    * `<select>` (e.g. `'Country'`).
    * - Applied to the trigger, the popup listbox, and (while the filter is active)
-   *   the filter input; per-mode wiring: `docs/A11Y.md` "Accessible name".
+   *   the filter input; per-mode wiring: `docs/llm/A11Y.md` "Accessible name".
    * - `null` (default): the library sets no name. Provide `ariaLabelledBy`
    *   instead; if BOTH stay `null` the field has no accessible name, which
    *   violates WAI-ARIA 1.2 - always supply one of the two.
@@ -124,7 +124,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * The ARIA mode follows the evaluated value per open cycle: active =
    * trigger `role="button"`, focus moves to the input; inactive = exactly
    * like `filterable: false` (trigger stays `role="combobox"`, focus stays on
-   * the trigger). See `docs/A11Y.md` and `docs/DESIGN.md`.
+   * the trigger). See `docs/llm/A11Y.md` and `docs/llm/DESIGN.md`.
    */
   filterable: boolean | ((items: readonly T[]) => boolean)
   /**
@@ -180,7 +180,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * skipped by keyboard nav; it keeps `role="option"` plus `aria-disabled`.
    * Re-evaluated on every render (never cached). For a generic `T` this is the
    * only way to mark items - the library cannot read a `disabled` field off an
-   * unknown type. See `docs/DESIGN.md`.
+   * unknown type. See `docs/llm/DESIGN.md`.
    */
   itemDisabledFn: ((item: T) => boolean) | null
   /**
@@ -234,7 +234,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * - `null` (setting, default): grouping off - flat list, no headers.
    * - fn returns `null`: this item is in no group; renders ungrouped.
    * - Contiguous items with an equal key (per `groupKeyCompareFn`) form one
-   *   group, so the data must be pre-sorted by group. See `docs/DESIGN.md`.
+   *   group, so the data must be pre-sorted by group. See `docs/llm/DESIGN.md`.
    */
   itemToGroupKeyFn: ((item: T) => GK | null) | null
   /**
@@ -310,7 +310,7 @@ export interface LLSelectClassIdMap {
   /**
    * Class on `triggerEl` (the interactive trigger). Its `role` is
    * `combobox` while the filter is inactive and `button` while a filterable popup
-   * is open; see `docs/A11Y.md`.
+   * is open; see `docs/llm/A11Y.md`.
    */
   triggerClass: string
   /** Class on the inner span where content (text/tags) is rendered. */
@@ -470,7 +470,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * `data-state="open|closed"`. Its `role` depends on the filter mode: `combobox`
    * while the filter is inactive (it then also hosts `aria-activedescendant`) and
    * `button` while a filterable popup is open (the filter input hosts
-   * `aria-activedescendant`). See `docs/A11Y.md`.
+   * `aria-activedescendant`). See `docs/llm/A11Y.md`.
    */
   public readonly triggerEl: HTMLElement
   /**
@@ -1045,7 +1045,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * while the filter input is the focus host the trigger leaves the tab
    * order, so the open widget stays a single tab stop and Shift+Tab exits
    * instead of landing on the trigger with the popup still open
-   * (`docs/A11Y.md` "Focus").
+   * (`docs/llm/A11Y.md` "Focus").
    */
   private syncTriggerTabindex(): void {
     const disabledAndUnfocusable = this.disabled && !this.settings.focusableWhenDisabled
@@ -1844,7 +1844,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * The filter input lives inside the popup, above the listbox. Always built
    * (`hidden` when `filterable: false`) so a future runtime toggle is a CSS
-   * flip rather than a DOM rebuild. See `docs/DESIGN.md`.
+   * flip rather than a DOM rebuild. See `docs/llm/DESIGN.md`.
    */
   private createFilterInputEl(): HTMLInputElement {
     const el = document.createElement('input')

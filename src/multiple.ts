@@ -70,7 +70,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    *   that is what AT is guaranteed to announce. The chip is a generic `<span>` (ARIA prohibits naming it), so
    *   for icon-only content include your own (visually hidden) text if the
    *   chip should be announced as more than its remove button. See
-   *   `docs/A11Y.md` "Tags".
+   *   `docs/llm/A11Y.md` "Tags".
    */
   createTagContentElFn: ((item: T) => HTMLElement | null) | null
   /**
@@ -91,7 +91,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * `uiTranslationPack.selectAllRowLabel`); Enter / click toggles. Acts on the VISIBLE
    * enabled subset (the filtered list while a filter query is active) - the
    * public `chooseAll` / `unchooseAll` / `toggleAll` keep their whole-list
-   * semantics. See `docs/A11Y.md` "Select-all".
+   * semantics. See `docs/llm/A11Y.md` "Select-all".
    */
   selectAllRow: boolean
   /**
