@@ -1,0 +1,20 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "@llselect/core",
+  "entryPoints": ["src/index.ts", "src/i18n.ts"],
+  "out": "public/api",
+  "readme": "none",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "hideGenerator": true,
+  "sourceLinkTemplate": "https://gitlab.com/kuanyui/llselect/-/blob/{gitRevision}/{path}#L{line}",
+  "searchInComments": true,
+  "sort": ["visibility", "source-order"],
+  "categoryOrder": ["Items", "Accessible name", "Events", "Trigger", "Filtering", "Grouping", "Select-all", "Popup", "Disabling", "i18n", "CSS", "*"],
+  "navigationLinks": {
+    "llselect home": "https://kuanyui.github.io/llselect/",
+    "GitHub": "https://github.com/kuanyui/llselect",
+    "GitLab": "https://gitlab.com/kuanyui/llselect"
+  }
+}

@@ -1,3 +1,8 @@
+/**
+ * Language packs for the UI chrome - the `@llselect/core/i18n` subpath. Pure
+ * data, tree-shakeable; spread a pack into the `uiTranslationPack` setting.
+ * @module @llselect/core/i18n
+ */
 // Language packs - the `@llselect/core/i18n` subpath entry, as a barrel: one
 // file per pack lives under src/i18n/ (including `en`, the built-in default);
 // this module defines the pack contract, re-exports them and builds the locale index. Pure data: each pack is

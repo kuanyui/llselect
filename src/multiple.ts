@@ -37,6 +37,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * construction nor on a setter call that yields an equivalent set
    * (element-wise compared via `compareFn`, order-sensitive).
    * `null` (default) = no listener.
+   * @category Events
    */
   onChange: ((chosenItems: readonly T[], previousChosenItems: readonly T[]) => void) | null
   /**
@@ -48,6 +49,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * - fn returns `null` - use the default for this render (count summary / tags).
    * - setting is `null` (default) - always use that default rendering.
    * Checked before `renderTriggerContent`, so it wins over a subclass override.
+   * @category Trigger
    */
   createTriggerContentElFn: ((ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null) | null
   /**
@@ -55,6 +57,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * - `'count'` (default): a summary like "3 / 10 selected".
    * - `'tags'`: one removable chip per chosen item; its x button removes it.
    * `createTriggerContentElFn` overrides both (full control wins).
+   * @category Trigger
    */
   triggerDisplay: LLSelectTriggerDisplay
   /**
@@ -71,6 +74,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    *   for icon-only content include your own (visually hidden) text if the
    *   chip should be announced as more than its remove button. See
    *   `docs/llm/A11Y.md` "Tags".
+   * @category Trigger
    */
   createTagContentElFn: ((item: T) => HTMLElement | null) | null
   /**
@@ -82,6 +86,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * - Return an `HTMLElement` / `SVGElement`: appended inside the button as its icon.
    * - `null` (setting default, or returned for an item): no icon - the theme
    *   draws the x via its CSS glyph (`.llselect-tag-remove-button:empty::before`).
+   * @category Trigger
    */
   createTagRemoveButtonContentElFn: ((item: T) => HTMLElement | SVGElement | null) | null
   /**
@@ -92,6 +97,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * enabled subset (the filtered list while a filter query is active) - the
    * public `chooseAll` / `unchooseAll` / `toggleAll` keep their whole-list
    * semantics. See `docs/llm/A11Y.md` "Select-all".
+   * @category Select-all
    */
   selectAllRow: boolean
   /**
@@ -104,6 +110,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    *   icon-only content is still announced with the counts.
    * - `null` (setting default, or returned): plain text from
    *   `uiTranslationPack.selectAllRowLabel` (themes then draw a text glyph tri-state).
+   * @category Select-all
    */
   createSelectAllRowContentElFn:
     ((chosenState: LLSelectChosenState, chosenCount: number, totalCount: number) => HTMLElement | null) | null

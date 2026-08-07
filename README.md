@@ -30,6 +30,7 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 - [Limitation: What llselect deliberately decides not to do?](#limitation-what-llselect-deliberately-decides-not-to-do)
 - [`<form>` integration](#form-integration)
 - [Capabilities overview](#capabilities-overview)
+- [API reference](#api-reference)
 - [Customization: settings or subclassing?](#customization-settings-or-subclassing)
 - [Acknowledgment](#acknowledgment)
 - [License](#license)
@@ -238,6 +239,14 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Events                               | `onChange(current, previous)`, `onOpen`, `onClose`                                                                       |
 
 Full contracts: [docs/llm/DESIGN.md](docs/llm/DESIGN.md) (API / architecture) and [docs/llm/A11Y.md](docs/llm/A11Y.md) (keyboard / focus / ARIA). The TypeScript declarations shipped in the package document every setting inline.
+
+## API reference
+
+Every class, setting and type, generated with TypeDoc from the same TSDoc that ships in the package's declarations - so it cannot drift from the source:
+
+- [GitHub Pages](https://kuanyui.github.io/llselect/api/) | [GitLab Pages](https://kuanyui.gitlab.io/llselect/api/)
+
+For the AngularJS directives (`ll-*` attributes), see the attribute reference in [angularjs/README.md](angularjs/README.md#attribute-reference).
 
 ## Customization: settings or subclassing?
 

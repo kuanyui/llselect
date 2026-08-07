@@ -22,6 +22,7 @@ export interface LLSelectSingleSettings<T, GK = string> extends LLSelectBaseSett
    * this change); `undefined` means "no selection" on either side. Does NOT
    * fire on construction nor on `setChosenItem` with an equivalent item.
    * `null` (default) = no listener.
+   * @category Events
    */
   onChange: ((chosenItem: T | undefined, previousChosenItem: T | undefined) => void) | null
   /**
@@ -34,6 +35,7 @@ export interface LLSelectSingleSettings<T, GK = string> extends LLSelectBaseSett
    *   `itemToString`, or the placeholder when nothing is chosen.
    * - setting is `null` (default) - always use that default rendering.
    * Checked before `renderTriggerContent`, so it wins over a subclass override.
+   * @category Trigger
    */
   createTriggerContentElFn: ((ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | null) | null
 }

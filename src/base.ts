@@ -35,12 +35,14 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * (default `'llselect'`). NOTE: the shipped themes target the default
    * prefix only - a custom prefix means bringing your own CSS. Reference the
    * resolved names via `instance.classIdMap` instead of hardcoding strings.
+   * @category CSS
    */
   cssClassPrefix: string
   /**
    * Text shown in the trigger when nothing is selected. App copy: an explicit
    * value always wins; when unset, the locale default
    * `uiTranslationPack.triggerPlaceholder` is used (`'Please select'` in English).
+   * @category Trigger
    */
   placeholder: string
   /**
@@ -52,6 +54,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   instead; if BOTH stay `null` the field has no accessible name, which
    *   violates WAI-ARIA 1.2 - always supply one of the two.
    * - Ignored when `ariaLabelledBy` is set (ARIA name precedence).
+   * @category Accessible name
    */
   ariaLabel: string | null
   /**
@@ -62,6 +65,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * - `null` (default): not forwarded; see `ariaLabel` for the naming
    *   requirement.
    * - Wins over `ariaLabel` when both are set (ARIA name precedence).
+   * @category Accessible name
    */
   ariaLabelledBy: string | null
   /**
@@ -77,6 +81,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   reference, so later label text changes stay correct.
    * - `null` = no label element; the name ladder just skips this rung.
    * - `destroy()` removes the click listener and a minted id.
+   * @category Accessible name
    */
   labelEl: HTMLElement | null
   /**
@@ -86,9 +91,13 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * - Used for selection, dedup, and matching the chosen item back to the list.
    * - Symmetric: do not depend on which argument is the candidate vs the
    *   existing item.
+   * @category Items
    */
   compareFn: (a: T, b: T) => boolean
-  /** See {@link LLSelectOutsideClickBehavior}. */
+  /**
+   * See {@link LLSelectOutsideClickBehavior}.
+   * @category Popup
+   */
   outsideClickBehavior: LLSelectOutsideClickBehavior
   /**
    * The trigger arrow slot's content ELEMENT (typically a dropdown chevron or
@@ -96,6 +105,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * every open/close - so the returned element can vary with `isOpen`.
    * - fn returns `null` - no arrow for that state.
    * - setting is `null` (default) - the library adds nothing to the arrow slot.
+   * @category Trigger
    */
   createTriggerArrowContentElFn: ((state: { isOpen: boolean }) => HTMLElement | SVGElement | null) | null
   /**
@@ -105,12 +115,14 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * an `aria-label`, and is hidden via `data-empty` when nothing is selected.
    * Clearing goes through the normal setters, so `onChange` fires with the empty
    * value (`undefined` / `[]`).
+   * @category Trigger
    */
   clearable: boolean
   /**
    * Content ELEMENT of the clear button (its x icon), mirroring `createTriggerArrowContentElFn`.
    * `null` (default) = the theme's CSS glyph. The library always owns the button,
    * its click (clears + stops propagation) and aria; this only fills the icon.
+   * @category Trigger
    */
   createTriggerClearButtonContentElFn: (() => HTMLElement | SVGElement | null) | null
   /**
@@ -125,6 +137,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * trigger `role="button"`, focus moves to the input; inactive = exactly
    * like `filterable: false` (trigger stays `role="combobox"`, focus stays on
    * the trigger). See `docs/llm/A11Y.md` and `docs/llm/DESIGN.md`.
+   * @category Filtering
    */
   filterable: boolean | ((items: readonly T[]) => boolean)
   /**
@@ -134,6 +147,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * (`uiTranslationPack: { ...zhTW, filterInputPlaceholder: '...' }`).
    * Key-by-key contract (incl. what `null` means where allowed):
    * {@link LLSelectUiTranslationPack}.
+   * @category i18n
    */
   uiTranslationPack: LLSelectUiTranslationPack
   /**
@@ -145,6 +159,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   it yourself (the built-in lower-cases both sides; it does not trim).
    * - Not called while the query is empty (an empty box shows every item), but a
    *   whitespace-only query (e.g. `"  "`) does call it.
+   * @category Filtering
    */
   filterFn: ((item: T, query: string) => boolean) | null
   /**
@@ -158,6 +173,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * - `null` (setting default, or returned): plain text from
    *   `uiTranslationPack.popupListNoResults`.
    * Re-evaluated every time the message is shown (the query may differ).
+   * @category Filtering
    */
   createPopupListNoResultsContentElFn: ((query: string) => HTMLElement | null) | null
   /**
@@ -172,6 +188,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   in an RTL context (`getComputedStyle(trigger).direction === 'rtl'`,
    *   read once per open) it right-aligns to the trigger and grows LEFTWARD,
    *   the mirror of LTR.
+   * @category Popup
    */
   popupWidthPolicy: WidthPolicy
   /**
@@ -181,6 +198,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * Re-evaluated on every render (never cached). For a generic `T` this is the
    * only way to mark items - the library cannot read a `disabled` field off an
    * unknown type. See `docs/llm/DESIGN.md`.
+   * @category Disabling
    */
   itemDisabledFn: ((item: T) => boolean) | null
   /**
@@ -188,6 +206,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * stays in the tab order (`tabindex="0"`). `false` (default) takes it out
    * (`-1`). Set `true` so keyboard / AT users can focus the disabled control to
    * read a "why disabled" tooltip.
+   * @category Disabling
    */
   focusableWhenDisabled: boolean
   /**
@@ -197,6 +216,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   single trigger label, the option's accessible name, and the default
    *   filter. Inserted as `textContent` (plain text, NOT parsed as HTML).
    * - For rich content (icons etc.), pass `createItemContentElFn`.
+   * @category Items
    */
   itemToStringFn: ((item: T) => string) | null
   /**
@@ -227,6 +247,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *     row.append(icon, lang.name)
    *     return row
    *   }
+   * @category Items
    */
   createItemContentElFn: ((item: T) => HTMLElement | null) | null
   /**
@@ -235,6 +256,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * - fn returns `null`: this item is in no group; renders ungrouped.
    * - Contiguous items with an equal key (per `groupKeyCompareFn`) form one
    *   group, so the data must be pre-sorted by group. See `docs/llm/DESIGN.md`.
+   * @category Grouping
    */
   itemToGroupKeyFn: ((item: T) => GK | null) | null
   /**
@@ -242,12 +264,14 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * - `null` (default) = strict `===` (right for string / number keys).
    * - Supply only when `GK` is an object without usable reference identity.
    * - Mirrors `compareFn`, one level up.
+   * @category Grouping
    */
   groupKeyCompareFn: ((a: GK, b: GK) => boolean) | null
   /**
    * Group key -> the header's display text. The i18n seam: keep keys stable,
    * translate here.
    * - `null` (default) = `String(groupKey)`.
+   * @category Grouping
    */
   groupKeyToLabelFn: ((groupKey: GK) => string) | null
   /**
@@ -255,6 +279,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * - `null` (default) = no group disabled.
    * - `true` = every item in the group is treated as disabled (layers on top of
    *   `itemDisabledFn`).
+   * @category Grouping
    */
   groupDisabledFn: ((groupKey: GK) => boolean) | null
   /**
@@ -267,6 +292,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   `groupKeyToLabel`.
    * - `itemsInGroup` is the group's items, so you can render "Fruits (4)" or a
    *   summary without recomputing the grouping.
+   * @category Grouping
    */
   createGroupLabelContentElFn: ((groupKey: GK, itemsInGroup: readonly T[]) => HTMLElement | null) | null
   /**
@@ -274,11 +300,13 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * disabled control) does not fire it. Fires in ADDITION to the protected
    * `onOpened` hook - the setting is for consumers, the hook for subclasses;
    * both run. `null` (default) = nothing.
+   * @category Events
    */
   onOpen: (() => void) | null
   /**
    * Fired right after the popup closes. A no-op `close()` does not fire it.
    * Additive with the protected `onClosed` hook, like {@link onOpen}.
+   * @category Events
    */
   onClose: (() => void) | null
 }
