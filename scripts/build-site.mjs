@@ -108,17 +108,21 @@ function buildTocHtml(body) {
       curH4.children.push({ h })
     }
   }
+  // mdi chevron-right / unfold-less-horizontal (MIT), same source as src/icons.ts
+  const CHEVRON = '<svg class="toc-chevron" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>'
+  const FOLD_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.59,5.41L15.17,4L12,7.17L8.83,4L7.41,5.41L12,10M7.41,18.59L8.83,20L12,16.83L15.17,20L16.58,18.59L12,14L7.41,18.59Z"/></svg>'
   const sections = root.map((s) => {
     const symbols = s.children.map((sym) => {
       if (sym.children.length === 0) { return `<li>${link(sym.h)}</li>` }
       const groups = sym.children.map((g) =>
         `<li class="toc-group">${link(g.h)}${g.children.length ? `<ul>${g.children.map((mem) => `<li>${link(mem.h)}</li>`).join('')}</ul>` : ''}</li>`)
-      return `<li><details><summary>${link(sym.h)}</summary><ul>${groups.join('')}</ul></details></li>`
+      return `<li><details><summary>${CHEVRON}${link(sym.h)}</summary><ul>${groups.join('')}</ul></details></li>`
     })
     return `<li class="toc-section">${link(s.h)}${symbols.length ? `<ul>${symbols.join('')}</ul>` : ''}</li>`
   })
   return `<aside class="toc">
 <input type="search" placeholder="Filter" aria-label="Filter the table of contents">
+<button type="button" class="toc-fold">${FOLD_ICON}Fold all</button>
 <ul class="toc-tree">${sections.join('\n')}</ul>
 </aside>`
 }
@@ -162,6 +166,8 @@ h5 { font-size: 1em; margin: 1.4em 0 0.5em; }
 h6 { font-size: 0.85em; margin: 1.2em 0 0.4em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--fg-muted); }
 /* API pages: member headings are identifiers - set them in code face */
 .with-toc h5 { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+/* Jump-target highlight: the content side answers the sidebar's highlight */
+main :target { background: var(--nav-hover); box-shadow: 0 0 0 6px var(--nav-hover); border-radius: 2px; scroll-margin-top: 0.6rem; }
 /* same look as demo/style.css .demo-nav so the site reads as one family */
 nav { display: flex; flex-wrap: wrap; gap: 0.25rem; padding: 0.8rem 0 0.5rem; border-bottom: 1px solid var(--line); margin-bottom: 1.5rem; }
 nav a { padding: 0.35rem 0.8rem; color: var(--nav-link); text-decoration: none; border-radius: 4px; font-weight: 600; }
@@ -186,8 +192,18 @@ body.with-toc { max-width: 78rem; }
 .toc a.active { background: var(--nav-hover); color: var(--nav-link); font-weight: 600; }
 .toc .toc-section > a { font-weight: 600; margin-top: 0.5rem; }
 .toc .toc-group > a { color: var(--fg-muted); }
-.toc summary { cursor: pointer; }
-.toc summary a { display: inline-block; }
+.toc-fold { display: flex; align-items: center; gap: 0.35rem; width: 100%; margin-bottom: 0.6rem; padding: 0.25rem 0.5rem; font: inherit; color: var(--fg); background: var(--muted); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
+.toc-fold:hover { background: var(--nav-hover); }
+.toc-fold svg { width: 1rem; height: 1rem; flex: none; color: var(--fg-muted); }
+/* The native disclosure marker is unclickably small; draw an mdi chevron
+   with a real hit area instead. Leaf rows at the same level get a matching
+   left inset so their text lines up with the chevron rows' text. */
+.toc summary { cursor: pointer; display: flex; align-items: center; list-style: none; }
+.toc summary::-webkit-details-marker { display: none; }
+.toc summary a { flex: 1; }
+.toc-chevron { flex: none; width: 1.1rem; height: 1.1rem; padding: 0.15rem 0.2rem; color: var(--fg-muted); transition: transform 0.15s; }
+.toc details[open] > summary > .toc-chevron { transform: rotate(90deg); }
+.toc .toc-section > ul > li > a { margin-left: 1.5rem; }
 @media (max-width: 62rem) {
   body.with-toc { max-width: 52rem; }
   .layout { display: block; }
@@ -272,6 +288,13 @@ ${toc ? `<script>
       for (const d of toc.querySelectorAll('details')) { d.open = false }
       if (activeLink) { openChain(activeLink) }
     }
+  })
+  // Fold all = reset the outline: clear the filter, collapse every branch
+  // (the active branch reopens on the next scrollspy change, not before).
+  toc.querySelector('.toc-fold').addEventListener('click', () => {
+    filter.value = ''
+    for (const li of toc.querySelectorAll('li')) { li.hidden = false }
+    for (const d of toc.querySelectorAll('details')) { d.open = false }
   })
 }
 </script>` : ''}
