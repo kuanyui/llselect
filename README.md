@@ -19,6 +19,10 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 > - Values can only be stored as `string`.
 > - Unable to accept mouse event when `<select disabled="true">` (to show tooltip to explain why it's disabled, for example).
 
+
+> [!WARNING]
+> I know [Semantic Versioning](https://semver.org/), but the API of versions < `v0.1.0` is unstable currently and may have breaking changes. I'm still trying to eat my own dog food in real-world projects and trying to make the API stable. Thanks for your understanding.
+
 **Contents**
 
 - [Features](#features)
