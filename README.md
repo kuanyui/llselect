@@ -21,8 +21,11 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 >
 > #### Arrrrgh... Yet another select library? Why not existing select libraries? Are you too bored?
 > Arrrrrgh, It's just because **all** of the existing libraries are unable to satisfy my requirements, on aspect of performance, flexibility, and explicitly.
-> As of May 2026, this situation is still. The only way is implement one according to my ideal design.
-> I am personally also very confusing why I still need to implement such fundamental web UI component library in 2026.
+>
+> At least as of May 2026, this situation was still not solved. The only way was implement one according to my ideal design.
+>
+> I am also very confusing why I still need to implement such doukangaedemo fundamental basic-of-basic web UI component library in 2026.
+>
 > (I've also fallen into self-doubt for years when thinking that why I even had to implement an extremely fundamental feature such as [a "**normally works**" recent file list for a text editor](https://github.com/kuanyui/recentz.el) in 2024.)
 
 
@@ -258,6 +261,24 @@ Every class, setting and type, generated with TypeDoc from the same TSDoc that s
 - [GitHub Pages](https://kuanyui.github.io/llselect/api/) | [GitLab Pages](https://kuanyui.gitlab.io/llselect/api/)
 
 For the AngularJS directives (`ll-*` attributes), see the attribute reference in [angularjs/README.md](angularjs/README.md#attribute-reference).
+
+### Method-name grammar
+
+Method names follow a strict grammar. Some notes maybe helpful if you need to customize it via subclass / settings:
+
+| Name shape              | DOM contact         | Meaning                                                              |
+|-------------------------|---------------------|----------------------------------------------------------------------|
+| `create*El(...)`        | none - detached     | Builds a new element and returns it. Never inserts it.               |
+| `commit*ToDom(content)` | writes the DOM      | Takes the content as its param. Writes it into the DOM.              |
+| `sync*ToDom()`          | writes the DOM      | **No params.** Reads one `this.*` state field. Writes it to the DOM. |
+| `replace*ElInDom(...)`  | writes the DOM      | Swaps one existing element for a fresh one. O(1).                    |
+| `render*()`             | none - orchestrator | Calls the methods above in the right order. Writes no DOM itself.    |
+
+> (`(...)` means the params vary per method. `()` means always zero params: the method reads instance state instead.)
+
+- A few verbs touch the DOM with no suffix. The full fixed list: `open` / `close` / `toggle` / `destroy`, `focus*`, `attach*` / `detach*`, `capture*`. Every other verb (`get*`, `compute*`, `is*`, `itemTo*`) never touches the DOM.
+
+- Settings callbacks are named by return type: `create*ElFn` returns an element, `itemTo*Fn` returns a string, other `*Fn` return a boolean, `on*` are event hooks. Full convention: [docs/llm/naming-conventions.md](docs/llm/naming-conventions.md).
 
 ## Customization: settings or subclassing?
 
