@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Korean pack. */
+/**
+ * Korean pack.
+ * @category Language packs
+ */
 export const ko: LLSelectUiTranslationPack = {
   triggerPlaceholder: '선택하세요',
   filterInputAriaLabel: '검색',

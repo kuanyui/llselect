@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Catalan pack. */
+/**
+ * Catalan pack.
+ * @category Language packs
+ */
 export const ca: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Seleccioneu una opció',
   filterInputAriaLabel: 'Cerca',

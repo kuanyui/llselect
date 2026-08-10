@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Tamil pack. */
+/**
+ * Tamil pack.
+ * @category Language packs
+ */
 export const ta: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'தேர்ந்தெடுக்கவும்',
   filterInputAriaLabel: 'தேடல்',

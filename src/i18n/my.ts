@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Burmese pack. */
+/**
+ * Burmese pack.
+ * @category Language packs
+ */
 export const my: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'ရွေးချယ်ပါ',
   filterInputAriaLabel: 'ရှာဖွေရန်',

@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Filipino pack. */
+/**
+ * Filipino pack.
+ * @category Language packs
+ */
 export const fil: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Pumili',
   filterInputAriaLabel: 'Maghanap',

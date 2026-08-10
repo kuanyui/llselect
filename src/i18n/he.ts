@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Hebrew pack (RTL). */
+/**
+ * Hebrew pack (RTL).
+ * @category Language packs
+ */
 export const he: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'נא לבחור',
   filterInputAriaLabel: 'חיפוש',

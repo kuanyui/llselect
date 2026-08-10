@@ -42,6 +42,7 @@
  *   taking RESOLVED primitives (never the item type `T`), so a language pack
  *   can implement them. Keys are message ids (no `Fn` suffix); see
  *   naming-conventions.md s7a.4.
+ * @category Pack contract
  */
 export interface LLSelectUiTranslationPack {
   /**
@@ -164,6 +165,7 @@ export { ar, bg, bn, ca, cs, da, de, el, en, es, et, fa, fi, fil, fr, ga, he, hi
  *   `zh-Hant-TW`), so negotiate instead of indexing blindly - e.g. try the
  *   full tag, then the base language, then fall back:
  *   `uiTranslationPackByLocale[tag] ?? uiTranslationPackByLocale[tag.split('-')[0]!] ?? en`.
+ * @category Language packs
  */
 export const uiTranslationPackByLocale: Record<string, LLSelectUiTranslationPack> = {
   ar,

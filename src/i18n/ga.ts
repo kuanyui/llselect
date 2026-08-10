@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Irish pack. */
+/**
+ * Irish pack.
+ * @category Language packs
+ */
 export const ga: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Roghnaigh',
   filterInputAriaLabel: 'Cuardaigh',

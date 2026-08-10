@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Hindi pack. */
+/**
+ * Hindi pack.
+ * @category Language packs
+ */
 export const hi: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'कृपया चुनें',
   filterInputAriaLabel: 'खोजें',

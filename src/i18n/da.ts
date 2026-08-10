@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Danish pack. */
+/**
+ * Danish pack.
+ * @category Language packs
+ */
 export const da: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Vælg en mulighed',
   filterInputAriaLabel: 'Søg',

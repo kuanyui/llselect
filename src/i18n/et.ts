@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Estonian pack. */
+/**
+ * Estonian pack.
+ * @category Language packs
+ */
 export const et: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Valige',
   filterInputAriaLabel: 'Otsi',

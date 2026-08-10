@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** French pack. */
+/**
+ * French pack.
+ * @category Language packs
+ */
 export const fr: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Veuillez sélectionner',
   filterInputAriaLabel: 'Rechercher',

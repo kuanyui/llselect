@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Greek pack. */
+/**
+ * Greek pack.
+ * @category Language packs
+ */
 export const el: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Επιλέξτε',
   filterInputAriaLabel: 'Αναζήτηση',

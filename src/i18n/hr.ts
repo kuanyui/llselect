@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Croatian pack. */
+/**
+ * Croatian pack.
+ * @category Language packs
+ */
 export const hr: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Odaberite',
   filterInputAriaLabel: 'Pretraži',

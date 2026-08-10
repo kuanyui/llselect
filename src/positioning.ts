@@ -11,12 +11,16 @@ export interface AnchorRect {
   height: number
 }
 
-/** Whether the floating element sits below or above the anchor. */
+/**
+ * Whether the floating element sits below or above the anchor.
+ * @category Positioning
+ */
 export type Placement = 'below' | 'above'
 
 /**
  * How the floating element decides its width. See `LLSelectBaseSettings`
  * (`popupWidthPolicy` field) for the user-facing contract.
+ * @category Positioning
  */
 export type WidthPolicy = 'match-trigger' | 'fit-content'
 

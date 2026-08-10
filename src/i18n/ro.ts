@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Romanian pack. */
+/**
+ * Romanian pack.
+ * @category Language packs
+ */
 export const ro: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Selectați',
   filterInputAriaLabel: 'Căutare',

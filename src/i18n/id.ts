@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Indonesian pack. */
+/**
+ * Indonesian pack.
+ * @category Language packs
+ */
 export const id: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Silakan pilih',
   filterInputAriaLabel: 'Cari',

@@ -9,16 +9,21 @@ import {
  * - `'count'`: a text summary like "3 / 10 selected".
  * - `'tags'`: one removable chip per chosen item.
  * See {@link LLSelectMultipleSettings.triggerDisplay}.
+ * @category Settings
  */
 export type LLSelectTriggerDisplay = 'count' | 'tags'
 
 /**
  * Tri-state of the select-all row (also the `data-chosen-state` attribute
  * value): how much of the VISIBLE enabled subset is currently chosen.
+ * @category Settings
  */
 export type LLSelectChosenState = 'none' | 'some' | 'all'
 
-/** Context passed to {@link LLSelectMultipleSettings.createTriggerContentElFn}. */
+/**
+ * Context passed to {@link LLSelectMultipleSettings.createTriggerContentElFn}.
+ * @category Settings
+ */
 export interface LLSelectMultipleTriggerContext<T> {
   chosenItems: readonly T[]
   items: readonly T[]
@@ -28,6 +33,7 @@ export interface LLSelectMultipleTriggerContext<T> {
  * Resolved (defaults applied) settings for {@link LLSelectMultiple}: the base
  * settings plus the multi-mode fields - the runtime type of `this.settings`,
  * one bag built complete in the constructor.
+ * @category Settings
  */
 export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSettings<T, GK> {
   /**
@@ -119,6 +125,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
 /**
  * Constructor-time settings input for {@link LLSelectMultiple}.
  * Every field is optional; missing fields use defaults.
+ * @category Settings
  */
 export type LLSelectMultipleSettingsInput<T, GK = string> = LLSelectSettingsInputOf<LLSelectMultipleSettings<T, GK>>
 
@@ -133,17 +140,27 @@ export type LLSelectMultipleSettingsInput<T, GK = string> = LLSelectSettingsInpu
  * subclass `renderTriggerContent`) to customise (e.g. tag chips).
  *
  * @typeParam T - item type.
+ * @category Select classes
  */
 export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, GK> {
-  /** Currently chosen items, in insertion order. */
+  /**
+   * Currently chosen items, in insertion order.
+   * @category State (protected)
+   */
   protected chosenItems: T[] = []
   /**
    * Re-type only (`declare` emits no field): the multi-mode fields are passed,
    * resolved, through `super()`, so the bag is complete before any base
    * construction code runs.
+   * @category State (protected)
    */
   protected declare readonly settings: LLSelectMultipleSettings<T, GK>
 
+  /**
+   * Build the control inside `targetEl`. Settings are resolved once here
+   * (missing fields get defaults) and are immutable afterwards.
+   * @category Lifecycle
+   */
   constructor(targetEl: HTMLElement, settings?: LLSelectMultipleSettingsInput<T, GK>) {
     super(targetEl, settings, {
       onChange: settings?.onChange ?? null,
@@ -158,7 +175,10 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     this.renderTrigger()
   }
 
-  /** Return the currently chosen items (insertion order). */
+  /**
+   * Return the currently chosen items (insertion order).
+   * @category Selection
+   */
   public getChosenItems(): readonly T[] {
     return this.chosenItems
   }
@@ -167,6 +187,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * Replace the entire chosen-items set. The input is shallow-copied. Fires
    * `onChange` only when the new set differs element-wise (order-sensitive)
    * from the current set.
+   * @category Selection
    */
   public setChosenItems(items: T[]): void {
     const next = items.slice()
@@ -177,7 +198,10 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     this.fireChange(previous)
   }
 
-  /** Whether the given item is currently chosen (via `compareFn`). */
+  /**
+   * Whether the given item is currently chosen (via `compareFn`).
+   * @category Selection
+   */
   public isChosen(item: T): boolean {
     return this.chosenItems.some(c => this.settings.compareFn(c, item))
   }
@@ -185,6 +209,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   /**
    * Toggle the membership of `item` in the chosen-items set. Adds at the end
    * if not present; removes if present. Fires `onChange`.
+   * @category Selection
    */
   public toggleItem(item: T): void {
     const previous = this.chosenItems
@@ -209,6 +234,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * Choose every enabled item. Already-chosen disabled items are preserved
    * (they cannot be toggled through the UI, so bulk ops leave them as-is).
    * Fires `onChange` only when the set actually changes.
+   * @category Selection
    */
   public chooseAll(): void {
     this.setChosenItems(this.items.filter(it => !this.isItemEffectivelyDisabled(it) || this.isChosen(it)))
@@ -217,12 +243,16 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   /**
    * Clear enabled choices. Already-chosen disabled items are preserved (not
    * togglable through the UI). Fires `onChange` only when the set changes.
+   * @category Selection
    */
   public unchooseAll(): void {
     this.setChosenItems(this.chosenItems.filter(c => this.isItemEffectivelyDisabled(c)))
   }
 
-  /** Toggle between "all enabled chosen" and "none chosen". Ignores disabled. */
+  /**
+   * Toggle between "all enabled chosen" and "none chosen". Ignores disabled.
+   * @category Selection
+   */
   public toggleAll(): void {
     const enabled = this.items.filter(it => !this.isItemEffectivelyDisabled(it))
     const allChosen = enabled.length > 0 && enabled.every(it => this.isChosen(it))
@@ -238,6 +268,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * - 0 chosen: `placeholder`
    * - n > 0: `uiTranslationPack.triggerCountSummary(n, total)` (English default:
    *   `"n / total selected"`, or `"All n selected"` when all are chosen)
+   * @category Subclassing: rendering
    */
   protected override renderTriggerContent(): void {
     this.syncEmptyStateToDom()
@@ -263,6 +294,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * Build the tag-list element for `'tags'` mode: one chip per chosen item.
    * Override for full control of the chip strip (the trigger-level equivalent
    * of overriding `createItemEl`).
+   * @category Subclassing: rendering
    */
   protected createTagsEl(): HTMLElement {
     const wrap = document.createElement('span')
@@ -278,6 +310,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * plain `itemToString`) plus its remove (x) button (from `createTagRemoveButtonEl`).
    * Override for full control of the chip container; override the two sub-parts
    * for content-only / remove-button-only changes.
+   * @category Subclassing: rendering
    */
   protected createTagEl(item: T): HTMLElement {
     const tag = document.createElement('span')
@@ -301,6 +334,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * `createTagRemoveButtonContentElFn` optionally fills the icon, else the theme's CSS glyph.
    * Mirrors the clear button's `createTriggerClearButtonEl`. Override for full control of
    * the button element.
+   * @category Subclassing: rendering
    */
   protected createTagRemoveButtonEl(item: T): HTMLElement {
     const btn = document.createElement('button')
@@ -323,6 +357,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * - Default reads `createTagRemoveButtonContentElFn`; `null` (setting unset,
    *   or returned) = no icon - the theme's CSS glyph draws the x.
    * - Override only when extending; for one-off icons pass the setting.
+   * @category Subclassing: rendering
    */
   protected createTagRemoveButtonContentEl(item: T): HTMLElement | SVGElement | null {
     return this.settings.createTagRemoveButtonContentElFn
@@ -334,6 +369,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * Per-chip visible content in `'tags'` mode. Mirrors `createItemContentEl`.
    * Default reads `createTagContentElFn`, else `null` so `createTagEl` falls
    * back to plain text from `itemToString`.
+   * @category Subclassing: rendering
    */
   protected createTagContentEl(item: T): HTMLElement | null {
     return this.settings.createTagContentElFn ? this.settings.createTagContentElFn(item) : null
@@ -344,22 +380,32 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * - Default: `uiTranslationPack.tagRemoveButtonAriaLabel(itemToString(item))`.
    * - Override only when extending (e.g. a name from another item field);
    *   per-locale text goes through the `uiTranslationPack` setting.
+   * @category Subclassing: semantics
    */
   protected itemToTagRemoveButtonAriaLabel(item: T): string {
     return this.settings.uiTranslationPack.tagRemoveButtonAriaLabel(this.itemToString(item))
   }
 
-  /** No selection iff the chosen set is empty. Drives the trigger's `data-empty`. */
+  /**
+   * No selection iff the chosen set is empty. Drives the trigger's `data-empty`.
+   * @category Subclassing: semantics
+   */
   protected override isEmpty(): boolean {
     return this.chosenItems.length === 0
   }
 
-  /** Toggle on click. Multi mode keeps the popup open. */
+  /**
+   * Toggle on click. Multi mode keeps the popup open.
+   * @category Subclassing: reactions
+   */
   protected override onItemActivated(item: T): void {
     this.toggleItem(item)
   }
 
-  /** Clear button empties the chosen-items set to `[]`. */
+  /**
+   * Clear button empties the chosen-items set to `[]`.
+   * @category Subclassing: semantics
+   */
   protected override clearSelection(): void {
     this.setChosenItems([])
   }
@@ -371,6 +417,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * enabled items are chosen, accessible name + visible text from
    * `uiTranslationPack.selectAllRowLabel(chosenCount, totalCount)` over the visible
    * enabled subset. `null` when the setting is off or nothing is actionable.
+   * @category Subclassing: rendering
    */
   protected override createPopupListLeadingRowEl(): HTMLElement | null {
     if (!this.settings.selectAllRow) { return null }
@@ -410,6 +457,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * - Default reads `createSelectAllRowContentElFn`; `null` (setting unset,
    *   or returned) = plain text from `uiTranslationPack.selectAllRowLabel`.
    * - Override only when extending; for one-off content pass the setting.
+   * @category Subclassing: rendering
    */
   protected createSelectAllRowContentEl(
     chosenState: LLSelectChosenState,
@@ -425,6 +473,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * Activate the select-all row: when every visible enabled item is chosen,
    * unchoose exactly those; otherwise add the missing ones. Choices outside
    * the visible subset (filtered-out or disabled) are preserved either way.
+   * @category Subclassing: reactions
    */
   protected override onLeadingRowActivated(): void {
     const actionable = this.getVisibleItems().filter(i => !this.isItemEffectivelyDisabled(i))
@@ -439,14 +488,20 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     }
   }
 
-  /** Mark each item with `aria-selected` reflecting its chosen state. */
+  /**
+   * Mark each item with `aria-selected` reflecting its chosen state.
+   * @category Subclassing: rendering
+   */
   protected override createItemEl(item: T, index: number): HTMLElement {
     const el = super.createItemEl(item, index)
     el.setAttribute('aria-selected', String(this.isChosen(item)))
     return el
   }
 
-  /** Drop chosen entries that disappeared from the new items list. */
+  /**
+   * Drop chosen entries that disappeared from the new items list.
+   * @category Subclassing: reactions
+   */
   protected override onItemsChanged(): void {
     const previous = this.chosenItems
     const filtered = previous.filter(c =>
@@ -465,6 +520,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * option; the row is the topmost option), so keyboard users discover it
    * immediately. Else the first enabled item. Indices are into
    * `getVisibleItems()`.
+   * @category Subclassing: focus
    */
   protected override focusInitial(): void {
     const list = this.getVisibleItems()

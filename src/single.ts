@@ -4,7 +4,10 @@ import {
   type LLSelectSettingsInputOf,
 } from './base.js'
 
-/** Context passed to {@link LLSelectSingleSettings.createTriggerContentElFn}. */
+/**
+ * Context passed to {@link LLSelectSingleSettings.createTriggerContentElFn}.
+ * @category Settings
+ */
 export interface LLSelectSingleTriggerContext<T> {
   chosenItem: T | undefined
   items: readonly T[]
@@ -14,6 +17,7 @@ export interface LLSelectSingleTriggerContext<T> {
  * Resolved (defaults applied) settings for {@link LLSelectSingle}: the base
  * settings plus the single-mode fields - the runtime type of `this.settings`,
  * one bag built complete in the constructor.
+ * @category Settings
  */
 export interface LLSelectSingleSettings<T, GK = string> extends LLSelectBaseSettings<T, GK> {
   /**
@@ -43,6 +47,7 @@ export interface LLSelectSingleSettings<T, GK = string> extends LLSelectBaseSett
 /**
  * Constructor-time settings input for {@link LLSelectSingle}.
  * Every field is optional; missing fields use defaults.
+ * @category Settings
  */
 export type LLSelectSingleSettingsInput<T, GK = string> = LLSelectSettingsInputOf<LLSelectSingleSettings<T, GK>>
 
@@ -51,17 +56,27 @@ export type LLSelectSingleSettingsInput<T, GK = string> = LLSelectSettingsInputO
  * and closes the popup. Use `setChosenItem(undefined)` to clear the selection.
  *
  * @typeParam T - item type. Supply your own `compareFn` for non-primitive `T`.
+ * @category Select classes
  */
 export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK> {
-  /** Currently chosen item, or `undefined` if none. */
+  /**
+   * Currently chosen item, or `undefined` if none.
+   * @category State (protected)
+   */
   protected chosenItem: T | undefined = undefined
   /**
    * Re-type only (`declare` emits no field): the single-mode fields are passed,
    * resolved, through `super()`, so the bag is complete before any base
    * construction code runs.
+   * @category State (protected)
    */
   protected declare readonly settings: LLSelectSingleSettings<T, GK>
 
+  /**
+   * Build the control inside `targetEl`. Settings are resolved once here
+   * (missing fields get defaults) and are immutable afterwards.
+   * @category Lifecycle
+   */
   constructor(targetEl: HTMLElement, settings?: LLSelectSingleSettingsInput<T, GK>) {
     super(targetEl, settings, {
       onChange: settings?.onChange ?? null,
@@ -70,7 +85,10 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
     this.renderTrigger()
   }
 
-  /** Return the currently chosen item, or `undefined` if none. */
+  /**
+   * Return the currently chosen item, or `undefined` if none.
+   * @category Selection
+   */
   public getChosenItem(): T | undefined {
     return this.chosenItem
   }
@@ -81,6 +99,7 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
    * (compared via `compareFn`). Accepts items that are not (yet) in the
    * items list - this supports async data flows; if a later `setItems` does
    * not include the chosen item it will be dropped automatically.
+   * @category Selection
    */
   public setChosenItem(item: T | undefined): void {
     if (this.areEqual(item, this.chosenItem)) { return }
@@ -99,6 +118,7 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
    * to (re)build the trigger from state; touches no DOM directly.
    * - `createTriggerContentElFn` first; `null` / unset falls to the default.
    * - Default: the chosen item's string, or the placeholder when empty.
+   * @category Subclassing: rendering
    */
   protected override renderTriggerContent(): void {
     this.syncEmptyStateToDom()
@@ -111,25 +131,37 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
     this.commitTriggerContentToDom(plainValue)
   }
 
-  /** No selection iff `chosenItem` is unset. Drives the trigger's `data-empty`. */
+  /**
+   * No selection iff `chosenItem` is unset. Drives the trigger's `data-empty`.
+   * @category Subclassing: semantics
+   */
   protected override isEmpty(): boolean {
     return this.chosenItem === undefined
   }
 
-  /** Mark the chosen option `aria-selected="true"`, the rest `"false"` (APG select-only). */
+  /**
+   * Mark the chosen option `aria-selected="true"`, the rest `"false"` (APG select-only).
+   * @category Subclassing: rendering
+   */
   protected override createItemEl(item: T, index: number): HTMLElement {
     const el = super.createItemEl(item, index)
     el.setAttribute('aria-selected', String(this.areEqual(item, this.chosenItem)))
     return el
   }
 
-  /** Pick this item as the chosen item and close the popup. */
+  /**
+   * Pick this item as the chosen item and close the popup.
+   * @category Subclassing: reactions
+   */
   protected override onItemActivated(item: T): void {
     this.setChosenItem(item)
     this.close()
   }
 
-  /** Clear button empties the single selection to `undefined`. */
+  /**
+   * Clear button empties the single selection to `undefined`.
+   * @category Subclassing: semantics
+   */
   protected override clearSelection(): void {
     this.setChosenItem(undefined)
   }
@@ -137,6 +169,7 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
   /**
    * On open, highlight the chosen item (if present and enabled), else the first
    * enabled item. Indices are into `getVisibleItems()` (the rendered list).
+   * @category Subclassing: focus
    */
   protected override focusInitial(): void {
     const list = this.getVisibleItems()
@@ -152,7 +185,10 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
     if (first >= 0) { this.setFocusedIndex(first) }
   }
 
-  /** Drop the chosen item if `setItems` removed it from the list. */
+  /**
+   * Drop the chosen item if `setItems` removed it from the list.
+   * @category Subclassing: reactions
+   */
   protected override onItemsChanged(): void {
     const previous = this.chosenItem
     if (previous === undefined) { return }

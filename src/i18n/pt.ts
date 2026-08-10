@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Portuguese pack (unsplit: vocabulary valid in both European and Brazilian usage). */
+/**
+ * Portuguese pack (unsplit: vocabulary valid in both European and Brazilian usage).
+ * @category Language packs
+ */
 export const pt: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Selecione uma opção',
   filterInputAriaLabel: 'Pesquisar',

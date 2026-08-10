@@ -8,7 +8,10 @@
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
-/** Options accepted by the built-in icon helpers. */
+/**
+ * Options accepted by the built-in icon helpers.
+ * @category Icons
+ */
 export interface IconOptions {
   /** Width and height of the SVG in pixels. Default 16. */
   size?: number
@@ -32,12 +35,16 @@ function createSvgEl(viewBox: string, pathD: string, size: number): SVGElement {
  * Solid filled triangle pointing down. Sized to roughly match the chevron's
  * visual weight (MDI's `arrow_drop_down` path occupies a small portion of
  * its 24x24 viewBox and looks too small next to other icons).
+ * @category Icons
  */
 export function createTriangleDownSvgEl(opts: IconOptions = {}): SVGElement {
   return createSvgEl('0 0 24 24', 'M4 8l8 10 8-10z', opts.size ?? 16)
 }
 
-/** Material Design `expand_more` chevron pointing down (filled outline). */
+/**
+ * Material Design `expand_more` chevron pointing down (filled outline).
+ * @category Icons
+ */
 export function createChevronDownSvgEl(opts: IconOptions = {}): SVGElement {
   return createSvgEl(
     '0 0 24 24',
@@ -49,6 +56,7 @@ export function createChevronDownSvgEl(opts: IconOptions = {}): SVGElement {
 /**
  * Standalone checkmark (no box). Useful as a "selected" indicator in single
  * mode, or as a lightweight chosen marker in multi mode.
+ * @category Icons
  */
 export function createCheckSvgEl(opts: IconOptions = {}): SVGElement {
   return createSvgEl(
@@ -61,6 +69,7 @@ export function createCheckSvgEl(opts: IconOptions = {}): SVGElement {
 /**
  * Visual state of a {@link createCheckboxSvgEl}. `indeterminate` is the
  * "mixed" / partial state used by a select-all control (`aria-checked="mixed"`).
+ * @category Icons
  */
 export type CheckboxState = 'unchecked' | 'checked' | 'indeterminate'
 
@@ -76,6 +85,10 @@ const CHECKBOX_PATHS: Record<CheckboxState, string> = {
     'M19,19V5H5V19H19M19,3A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5C3,3.89 3.9,3 5,3H19M17,11V13H7V11H17Z',
 }
 
+/**
+ * Options accepted by {@link createCheckboxSvgEl}.
+ * @category Icons
+ */
 export interface CheckboxIconOptions extends IconOptions {
   /**
    * Which checkbox state to draw. Accepts the icon vocabulary
@@ -93,6 +106,7 @@ export interface CheckboxIconOptions extends IconOptions {
  * indeterminate). Intended for multi-select item rows and the select-all
  * control. Decorative only (`aria-hidden`); the real state is carried by
  * `aria-selected` on the item or `aria-checked` on the control.
+ * @category Icons
  */
 export function createCheckboxSvgEl(opts: CheckboxIconOptions = {}): SVGElement {
   const raw = opts.state ?? 'unchecked'

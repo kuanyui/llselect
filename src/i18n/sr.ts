@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Serbian pack (Cyrillic). */
+/**
+ * Serbian pack (Cyrillic).
+ * @category Language packs
+ */
 export const sr: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Изаберите',
   filterInputAriaLabel: 'Претрага',

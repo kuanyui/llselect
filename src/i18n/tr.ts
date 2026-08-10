@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Turkish pack. */
+/**
+ * Turkish pack.
+ * @category Language packs
+ */
 export const tr: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Lütfen seçin',
   filterInputAriaLabel: 'Ara',

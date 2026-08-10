@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Bengali pack. */
+/**
+ * Bengali pack.
+ * @category Language packs
+ */
 export const bn: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'অনুগ্রহ করে নির্বাচন করুন',
   filterInputAriaLabel: 'অনুসন্ধান',

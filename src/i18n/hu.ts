@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Hungarian pack. */
+/**
+ * Hungarian pack.
+ * @category Language packs
+ */
 export const hu: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Válasszon',
   filterInputAriaLabel: 'Keresés',

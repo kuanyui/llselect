@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Bulgarian pack. */
+/**
+ * Bulgarian pack.
+ * @category Language packs
+ */
 export const bg: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Изберете',
   filterInputAriaLabel: 'Търсене',

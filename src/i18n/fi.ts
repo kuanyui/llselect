@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Finnish pack. */
+/**
+ * Finnish pack.
+ * @category Language packs
+ */
 export const fi: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Valitse',
   filterInputAriaLabel: 'Haku',

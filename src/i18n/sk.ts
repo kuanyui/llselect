@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Slovak pack. */
+/**
+ * Slovak pack.
+ * @category Language packs
+ */
 export const sk: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Vyberte',
   filterInputAriaLabel: 'Hľadať',

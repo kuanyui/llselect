@@ -21,6 +21,7 @@ import type { LLSelectUiTranslationPack } from './i18n.js'
  * - `'block'`: close the popup only; the outside click is swallowed so no
  *   underlying handler or default action fires. Avoids accidental side
  *   effects when the user only intended to dismiss the dropdown.
+ * @category Settings
  */
 export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
 
@@ -28,6 +29,7 @@ export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
  * Resolved (defaults applied) settings shared by all select variants.
  * Subclasses (`LLSelectSingle`, `LLSelectMultiple`) extend this with their
  * mode-specific options such as `onChange`.
+ * @category Settings
  */
 export interface LLSelectBaseSettings<T, GK = string> {
   /**
@@ -316,6 +318,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
  * and `uiTranslationPack` accepts a PARTIAL pack (missing keys fall back to
  * English). Shared by the base / single / multiple `*SettingsInput` types;
  * use it for a subclass wrapper that extends the settings bag.
+ * @category Settings
  */
 export type LLSelectSettingsInputOf<S extends { uiTranslationPack: LLSelectUiTranslationPack }> =
   & Partial<Omit<S, 'uiTranslationPack'>>
@@ -324,6 +327,7 @@ export type LLSelectSettingsInputOf<S extends { uiTranslationPack: LLSelectUiTra
 /**
  * Constructor-time settings input - every field is optional and missing
  * fields fall back to the library defaults.
+ * @category Settings
  */
 export type LLSelectBaseSettingsInput<T, GK = string> = LLSelectSettingsInputOf<LLSelectBaseSettings<T, GK>>
 
@@ -331,6 +335,7 @@ export type LLSelectBaseSettingsInput<T, GK = string> = LLSelectSettingsInputOf<
  * Resolved CSS class names and DOM ids for one instance. Exposed on
  * `instance.classIdMap` so callers can reuse them in their own CSS or query
  * selectors instead of hard-coding the strings.
+ * @category CSS & DOM
  */
 export interface LLSelectClassIdMap {
   /** Class on `rootEl` (the caller-passed mount element). */
@@ -484,12 +489,14 @@ type PopupListSegment<T, GK> =
  * @typeParam T - item value type. Use `unknown` (default) only when you
  *   intend to narrow inside templates / handlers; usually pass a concrete
  *   type like `string` or your domain object.
+ * @category Select classes
  */
 export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * The caller-passed mount element, now decorated as the select's root.
    * Library does not replace this node, so the caller's original reference,
    * id, and data-* attributes stay valid.
+   * @category DOM elements
    */
   public readonly rootEl: HTMLElement
   /**
@@ -499,12 +506,14 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * while the filter is inactive (it then also hosts `aria-activedescendant`) and
    * `button` while a filterable popup is open (the filter input hosts
    * `aria-activedescendant`). See `docs/llm/A11Y.md`.
+   * @category DOM elements
    */
   public readonly triggerEl: HTMLElement
   /**
    * Inner span inside the trigger where text/tags are written.
    * Subclasses' `renderTriggerContent` writes here so the sibling arrow slot
    * is preserved across re-renders.
+   * @category DOM elements
    */
   public readonly triggerContentEl: HTMLElement
   /**
@@ -513,6 +522,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * referenced by the filterable-mode `aria-labelledby` chain (see
    * `classIdMap.triggerValueId`). Outside the trigger so
    * `triggerEl.textContent` stays exactly the visible content.
+   * @category DOM elements
    */
   protected readonly triggerValueEl: HTMLElement
   /**
@@ -520,6 +530,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * popup chrome (future: filter input, toggle-all control) and the inner
    * `popupListEl`. Hidden via the `hidden` attribute when closed; positioned
    * via inline styles by the positioner when open.
+   * @category DOM elements
    */
   public readonly popupEl: HTMLElement
   /**
@@ -527,9 +538,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Sits inside `popupEl` so siblings (filter input, toggle-all) can live
    * above it without violating ARIA's "listbox children must be options"
    * rule. The trigger's `aria-controls` points to this element.
+   * @category DOM elements
    */
   public readonly popupListEl: HTMLElement
-  /** Resolved class names and ids for this instance. */
+  /**
+   * Resolved class names and ids for this instance.
+   * @category DOM elements
+   */
   public readonly classIdMap: LLSelectClassIdMap
 
   /**
@@ -537,6 +552,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Subclasses that extend the settings pass their resolved fields through the
    * constructor's `subclassSettings` param and re-type this field with
    * `declare` (see `LLSelectSingle` / `LLSelectMultiple`).
+   * @category State (protected)
    */
   protected readonly settings: LLSelectBaseSettings<T, GK>
   /** Raw constructor `placeholder` input; `setUiTranslationPack` re-resolves against it. */
@@ -545,13 +561,20 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   private labelElIdMinted = false
   /** Click handler bound to `labelEl`: focus the trigger, never open (native label parity). */
   private readonly handleLabelElClick = (): void => { this.triggerEl.focus() }
-  /** Current item list. Defensive copy of what `setItems` was given. */
+  /**
+   * Current item list. Defensive copy of what `setItems` was given.
+   * @category State (protected)
+   */
   protected items: T[] = []
-  /** Whether the popup is currently open. */
+  /**
+   * Whether the popup is currently open.
+   * @category State (protected)
+   */
   protected isOpen = false
   /**
    * Index (into `items`) of the currently keyboard-focused item, or `-1`
    * when nothing is focused (closed popup, or no items).
+   * @category State (protected)
    */
   protected focusedIndex = -1
   /** Control-level disabled state (whole select); toggled via `setDisabled`. */
@@ -616,6 +639,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    *   `this.settings` right here, so the bag is complete before any base
    *   construction code (e.g. `createTriggerClearButtonEl` via `createTriggerEl`) can read
    *   it. Pair with a `declare` re-type of `settings` in the subclass.
+   * @category Lifecycle
    */
   constructor(
     targetEl: HTMLElement,
@@ -817,6 +841,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * (which auto-closes if the trigger is scrolled out of view), wires the
    * outside-click handler, and moves keyboard focus into the item list.
    * No-op if already open.
+   * @category Open & close
    */
   public open(): void {
     if (this.isOpen || this.disabled) { return }
@@ -884,6 +909,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * filter, single-select pick, click on non-focusable area outside), focus
    * is returned to the trigger. Tab-away and outside clicks on focusable
    * elements have already moved focus elsewhere, so we leave it alone.
+   * @category Open & close
    */
   public close(): void {
     if (!this.isOpen) { return }
@@ -931,6 +957,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * `users[0].name = 'X'`) without replacing the items array - the library has
    * no way to detect that on its own. Does NOT fire `onChange`, does NOT run
    * `onItemsChanged`. Pure visual refresh.
+   * @category Lifecycle
    */
   public rerender(): void {
     this.renderTrigger()
@@ -948,6 +975,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    *   outside-click / focusout / scroll / resize listeners.
    * - Discarding a CLOSED instance without `destroy()` leaks nothing; it only
    *   leaves the root class and `overflow-anchor` style on the mount.
+   * @category Lifecycle
    */
   public destroy(): void {
     this.close()
@@ -960,7 +988,10 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.rootEl.replaceChildren()
   }
 
-  /** Open if closed, close if open. */
+  /**
+   * Open if closed, close if open.
+   * @category Open & close
+   */
   public toggle(): void {
     if (this.isOpen) {
       this.close()
@@ -977,6 +1008,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    *   re-filtering, and re-render.
    * - Structural change goes through `setItems`; mutating item OBJECTS +
    *   `rerender()` is the supported in-place path.
+   * @category Items
    */
   public getItems(): readonly T[] {
     return this.items
@@ -988,6 +1020,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * remove button: `sel.getUiTranslationPack().tagRemoveButtonAriaLabel(label)` - instead
    * of maintaining a second translation source. Live object, treat as
    * immutable (same contract as `getItems`).
+   * @category i18n
    */
   public getUiTranslationPack(): Readonly<LLSelectUiTranslationPack> {
     return this.settings.uiTranslationPack
@@ -1004,6 +1037,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * - Re-renders the trigger and the open popup, and re-applies the pack-owned
    *   attributes `rerender()` cannot reach (filter input placeholder and
    *   fallback `aria-label`, clear button `aria-label`).
+   * @category i18n
    */
   public setUiTranslationPack(uiTranslationPack: Partial<LLSelectUiTranslationPack>): void {
     const pack: LLSelectUiTranslationPack = { ...DEFAULT_UI_TRANSLATION_PACK, ...uiTranslationPack }
@@ -1027,6 +1061,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * re-rendered; otherwise the DOM is built lazily on the next `open()`.
    * Subclasses may reconcile chosen-state via {@link onItemsChanged}
    * (e.g. single mode drops a chosen value that is no longer in the list).
+   * @category Items
    */
   public setItems(items: T[]): void {
     this.items = items.slice()
@@ -1042,6 +1077,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * blocked, an open popup closes, and the trigger leaves the tab order unless
    * `focusableWhenDisabled` is set. Stored as state, mirroring `setItems` /
    * `setChosenItems` (this design keeps mutable state out of settings).
+   * @category Disabling
    */
   public setDisabled(value: boolean): void {
     if (this.disabled === value) { return }
@@ -1050,7 +1086,10 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.syncDisabledStateToDom()
   }
 
-  /** Whether the whole control is disabled. */
+  /**
+   * Whether the whole control is disabled.
+   * @category Disabling
+   */
   public isDisabled(): boolean {
     return this.disabled
   }
@@ -1085,20 +1124,26 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Subclass hook: called once after the popup finishes opening. Default no-op.
    * The `onOpen` setting fires alongside this (both run) - hook for subclass
    * logic, setting for consumer notification.
+   * @category Subclassing: reactions
    */
   protected onOpened(): void {}
-  /** Subclass hook: called once after the popup finishes closing. Pairs with the `onClose` setting (both run). */
+  /**
+   * Subclass hook: called once after the popup finishes closing. Pairs with the `onClose` setting (both run).
+   * @category Subclassing: reactions
+   */
   protected onClosed(): void {}
   /**
    * Subclass hook: called after the chosen state actually changed, right
    * before the variant's `onChange` setting fires (hook first, both run -
    * same pairing as `onOpened` / `onClosed`). Default no-op.
+   * @category Subclassing: reactions
    */
   protected onChosenChanged(): void {}
   /**
    * Called after `setItems` finishes. Override to reconcile state that
    * depends on the item list (e.g. clear a chosen value that disappeared).
    * Default no-op.
+   * @category Subclassing: reactions
    */
   protected onItemsChanged(): void {}
 
@@ -1108,6 +1153,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * normally override {@link renderTriggerContent}, not this. Call this from
    * subclass code when both slots need to refresh together (constructor,
    * post-state-change, etc.).
+   * @category Subclassing: rendering
    */
   protected renderTrigger(): void {
     this.renderTriggerContent()
@@ -1129,6 +1175,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    *   the mirror is what AT announces as the field's value.
    * Called by `renderTriggerContent` - the base default and the `LLSelectSingle`
    * / `LLSelectMultiple` overrides.
+   * @category Subclassing: rendering
    */
   protected commitTriggerContentToDom(content: HTMLElement | string, plainTextValue?: string): void {
     if (typeof content === 'string') {
@@ -1145,6 +1192,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * (`"true"` when `isEmpty()`, else `"false"`). A CSS / AT styling hook,
    * independent of the rendered content. Called by the subclass
    * `renderTriggerContent` overrides.
+   * @category Subclassing: rendering
    */
   protected syncEmptyStateToDom(): void {
     this.triggerEl.setAttribute('data-empty', this.isEmpty() ? 'true' : 'false')
@@ -1154,6 +1202,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Whether the control currently has no selection (drives `data-empty`).
    * Base default is always `true` (the base trigger only shows the
    * placeholder); `LLSelectSingle` / `LLSelectMultiple` override it.
+   * @category Subclassing: semantics
    */
   protected isEmpty(): boolean {
     return true
@@ -1166,6 +1215,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * the empty flag. Always write via `commitTriggerContentToDom` (content) and
    * `syncEmptyStateToDom` (the `data-empty` flag), never `triggerContentEl`
    * directly, so the sibling arrow slot is always preserved.
+   * @category Subclassing: rendering
    */
   protected renderTriggerContent(): void {
     this.syncEmptyStateToDom()
@@ -1188,6 +1238,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    *   a state) = no arrow for that state.
    * - Override only when extending; for one-off arrows pass the setting.
    *   Mirrors `createTriggerClearButtonEl` / `createItemContentEl`.
+   * @category Subclassing: rendering
    */
   protected createTriggerArrowContentEl(state: { isOpen: boolean }): HTMLElement | SVGElement | null {
     return this.settings.createTriggerArrowContentElFn ? this.settings.createTriggerArrowContentElFn(state) : null
@@ -1209,6 +1260,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * `getVisibleItems()`; touches no DOM directly. Called by `open()` and by
    * `setItems()` while open. Also clamps `focusedIndex` if the list shrank and
    * re-applies focus visuals.
+   * @category Subclassing: rendering
    */
   protected renderPopupList(): void {
     const list = this.getVisibleItems()
@@ -1292,6 +1344,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @param index - group index in the current render; builds a stable id
    * @param items - the group's items (for rich content / counts)
    * @param itemEls - the group's already-built option elements
+   * @category Subclassing: rendering
    */
   protected createGroupEl(key: GK, index: number, items: readonly T[], itemEls: HTMLElement[]): HTMLElement {
     const label = this.groupKeyToLabel(key)
@@ -1325,6 +1378,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * - The group's accessible name stays `groupKeyToLabel` (container `aria-label`);
    *   this fills only the visible, `aria-hidden` label content.
    * - Override only when extending; for one-off rich headers pass the setting.
+   * @category Subclassing: rendering
    */
   protected createGroupLabelContentEl(key: GK, itemsInGroup: readonly T[]): HTMLElement | null {
     return this.settings.createGroupLabelContentElFn
@@ -1339,6 +1393,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * (the lookup to find the item is O(n), but that is a cheap comparison
    * loop next to DOM mutation). No-op if the popup is closed or the item is
    * not in the current list. Used by multi-select toggle.
+   * @category Subclassing: rendering
    */
   protected replacePopupListItemElInDom(item: T): void {
     if (!this.isOpen) { return }
@@ -1371,6 +1426,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @param item - the item value
    * @param index - index in `this.items`; used to build a stable id so
    *   `aria-activedescendant` can point to this element across re-renders.
+   * @category Subclassing: rendering
    */
   protected createItemEl(item: T, index: number): HTMLElement {
     const el = document.createElement('div')
@@ -1418,6 +1474,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * - Configure via `itemToStringFn` (no subclass needed).
    * - Override only when extending (a new select type); your override replaces
    *   the default. For HTML content, subclass `createItemEl`.
+   * @category Subclassing: semantics
    */
   protected itemToString(item: T): string {
     return this.settings.itemToStringFn ? this.settings.itemToStringFn(item) : String(item)
@@ -1428,6 +1485,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * - Default reads `createItemContentElFn`, else `null` so `createItemEl` uses
    *   the plain-text default from `itemToString`.
    * - Override only when extending; for one-off rich content pass the setting.
+   * @category Subclassing: rendering
    */
   protected createItemContentEl(item: T): HTMLElement | null {
     return this.settings.createItemContentElFn ? this.settings.createItemContentElFn(item) : null
@@ -1440,6 +1498,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * covers grouped items with no extra code. False when neither applies.
    * The whole-control disabled state (`isDisabled()`) is a separate layer,
    * not part of this answer.
+   * @category Subclassing: semantics
    */
   protected isItemEffectivelyDisabled(item: T): boolean {
     if (this.settings.itemDisabledFn && this.settings.itemDisabledFn(item)) { return true }
@@ -1451,6 +1510,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Map an item to its group key, or `null` when it belongs to no group.
    * - Default reads `itemToGroupKeyFn`, else `null` (grouping off).
    * - Override only when extending; configure via the setting.
+   * @category Subclassing: semantics
    */
   protected itemToGroupKey(item: T): GK | null {
     return this.settings.itemToGroupKeyFn ? this.settings.itemToGroupKeyFn(item) : null
@@ -1459,12 +1519,16 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * Map a group key to its header display text.
    * - Default reads `groupKeyToLabelFn`, else `String(key)`.
+   * @category Subclassing: semantics
    */
   protected groupKeyToLabel(key: GK): string {
     return this.settings.groupKeyToLabelFn ? this.settings.groupKeyToLabelFn(key) : String(key)
   }
 
-  /** Whether the whole group `key` is disabled per `groupDisabledFn` (false when unset). */
+  /**
+   * Whether the whole group `key` is disabled per `groupDisabledFn` (false when unset).
+   * @category Subclassing: semantics
+   */
   protected isGroupDisabled(key: GK): boolean {
     return this.settings.groupDisabledFn ? this.settings.groupDisabledFn(key) : false
   }
@@ -1473,6 +1537,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * First enabled index scanning from `start` (inclusive) by `step` (+1 / -1).
    * Returns -1 if no enabled item lies in that direction. Used to skip disabled
    * items during keyboard nav and initial focus.
+   * @category Subclassing: focus
    */
   protected findNextEnabledIndex(start: number, step: number, list: readonly T[]): number {
     for (let i = start; i >= 0 && i < list.length; i += step) {
@@ -1501,6 +1566,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Called when an item is activated (click or keyboard select). Default
    * no-op; subclasses implement their selection behaviour (single mode picks
    * and closes, multiple mode toggles and keeps the popup open).
+   * @category Subclassing: reactions
    */
   protected onItemActivated(_item: T): void {}
 
@@ -1511,12 +1577,14 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * `itemEls[i] <-> getVisibleItems()[i]` alignment is untouched. Rebuilt on
    * every `renderPopupList`. Base default: `null` = no leading row.
    * `LLSelectMultiple` builds its select-all row here (`selectAllRow` setting).
+   * @category Subclassing: rendering
    */
   protected createPopupListLeadingRowEl(): HTMLElement | null { return null }
 
   /**
    * Subclass hook: the leading row was activated - Enter while it is focused
    * (subclasses also wire their row's click handler to this). Default no-op.
+   * @category Subclassing: reactions
    */
   protected onLeadingRowActivated(): void {}
 
@@ -1524,6 +1592,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Decide which item to focus when the popup opens. Default focuses the
    * first item (or no-op if the list is empty). Override to focus the
    * currently chosen item, last-used item, etc.
+   * @category Subclassing: focus
    */
   protected focusInitial(): void {
     const first = this.findNextEnabledIndex(0, 1, this.getVisibleItems())
@@ -1535,6 +1604,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * `[-1, items.length-1]`; pass `-1` to clear focus. Updates the focused
    * class, `aria-activedescendant`, and scrolls the item into view. No-op
    * if the clamped value equals the current focused index.
+   * @category Subclassing: focus
    */
   protected setFocusedIndex(index: number): void {
     const max = this.getVisibleItems().length - 1
@@ -1552,6 +1622,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * leading row's click to focus-then-activate (mirroring how item clicks
    * call `setFocusedIndex` before `onItemActivated`) and use it in
    * `focusInitial` (the leading row is the listbox's FIRST option).
+   * @category Subclassing: focus
    */
   protected focusLeadingRow(): boolean {
     if (!this.leadingRowEl) { return false }
@@ -1568,6 +1639,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * `replacePopupListItemElInDom`. Falls back to a full `renderPopupList`
    * when the row becomes inapplicable (builder returns `null`). No-op while
    * closed or when no leading row is rendered.
+   * @category Subclassing: rendering
    */
   protected replaceLeadingRowElInDom(): void {
     if (!this.isOpen || !this.leadingRowEl) { return }
@@ -1834,6 +1906,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * `clearSelection`) + `aria-label` (text from `uiTranslationPack.triggerClearButtonAriaLabel`);
    * `createTriggerClearButtonContentElFn` optionally fills the icon,
    * else the theme's CSS glyph. The theme hides it via `data-empty` when empty.
+   * @category Subclassing: rendering
    */
   protected createTriggerClearButtonEl(): HTMLElement {
     const btn = document.createElement('button')
@@ -1855,6 +1928,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * - Default reads `createTriggerClearButtonContentElFn`; `null` (setting
    *   unset, or returned) = no icon - the theme's CSS glyph draws the x.
    * - Override only when extending; for one-off icons pass the setting.
+   * @category Subclassing: rendering
    */
   protected createTriggerClearButtonContentEl(): HTMLElement | SVGElement | null {
     return this.settings.createTriggerClearButtonContentElFn
@@ -1866,6 +1940,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Empty the selection (invoked by the clear button). Base is a no-op; single
    * clears to `undefined`, multiple to `[]`. Goes through the normal setters, so
    * `onChange` fires with the empty value.
+   * @category Subclassing: semantics
    */
   protected clearSelection(): void {}
 
@@ -1900,6 +1975,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * the user has typed in the filter input. Subclasses may read this when
    * they need the visible list (e.g. for selection-by-index). Returns the
    * LIVE internal array, typed read-only - never mutate it (see `getItems`).
+   * @category Subclassing: semantics
    */
   protected getVisibleItems(): readonly T[] {
     return this.filteredItems ?? this.items
@@ -1911,6 +1987,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    *   `itemToString`.
    * - Override only when extending (subclass-wide custom matching); for a
    *   one-off match rule pass the setting.
+   * @category Subclassing: semantics
    */
   protected matchesQuery(item: T, query: string): boolean {
     const fn = this.settings.filterFn
@@ -1969,6 +2046,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * - Default reads `createPopupListNoResultsContentElFn`; `null` (setting
    *   unset, or returned) = plain text from `uiTranslationPack.popupListNoResults`.
    * - Override only when extending; for one-off content pass the setting.
+   * @category Subclassing: rendering
    */
   protected createPopupListNoResultsContentEl(query: string): HTMLElement | null {
     return this.settings.createPopupListNoResultsContentElFn

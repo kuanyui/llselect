@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Spanish pack (unsplit: these strings do not differ across regions). */
+/**
+ * Spanish pack (unsplit: these strings do not differ across regions).
+ * @category Language packs
+ */
 export const es: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Seleccione una opción',
   filterInputAriaLabel: 'Buscar',

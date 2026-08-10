@@ -12,8 +12,11 @@ export type {
   LLSelectSettingsInputOf,
 } from './base.js'
 
-// The pack contract (the `uiTranslationPack` setting / language-pack shape). The packs
-// themselves live under the `@llselect/core/i18n` subpath.
+/**
+ * The pack contract (the `uiTranslationPack` setting / language-pack shape).
+ * The packs themselves live under the `@llselect/core/i18n` subpath.
+ * @category Pack contract
+ */
 export type { LLSelectUiTranslationPack } from './i18n.js'
 
 export { LLSelectSingle } from './single.js'
@@ -48,5 +51,8 @@ export type {
   CheckboxIconOptions,
 } from './icons.js'
 
-/** Library version. Mirrors package.json `version` (smoke-test guarded). */
+/**
+ * Library version. Mirrors package.json `version` (smoke-test guarded).
+ * @category Metadata
+ */
 export const version = '0.0.2'

@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Latvian pack. */
+/**
+ * Latvian pack.
+ * @category Language packs
+ */
 export const lv: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Izvēlieties',
   filterInputAriaLabel: 'Meklēt',

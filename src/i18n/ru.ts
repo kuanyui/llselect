@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Russian pack. */
+/**
+ * Russian pack.
+ * @category Language packs
+ */
 export const ru: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Выберите',
   filterInputAriaLabel: 'Поиск',

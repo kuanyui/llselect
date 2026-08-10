@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Urdu pack (RTL). */
+/**
+ * Urdu pack (RTL).
+ * @category Language packs
+ */
 export const ur: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'براہ کرم منتخب کریں',
   filterInputAriaLabel: 'تلاش',

@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Japanese pack. */
+/**
+ * Japanese pack.
+ * @category Language packs
+ */
 export const ja: LLSelectUiTranslationPack = {
   triggerPlaceholder: '選択してください',
   filterInputAriaLabel: '検索',

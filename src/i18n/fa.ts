@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Persian pack (RTL). */
+/**
+ * Persian pack (RTL).
+ * @category Language packs
+ */
 export const fa: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'لطفاً انتخاب کنید',
   filterInputAriaLabel: 'جستجو',

@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Thai pack. */
+/**
+ * Thai pack.
+ * @category Language packs
+ */
 export const th: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'โปรดเลือก',
   filterInputAriaLabel: 'ค้นหา',

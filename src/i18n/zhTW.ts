@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Traditional Chinese (Taiwan) pack (`zh-HK` resolves here in uiTranslationPackByLocale). */
+/**
+ * Traditional Chinese (Taiwan) pack (`zh-HK` resolves here in uiTranslationPackByLocale).
+ * @category Language packs
+ */
 export const zhTW: LLSelectUiTranslationPack = {
   triggerPlaceholder: '請選擇',
   filterInputAriaLabel: '搜尋',

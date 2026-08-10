@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Mongolian pack (Cyrillic; the traditional script needs vertical layout and is out of scope). */
+/**
+ * Mongolian pack (Cyrillic; the traditional script needs vertical layout and is out of scope).
+ * @category Language packs
+ */
 export const mn: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Сонгоно уу',
   filterInputAriaLabel: 'Хайх',

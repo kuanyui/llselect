@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Vietnamese pack. */
+/**
+ * Vietnamese pack.
+ * @category Language packs
+ */
 export const vi: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Vui lòng chọn',
   filterInputAriaLabel: 'Tìm kiếm',

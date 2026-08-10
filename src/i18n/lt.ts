@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Lithuanian pack. */
+/**
+ * Lithuanian pack.
+ * @category Language packs
+ */
 export const lt: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Pasirinkite',
   filterInputAriaLabel: 'Paieška',

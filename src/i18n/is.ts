@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Icelandic pack. */
+/**
+ * Icelandic pack.
+ * @category Language packs
+ */
 export const is: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Veldu valkost',
   filterInputAriaLabel: 'Leita',

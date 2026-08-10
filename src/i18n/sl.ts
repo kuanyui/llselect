@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Slovenian pack. */
+/**
+ * Slovenian pack.
+ * @category Language packs
+ */
 export const sl: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Izberite',
   filterInputAriaLabel: 'Iskanje',

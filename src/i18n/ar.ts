@@ -1,6 +1,9 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
-/** Arabic pack (RTL). */
+/**
+ * Arabic pack (RTL).
+ * @category Language packs
+ */
 export const ar: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'الرجاء الاختيار',
   filterInputAriaLabel: 'بحث',
