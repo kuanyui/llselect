@@ -53,7 +53,7 @@ Findings are named by what they are, never by a bare code.
 
 ## Missing API
 
-- [x] **Arrow icon attribute.** llselect has `createTriggerArrowContentElFn` plus the built-in `createChevronDownSvgEl` / `createTriangleDownSvgEl` / `createCheckSvgEl` / `createCheckboxSvgEl`; the directives expose none of it. Expose the built-ins only, by name (e.g. `ll-arrow="chevron"`), and say in the docs that a custom arrow means forking the file - that is the whole point of a copy-paste package.
+- [x] **Arrow icon attribute.** llselect has `createTriggerArrowContentElFn` plus the built-in `createChevronDownSvgEl` / `createTriangleDownSvgEl` / `createCheckSvgEl` / `createOutlinedCheckboxSvgEl`; the directives expose none of it. Expose the built-ins only, by name (e.g. `ll-arrow="chevron"`), and say in the docs that a custom arrow means forking the file - that is the whole point of a copy-paste package.
 - [x] **Configuration phase (provider).** `llselectConfigProvider.defaults({...})`, per-element `ll-*` still wins, unknown keys throw. The open question - is the arrow really the only app-wide setting? - was settled by going through the actual settings surface rather than guessing, and the answer is no: `uiTranslationPack` is the strongest case of all (an app picks its language once, and llselect's chrome strings are not per-field copy) and the directives did not expose it at all before. Admitted: `arrow`, `filterable`, `popupWidthPolicy`, `uiTranslationPack`. Refused: `placeholder`, for the mirror-image reason - it IS per-field copy.
 
 ## Benchmark

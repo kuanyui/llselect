@@ -5,7 +5,8 @@ import {
   createChevronDownSvgEl,
   createTriangleDownSvgEl,
   createCheckSvgEl,
-  createCheckboxSvgEl,
+  createOutlinedCheckboxSvgEl,
+  createFilledCheckboxSvgEl,
 } from '../src/icons.js'
 
 test('createChevronDownSvgEl returns an SVG element with currentColor + aria-hidden', () => {
@@ -38,30 +39,69 @@ test('createCheckSvgEl returns an SVG element with currentColor + aria-hidden', 
   assert.equal(svg.querySelector('path')?.getAttribute('fill'), 'currentColor')
 })
 
-test('createCheckboxSvgEl draws different paths per state', () => {
+test('createOutlinedCheckboxSvgEl draws different paths per state', () => {
   setupDom()
-  const unchecked = createCheckboxSvgEl().querySelector('path')?.getAttribute('d')
-  const checked = createCheckboxSvgEl({ state: 'checked' }).querySelector('path')?.getAttribute('d')
-  const indeterminate = createCheckboxSvgEl({ state: 'indeterminate' }).querySelector('path')?.getAttribute('d')
+  const unchecked = createOutlinedCheckboxSvgEl().querySelector('path')?.getAttribute('d')
+  const checked = createOutlinedCheckboxSvgEl({ state: 'checked' }).querySelector('path')?.getAttribute('d')
+  const indeterminate = createOutlinedCheckboxSvgEl({ state: 'indeterminate' }).querySelector('path')?.getAttribute('d')
   assert.ok(unchecked && checked && indeterminate)
   assert.notEqual(unchecked, checked)
   assert.notEqual(checked, indeterminate)
   assert.notEqual(unchecked, indeterminate)
 })
 
-test('createCheckboxSvgEl accepts the chosen-state vocabulary (none/some/all)', () => {
+test('createOutlinedCheckboxSvgEl accepts the chosen-state vocabulary (none/some/all)', () => {
   setupDom()
   const pathOf = (state: 'none' | 'some' | 'all' | 'unchecked' | 'checked' | 'indeterminate') =>
-    createCheckboxSvgEl({ state }).querySelector('path')?.getAttribute('d')
+    createOutlinedCheckboxSvgEl({ state }).querySelector('path')?.getAttribute('d')
   assert.equal(pathOf('none'), pathOf('unchecked'))
   assert.equal(pathOf('some'), pathOf('indeterminate'))
   assert.equal(pathOf('all'), pathOf('checked'))
 })
 
-test('createCheckboxSvgEl defaults to unchecked and honors size', () => {
+test('createOutlinedCheckboxSvgEl defaults to unchecked and honors size', () => {
   setupDom()
-  const def = createCheckboxSvgEl().querySelector('path')?.getAttribute('d')
-  const explicit = createCheckboxSvgEl({ state: 'unchecked' }).querySelector('path')?.getAttribute('d')
+  const def = createOutlinedCheckboxSvgEl().querySelector('path')?.getAttribute('d')
+  const explicit = createOutlinedCheckboxSvgEl({ state: 'unchecked' }).querySelector('path')?.getAttribute('d')
   assert.equal(def, explicit)
-  assert.equal(createCheckboxSvgEl({ size: 20 }).getAttribute('width'), '20')
+  assert.equal(createOutlinedCheckboxSvgEl({ size: 20 }).getAttribute('width'), '20')
+})
+
+test('createFilledCheckboxSvgEl draws different paths per state', () => {
+  setupDom()
+  const unchecked = createFilledCheckboxSvgEl().querySelector('path')?.getAttribute('d')
+  const checked = createFilledCheckboxSvgEl({ state: 'checked' }).querySelector('path')?.getAttribute('d')
+  const indeterminate = createFilledCheckboxSvgEl({ state: 'indeterminate' }).querySelector('path')?.getAttribute('d')
+  assert.ok(unchecked && checked && indeterminate)
+  assert.notEqual(unchecked, checked)
+  assert.notEqual(checked, indeterminate)
+  assert.notEqual(unchecked, indeterminate)
+})
+
+test('createFilledCheckboxSvgEl accepts the chosen-state vocabulary (none/some/all)', () => {
+  setupDom()
+  const pathOf = (state: 'none' | 'some' | 'all' | 'unchecked' | 'checked' | 'indeterminate') =>
+    createFilledCheckboxSvgEl({ state }).querySelector('path')?.getAttribute('d')
+  assert.equal(pathOf('none'), pathOf('unchecked'))
+  assert.equal(pathOf('some'), pathOf('indeterminate'))
+  assert.equal(pathOf('all'), pathOf('checked'))
+})
+
+test('createFilledCheckboxSvgEl shares unchecked with the outline icon, differs elsewhere', () => {
+  setupDom()
+  const outline = (state: 'unchecked' | 'checked' | 'indeterminate') =>
+    createOutlinedCheckboxSvgEl({ state }).querySelector('path')?.getAttribute('d')
+  const filled = (state: 'unchecked' | 'checked' | 'indeterminate') =>
+    createFilledCheckboxSvgEl({ state }).querySelector('path')?.getAttribute('d')
+  assert.equal(filled('unchecked'), outline('unchecked'))
+  assert.notEqual(filled('checked'), outline('checked'))
+  assert.notEqual(filled('indeterminate'), outline('indeterminate'))
+})
+
+test('createFilledCheckboxSvgEl defaults to unchecked and honors size', () => {
+  setupDom()
+  const def = createFilledCheckboxSvgEl().querySelector('path')?.getAttribute('d')
+  const explicit = createFilledCheckboxSvgEl({ state: 'unchecked' }).querySelector('path')?.getAttribute('d')
+  assert.equal(def, explicit)
+  assert.equal(createFilledCheckboxSvgEl({ size: 20 }).getAttribute('width'), '20')
 })

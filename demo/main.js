@@ -1,4 +1,4 @@
-import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createCheckboxSvgEl } from '../dist/index.mjs'
+import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createOutlinedCheckboxSvgEl, createFilledCheckboxSvgEl } from '../dist/index.mjs'
 import { ar, en, he, ja, zhTW, uiTranslationPackByLocale } from '../dist/i18n.mjs'
 import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS, MIXED_DIRECTION_COUNTRIES } from './data.js'
 import { highlightJs } from './highlight.js'
@@ -242,7 +242,7 @@ const outMultiCheckbox = document.getElementById('out-multi-checkbox')
 class CheckboxMultiSelect extends LLSelectMultiple {
   createItemEl(item, index) {
     const el = super.createItemEl(item, index)  // sets text + role + aria-selected
-    const box = createCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' })
+    const box = createOutlinedCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' })
     el.prepend(box)
     return el
   }
@@ -370,7 +370,7 @@ const outSearchMulti = document.getElementById('out-search-multi')
 class SearchCheckboxMulti extends LLSelectMultiple {
   createItemEl(item, index) {
     const el = super.createItemEl(item, index)
-    el.prepend(createCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
+    el.prepend(createOutlinedCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
     return el
   }
 }
@@ -479,7 +479,7 @@ selTags.setChosenItems(['Japan', 'Brazil', 'Canada'])
 // filter first, then activate the row: only the matches toggle, hidden
 // choices are preserved. The public chooseAll/unchooseAll/toggleAll keep
 // their whole-list semantics. createSelectAllRowContentElFn fills the row
-// with a tri-state SVG checkbox (createCheckboxSvgEl) + the library's own
+// with a tri-state SVG checkbox (createOutlinedCheckboxSvgEl) + the library's own
 // counting label (en pack); without the hook, themes draw a text glyph from
 // data-chosen-state. The accessible name stays uiTranslationPack.selectAllRowLabel.
 // The ITEMS get the same visual language - a subclass prepends a checkbox
@@ -488,7 +488,7 @@ selTags.setChosenItems(['Japan', 'Brazil', 'Canada'])
 class SelectAllCheckboxMulti extends LLSelectMultiple {
   createItemEl(item, index) {
     const el = super.createItemEl(item, index)
-    el.prepend(createCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
+    el.prepend(createOutlinedCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
     return el
   }
 }
@@ -504,7 +504,7 @@ const selSelectAll = new SelectAllCheckboxMulti(
       row.className = 'lang-row' // inline-flex + gap (demo CSS)
       row.append(
         // The icon helper accepts the chosen-state vocabulary directly.
-        createCheckboxSvgEl({ state: chosenState }),
+        createOutlinedCheckboxSvgEl({ state: chosenState }),
         en.selectAllRowLabel(chosenCount, totalCount), // reuse the library's translation
       )
       return row
@@ -513,6 +513,40 @@ const selSelectAll = new SelectAllCheckboxMulti(
   }
 )
 selSelectAll.setItems(COUNTRIES)
+//#endregion
+
+//#region 5.6
+// 5.5's select-all pattern drawn with the Material-look icon instead:
+// createFilledCheckboxSvgEl - solid rounded box, tick / dash cut out. Same
+// options as createOutlinedCheckboxSvgEl (incl. the chosen-state vocabulary);
+// unchecked is the same outline box in both.
+class FilledCheckboxMulti extends LLSelectMultiple {
+  createItemEl(item, index) {
+    const el = super.createItemEl(item, index)
+    el.prepend(createFilledCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
+    return el
+  }
+}
+const outFilledCheckbox = document.getElementById('out-filled-checkbox')
+const selFilledCheckbox = new FilledCheckboxMulti(
+  document.getElementById('mount-filled-checkbox'),
+  {
+    placeholder: 'Pick countries',
+    filterable: true,
+    selectAllRow: true,
+    createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
+      const row = document.createElement('span')
+      row.className = 'lang-row' // inline-flex + gap (demo CSS)
+      row.append(
+        createFilledCheckboxSvgEl({ state: chosenState }),
+        en.selectAllRowLabel(chosenCount, totalCount),
+      )
+      return row
+    },
+    onChange: (chosen) => { outFilledCheckbox.textContent = 'chosen: ' + chosen.length + ' items' },
+  }
+)
+selFilledCheckbox.setItems(COUNTRIES)
 //#endregion
 
 //#region 9.1

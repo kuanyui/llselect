@@ -54,7 +54,7 @@ By RETURN TYPE (behaviour, not input):
 
 ### 4a. Rename - DONE (applied to code)
 
-> Three After-names were later renamed AGAIN by the precision audit (s7b): `createArrowElFn` -> `createTriggerArrowContentElFn`, `LLSelectCreateArrowElFn` -> `LLSelectCreateTriggerArrowContentElFn` (that alias was then REMOVED in the RC review - see the s3 alias policy), `commitArrowElToDom` -> `commitTriggerArrowContentElToDom`.
+> Three After-names were later renamed AGAIN by the precision audit (s7b): `createArrowElFn` -> `createTriggerArrowContentElFn`, `LLSelectCreateArrowElFn` -> `LLSelectCreateTriggerArrowContentElFn` (that alias was then REMOVED in the RC review - see the s3 alias policy), `commitArrowElToDom` -> `commitTriggerArrowContentElToDom`. A fourth changed when the filled variant shipped: `createCheckboxSvgEl` -> `createOutlinedCheckboxSvgEl`, the symmetric twin of `createFilledCheckboxSvgEl` (MUI's Outlined / Filled vocabulary).
 
 | Vis          | Before                                   | After                                                                 |
 | ------------ | ---------------------------------------- | --------------------------------------------------------------------- |

@@ -43,7 +43,8 @@ export {
   createChevronDownSvgEl,
   createTriangleDownSvgEl,
   createCheckSvgEl,
-  createCheckboxSvgEl,
+  createOutlinedCheckboxSvgEl,
+  createFilledCheckboxSvgEl,
 } from './icons.js'
 export type {
   IconOptions,

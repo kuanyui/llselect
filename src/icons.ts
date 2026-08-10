@@ -67,13 +67,14 @@ export function createCheckSvgEl(opts: IconOptions = {}): SVGElement {
 }
 
 /**
- * Visual state of a {@link createCheckboxSvgEl}. `indeterminate` is the
- * "mixed" / partial state used by a select-all control (`aria-checked="mixed"`).
+ * Visual state of {@link createOutlinedCheckboxSvgEl} / {@link createFilledCheckboxSvgEl}.
+ * `indeterminate` is the "mixed" / partial state used by a select-all control
+ * (`aria-checked="mixed"`).
  * @category Icons
  */
 export type CheckboxState = 'unchecked' | 'checked' | 'indeterminate'
 
-const CHECKBOX_PATHS: Record<CheckboxState, string> = {
+const OUTLINED_CHECKBOX_PATHS: Record<CheckboxState, string> = {
   // mdi checkbox-blank-outline
   unchecked:
     'M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,5V19H5V5H19Z',
@@ -86,7 +87,8 @@ const CHECKBOX_PATHS: Record<CheckboxState, string> = {
 }
 
 /**
- * Options accepted by {@link createCheckboxSvgEl}.
+ * Options accepted by {@link createOutlinedCheckboxSvgEl} and
+ * {@link createFilledCheckboxSvgEl}.
  * @category Icons
  */
 export interface CheckboxIconOptions extends IconOptions {
@@ -102,15 +104,43 @@ export interface CheckboxIconOptions extends IconOptions {
 }
 
 /**
- * Outline checkbox icon in one of three states (unchecked / checked /
- * indeterminate). Intended for multi-select item rows and the select-all
- * control. Decorative only (`aria-hidden`); the real state is carried by
+ * Outlined checkbox icon: box border with the tick (`checked`) / dash
+ * (`indeterminate`) drawn inside, all in `currentColor`; the filled twin is
+ * {@link createFilledCheckboxSvgEl}. Intended for multi-select item rows and
+ * the select-all control. Decorative only (`aria-hidden`); the real state is
+ * carried by `aria-selected` on the item or `aria-checked` on the control.
+ * @category Icons
+ */
+/** Map the select-all row's chosen-state vocabulary onto the icon vocabulary. */
+function resolveCheckboxState(raw: NonNullable<CheckboxIconOptions['state']>): CheckboxState {
+  return raw === 'none' ? 'unchecked' : raw === 'some' ? 'indeterminate' : raw === 'all' ? 'checked' : raw
+}
+
+export function createOutlinedCheckboxSvgEl(opts: CheckboxIconOptions = {}): SVGElement {
+  const state = resolveCheckboxState(opts.state ?? 'unchecked')
+  return createSvgEl('0 0 24 24', OUTLINED_CHECKBOX_PATHS[state], opts.size ?? 16)
+}
+
+const FILLED_CHECKBOX_PATHS: Record<CheckboxState, string> = {
+  // Material's unchecked is the same outline box in both looks.
+  unchecked: OUTLINED_CHECKBOX_PATHS.unchecked,
+  // mdi checkbox-marked (solid box, tick cut out)
+  checked:
+    'M10,17L5,12L6.41,10.58L10,14.17L17.59,6.58L19,8M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z',
+  // mdi minus-box (solid box, dash cut out)
+  indeterminate:
+    'M17,13H7V11H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z',
+}
+
+/**
+ * Material-look checkbox icon: a solid rounded box with the tick (`checked`)
+ * / dash (`indeterminate`) cut out; `unchecked` draws the same outline box as
+ * {@link createOutlinedCheckboxSvgEl}. Same options, including the chosen-state
+ * vocabulary. Decorative only (`aria-hidden`); the real state is carried by
  * `aria-selected` on the item or `aria-checked` on the control.
  * @category Icons
  */
-export function createCheckboxSvgEl(opts: CheckboxIconOptions = {}): SVGElement {
-  const raw = opts.state ?? 'unchecked'
-  const state: CheckboxState =
-    raw === 'none' ? 'unchecked' : raw === 'some' ? 'indeterminate' : raw === 'all' ? 'checked' : raw
-  return createSvgEl('0 0 24 24', CHECKBOX_PATHS[state], opts.size ?? 16)
+export function createFilledCheckboxSvgEl(opts: CheckboxIconOptions = {}): SVGElement {
+  const state = resolveCheckboxState(opts.state ?? 'unchecked')
+  return createSvgEl('0 0 24 24', FILLED_CHECKBOX_PATHS[state], opts.size ?? 16)
 }

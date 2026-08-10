@@ -278,7 +278,7 @@
               row.style.display = 'inline-flex'
               row.style.alignItems = 'center'
               row.style.gap = '0.4em'
-              row.appendChild(llselect.createCheckboxSvgEl({ state: state }))
+              row.appendChild(llselect.createOutlinedCheckboxSvgEl({ state: state }))
               row.appendChild(document.createTextNode(text))
               return row
             }

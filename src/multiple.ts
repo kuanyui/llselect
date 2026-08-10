@@ -108,7 +108,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
   selectAllRow: boolean
   /**
    * The select-all row's visible content ELEMENT, without subclassing - e.g.
-   * a tri-state SVG checkbox (`createCheckboxSvgEl`) + label. Mirrors
+   * a tri-state SVG checkbox (`createOutlinedCheckboxSvgEl`) + label. Mirrors
    * `createItemContentElFn`. Only used with `selectAllRow: true`.
    * - Receives the tri-state and the counts of the visible enabled subset.
    * - Return an `HTMLElement`: inserted as the row's content; the accessible

@@ -255,9 +255,9 @@
     </article>
 
     <article>
-      <h3>5.4 Checkbox items (built-in createCheckboxSvgEl)</h3>
+      <h3>5.4 Checkbox items (built-in createOutlinedCheckboxSvgEl)</h3>
       <p class="hint">
-        Subclass <code>createItemEl</code> to prepend <code>createCheckboxSvgEl()</code>
+        Subclass <code>createItemEl</code> to prepend <code>createOutlinedCheckboxSvgEl()</code>
         reflecting <code>isChosen</code>. No mdi / FontAwesome needed. The
         single-item rerender keeps each toggle's checkbox in sync.
       </p>
@@ -318,7 +318,7 @@
         activate the row - only the matches toggle, hidden choices are
         preserved. This demo fills the row via
         <code>createSelectAllRowContentElFn</code> with a tri-state SVG
-        checkbox (<code>createCheckboxSvgEl</code>) and gives the ITEMS the
+        checkbox (<code>createOutlinedCheckboxSvgEl</code>) and gives the ITEMS the
         same checkbox treatment (5.4's subclass pattern) for one consistent
         visual language; without the hook, themes draw a text glyph from the
         <code>data-chosen-state</code> attribute. The accessible name stays
@@ -330,6 +330,26 @@
           <div class="out" id="out-select-all">chosen: 0 items</div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="5.5"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>5.6 Filled (Material-look) checkboxes (<code>createFilledCheckboxSvgEl</code>)</h3>
+      <p class="hint">
+        5.5's select-all pattern, drawn with
+        <code>createFilledCheckboxSvgEl</code>: a solid rounded box with the
+        tick / dash cut out - the checkbox look Material-flavored CSS
+        libraries expect. Unchecked stays the same outline box as
+        <code>createOutlinedCheckboxSvgEl</code>; options and the chosen-state
+        vocabulary are identical. Choose a few items and look at the
+        select-all row to see the filled indeterminate state.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-filled-checkbox"></div>
+          <div class="out" id="out-filled-checkbox">chosen: 0 items</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="5.6"><code></code></pre></details>
       </div>
     </article>
   </section>
