@@ -223,6 +223,9 @@ body.with-toc { max-width: 78rem; }
   .md-alert-warning { --alert: #d29922; }
   .md-alert-caution { --alert: #f85149; }
 }
+/* Back-to-top: fixed bottom-right, hidden until scrolled (script toggles). */
+.back-to-top { position: fixed; right: 1rem; bottom: 1rem; z-index: 10; padding: 0.45rem 0.9rem; font: inherit; font-weight: 600; color: var(--nav-link); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+.back-to-top:hover { background: var(--nav-hover); }
 </style>
 </head>
 <body${toc ? ' class="with-toc"' : ''}>
@@ -241,6 +244,20 @@ if (location.hostname.includes('gitlab')) {
   const repoLink = document.querySelector('nav a.repo')
   repoLink.href = '${REPO_URL}'
   repoLink.textContent = 'GitLab'
+}
+</script>
+<button class="back-to-top" hidden>Top</button>
+<script>
+// Back-to-top: appears after one viewport of scroll.
+{
+  const topBtn = document.querySelector('.back-to-top')
+  const syncTopBtn = () => { topBtn.hidden = window.scrollY < window.innerHeight }
+  window.addEventListener('scroll', syncTopBtn, { passive: true })
+  syncTopBtn()
+  topBtn.addEventListener('click', () => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' })
+  })
 }
 </script>
 ${toc ? `<script>
