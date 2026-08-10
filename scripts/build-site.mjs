@@ -18,6 +18,7 @@ import { marked } from 'marked'
 
 const REPO_URL = 'https://gitlab.com/kuanyui/llselect'
 const REPO_BLOB = `${REPO_URL}/-/blob/master/`
+const REPO_GITHUB = 'https://github.com/kuanyui/llselect'
 
 if (!existsSync('dist/index.mjs')) {
   throw new Error('dist/ is missing or incomplete: run `npm run build` first')
@@ -83,7 +84,9 @@ const NAV = [
 function navHtml(prefix, current) {
   const items = NAV.map(([label, path]) =>
     `<a href="${path ? prefix + path : prefix}"${label === current ? ' class="current"' : ''}>${label}</a>`)
-  items.push(`<a href="${REPO_URL}">GitLab</a>`)
+  // Right-aligned, host-aware: GitHub by default, swapped to GitLab at runtime
+  // when served from a gitlab domain (same public/ deploys to both hosts).
+  items.push(`<a href="${REPO_GITHUB}" class="repo">GitHub</a>`)
   return items.join('\n')
 }
 
@@ -104,6 +107,7 @@ nav { display: flex; flex-wrap: wrap; gap: 0.25rem; padding: 0.8rem 0 0.5rem; bo
 nav a { padding: 0.35rem 0.8rem; color: var(--nav-link); text-decoration: none; border-radius: 4px; font-weight: 600; }
 nav a:hover { background: var(--nav-hover); }
 nav a.current { background: var(--nav-link); color: var(--bg); }
+nav a.repo { margin-left: auto; }
 a { color: var(--link); }
 pre { padding: 0.8rem; background: var(--muted); overflow-x: auto; }
 code { background: var(--muted); padding: 0.1em 0.3em; font-size: 0.92em; }
@@ -131,6 +135,14 @@ th, td { border: 1px solid var(--line); padding: 0.3em 0.6em; }
 ${nav}
 </nav>
 ${body}
+<script>
+// One build serves both hosts: the nav repo link follows the serving domain.
+if (location.hostname.includes('gitlab')) {
+  const repoLink = document.querySelector('nav a.repo')
+  repoLink.href = '${REPO_URL}'
+  repoLink.textContent = 'GitLab'
+}
+</script>
 </body>
 </html>
 `
