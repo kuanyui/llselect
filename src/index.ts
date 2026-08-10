@@ -55,4 +55,4 @@ export type {
  * Library version. Mirrors package.json `version` (smoke-test guarded).
  * @category Metadata
  */
-export const version = '0.0.2'
+export const version = '0.0.3'
