@@ -5,8 +5,9 @@
 //   dist/       - built library (run `npm run build` first)
 //   angularjs/  - the directive sources the angularjs demo loads, plus
 //                 index.html rendered from angularjs/README.md
-//   api/        - core API reference; typedoc writes it AFTER this script
-//                 (the `build:site` npm script chains the two)
+//   api/        - core API reference, rendered from the markdown typedoc
+//                 emits into .build/api-md (the `build:site` npm script runs
+//                 typedoc first)
 // Relative README links are kept when they point at published content
 // (demo/, dist/, the directive files, the other rendered README); everything
 // else is a repo file that is not published, so it is rewritten to a GitLab
@@ -32,14 +33,20 @@ for (const f of ['llselect-angularjs.js', 'llselect-ui-select.js']) {
   copyFileSync(`angularjs/${f}`, `public/angularjs/${f}`)
 }
 
-// GitLab-style slugs for ASCII headings ("Form integration" -> form-integration)
+// GitLab-style slugs for ASCII headings ("Form integration" -> form-integration).
+// Duplicate headings dedupe GitHub-style (x, x-1, x-2) in document order - the
+// convention typedoc-plugin-markdown's intra-page links assume. Reset per page.
+const slugCounts = new Map()
 const ALERT_RE = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/
 marked.use({
   renderer: {
     heading({ tokens, depth }) {
       const text = this.parser.parseInline(tokens)
       // strip tags, then entities (&lt; etc. would otherwise leak into the slug)
-      const id = text.replace(/<[^>]+>/g, '').replace(/&[a-z0-9#]+;/gi, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+      let id = text.replace(/<[^>]+>/g, '').replace(/&[a-z0-9#]+;/gi, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+      const n = slugCounts.get(id) ?? 0
+      slugCounts.set(id, n + 1)
+      if (n > 0) { id = `${id}-${n}` }
       return `<h${depth} id="${id}">${text}</h${depth}>\n`
     },
     // GitHub-style alerts: > [!TIP] etc. Marked has no built-in for them, so a
@@ -148,13 +155,46 @@ if (location.hostname.includes('gitlab')) {
 `
 }
 
-function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current }) {
-  const body = rewriteLinks(marked.parse(readFileSync(mdPath, 'utf8')), posix.dirname(mdPath).replace(/^\.$/, ''))
+function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links }) {
+  slugCounts.clear()
+  let body = marked.parse(readFileSync(mdPath, 'utf8'))
+  body = links ? links(body) : rewriteLinks(body, posix.dirname(mdPath).replace(/^\.$/, ''))
   writeFileSync(outPath, renderPage({ title, description, nav: navHtml(prefix, current), body }))
+}
+
+// The API pages come out of typedoc (markdown, one page per module, written to
+// .build/api-md by the `build:site` npm script BEFORE this script runs). Their
+// only non-anchor links are the three inter-page ones; map them onto the
+// published names. Everything else (source links) is already absolute.
+const API_PAGES = [
+  ['README.md', 'index.html', 'llselect API reference'],
+  ['@llselect/core.md', 'core.html', '@llselect/core API'],
+  ['@llselect/core/i18n.md', 'i18n.html', '@llselect/core/i18n API'],
+]
+function makeApiLinkRewriter(mdDir) {
+  return (body) => body.replace(/href="(?!https?:|#|mailto:)([^"]+)"/g, (_m, target) => {
+    const hashIndex = target.indexOf('#')
+    const path = hashIndex === -1 ? target : target.slice(0, hashIndex)
+    const hash = hashIndex === -1 ? '' : target.slice(hashIndex)
+    const mdPath = posix.normalize(posix.join(mdDir, path))
+    const page = API_PAGES.find(([md]) => md === mdPath)
+    if (!page) { throw new Error(`build:site: unexpected relative link in API markdown: ${target}`) }
+    return `href="${page[1]}${hash}"`
+  })
 }
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
 const ngPkg = JSON.parse(readFileSync('angularjs/package.json', 'utf8'))
 renderMarkdownPage('README.md', 'public/index.html', { title: 'llselect', description: pkg.description, prefix: './', current: 'Home' })
 renderMarkdownPage('angularjs/README.md', 'public/angularjs/index.html', { title: 'llselect + AngularJS 1.x', description: ngPkg.description, prefix: '../', current: null })
+
+if (!existsSync('.build/api-md/README.md')) {
+  throw new Error('.build/api-md/ is missing: the build:site npm script runs typedoc first')
+}
+mkdirSync('public/api', { recursive: true })
+for (const [md, out, title] of API_PAGES) {
+  renderMarkdownPage(`.build/api-md/${md}`, `public/api/${out}`, {
+    title, description: `API reference for ${pkg.name} - generated from the TypeScript declarations`, prefix: '../', current: 'API', links: makeApiLinkRewriter(posix.dirname(md).replace(/^\.$/, '')),
+  })
+}
 console.log('build:site: OK (public/)')
