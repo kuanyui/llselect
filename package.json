@@ -43,7 +43,8 @@
     "test": "npm run test:compile && node --test .build/test/*.test.js",
     "verify": "npm run check && npm run build && npm test && (cd angularjs && npm ci && npm test) && npm run build:site",
     "watch": "rollup -c -w",
-    "serve": "python3 -m http.server ${PORT:-8080}"
+    "serve": "python3 -m http.server ${PORT:-8080}",
+    "serve:site": "npm run build:site && python3 -m http.server -d public ${PORT:-8080}"
   },
   "repository": {
     "type": "git",

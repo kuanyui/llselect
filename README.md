@@ -101,6 +101,7 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 - Live: [GitHub Pages](https://kuanyui.github.io/llselect/demo/) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/)
 - AngularJS directives: [GitHub Pages](https://kuanyui.github.io/llselect/demo/angularjs/) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/angularjs/)
 - Local: clone this repo, `npm install && npm run build`, then `npm run serve` and open `http://localhost:8080/demo/`
+- Local, full-site preview: `npm run serve:site` (after `npm run build`) and open `http://localhost:8080/` - builds and serves `public/` exactly as the Pages hosts publish it (landing page, docs, API reference, demos)
 
 ## Install
 
