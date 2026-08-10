@@ -80,13 +80,56 @@ function rewriteLinks(body, mdDir) {
   })
 }
 
+// Sidebar outline for the (long) API pages, from the rendered headings:
+// h2 = top section, h3 = symbol (collapsible), h4 = member group, h5 = member.
+// Structural typedoc headings that are not navigation targets are skipped.
+const TOC_SKIP = new Set(['Type Parameters', 'Extends', 'Extended by', 'Implements', 'Type Declaration'])
+function buildTocHtml(body) {
+  const link = (h) => `<a href="#${h.id}">${h.text}</a>`
+  const root = []
+  let curH2 = null
+  let curH3 = null
+  let curH4 = null
+  for (const m of body.matchAll(/<h([2-5]) id="([^"]+)">(.*?)<\/h\1>/g)) {
+    const h = { depth: Number(m[1]), id: m[2], text: m[3].replace(/<[^>]+>/g, '') }
+    if (TOC_SKIP.has(h.text)) { continue }
+    if (h.depth === 2) {
+      curH2 = { h, children: [] }
+      root.push(curH2)
+      curH3 = curH4 = null
+    } else if (h.depth === 3 && curH2) {
+      curH3 = { h, children: [] }
+      curH2.children.push(curH3)
+      curH4 = null
+    } else if (h.depth === 4 && curH3) {
+      curH4 = { h, children: [] }
+      curH3.children.push(curH4)
+    } else if (h.depth === 5 && curH4) {
+      curH4.children.push({ h })
+    }
+  }
+  const sections = root.map((s) => {
+    const symbols = s.children.map((sym) => {
+      if (sym.children.length === 0) { return `<li>${link(sym.h)}</li>` }
+      const groups = sym.children.map((g) =>
+        `<li class="toc-group">${link(g.h)}${g.children.length ? `<ul>${g.children.map((mem) => `<li>${link(mem.h)}</li>`).join('')}</ul>` : ''}</li>`)
+      return `<li><details><summary>${link(sym.h)}</summary><ul>${groups.join('')}</ul></details></li>`
+    })
+    return `<li class="toc-section">${link(s.h)}${symbols.length ? `<ul>${symbols.join('')}</ul>` : ''}</li>`
+  })
+  return `<aside class="toc">
+<input type="search" placeholder="Filter" aria-label="Filter the table of contents">
+<ul class="toc-tree">${sections.join('\n')}</ul>
+</aside>`
+}
+
 // prefix walks from the page back up to the site root ('./' or '../').
 const NAV = [
   ['Home', ''],
+  ['API', 'api/core.html'],
   ['Examples', 'demo/examples.html'],
   ['Benchmark', 'demo/benchmark.html'],
   ['AngularJS', 'demo/angularjs/'],
-  ['API', 'api/'],
 ]
 function navHtml(prefix, current) {
   const items = NAV.map(([label, path]) =>
@@ -97,7 +140,7 @@ function navHtml(prefix, current) {
   return items.join('\n')
 }
 
-function renderPage({ title, description, nav, body }) {
+function renderPage({ title, description, nav, body, toc }) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -106,9 +149,19 @@ function renderPage({ title, description, nav, body }) {
 <meta name="description" content="${description}">
 <title>${title}</title>
 <style>
-:root { color-scheme: light dark; --fg: #1a1a1a; --bg: #ffffff; --muted: #f4f4f4; --line: #d0d0d0; --link: #0550ae; --nav-link: #2456a6; --nav-hover: #eef3fb; }
-@media (prefers-color-scheme: dark) { :root { --fg: #d8d8d8; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --nav-link: #7fb1f5; --nav-hover: #263344; } }
+:root { color-scheme: light dark; --fg: #1a1a1a; --fg-muted: #656565; --bg: #ffffff; --muted: #f4f4f4; --line: #d0d0d0; --link: #0550ae; --nav-link: #2456a6; --nav-hover: #eef3fb; }
+@media (prefers-color-scheme: dark) { :root { --fg: #d8d8d8; --fg-muted: #9a9a9a; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --nav-link: #7fb1f5; --nav-hover: #263344; } }
 body { margin: 0 auto; padding: 0 1rem 4rem; max-width: 52rem; font: 16px/1.6 system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+/* Explicit heading scale: browser defaults shrink h5/h6 BELOW body text,
+   which the API pages (members are h5) cannot live with. */
+h1 { font-size: 1.9em; }
+h2 { font-size: 1.5em; border-bottom: 1px solid var(--line); padding-bottom: 0.2em; margin-top: 2em; }
+h3 { font-size: 1.25em; margin-top: 1.8em; }
+h4 { font-size: 1.08em; margin-top: 1.6em; }
+h5 { font-size: 1em; margin: 1.4em 0 0.5em; }
+h6 { font-size: 0.85em; margin: 1.2em 0 0.4em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--fg-muted); }
+/* API pages: member headings are identifiers - set them in code face */
+.with-toc h5 { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 /* same look as demo/style.css .demo-nav so the site reads as one family */
 nav { display: flex; flex-wrap: wrap; gap: 0.25rem; padding: 0.8rem 0 0.5rem; border-bottom: 1px solid var(--line); margin-bottom: 1.5rem; }
 nav a { padding: 0.35rem 0.8rem; color: var(--nav-link); text-decoration: none; border-radius: 4px; font-weight: 600; }
@@ -121,6 +174,25 @@ code { background: var(--muted); padding: 0.1em 0.3em; font-size: 0.92em; }
 pre code { padding: 0; }
 table { border-collapse: collapse; }
 th, td { border: 1px solid var(--line); padding: 0.3em 0.6em; }
+/* Two-column shell for pages with a sidebar outline */
+body.with-toc { max-width: 78rem; }
+.layout { display: grid; grid-template-columns: 17rem minmax(0, 52rem); gap: 2.5rem; align-items: start; }
+.toc { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; padding: 1rem 0.5rem 2rem 0; font-size: 0.82em; line-height: 1.45; }
+.toc input { width: 100%; box-sizing: border-box; margin-bottom: 0.6rem; padding: 0.3rem 0.5rem; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
+.toc ul { list-style: none; margin: 0; padding-left: 0.85rem; }
+.toc ul.toc-tree { padding-left: 0; }
+.toc a { display: block; padding: 0.1rem 0.35rem; color: var(--fg); text-decoration: none; border-radius: 3px; overflow-wrap: anywhere; }
+.toc a:hover { background: var(--nav-hover); }
+.toc a.active { background: var(--nav-hover); color: var(--nav-link); font-weight: 600; }
+.toc .toc-section > a { font-weight: 600; margin-top: 0.5rem; }
+.toc .toc-group > a { color: var(--fg-muted); }
+.toc summary { cursor: pointer; }
+.toc summary a { display: inline-block; }
+@media (max-width: 62rem) {
+  body.with-toc { max-width: 52rem; }
+  .layout { display: block; }
+  .toc { display: none; }
+}
 .md-alert { margin: 1rem 0; padding: 0.1rem 1rem; border-left: 0.25rem solid var(--alert, var(--line)); }
 .md-alert-title { font-weight: 600; color: var(--alert); }
 .md-alert-note { --alert: #0969da; }
@@ -137,11 +209,16 @@ th, td { border: 1px solid var(--line); padding: 0.3em 0.6em; }
 }
 </style>
 </head>
-<body>
+<body${toc ? ' class="with-toc"' : ''}>
 <nav>
 ${nav}
 </nav>
-${body}
+${toc ? `<div class="layout">
+${toc}
+<main>
+${body}</main>
+</div>` : `<main>
+${body}</main>`}
 <script>
 // One build serves both hosts: the nav repo link follows the serving domain.
 if (location.hostname.includes('gitlab')) {
@@ -150,16 +227,64 @@ if (location.hostname.includes('gitlab')) {
   repoLink.textContent = 'GitLab'
 }
 </script>
+${toc ? `<script>
+// Sidebar outline: scroll tracking + text filter. No dependencies.
+{
+  const toc = document.querySelector('.toc')
+  const links = new Map()
+  for (const a of toc.querySelectorAll('a')) { links.set(decodeURIComponent(a.hash.slice(1)), a) }
+  const heads = [...document.querySelectorAll('main h2[id], main h3[id], main h4[id], main h5[id]')].filter((h) => links.has(h.id))
+  const openChain = (link) => {
+    for (let d = link.closest('details'); d; d = d.parentElement.closest('details')) { d.open = true }
+  }
+  let activeLink = null
+  const sync = () => {
+    const y = window.scrollY + 100
+    let cur = null
+    for (const h of heads) { if (h.offsetTop <= y) { cur = h } else { break } }
+    const link = cur ? links.get(cur.id) : null
+    if (link === activeLink) { return }
+    if (activeLink) { activeLink.classList.remove('active') }
+    activeLink = link
+    if (link) {
+      link.classList.add('active')
+      openChain(link)
+      link.scrollIntoView({ block: 'nearest' })
+    }
+  }
+  window.addEventListener('scroll', () => { window.requestAnimationFrame(sync) }, { passive: true })
+  sync()
+  // A symbol link inside a <summary> should always OPEN its branch, never
+  // collapse it back while jumping to the section.
+  toc.addEventListener('click', (ev) => {
+    const a = ev.target.closest('summary a')
+    if (a) { const d = a.closest('details'); window.requestAnimationFrame(() => { d.open = true }) }
+  })
+  const filter = toc.querySelector('input')
+  filter.addEventListener('input', () => {
+    const q = filter.value.trim().toLowerCase()
+    for (const li of toc.querySelectorAll('li')) {
+      li.hidden = q !== '' && !li.textContent.toLowerCase().includes(q)
+    }
+    if (q !== '') {
+      for (const d of toc.querySelectorAll('details')) { d.open = true }
+    } else {
+      for (const d of toc.querySelectorAll('details')) { d.open = false }
+      if (activeLink) { openChain(activeLink) }
+    }
+  })
+}
+</script>` : ''}
 </body>
 </html>
 `
 }
 
-function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links }) {
+function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links, toc = false }) {
   slugCounts.clear()
   let body = marked.parse(readFileSync(mdPath, 'utf8'))
   body = links ? links(body) : rewriteLinks(body, posix.dirname(mdPath).replace(/^\.$/, ''))
-  writeFileSync(outPath, renderPage({ title, description, nav: navHtml(prefix, current), body }))
+  writeFileSync(outPath, renderPage({ title, description, nav: navHtml(prefix, current), body, toc: toc ? buildTocHtml(body) : null }))
 }
 
 // The API pages come out of typedoc (markdown, one page per module, written to
@@ -167,9 +292,9 @@ function renderMarkdownPage(mdPath, outPath, { title, description, prefix, curre
 // only non-anchor links are the three inter-page ones; map them onto the
 // published names. Everything else (source links) is already absolute.
 const API_PAGES = [
-  ['README.md', 'index.html', 'llselect API reference'],
-  ['@llselect/core.md', 'core.html', '@llselect/core API'],
-  ['@llselect/core/i18n.md', 'i18n.html', '@llselect/core/i18n API'],
+  ['README.md', 'index.html', 'llselect API reference', false],
+  ['@llselect/core.md', 'core.html', '@llselect/core API', true],
+  ['@llselect/core/i18n.md', 'i18n.html', '@llselect/core/i18n API', true],
 ]
 function makeApiLinkRewriter(mdDir) {
   return (body) => body.replace(/href="(?!https?:|#|mailto:)([^"]+)"/g, (_m, target) => {
@@ -192,9 +317,9 @@ if (!existsSync('.build/api-md/README.md')) {
   throw new Error('.build/api-md/ is missing: the build:site npm script runs typedoc first')
 }
 mkdirSync('public/api', { recursive: true })
-for (const [md, out, title] of API_PAGES) {
+for (const [md, out, title, toc] of API_PAGES) {
   renderMarkdownPage(`.build/api-md/${md}`, `public/api/${out}`, {
-    title, description: `API reference for ${pkg.name} - generated from the TypeScript declarations`, prefix: '../', current: 'API', links: makeApiLinkRewriter(posix.dirname(md).replace(/^\.$/, '')),
+    title, description: `API reference for ${pkg.name} - generated from the TypeScript declarations`, prefix: '../', current: 'API', links: makeApiLinkRewriter(posix.dirname(md).replace(/^\.$/, '')), toc,
   })
 }
 console.log('build:site: OK (public/)')
