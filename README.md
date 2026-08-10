@@ -18,6 +18,12 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 > - No filter feature, especially for East-Asian languages.
 > - Values can only be stored as `string`.
 > - Unable to accept mouse event when `<select disabled="true">` (to show tooltip to explain why it's disabled, for example).
+>
+> #### Arrrrgh... Yet another select library? Why not existing select libraries? Are you too bored?
+> Arrrrrgh, It's just because **all** of the existing libraries are unable to satisfy my requirements, on aspect of performance, flexibility, and explicitly.
+> As of May 2026, this situation is still. The only way is implement one according to my ideal design.
+> I am personally also very confusing why I still need to implement such fundamental web UI component library in 2026.
+> (I've also fallen into self-doubt for years when thinking that why I even had to implement an extremely fundamental feature such as [a "**normally works**" recent file list for a text editor](https://github.com/kuanyui/recentz.el) in 2024.)
 
 
 > [!WARNING]
@@ -74,7 +80,7 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 ## Benchmark
 
 > [!NOTE]
-> - Tested on Intel 13900HX, Chromium 149.
+> - Tested on Intel 13900HX, Chromium 149. All libraries are the latest version at 2026-07-16.
 > - All tests are single select.
 > - The following table shows **instantiation** only, other tests (interactions like open popup, filter candidates, choose candidate, ... etc) cannot be accurately benchmarked nor able to be fairly compared across libraries due to the details in implementations of each library. But you still can test by yourself in demo benchmark page, and interact with them and feel the "real experience" instead of relying on inaccurate benchmark results.
 
@@ -295,7 +301,11 @@ How the two layers coexist: every customization point is a `protected` method wh
 
 ## Acknowledgment
 
-I have had this idea since 2024 and wrote some drafts for it, but I had no time to implement it, so the draft was abandoned.
+I have had a idea to implement a JavaScript/TypeScript library by myself at least since 2020, because I had enough of the terrible inflexibility of the HTML native `<select>`, but none of any existing libraries satisfies my requirements. The most significant part is performance issue, the second one is inflexible or ambiguous-semantic APIs which made me headache.
+
+But I clearly know that there are surprisingly lots of details in the behaviours of a select, and deeply know how time-costing implementing it is, so I didn't wrote it.
+
+In 2024 I tried to wrote some drafts for it, but I still had no time to implement it, so the draft was abandoned.
 
 Now, with Claude Code, I am trying to finish it.
 
@@ -305,10 +315,11 @@ This project heavily relies on LLM agents. More than 99% of the working code was
 
 #### So you are just a fucking idiot vibe coder? what on Earth were you responsible for in this project, if LLM has done so much?
 
-1. I review all modifications via `git diff` before `git commit`, as much as I can, to avoid obvious anti-patterns and bad-smelling code.
+1. I review each modifications (before or after `git commit`) via `git diff` as possible as I can, to avoid obvious anti-patterns and bad-smelling code.
 2. I
    - correct unreasonable APIs according to my development experience, trying to avoid the painful APIs and anti-patterns common among existing select UI component libraries,
    - make the technical decisions,
+   - decide API naming conventions,
    - test on real browsers and OSes (Firefox / Chromium, Linux / Android) and decide the UI/UX details.
 
 I try to provide usable software, but **I still cannot provide any warranty.**
