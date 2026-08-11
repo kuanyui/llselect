@@ -130,7 +130,7 @@ function buildTocHtml(body) {
 // prefix walks from the page back up to the site root ('./' or '../').
 const NAV = [
   ['Home', ''],
-  ['API', 'api/core.html'],
+  ['API', 'api/'],
   ['Examples', 'demo/examples.html'],
   ['Benchmark', 'demo/benchmark.html'],
   ['AngularJS', 'demo/angularjs/'],
@@ -353,13 +353,30 @@ const ngPkg = JSON.parse(readFileSync('angularjs/package.json', 'utf8'))
 renderMarkdownPage('README.md', 'public/index.html', { title: 'llselect', description: pkg.description, prefix: './', current: 'Home' })
 renderMarkdownPage('angularjs/README.md', 'public/angularjs/index.html', { title: 'llselect + AngularJS 1.x', description: ngPkg.description, prefix: '../', current: null })
 
-if (!existsSync('.build/api-md/README.md')) {
+if (!existsSync('.build/api-md/@llselect/core.md')) {
   throw new Error('.build/api-md/ is missing: the build:site npm script runs typedoc first')
 }
 mkdirSync('public/api', { recursive: true })
 for (const [md, out, title, toc] of API_PAGES) {
+  if (md === 'README.md') { continue } // typedoc's index is a bare module list; composed below instead
   renderMarkdownPage(`.build/api-md/${md}`, `public/api/${out}`, {
     title, description: `API reference for ${pkg.name} - generated from the TypeScript declarations`, prefix: '../', current: 'API', links: makeApiLinkRewriter(posix.dirname(md).replace(/^\.$/, '')), toc,
   })
 }
+// The API landing page is site chrome, not typedoc output: it orients across
+// the generated module pages AND the hand-written AngularJS reference.
+writeFileSync('public/api/index.html', renderPage({
+  title: 'llselect API reference',
+  description: `API reference index for ${pkg.name} and @llselect/angularjs`,
+  nav: navHtml('../', 'API'),
+  toc: null,
+  body: `<h1>API reference</h1>
+<p>llselect v${pkg.version}. The core pages are generated from the TypeScript declarations (TSDoc) at build time, so they cannot drift from the source.</p>
+<ul>
+<li><a href="core.html"><code>@llselect/core</code></a> - the library itself: <code>LLSelectSingle</code> / <code>LLSelectMultiple</code>, every setting, the subclassing surface, and the SVG icon helpers.</li>
+<li><a href="i18n.html"><code>@llselect/core/i18n</code></a> - the UI-translation pack contract and every shipped language pack.</li>
+<li><a href="../angularjs/#attribute-reference"><code>@llselect/angularjs</code></a> - the AngularJS 1.x directives: hand-written attribute reference (markup is not a TypeScript surface).</li>
+</ul>
+`,
+}))
 console.log('build:site: OK (public/)')
