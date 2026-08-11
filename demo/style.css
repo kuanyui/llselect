@@ -75,13 +75,13 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .code-toggle[open] > summary::before { transform: rotate(90deg); }
 
 /* Open code escapes the half-width split: span the full row below the demo
-   pane, summary left-aligned above its code block. */
+   pane. The summary button KEEPS its right-edge position in both states
+   (base rule margin-left: auto) - only the code block widens. */
 .code-toggle[open] {
   grid-column: 1 / -1;
 }
 
 .code-toggle[open] > summary {
-  margin-left: 0;
   margin-bottom: 0.4rem;
 }
 
