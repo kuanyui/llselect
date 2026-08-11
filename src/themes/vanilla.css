@@ -63,6 +63,11 @@
   border: 1px solid #888;
   border-radius: 4px;
   z-index: 1000;
+  /* Explicit even though these match the defaults: in top-layer (popover)
+     mode the UA [popover] chrome (padding: 0.25em; color: CanvasText) would
+     otherwise leak in. Author declarations beat UA styles. */
+  color: inherit;
+  padding: 0;
 }
 
 .llselect-popup[data-placement='above'] {

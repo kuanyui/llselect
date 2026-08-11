@@ -586,6 +586,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   private disabled = false
   private triggerArrowEl: HTMLElement
   private positioner: Positioner | undefined
+  /**
+   * Whether the Popover API exists (feature-detected once per instance).
+   * When true the popup renders in the top layer while open - above every
+   * stacking context, immune to containing-block-creating ancestors - while
+   * staying in place in the DOM. See `docs/llm/DESIGN.md` "In-place popup".
+   */
+  private readonly popoverSupported: boolean
   private itemEls: HTMLElement[] = []
   private focusedEl: HTMLElement | undefined
   /**
@@ -756,6 +763,17 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.popupListEl.style.minHeight = '0'
     this.popupListEl.style.overflowY = 'auto'
 
+    // Top layer via the Popover API where it exists: while open the popup
+    // paints above every stacking context and ignores containing-block
+    // -creating ancestors (transform / filter / contain), WITHOUT moving in
+    // the DOM - so the rootEl.contains checks, inheritance, ARIA wiring and
+    // destroy() hold verbatim. 'manual' on purpose: it disables the
+    // browser's light dismiss, keeping this library's own outside-click /
+    // Esc logic the sole authority. Browsers without the API run the plain
+    // position:fixed path unchanged. See DESIGN.md "In-place popup".
+    this.popoverSupported = typeof this.popupEl.showPopover === 'function'
+    if (this.popoverSupported) { this.popupEl.setAttribute('popover', 'manual') }
+
     this.rootEl.append(this.triggerEl, this.triggerValueEl, this.popupEl)
 
     this.triggerEl.addEventListener('click', () => this.toggle())
@@ -887,6 +905,19 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.popupEl.style.display = 'flex'
     this.popupEl.style.flexDirection = 'column'
     this.popupEl.hidden = false
+    if (this.popoverSupported && this.popupEl.isConnected) {
+      // Enter the top layer BEFORE anything measures: a popover not in its
+      // showing state is `display: none !important` (UA rule), so the
+      // positioner would measure 0. UA `[popover]` also sets `inset: 0`;
+      // the positioner's inline top/left override two edges, but the
+      // remaining `right/bottom: 0` over-constrain the box - and in an RTL
+      // containing block an over-constrained `left` LOSES to `right: 0` -
+      // so neutralize both. (isConnected: showPopover() throws on a
+      // disconnected element; a detached widget is invisible either way.)
+      this.popupEl.showPopover()
+      this.popupEl.style.right = 'auto'
+      this.popupEl.style.bottom = 'auto'
+    }
     this.renderTriggerArrow()
     this.renderPopupList()
     this.positioner = createPositioner(this.triggerEl, this.popupEl, {
@@ -935,6 +966,17 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     this.detachOutsideClick()
     this.detachFocusOut()
     this.popupListEl.replaceChildren()
+    if (this.popoverSupported) {
+      try {
+        this.popupEl.hidePopover()
+      } catch {
+        // Already force-hidden without us (dialog.showModal() hides all
+        // popovers) - hidePopover() then throws InvalidStateError. State
+        // resyncs right here, so nothing else to do.
+      }
+      this.popupEl.style.right = ''
+      this.popupEl.style.bottom = ''
+    }
     this.popupEl.hidden = true
     // Clear inline display + position so the `[hidden]` UA rule can hide the
     // popup cleanly. (Position was set in open() to keep the popup out of

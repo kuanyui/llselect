@@ -163,6 +163,16 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .scroll-spacer-top { height: 16rem; }
 .scroll-spacer-bottom { height: 16rem; }
 
+/* 2.2: creates a fixed-position containing block - the ancestor class the
+   top-layer (Popover API) path is immune to. */
+.transform-container {
+  transform: translateZ(0);
+  border: 1px dashed #c9821a;
+  background: #fffaf0;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
 .page-filler { height: 80vh; }
 
 .theme-picker {

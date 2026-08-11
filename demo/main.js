@@ -122,6 +122,23 @@ const selScroll = new LLSelectSingle(
 )
 selScroll.setItems(COUNTRIES)
 //#endregion
+
+//#region 2.2
+// The mount sits inside a `transform`ed container (.transform-container in
+// style.css) - the ancestor that re-scopes position:fixed. With the Popover
+// API (feature-detected, no setting) the library shows the popup in the top
+// layer, so it still aligns under the trigger and paints above everything;
+// without the API, displacement here is the documented accepted limitation.
+const outTransform = document.getElementById('out-transform')
+const selTransform = new LLSelectSingle(
+  document.getElementById('mount-transform'),
+  {
+    placeholder: 'Open me - popup must align under the trigger',
+    onChange: (v) => { outTransform.textContent = 'chosen: ' + JSON.stringify(v) },
+  }
+)
+selTransform.setItems(COUNTRIES)
+//#endregion
 // Position the select roughly in the middle of the container so scrolling
 // up clips the anchor below the container, and scrolling down clips it above.
 const scrollContainer = document.querySelector('.scroll-container')

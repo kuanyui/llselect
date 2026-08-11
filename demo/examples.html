@@ -117,6 +117,30 @@
         <details class="code-toggle"><summary>code</summary><pre data-demo="2.1"><code></code></pre></details>
       </div>
     </article>
+
+    <article>
+      <h3>2.2 Inside a CSS-transformed container (top layer)</h3>
+      <p class="hint">
+        The amber box has <code>transform: translateZ(0)</code>, which makes it
+        the containing block for <code>position: fixed</code> descendants - the
+        classic ancestor that displaces fixed-positioned popups. In browsers
+        with the Popover API (feature-detected; all current ones) the library
+        renders the popup in the top layer instead: open it - it must align
+        under the trigger and paint above everything. In older browsers this
+        demo shows the documented accepted limitation (the popup lands
+        displaced); see <code>docs/llm/DESIGN.md</code> &rarr; "In-place
+        popup".
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div class="transform-container">
+            <div id="mount-transform"></div>
+          </div>
+          <div class="out" id="out-transform">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="2.2"><code></code></pre></details>
+      </div>
+    </article>
   </section>
 
   <section>
