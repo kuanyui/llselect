@@ -20,13 +20,11 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 > - Unable to accept mouse event when `<select disabled="true">` (to show tooltip to explain why it's disabled, for example).
 >
 > #### Arrrrgh... Yet another select library? Why not existing select libraries? Are you too bored?
-> Arrrrrgh, It's just because **all** of the existing libraries are unable to satisfy my requirements, on aspect of performance, flexibility, and explicitly.
 >
-> At least as of May 2026, this situation was still not solved. The only way was implement one according to my ideal design.
+> Yeeeee, it's just because all of the existing libraries are unable to satisfy my requirements, mainly on aspect of performance, then flexibility, and explicitly.
 >
-> I am also very confusing why I still need to implement such doukangaedemo fundamental basic-of-basic web UI component library in 2026.
->
-> (I've also fallen into self-doubt for years when thinking that why I even had to implement an extremely fundamental feature such as [a "**normally works**" recent file list for a text editor](https://github.com/kuanyui/recentz.el) in 2024.)
+> At least as of May 2026, this situation was still not solved. The only way was implement one to fit my ideal.
+
 
 
 > [!WARNING]
@@ -80,12 +78,13 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
    - Consistent & comprehensible API naming convention, avoid user from guessing the meaning of APIs.
    - *Single-select* and *multiple-select* are separate classes, avoiding ambiguous / over-abstracted APIs (for example, `select2` uses `T[]` adopted on single & multiple modes.).
    - Improves some UI/UX anti-patterns of the legacy `<select>` (e.g. `aria-disabled` instead of native `disabled`, so a disabled control still receives hover events and can show a "why is this disabled" tooltip).
+
 ## Benchmark
 
 > [!NOTE]
 > - Tested on Intel 13900HX, Chromium 149. All libraries are the latest version at 2026-07-16.
 > - All tests are single select.
-> - The following table shows **instantiation** only, other tests (interactions like open popup, filter candidates, choose candidate, ... etc) cannot be accurately benchmarked nor able to be fairly compared across libraries due to the details in implementations of each library. But you still can test by yourself in demo benchmark page, and interact with them and feel the "real experience" instead of relying on inaccurate benchmark results.
+> - The following table shows **instantiation** only, other tests (interactions like open popup, filter candidates, choose candidate, ... etc) cannot be accurately benchmarked nor able to be fairly compared across libraries due to the details in implementations of each library. But you still can test by yourself in benchmark page (Live Benchmark: [GitHub Page](https://kuanyui.github.io/llselect/demo/benchmark.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/benchmark.html). Source Code: [HTML](demo/benchmark.html), [JS](demo/benchmark.js)), and interact with them and feel the "real experience" instead of relying on inaccurate benchmark results.
 
 ### 100 selects x 100 candidates
 
@@ -111,7 +110,8 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 
 ## Demo
 
-- Live: [GitHub Pages](https://kuanyui.github.io/llselect/demo/) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/)
+- Live Example: [GitHub Pages](https://kuanyui.github.io/llselect/demo/) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/)
+- Live Benchmark: [GitHub Pages](https://kuanyui.github.io/llselect/demo/benchmark.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/benchmark.html)
 - AngularJS directives: [GitHub Pages](https://kuanyui.github.io/llselect/demo/angularjs/) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/angularjs/)
 - Local: clone this repo, `npm install && npm run build`, then `npm run serve` and open `http://localhost:8080/demo/`
 - Local, full-site preview: `npm run serve:site` (after `npm run build`) and open `http://localhost:8080/` - builds and serves `public/` exactly as the Pages hosts publish it (landing page, docs, API reference, demos)
@@ -320,23 +320,15 @@ Subclass only when settings cannot express it:
 How the two layers coexist: every customization point is a `protected` method whose default reads its `*Fn` setting. Overriding the method replaces that default - your override wins, plain OO, no hidden precedence. Rationale: [docs/llm/DESIGN.md](docs/llm/DESIGN.md).
 
 
-## Acknowledgment
-
-I have had a idea to implement a JavaScript/TypeScript library by myself at least since 2020, because I had enough of the terrible inflexibility of the HTML native `<select>`, but none of any existing libraries satisfies my requirements. The most significant part is performance issue, the second one is inflexible or ambiguous-semantic APIs which made me headache.
-
-But I clearly know that there are surprisingly lots of details in the behaviours of a select, and deeply know how time-costing implementing it is, so I didn't wrote it.
-
-In 2024 I tried to wrote some drafts for it, but I still had no time to implement it, so the draft was abandoned.
-
-Now, with Claude Code, I am trying to finish it.
+## Acknowledgments
 
 ### LLM Disclosures
 
 This project heavily relies on LLM agents. More than 99% of the working code was written directly by an LLM.
 
-#### So you are just a fucking idiot vibe coder? what on Earth were you responsible for in this project, if LLM has done so much?
+#### So you are just a fucking idiot vibe coder? What on Earth were you responsible for in this project, if LLM has done so much?
 
-1. I review each modifications (before or after `git commit`) via `git diff` as possible as I can, to avoid obvious anti-patterns and bad-smelling code.
+1. I review crucial modifications (before or after `git commit`) via `git diff` as possible as I can, to avoid obvious anti-patterns and bad-smelling code.
 2. I
    - correct unreasonable APIs according to my development experience, trying to avoid the painful APIs and anti-patterns common among existing select UI component libraries,
    - make the technical decisions,
@@ -344,6 +336,23 @@ This project heavily relies on LLM agents. More than 99% of the working code was
    - test on real browsers and OSes (Firefox / Chromium, Linux / Android) and decide the UI/UX details.
 
 I try to provide usable software, but **I still cannot provide any warranty.**
+
+### Special Thanks
+
+The development of `llselect` is influenced by the following FLOSS projects:
+
+- [W3C WAI](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/examples/combobox-select-only/) - provides reference implementations and canonical ARIA usage
+- [`select2`](https://select2.org/) - a popular, long-lived, and very mature select library, as a sophisticated and well-designed a11y reference for a select component. (ARIA semantic, keyboard behaviors)
+
+### Origin of This Project
+
+I have had the idea to implement this library at least since 2020, because I had enough of the terrible inflexibility of the HTML native `<select>`, but none of any existing libraries satisfies my requirements. Especially the performance issue when initializing a page containing hundreds of selects components.
+
+But I clearly know that there are surprisingly lots of details in the behaviours of a select, and deeply know how time-costing to implementing such library, so I didn't try to write it.
+
+In 2024 I tried to wrote some drafts for it, but I still had no time to implement it, so the drafts were abandoned.
+
+Now, with Claude Code, I am trying to finish it. Even with LLM agent, this project still costs me about 3 months to release `v0.0.1`.
 
 ## License
 
