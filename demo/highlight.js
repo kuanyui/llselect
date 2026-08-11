@@ -1,7 +1,8 @@
-// Minimal syntax highlighters for the demo pages. Tokenise left-to-right with a
-// small set of patterns; HTML-escape everything for safety. Good enough for the
-// curated snippets shown here - not real parsers. Output uses the .hl-* classes
-// styled in demo/style.css.
+// Minimal syntax highlighters. Tokenise left-to-right with a small set of
+// patterns; HTML-escape everything for safety. Good enough for the curated
+// snippets shown here - not real parsers. Output uses the .hl-* classes styled
+// in demo/style.css. Consumers: the demo pages at runtime, and
+// scripts/build-site.mjs at build time (fenced blocks of the rendered pages).
 
 const esc = (s) => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
 

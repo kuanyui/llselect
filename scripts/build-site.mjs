@@ -16,6 +16,7 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { posix } from 'node:path'
 import { marked } from 'marked'
+import { highlightJs, highlightHtml } from '../demo/highlight.js'
 
 const REPO_URL = 'https://gitlab.com/kuanyui/llselect'
 const REPO_BLOB = `${REPO_URL}/-/blob/master/`
@@ -48,6 +49,14 @@ marked.use({
       slugCounts.set(id, n + 1)
       if (n > 0) { id = `${id}-${n}` }
       return `<h${depth} id="${id}">${text}</h${depth}>\n`
+    },
+    // Fenced blocks highlight at build time via the demo's own minimal
+    // tokenizers (ts is close enough to js for the curated API examples);
+    // unknown languages render escaped plain.
+    code({ text, lang }) {
+      const escaped = text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
+      const html = (lang === 'js' || lang === 'ts') ? highlightJs(text) : lang === 'html' ? highlightHtml(text) : escaped
+      return `<pre><code>${html}</code></pre>\n`
     },
     // GitHub-style alerts: > [!TIP] etc. Marked has no built-in for them, so a
     // blockquote whose first paragraph opens with the marker becomes a styled
@@ -198,9 +207,15 @@ nav a.repo { margin-left: auto; }
 .subnav a:hover { background: var(--nav-hover); }
 .subnav a.current { background: var(--nav-link); color: var(--bg); }
 a { color: var(--link); }
-pre { padding: 0.8rem; background: var(--muted); overflow-x: auto; }
+/* Fenced blocks: the demo pages' dark One Monokai look, same in both themes */
+pre { padding: 0.8rem 1rem; background: #282c34; color: #abb2bf; border-radius: 4px; overflow-x: auto; font-size: 0.9em; line-height: 1.5; }
 code { background: var(--muted); padding: 0.1em 0.3em; font-size: 0.92em; }
-pre code { padding: 0; }
+pre code { padding: 0; background: transparent; color: inherit; }
+.hl-comment { color: #676f7d; font-style: italic; }
+.hl-string { color: #e6db74; }
+.hl-keyword { color: #f92672; }
+.hl-number { color: #ae81ff; }
+.hl-func { color: #a6e22e; }
 table { border-collapse: collapse; }
 th, td { border: 1px solid var(--line); padding: 0.3em 0.6em; }
 /* Two-column shell for pages with a sidebar outline */
