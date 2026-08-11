@@ -378,22 +378,6 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .demo-subnav a:hover { background: #eef3fb; }
 .demo-subnav a.current { background: #2456a6; color: #fff; }
 
-/* --- card grid (angularjs/index.html overview) ---------------------------- */
-.hub-cmd { background: #f4f4f4; padding: 0.75rem 1rem; border-radius: 6px; overflow-x: auto; }
-.hub-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
-.hub-card {
-  display: block;
-  padding: 1.1rem 1.25rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  text-decoration: none;
-  color: inherit;
-  background: #fff;
-  transition: border-color 0.12s, box-shadow 0.12s;
-}
-.hub-card:hover { border-color: #2456a6; box-shadow: 0 2px 10px rgba(36, 86, 166, 0.12); }
-.hub-card h2 { margin: 0 0 0.4rem; font-size: 1.1rem; color: #2456a6; border: none; padding: 0; }
-.hub-card p { margin: 0; font-size: 0.9rem; color: #444; }
 
 /* --- benchmark (benchmark.html) ----------------------------------------- */
 /* Controls: both sections stack .bench-row lines in a .bench-toolbar (interaction:

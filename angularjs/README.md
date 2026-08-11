@@ -4,8 +4,8 @@
 
 AngularJS 1.x directives for [llselect](../README.md), published as `@llselect/angularjs`. Two independent files: pick the one you need, or use both while migrating.
 
-- GitHub: [Git](https://github.com/kuanyui/llselect/tree/master/angularjs) | [Docs](https://kuanyui.github.io/llselect/angularjs/) | [Demo](https://kuanyui.github.io/llselect/demo/angularjs/)
-- GitLab: [Git](https://gitlab.com/kuanyui/llselect/-/tree/master/angularjs) | [Docs](https://kuanyui.gitlab.io/llselect/angularjs/) | [Demo](https://kuanyui.gitlab.io/llselect/demo/angularjs/)
+- GitHub: [Git](https://github.com/kuanyui/llselect/tree/master/angularjs) | [Docs](https://kuanyui.github.io/llselect/angularjs/) | [Demo](https://kuanyui.github.io/llselect/demo/angularjs/examples.html)
+- GitLab: [Git](https://gitlab.com/kuanyui/llselect/-/tree/master/angularjs) | [Docs](https://kuanyui.gitlab.io/llselect/angularjs/) | [Demo](https://kuanyui.gitlab.io/llselect/demo/angularjs/examples.html)
 
 ```html
 <script src="node_modules/@llselect/core/dist/index.umd.js"></script>
@@ -30,6 +30,16 @@ Every claim below about AngularJS internals was verified against the AngularJS 1
 
 Deeper material lives beside this file, split by who reads it: [`DESIGN.md`](DESIGN.md) is why this package exists at all and why each piece is shaped the way it is; [`SPEC.md`](SPEC.md) is the source-level evidence behind every claim made here, with file:line references into AngularJS and ui-select. If you only want to use the directives, this file is enough.
 
+## Why this exists when React and Vue do not
+
+llselect ships no framework wrappers. All three reasons for that fail for AngularJS specifically:
+
+- **It cannot rot.** AngularJS is end-of-life and frozen, so there is no API churn to chase.
+- **It does not have to guess your data.** The `ng-options` grammar is the app declaring its own item type: `c.id as c.name for c in colors track by c.id` states the label, the identity and the model value in one line.
+- **There is only one way to sync state.** `ngModel` plus the digest - no Pinia / Redux / signals / form-library choice to get wrong.
+
+React and Vue fail the last two (no standard expression grammar, no standard state layer), so the boundary holds for them. This is not an exception carved out of the rule; the rule's premises just do not apply here. The full reasoning and the rejected alternatives: [`DESIGN.md`](DESIGN.md).
+
 ## What this is not
 
 - Not part of `llselect` itself. It is a separate package with its own version, so llselect's build, types and `sideEffects` stay untouched by it.
@@ -43,7 +53,7 @@ Deeper material lives beside this file, split by who reads it: [`DESIGN.md`](DES
 | `llselect-angularjs.js` | `llselect` | `<llselect-single>` / `<llselect-multiple>`, driven by an `ng-options`-style `ll-options` expression. Start here. |
 | `llselect-ui-select.js` | `llselect.uiCompat` | `<ui-llselect>`, which accepts ui-select's call-site markup. For migrating an existing ui-select codebase; needs `llselect-angularjs.js` loaded too. |
 
-Each ships a `.min.js` beside it (built by `npm run build`, terser only - there is no bundler). The live demo and the benchmark are in [`demo/angularjs/`](../demo/angularjs/) and load these files directly, so what the demo shows is what the package ships.
+Each ships a `.min.js` beside it (built by `npm run build`, terser only - there is no bundler). The live [examples](../demo/angularjs/examples.html) and [benchmark](../demo/angularjs/benchmark.html) load these files directly, so what the demo shows is what the package ships.
 
 ## The two `name` attributes
 
