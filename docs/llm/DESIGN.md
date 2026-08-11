@@ -135,6 +135,7 @@ The popup SHELL is built in the constructor and stays in the DOM for the instanc
 - The filter input's always-built rule has its own recorded rationale below ("Filter box (Phase 8) architecture").
 - `setUiTranslationPack` re-applies pack-owned attributes (filter placeholder / fallback `aria-label`) while closed; with a lazily-built shell every such path would need "if built yet" guards.
 - Subclass contract stability: the `create*El` shell hooks are protected extension points with ONE defined call time (construction), not "whenever first open happens".
+- The constant child list is also what makes open / close structurally side-effect-free for the host page - see "In-place popup (no body portal)", host sibling-safety.
 
 ## In-place popup (no body portal)
 
@@ -145,6 +146,7 @@ The popup SHELL is built in the constructor and stays in the DOM for the instanc
 - Inherited context is right for free: themes set font / color on `.llselect-root`, and direction comes from the environment's `dir` (see "RTL" - there is no RTL setting). A portaled popup inherits BODY's context and must copy all of it over.
 - Reading order: the popup sits immediately after the trigger for AT virtual cursors.
 - Top-layer compatibility: inside an open native `<dialog>`, an in-subtree popup renders within the dialog's top-layer context, while a body-portaled popup renders UNDER the dialog and its `::backdrop` - the classic portal-in-dialog failure. In-place is the arrangement that keeps working there.
+- Host sibling-safety: the caller's element BECOMES the root (nothing is ever inserted next to it), and the root's child list is invariant from construction to destroy - the popup shell exists from the start, `hidden` while closed, out-of-flow (`position: fixed`, set BEFORE unhiding) while open. So sibling-dependent CSS in the host layout (`:nth-child`, `.btn + .btn`, `:first/last-child` - the uib-tooltip-in-a-btn-group / select2-inserted-container breakage class, where SHOWING the popup inserts an element next to the trigger and reflows the host) never flips on open / close. Pinned by `test/structure.test.ts`.
 
 Accepted costs - two classes, both solved by the planned top-layer enhancement (`TODO.md` "Popup top layer via Popover API"), neither fully by a body portal:
 
