@@ -4,7 +4,7 @@ import { setupDom } from '../test-utils/dom.js'
 import {
   createChevronDownSvgEl,
   createTriangleDownSvgEl,
-  createCheckSvgEl,
+  createCheckmarkSvgEl,
   createOutlinedCheckboxSvgEl,
   createFilledCheckboxSvgEl,
 } from '../src/icons.js'
@@ -31,9 +31,9 @@ test('createTriangleDownSvgEl returns an SVG element with currentColor', () => {
   assert.equal(svg.querySelector('path')?.getAttribute('fill'), 'currentColor')
 })
 
-test('createCheckSvgEl returns an SVG element with currentColor + aria-hidden', () => {
+test('createCheckmarkSvgEl returns an SVG element with currentColor + aria-hidden', () => {
   setupDom()
-  const svg = createCheckSvgEl()
+  const svg = createCheckmarkSvgEl()
   assert.equal(svg.tagName.toLowerCase(), 'svg')
   assert.equal(svg.getAttribute('aria-hidden'), 'true')
   assert.equal(svg.querySelector('path')?.getAttribute('fill'), 'currentColor')

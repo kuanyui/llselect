@@ -75,7 +75,7 @@ By RETURN TYPE (behaviour, not input):
 | protected x3 | `afterItemsChange`                       | `onItemsChanged`                                                      |
 | public       | `triangleDownSvg`                        | `createTriangleDownSvgEl`                                             |
 | public       | `chevronDownSvg`                         | `createChevronDownSvgEl`                                              |
-| public       | `checkSvg`                               | `createCheckSvgEl`                                                    |
+| public       | `checkSvg`                               | `createCheckmarkSvgEl`                                                    |
 | public       | `checkboxSvg`                            | `createCheckboxSvgEl`                                                 |
 | setting      | `renderArrowFn`                          | `createArrowElFn`                                                     |
 | setting      | `renderTriggerContentFn`                 | `createTriggerContentElFn` (narrowed to element-only)                 |

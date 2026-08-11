@@ -1,5 +1,5 @@
 // Opt-in icon helpers. None of these is used by the library by default; pass
-// the arrow ones via `settings.createTriggerArrowContentElFn`, or use the check / checkbox
+// the arrow ones via `settings.createTriggerArrowContentElFn`, or use the checkmark / checkbox
 // ones inside a custom item renderer (override `createItemEl` / `itemToString`)
 // so people who do not want to pull in mdi / FontAwesome still get sensible
 // built-ins. All paths use fill="currentColor" so they inherit the
@@ -58,7 +58,7 @@ export function createChevronDownSvgEl(opts: IconOptions = {}): SVGElement {
  * mode, or as a lightweight chosen marker in multi mode.
  * @category Icons
  */
-export function createCheckSvgEl(opts: IconOptions = {}): SVGElement {
+export function createCheckmarkSvgEl(opts: IconOptions = {}): SVGElement {
   return createSvgEl(
     '0 0 24 24',
     'M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z',

@@ -42,7 +42,7 @@ export type { WidthPolicy, Placement } from './positioning.js'
 export {
   createChevronDownSvgEl,
   createTriangleDownSvgEl,
-  createCheckSvgEl,
+  createCheckmarkSvgEl,
   createOutlinedCheckboxSvgEl,
   createFilledCheckboxSvgEl,
 } from './icons.js'
