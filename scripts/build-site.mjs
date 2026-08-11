@@ -133,7 +133,7 @@ function buildTocHtml(body) {
     if (isSection) { return `<li class="toc-section">${link}${inner}</li>` }
     return `<li><details><summary>${CHEVRON}${link}</summary>${inner}</details></li>`
   }
-  const html = `<aside class="toc">
+  const html = `<aside class="toc" id="toc" tabindex="-1" aria-label="Table of contents">
 <input type="search" placeholder="Filter" aria-label="Filter the table of contents">
 <button type="button" class="toc-fold">${FOLD_ICON}Fold all</button>
 <ul class="toc-tree">${root.children.map((c) => render(c, true)).join('\n')}</ul>
@@ -183,8 +183,8 @@ function renderPage({ title, description, nav, body, toc, subnav = null }) {
 <meta name="description" content="${description}">
 <title>${title}</title>
 <style>
-:root { color-scheme: light dark; --fg: #1a1a1a; --fg-muted: #656565; --bg: #ffffff; --muted: #f4f4f4; --line: #d0d0d0; --link: #0550ae; --nav-link: #2456a6; --nav-hover: #eef3fb; }
-@media (prefers-color-scheme: dark) { :root { --fg: #d8d8d8; --fg-muted: #9a9a9a; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --nav-link: #7fb1f5; --nav-hover: #263344; } }
+:root { color-scheme: light dark; --fg: #1a1a1a; --fg-muted: #656565; --bg: #ffffff; --muted: #f4f4f4; --line: #d0d0d0; --link: #0550ae; --nav-link: #2456a6; --nav-hover: #eef3fb; --mark: #ffe066; }
+@media (prefers-color-scheme: dark) { :root { --fg: #d8d8d8; --fg-muted: #9a9a9a; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --nav-link: #7fb1f5; --nav-hover: #263344; --mark: rgba(187, 128, 9, 0.45); } }
 body { margin: 0 auto; padding: 0 1rem 4rem; max-width: 52rem; font: 16px/1.6 system-ui, sans-serif; color: var(--fg); background: var(--bg); }
 /* Explicit heading scale: browser defaults shrink h5/h6 BELOW body text,
    which the API pages (members are h5) cannot live with. */
@@ -254,11 +254,24 @@ body.with-toc { max-width: 78rem; }
 /* leaf rows text-align with their chevron'd siblings at any level */
 .toc-tree li > a { margin-left: 1.5rem; }
 .toc summary a { margin-left: 0; }
+/* filter-match highlight; --mark swaps for the dark scheme */
+.toc mark { padding: 0; border-radius: 2px; background: var(--mark); color: inherit; }
+/* Narrow screens: the sidebar becomes a left off-canvas drawer behind a
+   fixed "Sections" button (button + backdrop injected by the toc script). */
+.toc-toggle { display: none; }
+.toc-backdrop { display: none; }
 @media (max-width: 62rem) {
   body.with-toc { max-width: 52rem; }
   .layout { display: block; }
-  .toc { display: none; }
+  .toc { position: fixed; top: 0; bottom: 0; left: 0; z-index: 3000; width: min(19rem, 85vw); max-height: none; margin: 0; padding: 1rem 1rem 2rem; background: var(--bg); border-right: 1px solid var(--line); box-shadow: 0 0 24px rgba(0, 0, 0, 0.35); transform: translateX(-100%); visibility: hidden; transition: transform 0.2s ease, visibility 0.2s; }
+  body.toc-open .toc { transform: none; visibility: visible; }
+  body.toc-open { overflow: hidden; } /* page stays put while the drawer scrolls */
+  .toc-toggle { display: flex; align-items: center; gap: 0.4rem; position: fixed; left: 1rem; bottom: 1rem; z-index: 1500; padding: 0.45rem 0.9rem; font: inherit; font-weight: 600; color: var(--nav-link); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+  .toc-toggle svg { width: 1.1em; height: 1.1em; }
+  .toc-backdrop { display: block; position: fixed; inset: 0; z-index: 2900; background: rgba(0, 0, 0, 0.4); }
+  .toc-backdrop[hidden] { display: none; }
 }
+@media (prefers-reduced-motion: reduce) { .toc { transition: none; } }
 .md-alert { margin: 1rem 0; padding: 0.1rem 1rem; border-left: 0.25rem solid var(--alert, var(--line)); }
 .md-alert-title { display: flex; align-items: center; gap: 0.4em; font-weight: 600; color: var(--alert); }
 .md-alert-title svg { width: 1.125em; height: 1.125em; flex: none; }
@@ -313,11 +326,18 @@ if (location.hostname.includes('gitlab')) {
 }
 </script>
 ${toc ? `<script>
-// Sidebar outline: scroll tracking + text filter. No dependencies.
+// Sidebar outline: scroll tracking + text filter + narrow-screen drawer. No
+// dependencies.
 {
   const toc = document.querySelector('.toc')
+  const drawerMq = window.matchMedia('(max-width: 62rem)')
+  const isOpen = () => document.body.classList.contains('toc-open')
   const links = new Map()
-  for (const a of toc.querySelectorAll('a')) { links.set(decodeURIComponent(a.hash.slice(1)), a) }
+  const linkTexts = new Map() // toc link -> plain text (filter re-renders with <mark>s)
+  for (const a of toc.querySelectorAll('a')) {
+    links.set(decodeURIComponent(a.hash.slice(1)), a)
+    linkTexts.set(a, a.textContent)
+  }
   const heads = [...document.querySelectorAll('main h2[id], main h3[id], main h4[id], main h5[id], main h6[id]')].filter((h) => links.has(h.id))
   const openChain = (link) => {
     for (let d = link.closest('details'); d; d = d.parentElement.closest('details')) { d.open = true }
@@ -340,7 +360,9 @@ ${toc ? `<script>
     if (link) {
       link.classList.add('active')
       openChain(link)
-      link.scrollIntoView({ block: 'nearest' })
+      // keep the highlight visible inside the sidebar's own overflow; skip
+      // while the drawer sits closed off-screen
+      if (!drawerMq.matches || isOpen()) { link.scrollIntoView({ block: 'nearest' }) }
     }
   }
   window.addEventListener('scroll', () => { window.requestAnimationFrame(sync) }, { passive: true })
@@ -351,12 +373,34 @@ ${toc ? `<script>
     const a = ev.target.closest('summary a')
     if (a) { const d = a.closest('details'); window.requestAnimationFrame(() => { d.open = true }) }
   })
+  // Ancestors stay visible around a match (a parent li's textContent includes
+  // its subtree), so the match itself is wrapped in <mark>s to show WHY a row
+  // survived the filter.
+  const renderLinkText = (a, q) => {
+    const text = linkTexts.get(a)
+    if (q === '') {
+      a.textContent = text
+      return
+    }
+    const lower = text.toLowerCase()
+    a.replaceChildren()
+    let from = 0
+    for (let hit = lower.indexOf(q); hit !== -1; hit = lower.indexOf(q, hit + q.length)) {
+      a.append(text.slice(from, hit))
+      const mark = document.createElement('mark')
+      mark.textContent = text.slice(hit, hit + q.length)
+      a.append(mark)
+      from = hit + q.length
+    }
+    a.append(text.slice(from))
+  }
   const filter = toc.querySelector('input')
   filter.addEventListener('input', () => {
     const q = filter.value.trim().toLowerCase()
     for (const li of toc.querySelectorAll('li')) {
       li.hidden = q !== '' && !li.textContent.toLowerCase().includes(q)
     }
+    for (const a of linkTexts.keys()) { renderLinkText(a, q) }
     if (q !== '') {
       for (const d of toc.querySelectorAll('details')) { d.open = true }
     } else {
@@ -369,8 +413,48 @@ ${toc ? `<script>
   toc.querySelector('.toc-fold').addEventListener('click', () => {
     filter.value = ''
     for (const li of toc.querySelectorAll('li')) { li.hidden = false }
+    for (const a of linkTexts.keys()) { renderLinkText(a, '') }
     for (const d of toc.querySelectorAll('details')) { d.open = false }
   })
+  // Narrow screens: off-canvas drawer chrome. Injected here so a no-JS page
+  // never shows a dead button.
+  const toggle = document.createElement('button')
+  toggle.type = 'button'
+  toggle.className = 'toc-toggle'
+  toggle.setAttribute('aria-controls', 'toc')
+  toggle.setAttribute('aria-expanded', 'false')
+  // mdi table-of-contents (MIT), same source as the other site icons
+  toggle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3,9H17V7H3V9M3,13H17V11H3V13M3,17H17V15H3V17M19,17H21V15H19V17M19,7V9H21V7H19M19,13H21V11H19V13Z"/></svg>Sections'
+  const backdrop = document.createElement('div')
+  backdrop.className = 'toc-backdrop'
+  backdrop.hidden = true
+  document.body.append(toggle, backdrop)
+  const openDrawer = () => {
+    document.body.classList.add('toc-open')
+    backdrop.hidden = false
+    toggle.setAttribute('aria-expanded', 'true')
+    if (activeLink) {
+      openChain(activeLink)
+      activeLink.scrollIntoView({ block: 'nearest' })
+    }
+    toc.focus({ preventScroll: true })
+  }
+  const closeDrawer = (refocusToggle) => {
+    document.body.classList.remove('toc-open')
+    backdrop.hidden = true
+    toggle.setAttribute('aria-expanded', 'false')
+    if (refocusToggle) { toggle.focus() }
+  }
+  toggle.addEventListener('click', () => { if (isOpen()) { closeDrawer(true) } else { openDrawer() } })
+  backdrop.addEventListener('click', () => { closeDrawer(false) })
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape' && isOpen()) { closeDrawer(true) }
+  })
+  toc.addEventListener('click', (ev) => {
+    if (ev.target.closest('a') && drawerMq.matches) { closeDrawer(false) }
+  })
+  // Widening past the breakpoint while open would leave body scroll locked.
+  drawerMq.addEventListener('change', () => { closeDrawer(false) })
 }
 </script>` : ''}
 </body>
