@@ -43,3 +43,7 @@ tag: ## annotated v<version> tag on HEAD, pushed to both remotes
 
 release: check-version login push publish tag ## the whole flow: guard, auth, push, publish, tag
 	@echo "released: @llselect/core@$$(npm view @llselect/core version) @llselect/angularjs@$$(npm view @llselect/angularjs version)"
+
+
+server:    ## Build and serve the home page at localhost.
+	npm run 'serve:site'
