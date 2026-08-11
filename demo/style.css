@@ -354,6 +354,30 @@ section { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .demo-nav a:hover { background: #eef3fb; }
 .demo-nav a.current { background: #2456a6; color: #fff; }
 
+/* second nav tier (AngularJS section): identity label + in-section items */
+.demo-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  margin: -1rem 0 1.5rem;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.92em;
+  background: #f4f4f4;
+  border-radius: 6px;
+}
+.demo-subnav .subnav-label { display: flex; align-items: center; gap: 0.3rem; margin-right: 0.5rem; font-weight: 600; }
+.demo-subnav .subnav-label svg { width: 1.15em; height: 1.15em; color: #dd1b16; }
+.demo-subnav a {
+  padding: 0.25rem 0.7rem;
+  color: #2456a6;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.demo-subnav a:hover { background: #eef3fb; }
+.demo-subnav a.current { background: #2456a6; color: #fff; }
+
 /* --- card grid (angularjs/index.html overview) ---------------------------- */
 .hub-cmd { background: #f4f4f4; padding: 0.75rem 1rem; border-radius: 6px; overflow-x: auto; }
 .hub-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem; }

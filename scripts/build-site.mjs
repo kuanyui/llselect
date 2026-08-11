@@ -144,7 +144,24 @@ function navHtml(prefix, current) {
   return items.join('\n')
 }
 
-function renderPage({ title, description, nav, body, toc }) {
+// Second nav tier for the AngularJS section: the main nav marks the section
+// ("AngularJS" current), this bar identifies it (logo label) and navigates
+// within it. The demo pages carry the same bar statically (.demo-subnav).
+// mdi angularjs (MIT), extracted from @mdi/js.
+const ANGULARJS_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12,2.5L20.84,5.65L19.5,17.35L12,21.5L4.5,17.35L3.16,5.65L12,2.5M12,4.5L5,7L6.08,16.22L12,19.5L17.92,16.22L19,7L12,4.5M12,5.72L16.58,16H14.87L13.94,13.72H10.04L9.12,16H7.41L12,5.72M13.34,12.3L12,9.07L10.66,12.3H13.34Z"/></svg>'
+function angularjsSubnavHtml(prefix, current) {
+  const items = [
+    ['Docs', `${prefix}angularjs/`],
+    ['Overview', `${prefix}demo/angularjs/`],
+    ['Examples', `${prefix}demo/angularjs/examples.html`],
+    ['Benchmark', `${prefix}demo/angularjs/benchmark.html`],
+  ]
+  return `<nav class="subnav"><span class="subnav-label">${ANGULARJS_ICON}AngularJS 1.x</span>
+${items.map(([label, href]) => `<a href="${href}"${label === current ? ' class="current"' : ''}>${label}</a>`).join('\n')}
+</nav>`
+}
+
+function renderPage({ title, description, nav, body, toc, subnav = null }) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -174,6 +191,13 @@ nav a { padding: 0.35rem 0.8rem; color: var(--nav-link); text-decoration: none; 
 nav a:hover { background: var(--nav-hover); }
 nav a.current { background: var(--nav-link); color: var(--bg); }
 nav a.repo { margin-left: auto; }
+/* Second nav tier (AngularJS section): identity label + in-section items */
+.subnav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; margin: -1rem 0 1.5rem; padding: 0.4rem 0.5rem; font-size: 0.92em; background: var(--muted); border-radius: 6px; }
+.subnav-label { display: flex; align-items: center; gap: 0.3rem; margin-right: 0.5rem; font-weight: 600; }
+.subnav-label svg { width: 1.15em; height: 1.15em; color: #dd1b16; }
+.subnav a { padding: 0.25rem 0.7rem; color: var(--nav-link); text-decoration: none; border-radius: 4px; font-weight: 600; }
+.subnav a:hover { background: var(--nav-hover); }
+.subnav a.current { background: var(--nav-link); color: var(--bg); }
 a { color: var(--link); }
 pre { padding: 0.8rem; background: var(--muted); overflow-x: auto; }
 code { background: var(--muted); padding: 0.1em 0.3em; font-size: 0.92em; }
@@ -232,6 +256,7 @@ body.with-toc { max-width: 78rem; }
 <nav>
 ${nav}
 </nav>
+${subnav ?? ''}
 ${toc ? `<div class="layout">
 ${toc}
 <main>
@@ -320,11 +345,11 @@ ${toc ? `<script>
 `
 }
 
-function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links, toc = false }) {
+function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links, toc = false, subnav = null }) {
   slugCounts.clear()
   let body = marked.parse(readFileSync(mdPath, 'utf8'))
   body = links ? links(body) : rewriteLinks(body, posix.dirname(mdPath).replace(/^\.$/, ''))
-  writeFileSync(outPath, renderPage({ title, description, nav: navHtml(prefix, current), body, toc: toc ? buildTocHtml(body) : null }))
+  writeFileSync(outPath, renderPage({ title, description, nav: navHtml(prefix, current), body, toc: toc ? buildTocHtml(body) : null, subnav }))
 }
 
 // The API pages come out of typedoc (markdown, one page per module, written to
@@ -351,7 +376,7 @@ function makeApiLinkRewriter(mdDir) {
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
 const ngPkg = JSON.parse(readFileSync('angularjs/package.json', 'utf8'))
 renderMarkdownPage('README.md', 'public/index.html', { title: 'llselect', description: pkg.description, prefix: './', current: 'Home' })
-renderMarkdownPage('angularjs/README.md', 'public/angularjs/index.html', { title: 'llselect + AngularJS 1.x', description: ngPkg.description, prefix: '../', current: null })
+renderMarkdownPage('angularjs/README.md', 'public/angularjs/index.html', { title: 'llselect + AngularJS 1.x', description: ngPkg.description, prefix: '../', current: 'AngularJS', subnav: angularjsSubnavHtml('../', 'Docs') })
 
 if (!existsSync('.build/api-md/@llselect/core.md')) {
   throw new Error('.build/api-md/ is missing: the build:site npm script runs typedoc first')
