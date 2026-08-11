@@ -834,21 +834,3 @@ for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
   if (target) target.innerHTML = highlightJs(dataSrc)
 }
 
-// Auto table of contents: id every section from its <h2>, then fill the sticky
-// #toc nav (top-level sections only). Stays in sync as demos are added/removed.
-{
-  const toc = document.getElementById('toc')
-  const panel = document.getElementById('toc-panel')
-  const slugify = (t) => t.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-  document.querySelectorAll('section').forEach((sec) => {
-    const h2 = sec.querySelector('h2')
-    if (!h2) { return }
-    sec.id = slugify(h2.textContent)
-    const a = document.createElement('a')
-    a.href = `#${sec.id}`
-    a.textContent = h2.textContent
-    a.addEventListener('click', () => { panel.open = false })
-    toc.appendChild(a)
-  })
-}
-

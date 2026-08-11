@@ -22,6 +22,11 @@
     <a href="benchmark.html">Benchmark</a>
   </nav>
 
+  <!-- ../toc.js injects the TOC sidebar into .page-layout; without JS this
+       stays a plain single-column page. Content is intentionally not
+       re-indented for the wrappers. -->
+  <div class="page-layout">
+  <main>
   <h1>llselect + AngularJS 1.x - examples</h1>
   <p>
     Example directives, not a supported wrapper. Copy
@@ -272,6 +277,8 @@
     <details class="code-toggle"><summary>ui-llselect.js - the ui-select-shaped bridge</summary><pre><code id="src-ui-llselect"></code></pre></details>
     <details class="code-toggle"><summary>app.js - this demo's own controller</summary><pre><code id="src-app"></code></pre></details>
   </section>
+  </main>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/angular@1.8.3/angular.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/angular-sanitize@1.8.3/angular-sanitize.min.js"></script>
@@ -288,5 +295,6 @@
   <!-- Source display only. A module script so it can share the demo's
        highlighter; it runs after the classic scripts above. -->
   <script type="module" src="source-view.js"></script>
+  <script type="module" src="../toc.js"></script>
 </body>
 </html>

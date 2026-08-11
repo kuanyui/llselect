@@ -22,10 +22,6 @@
       <option value="bootstrap-4">Bootstrap 4</option>
       <option value="bootstrap-5">Bootstrap 5</option>
     </select>
-    <details id="toc-panel">
-      <summary>Sections</summary>
-      <nav id="toc"></nav>
-    </details>
     <details id="data-panel">
       <summary>Show data.js</summary>
       <pre><code id="data-source"></code></pre>
@@ -40,6 +36,11 @@
     <a href="../angularjs/">AngularJS</a>
   </nav>
 
+  <!-- toc.js injects the TOC sidebar into .page-layout; without JS this
+       stays a plain single-column page. Content is intentionally not
+       re-indented for the wrappers. -->
+  <div class="page-layout">
+  <main>
   <h1>llselect demo - examples</h1>
   <p>Run <code>npm run build</code>, then <code>npm run serve</code>, and open <code>/demo/</code>.</p>
 
@@ -809,7 +810,10 @@
       <details class="code-toggle"><summary>code</summary><pre data-demo="13.2"><code></code></pre></details>
     </article>
   </section>
+  </main>
+  </div>
 
   <script type="module" src="main.js"></script>
+  <script type="module" src="toc.js"></script>
 </body>
 </html>
