@@ -103,6 +103,11 @@ export interface CheckboxIconOptions extends IconOptions {
   state?: CheckboxState | 'none' | 'some' | 'all'
 }
 
+/** Map the select-all row's chosen-state vocabulary onto the icon vocabulary. */
+function resolveCheckboxState(raw: NonNullable<CheckboxIconOptions['state']>): CheckboxState {
+  return raw === 'none' ? 'unchecked' : raw === 'some' ? 'indeterminate' : raw === 'all' ? 'checked' : raw
+}
+
 /**
  * Outlined checkbox icon: box border with the tick (`checked`) / dash
  * (`indeterminate`) drawn inside, all in `currentColor`; the filled twin is
@@ -111,11 +116,6 @@ export interface CheckboxIconOptions extends IconOptions {
  * carried by `aria-selected` on the item or `aria-checked` on the control.
  * @category Icons
  */
-/** Map the select-all row's chosen-state vocabulary onto the icon vocabulary. */
-function resolveCheckboxState(raw: NonNullable<CheckboxIconOptions['state']>): CheckboxState {
-  return raw === 'none' ? 'unchecked' : raw === 'some' ? 'indeterminate' : raw === 'all' ? 'checked' : raw
-}
-
 export function createOutlinedCheckboxSvgEl(opts: CheckboxIconOptions = {}): SVGElement {
   const state = resolveCheckboxState(opts.state ?? 'unchecked')
   return createSvgEl('0 0 24 24', OUTLINED_CHECKBOX_PATHS[state], opts.size ?? 16)

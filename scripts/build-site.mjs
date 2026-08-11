@@ -401,6 +401,12 @@ for (const [md, out, title, toc] of API_PAGES) {
   renderMarkdownPage(`.build/api-md/${md}`, `public/api/${out}`, {
     title, description: `API reference for ${pkg.name} - generated from the TypeScript declarations`, prefix: '../', current: 'API', links: makeApiLinkRewriter(posix.dirname(md).replace(/^\.$/, '')), toc,
   })
+  // The categorization is total by design: an "Other" bucket means some public
+  // export or member lost its @category (e.g. a helper inserted between a
+  // docstring and its declaration). Fail the build instead of shipping it.
+  if (/<h\d id="other(-\d+)?">Other<\/h\d>/.test(readFileSync(`public/api/${out}`, 'utf8'))) {
+    throw new Error(`build:site: public/api/${out} has an "Other" category - a public export or member is missing its @category tag`)
+  }
 }
 // The API landing page is site chrome, not typedoc output: it orients across
 // the generated module pages AND the hand-written AngularJS reference.
