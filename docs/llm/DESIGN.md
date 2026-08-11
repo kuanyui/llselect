@@ -268,12 +268,14 @@ Same trick as the arrow: clear and arrow are separate slots, so `createTriggerCo
 
 ## Popup width policy
 
-Two policies, chosen by the `popupWidthPolicy` setting; `'match-trigger'` is the default.
+Two policies, chosen by the `popupWidthPolicy` setting; `'fit-content'` is the default.
 
-- `'match-trigger'` (default): the positioner sets `popupEl.style.width` to the trigger's measured width on every reposition (`positioning.ts`). Long items wrap (themes default to `white-space: normal`).
-- `'fit-content'` (opt-in): the popup grows to its content's natural width, shifted and clamped against the viewport (details under Rationale, point 5).
+- `'fit-content'` (default): the popup grows to its content's natural width, never narrower than the trigger (`max(trigger, natural)`), shifted and clamped against the viewport (details under Rationale, point 5).
+- `'match-trigger'` (opt-in): the positioner sets `popupEl.style.width` to the trigger's measured width on every reposition (`positioning.ts`). Long items wrap (themes default to `white-space: normal`).
 
 Under either policy, long chosen text in the trigger is ellipsized (`overflow: hidden; text-overflow: ellipsis` on `.llselect-trigger-content`), and the library never touches the trigger's own width.
+
+The default was `'match-trigger'` originally; it flipped to `'fit-content'` for native parity - per the table below, a content-sized popup is what the native control does (Chromium / macOS), while `'match-trigger'` is select2's convention, not the native control's. The two render identically whenever the widest item fits inside the trigger (`max(trigger, natural) = trigger`), so the flip only shows in the case where labels overflow the trigger - exactly where `'match-trigger'` wraps them. Cost accepted with the flip: `'fit-content'` re-measures the popup's max-content width on every reposition, one extra forced layout per scroll tick while open; caching it per content change is an open item in `TODO.md`.
 
 ### Empirical baselines
 
@@ -285,14 +287,14 @@ Tested 2026 against the native control and select2 on Firefox + Chromium. Captur
 | native `<select>`, CSS width set | fixed by CSS, overflow clipped (no ellipsis) | Chromium: independent of trigger, can overflow viewport. Firefox: popup content gets trimmed. | n/a / depends on browser | clipped |
 | select2, no CSS width | grows to fit widest item | matches trigger (with an internal JS cap around ~1021px; appears built-in) | wrap; trigger gets ellipsis if wider than the cap | n/a / ellipsis past cap |
 | select2, CSS width set | fixed by CSS, overflow ellipsized | matches trigger | wrap (potentially many lines) | ellipsis |
-| **llselect** | fixed by CSS only - library never auto-fits to widest item | default `match-trigger`: = trigger width (positioner inline `width`); opt-in `fit-content`: content's natural width, viewport-clamped | wrap (default theme) | ellipsis (default theme) |
+| **llselect** | fixed by CSS only - library never auto-fits to widest item | default `fit-content`: content's natural width, never narrower than trigger, viewport-clamped; opt-in `match-trigger`: = trigger width (positioner inline `width`) | full width shown (default); wrap under `match-trigger` | ellipsis (default theme) |
 
 ### Rationale
 
-1. **Predictable.** Trigger width is whatever the user's CSS says it is; the library never measures items and never auto-resizes the trigger or the popup. No "popup randomly wide because one row is long" surprise.
-2. **No viewport-overflow surprise.** Under the default `match-trigger` the popup never sticks out horizontally past the trigger's footprint; `fit-content` may grow past it but shifts and clamps against the viewport instead of overflowing it.
-3. **Long-text full-fidelity by default.** Items wrap rather than truncate, so no information is hidden behind a hover tooltip.
-4. **Users opt in to other policies via their own CSS** - e.g. set `.llselect-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }`. The library deliberately does NOT auto-set a `title` attribute on items so it never fights third-party tooltip libraries (Tippy / Floating UI / etc.). Users who pick ellipsis-on-items pick their own tooltip mechanism (subclass adding `el.title`, or a custom tooltip lib, or none at all).
-5. **Popup-only width opt-in is available via setting** `popupWidthPolicy: 'match-trigger' | 'fit-content'` (default `'match-trigger'`). `'fit-content'` lets the popup grow to its content's natural width; if the popup would overflow the viewport's right edge it shifts left automatically (so `popup.x` can become smaller than `trigger.x`), and the popup's width is clamped to `viewport - 2 * VIEWPORT_PADDING`. The setting NEVER touches the trigger's width - that stays entirely CSS-driven.
+1. **Predictable trigger.** Trigger width is whatever the user's CSS says it is; the library never measures items to auto-resize the trigger. The popup does size to content by default - that is the point of `fit-content` - but it is a fixed-position overlay, so its width never reflows the page.
+2. **No viewport-overflow surprise.** The native content-sized popup can escape the viewport (Chromium); `fit-content` instead shifts left when the right edge would overflow (so `popup.x` can become smaller than `trigger.x`) and clamps width to `viewport - 2 * VIEWPORT_PADDING`. Opt-in `match-trigger` never sticks out past the trigger's footprint at all.
+3. **Long-text full-fidelity by default.** Under the default the full label simply shows (the popup grows); under `match-trigger` items wrap rather than truncate. Either way no information is hidden behind a hover tooltip.
+4. **Users opt in to other policies via their own CSS** - e.g. set `.llselect-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }` (pair it with `match-trigger`: a content-fitted popup never overflows its labels, so ellipsis would stay dead). The library deliberately does NOT auto-set a `title` attribute on items so it never fights third-party tooltip libraries (Tippy / Floating UI / etc.). Users who pick ellipsis-on-items pick their own tooltip mechanism (subclass adding `el.title`, or a custom tooltip lib, or none at all).
+5. **The edge-aligned look stays one setting away**: `popupWidthPolicy: 'fit-content' | 'match-trigger'` (default `'fit-content'`). `'match-trigger'` pins the popup to the trigger's measured width - the select2-style aligned-edges convention. The setting NEVER touches the trigger's width - that stays entirely CSS-driven.
 
 The trigger ellipsizes its chosen-text by default in every shipped theme (`.llselect-trigger-content { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }`). This is non-negotiable in the default themes because a wrapping trigger looks broken; user themes can override if they genuinely want a multi-line trigger.

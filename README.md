@@ -246,7 +246,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Disabling - whole control / per item | `setDisabled()`, `focusableWhenDisabled`, `itemDisabledFn`                                                               |
 | Grouping (optgroup)                  | `itemToGroupKeyFn`, `groupKeyToLabelFn`, `groupDisabledFn`                                                               |
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `selectAllRow`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
-| Popup width                          | `popupWidthPolicy: 'match-trigger' \| 'fit-content'`                                                                     |
+| Popup width                          | `popupWidthPolicy: 'fit-content' \| 'match-trigger'` (default `'fit-content'` - grows to content like a native select)   |
 | Rich rendering without subclassing   | `createItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
 | i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir` |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |

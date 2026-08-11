@@ -360,10 +360,14 @@
   <section>
     <h2>6. Width policy: trigger and popup</h2>
     <p class="hint">
-      The library never sets widths. Trigger width comes from your CSS; popup
-      always matches trigger; chosen text in trigger ellipsizes; long labels
-      in popup wrap. Full rationale: <code>docs/llm/DESIGN.md</code> &rarr;
-      "Popup width policy".
+      The library never sets the trigger's width - that comes from your CSS,
+      and the chosen text in it ellipsizes. The popup defaults to
+      <code>popupWidthPolicy: 'fit-content'</code>: it grows to its content,
+      never narrower than the trigger, shifted and clamped inside the
+      viewport - the native <code>&lt;select&gt;</code> dropdown behavior.
+      <code>'match-trigger'</code> pins the popup to the trigger's width
+      instead (long labels wrap). Full rationale:
+      <code>docs/llm/DESIGN.md</code> &rarr; "Popup width policy".
     </p>
 
     <article>
@@ -387,53 +391,58 @@
     </article>
 
     <article>
-      <h3>6.2 Constrained trigger: long labels wrap; trigger ellipsizes the chosen text</h3>
+      <h3>6.2 Constrained trigger, default policy: popup grows beyond the trigger</h3>
       <p class="hint">
-        <strong>Demo CSS:</strong> <code>#mount-long-wrap { max-width: 18rem }</code>.
-        Longest label preselected, so trigger shows <code>...</code> on load.
-        Open the popup - long labels wrap to multiple lines.
+        <strong>Demo CSS:</strong> <code>#mount-long-fitcontent { max-width: 18rem }</code>.
+        Longest label preselected, so the trigger shows <code>...</code> on
+        load. Open the popup - the default <code>'fit-content'</code> expands
+        it to the widest label, like a native <code>&lt;select&gt;</code>.
+        If the trigger is near the viewport's right edge, the popup
+        auto-shifts left (its <code>x</code> can drop below the trigger's),
+        and width clamps to the viewport.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
-          <div id="mount-long-wrap"></div>
-          <div class="out" id="out-long-wrap">chosen: (none)</div>
+          <div id="mount-long-fitcontent"></div>
+          <div class="out" id="out-long-fitcontent">chosen: (none)</div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="6.2"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>6.3 Constrained trigger + opt-in ellipsis on labels</h3>
+      <h3>6.3 <code>popupWidthPolicy: 'match-trigger'</code>: long labels wrap</h3>
       <p class="hint">
-        <strong>Demo CSS:</strong> same <code>max-width: 18rem</code>, plus
-        <code>#mount-long-ellipsis .llselect-item { text-overflow: ellipsis }</code>.
-        Library does not auto-add <code>title</code> (would fight Tippy /
-        Floating UI / etc.); this demo uses the simplest tooltip - a subclass
-        setting <code>el.title</code>.
+        <strong>Demo CSS:</strong> <code>#mount-long-wrap { max-width: 18rem }</code>
+        (same constraint as 6.2). The opt-in <code>'match-trigger'</code> pins
+        the popup to the trigger's width - the select2-style edge-aligned
+        look - so long labels wrap to multiple lines instead of widening the
+        popup.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
-          <div id="mount-long-ellipsis"></div>
-          <div class="out" id="out-long-ellipsis">chosen: (none)</div>
+          <div id="mount-long-wrap"></div>
+          <div class="out" id="out-long-wrap">chosen: (none)</div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="6.3"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>6.4 <code>popupWidthPolicy: 'fit-content'</code>: popup grows beyond trigger</h3>
+      <h3>6.4 <code>'match-trigger'</code> + opt-in ellipsis on labels</h3>
       <p class="hint">
-        <strong>Demo CSS:</strong> <code>#mount-long-fitcontent { max-width: 18rem }</code>
-        (same as 6.2). Trigger is still constrained and ellipsizes, but the
-        popup uses <code>popupWidthPolicy: 'fit-content'</code> so it expands to
-        the widest label. If the trigger is near the viewport's right edge,
-        the popup auto-shifts left (its <code>x</code> can drop below the
-        trigger's), and width clamps to the viewport.
+        <strong>Demo CSS:</strong> same <code>max-width: 18rem</code>, plus
+        <code>#mount-long-ellipsis .llselect-item { text-overflow: ellipsis }</code>.
+        Ellipsis needs a bounded popup, so this opts into
+        <code>'match-trigger'</code> too. Library does not auto-add
+        <code>title</code> (would fight Tippy / Floating UI / etc.); this
+        demo uses the simplest tooltip - a subclass setting
+        <code>el.title</code>.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
-          <div id="mount-long-fitcontent"></div>
-          <div class="out" id="out-long-fitcontent">chosen: (none)</div>
+          <div id="mount-long-ellipsis"></div>
+          <div class="out" id="out-long-ellipsis">chosen: (none)</div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="6.4"><code></code></pre></details>
       </div>

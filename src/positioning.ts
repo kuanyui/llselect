@@ -22,7 +22,7 @@ export type Placement = 'below' | 'above'
  * (`popupWidthPolicy` field) for the user-facing contract.
  * @group Positioning
  */
-export type WidthPolicy = 'match-trigger' | 'fit-content'
+export type WidthPolicy = 'fit-content' | 'match-trigger'
 
 /** Input to the pure positioning calculation. */
 export interface PositionInput {
@@ -31,7 +31,7 @@ export interface PositionInput {
   viewportHeight: number
   /** Measured height of the floating element. Pass 0 if unknown. */
   floatingHeight: number
-  /** Width policy. Optional; default `'match-trigger'`. */
+  /** Width policy. Optional; default `'fit-content'`. */
   widthPolicy?: WidthPolicy
   /**
    * Floating element's natural (max-content) width in px. Only consulted when
@@ -78,14 +78,14 @@ const VIEWPORT_PADDING = 8
  * "below" on every content change would make the popup jump sides whenever
  * the list shrinks and regrows.
  *
- * Horizontal: `widthPolicy === 'match-trigger'` (default) returns
- * `width = anchor.width` and `left = anchor.left` (no collision handling -
- * popup is the same width as trigger; direction-independent).
- * `widthPolicy === 'fit-content'` returns
+ * Horizontal: `widthPolicy === 'fit-content'` (default) returns
  * `width = max(anchor.width, floatingNaturalWidth)`, clamps to
  * `viewport - 2 * VIEWPORT_PADDING`, and keeps the popup inside the viewport
  * margins. Growth direction follows `direction`: ltr aligns left edges and
  * grows rightward; rtl aligns RIGHT edges and grows leftward (the mirror).
+ * `widthPolicy === 'match-trigger'` returns `width = anchor.width` and
+ * `left = anchor.left` (no collision handling - popup is the same width as
+ * trigger; direction-independent).
  */
 export function computePosition(input: PositionInput): PositionResult {
   const {
@@ -93,7 +93,7 @@ export function computePosition(input: PositionInput): PositionResult {
     viewportWidth,
     viewportHeight,
     floatingHeight,
-    widthPolicy = 'match-trigger',
+    widthPolicy = 'fit-content',
     floatingNaturalWidth = 0,
     direction = 'ltr',
     currentPlacement,
@@ -233,8 +233,8 @@ export interface PositionerOptions {
    */
   onHide?: () => void
   /**
-   * Width policy. Default `'match-trigger'` (preserve the pre-existing
-   * behaviour of `width = anchor.width`).
+   * Width policy. Default `'fit-content'`, matching the `popupWidthPolicy`
+   * setting default.
    */
   widthPolicy?: WidthPolicy
   /**
@@ -303,7 +303,7 @@ export function createPositioner(
   options?: PositionerOptions,
 ): Positioner {
   let attached = true
-  const widthPolicy: WidthPolicy = options?.widthPolicy ?? 'match-trigger'
+  const widthPolicy: WidthPolicy = options?.widthPolicy ?? 'fit-content'
   // Snapshot at attach (= once per open cycle): direction changes are rare
   // and the next open re-reads it. Only fit-content consults it.
   const direction: 'ltr' | 'rtl' =

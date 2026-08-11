@@ -279,12 +279,15 @@ const selRichMulti = new LLSelectMultiple(
 selRichMulti.setItems(PROGRAMMING_LANGUAGES)
 //#endregion
 
-//#region 6.2
+//#region 6.3
+// Opt-in 'match-trigger': popup pinned to the trigger's width (the
+// select2-style edge-aligned look), so long labels wrap inside it.
 const outLongWrap = document.getElementById('out-long-wrap')
 const selLongWrap = new LLSelectSingle(
   document.getElementById('mount-long-wrap'),
   {
     placeholder: 'Pick a country',
+    popupWidthPolicy: 'match-trigger',
     onChange: (v) => { outLongWrap.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
@@ -292,8 +295,9 @@ selLongWrap.setItems(LONG_NAMES)
 selLongWrap.setChosenItem(LONG_NAMES[0])  // preselect the longest entry so trigger ellipsis is visible on load
 //#endregion
 
-//#region 6.3
-// Builds on 6.2 (constrained trigger), plus:
+//#region 6.4
+// Builds on 6.3 ('match-trigger', constrained trigger - ellipsis needs a
+// bounded popup width), plus:
 //  - scoped CSS in demo/style.css gives this instance ellipsis on items.
 //  - a subclass adds `title` so hover reveals the full text. (The library
 //    deliberately does NOT add `title` automatically, so users can plug in
@@ -310,6 +314,7 @@ const selLongEllipsis = new EllipsisSingle(
   document.getElementById('mount-long-ellipsis'),
   {
     placeholder: 'Pick a country',
+    popupWidthPolicy: 'match-trigger',
     onChange: (v) => { outLongEllipsis.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
@@ -336,15 +341,15 @@ const selLongNoConstraint = new LLSelectSingle(
 selLongNoConstraint.setItems(LONG_NAMES)
 //#endregion
 
-//#region 6.4
-// Trigger constrained the same way as 6.1, but popup uses `fit-content` so
-// it grows to fit the widest label and can be wider than the trigger.
+//#region 6.2
+// Trigger constrained by demo CSS (max-width: 18rem). No width setting: the
+// DEFAULT `popupWidthPolicy: 'fit-content'` grows the popup to the widest
+// label, wider than the trigger, like a native <select>.
 const outLongFitContent = document.getElementById('out-long-fitcontent')
 const selLongFitContent = new LLSelectSingle(
   document.getElementById('mount-long-fitcontent'),
   {
     placeholder: 'Pick a country',
-    popupWidthPolicy: 'fit-content',
     onChange: (v) => { outLongFitContent.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )

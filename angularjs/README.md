@@ -125,7 +125,7 @@ Both directives:
 | `ll-placeholder` | expression | `placeholder` | per-field copy, so it has no app-wide default |
 | `ll-filterable` | expression | `filterable` | `true` / `false` / a predicate `(items) => boolean` |
 | `ll-clearable` | expression | `clearable` | trigger clear (x) button |
-| `ll-popup-width-policy` | expression | `popupWidthPolicy` | `'match-trigger'` / `'fit-content'` |
+| `ll-popup-width-policy` | expression | `popupWidthPolicy` | `'fit-content'` (llselect default) / `'match-trigger'` |
 | `ll-arrow` | literal | the trigger arrow | `chevron` (default) / `triangle` / `none`; see "The arrow" |
 | `ll-aria-label` | literal | `ariaLabel` | accessible name; always set this or `ll-aria-labelledby` |
 | `ll-aria-labelledby` | literal | `ariaLabelledBy` | space-separated element id(s) of the visible label |
@@ -178,7 +178,7 @@ angular.module('app', ['llselect'])
     llselectConfigProvider.defaults({
       arrow: 'chevron',          // 'chevron' | 'triangle' | null (null = the theme draws it)
       filterable: true,          // boolean, or a predicate (items) => boolean
-      popupWidthPolicy: 'fit-content',
+      popupWidthPolicy: 'match-trigger',  // llselect's own default is 'fit-content'
       uiTranslationPack: llselectI18n.zhTW,  // an llselect language pack
     })
   }])

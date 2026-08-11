@@ -65,14 +65,15 @@ test('computePosition stays below when above has less space', () => {
   assert.equal(r.placement, 'below')
 })
 
-test('computePosition width matches anchor', () => {
+test('computePosition defaults to fit-content: natural width honored without an explicit policy', () => {
   const r = computePosition({
     anchorRect: { ...ANCHOR_AT_TOP, width: 350 },
     viewportWidth: 1024,
     viewportHeight: 768,
     floatingHeight: 200,
+    floatingNaturalWidth: 500,
   })
-  assert.equal(r.width, 350)
+  assert.equal(r.width, 500)
 })
 
 test('computePosition maxHeight is non-negative even in tiny viewport', () => {
@@ -185,7 +186,7 @@ test('fit-content: omitted direction defaults to ltr (left edges aligned)', () =
   assert.equal(r.left, 700)
 })
 
-test('match-trigger remains the explicit default behavior (no horizontal shift)', () => {
+test('match-trigger (opt-in): width pinned to anchor, no horizontal shift', () => {
   // Anchor near right edge with `match-trigger` should NOT shift left;
   // popup stays the same width as the trigger.
   const r = computePosition({

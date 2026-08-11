@@ -184,14 +184,15 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * How the popup decides its width. Does NOT affect the trigger - trigger
    * width is always whatever your CSS says.
    *
-   * - `'match-trigger'` (default): popup width equals trigger width; long
-   *   labels wrap inside the popup.
-   * - `'fit-content'`: popup width grows to its own content (items, filter
-   *   input, ...). May be wider than trigger. Auto-shifts and width-clamps
-   *   when the natural width would overflow the viewport. Direction-aware:
-   *   in an RTL context (`getComputedStyle(trigger).direction === 'rtl'`,
-   *   read once per open) it right-aligns to the trigger and grows LEFTWARD,
-   *   the mirror of LTR.
+   * - `'fit-content'` (default): popup width grows to its own content (items,
+   *   filter input, ...) and never shrinks below the trigger's width - the
+   *   native `<select>` dropdown behavior, minus its viewport overflow:
+   *   auto-shifts and width-clamps when the natural width would not fit.
+   *   Direction-aware: in an RTL context
+   *   (`getComputedStyle(trigger).direction === 'rtl'`, read once per open)
+   *   it right-aligns to the trigger and grows LEFTWARD, the mirror of LTR.
+   * - `'match-trigger'`: popup width equals trigger width; long labels wrap
+   *   inside the popup.
    * @group Popup
    */
   popupWidthPolicy: WidthPolicy
@@ -682,7 +683,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       uiTranslationPack,
       filterFn: settings?.filterFn ?? null,
       createPopupListNoResultsContentElFn: settings?.createPopupListNoResultsContentElFn ?? null,
-      popupWidthPolicy: settings?.popupWidthPolicy ?? 'match-trigger',
+      popupWidthPolicy: settings?.popupWidthPolicy ?? 'fit-content',
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
       itemToStringFn: settings?.itemToStringFn ?? null,
