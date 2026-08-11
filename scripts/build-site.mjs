@@ -39,6 +39,16 @@ for (const f of ['llselect-angularjs.js', 'llselect-ui-select.js']) {
 // convention typedoc-plugin-markdown's intra-page links assume. Reset per page.
 const slugCounts = new Map()
 const ALERT_RE = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/
+// Title icons mirror GitHub's octicon pairing; mdi equivalents (MIT), same
+// source as the other site icons: information-outline / lightbulb-outline /
+// message-alert-outline / alert-outline / alert-octagon-outline.
+const ALERT_ICONS = {
+  NOTE: 'M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z',
+  TIP: 'M12,2A7,7 0 0,1 19,9C19,11.38 17.81,13.47 16,14.74V17A1,1 0 0,1 15,18H9A1,1 0 0,1 8,17V14.74C6.19,13.47 5,11.38 5,9A7,7 0 0,1 12,2M9,21V20H15V21A1,1 0 0,1 14,22H10A1,1 0 0,1 9,21M12,4A5,5 0 0,0 7,9C7,11.05 8.23,12.81 10,13.58V16H14V13.58C15.77,12.81 17,11.05 17,9A5,5 0 0,0 12,4Z',
+  IMPORTANT: 'M13,10H11V6H13V10M13,12H11V14H13V12M22,4V16A2,2 0 0,1 20,18H6L2,22V4A2,2 0 0,1 4,2H20A2,2 0 0,1 22,4M20,4H4V17.2L5.2,16H20V4Z',
+  WARNING: 'M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16',
+  CAUTION: 'M8.27,3L3,8.27V15.73L8.27,21H15.73C17.5,19.24 21,15.73 21,15.73V8.27L15.73,3M9.1,5H14.9L19,9.1V14.9L14.9,19H9.1L5,14.9V9.1M11,15H13V17H11V15M11,7H13V13H11V7',
+}
 marked.use({
   renderer: {
     heading({ tokens, depth }) {
@@ -68,7 +78,8 @@ marked.use({
       const label = m[1][0] + m[1].slice(1).toLowerCase()
       let inner = this.parser.parse(tokens)
       inner = inner.replace(/^<p>\[!\w+\]<\/p>\n?/, '').replace(/^<p>\[!\w+\]\s*/, '<p>')
-      return `<div class="md-alert md-alert-${m[1].toLowerCase()}">\n<p class="md-alert-title">${label}</p>\n${inner}</div>\n`
+      const icon = `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="${ALERT_ICONS[m[1]]}"/></svg>`
+      return `<div class="md-alert md-alert-${m[1].toLowerCase()}">\n<p class="md-alert-title">${icon}${label}</p>\n${inner}</div>\n`
     },
   },
 })
@@ -249,7 +260,8 @@ body.with-toc { max-width: 78rem; }
   .toc { display: none; }
 }
 .md-alert { margin: 1rem 0; padding: 0.1rem 1rem; border-left: 0.25rem solid var(--alert, var(--line)); }
-.md-alert-title { font-weight: 600; color: var(--alert); }
+.md-alert-title { display: flex; align-items: center; gap: 0.4em; font-weight: 600; color: var(--alert); }
+.md-alert-title svg { width: 1.125em; height: 1.125em; flex: none; }
 .md-alert-note { --alert: #0969da; }
 .md-alert-tip { --alert: #1a7f37; }
 .md-alert-important { --alert: #8250df; }
