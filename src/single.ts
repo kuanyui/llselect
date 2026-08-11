@@ -6,7 +6,7 @@ import {
 
 /**
  * Context passed to {@link LLSelectSingleSettings.createTriggerContentElFn}.
- * @category Settings
+ * @category Settings: Single
  */
 export interface LLSelectSingleTriggerContext<T> {
   chosenItem: T | undefined
@@ -17,7 +17,7 @@ export interface LLSelectSingleTriggerContext<T> {
  * Resolved (defaults applied) settings for {@link LLSelectSingle}: the base
  * settings plus the single-mode fields - the runtime type of `this.settings`,
  * one bag built complete in the constructor.
- * @category Settings
+ * @category Settings: Single
  */
 export interface LLSelectSingleSettings<T, GK = string> extends LLSelectBaseSettings<T, GK> {
   /**
@@ -47,7 +47,7 @@ export interface LLSelectSingleSettings<T, GK = string> extends LLSelectBaseSett
 /**
  * Constructor-time settings input for {@link LLSelectSingle}.
  * Every field is optional; missing fields use defaults.
- * @category Settings
+ * @category Settings: Single
  */
 export type LLSelectSingleSettingsInput<T, GK = string> = LLSelectSettingsInputOf<LLSelectSingleSettings<T, GK>>
 

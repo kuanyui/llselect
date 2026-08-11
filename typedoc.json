@@ -14,7 +14,7 @@
   "sourceLinkTemplate": "https://gitlab.com/kuanyui/llselect/-/blob/{gitRevision}/{path}#L{line}",
   "sort": ["visibility", "source-order"],
   "categoryOrder": [
-    "Select classes", "Settings", "Pack contract", "Language packs", "Icons", "Icons: Arrows", "Icons: Checkmarks & checkboxes", "Positioning", "CSS & DOM",
+    "Select classes", "Settings: Base", "Settings: Single", "Settings: Multiple", "Pack contract", "Language packs", "Icons", "Icons: Arrows", "Icons: Checkmarks & checkboxes", "Positioning", "CSS & DOM",
     "Selection", "Items", "Open & close",
     "Accessible name", "Events", "Trigger", "Filtering", "Grouping", "Select-all", "Popup", "Disabling", "i18n", "CSS",
     "Lifecycle", "DOM elements",

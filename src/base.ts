@@ -21,7 +21,7 @@ import type { LLSelectUiTranslationPack } from './i18n.js'
  * - `'block'`: close the popup only; the outside click is swallowed so no
  *   underlying handler or default action fires. Avoids accidental side
  *   effects when the user only intended to dismiss the dropdown.
- * @category Settings
+ * @category Settings: Base
  */
 export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
 
@@ -29,7 +29,7 @@ export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
  * Resolved (defaults applied) settings shared by all select variants.
  * Subclasses (`LLSelectSingle`, `LLSelectMultiple`) extend this with their
  * mode-specific options such as `onChange`.
- * @category Settings
+ * @category Settings: Base
  */
 export interface LLSelectBaseSettings<T, GK = string> {
   /**
@@ -318,7 +318,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
  * and `uiTranslationPack` accepts a PARTIAL pack (missing keys fall back to
  * English). Shared by the base / single / multiple `*SettingsInput` types;
  * use it for a subclass wrapper that extends the settings bag.
- * @category Settings
+ * @category Settings: Base
  */
 export type LLSelectSettingsInputOf<S extends { uiTranslationPack: LLSelectUiTranslationPack }> =
   & Partial<Omit<S, 'uiTranslationPack'>>
@@ -327,7 +327,7 @@ export type LLSelectSettingsInputOf<S extends { uiTranslationPack: LLSelectUiTra
 /**
  * Constructor-time settings input - every field is optional and missing
  * fields fall back to the library defaults.
- * @category Settings
+ * @category Settings: Base
  */
 export type LLSelectBaseSettingsInput<T, GK = string> = LLSelectSettingsInputOf<LLSelectBaseSettings<T, GK>>
 

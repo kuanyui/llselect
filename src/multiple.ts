@@ -9,20 +9,20 @@ import {
  * - `'count'`: a text summary like "3 / 10 selected".
  * - `'tags'`: one removable chip per chosen item.
  * See {@link LLSelectMultipleSettings.triggerDisplay}.
- * @category Settings
+ * @category Settings: Multiple
  */
 export type LLSelectTriggerDisplay = 'count' | 'tags'
 
 /**
  * Tri-state of the select-all row (also the `data-chosen-state` attribute
  * value): how much of the VISIBLE enabled subset is currently chosen.
- * @category Settings
+ * @category Settings: Multiple
  */
 export type LLSelectChosenState = 'none' | 'some' | 'all'
 
 /**
  * Context passed to {@link LLSelectMultipleSettings.createTriggerContentElFn}.
- * @category Settings
+ * @category Settings: Multiple
  */
 export interface LLSelectMultipleTriggerContext<T> {
   chosenItems: readonly T[]
@@ -33,7 +33,7 @@ export interface LLSelectMultipleTriggerContext<T> {
  * Resolved (defaults applied) settings for {@link LLSelectMultiple}: the base
  * settings plus the multi-mode fields - the runtime type of `this.settings`,
  * one bag built complete in the constructor.
- * @category Settings
+ * @category Settings: Multiple
  */
 export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSettings<T, GK> {
   /**
@@ -125,7 +125,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
 /**
  * Constructor-time settings input for {@link LLSelectMultiple}.
  * Every field is optional; missing fields use defaults.
- * @category Settings
+ * @category Settings: Multiple
  */
 export type LLSelectMultipleSettingsInput<T, GK = string> = LLSelectSettingsInputOf<LLSelectMultipleSettings<T, GK>>
 
