@@ -184,6 +184,11 @@ h6 { font-size: 1em; margin: 1.4em 0 0.5em; }
 .with-toc h6[id^="parameters"], .with-toc h6[id^="returns"], .with-toc h6[id^="inherited-from"], .with-toc h6[id^="overrides"], .with-toc h6[id^="example"] { font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--fg-muted); }
 /* Jump-target highlight: the content side answers the sidebar's highlight */
 main :target { background: var(--nav-hover); box-shadow: 0 0 0 6px var(--nav-hover); border-radius: 2px; scroll-margin-top: 0.6rem; }
+/* Scroll-following block highlight: the section owning the scrollspy's
+   current heading. Constant padding (class-independent) so toggling the
+   class never shifts layout mid-scroll. */
+main section { padding: 0 0.6rem; margin: 0 -0.6rem; border-radius: 4px; transition: background-color 0.15s; }
+main section.current-block { background: var(--nav-hover); box-shadow: inset 3px 0 0 var(--nav-link); }
 /* same look as demo/style.css .demo-nav so the site reads as one family */
 nav { display: flex; flex-wrap: wrap; gap: 0.25rem; padding: 0.8rem 0 0.5rem; border-bottom: 1px solid var(--line); margin-bottom: 1.5rem; }
 nav a { padding: 0.35rem 0.8rem; color: var(--nav-link); text-decoration: none; border-radius: 4px; font-weight: 600; }
@@ -302,6 +307,7 @@ ${toc ? `<script>
     for (let d = link.closest('details'); d; d = d.parentElement.closest('details')) { d.open = true }
   }
   let activeLink = null
+  let blockEl = null
   const sync = () => {
     const y = window.scrollY + 100
     let cur = null
@@ -310,6 +316,11 @@ ${toc ? `<script>
     if (link === activeLink) { return }
     if (activeLink) { activeLink.classList.remove('active') }
     activeLink = link
+    // Mirror the sidebar highlight on the content side: paint the section
+    // that owns the current heading.
+    if (blockEl) { blockEl.classList.remove('current-block') }
+    blockEl = cur && cur.parentElement.tagName === 'SECTION' ? cur.parentElement : null
+    if (blockEl) { blockEl.classList.add('current-block') }
     if (link) {
       link.classList.add('active')
       openChain(link)
@@ -351,10 +362,19 @@ ${toc ? `<script>
 `
 }
 
+// Wrap each heading together with its own direct content in a <section>, so
+// the scrollspy can paint the current block as ONE continuous box (per-element
+// classes would stripe across the margins between elements).
+function wrapSections(body) {
+  return body.split(/(?=<h[1-6] )/).map((chunk, i) =>
+    (i === 0 && !/^<h[1-6] /.test(chunk)) ? chunk : `<section>\n${chunk}</section>\n`).join('')
+}
+
 function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links, toc = false, subnav = null }) {
   slugCounts.clear()
   let body = marked.parse(readFileSync(mdPath, 'utf8'))
   body = links ? links(body) : rewriteLinks(body, posix.dirname(mdPath).replace(/^\.$/, ''))
+  if (toc) { body = wrapSections(body) }
   writeFileSync(outPath, renderPage({ title, description, nav: navHtml(prefix, current), body, toc: toc ? buildTocHtml(body) : null, subnav }))
 }
 
