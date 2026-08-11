@@ -111,6 +111,9 @@ function buildTocHtml(body) {
   // mdi chevron-right / unfold-less-horizontal (MIT), same source as src/icons.ts
   const CHEVRON = '<svg class="toc-chevron" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>'
   const FOLD_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.59,5.41L15.17,4L12,7.17L8.83,4L7.41,5.41L12,10M7.41,18.59L8.83,20L12,16.83L15.17,20L16.58,18.59L12,14L7.41,18.59Z"/></svg>'
+  const ids = new Set()
+  const collect = (node) => { ids.add(node.id); node.children.forEach(collect) }
+  root.children.forEach(collect)
   const render = (node, isSection) => {
     const link = `<a href="#${node.id}">${node.text}</a>`
     if (node.children.length === 0) { return `<li>${link}</li>` }
@@ -119,11 +122,12 @@ function buildTocHtml(body) {
     if (isSection) { return `<li class="toc-section">${link}${inner}</li>` }
     return `<li><details><summary>${CHEVRON}${link}</summary>${inner}</details></li>`
   }
-  return `<aside class="toc">
+  const html = `<aside class="toc">
 <input type="search" placeholder="Filter" aria-label="Filter the table of contents">
 <button type="button" class="toc-fold">${FOLD_ICON}Fold all</button>
 <ul class="toc-tree">${root.children.map((c) => render(c, true)).join('\n')}</ul>
 </aside>`
+  return { html, ids }
 }
 
 // prefix walks from the page back up to the site root ('./' or '../').
@@ -362,20 +366,41 @@ ${toc ? `<script>
 `
 }
 
-// Wrap each heading together with its own direct content in a <section>, so
-// the scrollspy can paint the current block as ONE continuous box (per-element
-// classes would stripe across the margins between elements).
-function wrapSections(body) {
-  return body.split(/(?=<h[1-6] )/).map((chunk, i) =>
-    (i === 0 && !/^<h[1-6] /.test(chunk)) ? chunk : `<section>\n${chunk}</section>\n`).join('')
+// Wrap content in <section>s so the scrollspy can paint the current block as
+// ONE continuous box (per-element classes would stripe across the margins
+// between elements). A section starts ONLY at a TOC-entry heading and runs to
+// the next one, so a member's block includes its structural sub-parts
+// (Parameters / Returns / Example / Inherited from) - those never become the
+// scrollspy target themselves.
+function wrapSections(body, tocIds) {
+  const chunks = body.split(/(?=<h[1-6] )/)
+  let out = ''
+  let open = false
+  for (const chunk of chunks) {
+    const m = chunk.match(/^<h[1-6] id="([^"]+)"/)
+    if (m && tocIds.has(m[1])) {
+      if (open) { out += '</section>\n' }
+      out += '<section>\n' + chunk
+      open = true
+    } else {
+      out += chunk
+    }
+  }
+  if (open) { out += '</section>\n' }
+  return out
 }
 
 function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links, toc = false, subnav = null }) {
   slugCounts.clear()
   let body = marked.parse(readFileSync(mdPath, 'utf8'))
   body = links ? links(body) : rewriteLinks(body, posix.dirname(mdPath).replace(/^\.$/, ''))
-  if (toc) { body = wrapSections(body) }
-  writeFileSync(outPath, renderPage({ title, description, nav: navHtml(prefix, current), body, toc: toc ? buildTocHtml(body) : null, subnav }))
+  let tocHtml = null
+  if (toc) {
+    const built = buildTocHtml(body)
+    tocHtml = built.html
+    body = wrapSections(body, built.ids)
+  }
+  writeFileSync(outPath, renderPage({ title, description, nav: navHtml(prefix, current), body, toc: tocHtml, subnav }))
 }
 
 // The API pages come out of typedoc (markdown, one page per module, written to
