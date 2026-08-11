@@ -27,6 +27,7 @@ The automatable layer of the original checklist ran green in real Chromium and F
 
 - A single set of `.d.ts` serves both ESM and CJS. TypeScript consumers on `moduleResolution: nodenext` who `require()` the package hit the classic dual-types edge (bundler / `import` consumers are unaffected). Fixing it properly means bundling declarations into per-format `.d.ts` / `.d.cts` - revisit if anyone actually hits it.
 - Per-item click listeners stay (no event delegation) until a benchmark shows a win; lazy render already bounds the cost. See the event-delegation deferral in `archive/roadmap-v0.0.1.md`.
+- The popup positions with `position: fixed` from INSIDE the component subtree (no body portal - rationale in `DESIGN.md` "In-place popup (no body portal)"), so an ancestor that creates a fixed-position containing block (`transform` / `translate` / `scale` / `rotate` / `filter` / `perspective` / `will-change: transform` / `contain: paint|layout`, including via `content-visibility`) displaces it. Revisit if real consumers hit it; the fix of choice is top-layer via the Popover API (`popover="manual"` + `showPopover()`) as a feature-detected enhancement - it keeps every in-subtree invariant and needs no browser-floor change - NOT a body portal.
 
 ## Notes
 

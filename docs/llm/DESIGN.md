@@ -126,6 +126,28 @@ Demo: section 12 (the ar / he packs set `dir="rtl"` on the mounts and use a mixe
   - Single-item changes (multi-select `toggleItem`) use `replacePopupListItemElInDom(item)`, which replaces just that one item's element. DOM work stays O(1) regardless of list size, so toggling one selection in a 10k-item list does not recreate 10k nodes. (The lookup to find the item is O(n), but a comparison loop is negligible next to DOM mutation + reflow.) A vdom framework would instead diff the list render on each state change; llselect skips that by knowing exactly which item changed. (No published benchmark - this is an implementation description, not a measured comparison.)
 - External mutation of an item object's properties (e.g. `users[0].name = 'X'`) is **not** auto-detected. Call `rerender()` to reflect the change in the DOM. `rerender` is a pure visual refresh: it does not fire `onChange` and does not run `afterItemsChange`.
 
+## Popup DOM lifecycle (construction vs open)
+
+The popup SHELL is built in the constructor and stays in the DOM for the instance's whole life, hidden while closed; the option ROWS are lazy (built on `open()`, cleared on `close()` - Phase 3). Per instance the shell is five nodes: `popupEl` (`hidden`), `popupListEl` (the listbox), `filterInputEl`, the no-results element, and the hidden value-mirror span next to the trigger.
+
+- The costly axis is the rows (O(n)) and that axis IS lazy; the shell is O(1), so pre-building trades five hidden nodes for the guarantees below.
+- ARIA needs the listbox to exist while CLOSED: the trigger carries `aria-controls` -> `popupListId` in both states (see the `A11Y.md` role table), and an ID reference to a nonexistent element is a defect that audit tooling flags - and closed is the state nearly every audit sees. The value-mirror span is referenced by the accname chain while closed for the same reason.
+- The filter input's always-built rule has its own recorded rationale below ("Filter box (Phase 8) architecture").
+- `setUiTranslationPack` re-applies pack-owned attributes (filter placeholder / fallback `aria-label`) while closed; with a lazily-built shell every such path would need "if built yet" guards.
+- Subclass contract stability: the `create*El` shell hooks are protected extension points with ONE defined call time (construction), not "whenever first open happens".
+
+## In-place popup (no body portal)
+
+`popupEl` stays a child of the component root; it is never appended to `document.body`. Escaping ancestor clipping is `position: fixed`'s job instead: a fixed element's containing block is normally the viewport, so ancestor `overflow` never clips it (demo 2.1 shows the popup working inside a scroll container). What staying in-subtree buys - each point is load-bearing code, not taste:
+
+- Outside-click and focus-out classify inside-vs-outside with `rootEl.contains(target)`; the popup being inside the root makes clicks / focus in the popup "inside" with zero extra cases. A portal would need every such check duplicated against a second subtree.
+- `destroy()` is one `rootEl.replaceChildren()`; nothing can be orphaned in `body`. (The benchmark docs record the real-world version of this failure in portaling libraries: leftover containers in `body`, selectors hitting the wrong widget's dropdown.)
+- Inherited context is right for free: themes set font / color on `.llselect-root`, and direction comes from the environment's `dir` (see "RTL" - there is no RTL setting). A portaled popup inherits BODY's context and must copy all of it over.
+- Reading order: the popup sits immediately after the trigger for AT virtual cursors.
+- Top-layer compatibility: inside an open native `<dialog>`, an in-subtree popup renders within the dialog's top-layer context, while a body-portaled popup renders UNDER the dialog and its `::backdrop` - the classic portal-in-dialog failure. In-place is the arrangement that keeps working there.
+
+Accepted cost: an ancestor that creates a fixed-position containing block (`transform`, individual `translate` / `scale` / `rotate`, `filter`, `perspective`, `will-change: transform`, `contain: paint` / `layout` - including via `content-visibility`) re-scopes `position: fixed` to itself, so the positioner's viewport coordinates land displaced. Recorded in `TODO.md` (accepted limitations) together with the revisit path: the Popover API (`popover="manual"` + `showPopover()`) moves the popup into the top layer WITHOUT moving it in the DOM - every in-subtree invariant above keeps holding - and can ship as a feature-detected enhancement over the current `position: fixed` fallback, with no browser-floor change. A body portal, by contrast, would forfeit the invariants above and foreclose that path.
+
 ## Filter box (Phase 8) architecture
 
 Locked decisions for the filterable variant. Keyboard / focus / ARIA contract is in `A11Y.md`.
