@@ -5,7 +5,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
  * DRAFT - see TRANSLATION STATUS: needs the maintainer's native vetting.
  * Same language as `nan-TW`, distinguished by script (`Latn`) + variant, not
  * by a separate language id.
- * @category Language packs
+ * @group Language packs
  */
 export const nanLatnTailo: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Tshiánn kíng-suán',

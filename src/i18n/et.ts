@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Estonian pack.
- * @category Language packs
+ * @group Language packs
  */
 export const et: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Valige',

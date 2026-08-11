@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Irish pack.
- * @category Language packs
+ * @group Language packs
  */
 export const ga: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Roghnaigh',

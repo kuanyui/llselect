@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Japanese pack.
- * @category Language packs
+ * @group Language packs
  */
 export const ja: LLSelectUiTranslationPack = {
   triggerPlaceholder: '選択してください',

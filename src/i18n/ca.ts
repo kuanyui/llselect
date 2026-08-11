@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Catalan pack.
- * @category Language packs
+ * @group Language packs
  */
 export const ca: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Seleccioneu una opció',

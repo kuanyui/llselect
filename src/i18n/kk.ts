@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Kazakh pack (Cyrillic).
- * @category Language packs
+ * @group Language packs
  */
 export const kk: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Таңдаңыз',

@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Hungarian pack.
- * @category Language packs
+ * @group Language packs
  */
 export const hu: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Válasszon',

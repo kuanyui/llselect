@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Lithuanian pack.
- * @category Language packs
+ * @group Language packs
  */
 export const lt: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Pasirinkite',

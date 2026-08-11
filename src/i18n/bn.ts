@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Bengali pack.
- * @category Language packs
+ * @group Language packs
  */
 export const bn: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'অনুগ্রহ করে নির্বাচন করুন',

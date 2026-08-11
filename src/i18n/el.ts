@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Greek pack.
- * @category Language packs
+ * @group Language packs
  */
 export const el: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Επιλέξτε',

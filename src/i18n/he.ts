@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Hebrew pack (RTL).
- * @category Language packs
+ * @group Language packs
  */
 export const he: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'נא לבחור',

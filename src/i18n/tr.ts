@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Turkish pack.
- * @category Language packs
+ * @group Language packs
  */
 export const tr: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Lütfen seçin',

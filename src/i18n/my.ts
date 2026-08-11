@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Burmese pack.
- * @category Language packs
+ * @group Language packs
  */
 export const my: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'ရွေးချယ်ပါ',

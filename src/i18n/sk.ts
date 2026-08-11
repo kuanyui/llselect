@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Slovak pack.
- * @category Language packs
+ * @group Language packs
  */
 export const sk: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Vyberte',

@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Swahili pack.
- * @category Language packs
+ * @group Language packs
  */
 export const sw: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Tafadhali chagua',

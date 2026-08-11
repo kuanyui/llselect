@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Khmer pack.
- * @category Language packs
+ * @group Language packs
  */
 export const km: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'សូមជ្រើសរើស',

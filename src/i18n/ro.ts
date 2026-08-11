@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Romanian pack.
- * @category Language packs
+ * @group Language packs
  */
 export const ro: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Selectați',

@@ -5,7 +5,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
  * different register from `zh-HK` (which is formal written Chinese and
  * aliases to `zh-TW`): pick `yue` only when the product speaks colloquial
  * Cantonese on purpose.
- * @category Language packs
+ * @group Language packs
  */
 export const yue: LLSelectUiTranslationPack = {
   triggerPlaceholder: '請揀',

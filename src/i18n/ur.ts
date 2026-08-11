@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Urdu pack (RTL).
- * @category Language packs
+ * @group Language packs
  */
 export const ur: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'براہ کرم منتخب کریں',

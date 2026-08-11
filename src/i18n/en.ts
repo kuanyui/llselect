@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * The built-in English pack - the library default.
- * @category Language packs
+ * @group Language packs
  */
 export const en: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Please select',

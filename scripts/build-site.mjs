@@ -89,50 +89,40 @@ function rewriteLinks(body, mdDir) {
   })
 }
 
-// Sidebar outline for the (long) API pages, from the rendered headings:
-// h2 = top section, h3 = symbol (collapsible), h4 = member group, h5 = member.
-// Structural typedoc headings that are not navigation targets are skipped.
-const TOC_SKIP = new Set(['Type Parameters', 'Extends', 'Extended by', 'Implements', 'Type Declaration'])
+// Sidebar outline for the (long) API pages: a generic nested tree from the
+// rendered heading ladder (h2..h6) - depths are NOT fixed per role, because a
+// categorized group (@group + @category) sinks its symbols one level deeper
+// than an uncategorized one. Structural typedoc headings are skipped by TEXT,
+// together with their deeper subtree.
+const TOC_SKIP = new Set(['Type Parameters', 'Extends', 'Extended by', 'Implements', 'Type Declaration', 'Parameters', 'Returns', 'Inherited from', 'Overrides', 'Example'])
 function buildTocHtml(body) {
-  const link = (h) => `<a href="#${h.id}">${h.text}</a>`
-  const root = []
-  let curH2 = null
-  let curH3 = null
-  let curH4 = null
-  for (const m of body.matchAll(/<h([2-5]) id="([^"]+)">(.*?)<\/h\1>/g)) {
-    const h = { depth: Number(m[1]), id: m[2], text: m[3].replace(/<[^>]+>/g, '') }
-    if (TOC_SKIP.has(h.text)) { continue }
-    if (h.depth === 2) {
-      curH2 = { h, children: [] }
-      root.push(curH2)
-      curH3 = curH4 = null
-    } else if (h.depth === 3 && curH2) {
-      curH3 = { h, children: [] }
-      curH2.children.push(curH3)
-      curH4 = null
-    } else if (h.depth === 4 && curH3) {
-      curH4 = { h, children: [] }
-      curH3.children.push(curH4)
-    } else if (h.depth === 5 && curH4) {
-      curH4.children.push({ h })
-    }
+  const root = { depth: 1, children: [] }
+  const stack = [root]
+  let skipDepth = null
+  for (const m of body.matchAll(/<h([2-6]) id="([^"]+)">(.*?)<\/h\1>/g)) {
+    const h = { depth: Number(m[1]), id: m[2], text: m[3].replace(/<[^>]+>/g, ''), children: [] }
+    if (skipDepth !== null && h.depth > skipDepth) { continue }
+    skipDepth = null
+    if (TOC_SKIP.has(h.text)) { skipDepth = h.depth; continue }
+    while (stack[stack.length - 1].depth >= h.depth) { stack.pop() }
+    stack[stack.length - 1].children.push(h)
+    stack.push(h)
   }
   // mdi chevron-right / unfold-less-horizontal (MIT), same source as src/icons.ts
   const CHEVRON = '<svg class="toc-chevron" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>'
   const FOLD_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.59,5.41L15.17,4L12,7.17L8.83,4L7.41,5.41L12,10M7.41,18.59L8.83,20L12,16.83L15.17,20L16.58,18.59L12,14L7.41,18.59Z"/></svg>'
-  const sections = root.map((s) => {
-    const symbols = s.children.map((sym) => {
-      if (sym.children.length === 0) { return `<li>${link(sym.h)}</li>` }
-      const groups = sym.children.map((g) =>
-        `<li class="toc-group">${link(g.h)}${g.children.length ? `<ul>${g.children.map((mem) => `<li>${link(mem.h)}</li>`).join('')}</ul>` : ''}</li>`)
-      return `<li><details><summary>${CHEVRON}${link(sym.h)}</summary><ul>${groups.join('')}</ul></details></li>`
-    })
-    return `<li class="toc-section">${link(s.h)}${symbols.length ? `<ul>${symbols.join('')}</ul>` : ''}</li>`
-  })
+  const render = (node, isSection) => {
+    const link = `<a href="#${node.id}">${node.text}</a>`
+    if (node.children.length === 0) { return `<li>${link}</li>` }
+    const inner = `<ul>${node.children.map((c) => render(c, false)).join('')}</ul>`
+    // top-level sections stay expanded labels; every deeper parent collapses
+    if (isSection) { return `<li class="toc-section">${link}${inner}</li>` }
+    return `<li><details><summary>${CHEVRON}${link}</summary>${inner}</details></li>`
+  }
   return `<aside class="toc">
 <input type="search" placeholder="Filter" aria-label="Filter the table of contents">
 <button type="button" class="toc-fold">${FOLD_ICON}Fold all</button>
-<ul class="toc-tree">${sections.join('\n')}</ul>
+<ul class="toc-tree">${root.children.map((c) => render(c, true)).join('\n')}</ul>
 </aside>`
 }
 
@@ -188,9 +178,10 @@ h2 { font-size: 1.5em; border-bottom: 1px solid var(--line); padding-bottom: 0.2
 h3 { font-size: 1.25em; margin-top: 1.8em; }
 h4 { font-size: 1.08em; margin-top: 1.6em; }
 h5 { font-size: 1em; margin: 1.4em 0 0.5em; }
-h6 { font-size: 0.85em; margin: 1.2em 0 0.4em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--fg-muted); }
-/* API pages: member headings are identifiers - set them in code face */
-.with-toc h5 { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+h6 { font-size: 1em; margin: 1.4em 0 0.5em; }
+/* API pages: h6 holds member names AND typedoc's structural labels - the
+   labels are a closed set, recognizable by their slug ids */
+.with-toc h6[id^="parameters"], .with-toc h6[id^="returns"], .with-toc h6[id^="inherited-from"], .with-toc h6[id^="overrides"], .with-toc h6[id^="example"] { font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--fg-muted); }
 /* Jump-target highlight: the content side answers the sidebar's highlight */
 main :target { background: var(--nav-hover); box-shadow: 0 0 0 6px var(--nav-hover); border-radius: 2px; scroll-margin-top: 0.6rem; }
 /* same look as demo/style.css .demo-nav so the site reads as one family */
@@ -229,7 +220,6 @@ body.with-toc { max-width: 78rem; }
 .toc a:hover { background: var(--nav-hover); }
 .toc a.active { background: var(--nav-hover); color: var(--nav-link); font-weight: 600; }
 .toc .toc-section > a { font-weight: 600; margin-top: 0.5rem; }
-.toc .toc-group > a { color: var(--fg-muted); }
 .toc-fold { display: flex; align-items: center; gap: 0.35rem; width: 100%; margin-bottom: 0.6rem; padding: 0.25rem 0.5rem; font: inherit; color: var(--fg); background: var(--muted); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
 .toc-fold:hover { background: var(--nav-hover); }
 .toc-fold svg { width: 1rem; height: 1rem; flex: none; color: var(--fg-muted); }
@@ -241,7 +231,9 @@ body.with-toc { max-width: 78rem; }
 .toc summary a { flex: 1; }
 .toc-chevron { flex: none; width: 1.1rem; height: 1.1rem; padding: 0.15rem 0.2rem; color: var(--fg-muted); transition: transform 0.15s; }
 .toc details[open] > summary > .toc-chevron { transform: rotate(90deg); }
-.toc .toc-section > ul > li > a { margin-left: 1.5rem; }
+/* leaf rows text-align with their chevron'd siblings at any level */
+.toc-tree li > a { margin-left: 1.5rem; }
+.toc summary a { margin-left: 0; }
 @media (max-width: 62rem) {
   body.with-toc { max-width: 52rem; }
   .layout { display: block; }
@@ -305,7 +297,7 @@ ${toc ? `<script>
   const toc = document.querySelector('.toc')
   const links = new Map()
   for (const a of toc.querySelectorAll('a')) { links.set(decodeURIComponent(a.hash.slice(1)), a) }
-  const heads = [...document.querySelectorAll('main h2[id], main h3[id], main h4[id], main h5[id]')].filter((h) => links.has(h.id))
+  const heads = [...document.querySelectorAll('main h2[id], main h3[id], main h4[id], main h5[id], main h6[id]')].filter((h) => links.has(h.id))
   const openChain = (link) => {
     for (let d = link.closest('details'); d; d = d.parentElement.closest('details')) { d.open = true }
   }

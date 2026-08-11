@@ -3,7 +3,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 /**
  * Taiwanese Hokkien pack (Taiwan; Han script, MOE recommended characters).
  * DRAFT - see TRANSLATION STATUS: needs the maintainer's native vetting.
- * @category Language packs
+ * @group Language packs
  */
 export const nanTW: LLSelectUiTranslationPack = {
   triggerPlaceholder: '請揀選',

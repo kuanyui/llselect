@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Danish pack.
- * @category Language packs
+ * @group Language packs
  */
 export const da: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Vælg en mulighed',

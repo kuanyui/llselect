@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Ukrainian pack.
- * @category Language packs
+ * @group Language packs
  */
 export const uk: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Виберіть',

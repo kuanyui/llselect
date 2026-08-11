@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Simplified Chinese (mainland) pack.
- * @category Language packs
+ * @group Language packs
  */
 export const zhCN: LLSelectUiTranslationPack = {
   triggerPlaceholder: '请选择',

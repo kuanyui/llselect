@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Latvian pack.
- * @category Language packs
+ * @group Language packs
  */
 export const lv: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Izvēlieties',

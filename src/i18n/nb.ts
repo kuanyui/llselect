@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Norwegian Bokmål pack (`no` resolves here in uiTranslationPackByLocale).
- * @category Language packs
+ * @group Language packs
  */
 export const nb: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Velg et alternativ',

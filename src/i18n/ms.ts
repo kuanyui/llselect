@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Malay pack.
- * @category Language packs
+ * @group Language packs
  */
 export const ms: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Sila pilih',

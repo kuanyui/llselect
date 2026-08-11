@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Hindi pack.
- * @category Language packs
+ * @group Language packs
  */
 export const hi: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'कृपया चुनें',

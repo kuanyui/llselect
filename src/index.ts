@@ -15,7 +15,7 @@ export type {
 /**
  * The pack contract (the `uiTranslationPack` setting / language-pack shape).
  * The packs themselves live under the `@llselect/core/i18n` subpath.
- * @category Pack contract
+ * @group Pack contract
  */
 export type { LLSelectUiTranslationPack } from './i18n.js'
 
@@ -54,6 +54,6 @@ export type {
 
 /**
  * Library version. Mirrors package.json `version` (smoke-test guarded).
- * @category Metadata
+ * @group Metadata
  */
 export const version = '0.0.3'

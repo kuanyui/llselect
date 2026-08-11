@@ -2,7 +2,7 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Filipino pack.
- * @category Language packs
+ * @group Language packs
  */
 export const fil: LLSelectUiTranslationPack = {
   triggerPlaceholder: 'Pumili',
