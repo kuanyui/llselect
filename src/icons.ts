@@ -35,7 +35,7 @@ function createSvgEl(viewBox: string, pathD: string, size: number): SVGElement {
  * Solid filled triangle pointing down. Sized to roughly match the chevron's
  * visual weight (MDI's `arrow_drop_down` path occupies a small portion of
  * its 24x24 viewBox and looks too small next to other icons).
- * @category Icons
+ * @category Icons: Arrows
  */
 export function createTriangleDownSvgEl(opts: IconOptions = {}): SVGElement {
   return createSvgEl('0 0 24 24', 'M4 8l8 10 8-10z', opts.size ?? 16)
@@ -43,7 +43,7 @@ export function createTriangleDownSvgEl(opts: IconOptions = {}): SVGElement {
 
 /**
  * Material Design `expand_more` chevron pointing down (filled outline).
- * @category Icons
+ * @category Icons: Arrows
  */
 export function createChevronDownSvgEl(opts: IconOptions = {}): SVGElement {
   return createSvgEl(
@@ -56,7 +56,7 @@ export function createChevronDownSvgEl(opts: IconOptions = {}): SVGElement {
 /**
  * Standalone checkmark (no box). Useful as a "selected" indicator in single
  * mode, or as a lightweight chosen marker in multi mode.
- * @category Icons
+ * @category Icons: Checkmarks & checkboxes
  */
 export function createCheckmarkSvgEl(opts: IconOptions = {}): SVGElement {
   return createSvgEl(
@@ -70,7 +70,7 @@ export function createCheckmarkSvgEl(opts: IconOptions = {}): SVGElement {
  * Visual state of {@link createOutlinedCheckboxSvgEl} / {@link createFilledCheckboxSvgEl}.
  * `indeterminate` is the "mixed" / partial state used by a select-all control
  * (`aria-checked="mixed"`).
- * @category Icons
+ * @category Icons: Checkmarks & checkboxes
  */
 export type CheckboxState = 'unchecked' | 'checked' | 'indeterminate'
 
@@ -89,7 +89,7 @@ const OUTLINED_CHECKBOX_PATHS: Record<CheckboxState, string> = {
 /**
  * Options accepted by {@link createOutlinedCheckboxSvgEl} and
  * {@link createFilledCheckboxSvgEl}.
- * @category Icons
+ * @category Icons: Checkmarks & checkboxes
  */
 export interface CheckboxIconOptions extends IconOptions {
   /**
@@ -114,7 +114,7 @@ function resolveCheckboxState(raw: NonNullable<CheckboxIconOptions['state']>): C
  * {@link createFilledCheckboxSvgEl}. Intended for multi-select item rows and
  * the select-all control. Decorative only (`aria-hidden`); the real state is
  * carried by `aria-selected` on the item or `aria-checked` on the control.
- * @category Icons
+ * @category Icons: Checkmarks & checkboxes
  */
 export function createOutlinedCheckboxSvgEl(opts: CheckboxIconOptions = {}): SVGElement {
   const state = resolveCheckboxState(opts.state ?? 'unchecked')
@@ -138,7 +138,7 @@ const FILLED_CHECKBOX_PATHS: Record<CheckboxState, string> = {
  * {@link createOutlinedCheckboxSvgEl}. Same options, including the chosen-state
  * vocabulary. Decorative only (`aria-hidden`); the real state is carried by
  * `aria-selected` on the item or `aria-checked` on the control.
- * @category Icons
+ * @category Icons: Checkmarks & checkboxes
  */
 export function createFilledCheckboxSvgEl(opts: CheckboxIconOptions = {}): SVGElement {
   const state = resolveCheckboxState(opts.state ?? 'unchecked')
