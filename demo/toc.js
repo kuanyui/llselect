@@ -22,12 +22,14 @@ if (layout && mainEl) {
   const tree = document.createElement('ul')
   tree.className = 'toc-tree'
   const targets = [] // [anchor element, toc link] in document order (scrollspy)
+  const linkTexts = new Map() // toc link -> its plain text (filter re-renders it with <mark>s)
   const addLink = (parentUl, el, text, isSection) => {
     const li = document.createElement('li')
     if (isSection) { li.className = 'toc-section' }
     const a = document.createElement('a')
     a.href = `#${el.id}`
     a.textContent = text
+    linkTexts.set(a, text)
     li.appendChild(a)
     parentUl.appendChild(li)
     targets.push([el, a])
@@ -90,12 +92,33 @@ if (layout && mainEl) {
 
   // --- text filter ---------------------------------------------------------
   // A section li's textContent includes its children, so a child match keeps
-  // its section visible (same behavior as the site sidebar).
+  // its section visible (same behavior as the site sidebar). Because both
+  // levels stay visible around a match, the match itself is wrapped in
+  // <mark>s to show WHY a row survived.
+  const renderLinkText = (a, q) => {
+    const text = linkTexts.get(a)
+    if (q === '') {
+      a.textContent = text
+      return
+    }
+    const lower = text.toLowerCase()
+    a.replaceChildren()
+    let from = 0
+    for (let hit = lower.indexOf(q); hit !== -1; hit = lower.indexOf(q, hit + q.length)) {
+      a.append(text.slice(from, hit))
+      const mark = document.createElement('mark')
+      mark.textContent = text.slice(hit, hit + q.length)
+      a.append(mark)
+      from = hit + q.length
+    }
+    a.append(text.slice(from))
+  }
   filter.addEventListener('input', () => {
     const q = filter.value.trim().toLowerCase()
     for (const li of tree.querySelectorAll('li')) {
       li.hidden = q !== '' && !li.textContent.toLowerCase().includes(q)
     }
+    for (const [, link] of targets) { renderLinkText(link, q) }
   })
 
   // --- mobile drawer chrome ------------------------------------------------

@@ -333,6 +333,9 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .toc a.active { background: #eef3fb; color: #2456a6; font-weight: 600; }
 .toc .toc-section > a { font-weight: 600; color: #222; margin-top: 0.4rem; }
 .toc .toc-section > a.active { color: #2456a6; }
+/* filter-match highlight; explicit padding/background so Bootstrap's global
+   mark rule (0.2em padding) cannot bloat the rows when a BS theme is active */
+.toc mark { padding: 0; background: #ffe066; color: inherit; border-radius: 2px; }
 
 /* drawer chrome exists only below the breakpoint */
 .toc-toggle { display: none; }
