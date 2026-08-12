@@ -305,21 +305,19 @@
     </article>
 
     <article>
-      <h3>5.4 Checkbox items (subclass)</h3>
+      <h3>5.4 Checkbox items (settings)</h3>
       <p class="hint">
-        Subclass path: override <code>createItemEl</code> to prepend a live
-        checkbox (<code>createOutlinedCheckboxSvgEl</code>); the single-item
-        rerender keeps it in sync. The subclass is NOT required:
-        <code>createItemContentElFn</code> plus the public
-        <code>isChosen()</code> reaches the same result (settings style:
-        11.2); shown subclass-style on purpose.
+        <code>createItemContentElFn</code> renders checkbox + label; the
+        public <code>isChosen()</code> supplies the state (the fn runs per
+        render, so the self-reference in the code is safe); the single-item
+        rerender keeps it in sync. Subclass equivalent: 14.1.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-multi-checkbox"></div>
           <div class="out" id="out-multi-checkbox">chosen: []</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="5.4"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="5.4"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="5.4"><code></code></pre></details>
       </div>
     </article>
 
@@ -330,14 +328,14 @@
         VISIBLE enabled subset: type a filter, toggle the row - only the
         matches change. Row content via the
         <code>createSelectAllRowContentElFn</code> setting; items reuse 5.4's
-        subclass checkbox (not required - see 5.4).
+        settings checkbox.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-select-all"></div>
           <div class="out" id="out-select-all">chosen: 0 items</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="5.5"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="5.5"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="5.5"><code></code></pre></details>
       </div>
     </article>
 
@@ -345,7 +343,7 @@
       <h3>5.6 Filled (Material) checkboxes</h3>
       <p class="hint">
         5.5 drawn with <code>createFilledCheckboxSvgEl</code> (tick / dash cut
-        out of a solid box); same not-required subclass as 5.4. Choose a few
+        out of a solid box); same settings checkbox as 5.4. Choose a few
         items - the select-all row shows the filled indeterminate state.
       </p>
       <div class="demo-split">
@@ -353,7 +351,7 @@
           <div id="mount-filled-checkbox"></div>
           <div class="out" id="out-filled-checkbox">chosen: 0 items</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="5.6"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="5.6"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="5.6"><code></code></pre></details>
       </div>
     </article>
   </section>
@@ -464,7 +462,7 @@
       <p class="hint">
         Filtering does not change the chosen set: a chosen item hidden by the
         current query stays chosen and reappears when cleared. Checkboxes:
-        5.4's not-required subclass.
+        5.4's settings pattern.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -618,7 +616,7 @@
       <code>create*ContentElFn</code> setting fills an element's VISIBLE
       content only; the library keeps the shell + ARIA (an option's
       <code>aria-label</code> stays the plain <code>itemToString</code>).
-      Subclass counterparts: 5.4 / 6.4 / 9.1.
+      When the SHELL itself must change, subclass instead: section 14.
     </p>
 
     <article>
@@ -641,7 +639,7 @@
       <h3>11.2 Multiple icon rows</h3>
       <p class="hint">
         Same renderer on a multiple; the shell keeps <code>aria-selected</code>
-        plus the auto <code>aria-label</code>. Subclass counterpart: 5.4.
+        plus the auto <code>aria-label</code>.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -757,6 +755,33 @@
       </p>
       <div id="i18n-all-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0.8rem"></div>
       <details class="code-toggle"><summary>code</summary><pre data-demo="13.2"><code></code></pre></details>
+    </article>
+  </section>
+
+  <section>
+    <h2>14. Subclassing</h2>
+    <p class="hint">
+      Settings customize CONTENT; subclassing customizes the SHELL (the
+      <code>role="option"</code> element itself) and can read protected
+      state. Performance is identical (one shared prototype method vs one
+      closure per instance is noise) - pick by capability. The
+      required-subclass cases live with their features: 6.4 (title on the
+      whole row), 9.1 (protected <code>isItemEffectivelyDisabled()</code>).
+    </p>
+
+    <article>
+      <h3>14.1 Checkbox items, subclass-style (= 5.4)</h3>
+      <p class="hint">
+        The same result as 5.4 via a <code>createItemEl</code> override - not
+        required, kept as the reference example of the subclass surface.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-subclass-checkbox"></div>
+          <div class="out" id="out-subclass-checkbox">chosen: []</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="14.1"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="14.1"><code></code></pre></details>
+      </div>
     </article>
   </section>
   </main>

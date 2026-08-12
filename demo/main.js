@@ -255,19 +255,21 @@ selMulti.setItems(COUNTRIES)
 //#endregion
 
 //#region 5.4
+// Settings path: createItemContentElFn renders checkbox + label; the public
+// isChosen() supplies the state. The fn only runs on render (after
+// construction), so the self-reference is safe. Subclass equivalent: 14.1.
 const outMultiCheckbox = document.getElementById('out-multi-checkbox')
-class CheckboxMultiSelect extends LLSelectMultiple {
-  createItemEl(item, index) {
-    const el = super.createItemEl(item, index)  // sets text + role + aria-selected
-    const box = createOutlinedCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' })
-    el.prepend(box)
-    return el
-  }
-}
-const selMultiCheckbox = new CheckboxMultiSelect(
+let selMultiCheckbox
+selMultiCheckbox = new LLSelectMultiple(
   document.getElementById('mount-multi-checkbox'),
   {
     placeholder: 'Pick countries (checkboxes)',
+    createItemContentElFn: (item) => {
+      const row = document.createElement('span')
+      row.className = 'lang-row' // inline-flex + gap (demo CSS)
+      row.append(createOutlinedCheckboxSvgEl({ state: selMultiCheckbox.isChosen(item) ? 'checked' : 'unchecked' }), item)
+      return row
+    },
     onChange: (chosen) => {
       outMultiCheckbox.textContent = 'chosen: ' + JSON.stringify(chosen)
     },
@@ -388,19 +390,20 @@ selSearchSingle.setItems(COUNTRIES)
 //#endregion
 
 //#region 7.2
+// Settings-path checkboxes, same pattern as 5.4.
 const outSearchMulti = document.getElementById('out-search-multi')
-class SearchCheckboxMulti extends LLSelectMultiple {
-  createItemEl(item, index) {
-    const el = super.createItemEl(item, index)
-    el.prepend(createOutlinedCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
-    return el
-  }
-}
-const selSearchMulti = new SearchCheckboxMulti(
+let selSearchMulti
+selSearchMulti = new LLSelectMultiple(
   document.getElementById('mount-search-multi'),
   {
     placeholder: 'Pick countries',
     filterable: true,
+    createItemContentElFn: (item) => {
+      const row = document.createElement('span')
+      row.className = 'lang-row'
+      row.append(createOutlinedCheckboxSvgEl({ state: selSearchMulti.isChosen(item) ? 'checked' : 'unchecked' }), item)
+      return row
+    },
     onChange: (chosen) => {
       outSearchMulti.textContent = 'chosen: ' + JSON.stringify(chosen)
     },
@@ -504,23 +507,22 @@ selTags.setChosenItems(['Japan', 'Brazil', 'Canada'])
 // with a tri-state SVG checkbox (createOutlinedCheckboxSvgEl) + the library's own
 // counting label (en pack); without the hook, themes draw a text glyph from
 // data-chosen-state. The accessible name stays uiTranslationPack.selectAllRowLabel.
-// The ITEMS get the same visual language - a subclass prepends a checkbox
-// reflecting isChosen (same pattern as 5.4) - so the row and the items read
-// as one consistent list.
-class SelectAllCheckboxMulti extends LLSelectMultiple {
-  createItemEl(item, index) {
-    const el = super.createItemEl(item, index)
-    el.prepend(createOutlinedCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
-    return el
-  }
-}
+// The ITEMS get the same visual language via 5.4's settings-path checkbox,
+// so the row and the items read as one consistent list.
 const outSelectAll = document.getElementById('out-select-all')
-const selSelectAll = new SelectAllCheckboxMulti(
+let selSelectAll
+selSelectAll = new LLSelectMultiple(
   document.getElementById('mount-select-all'),
   {
     placeholder: 'Pick countries',
     filterable: true,
     selectAllRow: true,
+    createItemContentElFn: (item) => {
+      const row = document.createElement('span')
+      row.className = 'lang-row'
+      row.append(createOutlinedCheckboxSvgEl({ state: selSelectAll.isChosen(item) ? 'checked' : 'unchecked' }), item)
+      return row
+    },
     createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
       const row = document.createElement('span')
       row.className = 'lang-row' // inline-flex + gap (demo CSS)
@@ -542,20 +544,20 @@ selSelectAll.setItems(COUNTRIES)
 // createFilledCheckboxSvgEl - solid rounded box, tick / dash cut out. Same
 // options as createOutlinedCheckboxSvgEl (incl. the chosen-state vocabulary);
 // unchecked is the same outline box in both.
-class FilledCheckboxMulti extends LLSelectMultiple {
-  createItemEl(item, index) {
-    const el = super.createItemEl(item, index)
-    el.prepend(createFilledCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
-    return el
-  }
-}
 const outFilledCheckbox = document.getElementById('out-filled-checkbox')
-const selFilledCheckbox = new FilledCheckboxMulti(
+let selFilledCheckbox
+selFilledCheckbox = new LLSelectMultiple(
   document.getElementById('mount-filled-checkbox'),
   {
     placeholder: 'Pick countries',
     filterable: true,
     selectAllRow: true,
+    createItemContentElFn: (item) => {
+      const row = document.createElement('span')
+      row.className = 'lang-row'
+      row.append(createFilledCheckboxSvgEl({ state: selFilledCheckbox.isChosen(item) ? 'checked' : 'unchecked' }), item)
+      return row
+    },
     createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
       const row = document.createElement('span')
       row.className = 'lang-row' // inline-flex + gap (demo CSS)
@@ -837,6 +839,31 @@ for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
 //#endregion
 
 // --- Inject demo snippets into <pre data-demo="X"><code></code></pre> -----
+//#region 14.1
+// Subclass equivalent of 5.4: override createItemEl and prepend the checkbox
+// to the option SHELL. Not required (5.4 reaches the same result with a
+// setting) and not faster - subclass when you need the shell itself or
+// protected state (see 6.4 / 9.1).
+class CheckboxMultiSelect extends LLSelectMultiple {
+  createItemEl(item, index) {
+    const el = super.createItemEl(item, index)  // sets text + role + aria-selected
+    el.prepend(createOutlinedCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
+    return el
+  }
+}
+const outSubclassCheckbox = document.getElementById('out-subclass-checkbox')
+const selSubclassCheckbox = new CheckboxMultiSelect(
+  document.getElementById('mount-subclass-checkbox'),
+  {
+    placeholder: 'Pick countries (checkboxes)',
+    onChange: (chosen) => {
+      outSubclassCheckbox.textContent = 'chosen: ' + JSON.stringify(chosen)
+    },
+  }
+)
+selSubclassCheckbox.setItems(COUNTRIES)
+//#endregion
+
 // Self-extraction: fetch this file's source, locate `//#region NAME` ...
 // `//#endregion` blocks, and write each into the matching <code>.
 {
