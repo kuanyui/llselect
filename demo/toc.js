@@ -89,9 +89,13 @@ if (layout && mainEl) {
     activeLink = cur
     if (activeLink) {
       activeLink.classList.add('active')
-      // keep the highlight visible inside the sidebar's own overflow; skip
-      // while the drawer sits closed off-screen
-      if (!drawerMq.matches || isOpen()) { activeLink.scrollIntoView({ block: 'nearest' }) }
+      // Keep the highlight visible inside the sidebar's own overflow - but
+      // NEVER while the user is browsing the sidebar (pointer over it or
+      // focus inside it): re-scrolling to the active row on every change
+      // would yank the sidebar away from where the user scrolled it. Skip
+      // while the drawer sits closed off-screen too.
+      const userBrowsingToc = aside.matches(':hover') || aside.matches(':focus-within')
+      if ((!drawerMq.matches || isOpen()) && !userBrowsingToc) { activeLink.scrollIntoView({ block: 'nearest' }) }
     }
   }
   window.addEventListener('scroll', () => { window.requestAnimationFrame(sync) }, { passive: true })

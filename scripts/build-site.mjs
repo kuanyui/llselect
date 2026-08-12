@@ -465,9 +465,14 @@ ${toc ? `<script>
     if (link) {
       link.classList.add('active')
       openChain(link)
-      // keep the highlight visible inside the sidebar's own overflow; skip
-      // while the drawer sits closed off-screen
-      if (!drawerMq.matches || isOpen()) { link.scrollIntoView({ block: 'nearest' }) }
+      // Keep the highlight visible inside the sidebar's own overflow - but
+      // NEVER while the user is browsing the sidebar (pointer over it or
+      // focus inside it): the page keeps moving under momentum / keyboard
+      // input, and re-scrolling to the active row on every change yanks the
+      // sidebar away from where the user scrolled it. Skip while the drawer
+      // sits closed off-screen too.
+      const userBrowsingToc = toc.matches(':hover') || toc.matches(':focus-within')
+      if ((!drawerMq.matches || isOpen()) && !userBrowsingToc) { link.scrollIntoView({ block: 'nearest' }) }
     }
   }
   window.addEventListener('scroll', () => { window.requestAnimationFrame(sync) }, { passive: true })
