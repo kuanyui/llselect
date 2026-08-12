@@ -16,6 +16,7 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { posix } from 'node:path'
 import { marked } from 'marked'
+import { ReflectionKind } from 'typedoc'
 import { highlightJs, highlightHtml } from '../demo/highlight.js'
 
 const REPO_URL = 'https://gitlab.com/kuanyui/llselect'
@@ -100,6 +101,64 @@ function rewriteLinks(body, mdDir) {
   })
 }
 
+// Kind badges for the API pages. The custom @group/@category grouping
+// replaced typedoc's kind-based buckets (Methods / Properties / ...), so the
+// rendered markdown no longer shows what a symbol IS. The typedoc JSON model
+// (.build/api.json, emitted alongside the markdown) still knows: build a
+// name -> kind-label map per module and stamp `data-kind` onto each matching
+// heading; CSS draws the letter chip. A name mapping to two different labels
+// fails the build - badges must never guess.
+const KIND_LABELS = new Map([
+  [ReflectionKind.Class, 'class'],
+  [ReflectionKind.Interface, 'interface'],
+  [ReflectionKind.TypeAlias, 'type'],
+  [ReflectionKind.Function, 'function'],
+  [ReflectionKind.Method, 'method'],
+  [ReflectionKind.Property, 'property'],
+  [ReflectionKind.Accessor, 'accessor'],
+  [ReflectionKind.Variable, 'const'], // every exported binding here is a const
+  [ReflectionKind.Enum, 'enum'],
+  [ReflectionKind.EnumMember, 'enum-member'],
+])
+function collectKinds(moduleReflection) {
+  const byName = new Map()
+  const walk = (r) => {
+    const label = KIND_LABELS.get(r.kind)
+    if (label) {
+      const prev = byName.get(r.name)
+      if (prev !== undefined && prev !== label) {
+        throw new Error(`build:site: symbol name '${r.name}' is both '${prev}' and '${label}' - kind badges need real disambiguation now`)
+      }
+      byName.set(r.name, label)
+    }
+    for (const c of r.children ?? []) { walk(c) }
+  }
+  for (const c of moduleReflection.children ?? []) { walk(c) }
+  return byName
+}
+// Heading text -> symbol name: strip tags/entities, drop a trailing call
+// signature `()`, and retry once without a leading modifier word (the
+// `abstract` / `readonly` etc. code chips typedoc puts before the name).
+const HEADING_MODIFIERS = new Set(['abstract', 'readonly', 'static', 'protected', 'optional', 'const', 'get', 'set'])
+function resolveHeadingKind(innerHtml, kinds) {
+  let text = innerHtml.replace(/<[^>]+>/g, '').replace(/&[a-z0-9#]+;/gi, '').trim()
+  if (text.endsWith('()')) { text = text.slice(0, -2) }
+  if (kinds.has(text)) { return kinds.get(text) }
+  const space = text.indexOf(' ')
+  if (space !== -1 && HEADING_MODIFIERS.has(text.slice(0, space))) {
+    const rest = text.slice(space + 1)
+    if (kinds.has(rest)) { return kinds.get(rest) }
+  }
+  return null
+}
+function injectKindBadges(body, kinds) {
+  return body.replace(/<h([2-6]) id="([^"]+)">(.*?)<\/h\1>/g, (whole, depth, id, inner) => {
+    const label = resolveHeadingKind(inner, kinds)
+    if (label === null) { return whole }
+    return `<h${depth} id="${id}" data-kind="${label}" title="${label}">${inner}</h${depth}>`
+  })
+}
+
 // Sidebar outline for the (long) API pages: a generic nested tree from the
 // rendered heading ladder (h2..h6) - depths are NOT fixed per role, because a
 // categorized group (@group + @category) sinks its symbols one level deeper
@@ -110,8 +169,9 @@ function buildTocHtml(body) {
   const root = { depth: 1, children: [] }
   const stack = [root]
   let skipDepth = null
-  for (const m of body.matchAll(/<h([2-6]) id="([^"]+)">(.*?)<\/h\1>/g)) {
-    const h = { depth: Number(m[1]), id: m[2], text: m[3].replace(/<[^>]+>/g, ''), children: [] }
+  for (const m of body.matchAll(/<h([2-6]) id="([^"]+)"([^>]*)>(.*?)<\/h\1>/g)) {
+    const kind = (m[3].match(/data-kind="([^"]+)"/) ?? [])[1] ?? null
+    const h = { depth: Number(m[1]), id: m[2], kind, text: m[4].replace(/<[^>]+>/g, ''), children: [] }
     if (skipDepth !== null && h.depth > skipDepth) { continue }
     skipDepth = null
     if (TOC_SKIP.has(h.text)) { skipDepth = h.depth; continue }
@@ -123,19 +183,28 @@ function buildTocHtml(body) {
   const CHEVRON = '<svg class="toc-chevron" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>'
   const FOLD_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.59,5.41L15.17,4L12,7.17L8.83,4L7.41,5.41L12,10M7.41,18.59L8.83,20L12,16.83L15.17,20L16.58,18.59L12,14L7.41,18.59Z"/></svg>'
   const ids = new Set()
-  const collect = (node) => { ids.add(node.id); node.children.forEach(collect) }
+  const kindsUsed = new Set()
+  const collect = (node) => {
+    ids.add(node.id)
+    if (node.kind) { kindsUsed.add(node.kind) }
+    node.children.forEach(collect)
+  }
   root.children.forEach(collect)
   const render = (node, isSection) => {
-    const link = `<a href="#${node.id}">${node.text}</a>`
+    const kindAttrs = node.kind ? ` data-kind="${node.kind}" title="${node.kind}"` : ''
+    const link = `<a href="#${node.id}"${kindAttrs}>${node.text}</a>`
     if (node.children.length === 0) { return `<li>${link}</li>` }
     const inner = `<ul>${node.children.map((c) => render(c, false)).join('')}</ul>`
     // top-level sections stay expanded labels; every deeper parent collapses
     if (isSection) { return `<li class="toc-section">${link}${inner}</li>` }
     return `<li><details><summary>${CHEVRON}${link}</summary>${inner}</details></li>`
   }
+  // Legend lists only the kinds this page actually uses, in a fixed order.
+  const KIND_ORDER = ['class', 'interface', 'type', 'function', 'method', 'property', 'accessor', 'const', 'enum', 'enum-member']
+  const legend = kindsUsed.size === 0 ? '' : `\n<div class="toc-legend">${KIND_ORDER.filter((k) => kindsUsed.has(k)).map((k) => `<span data-kind="${k}">${k}</span>`).join('')}</div>`
   const html = `<aside class="toc" id="toc" tabindex="-1" aria-label="Table of contents">
 <input type="search" placeholder="Filter" aria-label="Filter the table of contents">
-<button type="button" class="toc-fold">${FOLD_ICON}Fold all</button>
+<button type="button" class="toc-fold">${FOLD_ICON}Fold all</button>${legend}
 <ul class="toc-tree">${root.children.map((c) => render(c, true)).join('\n')}</ul>
 </aside>`
   return { html, ids }
@@ -243,6 +312,21 @@ body.with-toc { max-width: 78rem; }
 .toc-fold { display: flex; align-items: center; gap: 0.35rem; width: 100%; margin-bottom: 0.6rem; padding: 0.25rem 0.5rem; font: inherit; color: var(--fg); background: var(--muted); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
 .toc-fold:hover { background: var(--nav-hover); }
 .toc-fold svg { width: 1rem; height: 1rem; flex: none; color: var(--fg-muted); }
+/* Kind badges: letter chips stamped from data-kind (API pages). Fixed chip
+   colors with white text read fine in both color schemes. */
+[data-kind]::before { display: inline-flex; align-items: center; justify-content: center; width: 1.2em; height: 1.2em; margin-right: 0.4em; border-radius: 3px; font-size: 0.7em; font-weight: 700; font-style: normal; color: #fff; vertical-align: 0.15em; font-family: system-ui, sans-serif; }
+[data-kind="class"]::before { content: "C"; background: #1f883d; }
+[data-kind="interface"]::before { content: "I"; background: #0f766e; }
+[data-kind="type"]::before { content: "T"; background: #0969da; }
+[data-kind="function"]::before { content: "F"; background: #bc4c00; }
+[data-kind="method"]::before { content: "M"; background: #6639ba; }
+[data-kind="property"]::before { content: "P"; background: #57606a; }
+[data-kind="accessor"]::before { content: "A"; background: #bf3989; }
+[data-kind="const"]::before { content: "V"; background: #9a6700; }
+[data-kind="enum"]::before { content: "E"; background: #bf3989; }
+[data-kind="enum-member"]::before { content: "E"; background: #57606a; }
+.toc-legend { display: flex; flex-wrap: wrap; gap: 0.2rem 0.7rem; margin-bottom: 0.6rem; font-size: 0.78em; color: var(--fg-muted); }
+.toc-legend span { display: inline-flex; align-items: center; }
 /* The native disclosure marker is unclickably small; draw an mdi chevron
    with a real hit area instead. Leaf rows at the same level get a matching
    left inset so their text lines up with the chevron rows' text. */
@@ -486,10 +570,11 @@ function wrapSections(body, tocIds) {
   return out
 }
 
-function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links, toc = false, subnav = null }) {
+function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links, toc = false, subnav = null, kinds = null }) {
   slugCounts.clear()
   let body = marked.parse(readFileSync(mdPath, 'utf8'))
   body = links ? links(body) : rewriteLinks(body, posix.dirname(mdPath).replace(/^\.$/, ''))
+  if (kinds !== null) { body = injectKindBadges(body, kinds) }
   let tocHtml = null
   if (toc) {
     const built = buildTocHtml(body)
@@ -528,11 +613,20 @@ renderMarkdownPage('angularjs/README.md', 'public/angularjs/index.html', { title
 if (!existsSync('.build/api-md/@llselect/core.md')) {
   throw new Error('.build/api-md/ is missing: the build:site npm script runs typedoc first')
 }
+if (!existsSync('.build/api.json')) {
+  throw new Error('.build/api.json is missing: typedoc emits it (typedoc.json "json") in the same run as the markdown')
+}
+const apiModel = JSON.parse(readFileSync('.build/api.json', 'utf8'))
+const kindsByModule = new Map((apiModel.children ?? []).map((mod) => [mod.name, collectKinds(mod)]))
 mkdirSync('public/api', { recursive: true })
 for (const [md, out, title, toc] of API_PAGES) {
   if (md === 'README.md') { continue } // typedoc's index is a bare module list; composed below instead
+  const kinds = kindsByModule.get(md.replace(/\.md$/, '')) ?? null
+  if (toc && kinds === null) {
+    throw new Error(`build:site: no typedoc module matches ${md} for kind badges (modules: ${[...kindsByModule.keys()].join(', ')})`)
+  }
   renderMarkdownPage(`.build/api-md/${md}`, `public/api/${out}`, {
-    title, description: `API reference for ${pkg.name} - generated from the TypeScript declarations`, prefix: '../', current: 'API', links: makeApiLinkRewriter(posix.dirname(md).replace(/^\.$/, '')), toc,
+    title, description: `API reference for ${pkg.name} - generated from the TypeScript declarations`, prefix: '../', current: 'API', links: makeApiLinkRewriter(posix.dirname(md).replace(/^\.$/, '')), toc, kinds,
   })
   // The categorization is total by design: an "Other" bucket means some public
   // export or member lost its @category (e.g. a helper inserted between a

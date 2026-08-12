@@ -4,6 +4,7 @@
   "entryPoints": ["src/index.ts", "src/i18n.ts"],
   "plugin": ["typedoc-plugin-markdown"],
   "outputFileStrategy": "modules",
+  "json": ".build/api.json",
   "hidePageHeader": true,
   "hideBreadcrumbs": true,
   "out": ".build/api-md",
