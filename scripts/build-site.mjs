@@ -312,19 +312,33 @@ body.with-toc { max-width: 78rem; }
 .toc-fold { display: flex; align-items: center; gap: 0.35rem; width: 100%; margin-bottom: 0.6rem; padding: 0.25rem 0.5rem; font: inherit; color: var(--fg); background: var(--muted); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
 .toc-fold:hover { background: var(--nav-hover); }
 .toc-fold svg { width: 1rem; height: 1rem; flex: none; color: var(--fg-muted); }
-/* Kind badges: letter chips stamped from data-kind (API pages). Fixed chip
-   colors with white text read fine in both color schemes. */
-[data-kind]::before { display: inline-flex; align-items: center; justify-content: center; width: 1.2em; height: 1.2em; margin-right: 0.4em; border-radius: 3px; font-size: 0.7em; font-weight: 700; font-style: normal; color: #fff; vertical-align: 0.15em; font-family: system-ui, sans-serif; }
-[data-kind="class"]::before { content: "C"; background: #1f883d; }
-[data-kind="interface"]::before { content: "I"; background: #0f766e; }
-[data-kind="type"]::before { content: "T"; background: #0969da; }
-[data-kind="function"]::before { content: "F"; background: #bc4c00; }
-[data-kind="method"]::before { content: "M"; background: #6639ba; }
-[data-kind="property"]::before { content: "P"; background: #57606a; }
-[data-kind="accessor"]::before { content: "A"; background: #bf3989; }
-[data-kind="const"]::before { content: "V"; background: #9a6700; }
-[data-kind="enum"]::before { content: "E"; background: #bf3989; }
-[data-kind="enum-member"]::before { content: "E"; background: #57606a; }
+/* Kind badges (API pages), stamped as data-kind. One color per kind (fixed,
+   white text - fine in both schemes); the sidebar draws compact letter
+   chips, the content side an unabbreviated pill at the heading's right
+   edge. */
+[data-kind="class"] { --kind-color: #1f883d; }
+[data-kind="interface"] { --kind-color: #0f766e; }
+[data-kind="type"] { --kind-color: #0969da; }
+[data-kind="function"] { --kind-color: #bc4c00; }
+[data-kind="method"] { --kind-color: #6639ba; }
+[data-kind="property"] { --kind-color: #57606a; }
+[data-kind="accessor"] { --kind-color: #bf3989; }
+[data-kind="const"] { --kind-color: #9a6700; }
+[data-kind="enum"] { --kind-color: #bf3989; }
+[data-kind="enum-member"] { --kind-color: #57606a; }
+.toc [data-kind]::before { display: inline-flex; align-items: center; justify-content: center; width: 1.2em; height: 1.2em; margin-right: 0.4em; border-radius: 3px; font-size: 0.7em; font-weight: 700; font-style: normal; color: #fff; vertical-align: 0.15em; font-family: system-ui, sans-serif; background: var(--kind-color); }
+.toc [data-kind="class"]::before { content: "C"; }
+.toc [data-kind="interface"]::before { content: "I"; }
+.toc [data-kind="type"]::before { content: "T"; }
+.toc [data-kind="function"]::before { content: "F"; }
+.toc [data-kind="method"]::before { content: "M"; }
+.toc [data-kind="property"]::before { content: "P"; }
+.toc [data-kind="accessor"]::before { content: "A"; }
+.toc [data-kind="const"]::before { content: "V"; }
+.toc [data-kind="enum"]::before { content: "E"; }
+.toc [data-kind="enum-member"]::before { content: "E"; }
+/* content side: the full kind word, floated to the heading's right edge */
+main [data-kind]::after { content: attr(data-kind); float: right; margin-left: 0.6em; margin-top: 0.15em; padding: 0.1em 0.6em; border-radius: 999px; font-size: 0.72rem; font-weight: 600; font-style: normal; line-height: 1.6; color: #fff; background: var(--kind-color); font-family: system-ui, sans-serif; }
 .toc-legend { display: flex; flex-wrap: wrap; gap: 0.2rem 0.7rem; margin-bottom: 0.6rem; font-size: 0.78em; color: var(--fg-muted); }
 .toc-legend span { display: inline-flex; align-items: center; }
 /* The native disclosure marker is unclickably small; draw an mdi chevron
