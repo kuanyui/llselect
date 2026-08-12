@@ -309,7 +309,10 @@
       <p class="hint">
         Subclass path: override <code>createItemEl</code> to prepend a live
         checkbox (<code>createOutlinedCheckboxSvgEl</code>); the single-item
-        rerender keeps it in sync. Settings counterpart: 11.2.
+        rerender keeps it in sync. The subclass is NOT required:
+        <code>createItemContentElFn</code> plus the public
+        <code>isChosen()</code> reaches the same result (settings style:
+        11.2); shown subclass-style on purpose.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -327,7 +330,7 @@
         VISIBLE enabled subset: type a filter, toggle the row - only the
         matches change. Row content via the
         <code>createSelectAllRowContentElFn</code> setting; items reuse 5.4's
-        subclass checkbox.
+        subclass checkbox (not required - see 5.4).
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -342,8 +345,8 @@
       <h3>5.6 Filled (Material) checkboxes</h3>
       <p class="hint">
         5.5 drawn with <code>createFilledCheckboxSvgEl</code> (tick / dash cut
-        out of a solid box). Choose a few items - the select-all row shows the
-        filled indeterminate state.
+        out of a solid box); same not-required subclass as 5.4. Choose a few
+        items - the select-all row shows the filled indeterminate state.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -419,8 +422,10 @@
         Demo CSS adds <code>text-overflow: ellipsis</code> on the items
         (needs <code>'match-trigger'</code> - a fit-content popup never
         truncates); a <code>createItemEl</code> subclass sets
-        <code>el.title</code> as the tooltip. The library never auto-adds
-        <code>title</code> - bring your own tooltip lib, or this.
+        <code>el.title</code>. The subclass IS required for this exact
+        effect: no setting reaches the option shell, so a content fn could
+        only tooltip the inner text, not the whole row. (The library never
+        auto-adds <code>title</code> - bring your own tooltip lib, or this.)
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -458,7 +463,8 @@
       <h3>7.2 Multi + filterable + checkboxes</h3>
       <p class="hint">
         Filtering does not change the chosen set: a chosen item hidden by the
-        current query stays chosen and reappears when cleared.
+        current query stays chosen and reappears when cleared. Checkboxes:
+        5.4's not-required subclass.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -533,7 +539,10 @@
       <p class="hint">
         Out-of-stock drinks: unselectable, skipped by arrows, still hoverable
         - hover one for the tooltip a <code>createItemEl</code> subclass
-        attached.
+        attached. The subclass IS required here: the <code>title</code> sits
+        on the option shell (whole-row hover), and
+        <code>isItemEffectivelyDisabled()</code> is protected - neither is
+        reachable from settings.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
