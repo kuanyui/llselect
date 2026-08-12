@@ -6,6 +6,7 @@
   <title>llselect + AngularJS - examples</title>
   <link rel="stylesheet" href="../style.css">
   <link rel="stylesheet" href="../../dist/themes/vanilla.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
 </head>
 <body ng-app="demo" ng-controller="DemoCtrl as vm">
   <nav class="demo-nav">
@@ -18,6 +19,7 @@
   <nav class="demo-subnav">
     <span class="subnav-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12,2.5L20.84,5.65L19.5,17.35L12,21.5L4.5,17.35L3.16,5.65L12,2.5M12,4.5L5,7L6.08,16.22L12,19.5L17.92,16.22L19,7L12,4.5M12,5.72L16.58,16H14.87L13.94,13.72H10.04L9.12,16H7.41L12,5.72M13.34,12.3L12,9.07L10.66,12.3H13.34Z"/></svg>AngularJS 1.x</span>
     <a href="../../angularjs/">README</a>
+    <a href="../../angularjs/api.html">API</a>
     <a href="examples.html" class="current">Examples</a>
     <a href="benchmark.html">Benchmark</a>
   </nav>
@@ -133,7 +135,7 @@
   </section>
 
   <section>
-    <h2>4. select as: the model holds an id, not the object</h2>
+    <h2>4. Ids in ng-model: select as</h2>
     <p>
       <code>select as</code> is the ngModel value projection. llselect has no
       equivalent setting on purpose - the app declares it, exactly as
@@ -164,7 +166,7 @@
   </section>
 
   <section>
-    <h2>5b. Arrow, and app-wide defaults</h2>
+    <h2>6. ll-arrow, and llselectConfigProvider defaults</h2>
     <p>
       <code>ll-arrow</code> takes llselect's two built-in arrows and nothing
       else; a custom one means editing your copy of the file. The house style
@@ -173,46 +175,50 @@
       app-wide, which is why the selects above have one without saying so. A
       per-element <code>ll-arrow</code> wins over it.
     </p>
-    <div class="demo-row" data-src="5b">
+    <div class="demo-row" data-src="6">
       <llselect-single ng-model="vm.country3" ll-arrow="triangle"
         ll-options="c for c in vm.countries">
       </llselect-single>
     </div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="5b"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="6"><code></code></pre></details>
   </section>
 
   <section>
-    <h2>5c. Custom item content: ll-item-content-fn</h2>
+    <h2>7. Custom item HTML: ll-item-content-fn</h2>
     <p>
       An expression evaluating to a function <code>(item) =&gt; HTMLElement | null</code>,
       passed straight to llselect's <code>createItemContentElFn</code>. It runs
       per rendered row per render, outside any digest, and the element is never
       <code>$compile</code>d - custom rows with zero per-row scope or watcher.
       The accessible name and filter text stay the <code>ll-options</code>
-      label. Two ways to build the element (both in <code>app.js</code>): the
-      single builds it with <code>createElement</code>
-      (<code>renderUserRow</code>); the multiple clones the
-      <code>&lt;template&gt;</code> below and fills it
-      (<code>renderUserRowFromTpl</code>) - the closest feel to a row template,
-      with the element rendered beside the default checkbox. For real per-row
-      Angular templates, that is <code>&lt;ui-llselect&gt;</code> below.
+      label (the icon never reaches a screen reader). Two ways to build the
+      element (both in <code>app.js</code>): the single builds it with
+      <code>createElement</code> (<code>renderLangRow</code>); the multiple
+      clones the <code>&lt;template&gt;</code> below and fills it
+      (<code>renderLangRowFromTpl</code>), rendered beside the default
+      checkbox. For real per-row Angular templates, that is
+      <code>&lt;ui-llselect&gt;</code> below.
     </p>
-    <div class="demo-row" data-src="5c">
-      <template id="user-row-tpl">
-        <span><span class="who"></span> <small class="hint"></small></span>
+    <div data-src="7">
+      <template id="lang-row-tpl">
+        <span class="lang-row"><i class="mdi" aria-hidden="true"></i><span class="lang-name"></span></span>
       </template>
-      <llselect-single ng-model="vm.user2" ll-filterable="true" ll-item-content-fn="vm.renderUserRow"
-        ll-options="u.name disable when u.suspended for u in vm.users track by u.id">
-      </llselect-single>
-      <llselect-multiple ng-model="vm.people2" ll-item-content-fn="vm.renderUserRowFromTpl"
-        ll-options="u.name for u in vm.users track by u.id">
-      </llselect-multiple>
+      <div class="demo-row">
+        <llselect-single ng-model="vm.lang" ll-filterable="true" ll-item-content-fn="vm.renderLangRow"
+          ll-options="l.name for l in vm.languages track by l.name">
+        </llselect-single>
+      </div>
+      <div class="demo-row">
+        <llselect-multiple ng-model="vm.langsRich" ll-item-content-fn="vm.renderLangRowFromTpl"
+          ll-options="l.name for l in vm.languages track by l.name">
+        </llselect-multiple>
+      </div>
     </div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="5c"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7"><code></code></pre></details>
   </section>
 
   <section>
-    <h2>6. &lt;ui-llselect&gt;: ui-select's markup, llselect's DOM</h2>
+    <h2>8. &lt;ui-llselect&gt;: ui-select's markup, llselect's DOM</h2>
     <p>
       The call-site markup and the transcluded templates carry over from
       ui-select. Its CSS themes do not - llselect owns the DOM, so this is styled
@@ -220,7 +226,7 @@
       ui-select has no item-to-string concept, and llselect needs one for the
       option's accessible name.
     </p>
-    <div data-src="6">
+    <div data-src="8">
     <ui-llselect ng-model="vm.person" name="person" required>
       <ui-select-match placeholder="Pick a person">{{$select.selected.name}}</ui-select-match>
       <ui-select-choices repeat="p in vm.users | filter: $select.search" ll-label="p.name"
@@ -231,9 +237,9 @@
     </ui-llselect>
     </div>
     <div class="out">ng-model = {{ vm.person | json }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="6"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8"><code></code></pre></details>
 
-    <div data-src="6b">
+    <div data-src="8b">
     <ui-llselect ng-model="vm.people" multiple>
       <ui-select-match>{{$item.name}}</ui-select-match>
       <ui-select-choices repeat="p in vm.users | filter: $select.search" ll-label="p.name">
@@ -242,9 +248,9 @@
     </ui-llselect>
     </div>
     <div class="out">ng-model = {{ vm.people.length }} selected</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="6b"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8b"><code></code></pre></details>
 
-    <div data-src="6c">
+    <div data-src="8c">
     <ui-llselect ng-model="vm.person2">
       <ui-select-match placeholder="Pick a person" allow-clear="true">{{$select.selected.name}}</ui-select-match>
       <ui-select-choices repeat="p in vm.users | filter: $select.search" ll-label="p.name">
@@ -253,7 +259,7 @@
     </ui-llselect>
     </div>
     <div class="out">ng-model = {{ vm.person2.name || 'undefined' }} <span class="hint">(ui-select's own allow-clear carries over: the x clears back to undefined)</span></div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="6c"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8c"><code></code></pre></details>
     <p class="hint">
       Not bridged, by rule (llselect has no such concept, so it is ignored rather
       than half-implemented): tagging, sortable, append-to-body, async refresh,
@@ -262,7 +268,7 @@
   </section>
 
   <section>
-    <h2>7. ghiscoding/angular-validation</h2>
+    <h2>9. ghiscoding/angular-validation</h2>
     <p>
       A third-party validation library, included because it is the case that
       started this: it <b>throws</b> unless the field has a <code>name</code>
@@ -273,7 +279,7 @@
       <code>require: 'ngModel'</code>, and it revalidates from a watch on
       <code>ctrl.$modelValue</code> - all element-agnostic.
     </p>
-    <form name="avForm" novalidate data-src="7">
+    <form name="avForm" novalidate data-src="9">
       <div class="demo-row">
         <llselect-single name="avFruit" ng-model="vm.avFruit" validation="required"
           ll-clearable="true" ll-options="f for f in vm.fruits">
@@ -294,11 +300,11 @@
       and the focusable element is llselect's inner trigger - but the
       <code>$modelValue</code> watch is the path that matters for a select.
     </p>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="9"><code></code></pre></details>
   </section>
 
   <section>
-    <h2>8. Full source</h2>
+    <h2>10. Full source</h2>
     <p>
       The whole of what this page loads. Nothing is generated and nothing is
       minified: this is the file you copy.

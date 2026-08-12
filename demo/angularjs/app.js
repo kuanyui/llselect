@@ -24,9 +24,16 @@
     { id: 7, name: 'Grace Garcia', role: 'guest', suspended: false },
   ]
 
+  // icon/color drive example 7's custom rows (same data shape as the core
+  // demo's PROGRAMMING_LANGUAGES); the other examples read only .name.
   var LANGUAGES = [
-    { name: 'JavaScript' }, { name: 'TypeScript' }, { name: 'Python' },
-    { name: 'Rust' }, { name: 'Go' }, { name: 'Ruby' }, { name: 'Java' },
+    { name: 'JavaScript', icon: 'language-javascript', color: '#f7df1e' },
+    { name: 'TypeScript', icon: 'language-typescript', color: '#3178c6' },
+    { name: 'Python', icon: 'language-python', color: '#3776ab' },
+    { name: 'Rust', icon: 'language-rust', color: '#ce412b' },
+    { name: 'Go', icon: 'language-go', color: '#00add8' },
+    { name: 'Ruby', icon: 'language-ruby', color: '#cc342d' },
+    { name: 'Java', icon: 'language-java', color: '#e76f00' },
   ]
 
   angular.module('demo', ['llselect', 'llselect.uiCompat', 'ngSanitize', 'ghiscoding.validation'])
@@ -88,35 +95,37 @@
       vm.locked = false
       vm.avFruit = undefined
       vm.country3 = undefined
-      vm.user2 = undefined
-      vm.people2 = []
+      vm.lang = undefined
+      vm.langsRich = []
 
       /**
-       * 5c. A render-time DOM factory: called by llselect outside any digest,
+       * 7. A render-time DOM factory: called by llselect outside any digest,
        * never $compile'd - custom rows with zero per-row scope or watcher.
        * The accessible name stays the ll-options label; this only changes
        * the pixels.
        */
-      vm.renderUserRow = function (u) {
+      vm.renderLangRow = function (lang) {
         var row = document.createElement('span')
-        var name = document.createElement('span')
-        name.textContent = u.name
-        var hint = document.createElement('small')
-        hint.className = 'hint'
-        hint.textContent = u.role + (u.suspended ? ' - suspended' : '')
-        row.append(name, ' ', hint)
+        row.className = 'lang-row'
+        var icon = document.createElement('i')
+        icon.className = 'mdi mdi-' + lang.icon
+        icon.setAttribute('aria-hidden', 'true') // decorative; aria-label covers the name
+        icon.style.color = lang.color
+        row.append(icon, document.createTextNode(lang.name))
         return row
       }
 
       /**
-       * 5c, template flavor: the same factory with the markup authored in HTML
-       * (the <template id="user-row-tpl"> in examples.html) and cloned per
+       * 7, template flavor: the same factory with the markup authored in HTML
+       * (the <template id="lang-row-tpl"> in examples.html) and cloned per
        * row. Closest feel to a row template - still no scope, no $compile.
        */
-      vm.renderUserRowFromTpl = function (u) {
-        var row = document.getElementById('user-row-tpl').content.firstElementChild.cloneNode(true)
-        row.querySelector('.who').textContent = u.name
-        row.querySelector('.hint').textContent = u.role
+      vm.renderLangRowFromTpl = function (lang) {
+        var row = document.getElementById('lang-row-tpl').content.firstElementChild.cloneNode(true)
+        var icon = row.querySelector('i')
+        icon.classList.add('mdi-' + lang.icon)
+        icon.style.color = lang.color
+        row.querySelector('.lang-name').textContent = lang.name
         return row
       }
 
