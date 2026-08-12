@@ -39,6 +39,11 @@
    */
   var BRIDGES = new WeakMap()
 
+  /**
+   * @template {new (...args: any[]) => any} B
+   * @param {B} Base
+   * @returns {B}
+   */
   function defineCompatClass(Base) {
     return class extends Base {
       renderPopupList() {
@@ -325,9 +330,15 @@
       if (repeat.modelMapperFn) { ngModelCtrl.$render() }
     })
 
-    if (attrs.ngDisabled || attrs.disabled) {
-      scope.$watch(attrs.ngDisabled || attrs.disabled, function (v) { sel.setDisabled(!!v) })
-    }
+    // Disabled, ui-select's own way (select.js:1135): observe the ATTRIBUTE
+    // and ride ngDisabled's attr.$set, which hands observers a real boolean; a
+    // static literal ("disabled") and an interpolated string stay truthy-string
+    // compatible with ui-select - string "false" trap included, the bridge is
+    // faithful to the original, quirks and all. The attribute itself stays
+    // inert on this non-form-associated host (no pointer-event suppression),
+    // and setDisabled() keeps the trigger hoverable by design, so hover
+    // tooltips explaining WHY it is disabled keep working.
+    attrs.$observe('disabled', function (v) { sel.setDisabled(!!v) })
 
     scope.$on('$destroy', function () {
       bridge.releaseRowScopes()
@@ -350,4 +361,4 @@
         },
       }
     }])
-})(window.angular, window.llselect)
+})(/** @type {any} */ (window).angular, /** @type {any} */ (window).llselect) // script-tag globals, cast for checkJs

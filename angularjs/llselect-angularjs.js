@@ -120,6 +120,7 @@
    * llselect outside any digest, and the returned element is NOT $compile'd.
    * Angular templates per row are the <ui-llselect> trade, deliberately not
    * this one. A non-function value is reported loudly.
+   * @returns {Function | null}
    */
   function evalFnAttr(scope, attrs, name) {
     if (!attrs[name]) { return null }
@@ -171,6 +172,11 @@
   }
 
   /**
+   * @typedef {import('@llselect/core').LLSelectSingle<unknown>} LlselectSingleInstance
+   * @typedef {import('@llselect/core').LLSelectMultiple<unknown>} LlselectMultipleInstance
+   */
+
+  /**
    * The controller other directives on the same element `require` (by the
    * directive names `llselectSingle` / `llselectMultiple`) to reach the live
    * widget - the door for app-owned policy directives (an app-wide
@@ -179,10 +185,17 @@
    * from a $watch / event handler, never from a controller constructor.
    */
   function LlselectApiController() {
+    /** @type {LlselectSingleInstance | LlselectMultipleInstance | null} */
     var sel = null
-    /** Wired by the owning directive's link; not part of the public surface. */
+    /**
+     * Wired by the owning directive's link; not part of the public surface.
+     * @param {LlselectSingleInstance | LlselectMultipleInstance} s
+     */
     this.$$setInstance = function (s) { sel = s }
-    /** The live LLSelectSingle / LLSelectMultiple. Throws before link; never returns null. */
+    /**
+     * The live LLSelectSingle / LLSelectMultiple. Throws before link; never returns null.
+     * @returns {LlselectSingleInstance | LlselectMultipleInstance}
+     */
     this.instance = function () {
       if (!sel) {
         throw new Error('llselect-angularjs: instance() is not available yet - the widget is created at link time; call it from a $watch or event handler')
@@ -388,4 +401,4 @@
         },
       }
     }])
-})(window.angular, window.llselect)
+})(/** @type {any} */ (window).angular, /** @type {any} */ (window).llselect) // script-tag globals, cast for checkJs

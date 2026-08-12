@@ -235,7 +235,7 @@ The bridge (`llselect-ui-select.js`, module `llselect.uiCompat`) for migrating a
 | `search-enabled` | `filterable`. Defaults to `true`, following ui-select's default rather than llselect's `false` - it is ui-select's markup, so its defaults are what the call site expects |
 | `placeholder`, `allow-clear` (on `<ui-select-match>`) | `placeholder`, `clearable` |
 | `on-select`, `on-remove` | derived from `onChange` by diffing against the previous set |
-| `ng-disabled` | `setDisabled()` |
+| `ng-disabled` / the `disabled` attribute | `setDisabled()`, via `attrs.$observe('disabled')` - the exact mechanism ui-select itself uses, its string quirks included (a truthy string like interpolated `"false"` disables). The observed attribute stays inert on the host, so hover - and a why-tooltip - keep working while disabled |
 | `$select.selected`, `$select.search`, `$select.multiple` | published on each template's scope |
 | `$index` | from `createItemEl(item, index)` |
 

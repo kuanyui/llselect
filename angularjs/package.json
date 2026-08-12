@@ -9,25 +9,29 @@
     "llselect-ui-select.js",
     "llselect-ui-select.min.js",
     "README.md",
+    "API.md",
     "DESIGN.md",
     "SPEC.md",
     "LICENSE"
   ],
   "scripts": {
     "build": "terser llselect-angularjs.js -c -m --comments '/^!/' -o llselect-angularjs.min.js && terser llselect-ui-select.js -c -m --comments '/^!/' -o llselect-ui-select.min.js",
-    "test": "node --test test/*.test.mjs",
+    "test": "npm run check:types && node --test test/*.test.mjs",
     "prepublishOnly": "npm test",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "check:types": "tsc -p tsconfig.check.json"
   },
   "peerDependencies": {
-    "angular": "^1.5.0",
-    "@llselect/core": "^0.0.3"
+    "@llselect/core": "^0.0.3",
+    "angular": "^1.5.0"
   },
   "devDependencies": {
-    "angular": "1.8.3",
-    "jsdom": "^25.0.0",
     "@llselect/core": "file:..",
-    "terser": "^5.37.0"
+    "angular": "1.8.3",
+    "angular-ui-bootstrap": "^2.5.6",
+    "jsdom": "^25.0.0",
+    "terser": "^5.37.0",
+    "typescript": "^5.9.3"
   },
   "repository": {
     "type": "git",
