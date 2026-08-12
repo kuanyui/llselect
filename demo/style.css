@@ -332,8 +332,9 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .toc {
   position: sticky;
   top: var(--toc-top, 0px); /* set by toc.js below the core page's sticky bar */
-  max-height: calc(100vh - var(--toc-top, 0px));
+  max-height: calc(100vh - var(--toc-top, 0px)); /* fallback; toc.js fits it to the visible viewport */
   overflow-y: auto;
+  overscroll-behavior: contain; /* wheel at the edge must not scroll the page */
   padding: 0.5rem 0.5rem 2rem 0;
   font-size: 0.85rem;
   line-height: 1.45;

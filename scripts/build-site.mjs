@@ -301,7 +301,7 @@ th, td { border: 1px solid var(--line); padding: 0.3em 0.6em; }
 /* Two-column shell for pages with a sidebar outline */
 body.with-toc { max-width: 78rem; }
 .layout { display: grid; grid-template-columns: 17rem minmax(0, 52rem); gap: 2.5rem; align-items: start; }
-.toc { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; padding: 1rem 0.5rem 2rem 0; font-size: 0.82em; line-height: 1.45; }
+.toc { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; overscroll-behavior: contain; padding: 1rem 0.5rem 2rem 0; font-size: 0.82em; line-height: 1.45; }
 .toc input { width: 100%; box-sizing: border-box; margin-bottom: 0.6rem; padding: 0.3rem 0.5rem; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
 .toc ul { list-style: none; margin: 0; padding-left: 0.85rem; }
 .toc ul.toc-tree { padding-left: 0; }
@@ -417,10 +417,10 @@ if (location.hostname.includes('gitlab')) {
   const syncTopBtn = () => { topBtn.hidden = window.scrollY < window.innerHeight }
   window.addEventListener('scroll', syncTopBtn, { passive: true })
   syncTopBtn()
-  topBtn.addEventListener('click', () => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' })
-  })
+  // Instant jump on purpose: a smooth scroll over these page lengths runs
+  // for seconds and any user input cancels it midway - reads as a stuck
+  // button.
+  topBtn.addEventListener('click', () => { window.scrollTo(0, 0) })
 }
 </script>
 ${toc ? `<script>
@@ -443,6 +443,13 @@ ${toc ? `<script>
   let activeLink = null
   let blockEl = null
   const sync = () => {
+    // Fit the sticky sidebar to the VISIBLE viewport: while the nav is still
+    // in view the aside starts below the viewport top, so a plain 100vh box
+    // overflows the bottom and its last rows are unreachable. Re-measured
+    // every scroll/resize tick; drawer mode owns its own geometry.
+    if (!drawerMq.matches) {
+      toc.style.maxHeight = String(Math.max(0, window.innerHeight - Math.max(0, toc.getBoundingClientRect().top))) + 'px'
+    }
     const y = window.scrollY + 100
     let cur = null
     for (const h of heads) { if (h.offsetTop <= y) { cur = h } else { break } }
@@ -464,6 +471,7 @@ ${toc ? `<script>
     }
   }
   window.addEventListener('scroll', () => { window.requestAnimationFrame(sync) }, { passive: true })
+  window.addEventListener('resize', () => { window.requestAnimationFrame(sync) }, { passive: true })
   sync()
   // A symbol link inside a <summary> should always OPEN its branch, never
   // collapse it back while jumping to the section.
@@ -552,7 +560,12 @@ ${toc ? `<script>
     if (ev.target.closest('a') && drawerMq.matches) { closeDrawer(false) }
   })
   // Widening past the breakpoint while open would leave body scroll locked.
-  drawerMq.addEventListener('change', () => { closeDrawer(false) })
+  // Entering the drawer also drops the desktop inline max-height (the drawer
+  // is CSS-sized); leaving it, the next sync() re-applies the fit.
+  drawerMq.addEventListener('change', () => {
+    closeDrawer(false)
+    toc.style.maxHeight = ''
+  })
 }
 </script>` : ''}
 </body>

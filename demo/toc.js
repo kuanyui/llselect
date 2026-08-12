@@ -74,6 +74,13 @@ if (layout && mainEl) {
   // --- scrollspy -----------------------------------------------------------
   let activeLink = null
   const sync = () => {
+    // Fit the sticky sidebar to the VISIBLE viewport: while the page nav is
+    // still in view the aside starts below the viewport top, so a fixed
+    // 100vh-ish box overflows the bottom and its last rows are unreachable.
+    // Drawer mode owns its own geometry.
+    if (!drawerMq.matches) {
+      aside.style.maxHeight = `${Math.max(0, window.innerHeight - Math.max(0, aside.getBoundingClientRect().top))}px`
+    }
     const y = window.scrollY + 120
     let cur = null
     for (const [el, link] of targets) { if (el.offsetTop <= y) { cur = link } else { break } }
@@ -88,6 +95,7 @@ if (layout && mainEl) {
     }
   }
   window.addEventListener('scroll', () => { window.requestAnimationFrame(sync) }, { passive: true })
+  window.addEventListener('resize', () => { window.requestAnimationFrame(sync) }, { passive: true })
   sync()
 
   // --- text filter ---------------------------------------------------------
@@ -155,7 +163,12 @@ if (layout && mainEl) {
     if (ev.target.closest('a') && drawerMq.matches) { closeDrawer(false) }
   })
   // Widening past the breakpoint while open would leave body scroll locked.
-  drawerMq.addEventListener('change', () => { closeDrawer(false) })
+  // Entering the drawer also drops the desktop inline max-height (the drawer
+  // is CSS-sized); leaving it, the next sync() re-applies the fit.
+  drawerMq.addEventListener('change', () => {
+    closeDrawer(false)
+    aside.style.maxHeight = ''
+  })
 
   // --- initial fragment ----------------------------------------------------
   // ids exist only after this script runs, so the browser's own load-time
