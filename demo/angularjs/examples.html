@@ -185,20 +185,26 @@
     <h2>5c. Custom item content: ll-item-content-fn</h2>
     <p>
       An expression evaluating to a function <code>(item) =&gt; HTMLElement | null</code>,
-      passed straight to llselect's <code>createItemContentElFn</code> (see
-      <code>renderUserRow</code> in <code>app.js</code>). It runs per rendered
-      row per render, outside any digest, and the element is never
+      passed straight to llselect's <code>createItemContentElFn</code>. It runs
+      per rendered row per render, outside any digest, and the element is never
       <code>$compile</code>d - custom rows with zero per-row scope or watcher.
       The accessible name and filter text stay the <code>ll-options</code>
-      label. On <code>&lt;llselect-multiple&gt;</code> the element renders
-      beside the default checkbox. For real per-row Angular templates, that is
-      <code>&lt;ui-llselect&gt;</code> below.
+      label. Two ways to build the element (both in <code>app.js</code>): the
+      single builds it with <code>createElement</code>
+      (<code>renderUserRow</code>); the multiple clones the
+      <code>&lt;template&gt;</code> below and fills it
+      (<code>renderUserRowFromTpl</code>) - the closest feel to a row template,
+      with the element rendered beside the default checkbox. For real per-row
+      Angular templates, that is <code>&lt;ui-llselect&gt;</code> below.
     </p>
     <div class="demo-row" data-src="5c">
+      <template id="user-row-tpl">
+        <span><span class="who"></span> <small class="hint"></small></span>
+      </template>
       <llselect-single ng-model="vm.user2" ll-filterable="true" ll-item-content-fn="vm.renderUserRow"
         ll-options="u.name disable when u.suspended for u in vm.users track by u.id">
       </llselect-single>
-      <llselect-multiple ng-model="vm.people2" ll-item-content-fn="vm.renderUserRow"
+      <llselect-multiple ng-model="vm.people2" ll-item-content-fn="vm.renderUserRowFromTpl"
         ll-options="u.name for u in vm.users track by u.id">
       </llselect-multiple>
     </div>

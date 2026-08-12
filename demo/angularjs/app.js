@@ -109,6 +109,18 @@
       }
 
       /**
+       * 5c, template flavor: the same factory with the markup authored in HTML
+       * (the <template id="user-row-tpl"> in examples.html) and cloned per
+       * row. Closest feel to a row template - still no scope, no $compile.
+       */
+      vm.renderUserRowFromTpl = function (u) {
+        var row = document.getElementById('user-row-tpl').content.firstElementChild.cloneNode(true)
+        row.querySelector('.who').textContent = u.name
+        row.querySelector('.hint').textContent = u.role
+        return row
+      }
+
+      /**
        * Drops the currently chosen fruit from the list, which is the case that
        * used to mark the form $dirty and null the model behind the user's back
        * (llselect's setItems reconciles the selection and fires onChange for
