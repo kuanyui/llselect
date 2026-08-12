@@ -289,7 +289,12 @@ Quick test: "Am I making a new, named, reusable kind of select?"
 - No, I just want this one dropdown to look / behave some way -> **settings**.
 - Yes -> **subclass**.
 
-The capability line between the two: **settings stop at the content layer** - a `create*ContentElFn` fills what an element shows, while the element itself (the shell, e.g. the `role="option"` row: its attributes, its structure, the ARIA the library pins on it) stays library-owned. Changing the shell requires overriding `create*El` in a subclass - deliberately, so no setting can break the ARIA contract. Live comparison: [demo examples, section 14](https://kuanyui.github.io/llselect/demo/examples.html#14-subclassing).
+The capability line between the two:
+
+- **Settings stop at the content layer.** A `create*ContentElFn` fills what an element shows - nothing more.
+- **The shell is subclass territory.** The shell = the element the library builds around your content (e.g. the `role="option"` row): its attributes, its structure, the ARIA pinned on it. Changing it means overriding `create*El`.
+- **This is deliberate**: no setting can break the ARIA contract.
+- Live comparison: the "Subclassing" section of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
 
 ### Settings (the common path - no subclass needed)
 
