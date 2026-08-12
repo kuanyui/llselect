@@ -61,7 +61,15 @@ if (layout && mainEl) {
   filter.type = 'search'
   filter.placeholder = 'Filter'
   filter.setAttribute('aria-label', 'Filter the table of contents')
-  aside.append(filter, tree)
+  // Pinned toolbar over the only scroller: the filter stays put, the tree
+  // scrolls beneath it.
+  const toolbar = document.createElement('div')
+  toolbar.className = 'toc-bar'
+  toolbar.append(filter)
+  const scrollArea = document.createElement('div')
+  scrollArea.className = 'toc-scroll'
+  scrollArea.append(tree)
+  aside.append(toolbar, scrollArea)
   layout.classList.add('has-toc')
   layout.insertBefore(aside, mainEl)
   // The core page's sticky theme bar owns the top edge; stick below it.

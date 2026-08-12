@@ -333,11 +333,20 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
   position: sticky;
   top: var(--toc-top, 0px); /* set by toc.js below the core page's sticky bar */
   max-height: calc(100vh - var(--toc-top, 0px)); /* fallback; toc.js fits it to the visible viewport */
-  overflow-y: auto;
-  overscroll-behavior: contain; /* wheel at the edge must not scroll the page */
-  padding: 0.5rem 0.5rem 2rem 0;
+  box-sizing: border-box; /* the JS-fitted max-height is the real outer height */
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.5rem 0 0;
   font-size: 0.85rem;
   line-height: 1.45;
+}
+.toc-bar { flex: none; }
+.toc-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain; /* wheel at the edge must not scroll the page */
+  padding-bottom: 2rem;
 }
 .toc input {
   width: 100%;
@@ -382,7 +391,7 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
     z-index: 3000; /* above the sticky bar (100), #data-panel (2000), popups (1000) */
     width: min(17rem, 85vw);
     max-height: none;
-    padding: 1rem;
+    padding: 1rem 1rem 0;
     background: #fff;
     border-right: 1px solid #ccc;
     box-shadow: 0 0 24px rgba(0, 0, 0, 0.25);

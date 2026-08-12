@@ -203,9 +203,13 @@ function buildTocHtml(body) {
   const KIND_ORDER = ['class', 'interface', 'type', 'function', 'method', 'property', 'accessor', 'const', 'enum', 'enum-member']
   const legend = kindsUsed.size === 0 ? '' : `\n<div class="toc-legend">${KIND_ORDER.filter((k) => kindsUsed.has(k)).map((k) => `<span data-kind="${k}">${k}</span>`).join('')}</div>`
   const html = `<aside class="toc" id="toc" tabindex="-1" aria-label="Table of contents">
+<div class="toc-bar">
 <input type="search" placeholder="Filter" aria-label="Filter the table of contents">
 <button type="button" class="toc-fold">${FOLD_ICON}Fold all</button>${legend}
+</div>
+<div class="toc-scroll">
 <ul class="toc-tree">${root.children.map((c) => render(c, true)).join('\n')}</ul>
+</div>
 </aside>`
   return { html, ids }
 }
@@ -301,7 +305,12 @@ th, td { border: 1px solid var(--line); padding: 0.3em 0.6em; }
 /* Two-column shell for pages with a sidebar outline */
 body.with-toc { max-width: 78rem; }
 .layout { display: grid; grid-template-columns: 17rem minmax(0, 52rem); gap: 2.5rem; align-items: start; }
-.toc { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; overscroll-behavior: contain; padding: 1rem 0.5rem 2rem 0; font-size: 0.82em; line-height: 1.45; }
+/* Sidebar shell: a pinned toolbar (filter / fold / legend) over the ONLY
+   scroller (.toc-scroll). border-box, so the JS-fitted max-height is the
+   real outer height (content-box padding overflowed the viewport before). */
+.toc { position: sticky; top: 0; max-height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; padding: 1rem 0.5rem 0 0; font-size: 0.82em; line-height: 1.45; }
+.toc-bar { flex: none; }
+.toc-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 2rem; }
 .toc input { width: 100%; box-sizing: border-box; margin-bottom: 0.6rem; padding: 0.3rem 0.5rem; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
 .toc ul { list-style: none; margin: 0; padding-left: 0.85rem; }
 .toc ul.toc-tree { padding-left: 0; }
@@ -361,7 +370,7 @@ main [data-kind]::after { content: attr(data-kind); float: right; margin-left: 0
 @media (max-width: 62rem) {
   body.with-toc { max-width: 52rem; }
   .layout { display: block; }
-  .toc { position: fixed; top: 0; bottom: 0; left: 0; z-index: 3000; width: min(19rem, 85vw); max-height: none; margin: 0; padding: 1rem 1rem 2rem; background: var(--bg); border-right: 1px solid var(--line); box-shadow: 0 0 24px rgba(0, 0, 0, 0.35); transform: translateX(-100%); visibility: hidden; transition: transform 0.2s ease, visibility 0.2s; }
+  .toc { position: fixed; top: 0; bottom: 0; left: 0; z-index: 3000; width: min(19rem, 85vw); max-height: none; margin: 0; padding: 1rem 1rem 0; background: var(--bg); border-right: 1px solid var(--line); box-shadow: 0 0 24px rgba(0, 0, 0, 0.35); transform: translateX(-100%); visibility: hidden; transition: transform 0.2s ease, visibility 0.2s; }
   body.toc-open .toc { transform: none; visibility: visible; }
   body.toc-open { overflow: hidden; } /* page stays put while the drawer scrolls */
   .toc-toggle { display: flex; align-items: center; gap: 0.4rem; position: fixed; left: 1rem; bottom: 1rem; z-index: 1500; padding: 0.45rem 0.9rem; font: inherit; font-weight: 600; color: var(--nav-link); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
