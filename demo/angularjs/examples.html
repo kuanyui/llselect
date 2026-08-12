@@ -196,8 +196,10 @@
       <code>createElement</code> (<code>renderLangRow</code>); the multiple
       clones the <code>&lt;template&gt;</code> below and fills it
       (<code>renderLangRowFromTpl</code>), rendered beside the default
-      checkbox. For real per-row Angular templates, that is
-      <code>&lt;ui-llselect&gt;</code> below.
+      checkbox. The third row shows a second content pattern
+      (<code>renderUserRow</code>): primary text plus a faded hint, with
+      <code>disable when</code> on top. For real per-row Angular templates,
+      that is <code>&lt;ui-llselect&gt;</code> below.
     </p>
     <div data-src="7">
       <template id="lang-row-tpl">
@@ -212,6 +214,11 @@
         <llselect-multiple ng-model="vm.langsRich" ll-item-content-fn="vm.renderLangRowFromTpl"
           ll-options="l.name for l in vm.languages track by l.name">
         </llselect-multiple>
+      </div>
+      <div class="demo-row">
+        <llselect-single ng-model="vm.user2" ll-filterable="true" ll-item-content-fn="vm.renderUserRow"
+          ll-options="u.name disable when u.suspended for u in vm.users track by u.id">
+        </llselect-single>
       </div>
     </div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="7"><code></code></pre></details>

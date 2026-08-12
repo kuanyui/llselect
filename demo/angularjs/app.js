@@ -97,6 +97,7 @@
       vm.country3 = undefined
       vm.lang = undefined
       vm.langsRich = []
+      vm.user2 = undefined
 
       /**
        * 7. A render-time DOM factory: called by llselect outside any digest,
@@ -126,6 +127,21 @@
         icon.classList.add('mdi-' + lang.icon)
         icon.style.color = lang.color
         row.querySelector('.lang-name').textContent = lang.name
+        return row
+      }
+
+      /**
+       * 7, second content pattern: primary text plus a faded secondary hint
+       * (the .hint class), with `disable when` dimming suspended users on top.
+       */
+      vm.renderUserRow = function (u) {
+        var row = document.createElement('span')
+        var name = document.createElement('span')
+        name.textContent = u.name
+        var hint = document.createElement('small')
+        hint.className = 'hint'
+        hint.textContent = u.role + (u.suspended ? ' - suspended' : '')
+        row.append(name, ' ', hint)
         return row
       }
 
