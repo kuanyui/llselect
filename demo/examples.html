@@ -74,11 +74,9 @@
     <article>
       <h3>1.3 Clearable (x button)</h3>
       <p class="hint">
-        <code>clearable: true</code> adds an x button in its own trigger slot
-        (composes with content / arrow / tags). Click it to clear to
-        <code>undefined</code> - <code>onChange</code> fires with the empty value.
-        The x hides when nothing is selected. Swap the icon via
-        <code>createTriggerClearButtonContentElFn</code> (mirrors <code>createTriggerArrowContentElFn</code>).
+        <code>clearable: true</code> adds an x in its own trigger slot. Click
+        it: value clears to <code>undefined</code>, <code>onChange</code>
+        fires. Custom icon: <code>createTriggerClearButtonContentElFn</code>.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -121,15 +119,11 @@
     <article>
       <h3>2.2 Inside a CSS-transformed container (top layer)</h3>
       <p class="hint">
-        The amber box has <code>transform: translateZ(0)</code>, which makes it
-        the containing block for <code>position: fixed</code> descendants - the
-        classic ancestor that displaces fixed-positioned popups. In browsers
-        with the Popover API (feature-detected; all current ones) the library
-        renders the popup in the top layer instead: open it - it must align
-        under the trigger and paint above everything. In older browsers this
-        demo shows the documented accepted limitation (the popup lands
-        displaced); see <code>docs/llm/DESIGN.md</code> &rarr; "In-place
-        popup".
+        The amber box's <code>transform</code> would normally displace a
+        <code>position: fixed</code> popup. With the Popover API (all current
+        browsers) the popup renders in the top layer instead - open it: it
+        must align under the trigger. Old browsers show the documented
+        displacement.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -246,10 +240,8 @@
     <article>
       <h3>4.5 Arrow + clear together (separate slots)</h3>
       <p class="hint">
-        The arrow and the clear (x) button are separate trigger slots, so they
-        coexist - a chevron arrow plus a <code>clearable</code> x. Neither is in
-        the content slot, so both survive a custom
-        <code>createTriggerContentElFn</code>.
+        Arrow and clear x live in separate trigger slots, so they compose -
+        and both survive a custom <code>createTriggerContentElFn</code>.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -263,10 +255,8 @@
   <section>
     <h2>5. Multiple selection (LLSelectMultiple)</h2>
     <p class="hint">
-      Click items to toggle. Popup stays open. Each item carries
-      <code>aria-selected</code>; popup-list carries
-      <code>aria-multiselectable="true"</code>. Default trigger shows a count
-      summary; subclass <code>renderTriggerContent</code> for custom display.
+      Click items to toggle; the popup stays open. Items carry
+      <code>aria-selected</code>, the list <code>aria-multiselectable</code>.
     </p>
 
     <article>
@@ -278,22 +268,6 @@
           <div class="out" id="out-multi">chosen: []</div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="5.1"><code></code></pre></details>
-      </div>
-    </article>
-
-    <article>
-      <h3>5.4 Checkbox items (built-in createOutlinedCheckboxSvgEl)</h3>
-      <p class="hint">
-        Subclass <code>createItemEl</code> to prepend <code>createOutlinedCheckboxSvgEl()</code>
-        reflecting <code>isChosen</code>. No mdi / FontAwesome needed. The
-        single-item rerender keeps each toggle's checkbox in sync.
-      </p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-multi-checkbox"></div>
-          <div class="out" id="out-multi-checkbox">chosen: []</div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="5.4"><code></code></pre></details>
       </div>
     </article>
 
@@ -317,13 +291,9 @@
     <article>
       <h3>5.3 Tags display (removable chips)</h3>
       <p class="hint">
-        <code>triggerDisplay: 'tags'</code> shows each chosen item as a chip with
-        a remove (x) button. The library owns the chip, the x button, its
-        <code>aria-label</code> and <code>tabindex="-1"</code> - you write none of
-        it. Composes with <code>filterable</code>; per-chip content is
-        customizable via <code>createTagContentElFn</code> (mirrors
-        <code>createItemContentElFn</code>); the remove-button icon via
-        <code>createTagRemoveButtonContentElFn</code> (mirrors <code>createTriggerClearButtonContentElFn</code>).
+        <code>triggerDisplay: 'tags'</code> - one removable chip per chosen
+        item; the library owns the chip, its x button and
+        <code>aria-label</code>. Custom chip content / x icon: see 11.4.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -335,21 +305,30 @@
     </article>
 
     <article>
+      <h3>5.4 Checkbox items - the SUBCLASS path (<code>createItemEl</code>)</h3>
+      <p class="hint">
+        Override <code>createItemEl</code>: prepend
+        <code>createOutlinedCheckboxSvgEl</code> reflecting
+        <code>isChosen</code>; the single-item rerender keeps it in sync.
+        Settings-path counterpart, no subclass: <b>11.2</b>.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-multi-checkbox"></div>
+          <div class="out" id="out-multi-checkbox">chosen: []</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="5.4"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
       <h3>5.5 Select-all row (tri-state, filtered scope)</h3>
       <p class="hint">
-        <code>selectAllRow: true</code> pins a tri-state select-all row as the
-        first option: with nothing chosen it holds the initial keyboard focus
-        on open, ArrowUp from the first item / Home (non-search mode) reach it,
-        Enter toggles. Tab never focuses it - the whole widget stays one tab
-        stop (APG combobox). It acts on the VISIBLE enabled subset: type a filter, then
-        activate the row - only the matches toggle, hidden choices are
-        preserved. This demo fills the row via
-        <code>createSelectAllRowContentElFn</code> with a tri-state SVG
-        checkbox (<code>createOutlinedCheckboxSvgEl</code>) and gives the ITEMS the
-        same checkbox treatment (5.4's subclass pattern) for one consistent
-        visual language; without the hook, themes draw a text glyph from the
-        <code>data-chosen-state</code> attribute. The accessible name stays
-        the counting <code>uiTranslationPack.selectAllRowLabel</code> either way.
+        <code>selectAllRow: true</code> pins a tri-state row acting on the
+        VISIBLE enabled subset: type a filter, toggle the row - only the
+        matches change. Row content via the
+        <code>createSelectAllRowContentElFn</code> setting; items reuse 5.4's
+        subclass checkbox.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -363,13 +342,9 @@
     <article>
       <h3>5.6 Filled (Material-look) checkboxes (<code>createFilledCheckboxSvgEl</code>)</h3>
       <p class="hint">
-        5.5's select-all pattern, drawn with
-        <code>createFilledCheckboxSvgEl</code>: a solid rounded box with the
-        tick / dash cut out - the checkbox look Material-flavored CSS
-        libraries expect. Unchecked stays the same outline box as
-        <code>createOutlinedCheckboxSvgEl</code>; options and the chosen-state
-        vocabulary are identical. Choose a few items and look at the
-        select-all row to see the filled indeterminate state.
+        5.5 drawn with <code>createFilledCheckboxSvgEl</code> (tick / dash cut
+        out of a solid box). Choose a few items - the select-all row shows the
+        filled indeterminate state.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -384,26 +359,19 @@
   <section>
     <h2>6. Width policy: trigger and popup</h2>
     <p class="hint">
-      The library never sets the trigger's width - that comes from your CSS,
-      and the chosen text in it ellipsizes. The popup defaults to
-      <code>popupWidthPolicy: 'fit-content'</code>: it grows to its content,
-      never narrower than the trigger, shifted and clamped inside the
-      viewport - the native <code>&lt;select&gt;</code> dropdown behavior.
-      <code>'match-trigger'</code> pins the popup to the trigger's width
-      instead (long labels wrap). Full rationale:
-      <code>docs/llm/DESIGN.md</code> &rarr; "Popup width policy".
+      Trigger width is your CSS's job; chosen text in it ellipsizes. The popup
+      defaults to <code>popupWidthPolicy: 'fit-content'</code> (grows to its
+      content, never narrower than the trigger, viewport-clamped - native
+      select behavior); <code>'match-trigger'</code> pins it to the trigger
+      width.
     </p>
 
     <article>
       <h3>6.1 No CSS width (baseline): trigger expands to fit, ellipsis never triggers</h3>
       <p class="hint">
-        <strong>Demo CSS:</strong> none. Pick the long sentence in the list -
-        the trigger expands to its natural width and overflows the demo pane
-        (and possibly the page). This is the policy in action: the library
-        does not constrain anything. Tidy layout is the caller's CSS job;
-        the next demos add CSS to bring this under control. (The long entry
-        is intentionally NOT preselected: pre-overflowing the page on first
-        paint triggers a Firefox Android scroll quirk.)
+        <strong>Demo CSS:</strong> none. Pick the long sentence - the trigger
+        grows to fit and overflows the pane: the library constrains nothing;
+        tidy layout is the caller's CSS job.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -417,13 +385,9 @@
     <article>
       <h3>6.2 Constrained trigger, default policy: popup grows beyond the trigger</h3>
       <p class="hint">
-        <strong>Demo CSS:</strong> <code>#mount-long-fitcontent { max-width: 18rem }</code>.
-        Longest label preselected, so the trigger shows <code>...</code> on
-        load. Open the popup - the default <code>'fit-content'</code> expands
-        it to the widest label, like a native <code>&lt;select&gt;</code>.
-        If the trigger is near the viewport's right edge, the popup
-        auto-shifts left (its <code>x</code> can drop below the trigger's),
-        and width clamps to the viewport.
+        <strong>Demo CSS:</strong> <code>max-width: 18rem</code> on the mount.
+        Trigger ellipsizes; the default popup opens at the widest label's
+        width, shifting / clamping at the viewport edge.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -437,11 +401,8 @@
     <article>
       <h3>6.3 <code>popupWidthPolicy: 'match-trigger'</code>: long labels wrap</h3>
       <p class="hint">
-        <strong>Demo CSS:</strong> <code>#mount-long-wrap { max-width: 18rem }</code>
-        (same constraint as 6.2). The opt-in <code>'match-trigger'</code> pins
-        the popup to the trigger's width - the select2-style edge-aligned
-        look - so long labels wrap to multiple lines instead of widening the
-        popup.
+        Same constraint as 6.2, opt-in <code>'match-trigger'</code>: popup
+        pinned to the trigger width, long labels wrap.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -453,15 +414,13 @@
     </article>
 
     <article>
-      <h3>6.4 <code>'match-trigger'</code> + opt-in ellipsis on labels</h3>
+      <h3>6.4 Label ellipsis - the SUBCLASS path adds <code>el.title</code></h3>
       <p class="hint">
-        <strong>Demo CSS:</strong> same <code>max-width: 18rem</code>, plus
-        <code>#mount-long-ellipsis .llselect-item { text-overflow: ellipsis }</code>.
-        Ellipsis needs a bounded popup, so this opts into
-        <code>'match-trigger'</code> too. Library does not auto-add
-        <code>title</code> (would fight Tippy / Floating UI / etc.); this
-        demo uses the simplest tooltip - a subclass setting
-        <code>el.title</code>.
+        Demo CSS adds <code>text-overflow: ellipsis</code> on the items
+        (needs <code>'match-trigger'</code> - a fit-content popup never
+        truncates); a <code>createItemEl</code> subclass sets
+        <code>el.title</code> as the tooltip. The library never auto-adds
+        <code>title</code> - bring your own tooltip lib, or this.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -476,12 +435,8 @@
   <section>
     <h2>7. Search (filter)</h2>
     <p class="hint">
-      Set <code>filterable: true</code> to add a filter input inside the popup.
-      Trigger becomes <code>role="button"</code>, the input becomes
-      <code>role="combobox"</code> with <code>aria-activedescendant</code>; Tab
-      leaves the widget, Esc clears the filter then closes. IME composition is
-      respected (filter applies on <code>compositionend</code>). See
-      <code>docs/llm/A11Y.md</code> and <code>docs/llm/DESIGN.md</code>.
+      <code>filterable: true</code> adds a filter input inside the popup. Esc
+      clears the filter, then closes; IME composition is respected.
     </p>
 
     <article>
@@ -517,9 +472,8 @@
     <article>
       <h3>7.3 Custom <code>filterFn</code> (match name OR role)</h3>
       <p class="hint">
-        User objects with both <code>name</code> and <code>role</code> fields.
-        Default substring would only see the rendered label; a custom
-        <code>filterFn</code> matches across fields.
+        A custom <code>filterFn</code> matches name OR role - the default
+        substring only sees the rendered label.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -534,17 +488,13 @@
   <section>
     <h2>8. Performance (10,000 items)</h2>
     <p class="hint">
-      Standalone stress demos: one single-select and one multi-select, each
-      over 10,000 rows. Kept apart from the feature sections so open/close
-      cost and first-open scroll behavior can be checked on their own.
+      10,000 rows each. Lazy render builds the option DOM on open and clears
+      it on close.
     </p>
 
     <article>
       <h3>8.1 Single-select</h3>
-      <p class="hint">
-        Lazy render builds the option DOM on open and clears it on close, so a
-        huge list stays cheap.
-      </p>
+      <p class="hint">Open and close must stay instant.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-single-huge"></div>
@@ -557,9 +507,8 @@
     <article>
       <h3>8.2 Multi-select</h3>
       <p class="hint">
-        Toggling one checkbox re-renders only that single item element (O(1)
-        DOM), not the whole 10k list. Open it, then click items rapidly -
-        each toggle stays instant.
+        Toggling re-renders only that item's element (O(1) DOM), not the 10k
+        list - click items rapidly.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -575,17 +524,16 @@
     <h2>9. Disabled</h2>
     <p class="hint">
       Always <code>aria-disabled</code>, never the native <code>disabled</code>
-      attribute - so a disabled trigger / item stays hoverable and you can attach
-      a tooltip explaining <em>why</em> it is disabled. Native
-      <code>&lt;select&gt;</code> / <code>&lt;option disabled&gt;</code> make that
-      impossible because they suppress pointer events.
+      attribute - disabled things stay hoverable, so a tooltip can explain
+      WHY.
     </p>
 
     <article>
-      <h3>9.1 Item-level (<code>itemDisabledFn</code>) + hover tooltip</h3>
+      <h3>9.1 Item-level (<code>itemDisabledFn</code>) - the SUBCLASS path adds the why-tooltip</h3>
       <p class="hint">
-        Out-of-stock drinks are disabled: not selectable, skipped by arrow keys,
-        but still hoverable. Hover a greyed-out item to see its "why" tooltip.
+        Out-of-stock drinks: unselectable, skipped by arrows, still hoverable
+        - hover one for the tooltip a <code>createItemEl</code> subclass
+        attached.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -599,10 +547,9 @@
     <article>
       <h3>9.2 Control-level (<code>setDisabled</code>) + <code>focusableWhenDisabled</code></h3>
       <p class="hint">
-        The first control toggles with the button and leaves the tab order when
-        disabled (default). The second is constructed disabled with
-        <code>focusableWhenDisabled: true</code>, so Tab still reaches it and a
-        keyboard user can read its tooltip. Hover either disabled trigger.
+        First control: <code>setDisabled()</code> removes it from the tab
+        order (default). Second: <code>focusableWhenDisabled: true</code>
+        keeps it Tab-reachable, so keyboard users get the tooltip too.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -620,14 +567,10 @@
   <section>
     <h2>10. Optgroup / grouping</h2>
     <p class="hint">
-      Grouping is a derived projection of the flat <code>items</code> list:
       <code>itemToGroupKeyFn</code> maps each item to a group key (contiguous
-      same-key items form one group; data must be pre-sorted by group). The key
-      is the identity; <code>groupKeyToLabelFn</code> is a separate display
-      projection (the i18n seam). Group headers are <code>role="group"</code>
-      with an <code>aria-hidden</code> label; keyboard nav skips them. Custom
-      header content is in 11.3. See <code>docs/llm/DESIGN.md</code> &rarr;
-      "Optgroup (Phase 10)".
+      same-key items form one group - pre-sort your data);
+      <code>groupKeyToLabelFn</code> is the display / i18n seam. Keyboard nav
+      skips headers. Custom header content: 11.3.
     </p>
 
     <article>
@@ -645,10 +588,9 @@
     <article>
       <h3>10.2 Group-level disabled + filterable (multiple)</h3>
       <p class="hint">
-        <code>groupDisabledFn</code> disables the whole Dairy group (layers on
-        item-level disabled): not selectable, skipped by keyboard, aria-disabled,
-        but still hoverable. Type to filter - survivors regroup and now-empty
-        groups disappear.
+        <code>groupDisabledFn</code> disables the whole Dairy group (still
+        hoverable). Type to filter - survivors regroup, empty groups
+        disappear.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -661,24 +603,21 @@
   </section>
 
   <section>
-    <h2>11. Customized renderer functions</h2>
+    <h2>11. Customized renderers - the SETTINGS path (<code>create*ContentElFn</code>)</h2>
     <p class="hint">
-      Customize what each option renders via <code>createItemContentElFn</code>
-      (no subclass). It fills the option's VISIBLE content only; the library
-      keeps the option shell + ARIA and pins each option's <code>aria-label</code>
-      to <code>itemToString</code>, so you write zero <code>aria-*</code> and a
-      screen reader announces the plain label, not the decorative icon. Group
-      headers customize the same way via <code>createGroupLabelContentElFn</code>
-      (11.3).
+      The no-subclass half of the customization model: each
+      <code>create*ContentElFn</code> setting fills an element's VISIBLE
+      content only; the library keeps the shell + ARIA (an option's
+      <code>aria-label</code> stays the plain <code>itemToString</code>).
+      Subclass counterparts: 5.4 / 6.4 / 9.1.
     </p>
 
     <article>
       <h3>11.1 Single (icon + label rows)</h3>
       <p class="hint">
-        Each row is a colored mdi icon + label. Inspect an option to see the
-        <code>role="option"</code> + <code>aria-label</code> the library added.
-        There is no auto-projection; the trigger mirrors the chosen row only
-        because we pass the same renderer to <code>createTriggerContentElFn</code>.
+        Icon + label rows via <code>createItemContentElFn</code>. The trigger
+        mirrors the chosen row only because the same renderer feeds
+        <code>createTriggerContentElFn</code> - there is no auto-projection.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -690,13 +629,11 @@
     </article>
 
     <article>
-      <h3>11.2 Multiple (icon + label rows)</h3>
+      <h3>11.2 Multiple (icon rows) - 5.4's no-subclass counterpart</h3>
       <p class="hint">
-        Same <code>createItemContentElFn</code> on a multiple: the option shell
-        carries <code>aria-selected</code> on top of the auto
-        <code>aria-label</code>, so AT announces "Python, selected" while the row
-        shows the icon. Compare with 5.4 (checkbox), which does the same via a
-        <code>createItemEl</code> subclass - the setting needs no subclass.
+        Same renderer on a multiple; the shell keeps <code>aria-selected</code>
+        plus the auto <code>aria-label</code>. Same idea as 5.4's checkbox
+        subclass - done with a setting instead.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -710,11 +647,9 @@
     <article>
       <h3>11.3 Rich group header (icon + count badge)</h3>
       <p class="hint">
-        <code>createGroupLabelContentElFn</code> fills the header's visible
-        content (icon + a <code>(n)</code> count from <code>itemsInGroup</code>),
-        mirroring <code>createItemContentElFn</code>. The header's accessible name
-        stays the plain <code>groupKeyToLabel</code>; the icon is
-        <code>aria-hidden</code>.
+        <code>createGroupLabelContentElFn</code> fills the header (icon +
+        item count); the accessible name stays the plain
+        <code>groupKeyToLabel</code>.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -727,14 +662,10 @@
     <article>
       <h3>11.4 Tags with rich chip content (icon + label)</h3>
       <p class="hint">
-        The same renderer as 11.1 feeds <code>createTagContentElFn</code>: the
-        chip is to the trigger what the option content is to the row, so ONE
-        <code>create*El</code> function serves list rows AND chips. The
-        library keeps the chip shell, the remove button and its
-        <code>aria-label</code> (still <code>itemToString</code>-based).
-        <code>createTagRemoveButtonContentElFn</code> swaps the remove icon
-        (an mdi icon here); leave it unset and the theme's CSS glyph
-        (<code>:empty::before</code>) draws the x instead.
+        11.1's renderer feeds <code>createTagContentElFn</code> too - ONE
+        function serves rows AND chips.
+        <code>createTagRemoveButtonContentElFn</code> swaps the x icon; unset,
+        the theme's CSS glyph draws it.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -749,14 +680,10 @@
   <section>
     <h2>12. Label integration (labelEl)</h2>
     <p class="hint">
-      Native <code>&lt;label for&gt;</code> cannot target these plain
-      <code>div</code>s, so the <code>labelEl</code> setting emulates both of
-      its halves: the label feeds the accessible name (bottom rung of the
-      <code>ariaLabelledBy</code> &gt; <code>ariaLabel</code> &gt;
-      <code>labelEl</code> ladder, wired as a live
-      <code>aria-labelledby</code> reference), and clicking it focuses the
-      trigger - focus only, like a native <code>&lt;select&gt;</code> label,
-      never opening the popup. <code>destroy()</code> unwires it.
+      Native <code>&lt;label for&gt;</code> cannot target a div, so the
+      <code>labelEl</code> setting emulates both halves: it feeds the
+      accessible name (via <code>aria-labelledby</code>) and clicking it
+      focuses the trigger - focus only, like a native select label.
     </p>
     <article>
       <div class="demo-split">
@@ -773,35 +700,21 @@
   <section>
     <h2>13. i18n (language packs) + RTL</h2>
     <p class="hint">
-      All chrome strings (trigger placeholder default, search aria-label +
-      placeholder, clear x, tag remove buttons, count summary) live in the
-      <code>uiTranslationPack</code> setting; packs from <code>@llselect/core/i18n</code> fill it
-      whole (<code>uiTranslationPack: zhTW</code>), with per-key overrides via spread. An
-      explicit <code>placeholder</code> setting is app copy and wins over the
-      pack's <code>triggerPlaceholder</code> default.
+      All chrome strings live in the <code>uiTranslationPack</code> setting;
+      packs from <code>@llselect/core/i18n</code> fill it whole, per-key
+      overrides via spread. An explicit <code>placeholder</code> setting wins
+      over the pack's default.
     </p>
 
     <article>
       <h3>13.1 Pack switcher: zhTW / ja / en / ar / he (single + multi)</h3>
       <p class="hint">
-        Switch the pack - the instances stay put and
-        <code>setUiTranslationPack</code> re-renders them in place (the one
-        deliberate exception to constructor-frozen settings), so a chosen
-        value survives the switch. No <code>placeholder</code> is passed, so every
-        trigger shows the pack's localized <code>triggerPlaceholder</code>
-        default; nothing is preselected, so every change on switch comes from
-        the pack alone. The single shows the chosen (possibly RTL) label in
-        its trigger; the <code>'tags'</code> multi gets translated remove-x
-        buttons (inspect their <code>aria-label</code>); the
-        <code>'count'</code> multi shows the translated count summary
-        directly. Open any popup - the filter input's placeholder (and
-        <code>aria-label</code>) and the clear x are translated everywhere.
-        Picking <code>ar</code> / <code>he</code> also sets
-        <code>dir="rtl"</code> on the mounts (the component inherits the
-        environment's direction - there is no RTL setting): the arrow and the
-        x buttons mirror to the LEFT like a native
-        <code>&lt;select&gt;</code>, chips flow right-to-left, and the
-        mixed-direction item labels reorder via bidi.
+        Switch the pack - <code>setUiTranslationPack</code> re-renders in
+        place, chosen values survive. Placeholders, filter input, clear x,
+        tag remove buttons and the count summary all translate.
+        <code>ar</code> / <code>he</code> also set <code>dir="rtl"</code> on
+        the mounts (direction is inherited - there is no RTL setting): arrows
+        and x buttons mirror LEFT, chips flow right-to-left.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -830,14 +743,9 @@
     <article>
       <h3>13.2 Every language pack</h3>
       <p class="hint">
-        One <code>LLSelectSingle</code> per entry in
-        <code>uiTranslationPackByLocale</code>, so this grid grows with the library.
-        Nothing is preselected and no <code>placeholder</code> is passed -
-        each trigger shows its pack's own <code>triggerPlaceholder</code>;
-        open one and the search placeholder, the clear x and the no-results
-        status are translated too. RTL packs (<code>ar</code> /
-        <code>fa</code> / <code>he</code> / <code>ur</code>) set
-        <code>dir="rtl"</code> on their mounts.
+        One instance per entry in <code>uiTranslationPackByLocale</code> - the
+        grid grows with the library. Each trigger shows its pack's own
+        placeholder; RTL packs set <code>dir="rtl"</code>.
       </p>
       <div id="i18n-all-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0.8rem"></div>
       <details class="code-toggle"><summary>code</summary><pre data-demo="13.2"><code></code></pre></details>
