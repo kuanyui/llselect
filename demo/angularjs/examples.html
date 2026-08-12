@@ -191,15 +191,19 @@
       per rendered row per render, outside any digest, and the element is never
       <code>$compile</code>d - custom rows with zero per-row scope or watcher.
       The accessible name and filter text stay the <code>ll-options</code>
-      label (the icon never reaches a screen reader). Two ways to build the
-      element (both in <code>app.js</code>): the single builds it with
-      <code>createElement</code> (<code>renderLangRow</code>); the multiple
-      clones the <code>&lt;template&gt;</code> below and fills it
-      (<code>renderLangRowFromTpl</code>), rendered beside the default
-      checkbox. The third row shows a second content pattern
-      (<code>renderUserRow</code>): primary text plus a faded hint, with
-      <code>disable when</code> on top. For real per-row Angular templates,
-      that is <code>&lt;ui-llselect&gt;</code> below.
+      label (the icon never reaches a screen reader). All renderers are in
+      <code>app.js</code>. Row by row: the single builds icon rows with
+      <code>createElement</code> (<code>renderLangRow</code>) and mirrors the
+      chosen row into the trigger via <code>ll-trigger-content-fn</code>, like
+      the core example; the multiple clones the <code>&lt;template&gt;</code>
+      below and fills it (<code>renderLangRowFromTpl</code>), rendered beside
+      the default checkbox; the third row is a second content pattern
+      (<code>renderUserRow</code>): primary text plus a faded hint at the
+      row's right edge, with <code>disable when</code> on top; the tags row
+      feeds ONE renderer to rows and chips
+      (<code>ll-tag-content-fn</code>) and swaps the remove icon
+      (<code>ll-tag-remove-button-content-fn</code>). For real per-row Angular
+      templates, that is <code>&lt;ui-llselect&gt;</code> below.
     </p>
     <div data-src="7">
       <template id="lang-row-tpl">
@@ -207,6 +211,7 @@
       </template>
       <div class="demo-row">
         <llselect-single ng-model="vm.lang" ll-filterable="true" ll-item-content-fn="vm.renderLangRow"
+          ll-trigger-content-fn="vm.renderLangTrigger"
           ll-options="l.name for l in vm.languages track by l.name">
         </llselect-single>
       </div>
@@ -219,6 +224,13 @@
         <llselect-single ng-model="vm.user2" ll-filterable="true" ll-item-content-fn="vm.renderUserRow"
           ll-options="u.name disable when u.suspended for u in vm.users track by u.id">
         </llselect-single>
+      </div>
+      <div class="demo-row">
+        <llselect-multiple ng-model="vm.langsTags" ll-trigger-display="'tags'"
+          ll-item-content-fn="vm.renderLangRow" ll-tag-content-fn="vm.renderLangRow"
+          ll-tag-remove-button-content-fn="vm.renderTagRemoveIcon"
+          ll-options="l.name for l in vm.languages track by l.name">
+        </llselect-multiple>
       </div>
     </div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="7"><code></code></pre></details>

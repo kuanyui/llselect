@@ -275,6 +275,16 @@ article { margin: 1.5rem 0 2rem 1rem; }
   gap: 0.5rem;
 }
 
+/* core 11.5 / angularjs 7: primary text + faded hint pushed to the row's
+   right edge. */
+.user-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  width: 100%;
+}
+.user-row .hint { margin-left: auto; }
+
 /* #region 6.2 6.3 6.4 */
 /* Constrain the trigger so the chosen text actually overflows (an
    unconstrained inline-block root would just grow to fit). 6.1 deliberately

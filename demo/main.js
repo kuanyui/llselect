@@ -737,6 +737,36 @@ selTagIcons.setItems(PROGRAMMING_LANGUAGES)
 selTagIcons.setChosenItems([PROGRAMMING_LANGUAGES[1], PROGRAMMING_LANGUAGES[3]])
 //#endregion
 
+//#region 11.5
+// Secondary hint text: primary label + a faded hint pushed to the row's
+// right edge (.user-row). Visual only - the option's aria-label stays
+// itemToString, so AT hears just the name.
+function createUserRowEl(user) {
+  const row = document.createElement('span')
+  row.className = 'user-row'
+  const name = document.createElement('span')
+  name.textContent = user.name
+  const hint = document.createElement('small')
+  hint.className = 'hint'
+  hint.textContent = user.role
+  row.append(name, hint)
+  return row
+}
+const outUserHints = document.getElementById('out-user-hints')
+const selUserHints = new LLSelectSingle(
+  document.getElementById('mount-user-hints'),
+  {
+    placeholder: 'Pick a user',
+    filterable: true,
+    compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: (u) => u.name,
+    createItemContentElFn: createUserRowEl,
+    onChange: (v) => { outUserHints.textContent = 'chosen: ' + (v ? v.name : '(none)') },
+  }
+)
+selUserHints.setItems(USERS)
+//#endregion
+
 //#region 12
 // labelEl: native <label for> cannot target these divs, so the setting
 // emulates both halves - the label is the bottom name rung (live

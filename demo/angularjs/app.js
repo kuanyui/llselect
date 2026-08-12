@@ -97,6 +97,7 @@
       vm.country3 = undefined
       vm.lang = undefined
       vm.langsRich = []
+      vm.langsTags = []
       vm.user2 = undefined
 
       /**
@@ -132,17 +133,36 @@
 
       /**
        * 7, second content pattern: primary text plus a faded secondary hint
-       * (the .hint class), with `disable when` dimming suspended users on top.
+       * pushed to the row's right edge (.user-row), with `disable when`
+       * dimming suspended users on top.
        */
       vm.renderUserRow = function (u) {
         var row = document.createElement('span')
+        row.className = 'user-row'
         var name = document.createElement('span')
         name.textContent = u.name
         var hint = document.createElement('small')
         hint.className = 'hint'
         hint.textContent = u.role + (u.suspended ? ' - suspended' : '')
-        row.append(name, ' ', hint)
+        row.append(name, hint)
         return row
+      }
+
+      /**
+       * 7, trigger mirror: the same row renderer feeds the trigger, exactly
+       * like the core example - there is no auto-projection. null with
+       * nothing chosen falls back to the placeholder.
+       */
+      vm.renderLangTrigger = function (ctx) {
+        return ctx.chosenItem ? vm.renderLangRow(ctx.chosenItem) : null
+      }
+
+      /** 7, tag remove icon; unset, the theme's CSS glyph draws the x. */
+      vm.renderTagRemoveIcon = function () {
+        var i = document.createElement('i')
+        i.className = 'mdi mdi-close-circle-outline'
+        i.setAttribute('aria-hidden', 'true') // decorative; the button carries the aria-label
+        return i
       }
 
       /**
