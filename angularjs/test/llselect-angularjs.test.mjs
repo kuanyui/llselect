@@ -301,6 +301,32 @@ test('multiple: ll-item-content-fn composes with default checkboxes; ll-checkbox
   assert.ok(b.$('.llselect-item em.custom-row'), 'custom content missing after checkbox opt-out')
 })
 
+test('ng-change rides the standard ngModel pipeline: real interaction only', () => {
+  // Pins the documented contract (API.md ng-change): the write-back gate keeps
+  // programmatic writes and data reloads out of the $setViewValue path, which
+  // is the only place $viewChangeListeners (= ng-change) fire.
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.fruit" ng-change="vm.changed = vm.changed + 1"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () {
+      this.fruits = FRUITS.slice()
+      this.fruit = null
+      this.changed = 0
+    },
+  })
+  assert.equal(a.scope.vm.changed, 0, 'must not fire on boot')
+  a.$('.llselect-trigger').click()
+  a.$$('.llselect-item')[0].click()
+  assert.equal(a.scope.vm.changed, 1, 'must fire once on a real choice')
+  a.scope.$apply(() => { a.scope.vm.fruit = 'Banana' })
+  assert.equal(a.scope.vm.changed, 1, 'must not fire on a programmatic model write')
+  a.scope.$apply(() => { a.scope.vm.fruits = ['Cherry'] })
+  assert.equal(a.scope.vm.changed, 1, 'must not fire when a data reload drops the chosen item')
+})
+
 test('ll-trigger-content-fn renders the trigger; null falls back to the default rendering', () => {
   const a = boot({
     deps: ['llselect'],

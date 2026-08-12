@@ -684,7 +684,7 @@ renderMarkdownPage('angularjs/README.md', 'public/angularjs/index.html', { title
 // angularjs/API.md. A heading missing here simply renders without a badge.
 const NG_KINDS = new Map(Object.entries({
   'llselect-single': 'directive', 'llselect-multiple': 'directive', 'ui-llselect': 'directive',
-  'ng-model': 'attribute', 'll-options': 'attribute', name: 'attribute', required: 'attribute',
+  'ng-model': 'attribute', 'ng-change': 'attribute', 'll-options': 'attribute', name: 'attribute', required: 'attribute',
   'll-disabled': 'attribute', 'll-placeholder': 'attribute', 'll-filterable': 'attribute',
   'll-clearable': 'attribute', 'll-popup-width-policy': 'attribute', 'll-arrow': 'attribute',
   'll-item-content-fn': 'attribute', 'll-trigger-content-fn': 'attribute',

@@ -28,6 +28,10 @@ App-wide defaults for `arrow` / `filterable` / `popupWidthPolicy` / `uiTranslati
 
 **Expression**, required. The chosen item on `<llselect-single>`; the array of chosen items on `<llselect-multiple>`. With `select as` in [`ll-options`](#ll-options), the projected value(s) instead.
 
+### `ng-change`
+
+**Expression**, evaluated on each committed change - works as on a native control, no `ll-change` needed. These directives drive a real ngModel, and `ng-change` is the standard `$viewChangeListeners` pipeline, which runs only on the `$setViewValue` path: a real user choice. It does NOT fire on load, on a programmatic model write, or when a data reload drops the chosen item - the write-back gate keeps those out of the view-change path (see the [Gotchas](README.md#gotchas)). The same holds for everything else riding the ngModel pipeline: validators, `$dirty`, angular-validation.
+
 ### `ll-options`
 
 **ng-options grammar**, required. Names the label, the identity and the model value of your items in one line. `(key, value) in object` collections throw - pass an array (see [Not supported](#not-supported)).
@@ -59,7 +63,12 @@ The clause grammar maps almost 1:1 onto llselect's `*Fn` settings. `NG_OPTIONS_R
 
 ### `ll-disabled`
 
-**Expression, watched** -> `setDisabled()`. The only watched attribute, because it maps to a method rather than an immutable setting.
+**Expression, watched** -> `setDisabled()`. The only watched attribute, because it maps to a method rather than an immutable setting. Disabling must go through llselect's own `setDisabled()`:
+
+- The state belongs on the inner TRIGGER element: `setDisabled()` sets `aria-disabled` / `data-disabled` (and manages `tabindex`) on the focusable combobox itself. A `disabled="true"` attribute would sit on this host element - not a form control, so the browser ignores it completely.
+- Hover must survive: llselect never uses the native `disabled` attribute, which suppresses pointer events. A disabled trigger stays hoverable (and focusable via the core `focusableWhenDisabled` setting), so a tooltip can still explain WHY it is disabled.
+
+`ng-disabled` is the same trap one level up: it is one `$watch` whose only action is toggling that inert host attribute (`angular.js:24530`), so the markup looks applied while the widget stays fully interactive. See [Not supported](#not-supported).
 
 ### `ll-placeholder`
 
@@ -221,6 +230,7 @@ Both directive sets:
 `llselect-angularjs.js`:
 
 - Filters on the collection (`ll-options="c for c in colors | filter:q"`). Filter in your controller and let `$watchCollection` see the result. (`<ui-llselect>` does support `| filter:` inside `repeat`, because that is ui-select's own filtering mechanism.)
+- `ng-disabled` / a plain `disabled` attribute. Both only toggle the host's `disabled` attribute, which nothing here honors - the widget stays fully interactive while the markup claims otherwise. Use [`ll-disabled`](#ll-disabled); its entry has the two reasons disabling must go through `setDisabled()`.
 
 `llselect-ui-select.js` - ignored attributes, because llselect has no such concept:
 
