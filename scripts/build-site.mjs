@@ -161,6 +161,23 @@ function injectKindBadges(body, kinds) {
   })
 }
 
+// The AngularJS attribute entries open with their binding mode in bold
+// (**Expression** / **Literal** / ...), so the raw markdown carries it on
+// GitHub / GitLab / npm too; lift that token onto the heading as data-binding
+// for the right-edge pill. Closed vocabulary plus a guard: an attribute
+// entry without a leading token fails the build - the binding mode is the
+// one thing the old reference table guaranteed per attribute.
+const BINDING_TOKENS = new Set(['expression', 'expression, watched', 'literal', 'flag', 'ng-options grammar'])
+function injectBindingBadges(body) {
+  return body.replace(/(<h([2-6]) id="([^"]+)" data-kind="attribute"[^>]*>.*?<\/h\2>\n)(<p><strong>([^<]*)<\/strong>)?/g, (_whole, heading, _depth, id, pOpen, token) => {
+    const norm = (token ?? '').toLowerCase()
+    if (!pOpen || !BINDING_TOKENS.has(norm)) {
+      throw new Error(`build:site: attribute entry '${id}' must open with a bold binding token (${[...BINDING_TOKENS].join(' / ')})`)
+    }
+    return heading.replace(' data-kind="attribute"', ` data-kind="attribute" data-binding="${norm}"`) + pOpen
+  })
+}
+
 // Sidebar outline for the (long) API pages: a generic nested tree from the
 // rendered heading ladder (h2..h6) - depths are NOT fixed per role, because a
 // categorized group (@group + @category) sinks its symbols one level deeper
@@ -356,6 +373,10 @@ body.with-toc { max-width: 78rem; }
 .toc [data-kind="enum-member"]::before { content: "E"; }
 /* content side: the full kind word, floated to the heading's right edge */
 main [data-kind]::after { content: attr(data-kind); float: right; margin-left: 0.6em; margin-top: 0.15em; padding: 0.1em 0.6em; border-radius: 999px; font-size: 0.72rem; font-weight: 600; font-style: normal; line-height: 1.6; color: #fff; background: var(--kind-color); font-family: system-ui, sans-serif; }
+/* AngularJS attribute entries: the binding mode as a second, outline pill.
+   ::before floats first, so it takes the far-right spot; the kind pill sits
+   left of it. */
+main [data-binding]::before { content: attr(data-binding); float: right; margin-left: 0.6em; margin-top: 0.15em; padding: 0.1em 0.6em; border-radius: 999px; font-size: 0.72rem; font-weight: 600; font-style: normal; line-height: 1.6; color: var(--fg-muted); border: 1px solid var(--line); font-family: system-ui, sans-serif; }
 .toc-legend { display: flex; flex-wrap: wrap; gap: 0.2rem 0.7rem; margin-bottom: 0.6rem; font-size: 0.78em; color: var(--fg-muted); }
 .toc-legend span { display: inline-flex; align-items: center; }
 /* The native disclosure marker is unclickably small; draw an mdi chevron
@@ -623,7 +644,7 @@ function renderMarkdownPage(mdPath, outPath, { title, description, prefix, curre
   slugCounts.clear()
   let body = marked.parse(readFileSync(mdPath, 'utf8'))
   body = links ? links(body) : rewriteLinks(body, posix.dirname(mdPath).replace(/^\.$/, ''))
-  if (kinds !== null) { body = injectKindBadges(body, kinds) }
+  if (kinds !== null) { body = injectBindingBadges(injectKindBadges(body, kinds)) }
   let tocHtml = null
   if (toc) {
     const built = buildTocHtml(body)

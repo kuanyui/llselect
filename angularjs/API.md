@@ -20,17 +20,17 @@ Multiple selection. `ng-model` holds an array of chosen items (or of `select as`
 
 ## Shared attributes
 
-Attributes of both `<llselect-single>` and `<llselect-multiple>`. "Expression" values are `$eval`'d against the scope once at link time - llselect resolves its settings bag once at construction, so settings are immutable and only the method-backed [`ll-disabled`](#ll-disabled) is watched (see the [Gotchas](README.md#gotchas)). String values need their own quotes: `ll-placeholder="'Pick one'"`. "Literal" values are plain attribute text.
+Attributes of both `<llselect-single>` and `<llselect-multiple>`. Every entry opens with its binding mode in bold. **Expression** values are `$eval`'d against the scope once at link time - llselect resolves its settings bag once at construction, so settings are immutable and only the method-backed [`ll-disabled`](#ll-disabled) is watched (see the [Gotchas](README.md#gotchas)); string values need their own quotes: `ll-placeholder="'Pick one'"`. **Literal** values are plain attribute text. **Flag** attributes act by presence alone.
 
 App-wide defaults for `arrow` / `filterable` / `popupWidthPolicy` / `uiTranslationPack` are set once via [`llselectConfigProvider`](#llselectconfigprovider); a per-element attribute always wins.
 
 ### `ng-model`
 
-Expression, required. The chosen item on `<llselect-single>`; the array of chosen items on `<llselect-multiple>`. With `select as` in [`ll-options`](#ll-options), the projected value(s) instead.
+**Expression**, required. The chosen item on `<llselect-single>`; the array of chosen items on `<llselect-multiple>`. With `select as` in [`ll-options`](#ll-options), the projected value(s) instead.
 
 ### `ll-options`
 
-Required. An `ng-options`-style expression naming the label, the identity and the model value of your items in one line. `(key, value) in object` collections throw - pass an array (see [Not supported](#not-supported)).
+**ng-options grammar**, required. Names the label, the identity and the model value of your items in one line. `(key, value) in object` collections throw - pass an array (see [Not supported](#not-supported)).
 
 Grammar: `select as label group by group disable when disable for (key, value) in collection track by trackBy`
 
@@ -51,57 +51,57 @@ The clause grammar maps almost 1:1 onto llselect's `*Fn` settings. `NG_OPTIONS_R
 
 ### `name`
 
-Literal. AngularJS form registration (`myForm.<name>`), with no native `<select>` and no hidden input: `myForm.$valid`, `myForm.<name>.$error.required` and `myForm.$dirty` all work. The value is **not** POSTed by a plain form submit, and the package never generates a `name` for you - the full story, including how AngularJS's `name` and HTML's `name` are unrelated mechanisms, is [The two `name` attributes](README.md#the-two-name-attributes) in the README.
+**Literal**. AngularJS form registration (`myForm.<name>`), with no native `<select>` and no hidden input: `myForm.$valid`, `myForm.<name>.$error.required` and `myForm.$dirty` all work. The value is **not** POSTed by a plain form submit, and the package never generates a `name` for you - the full story, including how AngularJS's `name` and HTML's `name` are unrelated mechanisms, is [The two `name` attributes](README.md#the-two-name-attributes) in the README.
 
 ### `required`
 
-Flag. The ngModel `required` validator. On `<llselect-multiple>`, `[]` counts as empty via a `$isEmpty` override - AngularJS's default would let `required` silently pass on an empty multi-selection (see the [Gotchas](README.md#gotchas)).
+**Flag**. The ngModel `required` validator. On `<llselect-multiple>`, `[]` counts as empty via a `$isEmpty` override - AngularJS's default would let `required` silently pass on an empty multi-selection (see the [Gotchas](README.md#gotchas)).
 
 ### `ll-disabled`
 
-Expression, watched -> `setDisabled()`. The only watched attribute, because it maps to a method rather than an immutable setting.
+**Expression, watched** -> `setDisabled()`. The only watched attribute, because it maps to a method rather than an immutable setting.
 
 ### `ll-placeholder`
 
-Expression -> `placeholder`. A string value, so it needs its own quotes: `ll-placeholder="'Pick one'"`. Per-field copy, which is why it has no app-wide default.
+**Expression** -> `placeholder`. A string value, so it needs its own quotes: `ll-placeholder="'Pick one'"`. Per-field copy, which is why it has no app-wide default.
 
 ### `ll-filterable`
 
-Expression -> `filterable`. `true` / `false` / a predicate `(items) => boolean`.
+**Expression** -> `filterable`. `true` / `false` / a predicate `(items) => boolean`.
 
 ### `ll-clearable`
 
-Expression -> `clearable`. The trigger clear (x) button.
+**Expression** -> `clearable`. The trigger clear (x) button.
 
 ### `ll-popup-width-policy`
 
-Expression -> `popupWidthPolicy`. `'fit-content'` (llselect's default) / `'match-trigger'`.
+**Expression** -> `popupWidthPolicy`. `'fit-content'` (llselect's default) / `'match-trigger'`.
 
 ### `ll-arrow`
 
-Literal: `chevron` (default) / `triangle` / `none`. The chevron default is this package being batteries-included, unlike the core (which ships no arrow so the app decides). `triangle` picks the other built-in icon; `none` opts out and leaves the slot to the theme. A custom arrow means editing your copy of `llselect-angularjs.js`, which is what a copy-paste package is for.
+**Literal**: `chevron` (default) / `triangle` / `none`. The chevron default is this package being batteries-included, unlike the core (which ships no arrow so the app decides). `triangle` picks the other built-in icon; `none` opts out and leaves the slot to the theme. A custom arrow means editing your copy of `llselect-angularjs.js`, which is what a copy-paste package is for.
 
 ### `ll-aria-label`
 
-Literal -> `ariaLabel`. The accessible name; always set this or `ll-aria-labelledby`.
+**Literal** -> `ariaLabel`. The accessible name; always set this or `ll-aria-labelledby`.
 
 ### `ll-aria-labelledby`
 
-Literal -> `ariaLabelledBy`. Space-separated element id(s) of the visible label.
+**Literal** -> `ariaLabelledBy`. Space-separated element id(s) of the visible label.
 
 ## `<llselect-multiple>` only
 
 ### `ll-trigger-display`
 
-Expression -> `triggerDisplay`. `'count'` (default) / `'tags'` - quoted: `ll-trigger-display="'tags'"`.
+**Expression** -> `triggerDisplay`. `'count'` (default) / `'tags'` - quoted: `ll-trigger-display="'tags'"`.
 
 ### `ll-select-all-row`
 
-Expression -> `selectAllRow`. A tri-state select-all as the first row; it gets the tri-state icon matching the row checkboxes plus the pack's counting label.
+**Expression** -> `selectAllRow`. A tri-state select-all as the first row; it gets the tri-state icon matching the row checkboxes plus the pack's counting label.
 
 ### `ll-checkboxes`
 
-Expression, default `true`. `<llselect-multiple>` rows get a live checkbox icon by default - the same batteries-included trade as the arrow; `ll-checkboxes="false"` opts out. The core ships neither: its answer is the subclass recipe (demo 5.4 / 5.5). Single-select never gets checkboxes - a radio-like look would misstate multiplicity.
+**Expression**, default `true`. `<llselect-multiple>` rows get a live checkbox icon by default - the same batteries-included trade as the arrow; `ll-checkboxes="false"` opts out. The core ships neither: its answer is the subclass recipe (demo 5.4 / 5.5). Single-select never gets checkboxes - a radio-like look would misstate multiplicity.
 
 ## `llselectConfigProvider`
 
@@ -166,7 +166,7 @@ The bridge (`llselect-ui-select.js`, module `llselect.uiCompat`) for migrating a
 
 ### `ll-label`
 
-ui-select has **no item-to-string concept at all** - its label is DOM, and its filtering is an Angular filter expression in `repeat`. llselect needs a string for the option's accessible name. So `<ui-select-choices ... ll-label="p.name">` is the single attribute added to ui-select's markup. Without it, an object item degrades to `String(item)`.
+**Expression**, evaluated per item with the `repeat` variable bound (`ll-label="p.name"`). ui-select has no item-to-string concept at all - its label is DOM, and its filtering is an Angular filter expression in `repeat` - but llselect needs a string for the option's accessible name, so this is the single attribute added to ui-select's markup. Without it, an object item degrades to `String(item)`.
 
 ### Two deliberate deviations
 
