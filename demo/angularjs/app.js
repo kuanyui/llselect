@@ -101,7 +101,7 @@
       vm.user2 = undefined
 
       /**
-       * 7. A render-time DOM factory: called by llselect outside any digest,
+       * 7a. A render-time DOM factory: called by llselect outside any digest,
        * never $compile'd - custom rows with zero per-row scope or watcher.
        * The accessible name stays the ll-options label; this only changes
        * the pixels.
@@ -118,7 +118,7 @@
       }
 
       /**
-       * 7, template flavor: the same factory with the markup authored in HTML
+       * 7b, template flavor: the same factory with the markup authored in HTML
        * (the <template id="lang-row-tpl"> in examples.html) and cloned per
        * row. Closest feel to a row template - still no scope, no $compile.
        */
@@ -132,7 +132,7 @@
       }
 
       /**
-       * 7, second content pattern: primary text plus a faded secondary hint
+       * 7c, second content pattern: primary text plus a faded secondary hint
        * pushed to the row's right edge (.user-row), with `disable when`
        * dimming suspended users on top.
        */
@@ -149,7 +149,7 @@
       }
 
       /**
-       * 7, trigger mirror: the same row renderer feeds the trigger, exactly
+       * 7a, trigger mirror: the same row renderer feeds the trigger, exactly
        * like the core example - there is no auto-projection. null with
        * nothing chosen falls back to the placeholder.
        */
@@ -157,7 +157,7 @@
         return ctx.chosenItem ? vm.renderLangRow(ctx.chosenItem) : null
       }
 
-      /** 7, tag remove icon; unset, the theme's CSS glyph draws the x. */
+      /** 7d, tag remove icon; unset, the theme's CSS glyph draws the x. */
       vm.renderTagRemoveIcon = function () {
         var i = document.createElement('i')
         i.className = 'mdi mdi-close-circle-outline'

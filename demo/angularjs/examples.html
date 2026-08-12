@@ -191,49 +191,73 @@
       per rendered row per render, outside any digest, and the element is never
       <code>$compile</code>d - custom rows with zero per-row scope or watcher.
       The accessible name and filter text stay the <code>ll-options</code>
-      label (the icon never reaches a screen reader). All renderers are in
-      <code>app.js</code>. Row by row: the single builds icon rows with
-      <code>createElement</code> (<code>renderLangRow</code>) and mirrors the
-      chosen row into the trigger via <code>ll-trigger-content-fn</code>, like
-      the core example; the multiple clones the <code>&lt;template&gt;</code>
-      below and fills it (<code>renderLangRowFromTpl</code>), rendered beside
-      the default checkbox; the third row is a second content pattern
-      (<code>renderUserRow</code>): primary text plus a faded hint at the
-      row's right edge, with <code>disable when</code> on top; the tags row
-      feeds ONE renderer to rows and chips
-      (<code>ll-tag-content-fn</code>) and swaps the remove icon
-      (<code>ll-tag-remove-button-content-fn</code>). For real per-row Angular
-      templates, that is <code>&lt;ui-llselect&gt;</code> below.
+      label (icons and hints never reach a screen reader). All renderers are in
+      <code>app.js</code>. For real per-row Angular templates, that is
+      <code>&lt;ui-llselect&gt;</code> below.
     </p>
-    <div data-src="7">
+
+    <h3>7a. Icon rows, mirrored into the trigger</h3>
+    <p>
+      <code>renderLangRow</code> builds the row with <code>createElement</code>;
+      feeding the SAME renderer to <code>ll-trigger-content-fn</code> is what
+      makes the trigger show the chosen row - there is no auto-projection.
+    </p>
+    <div class="demo-row" data-src="7a">
+      <llselect-single ng-model="vm.lang" ll-filterable="true" ll-item-content-fn="vm.renderLangRow"
+        ll-trigger-content-fn="vm.renderLangTrigger"
+        ll-options="l.name for l in vm.languages track by l.name">
+      </llselect-single>
+    </div>
+    <div class="out">ng-model = {{ vm.lang || 'undefined' }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7a"><code></code></pre></details>
+
+    <h3>7b. Template-clone flavor, beside the checkboxes</h3>
+    <p>
+      <code>renderLangRowFromTpl</code> clones the <code>&lt;template&gt;</code>
+      and fills it - the row markup lives in HTML, still with no scope and no
+      <code>$compile</code>. On a multiple the element renders beside the
+      default checkbox.
+    </p>
+    <div class="demo-row" data-src="7b">
       <template id="lang-row-tpl">
         <span class="lang-row"><i class="mdi" aria-hidden="true"></i><span class="lang-name"></span></span>
       </template>
-      <div class="demo-row">
-        <llselect-single ng-model="vm.lang" ll-filterable="true" ll-item-content-fn="vm.renderLangRow"
-          ll-trigger-content-fn="vm.renderLangTrigger"
-          ll-options="l.name for l in vm.languages track by l.name">
-        </llselect-single>
-      </div>
-      <div class="demo-row">
-        <llselect-multiple ng-model="vm.langsRich" ll-item-content-fn="vm.renderLangRowFromTpl"
-          ll-options="l.name for l in vm.languages track by l.name">
-        </llselect-multiple>
-      </div>
-      <div class="demo-row">
-        <llselect-single ng-model="vm.user2" ll-filterable="true" ll-item-content-fn="vm.renderUserRow"
-          ll-options="u.name disable when u.suspended for u in vm.users track by u.id">
-        </llselect-single>
-      </div>
-      <div class="demo-row">
-        <llselect-multiple ng-model="vm.langsTags" ll-trigger-display="'tags'"
-          ll-item-content-fn="vm.renderLangRow" ll-tag-content-fn="vm.renderLangRow"
-          ll-tag-remove-button-content-fn="vm.renderTagRemoveIcon"
-          ll-options="l.name for l in vm.languages track by l.name">
-        </llselect-multiple>
-      </div>
+      <llselect-multiple ng-model="vm.langsRich" ll-item-content-fn="vm.renderLangRowFromTpl"
+        ll-options="l.name for l in vm.languages track by l.name">
+      </llselect-multiple>
     </div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7"><code></code></pre></details>
+    <div class="out">ng-model = {{ vm.langsRich | json }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7b"><code></code></pre></details>
+
+    <h3>7c. Faded hint text</h3>
+    <p>
+      <code>renderUserRow</code>: primary text plus a faded hint pushed to the
+      row's right edge (<code>.user-row</code>), with <code>disable when</code>
+      dimming suspended users on top.
+    </p>
+    <div class="demo-row" data-src="7c">
+      <llselect-single ng-model="vm.user2" ll-filterable="true" ll-item-content-fn="vm.renderUserRow"
+        ll-options="u.name disable when u.suspended for u in vm.users track by u.id">
+      </llselect-single>
+    </div>
+    <div class="out">ng-model = {{ vm.user2 || 'undefined' }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7c"><code></code></pre></details>
+
+    <h3>7d. Rich tag chips</h3>
+    <p>
+      ONE renderer feeds rows AND chips (<code>ll-tag-content-fn</code>);
+      <code>ll-tag-remove-button-content-fn</code> swaps the remove icon, else
+      the theme's CSS glyph draws the x.
+    </p>
+    <div class="demo-row" data-src="7d">
+      <llselect-multiple ng-model="vm.langsTags" ll-trigger-display="'tags'"
+        ll-item-content-fn="vm.renderLangRow" ll-tag-content-fn="vm.renderLangRow"
+        ll-tag-remove-button-content-fn="vm.renderTagRemoveIcon"
+        ll-options="l.name for l in vm.languages track by l.name">
+      </llselect-multiple>
+    </div>
+    <div class="out">ng-model = {{ vm.langsTags | json }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7d"><code></code></pre></details>
   </section>
 
   <section>
