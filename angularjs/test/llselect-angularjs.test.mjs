@@ -252,3 +252,59 @@ test('multiple defaults to checkbox rows, live state; ll-checkboxes="false" opts
   c.$('.llselect-trigger').click()
   assert.ok(c.$('.llselect-select-all-row svg'), 'select-all tri-state icon missing')
 })
+
+function customRowApp(markup) {
+  return boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">${markup}</div>`,
+    // This module's scope has no `document` global - build DOM via the page's.
+    controller: function ($document) {
+      const doc = $document[0]
+      this.fruits = FRUITS.slice()
+      this.fruit = null
+      this.t = []
+      this.renderRow = function (fruit) {
+        if (fruit === 'Banana') { return null } // exercise the per-item fallback
+        const el = doc.createElement('em')
+        el.className = 'custom-row'
+        el.textContent = '* ' + fruit
+        return el
+      }
+    },
+  })
+}
+
+test('ll-item-content-fn renders custom row content; aria-label stays the label clause', () => {
+  const a = customRowApp(`<llselect-single ng-model="vm.fruit" ll-item-content-fn="vm.renderRow"
+    ll-options="f for f in vm.fruits"></llselect-single>`)
+  a.$('.llselect-trigger').click()
+  const items = a.$$('.llselect-item')
+  assert.ok(items[0].querySelector('em.custom-row'), 'custom element missing from the row')
+  // The accessible name must stay owned by the ll-options label clause, not the DOM.
+  assert.equal(items[0].getAttribute('aria-label'), 'Apple')
+  assert.equal(items[1].querySelector('em.custom-row'), null, 'null must fall back to plain text')
+  assert.equal(items[1].textContent, 'Banana')
+})
+
+test('multiple: ll-item-content-fn composes with default checkboxes; ll-checkboxes="false" hands it the whole row', () => {
+  const a = customRowApp(`<llselect-multiple ng-model="vm.t" ll-item-content-fn="vm.renderRow"
+    ll-options="f for f in vm.fruits"></llselect-multiple>`)
+  a.$('.llselect-trigger').click()
+  const item = a.$('.llselect-item')
+  assert.ok(item.querySelector('svg'), 'checkbox missing beside custom content')
+  assert.ok(item.querySelector('em.custom-row'), 'custom content missing beside checkbox')
+
+  const b = customRowApp(`<llselect-multiple ng-model="vm.t" ll-checkboxes="false" ll-item-content-fn="vm.renderRow"
+    ll-options="f for f in vm.fruits"></llselect-multiple>`)
+  b.$('.llselect-trigger').click()
+  assert.equal(b.$('.llselect-item svg'), null, 'opted-out checkbox still rendered')
+  assert.ok(b.$('.llselect-item em.custom-row'), 'custom content missing after checkbox opt-out')
+})
+
+test('a non-function ll-item-content-fn is reported and no widget is left behind', () => {
+  const a = app()
+  const el = a.compile('<llselect-single ng-model="x" ll-item-content-fn="\'nope\'" ll-options="f for f in vm.fruits"></llselect-single>')
+  assert.equal(a.errors.length, 1)
+  assert.match(a.errors[0].message, /ll-item-content-fn must evaluate to a function/)
+  assert.equal(el[0].querySelector('.llselect-trigger'), null)
+})

@@ -140,6 +140,16 @@
     if (attrs.llFilterable) { settings.filterable = scope.$eval(attrs.llFilterable) }
     if (attrs.llPopupWidthPolicy) { settings.popupWidthPolicy = scope.$eval(attrs.llPopupWidthPolicy) }
     if (attrs.llArrow) { arrow = attrs.llArrow }
+    // A render-time DOM factory, called by llselect outside any digest; the
+    // returned element is NOT $compile'd. Angular templates per row are the
+    // <ui-llselect> trade, deliberately not this one.
+    if (attrs.llItemContentFn) {
+      var itemContentFn = scope.$eval(attrs.llItemContentFn)
+      if (typeof itemContentFn !== 'function') {
+        throw new Error('llselect-angularjs: ll-item-content-fn must evaluate to a function (item) => HTMLElement | null')
+      }
+      settings.createItemContentElFn = itemContentFn
+    }
 
     settings.createTriggerArrowContentElFn = resolveArrow(arrow)
     return settings
@@ -271,22 +281,28 @@
           // Core deliberately ships neither - its answer is the subclass recipe
           // (demo 5.4 / 5.5); this package's answer is a default. Rows render
           // only after construction, so reading `sel` here is safe.
+          // An ll-item-content-fn composes: its element renders beside the
+          // checkbox (null falls back to the label text); opting out of
+          // checkboxes hands it the whole row.
           var checkboxes = attrs.llCheckboxes ? scope.$eval(attrs.llCheckboxes) : true
           if (checkboxes) {
-            var checkboxRowEl = function (state, text) {
+            var userContentFn = settings.createItemContentElFn || null
+            var checkboxRowEl = function (state, contentNode) {
               var row = document.createElement('span')
               row.style.display = 'inline-flex'
               row.style.alignItems = 'center'
               row.style.gap = '0.4em'
               row.appendChild(llselect.createOutlinedCheckboxSvgEl({ state: state }))
-              row.appendChild(document.createTextNode(text))
+              row.appendChild(contentNode)
               return row
             }
             settings.createItemContentElFn = function (item) {
-              return checkboxRowEl(sel && sel.isChosen(item) ? 'checked' : 'unchecked', settings.itemToStringFn(item))
+              var content = userContentFn && userContentFn(item)
+              return checkboxRowEl(sel && sel.isChosen(item) ? 'checked' : 'unchecked',
+                content || document.createTextNode(settings.itemToStringFn(item)))
             }
             settings.createSelectAllRowContentElFn = function (chosenState, chosenCount, totalCount) {
-              return checkboxRowEl(chosenState, sel.getUiTranslationPack().selectAllRowLabel(chosenCount, totalCount))
+              return checkboxRowEl(chosenState, document.createTextNode(sel.getUiTranslationPack().selectAllRowLabel(chosenCount, totalCount)))
             }
           }
 

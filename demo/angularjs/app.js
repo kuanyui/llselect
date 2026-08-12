@@ -88,6 +88,25 @@
       vm.locked = false
       vm.avFruit = undefined
       vm.country3 = undefined
+      vm.user2 = undefined
+      vm.people2 = []
+
+      /**
+       * 5c. A render-time DOM factory: called by llselect outside any digest,
+       * never $compile'd - custom rows with zero per-row scope or watcher.
+       * The accessible name stays the ll-options label; this only changes
+       * the pixels.
+       */
+      vm.renderUserRow = function (u) {
+        var row = document.createElement('span')
+        var name = document.createElement('span')
+        name.textContent = u.name
+        var hint = document.createElement('small')
+        hint.className = 'hint'
+        hint.textContent = u.role + (u.suspended ? ' - suspended' : '')
+        row.append(name, ' ', hint)
+        return row
+      }
 
       /**
        * Drops the currently chosen fruit from the list, which is the case that

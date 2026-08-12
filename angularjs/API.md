@@ -81,6 +81,26 @@ The clause grammar maps almost 1:1 onto llselect's `*Fn` settings. `NG_OPTIONS_R
 
 **Literal**: `chevron` (default) / `triangle` / `none`. The chevron default is this package being batteries-included, unlike the core (which ships no arrow so the app decides). `triangle` picks the other built-in icon; `none` opts out and leaves the slot to the theme. A custom arrow means editing your copy of `llselect-angularjs.js`, which is what a copy-paste package is for.
 
+### `ll-item-content-fn`
+
+**Expression** -> `createItemContentElFn`. Evaluated once at link time to a function `(item) => HTMLElement | null`; the returned element becomes the row's visible content, and `null` (for one item, or no attribute at all) falls back to the plain `ll-options` label text. The function runs per rendered row per render (open / filter / list change), entirely outside any digest, and its element is NOT `$compile`d - no Angular directives or bindings inside; build plain DOM (`document.createElement`, or clone a `<template>`). The accessible name and the filter text stay owned by the `ll-options` label clause no matter what you render (the library sets the option's `aria-label` from it). On `<llselect-multiple>` the element renders beside the default checkbox icon; `ll-checkboxes="false"` hands it the whole row. For real per-row Angular templates, use [`<ui-llselect>`](#ui-llselect) - one child scope and one `$compile` per row is exactly the trade it prices in.
+
+```js
+$scope.renderRow = function (fruit) {
+  var row = document.createElement('span')
+  var icon = document.createElement('i')
+  icon.className = 'mdi mdi-' + fruit.icon
+  icon.setAttribute('aria-hidden', 'true')
+  row.append(icon, ' ' + fruit.name)
+  return row
+}
+```
+
+```html
+<llselect-single ng-model="picked" ll-item-content-fn="renderRow"
+  ll-options="f.name for f in fruits"></llselect-single>
+```
+
 ### `ll-aria-label`
 
 **Literal** -> `ariaLabel`. The accessible name; always set this or `ll-aria-labelledby`.
