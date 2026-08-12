@@ -171,6 +171,27 @@
   }
 
   /**
+   * The controller other directives on the same element `require` (by the
+   * directive names `llselectSingle` / `llselectMultiple`) to reach the live
+   * widget - the door for app-owned policy directives (an app-wide
+   * permission-driven disable, etc.). instance() is late-bound: the widget is
+   * constructed in the post-link, AFTER controllers instantiate, so call it
+   * from a $watch / event handler, never from a controller constructor.
+   */
+  function LlselectApiController() {
+    var sel = null
+    /** Wired by the owning directive's link; not part of the public surface. */
+    this.$$setInstance = function (s) { sel = s }
+    /** The live LLSelectSingle / LLSelectMultiple. Throws before link; never returns null. */
+    this.instance = function () {
+      if (!sel) {
+        throw new Error('llselect-angularjs: instance() is not available yet - the widget is created at link time; call it from a $watch or event handler')
+      }
+      return sel
+    }
+  }
+
+  /**
    * llselect's setters fire onChange whenever the value really changes - which
    * includes changes WE caused while pushing the model into the view, and the
    * chosen item llselect drops when setItems no longer contains it. Writing
@@ -230,8 +251,10 @@
     .directive('llselectSingle', ['$parse', 'llselectConfig', function ($parse, llselectConfig) {
       return {
         restrict: 'E',
-        require: 'ngModel',
-        link: function (scope, element, attrs, ngModelCtrl) {
+        require: ['ngModel', 'llselectSingle'],
+        controller: LlselectApiController,
+        link: function (scope, element, attrs, ctrls) {
+          var ngModelCtrl = ctrls[0]
           var parsed = compileLlOptions($parse, attrs.llOptions)
           var settings = commonSettings(scope, attrs, parsed, llselectConfig)
 
@@ -246,6 +269,7 @@
           }
 
           var sel = new llselect.LLSelectSingle(element[0], settings)
+          ctrls[1].$$setInstance(sel)
 
           ngModelCtrl.$render = function () {
             var value = ngModelCtrl.$viewValue
@@ -275,8 +299,10 @@
     .directive('llselectMultiple', ['$parse', 'llselectConfig', function ($parse, llselectConfig) {
       return {
         restrict: 'E',
-        require: 'ngModel',
-        link: function (scope, element, attrs, ngModelCtrl) {
+        require: ['ngModel', 'llselectMultiple'],
+        controller: LlselectApiController,
+        link: function (scope, element, attrs, ctrls) {
+          var ngModelCtrl = ctrls[0]
           var parsed = compileLlOptions($parse, attrs.llOptions)
           var settings = commonSettings(scope, attrs, parsed, llselectConfig)
 
@@ -328,6 +354,7 @@
           }
 
           var sel = new llselect.LLSelectMultiple(element[0], settings)
+          ctrls[1].$$setInstance(sel)
 
           // The model is now a collection, so "empty" changes meaning - without
           // this, `required` passes on an empty selection ([] is not $isEmpty).

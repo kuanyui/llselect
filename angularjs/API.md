@@ -180,6 +180,40 @@ Boolean, or a predicate `(items) => boolean`. The app-wide default behind [`ll-f
 
 An llselect language pack (e.g. `llselectI18n.zhTW`). The clearest app-wide-by-nature case: an app picks its language once, and llselect's chrome strings are not per-field copy.
 
+## Reaching the instance from your own directive
+
+Both directives publish a controller under their directive names (`llselectSingle` / `llselectMultiple`), so an app-owned attribute directive on the same element can `require` it and drive the full llselect public API - the door for app-wide policies (a permission-driven disable, forced `focusableWhenDisabled` tooltips, ...). `require` takes the array form or, since AngularJS 1.5, the named object form; with `?` the entry is `null` on elements that are not llselect, which is what keeps a generic directive safe on native form controls.
+
+### `instance()`
+
+Returns the live `LLSelectSingle` / `LLSelectMultiple`. Late-bound: the widget is constructed at link time, AFTER controllers instantiate - call it from a `$watch` or event handler, never from a controller constructor. Before link it throws; it never returns `null`.
+
+A generic permission-driven disable that works on llselect AND native form controls (this exact shape is pinned by a test):
+
+```js
+angular.module('app').directive('ownDisabled', ['permissions', function (permissions) {
+  return {
+    restrict: 'A',
+    require: { single: '?llselectSingle', multiple: '?llselectMultiple' },
+    link: function (scope, element, attrs, ctrls) {
+      var api = ctrls.single || ctrls.multiple // null on non-llselect elements
+      scope.$watch(function () { return permissions.canEdit() }, function (ok) {
+        if (api) {
+          api.instance().setDisabled(!ok) // llselect: state lives on the trigger; see ll-disabled
+        } else {
+          element.prop('disabled', !ok) // native form controls
+        }
+      })
+    },
+  }
+}])
+```
+
+```html
+<llselect-single own-disabled ng-model="vm.fruit" ll-options="f for f in vm.fruits"></llselect-single>
+<input own-disabled type="text">
+```
+
 ## `<ui-llselect>`
 
 The bridge (`llselect-ui-select.js`, module `llselect.uiCompat`) for migrating an existing ui-select codebase without rewriting every call site; it needs `llselect-angularjs.js` loaded too. It takes ui-select's call-site markup, not its CSS. The scoping rule is: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible. It always renders the chevron (every ui-select theme has a caret, so a bare trigger would read as broken). How the bridge is built, and why it is not a full ui-select reimplementation: [the README](README.md#the-ui-select-bridge), [`DESIGN.md`](DESIGN.md#the-ui-select-bridge) and [`SPEC.md`](SPEC.md).

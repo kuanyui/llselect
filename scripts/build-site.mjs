@@ -691,7 +691,7 @@ const NG_KINDS = new Map(Object.entries({
   'll-tag-content-fn': 'attribute', 'll-tag-remove-button-content-fn': 'attribute',
   'll-aria-label': 'attribute', 'll-aria-labelledby': 'attribute', 'll-trigger-display': 'attribute',
   'll-select-all-row': 'attribute', 'll-checkboxes': 'attribute', 'll-label': 'attribute',
-  defaults: 'method',
+  defaults: 'method', instance: 'method',
   arrow: 'property', filterable: 'property', popupWidthPolicy: 'property', uiTranslationPack: 'property',
 }))
 renderMarkdownPage('angularjs/API.md', 'public/angularjs/api.html', { title: '@llselect/angularjs API', description: 'Attribute reference for the @llselect/angularjs AngularJS 1.x directives', prefix: '../', current: 'AngularJS', subnav: angularjsSubnavHtml('../', 'API'), toc: true, kinds: NG_KINDS })
