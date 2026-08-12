@@ -116,6 +116,21 @@
   }
 
   /**
+   * $eval an ll-*-fn attribute into a render-time DOM factory: called by
+   * llselect outside any digest, and the returned element is NOT $compile'd.
+   * Angular templates per row are the <ui-llselect> trade, deliberately not
+   * this one. A non-function value is reported loudly.
+   */
+  function evalFnAttr(scope, attrs, name) {
+    if (!attrs[name]) { return null }
+    var fn = scope.$eval(attrs[name])
+    if (typeof fn !== 'function') {
+      throw new Error('llselect-angularjs: ' + attrs.$attr[name] + ' must evaluate to a function')
+    }
+    return fn
+  }
+
+  /**
    * Settings shared by both directives: config defaults first, then this
    * element's ll-* attributes on top.
    *
@@ -140,16 +155,10 @@
     if (attrs.llFilterable) { settings.filterable = scope.$eval(attrs.llFilterable) }
     if (attrs.llPopupWidthPolicy) { settings.popupWidthPolicy = scope.$eval(attrs.llPopupWidthPolicy) }
     if (attrs.llArrow) { arrow = attrs.llArrow }
-    // A render-time DOM factory, called by llselect outside any digest; the
-    // returned element is NOT $compile'd. Angular templates per row are the
-    // <ui-llselect> trade, deliberately not this one.
-    if (attrs.llItemContentFn) {
-      var itemContentFn = scope.$eval(attrs.llItemContentFn)
-      if (typeof itemContentFn !== 'function') {
-        throw new Error('llselect-angularjs: ll-item-content-fn must evaluate to a function (item) => HTMLElement | null')
-      }
-      settings.createItemContentElFn = itemContentFn
-    }
+    var itemContentFn = evalFnAttr(scope, attrs, 'llItemContentFn')
+    if (itemContentFn) { settings.createItemContentElFn = itemContentFn }
+    var triggerContentFn = evalFnAttr(scope, attrs, 'llTriggerContentFn')
+    if (triggerContentFn) { settings.createTriggerContentElFn = triggerContentFn }
 
     settings.createTriggerArrowContentElFn = resolveArrow(arrow)
     return settings
@@ -274,6 +283,10 @@
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
           if (attrs.llTriggerDisplay) { settings.triggerDisplay = scope.$eval(attrs.llTriggerDisplay) }
           if (attrs.llSelectAllRow) { settings.selectAllRow = scope.$eval(attrs.llSelectAllRow) }
+          var tagContentFn = evalFnAttr(scope, attrs, 'llTagContentFn')
+          if (tagContentFn) { settings.createTagContentElFn = tagContentFn }
+          var tagRemoveIconFn = evalFnAttr(scope, attrs, 'llTagRemoveButtonContentFn')
+          if (tagRemoveIconFn) { settings.createTagRemoveButtonContentElFn = tagRemoveIconFn }
 
           // Batteries-included checkboxes: every row gets a live checkbox icon,
           // and (with ll-select-all-row) the row gets the matching tri-state

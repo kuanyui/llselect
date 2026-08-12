@@ -301,6 +301,60 @@ test('multiple: ll-item-content-fn composes with default checkboxes; ll-checkbox
   assert.ok(b.$('.llselect-item em.custom-row'), 'custom content missing after checkbox opt-out')
 })
 
+test('ll-trigger-content-fn renders the trigger; null falls back to the default rendering', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.fruit" ll-trigger-content-fn="vm.renderTrigger"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function ($document) {
+      const doc = $document[0]
+      this.fruits = FRUITS.slice()
+      this.fruit = 'Cherry'
+      this.renderTrigger = function (ctx) {
+        if (!ctx.chosenItem) { return null } // fall back to the placeholder
+        const el = doc.createElement('b')
+        el.className = 'custom-trigger'
+        el.textContent = '>> ' + ctx.chosenItem
+        return el
+      }
+    },
+  })
+  assert.equal(a.text('.llselect-trigger b.custom-trigger'), '>> Cherry')
+  a.scope.$apply(() => { a.scope.vm.fruit = null })
+  assert.equal(a.$('.llselect-trigger b.custom-trigger'), null, 'null must fall back to the default rendering')
+})
+
+test('multiple tags: ll-tag-content-fn fills the chip; ll-tag-remove-button-content-fn swaps the x icon', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-multiple ng-model="vm.t" ll-trigger-display="'tags'"
+        ll-tag-content-fn="vm.renderTag" ll-tag-remove-button-content-fn="vm.renderX"
+        ll-options="f for f in vm.fruits"></llselect-multiple>
+    </div>`,
+    controller: function ($document) {
+      const doc = $document[0]
+      this.fruits = FRUITS.slice()
+      this.t = ['Apple']
+      this.renderTag = function (fruit) {
+        const el = doc.createElement('em')
+        el.className = 'custom-tag'
+        el.textContent = fruit
+        return el
+      }
+      this.renderX = function () {
+        const el = doc.createElement('i')
+        el.className = 'custom-x'
+        return el
+      }
+    },
+  })
+  assert.ok(a.$('.llselect-tag em.custom-tag'), 'custom tag chip content missing')
+  assert.ok(a.$('.llselect-tag-remove-button i.custom-x'), 'custom remove icon missing')
+})
+
 test('a non-function ll-item-content-fn is reported and no widget is left behind', () => {
   const a = app()
   const el = a.compile('<llselect-single ng-model="x" ll-item-content-fn="\'nope\'" ll-options="f for f in vm.fruits"></llselect-single>')

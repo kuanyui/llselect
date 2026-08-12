@@ -101,6 +101,10 @@ $scope.renderRow = function (fruit) {
   ll-options="f.name for f in fruits"></llselect-single>
 ```
 
+### `ll-trigger-content-fn`
+
+**Expression** -> `createTriggerContentElFn`. A render-time DOM factory for the trigger's content, under the same rules as [`ll-item-content-fn`](#ll-item-content-fn) (outside any digest, never `$compile`'d). The context argument differs per directive: `<llselect-single>` receives `{ chosenItem, items }`, and `null` falls back to the default rendering (the chosen item's label, or the placeholder); `<llselect-multiple>` receives `{ chosenItems, items }`, and `null` falls back to the count summary / tags - a returned element overrides both display modes. Feeding it the same renderer as `ll-item-content-fn` is what makes the trigger mirror the chosen row (demo 7); there is no auto-projection.
+
 ### `ll-aria-label`
 
 **Literal** -> `ariaLabel`. The accessible name; always set this or `ll-aria-labelledby`.
@@ -114,6 +118,14 @@ $scope.renderRow = function (fruit) {
 ### `ll-trigger-display`
 
 **Expression** -> `triggerDisplay`. `'count'` (default) / `'tags'` - quoted: `ll-trigger-display="'tags'"`.
+
+### `ll-tag-content-fn`
+
+**Expression** -> `createTagContentElFn`. A function `(item) => HTMLElement | null` filling one tag chip's content in `ll-trigger-display="'tags'"` mode; `null` falls back to the plain label text. The library still owns the chip container, the remove (x) button, and the button's `aria-label` (`Remove <label>`). The chip itself is a generic `<span>` that ARIA prohibits naming, so for icon-only content include your own visually hidden text if the chip should be announced as more than its remove button.
+
+### `ll-tag-remove-button-content-fn`
+
+**Expression** -> `createTagRemoveButtonContentElFn`. A function `(item) => HTMLElement | SVGElement | null` filling the decorative icon inside each tag's remove (x) button; `null` (the default) leaves the theme's CSS glyph to draw the x. The library always owns the button, its click, and its `aria-label`.
 
 ### `ll-select-all-row`
 
