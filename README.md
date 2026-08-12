@@ -269,7 +269,6 @@ Method names follow a strict grammar. Some notes maybe helpful if you need to cu
 | Name shape              | DOM contact         | Meaning                                                              |
 |-------------------------|---------------------|----------------------------------------------------------------------|
 | `create*El(...)`        | none - detached     | Builds a new element and returns it. Never inserts it.               |
-| `create*ContentElFn` (setting) | none - detached | Fills an element's VISIBLE CONTENT only - the library keeps the shell (the element itself + the ARIA it pins on it). Changing the SHELL has no setting: override `create*El` (subclass). |
 | `commit*ToDom(content)` | writes the DOM      | Takes the content as its param. Writes it into the DOM.              |
 | `sync*ToDom()`          | writes the DOM      | **No params.** Reads one `this.*` state field. Writes it to the DOM. |
 | `replace*ElInDom(...)`  | writes the DOM      | Swaps one existing element for a fresh one. O(1).                    |
