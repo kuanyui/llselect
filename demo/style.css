@@ -106,6 +106,14 @@ article { margin: 1.5rem 0 2rem 1rem; }
   font-size: inherit;
 }
 
+/* caption between a demo's JS block and its demo-CSS block */
+.code-caption {
+  margin: 0.5rem 0 0.2rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: #777;
+}
+
 /* Minimal JS syntax highlight (One Monokai). */
 .hl-comment { color: #676f7d; font-style: italic; }
 .hl-string  { color: #e6db74; }
@@ -163,8 +171,9 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .scroll-spacer-top { height: 16rem; }
 .scroll-spacer-bottom { height: 16rem; }
 
-/* 2.2: creates a fixed-position containing block - the ancestor class the
-   top-layer (Popover API) path is immune to. */
+/* #region 2.2 */
+/* transform creates a fixed-position containing block - the ancestor class
+   the top-layer (Popover API) path is immune to. */
 .transform-container {
   transform: translateZ(0);
   border: 1px dashed #c9821a;
@@ -172,6 +181,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
   padding: 1rem;
   border-radius: 4px;
 }
+/* #endregion */
 
 .page-filler { height: 80vh; }
 
@@ -249,7 +259,8 @@ article { margin: 1.5rem 0 2rem 1rem; }
   z-index: 2000;
 }
 
-/* 5.4 / 5.5 / 5.6 checkbox items - align the prepended checkbox with the label. */
+/* #region 5.4 5.5 5.6 */
+/* align the prepended checkbox with the label */
 #mount-multi-checkbox .llselect-item,
 #mount-select-all .llselect-item,
 #mount-filled-checkbox .llselect-item {
@@ -257,6 +268,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
   align-items: center;
   gap: 0.4rem;
 }
+/* #endregion */
 
 /* 10.1 / 10.2 rich item content - icon + label row (used in the list rows). */
 .lang-row {
@@ -265,27 +277,29 @@ article { margin: 1.5rem 0 2rem 1rem; }
   gap: 0.5rem;
 }
 
-/* 6.2 / 6.3 / 6.4 width-policy demos: constrain the trigger width so the
-   chosen text actually overflows (otherwise `inline-block` on
-   `.llselect-root` would grow to fit content and ellipsis would never
-   trigger). 6.1 deliberately omits this constraint to show the unconstrained
-   behavior. */
+/* #region 6.2 6.3 6.4 */
+/* Constrain the trigger so the chosen text actually overflows (an
+   unconstrained inline-block root would just grow to fit). 6.1 deliberately
+   omits this. */
 #mount-long-wrap,
 #mount-long-ellipsis,
 #mount-long-fitcontent {
   max-width: 18rem;
 }
+/* #endregion */
 
-/* 6.4 ellipsis opt-in for long items - scoped to this mount only so other
-   demos keep the default wrap behavior. The library never applies this. */
+/* #region 6.4 */
+/* ellipsis opt-in for long items - the library never applies this */
 #mount-long-ellipsis .llselect-item {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* #endregion */
 
-/* 4.4 CSS-only arrow demo - this section deliberately bypasses the theme's
-   arrow slot and draws an arrow with a CSS triangle on a pseudo-element. */
+/* #region 4.4 */
+/* CSS-only arrow: bypass the arrow slot entirely, draw a triangle on a
+   pseudo-element; [data-state] drives the rotation. */
 #mount-ind-css .llselect-trigger::after {
   content: '';
   display: inline-block;
@@ -302,6 +316,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 #mount-ind-css .llselect-trigger[data-state='open']::after {
   transform: rotate(180deg);
 }
+/* #endregion */
 
 /* --- shared interactive TOC (both examples pages; injected by toc.js) ----
    Wide screens: sticky left sidebar with scrollspy + filter. Below 62rem

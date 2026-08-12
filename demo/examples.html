@@ -117,7 +117,7 @@
     </article>
 
     <article>
-      <h3>2.2 Inside a CSS-transformed container (top layer)</h3>
+      <h3>2.2 Transformed container (top layer)</h3>
       <p class="hint">
         The amber box's <code>transform</code> would normally displace a
         <code>position: fixed</code> popup. With the Popover API (all current
@@ -132,7 +132,7 @@
           </div>
           <div class="out" id="out-transform">chosen: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="2.2"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="2.2"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="2.2"><code></code></pre></details>
       </div>
     </article>
   </section>
@@ -233,12 +233,12 @@
         <div class="demo-pane">
           <div id="mount-ind-css"></div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="4.4"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="4.4"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="4.4"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>4.5 Arrow + clear together (separate slots)</h3>
+      <h3>4.5 Arrow + clear together</h3>
       <p class="hint">
         Arrow and clear x live in separate trigger slots, so they compose -
         and both survive a custom <code>createTriggerContentElFn</code>.
@@ -289,7 +289,7 @@
     </article>
 
     <article>
-      <h3>5.3 Tags display (removable chips)</h3>
+      <h3>5.3 Tags display</h3>
       <p class="hint">
         <code>triggerDisplay: 'tags'</code> - one removable chip per chosen
         item; the library owns the chip, its x button and
@@ -305,24 +305,23 @@
     </article>
 
     <article>
-      <h3>5.4 Checkbox items - the SUBCLASS path (<code>createItemEl</code>)</h3>
+      <h3>5.4 Checkbox items (subclass)</h3>
       <p class="hint">
-        Override <code>createItemEl</code>: prepend
-        <code>createOutlinedCheckboxSvgEl</code> reflecting
-        <code>isChosen</code>; the single-item rerender keeps it in sync.
-        Settings-path counterpart, no subclass: <b>11.2</b>.
+        Subclass path: override <code>createItemEl</code> to prepend a live
+        checkbox (<code>createOutlinedCheckboxSvgEl</code>); the single-item
+        rerender keeps it in sync. Settings counterpart: 11.2.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-multi-checkbox"></div>
           <div class="out" id="out-multi-checkbox">chosen: []</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="5.4"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="5.4"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="5.4"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>5.5 Select-all row (tri-state, filtered scope)</h3>
+      <h3>5.5 Select-all row (tri-state)</h3>
       <p class="hint">
         <code>selectAllRow: true</code> pins a tri-state row acting on the
         VISIBLE enabled subset: type a filter, toggle the row - only the
@@ -335,12 +334,12 @@
           <div id="mount-select-all"></div>
           <div class="out" id="out-select-all">chosen: 0 items</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="5.5"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="5.5"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="5.5"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>5.6 Filled (Material-look) checkboxes (<code>createFilledCheckboxSvgEl</code>)</h3>
+      <h3>5.6 Filled (Material) checkboxes</h3>
       <p class="hint">
         5.5 drawn with <code>createFilledCheckboxSvgEl</code> (tick / dash cut
         out of a solid box). Choose a few items - the select-all row shows the
@@ -351,7 +350,7 @@
           <div id="mount-filled-checkbox"></div>
           <div class="out" id="out-filled-checkbox">chosen: 0 items</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="5.6"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="5.6"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="5.6"><code></code></pre></details>
       </div>
     </article>
   </section>
@@ -367,7 +366,7 @@
     </p>
 
     <article>
-      <h3>6.1 No CSS width (baseline): trigger expands to fit, ellipsis never triggers</h3>
+      <h3>6.1 No CSS width (baseline)</h3>
       <p class="hint">
         <strong>Demo CSS:</strong> none. Pick the long sentence - the trigger
         grows to fit and overflows the pane: the library constrains nothing;
@@ -383,38 +382,39 @@
     </article>
 
     <article>
-      <h3>6.2 Constrained trigger, default policy: popup grows beyond the trigger</h3>
+      <h3>6.2 Default <code>'fit-content'</code>: popup outgrows the trigger</h3>
       <p class="hint">
-        <strong>Demo CSS:</strong> <code>max-width: 18rem</code> on the mount.
-        Trigger ellipsizes; the default popup opens at the widest label's
-        width, shifting / clamping at the viewport edge.
+        Demo CSS constrains the mount to <code>max-width: 18rem</code>: the
+        trigger ellipsizes, but the default popup still opens at the widest
+        label's width (viewport-clamped).
       </p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-long-fitcontent"></div>
           <div class="out" id="out-long-fitcontent">chosen: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="6.2"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="6.2"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="6.2"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>6.3 <code>popupWidthPolicy: 'match-trigger'</code>: long labels wrap</h3>
+      <h3>6.3 <code>'match-trigger'</code>: labels wrap</h3>
       <p class="hint">
-        Same constraint as 6.2, opt-in <code>'match-trigger'</code>: popup
-        pinned to the trigger width, long labels wrap.
+        Same <code>18rem</code> constraint, opt-in
+        <code>'match-trigger'</code>: popup pinned to the trigger width, long
+        labels wrap.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-long-wrap"></div>
           <div class="out" id="out-long-wrap">chosen: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="6.3"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="6.3"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="6.3"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>6.4 Label ellipsis - the SUBCLASS path adds <code>el.title</code></h3>
+      <h3>6.4 Label ellipsis + title tooltip (subclass)</h3>
       <p class="hint">
         Demo CSS adds <code>text-overflow: ellipsis</code> on the items
         (needs <code>'match-trigger'</code> - a fit-content popup never
@@ -427,7 +427,7 @@
           <div id="mount-long-ellipsis"></div>
           <div class="out" id="out-long-ellipsis">chosen: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="6.4"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="6.4"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="6.4"><code></code></pre></details>
       </div>
     </article>
   </section>
@@ -529,7 +529,7 @@
     </p>
 
     <article>
-      <h3>9.1 Item-level (<code>itemDisabledFn</code>) - the SUBCLASS path adds the why-tooltip</h3>
+      <h3>9.1 <code>itemDisabledFn</code> + why-tooltip (subclass)</h3>
       <p class="hint">
         Out-of-stock drinks: unselectable, skipped by arrows, still hoverable
         - hover one for the tooltip a <code>createItemEl</code> subclass
@@ -545,7 +545,7 @@
     </article>
 
     <article>
-      <h3>9.2 Control-level (<code>setDisabled</code>) + <code>focusableWhenDisabled</code></h3>
+      <h3>9.2 <code>setDisabled</code> + <code>focusableWhenDisabled</code></h3>
       <p class="hint">
         First control: <code>setDisabled()</code> removes it from the tab
         order (default). Second: <code>focusableWhenDisabled: true</code>
@@ -586,7 +586,7 @@
     </article>
 
     <article>
-      <h3>10.2 Group-level disabled + filterable (multiple)</h3>
+      <h3>10.2 Group disabled + filterable</h3>
       <p class="hint">
         <code>groupDisabledFn</code> disables the whole Dairy group (still
         hoverable). Type to filter - survivors regroup, empty groups
@@ -603,7 +603,7 @@
   </section>
 
   <section>
-    <h2>11. Customized renderers - the SETTINGS path (<code>create*ContentElFn</code>)</h2>
+    <h2>11. Custom renderers (settings)</h2>
     <p class="hint">
       The no-subclass half of the customization model: each
       <code>create*ContentElFn</code> setting fills an element's VISIBLE
@@ -613,7 +613,7 @@
     </p>
 
     <article>
-      <h3>11.1 Single (icon + label rows)</h3>
+      <h3>11.1 Single icon rows</h3>
       <p class="hint">
         Icon + label rows via <code>createItemContentElFn</code>. The trigger
         mirrors the chosen row only because the same renderer feeds
@@ -629,11 +629,10 @@
     </article>
 
     <article>
-      <h3>11.2 Multiple (icon rows) - 5.4's no-subclass counterpart</h3>
+      <h3>11.2 Multiple icon rows</h3>
       <p class="hint">
         Same renderer on a multiple; the shell keeps <code>aria-selected</code>
-        plus the auto <code>aria-label</code>. Same idea as 5.4's checkbox
-        subclass - done with a setting instead.
+        plus the auto <code>aria-label</code>. Subclass counterpart: 5.4.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -645,7 +644,7 @@
     </article>
 
     <article>
-      <h3>11.3 Rich group header (icon + count badge)</h3>
+      <h3>11.3 Rich group header</h3>
       <p class="hint">
         <code>createGroupLabelContentElFn</code> fills the header (icon +
         item count); the accessible name stays the plain
@@ -660,7 +659,7 @@
     </article>
 
     <article>
-      <h3>11.4 Tags with rich chip content (icon + label)</h3>
+      <h3>11.4 Rich tag chips</h3>
       <p class="hint">
         11.1's renderer feeds <code>createTagContentElFn</code> too - ONE
         function serves rows AND chips.
@@ -707,7 +706,7 @@
     </p>
 
     <article>
-      <h3>13.1 Pack switcher: zhTW / ja / en / ar / he (single + multi)</h3>
+      <h3>13.1 Pack switcher (incl. RTL)</h3>
       <p class="hint">
         Switch the pack - <code>setUiTranslationPack</code> re-renders in
         place, chosen values survive. Placeholders, filter input, clear x,

@@ -849,6 +849,24 @@ for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
   }
 }
 
+// Demo CSS: style.css regions marked `/* #region <id> [<id> ...] */` fill the
+// matching pre[data-demo-css] blocks (one rule can serve several demos).
+{
+  const css = await (await fetch('./style.css')).text()
+  const re = /\/\*\s*#region\s+([^*]+?)\s*\*\/\n([\s\S]*?)\n\/\*\s*#endregion\s*\*\//g
+  const byId = new Map()
+  let m
+  while ((m = re.exec(css)) !== null) {
+    for (const id of m[1].split(/\s+/)) {
+      byId.set(id, byId.has(id) ? byId.get(id) + '\n\n' + m[2] : m[2])
+    }
+  }
+  for (const [id, text] of byId) {
+    const target = document.querySelector(`pre[data-demo-css="${id}"] code`)
+    if (target) { target.textContent = text }
+  }
+}
+
 // Inject data.js content into the collapsible <details> at the top.
 {
   const dataSrc = await (await fetch('./data.js')).text()
