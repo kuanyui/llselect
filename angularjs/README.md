@@ -28,7 +28,7 @@ Both files are plain IIFEs reading `window.angular` and `window.llselect` - the 
 
 Every claim below about AngularJS internals was verified against the AngularJS 1.8.3 source, and every claim about ui-select against ui-select 0.19.8. File:line references point at those versions.
 
-Deeper material lives beside this file, split by who reads it: [`DESIGN.md`](DESIGN.md) is why this package exists at all and why each piece is shaped the way it is; [`SPEC.md`](SPEC.md) is the source-level evidence behind every claim made here, with file:line references into AngularJS and ui-select. If you only want to use the directives, this file is enough.
+Deeper material lives beside this file, split by who reads it: [`API.md`](API.md) is the complete attribute reference, one entry per attribute; [`DESIGN.md`](DESIGN.md) is why this package exists at all and why each piece is shaped the way it is; [`SPEC.md`](SPEC.md) is the source-level evidence behind every claim made here, with file:line references into AngularJS and ui-select. If you only want to use the directives, this file plus `API.md` is enough.
 
 ## Why this exists when React and Vue do not
 
@@ -90,56 +90,6 @@ The value is **not** POSTed by a plain form submit. If you need that too, the tw
 
 The `name` is always written by you, in your own template - the package never generates one. A generated name (say, an auto-incrementing counter) would key your server contract to JavaScript execution order: reorder your code, or mount two widgets in a different order, and the payload keys silently swap.
 
-## ng-options -> llselect settings
-
-The clause grammar maps almost 1:1 onto llselect's `*Fn` settings. `NG_OPTIONS_REGEXP` and its 9 capture groups are copied verbatim from `angular.js` (MIT, (c) 2010-2020 Google LLC) into `llselect-angularjs.js`; nothing else from AngularJS is copied.
-
-Grammar: `select as label group by group disable when disable for (key, value) in collection track by trackBy`
-
-| ng-options clause | llselect |
-|---|---|
-| `label` (group 2, else group 1) | `itemToStringFn` |
-| `group by` (group 3) | `itemToGroupKeyFn` |
-| `disable when` (group 4) | `itemDisabledFn` |
-| `in collection` (group 8) | `setItems()`, via `$watchCollection` |
-| `track by` (group 9) | `compareFn` |
-| `select as` (group 1, when ` as ` is present) | no equivalent, by design |
-
-`select as` is the ngModel value projection - the "what string/id does this item become in the model" question. It has no llselect setting because that projection belongs to the app, not the library, and `ng-options` is the app stating it. This is also why the library core has no `itemToValueFn`: using `itemToString` for it would conflate display with identity, so switching `uiTranslationPack` to another language would change your submitted values.
-
-`track by` is a per-item hash; `compareFn` is pairwise equality. Same semantic, different shape: `compareFn: (a, b) => trackBy(a) === trackBy(b)`.
-
-## Attribute reference
-
-The complete attribute surface of `<llselect-single>` and `<llselect-multiple>`. "expression" values are `$eval`'d against the scope once at link time (settings are immutable - see Gotchas - and string values need their own quotes: `ll-placeholder="'Pick one'"`); `ll-disabled` is the one watched attribute. "literal" values are plain attribute text. `<ui-llselect>` takes ui-select's markup instead - its table is under "The ui-select bridge".
-
-Both directives:
-
-| attribute | value | maps to | notes |
-|---|---|---|---|
-| `ng-model` | expression | the chosen item (single) / array of chosen items (multiple) | required. With `select as`: the projected value(s) instead |
-| `ll-options` | ng-options grammar | see the mapping table above | required. `(key, value) in object` throws - pass an array |
-| `name` | literal | AngularJS form registration (`myForm.<name>`) | never generated for you; see "The two `name` attributes" |
-| `required` | flag | ngModel `required` validator | on `<llselect-multiple>`, `[]` counts as empty (`$isEmpty` override) |
-| `ll-disabled` | expression, watched | `setDisabled()` | the only watched attribute |
-| `ll-placeholder` | expression | `placeholder` | per-field copy, so it has no app-wide default |
-| `ll-filterable` | expression | `filterable` | `true` / `false` / a predicate `(items) => boolean` |
-| `ll-clearable` | expression | `clearable` | trigger clear (x) button |
-| `ll-popup-width-policy` | expression | `popupWidthPolicy` | `'fit-content'` (llselect default) / `'match-trigger'` |
-| `ll-arrow` | literal | the trigger arrow | `chevron` (default) / `triangle` / `none`; see "The arrow" |
-| `ll-aria-label` | literal | `ariaLabel` | accessible name; always set this or `ll-aria-labelledby` |
-| `ll-aria-labelledby` | literal | `ariaLabelledBy` | space-separated element id(s) of the visible label |
-
-`<llselect-multiple>` only:
-
-| attribute | value | maps to | notes |
-|---|---|---|---|
-| `ll-trigger-display` | expression | `triggerDisplay` | `'count'` (default) / `'tags'` - quoted: `ll-trigger-display="'tags'"` |
-| `ll-select-all-row` | expression | `selectAllRow` | tri-state select-all as the first row; see "Checkboxes" |
-| `ll-checkboxes` | expression | per-row checkbox icons | default `true`; `ll-checkboxes="false"` opts out; see "Checkboxes" |
-
-App-wide defaults for `arrow` / `filterable` / `popupWidthPolicy` / `uiTranslationPack` are set once via `llselectConfigProvider` (see "App-wide defaults"); a per-element attribute always wins.
-
 ## Gotchas
 
 All verified against AngularJS 1.8.3 source, not folk wisdom.
@@ -168,65 +118,9 @@ Four things to know when wiring it up:
 - Validation is debounced by `typingLimit` (`_INACTIVITY_LIMIT`, default 1000 ms in `validation-common.js:14`). It is not instant, which is easy to misread as "it did not fire".
 - Its `elm.bind('blur', ...)` trigger is inert on these directives: blur does not bubble, and the focusable element is llselect's inner trigger, not the custom element the attribute sits on. The `$modelValue` watch is the path that matters for a select, and it works.
 
-## App-wide defaults
-
-A house style set once, rather than repeated on 40 elements. Per-element `ll-*` attributes always win over it.
-
-```js
-angular.module('app', ['llselect'])
-  .config(['llselectConfigProvider', function (llselectConfigProvider) {
-    llselectConfigProvider.defaults({
-      arrow: 'chevron',          // 'chevron' | 'triangle' | null (null = the theme draws it)
-      filterable: true,          // boolean, or a predicate (items) => boolean
-      popupWidthPolicy: 'match-trigger',  // llselect's own default is 'fit-content'
-      uiTranslationPack: llselectI18n.zhTW,  // an llselect language pack
-    })
-  }])
-```
-
-Only settings that are app-wide **by nature** are here, and `uiTranslationPack` is the clearest case: an app picks its language once, and llselect's chrome strings are not per-field copy. `placeholder` is deliberately absent for the mirror-image reason - it IS per-field copy. An unknown key throws rather than being ignored, so a typo cannot silently do nothing.
-
-## The arrow
-
-The chevron is the default - this package is batteries-included, unlike the core (which ships no arrow so the app decides). `ll-arrow="triangle"` picks the other built-in icon; `ll-arrow="none"` opts out and leaves the slot to the theme. A custom arrow means editing your copy of `llselect-angularjs.js`, which is what a copy-paste package is for. The ui-select bridge always renders the chevron (every ui-select theme has a caret, so a bare trigger would read as broken).
-
-## Checkboxes
-
-`<llselect-multiple>` rows get a live checkbox icon by default - the same batteries-included trade as the arrow. `ll-checkboxes="false"` opts out. With `ll-select-all-row="true"` the select-all row gets the matching tri-state icon plus the pack's counting label. Core ships neither: its answer is the subclass recipe (demo 5.4 / 5.5). Single-select never gets checkboxes - a radio-like look would misstate multiplicity.
-
 ## The ui-select bridge
 
-`<ui-llselect>` (`ui-llselect.js`) exists so an existing ui-select codebase can migrate without rewriting every call site. The scoping rule is: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible.
-
-### What carries over
-
-| ui-select | `<ui-llselect>` |
-|---|---|
-| `<ui-select-match>` template (single) | `createTriggerContentElFn` |
-| `<ui-select-match>` template (multiple) | `createTagContentElFn` - ui-select ng-repeats this slot over `$select.selected`, so it is per chip, not per trigger |
-| `<ui-select-choices>` template | `createItemContentElFn`, `$compile`d against a per-row child scope |
-| `repeat="p in people"` | `setItems` via `$watchCollection` |
-| `alias as item in source` | the ngModel projection, same role as `ng-options`' `select as` |
-| `track by` | `compareFn` |
-| `\| filter: $select.search` in the repeat | `filterFn`. llselect owns the search box and asks per item, so the source expression is re-evaluated once per query and answers membership - your filter expression stays authoritative |
-| `group-by` | `itemToGroupKeyFn` |
-| `ui-disable-choice` | `itemDisabledFn` |
-| `multiple` | `LLSelectMultiple` (+ `triggerDisplay: 'tags'`) |
-| `search-enabled` | `filterable`. Defaults to `true`, following ui-select's default rather than llselect's `false` - it is ui-select's markup, so its defaults are what the call site expects |
-| `placeholder`, `allow-clear` (on `<ui-select-match>`) | `placeholder`, `clearable` |
-| `on-select`, `on-remove` | derived from `onChange` by diffing against the previous set |
-| `ng-disabled` | `setDisabled()` |
-| `$select.selected`, `$select.search`, `$select.multiple` | published on each template's scope |
-| `$index` | from `createItemEl(item, index)` |
-
-### The one addition: `ll-label`
-
-ui-select has **no item-to-string concept at all** - its label is DOM, and its filtering is an Angular filter expression in `repeat`. llselect needs a string for the option's accessible name. So `<ui-select-choices ... ll-label="p.name">` is the single attribute added to ui-select's markup. Without it, an object item degrades to `String(item)`.
-
-### Two deliberate deviations
-
-- **No `scope: true`.** ui-select creates a child scope for `<ui-select>`, which silently shadows a non-dotted `ng-model`: `ng-model="p"` writes `p` onto the child and the parent never sees it. (That is the real reason ui-select's docs push `ng-model="ctrl.p"`.) Every template `<ui-llselect>` compiles gets its own child scope anyway, so `$select` lives there instead and `ng-model` keeps the parent scope. Strictly better, and more compatible in practice.
-- **The `highlight` filter is not provided.** It is ui-select's, not llselect's, so the rule says do not bridge it. It is 8 lines; `app.js` copies it from ui-select (MIT) so the demo's templates work without loading ui-select. Copy it the same way if your templates use `| highlight: $select.search`.
+`<ui-llselect>` (`llselect-ui-select.js`) exists so an existing ui-select codebase can migrate without rewriting every call site. The scoping rule is: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible. What carries over, the one added attribute (`ll-label`) and the two deliberate deviations are in [`API.md`](API.md#ui-llselect).
 
 ### Implementation notes
 
@@ -240,26 +134,3 @@ The bridge hangs off a `WeakMap` rather than an instance field because it cannot
 ### Why it is not a full ui-select reimplementation
 
 Short version: honoring ui-select's row-scope contract would mean the rows come from its `ng-repeat` and theme template, which is exactly the work llselect's own rendering does - so a faithful reimplementation would use approximately none of llselect. The long version, with the source references, is in [`DESIGN.md`](DESIGN.md#the-ui-select-bridge) and [`SPEC.md`](SPEC.md).
-
-
-## Not supported
-
-Deliberate gaps. Each is reported or simply absent, never silently half-working.
-
-A caveat on "reported", verified rather than assumed: a directive's `throw` never reaches your code. `$compile`'s `invokeLinkFn` wraps every link function in its own `try`/`catch` and hands the error to `$exceptionHandler` (`angular.js:11374`), which by default logs it. So a bad `ll-options` does not crash the page - the widget simply never renders and the reason is in the console. This is not specific to these directives; every AngularJS directive works this way, `uiSelectMinErr` included.
-
-Both directive sets:
-
-- `(key, value) in object` collections. Pass an array.
-- Native `<form>` submission. See "No native form integration" above.
-
-`llselect-angularjs.js`:
-
-- Filters on the collection (`ll-options="c for c in colors | filter:q"`). Filter in your controller and let `$watchCollection` see the result. (`<ui-llselect>` does support `| filter:` inside `repeat`, because that is ui-select's own filtering mechanism.)
-
-`ui-llselect.js` - ignored attributes, because llselect has no such concept:
-
-- `tagging`, `tagging-label`, `tagging-tokens` (llselect never creates items).
-- `refresh`, `refresh-delay`, `minimum-input-length`, `spinner-enabled` (no async data-fetching API; root README, "No asynchronous data-fetching API").
-- `sortable`, `limit`, `remove-selected`, `paste`, `append-to-body`, `close-on-select`, `theme`.
-- `$select` members that take a row scope: `isActive`, `isDisabled`, `isLocked`, plus `on-highlight` and `ui-lock-choice`. See above.

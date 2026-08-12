@@ -24,6 +24,7 @@ function walk(rel, extension) {
   if (!existsSync(dir)) { return [] }
   const out = []
   for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (e.name === 'node_modules') { continue }
     const childRel = join(rel, e.name)
     if (e.isDirectory()) {
       out.push(...walk(childRel, extension))
@@ -45,6 +46,7 @@ const asciiFiles = [
   ...srcTs.filter((f) => !f.startsWith('src/i18n/')),
   ...walk('src', '.css'),
   ...walk('docs', '.md'),
+  ...walk('angularjs', '.md'),
   ...scriptFiles,
   'README.md',
   'CLAUDE.md',
@@ -53,6 +55,7 @@ const asciiFiles = [
 
 const markdownFiles = [
   ...walk('docs', '.md'),
+  ...walk('angularjs', '.md'),
   'README.md',
   'CLAUDE.md',
 ]

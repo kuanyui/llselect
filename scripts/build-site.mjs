@@ -4,7 +4,8 @@
 //   demo/       - copied as-is
 //   dist/       - built library (run `npm run build` first)
 //   angularjs/  - the directive sources the angularjs demo loads, plus
-//                 index.html rendered from angularjs/README.md
+//                 index.html rendered from angularjs/README.md and api.html
+//                 rendered from angularjs/API.md (hand-written reference)
 //   api/        - core API reference, rendered from the markdown typedoc
 //                 emits into .build/api-md (the `build:site` npm script runs
 //                 typedoc first)
@@ -96,6 +97,7 @@ function rewriteLinks(body, mdDir) {
     const repoPath = posix.normalize(posix.join(mdDir, path))
     if (repoPath === 'README.md') { return `href="${mdDir ? '../' : './'}${hash}"` }
     if (repoPath === 'angularjs/README.md') { return `href="${mdDir ? './' : 'angularjs/'}${hash}"` }
+    if (repoPath === 'angularjs/API.md') { return `href="${mdDir ? './' : 'angularjs/'}api.html${hash}"` }
     if (/^(demo|dist)\//.test(repoPath) || /^angularjs\/llselect-.+\.js$/.test(repoPath)) { return `href="${target}"` }
     return `href="${REPO_BLOB}${repoPath}${hash}"`
   })
@@ -200,7 +202,7 @@ function buildTocHtml(body) {
     return `<li><details><summary>${CHEVRON}${link}</summary>${inner}</details></li>`
   }
   // Legend lists only the kinds this page actually uses, in a fixed order.
-  const KIND_ORDER = ['class', 'interface', 'type', 'function', 'method', 'property', 'accessor', 'const', 'enum', 'enum-member']
+  const KIND_ORDER = ['directive', 'attribute', 'class', 'interface', 'type', 'function', 'method', 'property', 'accessor', 'const', 'enum', 'enum-member']
   const legend = kindsUsed.size === 0 ? '' : `\n<div class="toc-legend">${KIND_ORDER.filter((k) => kindsUsed.has(k)).map((k) => `<span data-kind="${k}">${k}</span>`).join('')}</div>`
   const html = `<aside class="toc" id="toc" tabindex="-1" aria-label="Table of contents">
 <div class="toc-bar">
@@ -239,6 +241,7 @@ const ANGULARJS_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="
 function angularjsSubnavHtml(prefix, current) {
   const items = [
     ['README', `${prefix}angularjs/`],
+    ['API', `${prefix}angularjs/api.html`],
     ['Examples', `${prefix}demo/angularjs/examples.html`],
     ['Benchmark', `${prefix}demo/angularjs/benchmark.html`],
   ]
@@ -324,7 +327,10 @@ body.with-toc { max-width: 78rem; }
 /* Kind badges (API pages), stamped as data-kind. One color per kind (fixed,
    white text - fine in both schemes); the sidebar draws compact letter
    chips, the content side an unabbreviated pill at the heading's right
-   edge. */
+   edge. directive / attribute (the AngularJS page) reuse the class / type
+   colors by analogy - the typedoc kinds never share a page with them. */
+[data-kind="directive"] { --kind-color: #1f883d; }
+[data-kind="attribute"] { --kind-color: #0969da; }
 [data-kind="class"] { --kind-color: #1f883d; }
 [data-kind="interface"] { --kind-color: #0f766e; }
 [data-kind="type"] { --kind-color: #0969da; }
@@ -336,6 +342,8 @@ body.with-toc { max-width: 78rem; }
 [data-kind="enum"] { --kind-color: #bf3989; }
 [data-kind="enum-member"] { --kind-color: #57606a; }
 .toc [data-kind]::before { display: inline-flex; align-items: center; justify-content: center; width: 1.2em; height: 1.2em; margin-right: 0.4em; border-radius: 3px; font-size: 0.7em; font-weight: 700; font-style: normal; color: #fff; vertical-align: 0.15em; font-family: system-ui, sans-serif; background: var(--kind-color); }
+.toc [data-kind="directive"]::before { content: "D"; }
+.toc [data-kind="attribute"]::before { content: "A"; }
 .toc [data-kind="class"]::before { content: "C"; }
 .toc [data-kind="interface"]::before { content: "I"; }
 .toc [data-kind="type"]::before { content: "T"; }
@@ -650,6 +658,20 @@ const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
 const ngPkg = JSON.parse(readFileSync('angularjs/package.json', 'utf8'))
 renderMarkdownPage('README.md', 'public/index.html', { title: 'llselect', description: pkg.description, prefix: './', current: 'Home' })
 renderMarkdownPage('angularjs/README.md', 'public/angularjs/index.html', { title: 'llselect + AngularJS 1.x', description: ngPkg.description, prefix: '../', current: 'AngularJS', subnav: angularjsSubnavHtml('../', 'README') })
+// The AngularJS reference is hand-written (markup is not a TypeScript
+// surface), so its badge map is hand-written too: keys are heading texts in
+// angularjs/API.md. A heading missing here simply renders without a badge.
+const NG_KINDS = new Map(Object.entries({
+  'llselect-single': 'directive', 'llselect-multiple': 'directive', 'ui-llselect': 'directive',
+  'ng-model': 'attribute', 'll-options': 'attribute', name: 'attribute', required: 'attribute',
+  'll-disabled': 'attribute', 'll-placeholder': 'attribute', 'll-filterable': 'attribute',
+  'll-clearable': 'attribute', 'll-popup-width-policy': 'attribute', 'll-arrow': 'attribute',
+  'll-aria-label': 'attribute', 'll-aria-labelledby': 'attribute', 'll-trigger-display': 'attribute',
+  'll-select-all-row': 'attribute', 'll-checkboxes': 'attribute', 'll-label': 'attribute',
+  defaults: 'method',
+  arrow: 'property', filterable: 'property', popupWidthPolicy: 'property', uiTranslationPack: 'property',
+}))
+renderMarkdownPage('angularjs/API.md', 'public/angularjs/api.html', { title: '@llselect/angularjs API', description: 'Attribute reference for the @llselect/angularjs AngularJS 1.x directives', prefix: '../', current: 'AngularJS', subnav: angularjsSubnavHtml('../', 'API'), toc: true, kinds: NG_KINDS })
 
 if (!existsSync('.build/api-md/@llselect/core.md')) {
   throw new Error('.build/api-md/ is missing: the build:site npm script runs typedoc first')
@@ -688,7 +710,7 @@ writeFileSync('public/api/index.html', renderPage({
 <ul>
 <li><a href="core.html"><code>@llselect/core</code></a> - the library itself: <code>LLSelectSingle</code> / <code>LLSelectMultiple</code>, every setting, the subclassing surface, and the SVG icon helpers.</li>
 <li><a href="i18n.html"><code>@llselect/core/i18n</code></a> - the UI-translation pack contract and every shipped language pack.</li>
-<li><a href="../angularjs/#attribute-reference"><code>@llselect/angularjs</code></a> - the AngularJS 1.x directives: hand-written attribute reference (markup is not a TypeScript surface).</li>
+<li><a href="../angularjs/api.html"><code>@llselect/angularjs</code></a> - the AngularJS 1.x directives: hand-written attribute reference (markup is not a TypeScript surface).</li>
 </ul>
 `,
 }))

@@ -260,7 +260,7 @@ Every class, setting and type, generated with TypeDoc from the same TSDoc that s
 
 - [GitHub Pages](https://kuanyui.github.io/llselect/api/) | [GitLab Pages](https://kuanyui.gitlab.io/llselect/api/)
 
-For the AngularJS directives (`ll-*` attributes), see the attribute reference in [angularjs/README.md](angularjs/README.md#attribute-reference).
+For the AngularJS directives (`ll-*` attributes), see the attribute reference in [angularjs/API.md](angularjs/API.md).
 
 ### Method-name grammar
 
