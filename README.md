@@ -269,6 +269,7 @@ Method names follow a strict grammar. Some notes maybe helpful if you need to cu
 | Name shape              | DOM contact         | Meaning                                                              |
 |-------------------------|---------------------|----------------------------------------------------------------------|
 | `create*El(...)`        | none - detached     | Builds a new element and returns it. Never inserts it.               |
+| `create*ContentElFn` (setting) | none - detached | Fills an element's VISIBLE CONTENT only - the library keeps the shell (the element itself + the ARIA it pins on it). Changing the SHELL has no setting: override `create*El` (subclass). |
 | `commit*ToDom(content)` | writes the DOM      | Takes the content as its param. Writes it into the DOM.              |
 | `sync*ToDom()`          | writes the DOM      | **No params.** Reads one `this.*` state field. Writes it to the DOM. |
 | `replace*ElInDom(...)`  | writes the DOM      | Swaps one existing element for a fresh one. O(1).                    |
@@ -288,6 +289,8 @@ Quick test: "Am I making a new, named, reusable kind of select?"
 
 - No, I just want this one dropdown to look / behave some way -> **settings**.
 - Yes -> **subclass**.
+
+The capability line between the two: **settings stop at the content layer** - a `create*ContentElFn` fills what an element shows, while the element itself (the shell, e.g. the `role="option"` row: its attributes, its structure, the ARIA the library pins on it) stays library-owned. Changing the shell requires overriding `create*El` in a subclass - deliberately, so no setting can break the ARIA contract. Live comparison: [demo examples, section 14](https://kuanyui.github.io/llselect/demo/examples.html#14-subclassing).
 
 ### Settings (the common path - no subclass needed)
 

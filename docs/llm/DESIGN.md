@@ -41,6 +41,7 @@ User-facing guide (when to pick which, with examples): README "Customization". T
   - `itemToString(item)` - default `= itemToStringFn(item) ?? String(item)`.
   - `renderTriggerContent()` (single / multiple) - default reads `createTriggerContentElFn(ctx)` first, else the variant's label / count. `ctx` is variant-specific (`chosenItem` for single, `chosenItems` for multi).
 - **Override = replace.** Overriding the method replaces its default (setting included); the override wins, by plain OO. There is no resolver forcing the setting to win - that machinery was removed, it fought the low-level design. An extender who still wants the setting reads it / calls `super`.
+- **The capability line: settings stop at CONTENT.** Every `create*ContentElFn` fills what an element SHOWS; the element itself - the shell (e.g. the `role="option"` row: its attributes, its structure) plus the ARIA the library pins on it - stays library-owned. Shell-level changes deliberately have no setting (a setting must not be able to break the ARIA contract); they go through the `create*El` overrides, i.e. subclassing. Demo section 14 shows the split side by side.
 
 So: configure with settings (the common path); override `protected` methods only when extending. The two coexist with no precedence fight.
 
