@@ -213,16 +213,23 @@
        * 7e, per-item background, like native <option style="background-color">
        * (a Chromium-only nicety): 7a's row plus a tint of its icon color's
        * hue. hsl alpha keeps the theme's hover / keyboard-focus backgrounds
-       * visible through the tint. The .lang-tinted CSS (../style.css) moves
-       * the item padding onto the row (tint reaches the option's edges) and
-       * draws the selected row's checkmark from the shell's aria-selected -
-       * no JS, never stale. The whole-trigger tint is the demoTintTrigger
-       * directive below; the mirrored trigger row reuses renderLangTrigger
+       * visible through the tint; the .lang-tinted CSS (../style.css) moves
+       * the item padding onto the row so the tint reaches the option's
+       * edges. The chosen row gets llselect's own createCheckmarkSvgEl at
+       * its right edge; the ng-model value IS the chosen state, and rows
+       * re-render on chosen changes even while the popup is open, so the
+       * marker stays fresh. The whole-trigger tint is the demoTintTrigger
+       * directive above; the mirrored trigger row reuses renderLangTrigger
        * untinted (two stacked alphas would show as a darker patch).
        */
       vm.renderTintedLangRow = function (lang) {
         var row = vm.renderLangRow(lang)
         row.style.background = langTint(lang)
+        if (vm.langTinted && vm.langTinted.name === lang.name) {
+          var check = window.llselect.createCheckmarkSvgEl()
+          check.style.marginInlineStart = 'auto' // push to the row's far edge
+          row.appendChild(check)
+        }
         return row
       }
 

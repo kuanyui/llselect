@@ -1,4 +1,4 @@
-import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createOutlinedCheckboxSvgEl, createFilledCheckboxSvgEl } from '../dist/index.mjs'
+import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createOutlinedCheckboxSvgEl, createFilledCheckboxSvgEl, createCheckmarkSvgEl } from '../dist/index.mjs'
 import { ar, en, he, ja, zhTW, uiTranslationPackByLocale } from '../dist/i18n.mjs'
 import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS, MIXED_DIRECTION_COUNTRIES } from './data.js'
 import { highlightJs } from './highlight.js'
@@ -771,14 +771,16 @@ selUserHints.setItems(USERS)
 // Per-item background, like native <option style="background-color"> (a
 // Chromium-only nicety): 11.1's row plus a tint of ITS icon color's hue,
 // lifted near-white. hsl alpha (not an opaque pastel) keeps the theme's
-// hover / keyboard-focus backgrounds visible through the tint. The
-// .lang-tinted demo CSS moves the item padding onto the row (tint reaches
-// the option's edges) and draws the selected row's checkmark from the
-// shell's aria-selected - no JS, and a createItemContentElFn result would
-// go stale on in-place selection changes. The chosen tint covers the WHOLE
-// trigger, like the native control: onChange paints the public triggerEl.
-// The mirrored trigger row itself stays untinted (11.1's renderer) -
-// stacking two alpha tints would show as a darker patch.
+// hover / keyboard-focus backgrounds visible through the tint; the
+// .lang-tinted demo CSS moves the item padding onto the row so the tint
+// reaches the option's edges. The chosen row gets the library's own
+// createCheckmarkSvgEl at its right edge - reading state here is safe
+// because rows re-render on chosen changes, even while the popup is open
+// (setChosenItem replaces the affected rows; see createItemContentElFn's
+// docstring). The chosen tint covers the WHOLE trigger, like the native
+// control: onChange paints the public triggerEl. The mirrored trigger row
+// itself stays untinted (11.1's renderer) - stacking two alpha tints would
+// show as a darker patch.
 function hexToHue(hex) {
   const r = parseInt(hex.slice(1, 3), 16) / 255
   const g = parseInt(hex.slice(3, 5), 16) / 255
@@ -802,6 +804,12 @@ function languageTint(lang) {
 function createTintedLanguageRowEl(lang) {
   const row = createLanguageRowEl(lang)  // 11.1's icon + label row
   row.style.background = languageTint(lang)
+  const chosen = selLangTinted.getChosenItem()
+  if (chosen !== undefined && chosen.name === lang.name) {
+    const check = createCheckmarkSvgEl()
+    check.style.marginInlineStart = 'auto'  // push to the row's far edge
+    row.append(check)
+  }
   return row
 }
 const outLangTinted = document.getElementById('out-lang-tinted')

@@ -706,9 +706,10 @@
         hue, lifted near-white, and the chosen tint covers the whole trigger
         (<code>onChange</code> paints the public <code>triggerEl</code>).
         The tint uses hsl alpha so the theme's hover / keyboard-focus
-        backgrounds stay visible through it; demo CSS draws the selected
-        row's right-edge checkmark from <code>aria-selected</code> (the
-        shell state the library maintains) and moves the item padding onto
+        backgrounds stay visible through it. The chosen row's right-edge
+        checkmark is the library's <code>createCheckmarkSvgEl</code>, added
+        inside the renderer - safe, because rows re-render on chosen changes
+        even while the popup is open. Demo CSS moves the item padding onto
         the row so the tint reaches the option's edges.
       </p>
       <div class="demo-split">
