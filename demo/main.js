@@ -927,7 +927,7 @@ i18nPackSelect.addEventListener('change', () => applyI18nPack(i18nPackSelect.val
 applyI18nPack(i18nPackSelect.value)
 //#endregion
 
-//#region 13.2
+//#region 13.3
 // Every pack, straight out of `uiTranslationPackByLocale` (BCP 47 keys), so new packs
 // appear here without demo edits. One single per pack: closed it shows the
 // pack's `triggerPlaceholder`, open it the search placeholder / clear x /
@@ -959,7 +959,7 @@ for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
 }
 //#endregion
 
-//#region 13.3
+//#region 13.2
 // RTL needs no API: the mount's dir="rtl" is inherited like on a native
 // element, and flex rows / logical margins mirror on their own. Same
 // checkbox pattern as 5.5, with the ar pack.
