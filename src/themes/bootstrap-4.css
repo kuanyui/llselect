@@ -209,8 +209,10 @@
   /* Logical: mirrors under dir="rtl" (text side start, x-button side end). */
   padding-block: 0.1rem;
   padding-inline: 0.5rem 0.2rem;
-  background-color: #007bff;
-  color: #fff;
+  /* BS4 ships no tag/chip component; solid .badge-primary read too heavy
+     inside a form control. These are BS4's own .alert-primary pair. */
+  background-color: #cce5ff;
+  color: #004085;
   border-radius: 0.2rem;
   font-size: 0.85rem;
   line-height: 1.5;
@@ -226,8 +228,8 @@
   border: none;
   border-radius: 0.2rem;
   background: transparent;
-  color: #fff;
-  opacity: 0.8;
+  color: inherit;
+  opacity: 0.7;
   cursor: pointer;
   font: inherit;
   line-height: 1;
