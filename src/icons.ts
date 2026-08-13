@@ -1,5 +1,6 @@
-// Opt-in icon helpers. None of these is used by the library by default; pass
-// the arrow ones via `settings.createTriggerArrowContentElFn`, or use the checkmark / checkbox
+// Icon helpers. The library itself uses only the outlined checkbox (the
+// select-all row's default tri-state); the rest is opt-in: pass the arrow
+// ones via `settings.createTriggerArrowContentElFn`, or use the checkmark / checkbox
 // ones inside a custom item renderer (override `createItemEl` / `itemToString`)
 // so people who do not want to pull in mdi / FontAwesome still get sensible
 // built-ins. All paths use fill="currentColor" so they inherit the

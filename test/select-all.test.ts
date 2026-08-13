@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectMultiple } from '../src/multiple.js'
+import { createOutlinedCheckboxSvgEl } from '../src/icons.js'
 
 // Phase 13 select-all row: opt-in tri-state leading row acting on the VISIBLE
 // enabled subset. Contract: docs/llm/A11Y.md "Select-all"; design: docs/llm/TODO.md.
@@ -150,6 +151,34 @@ test('createSelectAllRowContentElFn returning null falls back to the plain label
   sel.open()
   assert.equal(row(sel)!.textContent, 'Select all (0 of 1)')
   assert.equal(row(sel)!.getAttribute('aria-label'), null)
+})
+
+test('default content: outlined tri-state checkbox SVG beside the label, tracking state', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  const pathOf = (state: 'none' | 'some' | 'all') =>
+    createOutlinedCheckboxSvgEl({ state }).querySelector('path')!.getAttribute('d')
+  const rowSvgPath = () => row(sel)!.querySelector(':scope > svg path')!.getAttribute('d')
+  assert.equal(rowSvgPath(), pathOf('none'))
+  sel.toggleItem('a') // O(1) leading-row replace keeps the svg fresh while open
+  assert.equal(rowSvgPath(), pathOf('some'))
+  sel.chooseAll()
+  assert.equal(rowSvgPath(), pathOf('all'))
+})
+
+test('custom content replaces the default checkbox svg entirely', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    selectAllRow: true,
+    createSelectAllRowContentElFn: () => {
+      const el = document.createElement('span')
+      el.textContent = 'custom'
+      return el
+    },
+  })
+  sel.setItems(['a'])
+  sel.open()
+  assert.equal(row(sel)!.querySelector(':scope > svg'), null)
 })
 
 test('a subclass createSelectAllRowContentEl override replaces the setting (override wins)', () => {

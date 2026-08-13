@@ -114,23 +114,20 @@
 }
 
 /* --- select-all row (multi, opt-in) ----------------------------- */
-/* Tri-state glyph drawn from data-chosen-state ONLY while the row has no
-   custom content element (createSelectAllRowContentElFn, e.g. an SVG
-   checkbox). The row also carries the
-   plain item class, so hover / focused styling comes from there. */
+/* The default tri-state checkbox is an inline SVG the library draws
+   (createOutlinedCheckboxSvgEl); this only spaces / aligns it. Custom
+   content (createSelectAllRowContentElFn) replaces the default, so the
+   direct-child selector stops matching. The row also carries the plain item
+   class, so hover / focused styling comes from there. */
 
 .llselect-select-all-row {
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
-.llselect-select-all-row::before {
-  display: inline-block;
+.llselect-select-all-row > svg {
   margin-inline-end: 0.4rem;
+  vertical-align: text-bottom;
 }
-
-.llselect-select-all-row[data-chosen-state='none']:not(:has(*))::before { content: '\2610'; }
-.llselect-select-all-row[data-chosen-state='some']:not(:has(*))::before { content: '\229F'; }
-.llselect-select-all-row[data-chosen-state='all']:not(:has(*))::before { content: '\2611'; }
 
 /* --- groups (Phase 10, matches .dropdown-header look) --------- */
 /* Static header by default; rect-based scroll math (keyboard.ts) allows a

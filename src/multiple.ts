@@ -3,6 +3,7 @@ import {
   type LLSelectBaseSettings,
   type LLSelectSettingsInputOf,
 } from './base.js'
+import { createOutlinedCheckboxSvgEl } from './icons.js'
 
 /**
  * Trigger display mode of {@link LLSelectMultiple}.
@@ -101,8 +102,9 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
   createTagRemoveButtonContentElFn: ((item: T) => HTMLElement | SVGElement | null) | null
   /**
    * Whether the popup shows a select-all row as the FIRST option of the
-   * listbox (`false` default). Tri-state (none / some / all chosen, via the
-   * `data-chosen-state` attribute themes draw + the accessible name from
+   * listbox (`false` default). Tri-state (none / some / all chosen - drawn
+   * as the library's outlined checkbox SVG by default, with the
+   * `data-chosen-state` attribute as a CSS hook + the accessible name from
    * `uiTranslationPack.selectAllRowLabel`); Enter / click toggles. Acts on the VISIBLE
    * enabled subset (the filtered list while a filter query is active) - the
    * public `chooseAll` / `unchooseAll` / `toggleAll` keep their whole-list
@@ -118,8 +120,9 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * - Return an `HTMLElement`: inserted as the row's content; the accessible
    *   name stays pinned to `uiTranslationPack.selectAllRowLabel` via `aria-label`, so
    *   icon-only content is still announced with the counts.
-   * - `null` (setting default, or returned): plain text from
-   *   `uiTranslationPack.selectAllRowLabel` (themes then draw a text glyph tri-state).
+   * - `null` (setting default, or returned): the default content - the
+   *   library's outlined tri-state checkbox (`createOutlinedCheckboxSvgEl`)
+   *   beside the plain text from `uiTranslationPack.selectAllRowLabel`.
    * @group Select-all
    */
   createSelectAllRowContentElFn:
@@ -417,8 +420,9 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
 
   /**
    * Build the select-all row (`selectAllRow` setting) as the listbox's
-   * leading `role="option"` row: `data-chosen-state="none|some|all"` (themes
-   * draw the tri-state icon from it), `aria-selected` only when ALL visible
+   * leading `role="option"` row: `data-chosen-state="none|some|all"` (a CSS
+   * hook; the default tri-state checkbox itself is the library's outlined
+   * SVG), `aria-selected` only when ALL visible
    * enabled items are chosen, accessible name + visible text from
    * `uiTranslationPack.selectAllRowLabel(chosenCount, totalCount)` over the visible
    * enabled subset. `null` when the setting is off or nothing is actionable.
@@ -441,7 +445,10 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     const label = this.settings.uiTranslationPack.selectAllRowLabel(chosenCount, actionable.length)
     const content = this.createSelectAllRowContentEl(state, chosenCount, actionable.length)
     if (content === null) {
-      el.textContent = label
+      // Default content: the library's own outlined tri-state checkbox
+      // (aria-hidden) beside the counting label. Themes only space / align
+      // the svg; the accessible name stays the text node.
+      el.append(createOutlinedCheckboxSvgEl({ state }), document.createTextNode(label))
     } else {
       // Custom content fills the visuals only; the accessible name stays the
       // counting label (same pinning as createItemEl's custom content).
@@ -460,7 +467,8 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * The select-all row's visible content (rich tri-state). Mirrors
    * `createItemContentEl`.
    * - Default reads `createSelectAllRowContentElFn`; `null` (setting unset,
-   *   or returned) = plain text from `uiTranslationPack.selectAllRowLabel`.
+   *   or returned) = the default content: the outlined tri-state checkbox +
+   *   plain text from `uiTranslationPack.selectAllRowLabel`.
    * - Override only when extending; for one-off content pass the setting.
    * @group Subclassing: rendering
    */
