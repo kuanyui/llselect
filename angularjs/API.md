@@ -261,7 +261,16 @@ angular.module('app').directive('ownDisabled', ['permissions', function (permiss
 
 ## `<ui-llselect>`
 
-The migration bridge for an existing ui-select codebase (`llselect-ui-select.js`, module `llselect.uiCompat`; needs `llselect-angularjs.js` loaded too). It takes ui-select's call-site MARKUP, not its CSS.
+The migration bridge for an existing ui-select codebase (`llselect-ui-select.js`, module `llselect.uiCompat`; needs `llselect-angularjs.js` loaded too).
+
+Migrating a call site, at a glance:
+
+| | ui-select | `<ui-llselect>` |
+|---|---|---|
+| Element | `<ui-select>` | rename to `<ui-llselect>` |
+| Item label string | **does not exist in ui-select** | add [`ll-label`](#ll-label) on `<ui-select-choices>` |
+| Templates, `repeat`, `track by`, `group-by`, `multiple`, ... | as you wrote them | unchanged - see [What carries over](#what-carries-over) |
+| CSS | ui-select themes | an llselect theme; the bridge takes ui-select's MARKUP, not its CSS |
 
 - Scoping rule: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible.
 - It always renders the chevron - every ui-select theme has a caret, so a bare trigger would read as broken.
@@ -290,15 +299,29 @@ The migration bridge for an existing ui-select codebase (`llselect-ui-select.js`
 
 ### `ll-label`
 
-**Expression** -> `itemToStringFn`. The item's display text, as an expression over the `repeat` variable. The ONE attribute you add to ui-select's markup; it sits on `<ui-select-choices>`:
+**Expression** -> `itemToStringFn`. **This attribute does not exist in ui-select - it is the ONE thing you add when migrating.** llselect needs one string per item - the option's accessible name and the search text - and ui-select's markup has no place that states it (its label is template DOM).
+
+Sits on `<ui-select-choices>`, written over the `repeat` variable:
 
 ```html
-<ui-select-choices repeat="p in vm.people | filter: $select.search" ll-label="p.name">
+<!-- ui-select, before -->
+<ui-select ng-model="vm.person">
+  <ui-select-match placeholder="Pick a person">{{$select.selected.name}}</ui-select-match>
+  <ui-select-choices repeat="p in vm.people | filter: $select.search">
+    <span>{{p.name}}</span>
+  </ui-select-choices>
+</ui-select>
+
+<!-- ui-llselect, after: the renamed element + ll-label. Nothing else changes. -->
+<ui-llselect ng-model="vm.person">
+  <ui-select-match placeholder="Pick a person">{{$select.selected.name}}</ui-select-match>
+  <ui-select-choices repeat="p in vm.people | filter: $select.search" ll-label="p.name">
+    <span>{{p.name}}</span>
+  </ui-select-choices>
+</ui-llselect>
 ```
 
-- Evaluated per item, with the `repeat` variable (`p` above) bound.
-- llselect needs a string per item - it becomes the option's accessible name and the text the search matches. ui-select never had that concept: its label is DOM, and its filtering is the `| filter:` expression.
-- Without it, an object item degrades to `String(item)` ("[object Object]").
+Without it, an object item degrades to `String(item)` ("[object Object]").
 
 ### Two deliberate deviations
 
