@@ -56,10 +56,10 @@
       label: '<ui-llselect>',
       note: 'This package, taking ui-select\'s markup. llselect underneath, but that markup forces one child scope and one $compile per row.',
       markup: '<ui-llselect ng-model="picked">' +
-        '<ui-select-match placeholder="Pick">{{$select.selected.name}}</ui-select-match>' +
-        '<ui-select-choices repeat="i in items | filter: $select.search" ll-item-text="i.name">' +
+        '<ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>' +
+        '<ui-llselect-choices repeat="i in items | filter: $select.search" ll-item-text="i.name">' +
         '<span ng-bind-html="i.name | highlight: $select.search"></span>' +
-        '</ui-select-choices></ui-llselect>',
+        '</ui-llselect-choices></ui-llselect>',
       triggerSel: '.llselect-trigger',
       rowSel: '.llselect-item',
       searchSel: 'input',

@@ -96,10 +96,10 @@ Those child chains, element types, and the `[theme=]` attribute selector do not 
   <ui-select-choices repeat="p in people | filter: $select.search"><span>{{p.name}}</span></ui-select-choices>
 </ui-select>
 
-<!-- <ui-llselect>: same markup, one attribute added, llselect's DOM underneath -->
+<!-- <ui-llselect>: renamed elements, one attribute added, llselect's DOM underneath -->
 <ui-llselect ng-model="p">
-  <ui-select-match>{{$select.selected.name}}</ui-select-match>
-  <ui-select-choices repeat="p in people | filter: $select.search" ll-item-text="p.name"><span>{{p.name}}</span></ui-select-choices>
+  <ui-llselect-match>{{$select.selected.name}}</ui-llselect-match>
+  <ui-llselect-choices repeat="p in people | filter: $select.search" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
 </ui-llselect>
 
 <!-- <llselect-single>: the destination -->

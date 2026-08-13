@@ -275,9 +275,9 @@ Migrating a call site, at a glance:
 
 | | ui-select | `<ui-llselect>` |
 |---|---|---|
-| Element | `<ui-select>` | rename to `<ui-llselect>` |
-| Item label string | **does not exist in ui-select** | add [`ll-item-text`](#ll-item-text) on `<ui-select-choices>` |
-| Templates, `repeat`, `track by`, `group-by`, `multiple`, ... | as you wrote them | unchanged - see [What carries over](#what-carries-over) |
+| Elements | `<ui-select>` / `<ui-select-match>` / `<ui-select-choices>` | rename to `<ui-llselect>` / `<ui-llselect-match>` / `<ui-llselect-choices>` |
+| Item label string | **does not exist in ui-select** | add [`ll-item-text`](#ll-item-text) on `<ui-llselect-choices>` |
+| Template content, `repeat`, `track by`, `group-by`, `multiple`, ... | as you wrote them | unchanged - see [What carries over](#what-carries-over) |
 | CSS | ui-select themes | an llselect theme; the bridge takes ui-select's MARKUP, not its CSS |
 
 - Scoping rule: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible.
@@ -288,9 +288,9 @@ Migrating a call site, at a glance:
 
 | ui-select | `<ui-llselect>` |
 |---|---|
-| `<ui-select-match>` template (single) | `createTriggerContentElFn` |
-| `<ui-select-match>` template (multiple) | `createTagContentElFn` - ui-select ng-repeats this slot over `$select.selected`, so it is per chip, not per trigger |
-| `<ui-select-choices>` template | `createItemContentElFn`, `$compile`d against a per-row child scope |
+| `<ui-select-match>` template (single) | `<ui-llselect-match>` -> `createTriggerContentElFn` |
+| `<ui-select-match>` template (multiple) | `<ui-llselect-match>` -> `createTagContentElFn` - ui-select ng-repeats this slot over `$select.selected`, so it is per chip, not per trigger |
+| `<ui-select-choices>` template | `<ui-llselect-choices>` -> `createItemContentElFn`, `$compile`d against a per-row child scope |
 | `repeat="p in people"` | `setItems` via `$watchCollection` |
 | `alias as item in source` | the ngModel projection, same role as `ng-options`' `select as` |
 | `track by` | `compareFn` |
@@ -309,7 +309,7 @@ Migrating a call site, at a glance:
 
 **Expression** -> `itemToStringFn`. **This attribute does not exist in ui-select - it is the ONE thing you add when migrating.** llselect needs one string per item - the option's accessible name and the search text - and ui-select's markup has no place that states it (its label is template DOM).
 
-Sits on `<ui-select-choices>`, written over the `repeat` variable:
+Sits on `<ui-llselect-choices>`, written over the `repeat` variable:
 
 ```html
 <!-- ui-select, before -->
@@ -320,12 +320,12 @@ Sits on `<ui-select-choices>`, written over the `repeat` variable:
   </ui-select-choices>
 </ui-select>
 
-<!-- ui-llselect, after: the renamed element + ll-item-text. Nothing else changes. -->
+<!-- ui-llselect, after: the renamed elements + ll-item-text. Template content unchanged. -->
 <ui-llselect ng-model="vm.person">
-  <ui-select-match placeholder="Pick a person">{{$select.selected.name}}</ui-select-match>
-  <ui-select-choices repeat="p in vm.people | filter: $select.search" ll-item-text="p.name">
+  <ui-llselect-match placeholder="Pick a person">{{$select.selected.name}}</ui-llselect-match>
+  <ui-llselect-choices repeat="p in vm.people | filter: $select.search" ll-item-text="p.name">
     <span>{{p.name}}</span>
-  </ui-select-choices>
+  </ui-llselect-choices>
 </ui-llselect>
 ```
 

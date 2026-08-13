@@ -16,11 +16,11 @@ function app(extraAttrs = '') {
       <div ng-controller="C as vm">
         <form name="f" novalidate>
           <ui-llselect ng-model="vm.person" name="person" required ${extraAttrs}>
-            <ui-select-match placeholder="Pick">{{$select.selected.name}}</ui-select-match>
-            <ui-select-choices repeat="p in vm.users | filter: $select.search"
+            <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+            <ui-llselect-choices repeat="p in vm.users | filter: $select.search"
               ll-item-text="p.name" ui-disable-choice="p.bad">
               <span>{{p.name}}</span>
-            </ui-select-choices>
+            </ui-llselect-choices>
           </ui-llselect>
         </form>
       </div>`,
@@ -34,7 +34,7 @@ function app(extraAttrs = '') {
 test('links, builds llselect DOM, and strips its own template slots', () => {
   const a = app()
   assert.ok(a.$('ui-llselect .llselect-trigger'), 'no trigger inside <ui-llselect>')
-  assert.equal(a.$('ui-llselect ui-select-choices'), null, '<ui-select-choices> survived into the DOM')
+  assert.equal(a.$('ui-llselect ui-llselect-choices'), null, '<ui-llselect-choices> survived into the DOM')
 })
 
 test('name + required work here too', () => {
@@ -97,8 +97,8 @@ test('ng-model keeps the parent scope (no scope: true shadowing)', () => {
     html: `
       <div ng-controller="C as vm">
         <ui-llselect ng-model="plain">
-          <ui-select-match>{{$select.selected.name}}</ui-select-match>
-          <ui-select-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-select-choices>
+          <ui-llselect-match>{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
         </ui-llselect>
       </div>`,
     controller: function () { this.users = USERS },
@@ -115,8 +115,8 @@ test('a repeat expression without ll-item-text still names the option, via Strin
     html: `
       <div ng-controller="C as vm">
         <ui-llselect ng-model="vm.s">
-          <ui-select-match>{{$select.selected}}</ui-select-match>
-          <ui-select-choices repeat="s in vm.strings"><span>{{s}}</span></ui-select-choices>
+          <ui-llselect-match>{{$select.selected}}</ui-llselect-match>
+          <ui-llselect-choices repeat="s in vm.strings"><span>{{s}}</span></ui-llselect-choices>
         </ui-llselect>
       </div>`,
     controller: function () { this.strings = ['a', 'b'] },
@@ -125,11 +125,11 @@ test('a repeat expression without ll-item-text still names the option, via Strin
   assert.equal(a.$('ui-llselect .llselect-item').getAttribute('aria-label'), 'a')
 })
 
-test('a missing <ui-select-choices> is reported, and no widget is left behind', () => {
+test('a missing <ui-llselect-choices> is reported, and no widget is left behind', () => {
   const a = app()
   const el = a.compile('<ui-llselect ng-model="x"></ui-llselect>')
   assert.equal(a.errors.length, 1, 'nothing was reported to $exceptionHandler')
-  assert.match(a.errors[0].message, /expected one <ui-select-choices/)
+  assert.match(a.errors[0].message, /expected one <ui-llselect-choices/)
   assert.equal(el[0].querySelector('.llselect-trigger'), null, 'a half-built widget was left behind')
 })
 
@@ -177,8 +177,8 @@ test('uib-tooltip still shows on hover while the bridge widget is disabled', asy
     html: `
       <div ng-controller="C as vm">
         <ui-llselect ng-model="vm.person" ng-disabled="true" uib-tooltip="Locked by admin">
-          <ui-select-match placeholder="Pick">{{$select.selected.name}}</ui-select-match>
-          <ui-select-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-select-choices>
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
         </ui-llselect>
       </div>`,
     controller: function () {

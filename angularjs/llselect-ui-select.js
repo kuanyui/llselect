@@ -6,10 +6,10 @@
  * Does not require ui-select itself to be loaded, and does not conflict with it.
  *
  *   <ui-llselect ng-model="p" name="person" required search-enabled="true">
- *     <ui-select-match placeholder="Pick one">{{$select.selected.name}}</ui-select-match>
- *     <ui-select-choices repeat="p in people | filter: $select.search" ll-item-text="p.name">
+ *     <ui-llselect-match placeholder="Pick one">{{$select.selected.name}}</ui-llselect-match>
+ *     <ui-llselect-choices repeat="p in people | filter: $select.search" ll-item-text="p.name">
  *       <span ng-bind-html="p.name | highlight: $select.search"></span>
- *     </ui-select-choices>
+ *     </ui-llselect-choices>
  *   </ui-llselect>
  *
  * Scope: the call-site markup and your transcluded templates carry over from
@@ -87,15 +87,16 @@
    * Pulls the two template slots out before AngularJS can compile them.
    * Emptying tElement during compile stops $compile from descending into the
    * children (compileNodes checks childNodes.length AFTER the compile fn runs),
-   * so a page that also loads real ui-select will not try to link its
-   * uiSelectMatch / uiSelectChoices directives inside ours.
+   * so nothing inside the templates links early. The slot names are
+   * llselect's own (<ui-llselect-match> / <ui-llselect-choices>), so real
+   * ui-select's directives never match them even when both libraries load.
    */
   function extractSlots(tElement) {
     var root = tElement[0]
-    var matchEl = root.querySelector('ui-select-match')
-    var choicesEl = root.querySelector('ui-select-choices')
+    var matchEl = root.querySelector('ui-llselect-match')
+    var choicesEl = root.querySelector('ui-llselect-choices')
     if (!choicesEl) {
-      throw new Error('ui-llselect: expected one <ui-select-choices repeat="..."> child')
+      throw new Error('ui-llselect: expected one <ui-llselect-choices repeat="..."> child')
     }
     var slots = {
       matchHtml: matchEl ? matchEl.innerHTML.trim() : '',
@@ -121,7 +122,7 @@
     var itemName = repeat.itemName
     var choicesAttrs = slots.choicesAttrs
 
-    // <ui-select-choices ll-item-text="p.name">. ui-select has NO item -> string
+    // <ui-llselect-choices ll-item-text="p.name">. ui-select has NO item -> string
     // concept at all (its label is DOM, its filtering is an Angular filter in
     // the repeat expression), but llselect needs one for the option's
     // accessible name. This attribute is the single addition to ui-select's
@@ -249,7 +250,7 @@
     var sel
     if (isMultiple) {
       settings.triggerDisplay = 'tags'
-      // <ui-select-match> in multiple mode is per selected item (ui-select
+      // <ui-llselect-match> in multiple mode is per selected item (ui-select
       // ng-repeats it over $select.selected), so it maps onto one tag's
       // content, not the whole trigger.
       if (slots.matchHtml) {
