@@ -2,7 +2,10 @@
 
 The complete attribute surface of the `@llselect/angularjs` directives, one entry per attribute. Install and loading, the two `name` attributes, integration gotchas and the design rationale live in the [README](README.md); this page is only the reference.
 
-The directives come from two independent files (see [Files](README.md#files)): `llselect-angularjs.js` registers module `llselect` with `<llselect-single>` / `<llselect-multiple>`, driven by an `ng-options`-style [`ll-options`](#ll-options) expression; `llselect-ui-select.js` registers module `llselect.uiCompat` with [`<ui-llselect>`](#ui-llselect), which takes ui-select's call-site markup instead and needs `llselect-angularjs.js` loaded too.
+Two independent files (see [Files](README.md#files)):
+
+- `llselect-angularjs.js` - module `llselect`: `<llselect-single>` / `<llselect-multiple>`, driven by an `ng-options`-style [`ll-options`](#ll-options) expression.
+- `llselect-ui-select.js` - module `llselect.uiCompat`: [`<ui-llselect>`](#ui-llselect), which takes ui-select's call-site markup instead. Needs `llselect-angularjs.js` loaded too.
 
 ## `<llselect-single>`
 
@@ -20,7 +23,11 @@ Multiple selection. `ng-model` holds an array of chosen items (or of `select as`
 
 ## Shared attributes
 
-Attributes of both `<llselect-single>` and `<llselect-multiple>`. Every entry opens with its binding mode in bold. **Expression** values are `$eval`'d against the scope once at link time - llselect resolves its settings bag once at construction, so settings are immutable and only the method-backed [`ll-disabled`](#ll-disabled) is watched (see the [Gotchas](README.md#gotchas)); string values need their own quotes: `ll-placeholder="'Pick one'"`. **Literal** values are plain attribute text. **Flag** attributes act by presence alone.
+Attributes of both `<llselect-single>` and `<llselect-multiple>`. Every entry opens with its binding mode in bold:
+
+- **Expression**: `$eval`'d against the scope ONCE at link time. llselect resolves its settings bag once at construction, so a later scope change does not move them; only the method-backed [`ll-disabled`](#ll-disabled) is watched (see the [Gotchas](README.md#gotchas)). String values need their own quotes: `ll-placeholder="'Pick one'"`.
+- **Literal**: plain attribute text.
+- **Flag**: acts by presence alone.
 
 App-wide defaults for `arrow` / `filterable` / `popupWidthPolicy` / `uiTranslationPack` are set once via [`llselectConfigProvider`](#llselectconfigprovider); a per-element attribute always wins.
 
@@ -30,15 +37,17 @@ App-wide defaults for `arrow` / `filterable` / `popupWidthPolicy` / `uiTranslati
 
 ### `ng-change`
 
-**Expression**, evaluated on each committed change - works as on a native control, no `ll-change` needed. These directives drive a real ngModel, and `ng-change` is the standard `$viewChangeListeners` pipeline, which runs only on the `$setViewValue` path: a real user choice. It does NOT fire on load, on a programmatic model write, or when a data reload drops the chosen item - the write-back gate keeps those out of the view-change path (see the [Gotchas](README.md#gotchas)). The same holds for everything else riding the ngModel pipeline: validators, `$dirty`, angular-validation.
+**Expression**. Runs on each committed user choice - exactly like on a native control, no `ll-change` needed.
+
+- These directives drive a real ngModel; `ng-change` is the standard `$viewChangeListeners` pipeline, which runs only on the `$setViewValue` path: a real user choice.
+- It does NOT fire on load, on a programmatic model write, or when a data reload drops the chosen item - the write-back gate keeps those out of the view-change path (see the [Gotchas](README.md#gotchas)).
+- The same holds for everything else riding the ngModel pipeline: validators, `$dirty`, angular-validation.
 
 ### `ll-options`
 
-**ng-options grammar**, required. Names the label, the identity and the model value of your items in one line. `(key, value) in object` collections throw - pass an array (see [Not supported](#not-supported)).
+**ng-options grammar**, required. Names the label, the identity and the model value of your items in one line:
 
-Grammar: `select as label group by group disable when disable for (key, value) in collection track by trackBy`
-
-The clause grammar maps almost 1:1 onto llselect's `*Fn` settings. `NG_OPTIONS_REGEXP` and its 9 capture groups are copied verbatim from `angular.js` (MIT, (c) 2010-2020 Google LLC) into `llselect-angularjs.js`; nothing else from AngularJS is copied.
+    select as label group by group disable when disable for (key, value) in collection track by trackBy
 
 | ng-options clause | llselect |
 |---|---|
@@ -49,13 +58,17 @@ The clause grammar maps almost 1:1 onto llselect's `*Fn` settings. `NG_OPTIONS_R
 | `track by` (group 9) | `compareFn` |
 | `select as` (group 1, when ` as ` is present) | no equivalent, by design |
 
-`select as` is the ngModel value projection - the "what string/id does this item become in the model" question. It has no llselect setting because that projection belongs to the app, not the library, and `ng-options` is the app stating it. This is also why the library core has no `itemToValueFn`: using `itemToString` for it would conflate display with identity, so switching `uiTranslationPack` to another language would change your submitted values.
-
-`track by` is a per-item hash; `compareFn` is pairwise equality. Same semantic, different shape: `compareFn: (a, b) => trackBy(a) === trackBy(b)`.
+- `select as` is the ngModel value projection: "what does this item become in the model". Deliberately no llselect setting - the projection belongs to the app, and `ng-options` is the app stating it. (Also why the core has no `itemToValueFn`: reusing `itemToString` would conflate display with identity, so switching `uiTranslationPack` to another language would change your submitted values.)
+- `track by` is a per-item hash; `compareFn` is pairwise equality. Same semantic, different shape: `compareFn: (a, b) => trackBy(a) === trackBy(b)`.
+- `(key, value) in object` collections throw - pass an array (see [Not supported](#not-supported)).
+- `NG_OPTIONS_REGEXP` and its 9 capture groups are copied verbatim from `angular.js` (MIT, (c) 2010-2020 Google LLC) into `llselect-angularjs.js`; nothing else from AngularJS is copied.
 
 ### `name`
 
-**Literal**. AngularJS form registration (`myForm.<name>`), with no native `<select>` and no hidden input: `myForm.$valid`, `myForm.<name>.$error.required` and `myForm.$dirty` all work. The value is **not** POSTed by a plain form submit, and the package never generates a `name` for you - the full story, including how AngularJS's `name` and HTML's `name` are unrelated mechanisms, is [The two `name` attributes](README.md#the-two-name-attributes) in the README.
+**Literal**. AngularJS form registration (`myForm.<name>`): `myForm.$valid`, `myForm.<name>.$error.required` and `myForm.$dirty` all work - with no native `<select>` and no hidden input.
+
+- The value is NOT posted by a plain form submit, and the package never generates a `name` for you.
+- AngularJS's `name` and HTML's `name` are unrelated mechanisms: [The two `name` attributes](README.md#the-two-name-attributes) in the README.
 
 ### `required`
 
@@ -63,7 +76,9 @@ The clause grammar maps almost 1:1 onto llselect's `*Fn` settings. `NG_OPTIONS_R
 
 ### `ll-disabled`
 
-**Expression, watched** -> `setDisabled()`. The only watched attribute, because it maps to a method rather than an immutable setting. Disabling must go through llselect's own `setDisabled()`:
+**Expression, watched** -> `setDisabled()`. Disables the widget. The only watched attribute, because it maps to a method rather than an immutable setting.
+
+Disabling must go through llselect's own `setDisabled()`:
 
 - The state belongs on the inner TRIGGER element: `setDisabled()` sets `aria-disabled` / `data-disabled` (and manages `tabindex`) on the focusable combobox itself. A `disabled="true"` attribute would sit on this host element - not a form control, so the browser ignores it completely.
 - Hover must survive: llselect never uses the native `disabled` attribute, which suppresses pointer events. A disabled trigger stays hoverable (and focusable via the core `focusableWhenDisabled` setting), so a tooltip can still explain WHY it is disabled.
@@ -72,15 +87,15 @@ The clause grammar maps almost 1:1 onto llselect's `*Fn` settings. `NG_OPTIONS_R
 
 ### `ll-placeholder`
 
-**Expression** -> `placeholder`. A string value, so it needs its own quotes: `ll-placeholder="'Pick one'"`. Per-field copy, which is why it has no app-wide default.
+**Expression** -> `placeholder`. The trigger's empty-state text. A string, so it needs its own quotes: `ll-placeholder="'Pick one'"`. Per-field copy, which is why it has no app-wide default.
 
 ### `ll-filterable`
 
-**Expression** -> `filterable`. `true` / `false` / a predicate `(items) => boolean`.
+**Expression** -> `filterable`. Shows the search box. `true` / `false` / a predicate `(items) => boolean`.
 
 ### `ll-clearable`
 
-**Expression** -> `clearable`. The trigger clear (x) button.
+**Expression** -> `clearable`. Shows the trigger's clear (x) button.
 
 ### `ll-popup-width-policy`
 
@@ -88,11 +103,22 @@ The clause grammar maps almost 1:1 onto llselect's `*Fn` settings. `NG_OPTIONS_R
 
 ### `ll-arrow`
 
-**Literal**: `chevron` (default) / `triangle` / `none`. The chevron default is this package being batteries-included, unlike the core (which ships no arrow so the app decides). `triangle` picks the other built-in icon; `none` opts out and leaves the slot to the theme. A custom arrow means editing your copy of `llselect-angularjs.js`, which is what a copy-paste package is for.
+**Literal**. The trigger arrow icon: `chevron` (default) / `triangle` / `none`.
+
+- The chevron default is this package being batteries-included, unlike the core (which ships no arrow so the app decides).
+- `none` opts out and leaves the slot to the theme.
+- A custom arrow means editing your copy of `llselect-angularjs.js` - which is what a copy-paste package is for.
 
 ### `ll-item-content-fn`
 
-**Expression** -> `createItemContentElFn`. Evaluated once at link time to a function `(item) => HTMLElement | null`; the returned element becomes the row's visible content, and `null` (for one item, or no attribute at all) falls back to the plain `ll-options` label text. The function runs per rendered row per render (open / filter / list change), entirely outside any digest, and its element is NOT `$compile`d - no Angular directives or bindings inside; build plain DOM (`document.createElement`, or clone a `<template>`). The accessible name and the filter text stay owned by the `ll-options` label clause no matter what you render (the library sets the option's `aria-label` from it). On `<llselect-multiple>` the element renders beside the default checkbox icon; `ll-checkboxes="false"` hands it the whole row. For real per-row Angular templates, use [`<ui-llselect>`](#ui-llselect) - one child scope and one `$compile` per row is exactly the trade it prices in.
+**Expression** -> `createItemContentElFn`. Custom visible content for each option row.
+
+- Evaluated once at link time to a function `(item) => HTMLElement | null`.
+- `null` (for one item, or no attribute at all) = the plain `ll-options` label text.
+- Runs per rendered row per render (open / filter / list change), entirely outside any digest. The element is NOT `$compile`d - no Angular directives or bindings inside; build plain DOM (`document.createElement`, or clone a `<template>`).
+- The accessible name and the filter text stay owned by the `ll-options` label clause no matter what you render (the library sets the option's `aria-label` from it).
+- On `<llselect-multiple>` the element renders beside the default checkbox icon; `ll-checkboxes="false"` hands it the whole row.
+- Need real per-row Angular templates? That is [`<ui-llselect>`](#ui-llselect) - one child scope and one `$compile` per row is exactly the trade it prices in.
 
 ```js
 $scope.renderRow = function (fruit) {
@@ -112,11 +138,15 @@ $scope.renderRow = function (fruit) {
 
 ### `ll-trigger-content-fn`
 
-**Expression** -> `createTriggerContentElFn`. A render-time DOM factory for the trigger's content, under the same rules as [`ll-item-content-fn`](#ll-item-content-fn) (outside any digest, never `$compile`'d). The context argument differs per directive: `<llselect-single>` receives `{ chosenItem, items }`, and `null` falls back to the default rendering (the chosen item's label, or the placeholder); `<llselect-multiple>` receives `{ chosenItems, items }`, and `null` falls back to the count summary / tags - a returned element overrides both display modes. Feeding it the same renderer as `ll-item-content-fn` is what makes the trigger mirror the chosen row (demo 7); there is no auto-projection.
+**Expression** -> `createTriggerContentElFn`. Custom visible content for the trigger, under the same rules as [`ll-item-content-fn`](#ll-item-content-fn) (outside any digest, never `$compile`'d).
+
+- `<llselect-single>`: the function receives `{ chosenItem, items }`; `null` = the default rendering (the chosen item's label, or the placeholder).
+- `<llselect-multiple>`: receives `{ chosenItems, items }`; `null` = the count summary / tags. A returned element overrides both display modes.
+- The trigger does not mirror rich rows by itself - feeding this the same renderer as `ll-item-content-fn` is what does that (demo 7).
 
 ### `ll-aria-label`
 
-**Literal** -> `ariaLabel`. The accessible name; always set this or `ll-aria-labelledby`.
+**Literal** -> `ariaLabel`. The accessible name. Always set this or `ll-aria-labelledby`.
 
 ### `ll-aria-labelledby`
 
@@ -130,19 +160,31 @@ $scope.renderRow = function (fruit) {
 
 ### `ll-tag-content-fn`
 
-**Expression** -> `createTagContentElFn`. A function `(item) => HTMLElement | null` filling one tag chip's content in `ll-trigger-display="'tags'"` mode; `null` falls back to the plain label text. The library still owns the chip container, the remove (x) button, and the button's `aria-label` (`Remove <label>`). The chip itself is a generic `<span>` that ARIA prohibits naming, so for icon-only content include your own visually hidden text if the chip should be announced as more than its remove button.
+**Expression** -> `createTagContentElFn`. Custom content for one tag chip in `ll-trigger-display="'tags'"` mode.
+
+- A function `(item) => HTMLElement | null`; `null` = the plain label text.
+- The library still owns the chip container, the remove (x) button, and the button's `aria-label` (`Remove <label>`).
+- The chip itself is a generic `<span>` that ARIA prohibits naming - for icon-only content include your own visually hidden text if the chip should be announced as more than its remove button.
 
 ### `ll-tag-remove-button-content-fn`
 
-**Expression** -> `createTagRemoveButtonContentElFn`. A function `(item) => HTMLElement | SVGElement | null` filling the decorative icon inside each tag's remove (x) button; `null` (the default) leaves the theme's CSS glyph to draw the x. The library always owns the button, its click, and its `aria-label`.
+**Expression** -> `createTagRemoveButtonContentElFn`. The decorative icon inside each tag's remove (x) button.
+
+- A function `(item) => HTMLElement | SVGElement | null`; `null` (the default) = the theme's CSS glyph draws the x.
+- The library always owns the button, its click, and its `aria-label`.
 
 ### `ll-select-all-row`
 
-**Expression** -> `selectAllRow`. A tri-state select-all as the first row; it gets the tri-state icon matching the row checkboxes plus the pack's counting label.
+**Expression** -> `selectAllRow`. A tri-state select-all row as the first row of the popup; it gets the tri-state icon matching the row checkboxes plus the pack's counting label.
 
 ### `ll-checkboxes`
 
-**Expression**, default `true`. `<llselect-multiple>` rows get a live checkbox icon by default - the same batteries-included trade as the arrow; `ll-checkboxes="false"` opts out of every checkbox visual, including the select-all row's default tri-state indicator (that row then shows only the plain counting label). The core itself ships no icons and no default indicator: its select-all row defaults to just the counting label, and per item its answer is the subclass recipe (demo 5.4 / 5.5). Single-select never gets checkboxes - a radio-like look would misstate multiplicity.
+**Expression**, default `true`. Whether `<llselect-multiple>` rows get this package's live checkbox icons.
+
+- On by default - the same batteries-included trade as the arrow.
+- `ll-checkboxes="false"` strips every checkbox visual, including the select-all row's icon; that row then shows only the counting label, which is also the core's own default.
+- The core itself ships no icons and no default indicator; per item its answer is the subclass recipe (demo 5.4 / 5.5).
+- Single-select never gets checkboxes - a radio-like look would misstate multiplicity.
 
 ## `llselectConfigProvider`
 
@@ -182,7 +224,10 @@ An llselect language pack (e.g. `llselectI18n.zhTW`). The clearest app-wide-by-n
 
 ## Reaching the instance from your own directive
 
-Both directives publish a controller under their directive names (`llselectSingle` / `llselectMultiple`), so an app-owned attribute directive on the same element can `require` it and drive the full llselect public API - the door for app-wide policies (a permission-driven disable, forced `focusableWhenDisabled` tooltips, ...). `require` takes the array form or, since AngularJS 1.5, the named object form; with `?` the entry is `null` on elements that are not llselect, which is what keeps a generic directive safe on native form controls.
+Both directives publish a controller under their directive names (`llselectSingle` / `llselectMultiple`). An app-owned attribute directive on the same element can `require` it and drive the full llselect public API - the door for app-wide policies (a permission-driven disable, forced `focusableWhenDisabled` tooltips, ...).
+
+- `require` takes the array form or, since AngularJS 1.5, the named object form.
+- With `?` the entry is `null` on elements that are not llselect - what keeps a generic directive safe on native form controls.
 
 ### `instance()`
 
@@ -216,7 +261,11 @@ angular.module('app').directive('ownDisabled', ['permissions', function (permiss
 
 ## `<ui-llselect>`
 
-The bridge (`llselect-ui-select.js`, module `llselect.uiCompat`) for migrating an existing ui-select codebase without rewriting every call site; it needs `llselect-angularjs.js` loaded too. It takes ui-select's call-site markup, not its CSS. The scoping rule is: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible. It always renders the chevron (every ui-select theme has a caret, so a bare trigger would read as broken). How the bridge is built, and why it is not a full ui-select reimplementation: [the README](README.md#the-ui-select-bridge), [`DESIGN.md`](DESIGN.md#the-ui-select-bridge) and [`SPEC.md`](SPEC.md).
+The migration bridge for an existing ui-select codebase (`llselect-ui-select.js`, module `llselect.uiCompat`; needs `llselect-angularjs.js` loaded too). It takes ui-select's call-site MARKUP, not its CSS.
+
+- Scoping rule: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible.
+- It always renders the chevron - every ui-select theme has a caret, so a bare trigger would read as broken.
+- How the bridge is built, and why it is not a full ui-select reimplementation: [the README](README.md#the-ui-select-bridge), [`DESIGN.md`](DESIGN.md#the-ui-select-bridge) and [`SPEC.md`](SPEC.md).
 
 ### What carries over
 
@@ -241,7 +290,15 @@ The bridge (`llselect-ui-select.js`, module `llselect.uiCompat`) for migrating a
 
 ### `ll-label`
 
-**Expression**, evaluated per item with the `repeat` variable bound (`ll-label="p.name"`). ui-select has no item-to-string concept at all - its label is DOM, and its filtering is an Angular filter expression in `repeat` - but llselect needs a string for the option's accessible name, so this is the single attribute added to ui-select's markup. Without it, an object item degrades to `String(item)`.
+**Expression** -> `itemToStringFn`. The item's display text, as an expression over the `repeat` variable. The ONE attribute you add to ui-select's markup; it sits on `<ui-select-choices>`:
+
+```html
+<ui-select-choices repeat="p in vm.people | filter: $select.search" ll-label="p.name">
+```
+
+- Evaluated per item, with the `repeat` variable (`p` above) bound.
+- llselect needs a string per item - it becomes the option's accessible name and the text the search matches. ui-select never had that concept: its label is DOM, and its filtering is the `| filter:` expression.
+- Without it, an object item degrades to `String(item)` ("[object Object]").
 
 ### Two deliberate deviations
 
@@ -254,7 +311,7 @@ Ignored attributes are listed under [Not supported](#not-supported).
 
 Deliberate gaps. Each is reported or simply absent, never silently half-working.
 
-A caveat on "reported", verified rather than assumed: a directive's `throw` never reaches your code. `$compile`'s `invokeLinkFn` wraps every link function in its own `try`/`catch` and hands the error to `$exceptionHandler` (`angular.js:11374`), which by default logs it. So a bad `ll-options` does not crash the page - the widget simply never renders and the reason is in the console. This is not specific to these directives; every AngularJS directive works this way, `uiSelectMinErr` included.
+- What "reported" means here (verified, not assumed): a directive's `throw` never reaches your code - `$compile`'s `invokeLinkFn` wraps every link function in its own `try`/`catch` and hands the error to `$exceptionHandler` (`angular.js:11374`), which by default logs it. So a bad `ll-options` does not crash the page; the widget simply never renders and the reason is in the console. Every AngularJS directive works this way, `uiSelectMinErr` included.
 
 Both directive sets:
 
