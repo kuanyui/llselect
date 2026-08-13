@@ -330,11 +330,12 @@
           // Batteries-included checkboxes: every row gets a live checkbox icon,
           // and (with ll-select-all-row) the row gets the matching tri-state
           // one plus the pack's counting label. ll-checkboxes="false" opts out
-          // of every checkbox icon - including the core's own default
-          // tri-state on the select-all row, which gets plain text instead.
-          // Core ships no per-item checkboxes (its answer is the subclass
-          // recipe, demo 5.4 / 5.5); this package's answer is a default. Rows
-          // render only after construction, so reading `sel` here is safe.
+          // of every checkbox visual - including the select-all row's default
+          // indicator (the theme's unicode glyph), suppressed via plain-text
+          // custom content. Core ships no icons (its select-all default is
+          // that theme glyph; per item its answer is the subclass recipe,
+          // demo 5.4 / 5.5); this package's answer is a default. Rows render
+          // only after construction, so reading `sel` here is safe.
           // An ll-item-content-fn composes: its element renders beside the
           // checkbox (null falls back to the label text); opting out of
           // checkboxes hands it the whole row.
@@ -359,9 +360,10 @@
               return checkboxRowEl(chosenState, document.createTextNode(sel.getUiTranslationPack().selectAllRowLabel(chosenCount, totalCount)))
             }
           } else {
-            // `null` would fall back to the core default (which now includes
-            // its outlined tri-state icon), so hand the row plain text: the
-            // same counting label, no icon.
+            // `null` would fall back to the default content, whose tri-state
+            // indicator the theme draws as a glyph; "no checkboxes" means no
+            // indicator at all, so hand the row plain text (custom content
+            // suppresses the glyph).
             settings.createSelectAllRowContentElFn = function (chosenState, chosenCount, totalCount) {
               var s = document.createElement('span')
               s.textContent = sel.getUiTranslationPack().selectAllRowLabel(chosenCount, totalCount)

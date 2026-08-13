@@ -2,7 +2,6 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectMultiple } from '../src/multiple.js'
-import { createOutlinedCheckboxSvgEl } from '../src/icons.js'
 
 // Phase 13 select-all row: opt-in tri-state leading row acting on the VISIBLE
 // enabled subset. Contract: docs/llm/A11Y.md "Select-all"; design: docs/llm/TODO.md.
@@ -153,21 +152,19 @@ test('createSelectAllRowContentElFn returning null falls back to the plain label
   assert.equal(row(sel)!.getAttribute('aria-label'), null)
 })
 
-test('default content: outlined tri-state checkbox SVG beside the label, tracking state', () => {
+test('default content: plain label, no icon, data-content="default" as the theme glyph gate', () => {
   const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
   sel.setItems(['a', 'b'])
   sel.open()
-  const pathOf = (state: 'none' | 'some' | 'all') =>
-    createOutlinedCheckboxSvgEl({ state }).querySelector('path')!.getAttribute('d')
-  const rowSvgPath = () => row(sel)!.querySelector(':scope > svg path')!.getAttribute('d')
-  assert.equal(rowSvgPath(), pathOf('none'))
-  sel.toggleItem('a') // O(1) leading-row replace keeps the svg fresh while open
-  assert.equal(rowSvgPath(), pathOf('some'))
-  sel.chooseAll()
-  assert.equal(rowSvgPath(), pathOf('all'))
+  assert.equal(row(sel)!.getAttribute('data-content'), 'default')
+  assert.equal(row(sel)!.textContent, 'Select all (0 of 2)')
+  assert.equal(row(sel)!.querySelector('svg'), null) // the core ships no icons
+  sel.toggleItem('a') // O(1) leading-row replace keeps the attributes fresh
+  assert.equal(row(sel)!.getAttribute('data-content'), 'default')
+  assert.equal(row(sel)!.getAttribute('data-chosen-state'), 'some')
 })
 
-test('custom content replaces the default checkbox svg entirely', () => {
+test('custom content rows carry data-content="custom" (theme draws no default glyph)', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     selectAllRow: true,
     createSelectAllRowContentElFn: () => {
@@ -178,7 +175,7 @@ test('custom content replaces the default checkbox svg entirely', () => {
   })
   sel.setItems(['a'])
   sel.open()
-  assert.equal(row(sel)!.querySelector(':scope > svg'), null)
+  assert.equal(row(sel)!.getAttribute('data-content'), 'custom')
 })
 
 test('a subclass createSelectAllRowContentEl override replaces the setting (override wins)', () => {
