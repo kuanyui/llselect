@@ -205,8 +205,11 @@
   /* Logical: mirrors under dir="rtl" (text side start, x-button side end). */
   padding-block: 1px;
   padding-inline: 8px 3px;
-  background-color: #337ab7;
-  color: #fff;
+  /* BS3 ships no tag/chip component; solid .label-primary read too heavy
+     inside a form control. These are BS3's own .alert-info pair (BS3 has
+     no primary-tinted surface). */
+  background-color: #d9edf7;
+  color: #31708f;
   border-radius: 3px;
   font-size: 12px;
   line-height: 1.5;
@@ -222,8 +225,8 @@
   border: none;
   border-radius: 2px;
   background: transparent;
-  color: #fff;
-  opacity: 0.8;
+  color: inherit;
+  opacity: 0.7;
   cursor: pointer;
   font: inherit;
   line-height: 1;
