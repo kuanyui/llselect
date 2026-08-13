@@ -327,8 +327,8 @@
         <code>selectAllRow: true</code> pins a tri-state row acting on the
         VISIBLE enabled subset: type a filter, toggle the row - only the
         matches change. <code>createSelectAllRowContentElFn</code> swaps the
-        default text glyph (5.7) for the outlined SVG; items reuse 5.4's
-        checkbox.
+        default plain-label row (5.7) for the outlined SVG; items reuse
+        5.4's checkbox.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -358,9 +358,9 @@
     <article>
       <h3>5.7 Select-all default look</h3>
       <p class="hint">
-        No content fn at all: the library renders the row as plain text - a
-        unicode tri-state glyph + the counting label. 5.5 / 5.6 replace it
-        with SVG checkboxes.
+        No content fn: the row is just the counting label, and its numbers
+        ARE the tri-state. The library draws no default indicator anywhere;
+        5.5 / 5.6 add SVG checkboxes via the hook.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -808,6 +808,23 @@
       </p>
       <div id="i18n-all-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0.8rem"></div>
       <details class="code-toggle"><summary>code</summary><pre data-demo="13.2"><code></code></pre></details>
+    </article>
+
+    <article>
+      <h3>13.3 RTL + checkbox rows (auto-mirroring)</h3>
+      <p class="hint">
+        <code>dir="rtl"</code> on the mount is ALL the wiring - there is no
+        RTL API. Flex rows and logical margins mirror by themselves: the
+        checkboxes land on the right, the ar pack's counting label reads
+        right-to-left.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-rtl-checkboxes" dir="rtl"></div>
+          <div class="out" id="out-rtl-checkboxes">chosen: 0 items</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="13.3"><code></code></pre></details>
+      </div>
     </article>
   </section>
 
