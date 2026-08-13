@@ -103,8 +103,9 @@
 
     /**
      * 7e's whole-trigger tint: an app policy directive. ll-* attributes cover
-     * CONTENT; shell styling per state is app territory, so this requires the
-     * published controller and drives the core public API (API.md "Reaching
+     * CONTENT; styling the library-built trigger element is app territory,
+     * so this requires the published controller and drives the core public
+     * API (API.md "Reaching
      * the instance from your own directive"). instance() is late-bound -
      * safe inside $watch, never in a controller constructor.
      */
@@ -221,9 +222,10 @@
        * 7e, per-item background, like native <option style="background-color">
        * (a Chromium-only nicety): 7a's row plus a tint of its icon color's
        * hue. hsl alpha keeps the theme's hover / keyboard-focus backgrounds
-       * visible through the tint; the .lang-tinted CSS (../style.css) moves
-       * the item padding onto the row so the tint reaches the option's
-       * edges. The chosen row gets llselect's own createCheckmarkSvgEl at
+       * visible through the tint. Everything is inline on the row except
+       * one demo CSS line (.lang-tinted, ../style.css) zeroing the option
+       * element's own padding - the renderer never gets that element.
+       * The chosen row gets llselect's own createCheckmarkSvgEl at
        * its right edge; the ng-model value IS the chosen state, and rows
        * re-render on chosen changes even while the popup is open, so the
        * marker stays fresh. The whole-trigger tint is the demoTintTrigger
@@ -232,6 +234,10 @@
        */
       vm.renderTintedLangRow = function (lang) {
         var row = vm.renderLangRow(lang)
+        // Fill the option element: block-level flex (inline-flex would
+        // shrink-wrap) + the spacing the demo CSS removed from the option.
+        row.style.display = 'flex'
+        row.style.padding = '0.35rem 0.7rem'
         row.style.background = langTint(lang)
         row.style.color = langShade(lang) // the mdi icon keeps its own brand color
         if (vm.langTinted && vm.langTinted.name === lang.name) {

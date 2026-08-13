@@ -268,8 +268,10 @@
       backgrounds stay visible through it, plus llselect's own
       <code>createCheckmarkSvgEl</code> on the chosen row (the ng-model
       value is the chosen state, and rows re-render on chosen changes even
-      while the popup is open). The <code>lang-tinted</code> demo CSS
-      (../style.css) moves the item padding onto the row. The chosen colors
+      while the popup is open). Everything is inline on the row except one
+      demo CSS line (<code>lang-tinted</code>, ../style.css) zeroing the
+      option element's own padding - the only thing the renderer cannot
+      reach; the row re-adds the spacing inline. The chosen colors
       cover the whole trigger - background, text and border:
       <code>demo-tint-trigger</code> is an app policy directive that
       requires the published controller and paints

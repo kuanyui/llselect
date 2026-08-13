@@ -421,8 +421,8 @@
         (needs <code>'match-trigger'</code> - a fit-content popup never
         truncates); a <code>createItemEl</code> subclass sets
         <code>el.title</code>. The subclass IS required for this exact
-        effect: no setting reaches the option shell, so a content fn could
-        only tooltip the inner text, not the whole row. (The library never
+        effect: no setting reaches the option element itself, so a content fn
+        could only tooltip the inner text, not the whole row. (The library never
         auto-adds <code>title</code> - bring your own tooltip lib, or this.)
       </p>
       <div class="demo-split">
@@ -538,7 +538,7 @@
         Out-of-stock drinks: unselectable, skipped by arrows, still hoverable
         - hover one for the tooltip a <code>createItemEl</code> subclass
         attached. The subclass IS required here: the <code>title</code> sits
-        on the option shell (whole-row hover), and
+        on the option element itself (whole-row hover), and
         <code>isItemEffectivelyDisabled()</code> is protected - neither is
         reachable from settings.
       </p>
@@ -614,9 +614,10 @@
     <p class="hint">
       The no-subclass half of the customization model: each
       <code>create*ContentElFn</code> setting fills an element's VISIBLE
-      content only; the library keeps the shell + ARIA (an option's
-      <code>aria-label</code> stays the plain <code>itemToString</code>).
-      When the SHELL itself must change, subclass instead: section 14.
+      content only; the element itself and its ARIA stay library-built (an
+      option's <code>aria-label</code> stays the plain
+      <code>itemToString</code>). When the library-built element itself must
+      change, subclass instead: section 14.
     </p>
 
     <article>
@@ -638,8 +639,8 @@
     <article>
       <h3>11.2 Multiple icon rows</h3>
       <p class="hint">
-        Same renderer on a multiple; the shell keeps <code>aria-selected</code>
-        plus the auto <code>aria-label</code>.
+        Same renderer on a multiple; the option element keeps
+        <code>aria-selected</code> plus the auto <code>aria-label</code>.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -711,8 +712,9 @@
         chosen row's right-edge checkmark is the library's
         <code>createCheckmarkSvgEl</code>, added inside the renderer - safe,
         because rows re-render on chosen changes even while the popup is
-        open. Demo CSS moves the item padding onto the row so the tint
-        reaches the option's edges.
+        open. Everything is inline styles in the renderer except ONE demo
+        CSS line zeroing the option element's own padding (the renderer
+        never gets that element); the row re-adds the spacing inline.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -802,9 +804,9 @@
   <section>
     <h2>14. Subclassing</h2>
     <p class="hint">
-      Settings customize CONTENT; subclassing customizes the SHELL (the
-      <code>role="option"</code> element itself) and can read protected
-      state. Performance is identical (one shared prototype method vs one
+      Settings customize CONTENT; subclassing customizes the library-built
+      elements (e.g. the <code>role="option"</code> element itself) and can
+      read protected state. Performance is identical (one shared prototype method vs one
       closure per instance is noise) - pick by capability. The
       required-subclass cases live with their features: 6.4 (title on the
       whole row), 9.1 (protected <code>isItemEffectivelyDisabled()</code>).

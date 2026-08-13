@@ -260,7 +260,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 
 /* #region 14.1 */
-/* align the shell-prepended checkbox with the label */
+/* align the subclass-prepended checkbox with the label */
 #mount-subclass-checkbox .llselect-item {
   display: flex;
   align-items: center;
@@ -286,20 +286,12 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .user-row .hint { margin-left: auto; }
 
 /* #region 11.6 */
-/* core 11.6 / angularjs 7e: full-row tint. The content el only fills the
-   item's content box, so the item padding moves onto the row (values are
-   vanilla's). display: flex (block-level, auto width) and NOT width: 100%:
-   the demos have no global border-box reset, so 100% + padding would
-   overflow the popup list into a horizontal scrollbar. Hover /
-   keyboard-focus backgrounds deliberately show through the tint's alpha.
-   The chosen row's checkmark (createCheckmarkSvgEl) and the whole-trigger
-   tint (painted onto the public triggerEl) are the demos' JS, not this
-   file. */
+/* core 11.6 / angularjs 7e: the ONE thing the renderer's inline styles
+   cannot reach - the option element's own padding. Zero it so the row
+   (padded inline) can paint the full option; a smaller padding would leave
+   an untinted ring, but negative margins on the row would overflow under
+   themes with smaller item padding. */
 .lang-tinted .llselect-item { padding: 0; }
-.lang-tinted .llselect-item .lang-row {
-  display: flex;
-  padding: 0.35rem 0.7rem;
-}
 /* #endregion */
 
 /* #region 6.2 6.3 6.4 */

@@ -81,7 +81,7 @@ selClearable.setChosenItem('Japan')
 
 //#region 11.1
 // createItemContentElFn fills each option's VISIBLE content (colored icon +
-// label), no subclass. The library owns the option shell + aria: it pins each
+// label), no subclass. The library owns the option element + aria: it pins each
 // option's aria-label to itemToString (the icon never reaches a screen reader),
 // so you write zero aria-*. There is no auto-projection - the trigger mirrors
 // the chosen row only because we pass the same createLanguageRowEl to
@@ -280,7 +280,7 @@ selMultiCheckbox.setItems(COUNTRIES)
 
 //#region 11.2
 // Same createItemContentElFn, now on a multiple. The library adds aria-selected
-// to each option shell on top of the auto aria-label, so AT announces e.g.
+// to each option element on top of the auto aria-label, so AT announces e.g.
 // "Python, selected" while the row shows the mdi icon. Reuses createLanguageRowEl (11.1).
 const outRichMulti = document.getElementById('out-rich-multi')
 const selRichMulti = new LLSelectMultiple(
@@ -505,8 +505,8 @@ selTags.setChosenItems(['Japan', 'Brazil', 'Canada'])
 // choices are preserved. The public chooseAll/unchooseAll/toggleAll keep
 // their whole-list semantics. createSelectAllRowContentElFn fills the row
 // with a tri-state SVG checkbox (createOutlinedCheckboxSvgEl) + the library's own
-// counting label (en pack); without the hook, themes draw a text glyph from
-// data-chosen-state. The accessible name stays uiTranslationPack.selectAllRowLabel.
+// counting label (en pack); without the hook, the library draws the same
+// outlined checkbox by itself. The accessible name stays uiTranslationPack.selectAllRowLabel.
 // The ITEMS get the same visual language via 5.4's settings-path checkbox,
 // so the row and the items read as one consistent list.
 const outSelectAll = document.getElementById('out-select-all')
@@ -710,7 +710,7 @@ selGroupRich.setItems(GROUPED_FOODS)
 // Tags with rich chip content: the SAME createLanguageRowEl (11.1) feeds
 // createTagContentElFn - the chip is to the trigger what the option content
 // is to the row, so one renderer serves both. The library still owns the chip
-// shell + remove button + aria (the remove aria-label stays itemToString-
+// element + remove button + aria (the remove aria-label stays itemToString-
 // based, never the custom content). createTagRemoveButtonContentElFn swaps
 // the remove icon; unset, the theme's CSS glyph (:empty::before) draws the x.
 const outTagIcons = document.getElementById('out-tag-icons')
@@ -771,17 +771,19 @@ selUserHints.setItems(USERS)
 // Per-item background, like native <option style="background-color"> (a
 // Chromium-only nicety): 11.1's row plus a tint of ITS icon color's hue,
 // lifted near-white. hsl alpha (not an opaque pastel) keeps the theme's
-// hover / keyboard-focus backgrounds visible through the tint; the
-// .lang-tinted demo CSS moves the item padding onto the row so the tint
-// reaches the option's edges. The chosen row gets the library's own
-// createCheckmarkSvgEl at its right edge - reading state here is safe
-// because rows re-render on chosen changes, even while the popup is open
-// (setChosenItem replaces the affected rows; see createItemContentElFn's
-// docstring). The chosen tint covers the WHOLE trigger, like the native
-// control: onChange paints the public triggerEl - background from the
-// tint, text + border from the darkened same-hue shade. The mirrored
-// trigger row itself stays untinted (11.1's renderer) - stacking two alpha
-// tints would show as a darker patch.
+// hover / keyboard-focus backgrounds visible through the tint. Everything
+// lives as inline styles on the row except ONE demo CSS line: the option
+// element's own padding must move onto the row (the renderer never gets
+// that element), or the tint stops short of the row's edges. The
+// chosen row gets the library's own createCheckmarkSvgEl at its right
+// edge - reading state here is safe because rows re-render on chosen
+// changes, even while the popup is open (setChosenItem replaces the
+// affected rows; see createItemContentElFn's docstring). The chosen tint
+// covers the WHOLE trigger, like the native control: onChange paints the
+// public triggerEl - background from the tint, text + border from the
+// darkened same-hue shade. The mirrored trigger row itself stays untinted
+// (11.1's renderer) - stacking two alpha tints would show as a darker
+// patch.
 function hexToHue(hex) {
   const r = parseInt(hex.slice(1, 3), 16) / 255
   const g = parseInt(hex.slice(3, 5), 16) / 255
@@ -809,6 +811,11 @@ function languageShade(lang) {
 }
 function createTintedLanguageRowEl(lang) {
   const row = createLanguageRowEl(lang)  // 11.1's icon + label row
+  // Fill the option element: block-level flex (inline-flex would shrink-wrap
+  // to the text, leaving the tint a narrow patch) + the spacing the one-line
+  // demo CSS removed from the option element itself.
+  row.style.display = 'flex'
+  row.style.padding = '0.35rem 0.7rem'
   row.style.background = languageTint(lang)
   row.style.color = languageShade(lang)  // the mdi icon keeps its own brand color
   const chosen = selLangTinted.getChosenItem()
@@ -944,9 +951,9 @@ for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
 // --- Inject demo snippets into <pre data-demo="X"><code></code></pre> -----
 //#region 14.1
 // Subclass equivalent of 5.4: override createItemEl and prepend the checkbox
-// to the option SHELL. Not required (5.4 reaches the same result with a
-// setting) and not faster - subclass when you need the shell itself or
-// protected state (see 6.4 / 9.1).
+// to the option element itself. Not required (5.4 reaches the same result
+// with a setting) and not faster - subclass when you need the option element
+// itself or protected state (see 6.4 / 9.1).
 class CheckboxMultiSelect extends LLSelectMultiple {
   createItemEl(item, index) {
     const el = super.createItemEl(item, index)  // sets text + role + aria-selected
