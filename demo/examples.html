@@ -327,8 +327,10 @@
         <code>selectAllRow: true</code> pins a tri-state row acting on the
         VISIBLE enabled subset: type a filter, toggle the row - only the
         matches change. Row content via the
-        <code>createSelectAllRowContentElFn</code> setting; items reuse 5.4's
-        settings checkbox.
+        <code>createSelectAllRowContentElFn</code> setting - WITHOUT it the
+        theme draws plain unicode text glyphs (the core ships no icons and
+        picks neither the outlined nor the filled style; this setting is
+        where that choice happens). Items reuse 5.4's settings checkbox.
       </p>
       <div class="demo-split">
         <div class="demo-pane">

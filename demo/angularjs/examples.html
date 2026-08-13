@@ -88,6 +88,14 @@
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="2b"><code></code></pre></details>
 
     <h3>2c. Select-all row</h3>
+    <p>
+      With <code>ll-checkboxes</code> on its default (true), this package
+      gives the rows AND the select-all row outlined SVG checkboxes. The
+      core's own default has no icon at all - the theme draws a plain
+      unicode text glyph - and <code>ll-checkboxes="false"</code> strips
+      every checkbox visual, leaving the select-all row as just the counting
+      label.
+    </p>
     <div class="demo-row" data-src="2c">
       <llselect-multiple ng-model="vm.langsAll" ll-filterable="true" ll-select-all-row="true"
         ll-options="l.name for l in vm.languages track by l.name">
