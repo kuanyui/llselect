@@ -18,7 +18,7 @@ function app(extraAttrs = '') {
           <ui-llselect ng-model="vm.person" name="person" required ${extraAttrs}>
             <ui-select-match placeholder="Pick">{{$select.selected.name}}</ui-select-match>
             <ui-select-choices repeat="p in vm.users | filter: $select.search"
-              ll-label="p.name" ui-disable-choice="p.bad">
+              ll-item-text="p.name" ui-disable-choice="p.bad">
               <span>{{p.name}}</span>
             </ui-select-choices>
           </ui-llselect>
@@ -71,9 +71,9 @@ test('ui-disable-choice reaches llselect', () => {
   assert.equal(a.$$('ui-llselect .llselect-item-disabled').length, 1, 'expected Bob disabled')
 })
 
-test('ll-label becomes the option accessible name', () => {
+test('ll-item-text becomes the option accessible name', () => {
   // ui-select has no item-to-string concept, so llselect has nothing to name the
-  // option with unless the markup says. Without ll-label an object item would
+  // option with unless the markup says. Without ll-item-text an object item would
   // announce as [object Object].
   const a = app()
   a.$('ui-llselect .llselect-trigger').click()
@@ -98,7 +98,7 @@ test('ng-model keeps the parent scope (no scope: true shadowing)', () => {
       <div ng-controller="C as vm">
         <ui-llselect ng-model="plain">
           <ui-select-match>{{$select.selected.name}}</ui-select-match>
-          <ui-select-choices repeat="p in vm.users" ll-label="p.name"><span>{{p.name}}</span></ui-select-choices>
+          <ui-select-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-select-choices>
         </ui-llselect>
       </div>`,
     controller: function () { this.users = USERS },
@@ -108,7 +108,7 @@ test('ng-model keeps the parent scope (no scope: true shadowing)', () => {
   assert.equal(a.scope.plain?.name, 'Alice', 'a non-dotted ng-model was shadowed onto a child scope')
 })
 
-test('a repeat expression without ll-label still names the option, via String(item)', () => {
+test('a repeat expression without ll-item-text still names the option, via String(item)', () => {
   const a = boot({
     files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
     deps: ['llselect', 'llselect.uiCompat'],
@@ -178,7 +178,7 @@ test('uib-tooltip still shows on hover while the bridge widget is disabled', asy
       <div ng-controller="C as vm">
         <ui-llselect ng-model="vm.person" ng-disabled="true" uib-tooltip="Locked by admin">
           <ui-select-match placeholder="Pick">{{$select.selected.name}}</ui-select-match>
-          <ui-select-choices repeat="p in vm.users" ll-label="p.name"><span>{{p.name}}</span></ui-select-choices>
+          <ui-select-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-select-choices>
         </ui-llselect>
       </div>`,
     controller: function () {

@@ -294,14 +294,14 @@
     <p>
       The call-site markup and the transcluded templates carry over from
       ui-select. Its CSS themes do not - llselect owns the DOM, so this is styled
-      by the llselect theme. <code>ll-label</code> is the one addition:
+      by the llselect theme. <code>ll-item-text</code> is the one addition:
       ui-select has no item-to-string concept, and llselect needs one for the
       option's accessible name.
     </p>
     <div data-src="8">
     <ui-llselect ng-model="vm.person" name="person" required>
       <ui-select-match placeholder="Pick a person">{{$select.selected.name}}</ui-select-match>
-      <ui-select-choices repeat="p in vm.users | filter: $select.search" ll-label="p.name"
+      <ui-select-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"
         ui-disable-choice="p.suspended">
         <span ng-bind-html="p.name | highlight: $select.search"></span>
         <small class="hint">{{p.role}}{{p.suspended ? ' - suspended' : ''}}</small>
@@ -314,7 +314,7 @@
     <div data-src="8b">
     <ui-llselect ng-model="vm.people" multiple>
       <ui-select-match>{{$item.name}}</ui-select-match>
-      <ui-select-choices repeat="p in vm.users | filter: $select.search" ll-label="p.name">
+      <ui-select-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
         <span ng-bind-html="p.name | highlight: $select.search"></span>
       </ui-select-choices>
     </ui-llselect>
@@ -325,7 +325,7 @@
     <div data-src="8c">
     <ui-llselect ng-model="vm.person2">
       <ui-select-match placeholder="Pick a person" allow-clear="true">{{$select.selected.name}}</ui-select-match>
-      <ui-select-choices repeat="p in vm.users | filter: $select.search" ll-label="p.name">
+      <ui-select-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
         <span ng-bind-html="p.name | highlight: $select.search"></span>
       </ui-select-choices>
     </ui-llselect>

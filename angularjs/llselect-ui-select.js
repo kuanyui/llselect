@@ -7,7 +7,7 @@
  *
  *   <ui-llselect ng-model="p" name="person" required search-enabled="true">
  *     <ui-select-match placeholder="Pick one">{{$select.selected.name}}</ui-select-match>
- *     <ui-select-choices repeat="p in people | filter: $select.search" ll-label="p.name">
+ *     <ui-select-choices repeat="p in people | filter: $select.search" ll-item-text="p.name">
  *       <span ng-bind-html="p.name | highlight: $select.search"></span>
  *     </ui-select-choices>
  *   </ui-llselect>
@@ -121,12 +121,12 @@
     var itemName = repeat.itemName
     var choicesAttrs = slots.choicesAttrs
 
-    // <ui-select-choices ll-label="p.name">. ui-select has NO item -> string
+    // <ui-select-choices ll-item-text="p.name">. ui-select has NO item -> string
     // concept at all (its label is DOM, its filtering is an Angular filter in
     // the repeat expression), but llselect needs one for the option's
     // accessible name. This attribute is the single addition to ui-select's
     // markup; without it an object item degrades to String(item).
-    var labelFn = choicesAttrs['ll-label'] ? $parse(choicesAttrs['ll-label']) : null
+    var labelFn = choicesAttrs['ll-item-text'] ? $parse(choicesAttrs['ll-item-text']) : null
     var groupByFn = choicesAttrs['group-by'] ? $parse(choicesAttrs['group-by']) : null
     var disableFn = choicesAttrs['ui-disable-choice'] ? $parse(choicesAttrs['ui-disable-choice']) : null
 

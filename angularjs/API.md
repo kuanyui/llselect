@@ -268,7 +268,7 @@ Migrating a call site, at a glance:
 | | ui-select | `<ui-llselect>` |
 |---|---|---|
 | Element | `<ui-select>` | rename to `<ui-llselect>` |
-| Item label string | **does not exist in ui-select** | add [`ll-label`](#ll-label) on `<ui-select-choices>` |
+| Item label string | **does not exist in ui-select** | add [`ll-item-text`](#ll-item-text) on `<ui-select-choices>` |
 | Templates, `repeat`, `track by`, `group-by`, `multiple`, ... | as you wrote them | unchanged - see [What carries over](#what-carries-over) |
 | CSS | ui-select themes | an llselect theme; the bridge takes ui-select's MARKUP, not its CSS |
 
@@ -297,7 +297,7 @@ Migrating a call site, at a glance:
 | `$select.selected`, `$select.search`, `$select.multiple` | published on each template's scope |
 | `$index` | from `createItemEl(item, index)` |
 
-### `ll-label`
+### `ll-item-text`
 
 **Expression** -> `itemToStringFn`. **This attribute does not exist in ui-select - it is the ONE thing you add when migrating.** llselect needs one string per item - the option's accessible name and the search text - and ui-select's markup has no place that states it (its label is template DOM).
 
@@ -312,10 +312,10 @@ Sits on `<ui-select-choices>`, written over the `repeat` variable:
   </ui-select-choices>
 </ui-select>
 
-<!-- ui-llselect, after: the renamed element + ll-label. Nothing else changes. -->
+<!-- ui-llselect, after: the renamed element + ll-item-text. Nothing else changes. -->
 <ui-llselect ng-model="vm.person">
   <ui-select-match placeholder="Pick a person">{{$select.selected.name}}</ui-select-match>
-  <ui-select-choices repeat="p in vm.people | filter: $select.search" ll-label="p.name">
+  <ui-select-choices repeat="p in vm.people | filter: $select.search" ll-item-text="p.name">
     <span>{{p.name}}</span>
   </ui-select-choices>
 </ui-llselect>

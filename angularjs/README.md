@@ -120,7 +120,7 @@ Four things to know when wiring it up:
 
 ## The ui-select bridge
 
-`<ui-llselect>` (`llselect-ui-select.js`) exists so an existing ui-select codebase can migrate without rewriting every call site. The scoping rule is: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible. What carries over, the one added attribute (`ll-label`) and the two deliberate deviations are in [`API.md`](API.md#ui-llselect).
+`<ui-llselect>` (`llselect-ui-select.js`) exists so an existing ui-select codebase can migrate without rewriting every call site. The scoping rule is: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible. What carries over, the one added attribute (`ll-item-text`) and the two deliberate deviations are in [`API.md`](API.md#ui-llselect).
 
 ### Implementation notes
 
