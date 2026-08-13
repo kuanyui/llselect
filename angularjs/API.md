@@ -152,6 +152,14 @@ $scope.renderRow = function (fruit) {
 
 **Literal** -> `ariaLabelledBy`. Space-separated element id(s) of the visible label.
 
+### `ll-label-el`
+
+**Literal** -> `labelEl`. The id of your external label element. Native `<label for>` cannot target these divs; this wires both halves of the label relationship:
+
+- The element names the field (`aria-labelledby`), and clicking it focuses the trigger - focus only, never open, native `<label>` behavior.
+- Resolved once at link time via `getElementById`; an unknown id throws (reported in the console, never silent).
+- Want only the accessible-name half? Use [`ll-aria-labelledby`](#ll-aria-labelledby).
+
 ## `<llselect-multiple>` only
 
 ### `ll-trigger-display`

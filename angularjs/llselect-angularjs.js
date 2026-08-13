@@ -144,6 +144,15 @@
     settings.ariaLabelledBy = attrs.llAriaLabelledby || null
     settings.ariaLabel = attrs.llAriaLabel || null
 
+    // Literal id -> the core labelEl setting: the element names the field
+    // (aria-labelledby) and clicking it focuses the trigger. Resolved once
+    // at link; a typo'd id must not silently do nothing.
+    if (attrs.llLabelEl) {
+      var labelEl = document.getElementById(attrs.llLabelEl)
+      if (!labelEl) { throw new Error('llselect-angularjs: ll-label-el: no element with id "' + attrs.llLabelEl + '"') }
+      settings.labelEl = labelEl
+    }
+
     if (config.uiTranslationPack) { settings.uiTranslationPack = config.uiTranslationPack }
     if (config.filterable !== null) { settings.filterable = config.filterable }
     if (config.popupWidthPolicy) { settings.popupWidthPolicy = config.popupWidthPolicy }

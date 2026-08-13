@@ -152,6 +152,7 @@
       vm.langsTags = []
       vm.user2 = undefined
       vm.langTinted = undefined
+      vm.labelFruit = undefined
 
       /**
        * 7a. A render-time DOM factory: called by llselect outside any digest,

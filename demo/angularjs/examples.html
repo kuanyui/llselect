@@ -376,7 +376,25 @@
   </section>
 
   <section>
-    <h2>10. Full source</h2>
+    <h2>10. Label element: ll-label-el</h2>
+    <p>
+      Native <code>&lt;label for&gt;</code> cannot target these divs.
+      <code>ll-label-el</code> points at your label's id: the label names the
+      field, and clicking it focuses the trigger - focus only, like a native
+      label. (Core demo 12, as an attribute.)
+    </p>
+    <div class="demo-row" data-src="10">
+      <label id="fav-fruit-label" class="field-label">Favorite fruit</label>
+      <llselect-single ng-model="vm.labelFruit" ll-label-el="fav-fruit-label"
+        ll-clearable="true" ll-options="f for f in vm.fruits">
+      </llselect-single>
+    </div>
+    <div class="out">ng-model = {{ vm.labelFruit || 'undefined' }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="10"><code></code></pre></details>
+  </section>
+
+  <section>
+    <h2>11. Full source</h2>
     <p>
       The whole of what this page loads. Nothing is generated and nothing is
       minified: this is the file you copy.

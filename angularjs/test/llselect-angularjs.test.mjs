@@ -425,3 +425,34 @@ test('a non-function ll-item-content-fn is reported and no widget is left behind
   assert.match(a.errors[0].message, /ll-item-content-fn must evaluate to a function/)
   assert.equal(el[0].querySelector('.llselect-trigger'), null)
 })
+
+test('ll-label-el: the label element names the field and click focuses the trigger', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <label id="lbl-fruit">Fruit</label>
+      <llselect-single ng-model="vm.fruit" ll-label-el="lbl-fruit"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.fruit = null },
+  })
+  assert.deepEqual(a.errors, [])
+  const trigger = a.$('.llselect-trigger')
+  assert.ok((trigger.getAttribute('aria-labelledby') || '').split(/\s+/).includes('lbl-fruit'), 'label id missing from aria-labelledby')
+  a.$('#lbl-fruit').click()
+  assert.equal(a.doc.activeElement, trigger, 'label click must focus the trigger')
+})
+
+test('ll-label-el with an unknown id is reported and no widget is left behind', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.fruit" ll-label-el="nope"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice() },
+  })
+  assert.equal(a.errors.length, 1)
+  assert.match(a.errors[0].message, /ll-label-el: no element with id "nope"/)
+  assert.equal(a.$('.llselect-trigger'), null)
+})

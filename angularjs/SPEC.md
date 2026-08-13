@@ -102,7 +102,7 @@ Bugs found while reading it, listed so nobody reproduces them in the name of com
 
 ### Settings are frozen; only methods are watched
 
-llselect resolves its settings bag once at construction, so `ll-placeholder` / `ll-filterable` / `ll-popup-width-policy` / `ll-arrow` / `ll-checkboxes` are read once at link time and a later scope change does not move them. Only `ll-disabled` gets a `$watch`, because it maps onto the `setDisabled()` method rather than a setting. Any new attribute has to be classified this way before it is added.
+llselect resolves its settings bag once at construction, so `ll-placeholder` / `ll-filterable` / `ll-popup-width-policy` / `ll-arrow` / `ll-checkboxes` / `ll-label-el` are read once at link time and a later scope change does not move them. Only `ll-disabled` gets a `$watch`, because it maps onto the `setDisabled()` method rather than a setting. Any new attribute has to be classified this way before it is added.
 
 ### Testing
 
