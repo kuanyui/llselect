@@ -316,7 +316,7 @@ Sits on `<ui-llselect-choices>`, written over the `repeat` variable:
 <ui-select ng-model="vm.person">
   <ui-select-match placeholder="Pick a person">{{$select.selected.name}}</ui-select-match>
   <ui-select-choices repeat="p in vm.people | filter: $select.search">
-    <span>{{p.name}}</span>
+    <span>{{p.name}}</span> <small>{{p.role}}</small>
   </ui-select-choices>
 </ui-select>
 
@@ -324,12 +324,14 @@ Sits on `<ui-llselect-choices>`, written over the `repeat` variable:
 <ui-llselect ng-model="vm.person">
   <ui-llselect-match placeholder="Pick a person">{{$select.selected.name}}</ui-llselect-match>
   <ui-llselect-choices repeat="p in vm.people | filter: $select.search" ll-item-text="p.name">
-    <span>{{p.name}}</span>
+    <span>{{p.name}}</span> <small>{{p.role}}</small>
   </ui-llselect-choices>
 </ui-llselect>
 ```
 
-Without it, an object item degrades to `String(item)` ("[object Object]").
+- The template and `ll-item-text` are separate channels: the template is what a row SHOWS, `ll-item-text` is the plain string (accessible name + search text). The bridge never derives one from the other - reading the rendered DOM back would put the role hint above into the option's spoken name.
+- The template is optional: an empty `<ui-llselect-choices>` renders each row as the plain `ll-item-text` text.
+- Without `ll-item-text`, an object item degrades to `String(item)` ("[object Object]").
 
 ### Two deliberate deviations
 

@@ -201,3 +201,26 @@ test('uib-tooltip still shows on hover while the bridge widget is disabled', asy
   assert.ok(tooltip, 'tooltip did not render on hover while disabled')
   assert.ok(tooltip.textContent.includes('Locked by admin'), `tooltip text was "${tooltip.textContent}"`)
 })
+
+test('an empty <ui-llselect-choices> renders rows as plain ll-item-text text', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person">
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () {
+      this.users = USERS
+      this.person = undefined
+    },
+  })
+  assert.deepEqual(a.errors, [])
+  a.$('.llselect-trigger').click()
+  const rows = a.$$('.llselect-item')
+  assert.equal(rows.length, USERS.length)
+  assert.equal(rows[0].textContent, 'Alice') // the ll-item-text string, no template needed
+})
