@@ -302,13 +302,14 @@ Same trick as the arrow: clear and arrow are separate slots, so `createTriggerCo
 - You optionally fill the icon via `createTriggerClearButtonContentElFn: () => HTMLElement | SVGElement | null` (mirrors `createTriggerArrowContentElFn`); `null` = theme CSS glyph (`.llselect-trigger-clear-button:empty::before { content: '\00d7' }`).
 - `protected clearSelection()`: base no-op; single -> `setChosenItem(undefined)`, multiple -> `setChosenItems([])`. Both go through the normal setters, so `onChange` fires with the empty value - no separate `onClear`. Clear means "back to empty / placeholder", not "back to some default option" (do that yourself in `onChange` if wanted).
 
-## Select-all default indicator (library-rendered text glyph)
+## Select-all default: plain counting label (no indicator)
 
-The select-all row's default content is plain TEXT the library renders: an `aria-hidden` span holding a unicode glyph - ballot box `☐`, squared minus `⊟`, checked ballot box `☑` plus the `\uFE0E` text-presentation selector (`☑` has an emoji variant in some font stacks) - followed by the counting label. `createSelectAllRowContentElFn` replaces the whole content. Landed here after two wrong shapes:
+The select-all row's default content is JUST the counting label (`uiTranslationPack.selectAllRowLabel`, e.g. "Select all (3 of 10)"). No icon, no glyph. RULED:
 
-- Not an icon-function SVG (briefly shipped, reverted): importing `icons.ts` from `multiple.ts` puts the checkbox paths into every multi bundle whether `selectAllRow` is used or not (the import sits in an always-present method, so tree shaking cannot drop it), and it makes the core pick outlined vs filled - a style call that belongs to the caller or to a batteries-included layer (the AngularJS package defaults to the outlined SVG via `ll-checkboxes`; that is the right layer for it).
-- Not theme CSS `::before` glyphs (the original shape, also gone): default CONTENT belongs in the default-content branch as real text, not in pseudo-elements. The CSS route needed machinery to detect custom content (first `:not(:has(*))` - above the browser support floor, so the rules silently died on floor browsers - then a dedicated attribute) and put the glyph into the accessible-name computation. The aria-hidden text span needs no gate at all (custom content replaces it by existing) and keeps the accessible name the plain label. CSS glyphs remain only where the element is otherwise EMPTY and the theme owns the look (the `\00d7` crosses).
-- Accepted cost: the glyph's exact look varies with the platform font. Apps wanting pixel-identical checkboxes pass an icon function - that is the documented difference, not a defect.
+- Consistency: the library ships no default visual indicator anywhere - no trigger arrow, no per-item checkboxes; selected state is theme styling off `aria-selected`. A select-all-only indicator was the single exception, and nothing ever required one.
+- The label already encodes the tri-state: "0 of 10" / "3 of 10" / "10 of 10". Any indicator restates the numbers.
+- The hooks stay: `data-chosen-state="none|some|all"` on the row for CSS, `createSelectAllRowContentElFn` for real content (e.g. `createOutlinedCheckboxSvgEl`). Batteries-included defaults live a layer up - the AngularJS package's `ll-checkboxes` does exactly that.
+- History, so this is not re-litigated: the default indicator was first a theme `::before` glyph gated by `:not(:has(*))` (a gate above the browser support floor, so it silently died on floor browsers, and generated content lands in the accessible-name computation), then a core-rendered `createOutlinedCheckboxSvgEl` (couples `icons.ts` into every multi bundle and makes the core pick outlined vs filled), then a core-rendered aria-hidden text glyph (redundant with the numbers, font-dependent look). Each step fixed the previous mechanism's defect; the actual answer was that the indicator itself was never needed.
 
 ## Popup width policy
 

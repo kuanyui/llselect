@@ -36,7 +36,7 @@ test('renders as the first option with tri-state attributes and a counting label
   assert.equal(r.getAttribute('role'), 'option')
   assert.equal(r.getAttribute('data-chosen-state'), 'some')
   assert.equal(r.getAttribute('aria-selected'), 'false') // only 'all' selects it
-  assert.equal(r.textContent, '\u229F Select all (1 of 3)') // glyph + label
+  assert.equal(r.textContent, 'Select all (1 of 3)')
   assert.equal(sel.popupListEl.querySelectorAll('[role="option"]').length, 4) // row + 3 items
 })
 
@@ -48,7 +48,7 @@ test('click toggles the visible enabled subset; tri-state and label update', () 
   assert.deepEqual([...sel.getChosenItems()], ['a', 'b', 'c'])
   assert.equal(row(sel)!.getAttribute('data-chosen-state'), 'all')
   assert.equal(row(sel)!.getAttribute('aria-selected'), 'true')
-  assert.equal(row(sel)!.textContent, '\u2611\uFE0E Select all (3 of 3)')
+  assert.equal(row(sel)!.textContent, 'Select all (3 of 3)')
   row(sel)!.click() // all chosen -> deselect the subset
   assert.deepEqual([...sel.getChosenItems()], [])
   assert.equal(row(sel)!.getAttribute('data-chosen-state'), 'none')
@@ -62,7 +62,7 @@ test('filtered scope: acts on visible matches only; hidden choices preserved', (
   const input = sel.popupEl.querySelector('input')!
   input.value = 'an' // matches banana only
   input.dispatchEvent(new Event('input', { bubbles: true }))
-  assert.equal(row(sel)!.textContent, '\u2610 Select all (0 of 1)')
+  assert.equal(row(sel)!.textContent, 'Select all (0 of 1)')
   row(sel)!.click()
   assert.deepEqual([...sel.getChosenItems()].sort(), ['banana', 'cherry']) // cherry kept
   row(sel)!.click() // all visible chosen -> unchoose the visible only
@@ -76,7 +76,7 @@ test('disabled items are excluded from the scope and the counts', () => {
   })
   sel.setItems(['a', 'b', 'c'])
   sel.open()
-  assert.equal(row(sel)!.textContent, '\u2610 Select all (0 of 2)')
+  assert.equal(row(sel)!.textContent, 'Select all (0 of 2)')
   row(sel)!.click()
   assert.deepEqual([...sel.getChosenItems()], ['a', 'c'])
 })
@@ -120,7 +120,7 @@ test('toggleItem keeps the row fresh via the O(1) leading-row replace (items unt
   const after = sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')
   assert.equal(after[2], before[2]) // the untouched item element ('b') is the SAME node
   assert.equal(row(sel)!.getAttribute('data-chosen-state'), 'some')
-  assert.equal(row(sel)!.textContent, '\u229F Select all (1 of 2)')
+  assert.equal(row(sel)!.textContent, 'Select all (1 of 2)')
 })
 
 test('createSelectAllRowContentElFn fills the row; accessible name stays the counting label', () => {
@@ -148,24 +148,22 @@ test('createSelectAllRowContentElFn returning null falls back to the plain label
   })
   sel.setItems(['a'])
   sel.open()
-  assert.equal(row(sel)!.textContent, '\u2610 Select all (0 of 1)')
+  assert.equal(row(sel)!.textContent, 'Select all (0 of 1)')
   assert.equal(row(sel)!.getAttribute('aria-label'), null)
 })
 
-test('default content: aria-hidden unicode glyph + counting label, no icon', () => {
+test('default content: just the plain counting label - no indicator element', () => {
   const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
   sel.setItems(['a', 'b'])
   sel.open()
-  const glyph = () => row(sel)!.querySelector('span[aria-hidden]')!
-  assert.equal(glyph().textContent, '\u2610') // ballot box
-  sel.toggleItem('a') // O(1) leading-row replace keeps the glyph fresh
-  assert.equal(glyph().textContent, '\u229F') // squared minus
-  sel.chooseAll()
-  assert.equal(glyph().textContent, '\u2611\uFE0E') // checked, forced text presentation
-  assert.equal(row(sel)!.querySelector('svg'), null) // the core ships no icons
+  assert.equal(row(sel)!.textContent, 'Select all (0 of 2)')
+  assert.equal(row(sel)!.childElementCount, 0) // pure text: no glyph span, no svg
+  sel.toggleItem('a') // O(1) leading-row replace keeps the label fresh
+  assert.equal(row(sel)!.textContent, 'Select all (1 of 2)')
+  assert.equal(row(sel)!.getAttribute('data-chosen-state'), 'some') // the CSS hook stays
 })
 
-test('custom content replaces the default glyph entirely', () => {
+test('custom content is the whole row content; the label moves to aria-label', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     selectAllRow: true,
     createSelectAllRowContentElFn: () => {
@@ -176,7 +174,7 @@ test('custom content replaces the default glyph entirely', () => {
   })
   sel.setItems(['a'])
   sel.open()
-  assert.equal(row(sel)!.querySelector('span[aria-hidden]'), null)
+  assert.equal(row(sel)!.textContent, 'custom')
 })
 
 test('a subclass createSelectAllRowContentEl override replaces the setting (override wins)', () => {
