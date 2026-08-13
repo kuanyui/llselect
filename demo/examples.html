@@ -305,7 +305,7 @@
     </article>
 
     <article>
-      <h3>5.4 Checkbox items (settings)</h3>
+      <h3>5.4 Checkbox items (createItemContentElFn)</h3>
       <p class="hint">
         <code>createItemContentElFn</code> renders checkbox + label; the
         public <code>isChosen()</code> supplies the state (the fn runs per
@@ -326,11 +326,9 @@
       <p class="hint">
         <code>selectAllRow: true</code> pins a tri-state row acting on the
         VISIBLE enabled subset: type a filter, toggle the row - only the
-        matches change. Row content via the
-        <code>createSelectAllRowContentElFn</code> setting - WITHOUT it the
-        theme draws plain unicode text glyphs (the core ships no icons and
-        picks neither the outlined nor the filled style; this setting is
-        where that choice happens). Items reuse 5.4's settings checkbox.
+        matches change. <code>createSelectAllRowContentElFn</code> swaps the
+        default text glyph (5.7) for the outlined SVG; items reuse 5.4's
+        checkbox.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -354,6 +352,21 @@
           <div class="out" id="out-filled-checkbox">chosen: 0 items</div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="5.6"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>5.7 Select-all default look</h3>
+      <p class="hint">
+        No content fn at all: the library renders the row as plain text - a
+        unicode tri-state glyph + the counting label. 5.5 / 5.6 replace it
+        with SVG checkboxes.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-select-all-default"></div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="5.7"><code></code></pre></details>
       </div>
     </article>
   </section>
@@ -535,7 +548,7 @@
     </p>
 
     <article>
-      <h3>9.1 <code>itemDisabledFn</code> + why-tooltip (subclass)</h3>
+      <h3>9.1 <code>itemDisabledFn</code> + why-tooltip (createItemEl subclass)</h3>
       <p class="hint">
         Out-of-stock drinks: unselectable, skipped by arrows, still hoverable
         - hover one for the tooltip a <code>createItemEl</code> subclass
@@ -612,7 +625,7 @@
   </section>
 
   <section>
-    <h2>11. Custom renderers (settings)</h2>
+    <h2>11. Custom renderers (create*ContentElFn settings)</h2>
     <p class="hint">
       The no-subclass half of the customization model: each
       <code>create*ContentElFn</code> setting fills an element's VISIBLE
@@ -705,18 +718,13 @@
       <h3>11.6 Per-item background tint</h3>
       <p class="hint">
         What <code>&lt;option style="background-color"&gt;</code> does on a
-        native select (Chromium only): each row tinted with its icon color's
-        hue, lifted near-white, text in a darkened shade of the same hue,
-        and the chosen colors cover the whole trigger - background, text and
-        border (<code>onChange</code> paints the public
-        <code>triggerEl</code>). The tint uses hsl alpha so the theme's
-        hover / keyboard-focus backgrounds stay visible through it. The
-        chosen row's right-edge checkmark is the library's
-        <code>createCheckmarkSvgEl</code>, added inside the renderer - safe,
-        because rows re-render on chosen changes even while the popup is
-        open. Everything is inline styles in the renderer except ONE demo
-        CSS line zeroing the option element's own padding (the renderer
-        never gets that element); the row re-adds the spacing inline.
+        native select (Chromium only): every row tinted from its icon color,
+        and the chosen item's colors cover the whole trigger
+        (<code>onChange</code> paints the public <code>triggerEl</code>).
+        The tint is translucent, so hover / keyboard-focus stay visible.
+        The checkmark is <code>createCheckmarkSvgEl</code>; rows re-render
+        on chosen changes, so it never goes stale. All inline styles, plus
+        one demo CSS line zeroing the option element's padding.
       </p>
       <div class="demo-split">
         <div class="demo-pane">

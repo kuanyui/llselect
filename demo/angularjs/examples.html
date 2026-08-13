@@ -89,12 +89,10 @@
 
     <h3>2c. Select-all row</h3>
     <p>
-      With <code>ll-checkboxes</code> on its default (true), this package
-      gives the rows AND the select-all row outlined SVG checkboxes. The
-      core's own default has no icon at all - the theme draws a plain
-      unicode text glyph - and <code>ll-checkboxes="false"</code> strips
-      every checkbox visual, leaving the select-all row as just the counting
-      label.
+      <code>ll-checkboxes</code> (default true) draws SVG checkboxes on the
+      rows and this row; <code>ll-checkboxes="false"</code> strips them all,
+      leaving plain text. Without the bridge, the core's default is a
+      unicode text glyph (core demo 5.7).
     </p>
     <div class="demo-row" data-src="2c">
       <llselect-multiple ng-model="vm.langsAll" ll-filterable="true" ll-select-all-row="true"
@@ -271,20 +269,13 @@
     <p>
       What <code>&lt;option style="background-color"&gt;</code> does on a
       native select (Chromium only): <code>renderTintedLangRow</code> is 7a's
-      row plus a tint of its icon color's hue (text in a darkened shade of
-      the same hue), translucent so the theme's hover / keyboard-focus
-      backgrounds stay visible through it, plus llselect's own
-      <code>createCheckmarkSvgEl</code> on the chosen row (the ng-model
-      value is the chosen state, and rows re-render on chosen changes even
-      while the popup is open). Everything is inline on the row except one
-      demo CSS line (<code>lang-tinted</code>, ../style.css) zeroing the
-      option element's own padding - the only thing the renderer cannot
-      reach; the row re-adds the spacing inline. The chosen colors
-      cover the whole trigger - background, text and border:
-      <code>demo-tint-trigger</code> is an app policy directive that
-      requires the published controller and paints
-      <code>instance().triggerEl</code> (see API.md "Reaching the instance
-      from your own directive").
+      row tinted from its icon color, with <code>createCheckmarkSvgEl</code>
+      on the chosen row (rows re-render on chosen changes - never stale).
+      All inline styles, plus one demo CSS line (<code>lang-tinted</code>)
+      zeroing the option element's padding. The whole trigger takes the
+      chosen colors: <code>demo-tint-trigger</code> requires the published
+      controller and paints <code>instance().triggerEl</code> (API.md
+      "Reaching the instance from your own directive").
     </p>
     <div class="demo-row" data-src="7e">
       <llselect-single ng-model="vm.langTinted" class="lang-tinted"

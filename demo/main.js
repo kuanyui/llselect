@@ -505,11 +505,9 @@ selTags.setChosenItems(['Japan', 'Brazil', 'Canada'])
 // choices are preserved. The public chooseAll/unchooseAll/toggleAll keep
 // their whole-list semantics. createSelectAllRowContentElFn fills the row
 // with a tri-state SVG checkbox (createOutlinedCheckboxSvgEl) + the library's own
-// counting label (en pack). Without the hook the THEME draws plain unicode
-// text glyphs instead - the core ships no icons and picks neither the
-// outlined nor the filled style; this hook is where that choice happens
-// (DESIGN.md "Select-all default indicator").
-// The accessible name stays uiTranslationPack.selectAllRowLabel.
+// counting label (en pack). Without the hook the library renders its plain
+// text glyph instead (5.7). The accessible name stays
+// uiTranslationPack.selectAllRowLabel.
 // The ITEMS get the same visual language via 5.4's settings-path checkbox,
 // so the row and the items read as one consistent list.
 const outSelectAll = document.getElementById('out-select-all')
@@ -574,6 +572,16 @@ selFilledCheckbox = new LLSelectMultiple(
   }
 )
 selFilledCheckbox.setItems(COUNTRIES)
+//#endregion
+
+//#region 5.7
+// The select-all DEFAULT look: no content fn, so the library renders plain
+// text - an aria-hidden unicode tri-state glyph + the counting label.
+const selSelectAllDefault = new LLSelectMultiple(
+  document.getElementById('mount-select-all-default'),
+  { placeholder: 'Pick countries', selectAllRow: true }
+)
+selSelectAllDefault.setItems(COUNTRIES)
 //#endregion
 
 //#region 9.1
