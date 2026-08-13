@@ -240,6 +240,11 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   `createItemContentElFn` for the look.
    * - For full control of the option element (tag / wiring), subclass
    *   `createItemEl` instead.
+   * - Runs per rendered row per render, and re-runs whenever a row is
+   *   rebuilt: open, filter, `setItems`, AND chosen-state changes (both modes
+   *   replace the affected rows in place while the popup is open). Content
+   *   that reads selection state (e.g. a checkmark on the chosen row via
+   *   `createCheckmarkSvgEl`) therefore stays fresh; keep the function cheap.
    *
    * @example
    *   // List shows an icon + label; screen readers announce just the label.
