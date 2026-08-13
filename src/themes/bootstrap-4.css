@@ -11,6 +11,12 @@
   font-size: 1rem;
   color: #495057;
   line-height: 1.5;
+  /* BS4's reboot hardcodes body { text-align: left } (BS4 ships no RTL
+     support), which would pin the widget's text left inside dir="rtl".
+     `start` re-follows the widget's own direction; identical in LTR.
+     BS3 sets nothing and BS5 leaves --bs-body-text-align undefined, so
+     only this theme needs it. */
+  text-align: start;
 }
 
 /* --- trigger (matches BS4 .form-control look) ---------------- */
