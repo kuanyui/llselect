@@ -5,6 +5,18 @@ import {
 } from './base.js'
 
 /**
+ * Default select-all indicator glyphs: ballot box / squared minus / checked
+ * ballot box. `\uFE0E` forces text presentation (`\u2611` has an emoji
+ * variant in some font stacks). Rendered as plain text by the library;
+ * see DESIGN.md "Select-all default indicator".
+ */
+const SELECT_ALL_GLYPHS: Record<LLSelectChosenState, string> = {
+  none: '\u2610',
+  some: '\u229F',
+  all: '\u2611\uFE0E',
+}
+
+/**
  * Trigger display mode of {@link LLSelectMultiple}.
  * - `'count'`: a text summary like "3 / 10 selected".
  * - `'tags'`: one removable chip per chosen item.
@@ -101,10 +113,11 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
   createTagRemoveButtonContentElFn: ((item: T) => HTMLElement | SVGElement | null) | null
   /**
    * Whether the popup shows a select-all row as the FIRST option of the
-   * listbox (`false` default). Tri-state (none / some / all chosen - the
-   * theme draws the default indicator as a plain unicode text glyph from the
-   * `data-chosen-state` attribute; the accessible name comes from
-   * `uiTranslationPack.selectAllRowLabel`); Enter / click toggles. Acts on the VISIBLE
+   * listbox (`false` default). Tri-state (none / some / all chosen - shown
+   * by default as a plain unicode text glyph the library renders beside the
+   * counting label; `data-chosen-state` stays on the row as a CSS hook; the
+   * accessible name comes from `uiTranslationPack.selectAllRowLabel`);
+   * Enter / click toggles. Acts on the VISIBLE
    * enabled subset (the filtered list while a filter query is active) - the
    * public `chooseAll` / `unchooseAll` / `toggleAll` keep their whole-list
    * semantics. See `docs/llm/A11Y.md` "Select-all".
@@ -119,13 +132,12 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    * - Return an `HTMLElement`: inserted as the row's content; the accessible
    *   name stays pinned to `uiTranslationPack.selectAllRowLabel` via `aria-label`, so
    *   icon-only content is still announced with the counts.
-   * - `null` (setting default, or returned): the default content - plain
-   *   text from `uiTranslationPack.selectAllRowLabel`, with the tri-state
-   *   indicator drawn by the theme as a unicode text glyph (the row carries
-   *   `data-content="default"` as the CSS gate). The core deliberately ships
-   *   no icon and picks neither checkbox style here - passing this setting
-   *   is how a style (e.g. `createOutlinedCheckboxSvgEl`) gets chosen. See
-   *   DESIGN.md "Select-all default indicator".
+   * - `null` (setting default, or returned): the default content - an
+   *   aria-hidden unicode tri-state glyph + the plain counting label,
+   *   rendered as text by the library. No icon and no checkbox style is
+   *   shipped here; passing this setting is how a style (e.g.
+   *   `createOutlinedCheckboxSvgEl`) gets chosen. See DESIGN.md "Select-all
+   *   default indicator".
    * @group Select-all
    */
   createSelectAllRowContentElFn:
@@ -423,9 +435,8 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
 
   /**
    * Build the select-all row (`selectAllRow` setting) as the listbox's
-   * leading `role="option"` row: `data-chosen-state="none|some|all"` (the
-   * CSS hook themes draw the default tri-state glyph from, gated on
-   * `data-content="default"`), `aria-selected` only when ALL visible
+   * leading `role="option"` row: `data-chosen-state="none|some|all"` (a CSS
+   * styling hook), `aria-selected` only when ALL visible
    * enabled items are chosen, accessible name + visible text from
    * `uiTranslationPack.selectAllRowLabel(chosenCount, totalCount)` over the visible
    * enabled subset. `null` when the setting is off or nothing is actionable.
@@ -447,14 +458,14 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     el.setAttribute('aria-selected', String(state === 'all'))
     const label = this.settings.uiTranslationPack.selectAllRowLabel(chosenCount, actionable.length)
     const content = this.createSelectAllRowContentEl(state, chosenCount, actionable.length)
-    // Themes draw the default tri-state glyph only on 'default'; the CSS-side
-    // check would be :has(), which sits above the browser support floor.
-    el.setAttribute('data-content', content === null ? 'default' : 'custom')
     if (content === null) {
-      // Default content: the plain counting label. The tri-state indicator is
-      // the THEME's unicode text glyph - the core ships no icons and picks no
-      // checkbox style (DESIGN.md "Select-all default indicator").
-      el.textContent = label
+      // Default content: a unicode tri-state glyph + the counting label,
+      // rendered as plain text - no icon shipped, no CSS machinery. The
+      // glyph span is aria-hidden so the accessible name stays the label.
+      const glyphEl = document.createElement('span')
+      glyphEl.setAttribute('aria-hidden', 'true')
+      glyphEl.textContent = SELECT_ALL_GLYPHS[state]
+      el.append(glyphEl, document.createTextNode(' ' + label))
     } else {
       // Custom content fills the visuals only; the accessible name stays the
       // counting label (same pinning as createItemEl's custom content).
@@ -473,9 +484,8 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * The select-all row's visible content (rich tri-state). Mirrors
    * `createItemContentEl`.
    * - Default reads `createSelectAllRowContentElFn`; `null` (setting unset,
-   *   or returned) = the default content: plain text from
-   *   `uiTranslationPack.selectAllRowLabel` (the theme draws the tri-state
-   *   glyph).
+   *   or returned) = the default content: the unicode tri-state glyph +
+   *   plain text from `uiTranslationPack.selectAllRowLabel`.
    * - Override only when extending; for one-off content pass the setting.
    * @group Subclassing: rendering
    */

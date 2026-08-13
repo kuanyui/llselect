@@ -142,7 +142,7 @@ $scope.renderRow = function (fruit) {
 
 ### `ll-checkboxes`
 
-**Expression**, default `true`. `<llselect-multiple>` rows get a live checkbox icon by default - the same batteries-included trade as the arrow; `ll-checkboxes="false"` opts out of every checkbox visual, including the select-all row's default tri-state indicator (that row then shows only the plain counting label). The core itself ships no icons: its select-all default is a plain text glyph drawn by the theme, and per item its answer is the subclass recipe (demo 5.4 / 5.5). Single-select never gets checkboxes - a radio-like look would misstate multiplicity.
+**Expression**, default `true`. `<llselect-multiple>` rows get a live checkbox icon by default - the same batteries-included trade as the arrow; `ll-checkboxes="false"` opts out of every checkbox visual, including the select-all row's default tri-state indicator (that row then shows only the plain counting label). The core itself ships no icons: its select-all default is a plain unicode text glyph it renders beside the label, and per item its answer is the subclass recipe (demo 5.4 / 5.5). Single-select never gets checkboxes - a radio-like look would misstate multiplicity.
 
 ## `llselectConfigProvider`
 

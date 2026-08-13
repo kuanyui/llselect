@@ -114,27 +114,14 @@
 }
 
 /* --- select-all row (multi, opt-in) ----------------------------- */
-/* Default tri-state indicator: plain unicode TEXT glyphs (ballot box /
-   squared minus / checked ballot box), deliberately not an icon-function
-   SVG - the core ships no icons and picks no checkbox style; choosing one
-   is createSelectAllRowContentElFn's job (rationale: DESIGN.md "Select-all
-   default indicator"). data-content='default' is the JS-set gate - a :has()
-   check would sit above the browser floor. '\FE0E' forces text presentation
-   ('\2611' has an emoji variant in some font stacks). The row also carries
-   the plain item class, so hover / focused styling comes from there. */
+/* The default tri-state indicator is plain text the library renders (an
+   aria-hidden unicode glyph + the counting label); custom content via
+   createSelectAllRowContentElFn replaces it. The row also carries the plain
+   item class, so hover / focused styling comes from there. */
 
 .llselect-select-all-row {
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
-
-.llselect-select-all-row::before {
-  display: inline-block;
-  margin-inline-end: 0.4rem;
-}
-
-.llselect-select-all-row[data-content='default'][data-chosen-state='none']::before { content: '\2610'; }
-.llselect-select-all-row[data-content='default'][data-chosen-state='some']::before { content: '\229F'; }
-.llselect-select-all-row[data-content='default'][data-chosen-state='all']::before { content: '\2611\FE0E'; }
 
 /* --- groups (Phase 10, matches .dropdown-header look) --------- */
 /* Static header by default; rect-based scroll math (keyboard.ts) allows a
