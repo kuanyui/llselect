@@ -778,9 +778,10 @@ selUserHints.setItems(USERS)
 // because rows re-render on chosen changes, even while the popup is open
 // (setChosenItem replaces the affected rows; see createItemContentElFn's
 // docstring). The chosen tint covers the WHOLE trigger, like the native
-// control: onChange paints the public triggerEl. The mirrored trigger row
-// itself stays untinted (11.1's renderer) - stacking two alpha tints would
-// show as a darker patch.
+// control: onChange paints the public triggerEl - background from the
+// tint, text + border from the darkened same-hue shade. The mirrored
+// trigger row itself stays untinted (11.1's renderer) - stacking two alpha
+// tints would show as a darker patch.
 function hexToHue(hex) {
   const r = parseInt(hex.slice(1, 3), 16) / 255
   const g = parseInt(hex.slice(3, 5), 16) / 255
@@ -801,12 +802,18 @@ function hexToHue(hex) {
 function languageTint(lang) {
   return `hsl(${hexToHue(lang.color)} 85% 55% / 0.14)`
 }
+// Darkened same-hue counterpart: row / trigger text and the trigger border.
+// Dark enough to stay readable on the near-white tint.
+function languageShade(lang) {
+  return `hsl(${hexToHue(lang.color)} 75% 32%)`
+}
 function createTintedLanguageRowEl(lang) {
   const row = createLanguageRowEl(lang)  // 11.1's icon + label row
   row.style.background = languageTint(lang)
+  row.style.color = languageShade(lang)  // the mdi icon keeps its own brand color
   const chosen = selLangTinted.getChosenItem()
   if (chosen !== undefined && chosen.name === lang.name) {
-    const check = createCheckmarkSvgEl()
+    const check = createCheckmarkSvgEl()  // currentColor -> the shade above
     check.style.marginInlineStart = 'auto'  // push to the row's far edge
     row.append(check)
   }
@@ -822,7 +829,10 @@ const selLangTinted = new LLSelectSingle(
     createItemContentElFn: createTintedLanguageRowEl,
     createTriggerContentElFn: (ctx) => ctx.chosenItem ? createLanguageRowEl(ctx.chosenItem) : null,
     onChange: (v) => {
-      selLangTinted.triggerEl.style.background = v ? languageTint(v) : ''
+      const t = selLangTinted.triggerEl
+      t.style.background = v ? languageTint(v) : ''
+      t.style.borderColor = v ? languageShade(v) : ''
+      t.style.color = v ? languageShade(v) : ''
       outLangTinted.textContent = 'chosen: ' + (v ? v.name : '(none)')
     },
   }

@@ -703,14 +703,16 @@
       <p class="hint">
         What <code>&lt;option style="background-color"&gt;</code> does on a
         native select (Chromium only): each row tinted with its icon color's
-        hue, lifted near-white, and the chosen tint covers the whole trigger
-        (<code>onChange</code> paints the public <code>triggerEl</code>).
-        The tint uses hsl alpha so the theme's hover / keyboard-focus
-        backgrounds stay visible through it. The chosen row's right-edge
-        checkmark is the library's <code>createCheckmarkSvgEl</code>, added
-        inside the renderer - safe, because rows re-render on chosen changes
-        even while the popup is open. Demo CSS moves the item padding onto
-        the row so the tint reaches the option's edges.
+        hue, lifted near-white, text in a darkened shade of the same hue,
+        and the chosen colors cover the whole trigger - background, text and
+        border (<code>onChange</code> paints the public
+        <code>triggerEl</code>). The tint uses hsl alpha so the theme's
+        hover / keyboard-focus backgrounds stay visible through it. The
+        chosen row's right-edge checkmark is the library's
+        <code>createCheckmarkSvgEl</code>, added inside the renderer - safe,
+        because rows re-render on chosen changes even while the popup is
+        open. Demo CSS moves the item padding onto the row so the tint
+        reaches the option's edges.
       </p>
       <div class="demo-split">
         <div class="demo-pane">

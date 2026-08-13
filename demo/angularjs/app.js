@@ -48,6 +48,11 @@
     return 'hsl(' + hexToHue(lang.color) + ' 85% 55% / 0.14)'
   }
 
+  // 7e: darkened same-hue counterpart - row / trigger text, trigger border.
+  function langShade(lang) {
+    return 'hsl(' + hexToHue(lang.color) + ' 75% 32%)'
+  }
+
   // icon/color drive example 7's custom rows (same data shape as the core
   // demo's PROGRAMMING_LANGUAGES); the other examples read only .name.
   var LANGUAGES = [
@@ -109,7 +114,10 @@
         require: 'llselectSingle',
         link: function (scope, element, attrs, api) {
           scope.$watch(attrs.demoTintTrigger, function (lang) {
-            api.instance().triggerEl.style.background = lang ? langTint(lang) : ''
+            var t = api.instance().triggerEl
+            t.style.background = lang ? langTint(lang) : ''
+            t.style.borderColor = lang ? langShade(lang) : ''
+            t.style.color = lang ? langShade(lang) : ''
           })
         },
       }
@@ -225,8 +233,9 @@
       vm.renderTintedLangRow = function (lang) {
         var row = vm.renderLangRow(lang)
         row.style.background = langTint(lang)
+        row.style.color = langShade(lang) // the mdi icon keeps its own brand color
         if (vm.langTinted && vm.langTinted.name === lang.name) {
-          var check = window.llselect.createCheckmarkSvgEl()
+          var check = window.llselect.createCheckmarkSvgEl() // currentColor -> the shade
           check.style.marginInlineStart = 'auto' // push to the row's far edge
           row.appendChild(check)
         }

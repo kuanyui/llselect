@@ -263,16 +263,18 @@
     <p>
       What <code>&lt;option style="background-color"&gt;</code> does on a
       native select (Chromium only): <code>renderTintedLangRow</code> is 7a's
-      row plus a tint of its icon color's hue, translucent so the theme's
-      hover / keyboard-focus backgrounds stay visible through it, plus
-      llselect's own <code>createCheckmarkSvgEl</code> on the chosen row
-      (the ng-model value is the chosen state, and rows re-render on chosen
-      changes even while the popup is open). The <code>lang-tinted</code>
-      demo CSS (../style.css) moves the item padding onto the row. The
-      chosen tint covers the whole trigger: <code>demo-tint-trigger</code>
-      is an app policy directive that requires the published controller and
-      paints <code>instance().triggerEl</code> (see API.md "Reaching the
-      instance from your own directive").
+      row plus a tint of its icon color's hue (text in a darkened shade of
+      the same hue), translucent so the theme's hover / keyboard-focus
+      backgrounds stay visible through it, plus llselect's own
+      <code>createCheckmarkSvgEl</code> on the chosen row (the ng-model
+      value is the chosen state, and rows re-render on chosen changes even
+      while the popup is open). The <code>lang-tinted</code> demo CSS
+      (../style.css) moves the item padding onto the row. The chosen colors
+      cover the whole trigger - background, text and border:
+      <code>demo-tint-trigger</code> is an app policy directive that
+      requires the published controller and paints
+      <code>instance().triggerEl</code> (see API.md "Reaching the instance
+      from your own directive").
     </p>
     <div class="demo-row" data-src="7e">
       <llselect-single ng-model="vm.langTinted" class="lang-tinted"
