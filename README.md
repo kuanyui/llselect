@@ -292,7 +292,7 @@ Quick test: "Am I making a new, named, reusable kind of select?"
 The capability line between the two:
 
 - **Settings stop at the content layer.** A `create*ContentElFn` fills what an element shows - nothing more.
-- **The shell is subclass territory.** The shell = the element the library builds around your content (e.g. the `role="option"` row): its attributes, its structure, the ARIA pinned on it. Changing it means overriding `create*El`.
+- **The elements the library builds are subclass territory.** That is the element around your content (e.g. the `role="option"` row): its attributes, its structure, the ARIA pinned on it. Changing it means overriding `create*El`.
 - **This is deliberate**: no setting can break the ARIA contract.
 - Live comparison: the "Subclassing" section of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
 

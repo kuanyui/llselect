@@ -51,7 +51,7 @@ if (layout && mainEl) {
     }
   }
 
-  // --- sidebar shell -------------------------------------------------------
+  // --- sidebar container ---------------------------------------------------
   const aside = document.createElement('aside')
   aside.id = 'toc'
   aside.className = 'toc'

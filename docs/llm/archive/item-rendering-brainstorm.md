@@ -23,7 +23,7 @@ Distilled takeaways only; full per-library notes live in the conversation.
 ## Where we lean (leanings, not locked)
 
 1. **Add an item-content renderer** (working name `renderItemContentFn`): the single source for an item's visual content, no subclass needed. Fills the gap in the existing `*Fn` family; invisible to anyone who does not use it.
-2. **Fill a node, don't return a prop bag.** The library builds the `role="option"` shell and wires ARIA/events; the hook fills the content. React's prop-getters solve a constraint (can't hand over a live DOM node) that a vanilla library does not have.
+2. **Fill a node, don't return a prop bag.** The library builds the `role="option"` element and wires ARIA/events; the hook fills the content. React's prop-getters solve a constraint (can't hand over a live DOM node) that a vanilla library does not have.
 3. **Return type encodes safety.** A returned string is inserted as `textContent` (does not parse markup - verified against XSS payloads in jsdom + DOM spec); a returned element is inserted as-is, caller owns it. No sanitizer needed on the text path; the DOMPurify warning shrinks to "only if you build a node with innerHTML yourself." (A mechanism fact, stated as such - not a guarantee about the whole app.)
 4. **The text layer stays independent.** `itemToString` keeps owning accessible name + search haystack; rich rendering never replaces it.
 5. **single trigger: lean toward projection (NOT decided).** The idea: the trigger would mirror the chosen item's rendering, with `renderTriggerContentFn` as the override. The user found this elegant, it has precedent (`<selectedcontent>`, react-select `meta.context`), and it costs nothing for callers who do not use rich items (projecting a text item is just text). But this is a leaning we like, not a decision - even the single case is not locked.
@@ -33,9 +33,9 @@ Distilled takeaways only; full per-library notes live in the conversation.
 The biggest course-correction. We briefly pushed a symmetric model where single and multiple were "the same thing at different cardinalities." We dropped it: **a scalar selection and a set selection are different worlds, and forcing them into one model is over-engineering.**
 
 - **single** leans toward projection (above) - liked, not decided.
-- **multiple does NOT project.** It follows the cross-ecosystem norm: the library provides the chip/tag shell (including the remove button), and a hook (the existing `renderTriggerContentFn`) decides the chip content / layout. No "project the whole item rendering into the trigger."
+- **multiple does NOT project.** It follows the cross-ecosystem norm: the library provides the chip/tag element (including the remove button), and a hook (the existing `renderTriggerContentFn`) decides the chip content / layout. No "project the whole item rendering into the trigger."
 
-Grounding fact: across Select2, Tom Select, react-select, MUI, Ant Design, **essentially none render the multiple trigger by projecting the full item rendering.** The shared shape is "library owns the chip shell + remove button; you decide what goes inside." The multiple trigger breaks into orthogonal choices, not one knob:
+Grounding fact: across Select2, Tom Select, react-select, MUI, Ant Design, **essentially none render the multiple trigger by projecting the full item rendering.** The shared shape is "library owns the chip element + remove button; you decide what goes inside." The multiple trigger breaks into orthogonal choices, not one knob:
 
 - unit: chips/tags (dominant) vs a text summary ("3 selected");
 - per-chip content source (their `templateSelection` / `MultiValue` / etc.);

@@ -41,7 +41,7 @@ User-facing guide (when to pick which, with examples): README "Customization". T
   - `itemToString(item)` - default `= itemToStringFn(item) ?? String(item)`.
   - `renderTriggerContent()` (single / multiple) - default reads `createTriggerContentElFn(ctx)` first, else the variant's label / count. `ctx` is variant-specific (`chosenItem` for single, `chosenItems` for multi).
 - **Override = replace.** Overriding the method replaces its default (setting included); the override wins, by plain OO. There is no resolver forcing the setting to win - that machinery was removed, it fought the low-level design. An extender who still wants the setting reads it / calls `super`.
-- **The capability line: settings stop at CONTENT.** Every `create*ContentElFn` fills what an element SHOWS; the element itself - the shell (e.g. the `role="option"` row: its attributes, its structure) plus the ARIA the library pins on it - stays library-owned. Shell-level changes deliberately have no setting (a setting must not be able to break the ARIA contract); they go through the `create*El` overrides, i.e. subclassing. Demo section 14 shows the split side by side.
+- **The capability line: settings stop at CONTENT.** Every `create*ContentElFn` fills what an element SHOWS; the element itself (e.g. the `role="option"` row: its attributes, its structure) plus the ARIA the library pins on it stays library-owned. Changes to the library-built elements deliberately have no setting (a setting must not be able to break the ARIA contract); they go through the `create*El` overrides, i.e. subclassing. Demo section 14 shows the split side by side.
 
 So: configure with settings (the common path); override `protected` methods only when extending. The two coexist with no precedence fight.
 
@@ -129,13 +129,13 @@ Demo: section 12 (the ar / he packs set `dir="rtl"` on the mounts and use a mixe
 
 ## Popup DOM lifecycle (construction vs open)
 
-The popup SHELL is built in the constructor and stays in the DOM for the instance's whole life, hidden while closed; the option ROWS are lazy (built on `open()`, cleared on `close()` - Phase 3). Per instance the shell is five nodes: `popupEl` (`hidden`), `popupListEl` (the listbox), `filterInputEl`, the no-results element, and the hidden value-mirror span next to the trigger.
+The popup's PERSISTENT elements are built in the constructor and stay in the DOM for the instance's whole life, hidden while closed; the option ROWS are lazy (built on `open()`, cleared on `close()` - Phase 3). Per instance the persistent part is five nodes: `popupEl` (`hidden`), `popupListEl` (the listbox), `filterInputEl`, the no-results element, and the hidden value-mirror span next to the trigger.
 
-- The costly axis is the rows (O(n)) and that axis IS lazy; the shell is O(1), so pre-building trades five hidden nodes for the guarantees below.
+- The costly axis is the rows (O(n)) and that axis IS lazy; the persistent part is O(1), so pre-building trades five hidden nodes for the guarantees below.
 - ARIA needs the listbox to exist while CLOSED: the trigger carries `aria-controls` -> `popupListId` in both states (see the `A11Y.md` role table), and an ID reference to a nonexistent element is a defect that audit tooling flags - and closed is the state nearly every audit sees. The value-mirror span is referenced by the accname chain while closed for the same reason.
 - The filter input's always-built rule has its own recorded rationale below ("Filter box (Phase 8) architecture").
-- `setUiTranslationPack` re-applies pack-owned attributes (filter placeholder / fallback `aria-label`) while closed; with a lazily-built shell every such path would need "if built yet" guards.
-- Subclass contract stability: the `create*El` shell hooks are protected extension points with ONE defined call time (construction), not "whenever first open happens".
+- `setUiTranslationPack` re-applies pack-owned attributes (filter placeholder / fallback `aria-label`) while closed; if these elements were lazily built, every such path would need "if built yet" guards.
+- Subclass contract stability: the `create*El` element builders are protected extension points with ONE defined call time (construction), not "whenever first open happens".
 - The constant child list is also what makes open / close structurally side-effect-free for the host page - see "In-place popup (no body portal)", host sibling-safety.
 
 ## In-place popup (no body portal)
@@ -147,7 +147,7 @@ The popup SHELL is built in the constructor and stays in the DOM for the instanc
 - Inherited context is right for free: themes set font / color on `.llselect-root`, and direction comes from the environment's `dir` (see "RTL" - there is no RTL setting). A portaled popup inherits BODY's context and must copy all of it over.
 - Reading order: the popup sits immediately after the trigger for AT virtual cursors.
 - Top-layer compatibility: inside an open native `<dialog>`, an in-subtree popup renders within the dialog's top-layer context, while a body-portaled popup renders UNDER the dialog and its `::backdrop` - the classic portal-in-dialog failure. In-place is the arrangement that keeps working there.
-- Host sibling-safety: the caller's element BECOMES the root (nothing is ever inserted next to it), and the root's child list is invariant from construction to destroy - the popup shell exists from the start, `hidden` while closed, out-of-flow (`position: fixed`, set BEFORE unhiding) while open. So sibling-dependent CSS in the host layout (`:nth-child`, `.btn + .btn`, `:first/last-child` - the uib-tooltip-in-a-btn-group / select2-inserted-container breakage class, where SHOWING the popup inserts an element next to the trigger and reflows the host) never flips on open / close. Pinned by `test/structure.test.ts`.
+- Host sibling-safety: the caller's element BECOMES the root (nothing is ever inserted next to it), and the root's child list is invariant from construction to destroy - the popup element exists from the start, `hidden` while closed, out-of-flow (`position: fixed`, set BEFORE unhiding) while open. So sibling-dependent CSS in the host layout (`:nth-child`, `.btn + .btn`, `:first/last-child` - the uib-tooltip-in-a-btn-group / select2-inserted-container breakage class, where SHOWING the popup inserts an element next to the trigger and reflows the host) never flips on open / close. Pinned by `test/structure.test.ts`.
 
 Accepted costs - two classes, both solved by the planned top-layer enhancement (`TODO.md` "Popup top layer via Popover API"), neither fully by a body portal:
 

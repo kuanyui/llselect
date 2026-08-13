@@ -215,7 +215,7 @@ test('without createItemContentElFn, options are plain text with no aria-label (
   assert.equal(opt.getAttribute('aria-label'), null)
 })
 
-test('multiple: option shell keeps aria-selected alongside the custom content + aria-label', () => {
+test('multiple: the option element keeps aria-selected alongside the custom content + aria-label', () => {
   const sel = new LLSelectMultiple<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: u => u.name,
@@ -231,8 +231,8 @@ test('multiple: option shell keeps aria-selected alongside the custom content + 
   sel.open()
   const opt = options(sel)[0]!
   assert.ok(opt.querySelector('.rich')) // custom content present
-  assert.equal(opt.getAttribute('aria-label'), 'Ann') // base shell
-  assert.equal(opt.getAttribute('aria-selected'), 'true') // multiple shell, on top
+  assert.equal(opt.getAttribute('aria-label'), 'Ann') // set by the base createItemEl
+  assert.equal(opt.getAttribute('aria-selected'), 'true') // multiple's createItemEl, on top
 })
 
 test('replacePopupListItemElInDom re-runs createItemContentElFn (single-item update keeps rich content)', () => {
