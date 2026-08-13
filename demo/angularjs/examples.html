@@ -258,6 +258,31 @@
     </div>
     <div class="out">ng-model = {{ vm.langsTags | json }}</div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="7d"><code></code></pre></details>
+
+    <h3>7e. Per-item background tint</h3>
+    <p>
+      What <code>&lt;option style="background-color"&gt;</code> does on a
+      native select (Chromium only): <code>renderTintedLangRow</code> is 7a's
+      row plus a tint of its icon color's hue, translucent so the theme's
+      hover / keyboard-focus backgrounds stay visible through it. The
+      <code>lang-tinted</code> demo CSS (../style.css) moves the item padding
+      onto the row and draws the selected row's right-edge checkmark from
+      <code>aria-selected</code> - the shell state the library maintains, so
+      it needs no JS. The chosen tint covers the whole trigger:
+      <code>demo-tint-trigger</code> is an app policy directive that requires
+      the published controller and paints <code>instance().triggerEl</code>
+      (see API.md "Reaching the instance from your own directive").
+    </p>
+    <div class="demo-row" data-src="7e">
+      <llselect-single ng-model="vm.langTinted" class="lang-tinted"
+        demo-tint-trigger="vm.langTinted"
+        ll-item-content-fn="vm.renderTintedLangRow"
+        ll-trigger-content-fn="vm.renderLangTrigger"
+        ll-options="l.name for l in vm.languages track by l.name">
+      </llselect-single>
+    </div>
+    <div class="out">ng-model = {{ vm.langTinted || 'undefined' }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7e"><code></code></pre></details>
   </section>
 
   <section>

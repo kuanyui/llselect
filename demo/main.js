@@ -767,6 +767,61 @@ const selUserHints = new LLSelectSingle(
 selUserHints.setItems(USERS)
 //#endregion
 
+//#region 11.6
+// Per-item background, like native <option style="background-color"> (a
+// Chromium-only nicety): 11.1's row plus a tint of ITS icon color's hue,
+// lifted near-white. hsl alpha (not an opaque pastel) keeps the theme's
+// hover / keyboard-focus backgrounds visible through the tint. The
+// .lang-tinted demo CSS moves the item padding onto the row (tint reaches
+// the option's edges) and draws the selected row's checkmark from the
+// shell's aria-selected - no JS, and a createItemContentElFn result would
+// go stale on in-place selection changes. The chosen tint covers the WHOLE
+// trigger, like the native control: onChange paints the public triggerEl.
+// The mirrored trigger row itself stays untinted (11.1's renderer) -
+// stacking two alpha tints would show as a darker patch.
+function hexToHue(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b)
+  const d = max - Math.min(r, g, b)
+  if (d === 0) { return 0 }
+  let h
+  if (max === r) {
+    h = ((g - b) / d) % 6
+  } else if (max === g) {
+    h = (b - r) / d + 2
+  } else {
+    h = (r - g) / d + 4
+  }
+  return Math.round(h * 60 + 360) % 360
+}
+function languageTint(lang) {
+  return `hsl(${hexToHue(lang.color)} 85% 55% / 0.14)`
+}
+function createTintedLanguageRowEl(lang) {
+  const row = createLanguageRowEl(lang)  // 11.1's icon + label row
+  row.style.background = languageTint(lang)
+  return row
+}
+const outLangTinted = document.getElementById('out-lang-tinted')
+const selLangTinted = new LLSelectSingle(
+  document.getElementById('mount-lang-tinted'),
+  {
+    placeholder: 'Pick a language',
+    compareFn: (a, b) => a.name === b.name,
+    itemToStringFn: (lang) => lang.name,
+    createItemContentElFn: createTintedLanguageRowEl,
+    createTriggerContentElFn: (ctx) => ctx.chosenItem ? createLanguageRowEl(ctx.chosenItem) : null,
+    onChange: (v) => {
+      selLangTinted.triggerEl.style.background = v ? languageTint(v) : ''
+      outLangTinted.textContent = 'chosen: ' + (v ? v.name : '(none)')
+    },
+  }
+)
+selLangTinted.setItems(PROGRAMMING_LANGUAGES)
+//#endregion
+
 //#region 12
 // labelEl: native <label for> cannot target these divs, so the setting
 // emulates both halves - the label is the bottom name rung (live

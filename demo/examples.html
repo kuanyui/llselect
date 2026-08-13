@@ -697,6 +697,28 @@
         <details class="code-toggle"><summary>code</summary><pre data-demo="11.5"><code></code></pre></details>
       </div>
     </article>
+
+    <article>
+      <h3>11.6 Per-item background tint</h3>
+      <p class="hint">
+        What <code>&lt;option style="background-color"&gt;</code> does on a
+        native select (Chromium only): each row tinted with its icon color's
+        hue, lifted near-white, and the chosen tint covers the whole trigger
+        (<code>onChange</code> paints the public <code>triggerEl</code>).
+        The tint uses hsl alpha so the theme's hover / keyboard-focus
+        backgrounds stay visible through it; demo CSS draws the selected
+        row's right-edge checkmark from <code>aria-selected</code> (the
+        shell state the library maintains) and moves the item padding onto
+        the row so the tint reaches the option's edges.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-lang-tinted" class="lang-tinted"></div>
+          <div class="out" id="out-lang-tinted">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="11.6"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="11.6"><code></code></pre></details>
+      </div>
+    </article>
   </section>
 
   <section>

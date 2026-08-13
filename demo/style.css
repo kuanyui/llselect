@@ -285,6 +285,29 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 .user-row .hint { margin-left: auto; }
 
+/* #region 11.6 */
+/* core 11.6 / angularjs 7e: full-row tint. The content el only fills the
+   item's content box, so the item padding moves onto the row (values are
+   vanilla's). display: flex (block-level, auto width) and NOT width: 100%:
+   the demos have no global border-box reset, so 100% + padding would
+   overflow the popup list into a horizontal scrollbar. The selected
+   checkmark comes from the shell's aria-selected (the library keeps it true
+   to state, so no JS and never stale); hover / keyboard-focus backgrounds
+   deliberately show through the tint's alpha. The chosen tint on the
+   TRIGGER is painted onto the public triggerEl by each demo's JS
+   (onChange / a policy directive), not by this file. */
+.lang-tinted .llselect-item { padding: 0; }
+.lang-tinted .llselect-item .lang-row {
+  display: flex;
+  padding: 0.35rem 0.7rem;
+}
+.lang-tinted .llselect-item[aria-selected='true'] .lang-row::after {
+  content: '\F012C'; /* mdi-check; both examples pages already load the mdi font */
+  font: normal normal normal 1em/1 'Material Design Icons';
+  margin-inline-start: auto;
+}
+/* #endregion */
+
 /* #region 6.2 6.3 6.4 */
 /* Constrain the trigger so the chosen text actually overflows (an
    unconstrained inline-block root would just grow to fit). 6.1 deliberately

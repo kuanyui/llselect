@@ -24,6 +24,30 @@
     { id: 7, name: 'Grace Garcia', role: 'guest', suspended: false },
   ]
 
+  // Hue (0-360) of a '#rrggbb' color; feeds example 7e's tints.
+  function hexToHue(hex) {
+    var r = parseInt(hex.slice(1, 3), 16) / 255
+    var g = parseInt(hex.slice(3, 5), 16) / 255
+    var b = parseInt(hex.slice(5, 7), 16) / 255
+    var max = Math.max(r, g, b)
+    var d = max - Math.min(r, g, b)
+    if (d === 0) { return 0 }
+    var h
+    if (max === r) {
+      h = ((g - b) / d) % 6
+    } else if (max === g) {
+      h = (b - r) / d + 2
+    } else {
+      h = (r - g) / d + 4
+    }
+    return Math.round(h * 60 + 360) % 360
+  }
+
+  // 7e: near-white translucent tint of a language's icon color.
+  function langTint(lang) {
+    return 'hsl(' + hexToHue(lang.color) + ' 85% 55% / 0.14)'
+  }
+
   // icon/color drive example 7's custom rows (same data shape as the core
   // demo's PROGRAMMING_LANGUAGES); the other examples read only .name.
   var LANGUAGES = [
@@ -72,6 +96,25 @@
       }
     })
 
+    /**
+     * 7e's whole-trigger tint: an app policy directive. ll-* attributes cover
+     * CONTENT; shell styling per state is app territory, so this requires the
+     * published controller and drives the core public API (API.md "Reaching
+     * the instance from your own directive"). instance() is late-bound -
+     * safe inside $watch, never in a controller constructor.
+     */
+    .directive('demoTintTrigger', function () {
+      return {
+        restrict: 'A',
+        require: 'llselectSingle',
+        link: function (scope, element, attrs, api) {
+          scope.$watch(attrs.demoTintTrigger, function (lang) {
+            api.instance().triggerEl.style.background = lang ? langTint(lang) : ''
+          })
+        },
+      }
+    })
+
     .controller('DemoCtrl', ['$scope', function ($scope) {
       var vm = this
 
@@ -99,6 +142,7 @@
       vm.langsRich = []
       vm.langsTags = []
       vm.user2 = undefined
+      vm.langTinted = undefined
 
       /**
        * 7a. A render-time DOM factory: called by llselect outside any digest,
@@ -149,9 +193,9 @@
       }
 
       /**
-       * 7a, trigger mirror: the same row renderer feeds the trigger, exactly
-       * like the core example - there is no auto-projection. null with
-       * nothing chosen falls back to the placeholder.
+       * 7a (7e reuses it), trigger mirror: the same row renderer feeds the
+       * trigger, exactly like the core example - there is no auto-projection.
+       * null with nothing chosen falls back to the placeholder.
        */
       vm.renderLangTrigger = function (ctx) {
         return ctx.chosenItem ? vm.renderLangRow(ctx.chosenItem) : null
@@ -163,6 +207,23 @@
         i.className = 'mdi mdi-close-circle-outline'
         i.setAttribute('aria-hidden', 'true') // decorative; the button carries the aria-label
         return i
+      }
+
+      /**
+       * 7e, per-item background, like native <option style="background-color">
+       * (a Chromium-only nicety): 7a's row plus a tint of its icon color's
+       * hue. hsl alpha keeps the theme's hover / keyboard-focus backgrounds
+       * visible through the tint. The .lang-tinted CSS (../style.css) moves
+       * the item padding onto the row (tint reaches the option's edges) and
+       * draws the selected row's checkmark from the shell's aria-selected -
+       * no JS, never stale. The whole-trigger tint is the demoTintTrigger
+       * directive below; the mirrored trigger row reuses renderLangTrigger
+       * untinted (two stacked alphas would show as a darker patch).
+       */
+      vm.renderTintedLangRow = function (lang) {
+        var row = vm.renderLangRow(lang)
+        row.style.background = langTint(lang)
+        return row
       }
 
       /**
