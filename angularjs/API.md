@@ -329,8 +329,26 @@ Sits on `<ui-llselect-choices>`, written over the `repeat` variable:
 </ui-llselect>
 ```
 
+Any of ui-select's template shapes carries over - plus one ui-select cannot do:
+
+```html
+<!-- elements: full control of the row -->
+<ui-llselect-choices repeat="p in vm.people | filter: $select.search" ll-item-text="p.name">
+  <span>{{p.name}}</span> <small>{{p.role}}</small>
+</ui-llselect-choices>
+
+<!-- a bare text node - ui-select accepts this shape too (its transclusion
+     appends every node, element or not) -->
+<ui-llselect-choices repeat="p in vm.people | filter: $select.search" ll-item-text="p.name">
+  {{p.name}} ({{p.role}})
+</ui-llselect-choices>
+
+<!-- no template at all: each row renders the ll-item-text string. Impossible
+     in ui-select - there the template is the only label source. -->
+<ui-llselect-choices repeat="p in vm.people | filter: $select.search" ll-item-text="p.name"></ui-llselect-choices>
+```
+
 - The template and `ll-item-text` are separate channels: the template is what a row SHOWS, `ll-item-text` is the plain string (accessible name + search text). The bridge never derives one from the other - reading the rendered DOM back would put the role hint above into the option's spoken name.
-- The template is optional: an empty `<ui-llselect-choices>` renders each row as the plain `ll-item-text` text.
 - Without `ll-item-text`, an object item degrades to `String(item)` ("[object Object]").
 
 ### Two deliberate deviations

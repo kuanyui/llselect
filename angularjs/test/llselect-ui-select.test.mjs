@@ -224,3 +224,25 @@ test('an empty <ui-llselect-choices> renders rows as plain ll-item-text text', (
   assert.equal(rows.length, USERS.length)
   assert.equal(rows[0].textContent, 'Alice') // the ll-item-text string, no template needed
 })
+
+test('a bare text-node template (no element) works, as in ui-select', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person">
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name">{{p.name}} ({{p.role}})</ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () {
+      this.users = USERS
+      this.person = undefined
+    },
+  })
+  assert.deepEqual(a.errors, [])
+  a.$('.llselect-trigger').click()
+  assert.equal(a.$$('.llselect-item')[0].textContent, 'Alice (admin)')
+  assert.equal(a.$$('.llselect-item')[0].getAttribute('aria-label'), 'Alice') // the string channel stays ll-item-text
+})
