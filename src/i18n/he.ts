@@ -10,7 +10,7 @@ export const he: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'סינון (Esc לניקוי)',
   popupListNoResults: 'לא נמצאו תוצאות',
   triggerClearButtonAriaLabel: 'נקה בחירה',
-  tagRemoveButtonAriaLabel: (itemLabel) => `הסר ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `הסר ${itemText}`,
   // Hebrew number agreement: singular past (nivchar) for 1, plural (nivcheru)
   // otherwise; the all-chosen form needs the noun (kol X ha-pritim).
   triggerCountSummary: (chosenCount, totalCount) => {
@@ -18,5 +18,5 @@ export const he: LLSelectUiTranslationPack = {
     if (chosenCount === totalCount) { return `נבחרו כל ${totalCount} הפריטים` }
     return `נבחרו ${chosenCount} מתוך ${totalCount}`
   },
-  selectAllRowLabel: (chosenCount, totalCount) => `בחר הכל (${chosenCount} מתוך ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `בחר הכל (${chosenCount} מתוך ${totalCount})`,
 }

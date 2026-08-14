@@ -10,8 +10,8 @@ export const uk: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Фільтр (Esc, щоб очистити)',
   popupListNoResults: 'Нічого не знайдено',
   triggerClearButtonAriaLabel: 'Очистити вибір',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Вилучити ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Вилучити ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Вибрано всі (${chosenCount})` : `Вибрано ${chosenCount} з ${totalCount}`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Вибрати всі (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Вибрати всі (${chosenCount} / ${totalCount})`,
 }

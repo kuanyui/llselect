@@ -10,8 +10,8 @@ export const hu: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Szűrés (Esc: törlés)',
   popupListNoResults: 'Nincs találat',
   triggerClearButtonAriaLabel: 'Kijelölés törlése',
-  tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel} eltávolítása`,
+  tagRemoveButtonAriaLabel: (itemText) => `${itemText} eltávolítása`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Összes kijelölve (${chosenCount})` : `${chosenCount} / ${totalCount} kijelölve`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Összes kijelölése (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Összes kijelölése (${chosenCount} / ${totalCount})`,
 }

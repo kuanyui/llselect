@@ -10,11 +10,11 @@ export const it: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Filtra (Esc per cancellare)',
   popupListNoResults: 'Nessun risultato',
   triggerClearButtonAriaLabel: 'Cancella la selezione',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Rimuovi ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Rimuovi ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) => {
     if (chosenCount === 1) { return `1 su ${totalCount} selezionato` }
     if (chosenCount === totalCount) { return `Tutti i ${chosenCount} selezionati` }
     return `${chosenCount} su ${totalCount} selezionati`
   },
-  selectAllRowLabel: (chosenCount, totalCount) => `Seleziona tutto (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Seleziona tutto (${chosenCount} / ${totalCount})`,
 }

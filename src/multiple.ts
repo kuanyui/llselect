@@ -102,8 +102,8 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
   /**
    * Whether the popup shows a select-all row as the FIRST option of the
    * listbox (`false` default). Tri-state (none / some / all chosen - carried
-   * by the counting label's numbers and the `data-chosen-state` CSS hook;
-   * the accessible name comes from `uiTranslationPack.selectAllRowLabel`);
+   * by the counting text's numbers and the `data-chosen-state` CSS hook;
+   * the accessible name comes from `uiTranslationPack.selectAllRowText`);
    * Enter / click toggles. Acts on the VISIBLE
    * enabled subset (the filtered list while a filter query is active) - the
    * public `chooseAll` / `unchooseAll` / `toggleAll` keep their whole-list
@@ -113,17 +113,17 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
   selectAllRow: boolean
   /**
    * The select-all row's visible content ELEMENT, without subclassing - e.g.
-   * a tri-state SVG checkbox (`createOutlinedCheckboxSvgEl`) + label. Mirrors
+   * a tri-state SVG checkbox (`createOutlinedCheckboxSvgEl`) + the counting text. Mirrors
    * `createItemContentElFn`. Only used with `selectAllRow: true`.
    * - Receives the tri-state and the counts of the visible enabled subset.
    * - Return an `HTMLElement`: inserted as the row's content; the accessible
-   *   name stays pinned to `uiTranslationPack.selectAllRowLabel` via `aria-label`, so
+   *   name stays pinned to `uiTranslationPack.selectAllRowText` via `aria-label`, so
    *   icon-only content is still announced with the counts.
    * - `null` (setting default, or returned): the default content - just the
-   *   plain counting label; its numbers carry the tri-state. The library
+   *   plain counting text; its numbers carry the tri-state. The library
    *   ships no default indicator (consistent with items and the arrow);
    *   passing this setting is how one (e.g. `createOutlinedCheckboxSvgEl`)
-   *   gets added. See DESIGN.md "Select-all default: plain counting label".
+   *   gets added. See DESIGN.md "Select-all default: plain counting text".
    * @group Select-all
    */
   createSelectAllRowContentElFn:
@@ -270,7 +270,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
 
   /**
    * Orchestrator: composes `syncEmptyStateToDom` + `commitTriggerContentToDom`
-   * to (re)build the trigger from state; touches no DOM directly. Default label
+   * to (re)build the trigger from state; touches no DOM directly. Default text
    * is a count summary; override (or pass the `createTriggerContentElFn`
    * setting) to display tags / custom markup / etc.
    *
@@ -291,7 +291,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       return
     }
     if (this.settings.triggerDisplay === 'tags' && chosenCount > 0) {
-      // Accessible value = the labels themselves; the chips (with their
+      // Accessible value = the item texts themselves; the chips (with their
       // labelled remove buttons) must not name the field.
       this.commitTriggerContentToDom(this.createTagsEl(), this.chosenItems.map((item) => this.itemToString(item)).join(', '))
       return
@@ -424,7 +424,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * leading `role="option"` row: `data-chosen-state="none|some|all"` (a CSS
    * styling hook), `aria-selected` only when ALL visible
    * enabled items are chosen, accessible name + visible text from
-   * `uiTranslationPack.selectAllRowLabel(chosenCount, totalCount)` over the visible
+   * `uiTranslationPack.selectAllRowText(chosenCount, totalCount)` over the visible
    * enabled subset. `null` when the setting is off or nothing is actionable.
    * @group Subclassing: rendering
    */
@@ -442,17 +442,17 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     // ARIA option has no `mixed`: the indeterminate state is conveyed by the
     // visual (data-chosen-state) + the counting accessible name only.
     el.setAttribute('aria-selected', String(state === 'all'))
-    const label = this.settings.uiTranslationPack.selectAllRowLabel(chosenCount, actionable.length)
+    const text = this.settings.uiTranslationPack.selectAllRowText(chosenCount, actionable.length)
     const content = this.createSelectAllRowContentEl(state, chosenCount, actionable.length)
     if (content === null) {
-      // Default content: just the counting label - its numbers already carry
+      // Default content: just the counting text - its numbers already carry
       // the tri-state, and the library ships no default indicator anywhere
-      // (DESIGN.md "Select-all default: plain counting label").
-      el.textContent = label
+      // (DESIGN.md "Select-all default: plain counting text").
+      el.textContent = text
     } else {
       // Custom content fills the visuals only; the accessible name stays the
-      // counting label (same pinning as createItemEl's custom content).
-      el.setAttribute('aria-label', label)
+      // counting text (same pinning as createItemEl's custom content).
+      el.setAttribute('aria-label', text)
       el.appendChild(content)
     }
     el.addEventListener('click', () => {
@@ -468,7 +468,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * `createItemContentEl`.
    * - Default reads `createSelectAllRowContentElFn`; `null` (setting unset,
    *   or returned) = the default content: plain text from
-   *   `uiTranslationPack.selectAllRowLabel`.
+   *   `uiTranslationPack.selectAllRowText`.
    * - Override only when extending; for one-off content pass the setting.
    * @group Subclassing: rendering
    */

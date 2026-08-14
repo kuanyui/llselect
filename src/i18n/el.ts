@@ -10,11 +10,11 @@ export const el: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Φίλτρο (Esc για καθαρισμό)',
   popupListNoResults: 'Κανένα αποτέλεσμα',
   triggerClearButtonAriaLabel: 'Καθαρισμός επιλογής',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Αφαίρεση ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Αφαίρεση ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) => {
     if (chosenCount === 1) { return `Επιλέχθηκε 1 από ${totalCount}` }
     if (chosenCount === totalCount) { return `Επιλέχθηκαν όλα (${chosenCount})` }
     return `Επιλέχθηκαν ${chosenCount} από ${totalCount}`
   },
-  selectAllRowLabel: (chosenCount, totalCount) => `Επιλογή όλων (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Επιλογή όλων (${chosenCount} / ${totalCount})`,
 }

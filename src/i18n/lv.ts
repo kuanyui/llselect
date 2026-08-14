@@ -10,8 +10,8 @@ export const lv: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Filtrs (Esc notīra)',
   popupListNoResults: 'Nav rezultātu',
   triggerClearButtonAriaLabel: 'Notīrīt izvēli',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Noņemt ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Noņemt ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Izvēlēts: viss (${chosenCount})` : `Izvēlēts: ${chosenCount} no ${totalCount}`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Izvēlēties visu (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Izvēlēties visu (${chosenCount} / ${totalCount})`,
 }

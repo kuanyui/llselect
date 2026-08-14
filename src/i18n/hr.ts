@@ -10,8 +10,8 @@ export const hr: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Filtriraj (Esc za brisanje)',
   popupListNoResults: 'Nema rezultata',
   triggerClearButtonAriaLabel: 'Očisti odabir',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Ukloni ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Ukloni ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Odabrano sve (${chosenCount})` : `Odabrano ${chosenCount} od ${totalCount}`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Odaberi sve (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Odaberi sve (${chosenCount} / ${totalCount})`,
 }

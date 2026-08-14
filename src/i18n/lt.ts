@@ -10,8 +10,8 @@ export const lt: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Filtras (Esc išvalyti)',
   popupListNoResults: 'Rezultatų nerasta',
   triggerClearButtonAriaLabel: 'Išvalyti pasirinkimą',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Pašalinti ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Pašalinti ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Pasirinkta viskas (${chosenCount})` : `Pasirinkta ${chosenCount} iš ${totalCount}`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Pasirinkti viską (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Pasirinkti viską (${chosenCount} / ${totalCount})`,
 }

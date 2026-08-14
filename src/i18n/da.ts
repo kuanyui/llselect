@@ -10,8 +10,8 @@ export const da: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Filtrer (Esc for at rydde)',
   popupListNoResults: 'Ingen resultater',
   triggerClearButtonAriaLabel: 'Ryd valget',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Fjern ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Fjern ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Alle ${chosenCount} valgt` : `${chosenCount} af ${totalCount} valgt`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Vælg alle (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Vælg alle (${chosenCount} / ${totalCount})`,
 }

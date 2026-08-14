@@ -183,14 +183,14 @@ $scope.renderRow = function (fruit) {
 
 ### `ll-select-all-row`
 
-**Expression** -> `selectAllRow`. A tri-state select-all row as the first row of the popup; it gets the tri-state icon matching the row checkboxes plus the pack's counting label.
+**Expression** -> `selectAllRow`. A tri-state select-all row as the first row of the popup; it gets the tri-state icon matching the row checkboxes plus the pack's counting text.
 
 ### `ll-checkboxes`
 
 **Expression**, default `true`. Whether `<llselect-multiple>` rows get this package's live checkbox icons.
 
 - On by default - the same batteries-included trade as the arrow.
-- `ll-checkboxes="false"` strips every checkbox visual, including the select-all row's icon; that row then shows only the counting label, which is also the core's own default.
+- `ll-checkboxes="false"` strips every checkbox visual, including the select-all row's icon; that row then shows only the counting text, which is also the core's own default.
 - The core itself ships no icons and no default indicator; per item its answer is the subclass recipe (demo 5.4 / 5.5).
 - Single-select never gets checkboxes - a radio-like look would misstate multiplicity.
 

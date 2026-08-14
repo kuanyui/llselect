@@ -10,8 +10,8 @@ export const ko: LLSelectUiTranslationPack = {
   filterInputPlaceholder: '필터 (Esc로 지우기)',
   popupListNoResults: '결과가 없습니다',
   triggerClearButtonAriaLabel: '선택 지우기',
-  tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel} 제거`,
+  tagRemoveButtonAriaLabel: (itemText) => `${itemText} 제거`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `전체 ${chosenCount}개 선택됨` : `${totalCount}개 중 ${chosenCount}개 선택됨`,
-  selectAllRowLabel: (chosenCount, totalCount) => `모두 선택 (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `모두 선택 (${chosenCount} / ${totalCount})`,
 }

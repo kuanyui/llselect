@@ -259,7 +259,7 @@ selMulti.setItems(COUNTRIES)
 //#endregion
 
 //#region 5.4
-// Settings path: createItemContentElFn renders checkbox + label; the public
+// Settings path: createItemContentElFn renders checkbox + item text; the public
 // isChosen() supplies the state. The fn only runs on render (after
 // construction), so the self-reference is safe. Subclass equivalent: 14.1.
 const outMultiCheckbox = document.getElementById('out-multi-checkbox')
@@ -304,7 +304,7 @@ selRichMulti.setItems(PROGRAMMING_LANGUAGES)
 
 //#region 6.3
 // Opt-in 'match-trigger': popup pinned to the trigger's width (the
-// select2-style edge-aligned look), so long labels wrap inside it.
+// select2-style edge-aligned look), so long item text wraps inside it.
 const outLongWrap = document.getElementById('out-long-wrap')
 const selLongWrap = new LLSelectSingle(
   document.getElementById('mount-long-wrap'),
@@ -347,7 +347,7 @@ selLongEllipsis.setChosenItem(LONG_NAMES[0])
 
 //#region 6.1
 // No demo CSS, no subclass. Library does not constrain widths, so picking
-// the long label below expands the trigger past the demo pane (and possibly
+// the long item text below expands the trigger past the demo pane (and possibly
 // the page) - that overflow IS the demonstration. We deliberately do NOT
 // preselect the long entry: pre-overflowing on page load triggers a
 // first-open scroll quirk on Firefox Android (browser does odd layout
@@ -367,7 +367,7 @@ selLongNoConstraint.setItems(LONG_NAMES)
 //#region 6.2
 // Trigger constrained by demo CSS (max-width: 18rem). No width setting: the
 // DEFAULT `popupWidthPolicy: 'fit-content'` grows the popup to the widest
-// label, wider than the trigger, like a native <select>.
+// text, wider than the trigger, like a native <select>.
 const outLongFitContent = document.getElementById('out-long-fitcontent')
 const selLongFitContent = new LLSelectSingle(
   document.getElementById('mount-long-fitcontent'),
@@ -425,7 +425,7 @@ const selSearchUsers = new LLSelectSingle(
     filterable: true,
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: (u) => `#${u.id} ${u.name} (${u.role})`,
-    // Default matches the visible label only. This custom fn lets the user
+    // Default matches the visible text only. This custom fn lets the user
     // type a role ("admin") and find users by role, not just by name.
     filterFn: (u, q) => {
       const needle = q.toLowerCase()
@@ -509,8 +509,8 @@ selTags.setChosenItems(['Japan', 'Brazil', 'Canada'])
 // choices are preserved. The public chooseAll/unchooseAll/toggleAll keep
 // their whole-list semantics. createSelectAllRowContentElFn fills the row
 // with a tri-state SVG checkbox (createOutlinedCheckboxSvgEl) + the library's own
-// counting label (en pack). Without the hook the row is just the counting
-// label (5.7). The accessible name stays uiTranslationPack.selectAllRowLabel.
+// counting text (en pack). Without the hook the row is just the counting
+// text (5.7). The accessible name stays uiTranslationPack.selectAllRowText.
 // The ITEMS get the same visual language via 5.4's settings-path checkbox,
 // so the row and the items read as one consistent list.
 const outSelectAll = document.getElementById('out-select-all')
@@ -533,7 +533,7 @@ selSelectAll = new LLSelectMultiple(
       row.append(
         // The icon helper accepts the chosen-state vocabulary directly.
         createOutlinedCheckboxSvgEl({ state: chosenState }),
-        en.selectAllRowLabel(chosenCount, totalCount), // reuse the library's translation
+        en.selectAllRowText(chosenCount, totalCount), // reuse the library's translation
       )
       return row
     },
@@ -567,7 +567,7 @@ selFilledCheckbox = new LLSelectMultiple(
       row.className = 'lang-row' // inline-flex + gap (demo CSS)
       row.append(
         createFilledCheckboxSvgEl({ state: chosenState }),
-        en.selectAllRowLabel(chosenCount, totalCount),
+        en.selectAllRowText(chosenCount, totalCount),
       )
       return row
     },
@@ -578,7 +578,7 @@ selFilledCheckbox.setItems(COUNTRIES)
 //#endregion
 
 //#region 5.7
-// The select-all DEFAULT look: no content fn - just the counting label,
+// The select-all DEFAULT look: no content fn - just the counting text,
 // whose numbers carry the tri-state. No default indicator, like everywhere
 // else in the library.
 const selSelectAllDefault = new LLSelectMultiple(
@@ -654,8 +654,8 @@ selDisFocusable.triggerEl.setAttribute('title', 'Disabled, but Tab can still rea
 
 //#region 10.1
 // Optgroup: flat items + itemToGroupKeyFn. Items are pre-sorted by category;
-// contiguous same-key items form one group. The key is the identity; the label
-// is a separate projection (here key === label, so groupKeyToLabelFn is omitted).
+// contiguous same-key items form one group. The key is the identity; the display text
+// is a separate projection (here key === text, so groupKeyToStringFn is omitted).
 const outGroup = document.getElementById('out-group')
 const selGroup = new LLSelectSingle(
   document.getElementById('mount-group'),
@@ -694,7 +694,7 @@ selGroupDisabled.setItems(GROUPED_FOODS)
 // Rich group header via createGroupLabelContentElFn (mirrors createItemContentElFn):
 // an icon + a live count badge. itemsInGroup gives the group's items, so the
 // count needs no external bookkeeping. The header's accessible name stays the
-// plain groupKeyToLabel; the icon is aria-hidden.
+// plain groupKeyToString; the icon is aria-hidden.
 const CATEGORY_ICON = { Fruit: 'food-apple', Vegetable: 'carrot', Dairy: 'cheese', Nuts: 'peanut' }
 // Named create*El per naming-conventions.md (returns an element), like createLanguageRowEl.
 function createCategoryHeaderEl(category, items) {
@@ -753,7 +753,7 @@ selTagIcons.setChosenItems([PROGRAMMING_LANGUAGES[1], PROGRAMMING_LANGUAGES[3]])
 //#endregion
 
 //#region 11.5
-// Secondary hint text: primary label + a faded hint pushed to the row's
+// Secondary hint text: primary text + a faded hint pushed to the row's
 // right edge (.user-row). Visual only - the option's aria-label stays
 // itemToString, so AT hears just the name.
 function createUserRowEl(user) {
@@ -825,7 +825,7 @@ function languageShade(lang) {
   return `hsl(${hexToHue(lang.color)} 75% 32%)`
 }
 function createTintedLanguageRowEl(lang) {
-  const row = createLanguageRowEl(lang)  // 11.1's icon + label row
+  const row = createLanguageRowEl(lang)  // 11.1's icon + text row
   // Fill the option element: block-level flex (inline-flex would shrink-wrap
   // to the text, leaving the tint a narrow patch) + the spacing the one-line
   // demo CSS removed from the option element itself.
@@ -887,7 +887,7 @@ labelDemoSel.setItems(['Apple', 'Banana', 'Cherry', 'Durian'])
 // localized `triggerPlaceholder` default shows; an explicit `placeholder` is
 // app copy and would win) and nothing preselected at load, so every visible
 // change comes from the pack alone. Three instances: a single (localized
-// placeholder + chosen label in the trigger), and two multis because their
+// placeholder + chosen text in the trigger), and two multis because their
 // displays are exclusive - 'tags' shows the translated remove buttons,
 // default 'count' the translated count summary.
 const I18N_PACKS = { en, ja, zhTW, ar, he }
@@ -914,7 +914,7 @@ const i18nSelects = [
     createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
   }),
 ]
-// Mixed-direction labels: bidi reorders runs inside each item on its own; the
+// Mixed-direction item texts: bidi reorders runs inside each item on its own; the
 // weak-character entries (parens / digits) show the base-direction caveat
 // that per-item dir="auto" / <bdi> would solve (DESIGN.md "RTL").
 for (const sel of i18nSelects) { sel.setItems(MIXED_DIRECTION_COUNTRIES) }
@@ -983,7 +983,7 @@ selRtlCheckboxes = new LLSelectMultiple(
     createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
       const row = document.createElement('span')
       row.className = 'lang-row'
-      row.append(createOutlinedCheckboxSvgEl({ state: chosenState }), ar.selectAllRowLabel(chosenCount, totalCount))
+      row.append(createOutlinedCheckboxSvgEl({ state: chosenState }), ar.selectAllRowText(chosenCount, totalCount))
       return row
     },
     onChange: (chosen) => { outRtlCheckboxes.textContent = 'chosen: ' + chosen.length + ' items' },

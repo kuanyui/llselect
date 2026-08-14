@@ -10,8 +10,8 @@ export const ga: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Scag (Esc le glanadh)',
   popupListNoResults: 'Gan torthaí',
   triggerClearButtonAriaLabel: 'Glan an rogha',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Bain ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Bain ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Gach ceann roghnaithe (${chosenCount})` : `${chosenCount} as ${totalCount} roghnaithe`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Roghnaigh uile (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Roghnaigh uile (${chosenCount} / ${totalCount})`,
 }

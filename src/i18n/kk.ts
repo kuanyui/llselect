@@ -12,8 +12,8 @@ export const kk: LLSelectUiTranslationPack = {
   triggerClearButtonAriaLabel: 'Таңдауды тазарту',
   // Label-colon frames: Kazakh case suffixes vary with the stem, so nothing
   // is suffixed onto the interpolated label or numerals.
-  tagRemoveButtonAriaLabel: (itemLabel) => `Алып тастау: ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Алып тастау: ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Барлығы таңдалды (${chosenCount})` : `Таңдалды: ${chosenCount} / ${totalCount}`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Барлығын таңдау (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Барлығын таңдау (${chosenCount} / ${totalCount})`,
 }

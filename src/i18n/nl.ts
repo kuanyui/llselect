@@ -10,8 +10,8 @@ export const nl: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Filteren (Esc om te wissen)',
   popupListNoResults: 'Geen resultaten',
   triggerClearButtonAriaLabel: 'Selectie wissen',
-  tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel} verwijderen`,
+  tagRemoveButtonAriaLabel: (itemText) => `${itemText} verwijderen`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Alle ${chosenCount} geselecteerd` : `${chosenCount} van ${totalCount} geselecteerd`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Alles selecteren (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Alles selecteren (${chosenCount} / ${totalCount})`,
 }

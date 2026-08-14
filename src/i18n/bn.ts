@@ -10,8 +10,8 @@ export const bn: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'ফিল্টার (মুছতে Esc)',
   popupListNoResults: 'কোনো ফলাফল পাওয়া যায়নি',
   triggerClearButtonAriaLabel: 'নির্বাচন মুছুন',
-  tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel} সরান`,
+  tagRemoveButtonAriaLabel: (itemText) => `${itemText} সরান`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `সব ${chosenCount}টি নির্বাচিত` : `${totalCount}টির মধ্যে ${chosenCount}টি নির্বাচিত`,
-  selectAllRowLabel: (chosenCount, totalCount) => `সব নির্বাচন করুন (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `সব নির্বাচন করুন (${chosenCount} / ${totalCount})`,
 }

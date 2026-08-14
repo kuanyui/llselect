@@ -12,8 +12,8 @@ export const tr: LLSelectUiTranslationPack = {
   triggerClearButtonAriaLabel: 'Seçimi temizle',
   // The case suffix lands on the carrier noun "oge" (item), never on the
   // interpolated label (Turkish suffixes vary with vowel harmony).
-  tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel} öğesini kaldır`,
+  tagRemoveButtonAriaLabel: (itemText) => `${itemText} öğesini kaldır`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Tümü seçildi (${chosenCount})` : `${chosenCount} / ${totalCount} seçildi`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Tümünü seç (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Tümünü seç (${chosenCount} / ${totalCount})`,
 }

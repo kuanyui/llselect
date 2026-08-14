@@ -10,8 +10,8 @@ export const zhCN: LLSelectUiTranslationPack = {
   filterInputPlaceholder: '筛选（按 Esc 清除）',
   popupListNoResults: '没有匹配的结果',
   triggerClearButtonAriaLabel: '清除选择',
-  tagRemoveButtonAriaLabel: (itemLabel) => `移除 ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `移除 ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `已选全部 ${chosenCount} 项` : `已选 ${chosenCount} / ${totalCount} 项`,
-  selectAllRowLabel: (chosenCount, totalCount) => `全选（${chosenCount} / ${totalCount}）`,
+  selectAllRowText: (chosenCount, totalCount) => `全选（${chosenCount} / ${totalCount}）`,
 }

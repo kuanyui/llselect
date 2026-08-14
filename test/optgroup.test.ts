@@ -52,7 +52,7 @@ test('grouping off (no itemToGroupKeyFn) renders a flat list with no group conta
 test('group label element is aria-hidden, has the group-label class, and shows the label text', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     itemToGroupKeyFn: () => 'fruits',
-    groupKeyToLabelFn: (k) => (k === 'fruits' ? 'Fruits' : k),
+    groupKeyToStringFn: (k) => (k === 'fruits' ? 'Fruits' : k),
   })
   sel.setItems(['a', 'b'])
   sel.open()
@@ -94,7 +94,7 @@ test('group key can be a number (GK generic, default string overridden)', () => 
   const sel = new LLSelectSingle<{ n: string; g: number }, number>(mount(), {
     itemToStringFn: (x) => x.n,
     itemToGroupKeyFn: (x) => x.g,
-    groupKeyToLabelFn: (g) => `Group ${g}`,
+    groupKeyToStringFn: (g) => `Group ${g}`,
   })
   sel.setItems([{ n: 'a', g: 1 }, { n: 'b', g: 1 }, { n: 'c', g: 2 }])
   sel.open()
@@ -110,7 +110,7 @@ test('groupKeyCompareFn merges object keys with the same identity into one group
     itemToStringFn: (x) => x.n,
     itemToGroupKeyFn: (x) => x.k,
     groupKeyCompareFn: (a, b) => a.id === b.id, // without this, two {id:1} objects would be two groups
-    groupKeyToLabelFn: (k) => `#${k.id}`,
+    groupKeyToStringFn: (k) => `#${k.id}`,
   })
   sel.setItems([
     { n: 'a', k: { id: 1 } },
@@ -232,7 +232,7 @@ test('filtering regroups survivors and drops now-empty groups', () => {
 test('createGroupLabelContentElFn fills the header; container aria-label stays plain text', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     itemToGroupKeyFn: (s) => s[0]!,
-    groupKeyToLabelFn: (k) => k.toUpperCase(),
+    groupKeyToStringFn: (k) => k.toUpperCase(),
     createGroupLabelContentElFn: (key, items) => {
       const span = document.createElement('span')
       span.className = 'rich'
@@ -243,7 +243,7 @@ test('createGroupLabelContentElFn fills the header; container aria-label stays p
   sel.setItems(['apple', 'avocado', 'banana'])
   sel.open()
   const group = groupEls(sel).find((g) => g.getAttribute('aria-label') === 'A')!
-  assert.equal(group.getAttribute('aria-label'), 'A') // plain groupKeyToLabel, not the rich node
+  assert.equal(group.getAttribute('aria-label'), 'A') // plain groupKeyToString, not the rich node
   const label = group.querySelector<HTMLElement>(`.${sel.classIdMap.groupLabelClass}`)!
   assert.equal(label.getAttribute('aria-hidden'), 'true')
   const rich = label.querySelector<HTMLElement>('.rich')!

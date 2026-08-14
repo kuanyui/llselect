@@ -12,8 +12,8 @@ export const mn: LLSelectUiTranslationPack = {
   triggerClearButtonAriaLabel: 'Сонголтыг арилгах',
   // Label-colon frame: Mongolian case suffixes vary with the stem (vowel
   // harmony), so nothing is suffixed onto the interpolated label.
-  tagRemoveButtonAriaLabel: (itemLabel) => `Хасах: ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Хасах: ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Бүгд сонгогдсон (${chosenCount})` : `Сонгосон: ${chosenCount} / ${totalCount}`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Бүгдийг сонгох (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Бүгдийг сонгох (${chosenCount} / ${totalCount})`,
 }

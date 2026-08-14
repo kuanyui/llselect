@@ -10,8 +10,8 @@ export const sr: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Филтер (Esc за брисање)',
   popupListNoResults: 'Нема резултата',
   triggerClearButtonAriaLabel: 'Обриши избор',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Уклони ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Уклони ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Изабрано све (${chosenCount})` : `Изабрано ${chosenCount} од ${totalCount}`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Изабери све (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Изабери све (${chosenCount} / ${totalCount})`,
 }

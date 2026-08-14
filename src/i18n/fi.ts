@@ -10,8 +10,8 @@ export const fi: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Suodata (Esc tyhjentää)',
   popupListNoResults: 'Ei tuloksia',
   triggerClearButtonAriaLabel: 'Tyhjennä valinta',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Poista ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Poista ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Kaikki ${chosenCount} valittu` : `${chosenCount} / ${totalCount} valittu`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Valitse kaikki (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Valitse kaikki (${chosenCount} / ${totalCount})`,
 }

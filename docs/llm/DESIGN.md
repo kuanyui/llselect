@@ -98,7 +98,7 @@ RULED: no form-integration setting; the library never creates form controls. REA
 
 ## Texts (i18n)
 
-All chrome strings (AT labels + generated text) live in ONE base setting `uiTranslationPack` (contract: the `LLSelectUiTranslationPack` interface atop `src/i18n.ts`): input is `Partial<LLSelectUiTranslationPack>`, resolved against the English defaults (`en` - the same object the `@llselect/core/i18n` subpath exports). Static strings are plain strings; parameterized messages are functions taking RESOLVED primitives (`itemLabel: string`, counts) - never `T` - so a language pack can implement them without knowing the item type. Per-`T` control stays on the protected methods (e.g. `itemToTagRemoveButtonAriaLabel`). Key naming rules: naming-conventions.md s7a.4.
+All chrome strings (AT labels + generated text) live in ONE base setting `uiTranslationPack` (contract: the `LLSelectUiTranslationPack` interface atop `src/i18n.ts`): input is `Partial<LLSelectUiTranslationPack>`, resolved against the English defaults (`en` - the same object the `@llselect/core/i18n` subpath exports). Static strings are plain strings; parameterized messages are functions taking RESOLVED primitives (`itemText: string`, counts) - never `T` - so a language pack can implement them without knowing the item type. Per-`T` control stays on the protected methods (e.g. `itemToTagRemoveButtonAriaLabel`). Key naming rules: naming-conventions.md s7a.4.
 
 The `placeholder` SETTING stays app copy - an explicit value always wins and packs never set it. But its library DEFAULT (`'Please select'`) is chrome, so it lives in `uiTranslationPack` as `triggerPlaceholder` and localizes with the pack; resolution is `settings.placeholder ?? uiTranslationPack.triggerPlaceholder`. (select2 has no such key only because it ships no default placeholder at all; llselect does, so the default must be translatable.)
 
@@ -115,7 +115,7 @@ Zero new API: the component inherits the environment's direction (`dir` attribut
 Two layers, owned by different parties:
 
 - **Chrome direction (the library's layer).** The trigger is a flex row, so the slot order (content | clear button | arrow) mirrors automatically under `dir="rtl"` - the arrow lands on the LEFT, matching the native `<select>`. (Libraries whose arrow stays on the right in RTL are carrying un-mirrored physical CSS, not making a design choice.) Shipped themes use logical properties only (`padding-inline`, never left/right), and `text-overflow: ellipsis` truncates at the logical end for free. The single direction-aware piece of JS is the `'fit-content'` popup width policy: in RTL it right-aligns to the trigger and grows LEFTWARD (direction read from `getComputedStyle(triggerEl).direction` once per open); `'match-trigger'` is position-identical in both directions.
-- **Data direction (the app's layer).** Mixed RTL/LTR item labels are handled by the Unicode Bidi Algorithm per label; items and chips are separate blocks / flex items, so labels never reorder across each other, and the trigger's layout never changes because of a chosen label's script (same as native). The remaining caveat is WEAK characters (digits, parentheses, punctuation): their placement follows the element's base direction, which is inherited, never content-detected. The fix is per-item `dir="auto"` or a `<bdi>` wrapper, supplied by the app via `createItemContentElFn` - the app knows its data, and the library does not force `dir="auto"` because it also flips per-item text alignment, making mixed lists ragged.
+- **Data direction (the app's layer).** Mixed RTL/LTR item texts are handled by the Unicode Bidi Algorithm per item; items and chips are separate blocks / flex items, so labels never reorder across each other, and the trigger's layout never changes because of a chosen label's script (same as native). The remaining caveat is WEAK characters (digits, parentheses, punctuation): their placement follows the element's base direction, which is inherited, never content-detected. The fix is per-item `dir="auto"` or a `<bdi>` wrapper, supplied by the app via `createItemContentElFn` - the app knows its data, and the library does not force `dir="auto"` because it also flips per-item text alignment, making mixed lists ragged.
 
 Demo: section 12 (the ar / he packs set `dir="rtl"` on the mounts and use a mixed-direction item list, weak-character examples included).
 
@@ -209,7 +209,7 @@ Rejected: a nested shape (`(T | { label, items: T[] })[]` or a second `setGroups
 |---|---|---|
 | identity | `T`                      | `GK` (grouping key; class `<T, GK = string>`) |
 | equality | `compareFn(a, b)`        | `groupKeyCompareFn(a, b)`               |
-| display (text) | `itemToStringFn(item)` | `groupKeyToLabelFn(key)`             |
+| display (text) | `itemToStringFn(item)` | `groupKeyToStringFn(key)`             |
 | display (rich) | `createItemContentElFn(item)` | `createGroupLabelContentElFn(key, items)` |
 | full control (subclass) | `createItemEl` (protected) | `createGroupEl` (protected) |
 | disabled | `itemDisabledFn(item)`   | `groupDisabledFn(key)`                  |
@@ -219,7 +219,7 @@ Why this shape, in this codebase specifically:
 - **Single source of truth.** `items` stays the only data channel. A nested shape is a second write channel - exactly the select2 / choices.js dual-write pattern this project already rejects ("Settings vs methods" above).
 - **Identity, not display, drives behavior.** `itemDisabledFn` takes the item `T` (identity), never `itemToString(item)` (display). Grouping obeys the same rule: membership and group-disabled are keyed on `GK`; the human label is a separate `GK -> string` projection. So renaming a label (i18n) never changes which items group together or which group is disabled.
 - **`GK` is fully generic, mirroring `T`.** The class is `<T, GK = string>`; the default leaves every existing `LLSelect*<T>` call unchanged. A number / object key is allowed exactly as `T` is - equality is asked via `groupKeyCompareFn` (default strict `===`), the same way `compareFn` handles arbitrary `T`. This dodges the hard-coded-string-key trap where widening the key type later would be a breaking change.
-- **`GK` never touches the DOM.** Group containers get an index-based id (`-group${index}`, like items' `-item${index}`); the `aria-label` comes from `groupKeyToLabelFn` (visible content optionally from `createGroupLabelContentElFn`), disabled state from a computed boolean. So an object key needs no `String(key)` serialization anywhere.
+- **`GK` never touches the DOM.** Group containers get an index-based id (`-group${index}`, like items' `-item${index}`); the `aria-label` comes from `groupKeyToStringFn` (visible content optionally from `createGroupLabelContentElFn`), disabled state from a computed boolean. So an object key needs no `String(key)` serialization anywhere.
 - **Settings compose; no subclass split.** Same reasoning as the filter box: a capability that combines with others (filter x optgroup x ...) must be a setting, not a subclass, or the class count multiplies.
 - **Nested's unique wins are out of scope.** A nested shape is only strictly needed for empty groups (a header with no items), one item in multiple groups, or group order decoupled from item order. Native `<select>` supports none of these and neither do we ("Library scope"), so we give up nothing real.
 
@@ -233,9 +233,9 @@ All live on `LLSelectBaseSettings<T, GK>` (single + multiple; `GK = string` defa
   - **setting `null`** (default): grouping off entirely - flat list, no headers, zero behavior change from today.
   - **fn returns `null`** for an item: that item is in no group and renders ungrouped (like an `<option>` outside any `<optgroup>`); consecutive ungrouped items are not gathered into one group. Backed by `protected itemToGroupKey(item)` (Customization model: override to replace).
 - `groupKeyCompareFn: ((a: GK, b: GK) => boolean) | null` (default `null` = strict `===`). Decides whether two adjacent items share a group (see contiguous-run). Mirrors `compareFn`; only worth setting when `GK` is an object without usable reference identity.
-- `groupKeyToLabelFn: ((groupKey: GK) => string) | null` (default `null` = `String(groupKey)`). The `GK -> display text` projection; the i18n seam. Backed by `protected groupKeyToLabel(key)`.
+- `groupKeyToStringFn: ((groupKey: GK) => string) | null` (default `null` = `String(groupKey)`). The `GK -> display text` projection; the i18n seam. Backed by `protected groupKeyToString(key)`.
 - `groupDisabledFn: ((groupKey: GK) => boolean) | null` (default `null` = no group disabled). `true` = every item in that group is treated as disabled. Backed by `protected isGroupDisabled(key)`.
-- `createGroupLabelContentElFn: ((groupKey: GK, itemsInGroup: readonly T[]) => HTMLElement | null) | null` (default `null`). The rich-header seam, mirroring `createItemContentElFn`: fills the header's visible content (icon, count badge; cf. react-select `formatGroupLabel`, MUI `renderGroup`). `null` (setting or returned) = plain text from `groupKeyToLabel`. The accessible name stays `groupKeyToLabel` (container `aria-label`); the label element stays `aria-hidden`. `itemsInGroup` (the group's items) is what makes counts / summaries possible without recomputing the grouping. Backed by `protected createGroupLabelContentEl(key, itemsInGroup)`.
+- `createGroupLabelContentElFn: ((groupKey: GK, itemsInGroup: readonly T[]) => HTMLElement | null) | null` (default `null`). The rich-header seam, mirroring `createItemContentElFn`: fills the header's visible content (icon, count badge; cf. react-select `formatGroupLabel`, MUI `renderGroup`). `null` (setting or returned) = plain text from `groupKeyToString`. The accessible name stays `groupKeyToString` (container `aria-label`); the label element stays `aria-hidden`. `itemsInGroup` (the group's items) is what makes counts / summaries possible without recomputing the grouping. Backed by `protected createGroupLabelContentEl(key, itemsInGroup)`.
 
 The full-control escape hatch mirrors `createItemEl`: `protected createGroupEl(key, index, items, itemEls)` builds the whole group container (id, `role="group"`, `aria-label`, label element, items) and is overridable for a custom group element.
 
@@ -252,7 +252,7 @@ Consecutive visible items whose keys are equal (per `groupKeyCompareFn`) form on
 
 ### ARIA
 
-Matches the APG grouped-listbox example. Each group is a container `role="group"` with `aria-label` set to `groupKeyToLabelFn(key)`; the visible label element carries `.llselect-group-label` and `aria-hidden="true"` (its text is already the group's accessible name via `aria-label`, so it must not be announced twice). A disabled group's container gets `aria-disabled="true"` + `data-disabled`. The keyboard / focus contract is in `A11Y.md` ("Grouping").
+Matches the APG grouped-listbox example. Each group is a container `role="group"` with `aria-label` set to `groupKeyToStringFn(key)`; the visible label element carries `.llselect-group-label` and `aria-hidden="true"` (its text is already the group's accessible name via `aria-label`, so it must not be announced twice). A disabled group's container gets `aria-disabled="true"` + `data-disabled`. The keyboard / focus contract is in `A11Y.md` ("Grouping").
 
 ### Implementation note (resolved)
 
@@ -302,12 +302,12 @@ Same trick as the arrow: clear and arrow are separate slots, so `createTriggerCo
 - You optionally fill the icon via `createTriggerClearButtonContentElFn: () => HTMLElement | SVGElement | null` (mirrors `createTriggerArrowContentElFn`); `null` = theme CSS glyph (`.llselect-trigger-clear-button:empty::before { content: '\00d7' }`).
 - `protected clearSelection()`: base no-op; single -> `setChosenItem(undefined)`, multiple -> `setChosenItems([])`. Both go through the normal setters, so `onChange` fires with the empty value - no separate `onClear`. Clear means "back to empty / placeholder", not "back to some default option" (do that yourself in `onChange` if wanted).
 
-## Select-all default: plain counting label (no indicator)
+## Select-all default: plain counting text (no indicator)
 
-The select-all row's default content is JUST the counting label (`uiTranslationPack.selectAllRowLabel`, e.g. "Select all (3 of 10)"). No icon, no glyph. RULED:
+The select-all row's default content is JUST the counting text (`uiTranslationPack.selectAllRowText`, e.g. "Select all (3 of 10)"). No icon, no glyph. RULED:
 
 - Consistency: the library ships no default visual indicator anywhere - no trigger arrow, no per-item checkboxes; selected state is theme styling off `aria-selected`. A select-all-only indicator was the single exception, and nothing ever required one.
-- The label already encodes the tri-state: "0 of 10" / "3 of 10" / "10 of 10". Any indicator restates the numbers.
+- The counting text already encodes the tri-state: "0 of 10" / "3 of 10" / "10 of 10". Any indicator restates the numbers.
 - The hooks stay: `data-chosen-state="none|some|all"` on the row for CSS, `createSelectAllRowContentElFn` for real content (e.g. `createOutlinedCheckboxSvgEl`). Batteries-included defaults live a layer up - the AngularJS package's `ll-checkboxes` does exactly that.
 - History, so this is not re-litigated: the default indicator was first a theme `::before` glyph gated by `:not(:has(*))` (a gate above the browser support floor, so it silently died on floor browsers, and generated content lands in the accessible-name computation), then a core-rendered `createOutlinedCheckboxSvgEl` (couples `icons.ts` into every multi bundle and makes the core pick outlined vs filled), then a core-rendered aria-hidden text glyph (redundant with the numbers, font-dependent look). Each step fixed the previous mechanism's defect; the actual answer was that the indicator itself was never needed.
 
@@ -338,7 +338,7 @@ Tested 2026 against the native control and select2 on Firefox + Chromium. Captur
 
 1. **Predictable trigger.** Trigger width is whatever the user's CSS says it is; the library never measures items to auto-resize the trigger. The popup does size to content by default - that is the point of `fit-content` - but it is a fixed-position overlay, so its width never reflows the page.
 2. **No viewport-overflow surprise.** The native content-sized popup can escape the viewport (Chromium); `fit-content` instead shifts left when the right edge would overflow (so `popup.x` can become smaller than `trigger.x`) and clamps width to `viewport - 2 * VIEWPORT_PADDING`. Opt-in `match-trigger` never sticks out past the trigger's footprint at all.
-3. **Long-text full-fidelity by default.** Under the default the full label simply shows (the popup grows); under `match-trigger` items wrap rather than truncate. Either way no information is hidden behind a hover tooltip.
+3. **Long-text full-fidelity by default.** Under the default the full item text simply shows (the popup grows); under `match-trigger` items wrap rather than truncate. Either way no information is hidden behind a hover tooltip.
 4. **Users opt in to other policies via their own CSS** - e.g. set `.llselect-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }` (pair it with `match-trigger`: a content-fitted popup never overflows its labels, so ellipsis would stay dead). The library deliberately does NOT auto-set a `title` attribute on items so it never fights third-party tooltip libraries (Tippy / Floating UI / etc.). Users who pick ellipsis-on-items pick their own tooltip mechanism (subclass adding `el.title`, or a custom tooltip lib, or none at all).
 5. **The edge-aligned look stays one setting away**: `popupWidthPolicy: 'fit-content' | 'match-trigger'` (default `'fit-content'`). `'match-trigger'` pins the popup to the trigger's measured width - the select2-style aligned-edges convention. The setting NEVER touches the trigger's width - that stays entirely CSS-driven.
 

@@ -10,11 +10,11 @@ export const sv: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Filtrera (Esc för att rensa)',
   popupListNoResults: 'Inga resultat',
   triggerClearButtonAriaLabel: 'Rensa valet',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Ta bort ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Ta bort ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) => {
     if (chosenCount === 1) { return `1 av ${totalCount} vald` }
     if (chosenCount === totalCount) { return `Alla ${chosenCount} valda` }
     return `${chosenCount} av ${totalCount} valda`
   },
-  selectAllRowLabel: (chosenCount, totalCount) => `Välj alla (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Välj alla (${chosenCount} / ${totalCount})`,
 }

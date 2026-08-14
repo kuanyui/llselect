@@ -157,7 +157,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
   /**
    * Predicate used by the filter input; return `true` to keep the item.
    * `null` (default) means the built-in case-insensitive substring match
-   * against the item's resolved label (`itemToStringFn` / `itemToString`).
+   * against the item's resolved text (`itemToStringFn` / `itemToString`).
    * Pass a custom function for fuzzy / domain-specific matching.
    * - `query` is the RAW input value: not trimmed and not lower-cased. Normalize
    *   it yourself (the built-in lower-cases both sides; it does not trim).
@@ -191,7 +191,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   Direction-aware: in an RTL context
    *   (`getComputedStyle(trigger).direction === 'rtl'`, read once per open)
    *   it right-aligns to the trigger and grows LEFTWARD, the mirror of LTR.
-   * - `'match-trigger'`: popup width equals trigger width; long labels wrap
+   * - `'match-trigger'`: popup width equals trigger width; long item text wraps
    *   inside the popup.
    * @group Popup
    */
@@ -218,7 +218,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * Item -> display string, without subclassing.
    * - `null` (default) = `String(item)`.
    * - Read by the `itemToString` method's default; used for list text, the
-   *   single trigger label, the option's accessible name, and the default
+   *   single trigger text, the option's accessible name, and the default
    *   filter. Inserted as `textContent` (plain text, NOT parsed as HTML).
    * - For rich content (icons etc.), pass `createItemContentElFn`.
    * @group Items
@@ -247,7 +247,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   `createCheckmarkSvgEl`) therefore stays fresh; keep the function cheap.
    *
    * @example
-   *   // List shows an icon + label; screen readers announce just the label.
+   *   // List shows an icon + the item text; screen readers announce just that text.
    *   itemToStringFn: (lang) => lang.name,
    *   createItemContentElFn: (lang) => {
    *     const row = document.createElement('span')
@@ -283,7 +283,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * - `null` (default) = `String(groupKey)`.
    * @group Grouping
    */
-  groupKeyToLabelFn: ((groupKey: GK) => string) | null
+  groupKeyToStringFn: ((groupKey: GK) => string) | null
   /**
    * Predicate: is this whole group disabled?
    * - `null` (default) = no group disabled.
@@ -296,10 +296,10 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * Group header -> its visible content ELEMENT (icon / count badge / rich
    * markup), without subclassing. Mirrors `createItemContentElFn`.
    * - Return an `HTMLElement` and the library inserts it as the header's visible
-   *   content; the group's accessible name stays `groupKeyToLabel` (on the
+   *   content; the group's accessible name stays `groupKeyToString` (on the
    *   container `aria-label`) and the label element stays `aria-hidden`.
    * - `null` (default, or returned for a group) = plain text from
-   *   `groupKeyToLabel`.
+   *   `groupKeyToString`.
    * - `itemsInGroup` is the group's items, so you can render "Fruits (4)" or a
    *   summary without recomputing the grouping.
    * @group Grouping
@@ -702,7 +702,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       createItemContentElFn: settings?.createItemContentElFn ?? null,
       itemToGroupKeyFn: settings?.itemToGroupKeyFn ?? null,
       groupKeyCompareFn: settings?.groupKeyCompareFn ?? null,
-      groupKeyToLabelFn: settings?.groupKeyToLabelFn ?? null,
+      groupKeyToStringFn: settings?.groupKeyToStringFn ?? null,
       groupDisabledFn: settings?.groupDisabledFn ?? null,
       createGroupLabelContentElFn: settings?.createGroupLabelContentElFn ?? null,
       onOpen: settings?.onOpen ?? null,
@@ -1217,7 +1217,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * was there; the sibling arrow slot is untouched. The single DOM-writing
    * primitive behind every `renderTriggerContent` path.
    * - `string` -> set as `textContent` (plain text, NOT parsed as HTML). Used
-   *   for the default placeholder / `itemToString` label / count summary.
+   *   for the default placeholder / `itemToString` text / count summary.
    * - `HTMLElement` -> inserted as-is via `replaceChildren`; caller owns the
    *   node. Used for whatever the `createTriggerContentElFn` setting returned.
    * - Also mirrors the value into the hidden `triggerValueEl` (the accessible
@@ -1385,7 +1385,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Build a detached group container: `role="group"` named by `groupKeyToLabel`,
+   * Build a detached group container: `role="group"` named by `groupKeyToString`,
    * an `aria-hidden` visible label element, then the group's item elements. The
    * label content comes from `createGroupLabelContentEl` (rich header) when
    * non-null, else the plain label text. `aria-disabled` + `data-disabled` when
@@ -1399,12 +1399,12 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @group Subclassing: rendering
    */
   protected createGroupEl(key: GK, index: number, items: readonly T[], itemEls: HTMLElement[]): HTMLElement {
-    const label = this.groupKeyToLabel(key)
+    const text = this.groupKeyToString(key)
     const group = document.createElement('div')
     group.id = `${this.classIdMap.popupListId}-group${index}`
     group.className = this.classIdMap.groupClass
     group.setAttribute('role', 'group')
-    group.setAttribute('aria-label', label)
+    group.setAttribute('aria-label', text)
     if (this.isGroupDisabled(key)) {
       group.setAttribute('aria-disabled', 'true')
       group.setAttribute('data-disabled', 'true')
@@ -1414,7 +1414,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     labelEl.setAttribute('aria-hidden', 'true')
     const content = this.createGroupLabelContentEl(key, items)
     if (content === null) {
-      labelEl.textContent = label
+      labelEl.textContent = text
     } else {
       labelEl.appendChild(content)
     }
@@ -1426,8 +1426,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Group header -> its visible content element (icon / count badge / rich
    * markup). Mirrors `createItemContentEl`.
    * - Default reads `createGroupLabelContentElFn`, else `null` so `createGroupEl`
-   *   uses plain text from `groupKeyToLabel`.
-   * - The group's accessible name stays `groupKeyToLabel` (container `aria-label`);
+   *   uses plain text from `groupKeyToString`.
+   * - The group's accessible name stays `groupKeyToString` (container `aria-label`);
    *   this fills only the visible, `aria-hidden` label content.
    * - Override only when extending; for one-off rich headers pass the setting.
    * @group Subclassing: rendering
@@ -1471,7 +1471,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * {@link createItemContentEl} (which reads `createItemContentElFn`), falling
    * back to `textContent` from {@link itemToString}. When the content is
    * custom (non-null), the option's `aria-label` is set from `itemToString`
-   * so the accessible name stays the plain label. For one-off rich content
+   * so the accessible name stays the plain `itemToString` text. For one-off rich content
    * (icons etc.) prefer the `createItemContentElFn` setting; override this only
    * to control the whole element (tag, extra wiring).
    *
@@ -1498,7 +1498,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       el.appendChild(content)
     }
     // No `title` attribute by default: items wrap (themes default), so the
-    // full label is already visible and a tooltip is redundant. Adding
+    // full text is already visible and a tooltip is redundant. Adding
     // `title` would also fight third-party tooltip libraries (Tippy etc.).
     // Users who opt into ellipsis-on-items pick their own tooltip mechanism.
     if (this.isItemEffectivelyDisabled(item)) {
@@ -1521,7 +1521,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
 
   /**
    * Map an item to its display string. The library calls this everywhere it
-   * needs an item's text: list rows, the single trigger label, default filter.
+   * needs an item's text: list rows, the single trigger text, default filter.
    * - Default reads the `itemToStringFn` setting, else `String(item)`.
    * - Configure via `itemToStringFn` (no subclass needed).
    * - Override only when extending (a new select type); your override replaces
@@ -1533,7 +1533,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Item -> the visible content of its list row (icon + label etc.).
+   * Item -> the visible content of its list row (icon + text etc.).
    * - Default reads `createItemContentElFn`, else `null` so `createItemEl` uses
    *   the plain-text default from `itemToString`.
    * - Override only when extending; for one-off rich content pass the setting.
@@ -1570,11 +1570,11 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
 
   /**
    * Map a group key to its header display text.
-   * - Default reads `groupKeyToLabelFn`, else `String(key)`.
+   * - Default reads `groupKeyToStringFn`, else `String(key)`.
    * @group Subclassing: semantics
    */
-  protected groupKeyToLabel(key: GK): string {
-    return this.settings.groupKeyToLabelFn ? this.settings.groupKeyToLabelFn(key) : String(key)
+  protected groupKeyToString(key: GK): string {
+    return this.settings.groupKeyToStringFn ? this.settings.groupKeyToStringFn(key) : String(key)
   }
 
   /**
@@ -1686,7 +1686,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Rebuild the leading row in place (tri-state / label refresh) without
+   * Rebuild the leading row in place (tri-state / text refresh) without
    * touching the item elements - O(1) DOM work, mirroring
    * `replacePopupListItemElInDom`. Falls back to a full `renderPopupList`
    * when the row becomes inapplicable (builder returns `null`). No-op while

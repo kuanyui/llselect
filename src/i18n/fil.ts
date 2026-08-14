@@ -10,8 +10,8 @@ export const fil: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Salain (Esc para burahin)',
   popupListNoResults: 'Walang resulta',
   triggerClearButtonAriaLabel: 'Burahin ang pinili',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Alisin ang ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Alisin ang ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Napili lahat (${chosenCount})` : `${chosenCount} sa ${totalCount} ang napili`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Piliin lahat (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Piliin lahat (${chosenCount} / ${totalCount})`,
 }

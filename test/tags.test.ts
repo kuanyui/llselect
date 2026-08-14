@@ -134,7 +134,7 @@ test('createTagRemoveButtonEl can be overridden for full control of the remove b
 test('uiTranslationPack.tagRemoveButtonAriaLabel customizes the remove button accessible name', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     triggerDisplay: 'tags',
-    uiTranslationPack: { tagRemoveButtonAriaLabel: (itemLabel) => `Drop ${itemLabel}` },
+    uiTranslationPack: { tagRemoveButtonAriaLabel: (itemText) => `Drop ${itemText}` },
   })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a'])
@@ -149,7 +149,7 @@ test('a subclass itemToTagRemoveButtonAriaLabel override replaces the pack defau
   }
   const sel = new Derived(mount(), {
     triggerDisplay: 'tags',
-    uiTranslationPack: { tagRemoveButtonAriaLabel: (itemLabel) => `Drop ${itemLabel}` },
+    uiTranslationPack: { tagRemoveButtonAriaLabel: (itemText) => `Drop ${itemText}` },
   })
   sel.setItems(['a'])
   sel.setChosenItems(['a'])

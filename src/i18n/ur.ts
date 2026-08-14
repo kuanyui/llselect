@@ -10,8 +10,8 @@ export const ur: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'فلٹر (صاف کرنے کے لیے Esc)',
   popupListNoResults: 'کوئی نتیجہ نہیں ملا',
   triggerClearButtonAriaLabel: 'انتخاب صاف کریں',
-  tagRemoveButtonAriaLabel: (itemLabel) => `${itemLabel} ہٹائیں`,
+  tagRemoveButtonAriaLabel: (itemText) => `${itemText} ہٹائیں`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `سب منتخب (${chosenCount})` : `${totalCount} میں سے ${chosenCount} منتخب`,
-  selectAllRowLabel: (chosenCount, totalCount) => `سب منتخب کریں (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `سب منتخب کریں (${chosenCount} / ${totalCount})`,
 }

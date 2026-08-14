@@ -13,8 +13,8 @@ export const nanLatnTailo: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Kuè-lī (tshi̍h Esc tshing-tiāu)',
   popupListNoResults: 'Tshuē bô kiat-kó',
   triggerClearButtonAriaLabel: 'Tshing-tiāu kíng--ê',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Kā ${itemLabel} the̍h-tiāu`,
+  tagRemoveButtonAriaLabel: (itemText) => `Kā ${itemText} the̍h-tiāu`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Tsuân-pōo ${chosenCount} hāng lóng kíng--ah` : `${totalCount} hāng kíng ${chosenCount} hāng`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Lóng-tsóng kíng (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Lóng-tsóng kíng (${chosenCount} / ${totalCount})`,
 }

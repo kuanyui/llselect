@@ -10,8 +10,8 @@ export const ru: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Фильтр (Esc, чтобы очистить)',
   popupListNoResults: 'Ничего не найдено',
   triggerClearButtonAriaLabel: 'Очистить выбор',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Удалить ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Удалить ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Выбраны все (${chosenCount})` : `Выбрано ${chosenCount} из ${totalCount}`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Выбрать все (${chosenCount} из ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Выбрать все (${chosenCount} из ${totalCount})`,
 }

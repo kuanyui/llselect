@@ -26,7 +26,7 @@ test('off by default: no select-all row', () => {
   assert.equal(row(sel), null)
 })
 
-test('renders as the first option with tri-state attributes and a counting label', () => {
+test('renders as the first option with tri-state attributes and a counting text', () => {
   const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
   sel.setItems(['a', 'b', 'c'])
   sel.toggleItem('a')
@@ -123,7 +123,7 @@ test('toggleItem keeps the row fresh via the O(1) leading-row replace (items unt
   assert.equal(row(sel)!.textContent, 'Select all (1 of 2)')
 })
 
-test('createSelectAllRowContentElFn fills the row; accessible name stays the counting label', () => {
+test('createSelectAllRowContentElFn fills the row; accessible name stays the counting text', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     selectAllRow: true,
     createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
@@ -152,7 +152,7 @@ test('createSelectAllRowContentElFn returning null falls back to the plain label
   assert.equal(row(sel)!.getAttribute('aria-label'), null)
 })
 
-test('default content: just the plain counting label - no indicator element', () => {
+test('default content: just the plain counting text - no indicator element', () => {
   const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
   sel.setItems(['a', 'b'])
   sel.open()

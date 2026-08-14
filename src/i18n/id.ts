@@ -10,8 +10,8 @@ export const id: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Saring (Esc untuk menghapus)',
   popupListNoResults: 'Tidak ada hasil',
   triggerClearButtonAriaLabel: 'Hapus pilihan',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Hapus ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Hapus ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Semua dipilih (${chosenCount})` : `${chosenCount} dari ${totalCount} dipilih`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Pilih semua (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Pilih semua (${chosenCount} / ${totalCount})`,
 }

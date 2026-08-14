@@ -159,7 +159,7 @@
       /**
        * 7a. A render-time DOM factory: called by llselect outside any digest,
        * never $compile'd - custom rows with zero per-row scope or watcher.
-       * The accessible name stays the ll-options label; this only changes
+       * The accessible name stays the item text from ll-options; this only changes
        * the pixels.
        */
       vm.renderLangRow = function (lang) {

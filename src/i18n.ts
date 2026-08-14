@@ -73,10 +73,10 @@ export interface LLSelectUiTranslationPack {
   /** Accessible name (`aria-label`) of the trigger's clear (x) button (`clearable`). */
   triggerClearButtonAriaLabel: string
   /**
-   * itemLabel (already `itemToString`-resolved) -> the accessible name
+   * itemText (already `itemToString`-resolved) -> the accessible name
    * (`aria-label`) of that tag's remove button. `'tags'` mode only.
    */
-  tagRemoveButtonAriaLabel: (itemLabel: string) => string
+  tagRemoveButtonAriaLabel: (itemText: string) => string
   /**
    * Count summary shown in the multi trigger. Called only when
    * `chosenCount > 0` (an empty selection shows `placeholder` instead).
@@ -87,7 +87,7 @@ export interface LLSelectUiTranslationPack {
    * (`selectAllRow` setting). Counts refer to the VISIBLE enabled subset the
    * row acts on.
    */
-  selectAllRowLabel: (chosenCount: number, totalCount: number) => string
+  selectAllRowText: (chosenCount: number, totalCount: number) => string
 }
 
 import { ar } from './i18n/ar.js'

@@ -10,8 +10,8 @@ export const ar: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'تصفية (Esc للمسح)',
   popupListNoResults: 'لا توجد نتائج',
   triggerClearButtonAriaLabel: 'مسح التحديد',
-  tagRemoveButtonAriaLabel: (itemLabel) => `إزالة ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `إزالة ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `تم اختيار الكل (${chosenCount})` : `تم اختيار ${chosenCount} من ${totalCount}`,
-  selectAllRowLabel: (chosenCount, totalCount) => `تحديد الكل (${chosenCount} من ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `تحديد الكل (${chosenCount} من ${totalCount})`,
 }

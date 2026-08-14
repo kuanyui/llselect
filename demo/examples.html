@@ -307,7 +307,7 @@
     <article>
       <h3>5.4 Checkbox items (createItemContentElFn)</h3>
       <p class="hint">
-        <code>createItemContentElFn</code> renders checkbox + label; the
+        <code>createItemContentElFn</code> renders checkbox + item text; the
         public <code>isChosen()</code> supplies the state (the fn runs per
         render, so the self-reference in the code is safe); the single-item
         rerender keeps it in sync. Subclass equivalent: 14.1.
@@ -327,7 +327,7 @@
         <code>selectAllRow: true</code> pins a tri-state row acting on the
         VISIBLE enabled subset: type a filter, toggle the row - only the
         matches change. <code>createSelectAllRowContentElFn</code> swaps the
-        default plain-label row (5.7) for the outlined SVG; items reuse
+        default plain-text row (5.7) for the outlined SVG; items reuse
         5.4's checkbox.
       </p>
       <div class="demo-split">
@@ -358,7 +358,7 @@
     <article>
       <h3>5.7 Select-all default look</h3>
       <p class="hint">
-        No content fn: the row is just the counting label, and its numbers
+        No content fn: the row is just the counting text, and its numbers
         ARE the tri-state. The library draws no default indicator anywhere;
         5.5 / 5.6 add SVG checkboxes via the hook.
       </p>
@@ -402,7 +402,7 @@
       <p class="hint">
         Demo CSS constrains the mount to <code>max-width: 18rem</code>: the
         trigger ellipsizes, but the default popup still opens at the widest
-        label's width (viewport-clamped).
+        item text's width (viewport-clamped).
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -414,11 +414,11 @@
     </article>
 
     <article>
-      <h3>6.3 <code>'match-trigger'</code>: labels wrap</h3>
+      <h3>6.3 <code>'match-trigger'</code>: item text wraps</h3>
       <p class="hint">
         Same <code>18rem</code> constraint, opt-in
         <code>'match-trigger'</code>: popup pinned to the trigger width, long
-        labels wrap.
+        item text wraps.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -492,7 +492,7 @@
       <h3>7.3 Custom <code>filterFn</code> (match name OR role)</h3>
       <p class="hint">
         A custom <code>filterFn</code> matches name OR role - the default
-        substring only sees the rendered label.
+        substring only sees the rendered text.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -591,7 +591,7 @@
     <p class="hint">
       <code>itemToGroupKeyFn</code> maps each item to a group key (contiguous
       same-key items form one group - pre-sort your data);
-      <code>groupKeyToLabelFn</code> is the display / i18n seam. Keyboard nav
+      <code>groupKeyToStringFn</code> is the display / i18n seam. Keyboard nav
       skips headers. Custom header content: 11.3.
     </p>
 
@@ -638,7 +638,7 @@
     <article>
       <h3>11.1 Single icon rows</h3>
       <p class="hint">
-        Icon + label rows via <code>createItemContentElFn</code>. The trigger
+        Icon + text rows via <code>createItemContentElFn</code>. The trigger
         mirrors the chosen row only because the same renderer feeds
         <code>createTriggerContentElFn</code> - there is no auto-projection.
       </p>
@@ -671,7 +671,7 @@
       <p class="hint">
         <code>createGroupLabelContentElFn</code> fills the header (icon +
         item count); the accessible name stays the plain
-        <code>groupKeyToLabel</code>.
+        <code>groupKeyToString</code>.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -701,7 +701,7 @@
     <article>
       <h3>11.5 Faded hint text</h3>
       <p class="hint">
-        Primary label + a faded <code>.hint</code> pushed to the row's right
+        Primary text + a faded <code>.hint</code> pushed to the row's right
         edge (<code>.user-row</code>). Visual only: the option's
         <code>aria-label</code> stays the plain <code>itemToString</code> name.
       </p>
@@ -788,7 +788,7 @@
             </select>
           </div>
           <div id="mount-i18n-single" style="margin-top:0.5rem"></div>
-          <div class="out">^ <code>LLSelectSingle</code> - localized placeholder, chosen label in the trigger</div>
+          <div class="out">^ <code>LLSelectSingle</code> - localized placeholder, chosen text in the trigger</div>
           <div id="mount-i18n-tags" style="margin-top:0.7rem"></div>
           <div class="out">^ multi, <code>triggerDisplay: 'tags'</code> - translated remove x per chip</div>
           <div id="mount-i18n-count" style="margin-top:0.7rem"></div>
@@ -804,7 +804,7 @@
       <p class="hint">
         <code>dir="rtl"</code> on the mount is ALL the wiring - there is no
         RTL API. Flex rows and logical margins mirror by themselves: the
-        checkboxes land on the right, the ar pack's counting label reads
+        checkboxes land on the right, the ar pack's counting text reads
         right-to-left.
       </p>
       <div class="demo-split">

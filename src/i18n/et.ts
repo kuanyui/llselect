@@ -10,8 +10,8 @@ export const et: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Filtreeri (Esc tühjendab)',
   popupListNoResults: 'Tulemusi pole',
   triggerClearButtonAriaLabel: 'Tühjenda valik',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Eemalda ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Eemalda ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Kõik valitud (${chosenCount})` : `Valitud ${chosenCount} / ${totalCount}`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Vali kõik (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Vali kõik (${chosenCount} / ${totalCount})`,
 }

@@ -10,8 +10,8 @@ export const cs: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Filtr (Esc pro vymazání)',
   popupListNoResults: 'Žádné výsledky',
   triggerClearButtonAriaLabel: 'Vymazat výběr',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Odebrat ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Odebrat ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Vybráno vše (${chosenCount})` : `Vybráno ${chosenCount} z ${totalCount}`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Vybrat vše (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Vybrat vše (${chosenCount} / ${totalCount})`,
 }

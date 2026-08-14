@@ -338,9 +338,9 @@
 
           // Batteries-included checkboxes: every row gets a live checkbox icon,
           // and (with ll-select-all-row) the row gets the matching tri-state
-          // one plus the pack's counting label. ll-checkboxes="false" opts out;
+          // one plus the pack's counting text. ll-checkboxes="false" opts out;
           // everything then falls back to the core defaults, which draw no
-          // indicator at all (the select-all row is just its counting label).
+          // indicator at all (the select-all row is just its counting text).
           // Core ships no icons; per item its answer is the subclass recipe
           // (demo 5.4 / 5.5), and this package's answer is a default. Rows
           // render only after construction, so reading `sel` here is safe.
@@ -365,7 +365,7 @@
                 content || document.createTextNode(settings.itemToStringFn(item)))
             }
             settings.createSelectAllRowContentElFn = function (chosenState, chosenCount, totalCount) {
-              return checkboxRowEl(chosenState, document.createTextNode(sel.getUiTranslationPack().selectAllRowLabel(chosenCount, totalCount)))
+              return checkboxRowEl(chosenState, document.createTextNode(sel.getUiTranslationPack().selectAllRowText(chosenCount, totalCount)))
             }
           }
 

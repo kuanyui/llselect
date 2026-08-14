@@ -10,8 +10,8 @@ export const is: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'Sía (Esc til að hreinsa)',
   popupListNoResults: 'Engar niðurstöður',
   triggerClearButtonAriaLabel: 'Hreinsa val',
-  tagRemoveButtonAriaLabel: (itemLabel) => `Fjarlægja ${itemLabel}`,
+  tagRemoveButtonAriaLabel: (itemText) => `Fjarlægja ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Allt valið (${chosenCount})` : `${chosenCount} af ${totalCount} valið`,
-  selectAllRowLabel: (chosenCount, totalCount) => `Velja allt (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `Velja allt (${chosenCount} / ${totalCount})`,
 }

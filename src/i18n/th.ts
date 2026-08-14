@@ -10,8 +10,8 @@ export const th: LLSelectUiTranslationPack = {
   filterInputPlaceholder: 'กรอง (กด Esc เพื่อล้าง)',
   popupListNoResults: 'ไม่พบผลลัพธ์',
   triggerClearButtonAriaLabel: 'ล้างการเลือก',
-  tagRemoveButtonAriaLabel: (itemLabel) => `นำ ${itemLabel} ออก`,
+  tagRemoveButtonAriaLabel: (itemText) => `นำ ${itemText} ออก`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `เลือกแล้วทั้งหมด (${chosenCount})` : `เลือกแล้ว ${chosenCount} จาก ${totalCount}`,
-  selectAllRowLabel: (chosenCount, totalCount) => `เลือกทั้งหมด (${chosenCount} / ${totalCount})`,
+  selectAllRowText: (chosenCount, totalCount) => `เลือกทั้งหมด (${chosenCount} / ${totalCount})`,
 }
