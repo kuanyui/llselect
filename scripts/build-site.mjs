@@ -424,8 +424,9 @@ main [data-binding]::before { content: attr(data-binding); float: right; margin-
   .md-alert-caution { --alert: #f85149; }
 }
 /* Back-to-top: fixed bottom-right, hidden until scrolled (script toggles). */
-.back-to-top { position: fixed; right: 1rem; bottom: 1rem; z-index: 10; padding: 0.45rem 0.9rem; font: inherit; font-weight: 600; color: var(--nav-link); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+.back-to-top { position: fixed; right: 1rem; bottom: 1rem; z-index: 10; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.45rem 0.9rem; font: inherit; font-weight: 600; color: var(--nav-link); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
 .back-to-top:hover { background: var(--nav-hover); }
+.back-to-top svg { width: 1em; height: 1em; }
 </style>
 </head>
 <body${toc ? ' class="with-toc"' : ''}>
@@ -447,7 +448,7 @@ if (location.hostname.includes('gitlab')) {
   repoLink.textContent = 'GitLab'
 }
 </script>
-<button class="back-to-top" hidden>Top</button>
+<button class="back-to-top" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13,20H11V8L5.5,13.5L4.08,12.08L12,4.16L19.92,12.08L18.5,13.5L13,8V20Z"/></svg>Top</button>
 <script>
 // Back-to-top: appears after one viewport of scroll.
 {

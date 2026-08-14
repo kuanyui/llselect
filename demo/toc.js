@@ -190,3 +190,27 @@ if (layout && mainEl) {
     if (target) { target.scrollIntoView() }
   }
 }
+
+// --- back-to-top button ------------------------------------------------------
+// Same behavior as the site pages (scripts/build-site.mjs): appears after one
+// viewport of scroll; instant jump on purpose - a smooth scroll over these
+// page lengths runs for seconds and any input cancels it midway, which reads
+// as a stuck button.
+{
+  const topBtn = document.createElement('button')
+  topBtn.className = 'back-to-top'
+  topBtn.hidden = true
+  const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  arrow.setAttribute('viewBox', '0 0 24 24')
+  arrow.setAttribute('aria-hidden', 'true')
+  const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  arrowPath.setAttribute('fill', 'currentColor')
+  arrowPath.setAttribute('d', 'M13,20H11V8L5.5,13.5L4.08,12.08L12,4.16L19.92,12.08L18.5,13.5L13,8V20Z')
+  arrow.appendChild(arrowPath)
+  topBtn.append(arrow, 'Top')
+  document.body.appendChild(topBtn)
+  const syncTopBtn = () => { topBtn.hidden = window.scrollY < window.innerHeight }
+  window.addEventListener('scroll', syncTopBtn, { passive: true })
+  syncTopBtn()
+  topBtn.addEventListener('click', () => { window.scrollTo(0, 0) })
+}

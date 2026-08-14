@@ -27,7 +27,11 @@ function applyTheme(name) {
     bsLink = document.createElement('link')
     bsLink.rel = 'stylesheet'
     bsLink.href = BS_CDN[name]
-    document.head.appendChild(bsLink)
+    // Base layer FIRST (before style.css and the llselect theme) so the
+    // page's own rules keep winning the cascade. Appended at the end,
+    // Bootstrap's body{margin:0} overrode the body centering and the whole
+    // page went left-aligned.
+    document.head.insertBefore(bsLink, document.querySelector('link[rel="stylesheet"]'))
   }
 }
 
