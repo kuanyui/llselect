@@ -294,7 +294,7 @@ Migrating a call site, at a glance:
 | `repeat="p in people"` | `setItems` via `$watchCollection` |
 | `alias as item in source` | the ngModel projection, same role as `ng-options`' `select as` |
 | `track by` | `compareFn` |
-| `\| filter: $select.search` in the repeat | `filterFn`. llselect owns the search box and asks per item, so the source expression is re-evaluated once per query and answers membership - your filter expression stays authoritative |
+| `\| filter: $select.search` in the repeat | `filterFn`. llselect owns the search box and asks per item, so the source expression is re-evaluated once per query and answers membership - your filter expression stays authoritative. No `\| filter:` in the repeat = typing filters nothing, exactly as in ui-select |
 | `group-by` | `itemToGroupKeyFn` |
 | `ui-disable-choice` | `itemDisabledFn` |
 | `multiple` | `LLSelectMultiple` (+ `triggerDisplay: 'tags'`) |

@@ -343,11 +343,11 @@
     <div data-src="8d">
     <ui-llselect ng-model="vm.person3">
       <ui-llselect-match placeholder="Bare text template">{{$select.selected.name}}</ui-llselect-match>
-      <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name">{{p.name}} ({{p.role}})</ui-llselect-choices>
+      <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">{{p.name}} ({{p.role}})</ui-llselect-choices>
     </ui-llselect>
     <ui-llselect ng-model="vm.person4">
       <ui-llselect-match placeholder="No template at all"></ui-llselect-match>
-      <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"></ui-llselect-choices>
+      <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"></ui-llselect-choices>
     </ui-llselect>
     </div>
     <div class="out">ng-model = {{ vm.person3.name || 'undefined' }} / {{ vm.person4.name || 'undefined' }}</div>
