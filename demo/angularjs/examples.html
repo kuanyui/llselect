@@ -333,6 +333,26 @@
     </div>
     <div class="out">ng-model = {{ vm.person2.name || 'undefined' }} <span class="hint">(ui-select's own allow-clear carries over: the x clears back to undefined)</span></div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="8c"><code></code></pre></details>
+
+    <p>
+      The template has three shapes: elements (above), a bare text node, or
+      none at all - rows then render the <code>ll-item-text</code> string
+      itself, which ui-select cannot do (its template is its only label
+      source).
+    </p>
+    <div data-src="8d">
+    <ui-llselect ng-model="vm.person3">
+      <ui-llselect-match placeholder="Bare text template">{{$select.selected.name}}</ui-llselect-match>
+      <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name">{{p.name}} ({{p.role}})</ui-llselect-choices>
+    </ui-llselect>
+    <ui-llselect ng-model="vm.person4">
+      <ui-llselect-match placeholder="No template at all"></ui-llselect-match>
+      <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"></ui-llselect-choices>
+    </ui-llselect>
+    </div>
+    <div class="out">ng-model = {{ vm.person3.name || 'undefined' }} / {{ vm.person4.name || 'undefined' }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8d"><code></code></pre></details>
+
     <p class="hint">
       Not bridged, by rule (llselect has no such concept, so it is ignored rather
       than half-implemented): tagging, sortable, append-to-body, async refresh,

@@ -143,6 +143,8 @@
       vm.userId = 3
       vm.person = undefined
       vm.person2 = USERS[2] // preset so allow-clear's x is visible on load
+      vm.person3 = undefined // 8d, bare text template
+      vm.person4 = undefined // 8d, no template
       vm.people = []
       vm.locked = false
       vm.avFruit = undefined
