@@ -32,9 +32,10 @@
   <h1>llselect + AngularJS 1.x - examples</h1>
   <p>
     Example directives, not a supported wrapper. Copy
-    <code>llselect-angularjs.js</code> (or <code>ui-llselect.js</code>) into your
-    project and adapt it. The reasoning, the source references, and the list of
-    deliberate gaps are in <a href="../../angularjs/">angularjs/README.md</a>.
+    <code>llselect-angularjs.js</code> (or <code>llselect-ui-select.js</code>)
+    into your project and adapt it. The reasoning, the source references, and
+    the list of deliberate gaps are in
+    <a href="../../angularjs/">angularjs/README.md</a>.
   </p>
   <p class="hint">
     Run <code>npm run build</code>, then <code>npm run serve:site</code>, and open
@@ -290,7 +291,16 @@
   </section>
 
   <section>
-    <h2>8. &lt;ui-llselect&gt;: ui-select's markup, llselect's DOM</h2>
+    <h2>8. &lt;ui-llselect&gt;: the ui-select-compatible directive</h2>
+    <p>
+      A separate directive (<code>llselect-ui-select.js</code>, module
+      <code>llselect.uiCompat</code>) that takes
+      <a href="https://github.com/angular-ui/ui-select">ui-select</a>'s
+      call-site markup, so an existing ui-select codebase can migrate without
+      rewriting every call site. New code should use
+      <code>&lt;llselect-single&gt;</code> /
+      <code>&lt;llselect-multiple&gt;</code> above instead.
+    </p>
     <p>
       Migrating a call site: rename the elements
       (<code>ui-select</code> family to <code>ui-llselect</code> family) and
