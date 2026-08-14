@@ -197,8 +197,9 @@
       passed straight to llselect's <code>createItemContentElFn</code>. It runs
       per rendered row per render, outside any digest, and the element is never
       <code>$compile</code>d - custom rows with zero per-row scope or watcher.
-      The accessible name and filter text stay the <code>ll-options</code>
-      label (icons and hints never reach a screen reader). All renderers are in
+      The accessible name and filter text stay the item text from
+      <code>ll-options</code> (icons and hints never reach a screen reader).
+      All renderers are in
       <code>app.js</code>. For real per-row Angular templates, that is
       <code>&lt;ui-llselect&gt;</code> below.
     </p>
@@ -347,8 +348,8 @@
     <p>
       The template has three shapes: elements (above), a bare text node, or
       none at all - rows then render the <code>ll-item-text</code> string
-      itself, which ui-select cannot do (its template is its only label
-      source).
+      itself, which ui-select cannot do (its template is its only source of
+      item text).
     </p>
     <div data-src="8d">
     <ui-llselect ng-model="vm.person3">

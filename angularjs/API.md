@@ -45,7 +45,7 @@ App-wide defaults for `arrow` / `filterable` / `popupWidthPolicy` / `uiTranslati
 
 ### `ll-options`
 
-**ng-options grammar**, required. Names the label, the identity and the model value of your items in one line:
+**ng-options grammar**, required. Names each item's text, its identity and its model value in one line:
 
     select as label group by group disable when disable for (key, value) in collection track by trackBy
 
@@ -114,9 +114,9 @@ Disabling must go through llselect's own `setDisabled()`:
 **Expression** -> `createItemContentElFn`. Custom visible content for each option row.
 
 - Evaluated once at link time to a function `(item) => HTMLElement | null`.
-- `null` (for one item, or no attribute at all) = the plain `ll-options` label text.
+- `null` (for one item, or no attribute at all) = the plain item text from `ll-options`.
 - Runs per rendered row per render (open / filter / list change), entirely outside any digest. The element is NOT `$compile`d - no Angular directives or bindings inside; build plain DOM (`document.createElement`, or clone a `<template>`).
-- The accessible name and the filter text stay owned by the `ll-options` label clause no matter what you render (the library sets the option's `aria-label` from it).
+- The accessible name and the filter text stay owned by the `label` clause of `ll-options` no matter what you render (the library sets the option's `aria-label` from it).
 - On `<llselect-multiple>` the element renders beside the default checkbox icon; `ll-checkboxes="false"` hands it the whole row.
 - Need real per-row Angular templates? That is [`<ui-llselect>`](#ui-llselect) - one child scope and one `$compile` per row is exactly the trade it prices in.
 
@@ -140,7 +140,7 @@ $scope.renderRow = function (fruit) {
 
 **Expression** -> `createTriggerContentElFn`. Custom visible content for the trigger, under the same rules as [`ll-item-content-fn`](#ll-item-content-fn) (outside any digest, never `$compile`'d).
 
-- `<llselect-single>`: the function receives `{ chosenItem, items }`; `null` = the default rendering (the chosen item's label, or the placeholder).
+- `<llselect-single>`: the function receives `{ chosenItem, items }`; `null` = the default rendering (the chosen item's text, or the placeholder).
 - `<llselect-multiple>`: receives `{ chosenItems, items }`; `null` = the count summary / tags. A returned element overrides both display modes.
 - The trigger does not mirror rich rows by itself - feeding this the same renderer as `ll-item-content-fn` is what does that (demo 7).
 
@@ -170,7 +170,7 @@ $scope.renderRow = function (fruit) {
 
 **Expression** -> `createTagContentElFn`. Custom content for one tag chip in `ll-trigger-display="'tags'"` mode.
 
-- A function `(item) => HTMLElement | null`; `null` = the plain label text.
+- A function `(item) => HTMLElement | null`; `null` = the plain item text.
 - The library still owns the chip container, the remove (x) button, and the button's `aria-label` (`Remove <label>`).
 - The chip itself is a generic `<span>` that ARIA prohibits naming - for icon-only content include your own visually hidden text if the chip should be announced as more than its remove button.
 
@@ -276,7 +276,7 @@ Migrating a call site, at a glance:
 | | ui-select | `<ui-llselect>` |
 |---|---|---|
 | Elements | `<ui-select>` / `<ui-select-match>` / `<ui-select-choices>` | rename to `<ui-llselect>` / `<ui-llselect-match>` / `<ui-llselect-choices>` |
-| Item label string | **does not exist in ui-select** | add [`ll-item-text`](#ll-item-text) on `<ui-llselect-choices>` |
+| Item text | **does not exist in ui-select** | add [`ll-item-text`](#ll-item-text) on `<ui-llselect-choices>` |
 | Template content, `repeat`, `track by`, `group-by`, `multiple`, ... | as you wrote them | unchanged - see [What carries over](#what-carries-over) |
 | CSS | ui-select themes | an llselect theme; the bridge takes ui-select's MARKUP, not its CSS |
 
@@ -307,7 +307,7 @@ Migrating a call site, at a glance:
 
 ### `ll-item-text`
 
-**Expression** -> `itemToStringFn`. **This attribute does not exist in ui-select - it is the ONE thing you add when migrating.** llselect needs one string per item - the option's accessible name and the search text - and ui-select's markup has no place that states it (its label is template DOM).
+**Expression** -> `itemToStringFn`. **This attribute does not exist in ui-select - it is the ONE thing you add when migrating.** llselect needs one string per item - the option's accessible name and the search text - and ui-select's markup has no place that states it (its row content is template DOM).
 
 Sits on `<ui-llselect-choices>`, written over the `repeat` variable:
 
@@ -344,7 +344,7 @@ Any of ui-select's template shapes carries over - plus one ui-select cannot do:
 </ui-llselect-choices>
 
 <!-- no template at all: each row renders the ll-item-text string. Impossible
-     in ui-select - there the template is the only label source. -->
+     in ui-select - there the template is the only source of item text. -->
 <ui-llselect-choices repeat="p in vm.people | filter: $select.search" ll-item-text="p.name"></ui-llselect-choices>
 ```
 

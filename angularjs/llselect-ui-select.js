@@ -123,11 +123,11 @@
     var choicesAttrs = slots.choicesAttrs
 
     // <ui-llselect-choices ll-item-text="p.name">. ui-select has NO item -> string
-    // concept at all (its label is DOM, its filtering is an Angular filter in
+    // concept at all (its row content is DOM, its filtering is an Angular filter in
     // the repeat expression), but llselect needs one for the option's
     // accessible name. This attribute is the single addition to ui-select's
     // markup; without it an object item degrades to String(item).
-    var labelFn = choicesAttrs['ll-item-text'] ? $parse(choicesAttrs['ll-item-text']) : null
+    var itemTextFn = choicesAttrs['ll-item-text'] ? $parse(choicesAttrs['ll-item-text']) : null
     var groupByFn = choicesAttrs['group-by'] ? $parse(choicesAttrs['group-by']) : null
     var disableFn = choicesAttrs['ui-disable-choice'] ? $parse(choicesAttrs['ui-disable-choice']) : null
 
@@ -212,8 +212,8 @@
 
     var settings = {
       ariaLabel: attrs.title || null,
-      itemToStringFn: labelFn
-        ? function (item) { return String(labelFn(scope, locals(item))) }
+      itemToStringFn: itemTextFn
+        ? function (item) { return String(itemTextFn(scope, locals(item))) }
         : null,
       itemToGroupKeyFn: groupByFn ? function (item) { return groupByFn(scope, locals(item)) } : null,
       itemDisabledFn: disableFn ? function (item) { return !!disableFn(scope, locals(item)) } : null,
