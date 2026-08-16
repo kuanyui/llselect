@@ -16,5 +16,5 @@ export const hi: LLSelectUiTranslationPack = {
     if (chosenCount === totalCount) { return `सभी ${chosenCount} चुने गए` }
     return `${totalCount} में से ${chosenCount} चुने गए`
   },
-  selectAllRowText: (chosenCount, totalCount) => `सभी चुनें (${chosenCount} / ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `सभी चुनें (${chosenCount} / ${totalCount})`,
 }

@@ -16,5 +16,5 @@ export const yue: LLSelectUiTranslationPack = {
   tagRemoveButtonAriaLabel: (itemText) => `移走 ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `全部 ${chosenCount} 項都揀咗` : `${totalCount} 項揀咗 ${chosenCount} 項`,
-  selectAllRowText: (chosenCount, totalCount) => `全部揀晒（${chosenCount} / ${totalCount}）`,
+  chooseAllRowText: (chosenCount, totalCount) => `全部揀晒（${chosenCount} / ${totalCount}）`,
 }

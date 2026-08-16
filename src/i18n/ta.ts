@@ -17,5 +17,5 @@ export const ta: LLSelectUiTranslationPack = {
     if (chosenCount === totalCount) { return `அனைத்தும் தேர்ந்தெடுக்கப்பட்டன (${chosenCount})` }
     return `${totalCount} இல் ${chosenCount} தேர்ந்தெடுக்கப்பட்டன`
   },
-  selectAllRowText: (chosenCount, totalCount) => `அனைத்தையும் தேர்ந்தெடு (${chosenCount} / ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `அனைத்தையும் தேர்ந்தெடு (${chosenCount} / ${totalCount})`,
 }

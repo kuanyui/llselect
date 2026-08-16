@@ -13,5 +13,5 @@ export const lv: LLSelectUiTranslationPack = {
   tagRemoveButtonAriaLabel: (itemText) => `Noņemt ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Izvēlēts: viss (${chosenCount})` : `Izvēlēts: ${chosenCount} no ${totalCount}`,
-  selectAllRowText: (chosenCount, totalCount) => `Izvēlēties visu (${chosenCount} / ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `Izvēlēties visu (${chosenCount} / ${totalCount})`,
 }

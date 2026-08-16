@@ -16,5 +16,5 @@ export const ro: LLSelectUiTranslationPack = {
     if (chosenCount === totalCount) { return `Toate cele ${chosenCount} selectate` }
     return `${chosenCount} din ${totalCount} selectate`
   },
-  selectAllRowText: (chosenCount, totalCount) => `Selectează tot (${chosenCount} / ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `Selectează tot (${chosenCount} / ${totalCount})`,
 }

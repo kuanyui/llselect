@@ -117,14 +117,14 @@
   color: var(--color-blue-600, #2563eb);
 }
 
-/* --- select-all row (multi, opt-in) ----------------------------- */
+/* --- choose-all row (multi, opt-in) ----------------------------- */
 /* The default row content is just the counting text (its numbers carry the
    tri-state); data-chosen-state is the hook if a theme wants to draw its own
-   indicator, createSelectAllRowContentElFn the way to add a real one. The
+   indicator, createChooseAllRowContentElFn the way to add a real one. The
    row also carries the plain item class, so hover / focused styling comes
    from there. */
 
-.llselect-select-all-row {
+.llselect-choose-all-row {
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 

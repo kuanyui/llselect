@@ -18,5 +18,5 @@ export const he: LLSelectUiTranslationPack = {
     if (chosenCount === totalCount) { return `נבחרו כל ${totalCount} הפריטים` }
     return `נבחרו ${chosenCount} מתוך ${totalCount}`
   },
-  selectAllRowText: (chosenCount, totalCount) => `בחר הכל (${chosenCount} מתוך ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `בחר הכל (${chosenCount} מתוך ${totalCount})`,
 }

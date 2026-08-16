@@ -372,11 +372,11 @@ export interface LLSelectClassIdMap {
    */
   popupListNoResultsClass: string
   /**
-   * Class on the select-all leading row (`LLSelectMultiple`, `selectAllRow`
+   * Class on the choose-all leading row (`LLSelectMultiple`, `chooseAllRow`
    * setting). Also carries `itemClass` plus `data-chosen-state="none|some|all"`
    * for the tri-state visual.
    */
-  selectAllRowClass: string
+  chooseAllRowClass: string
   /** Class on every item element (`role="option"`) inside the popup list. */
   itemClass: string
   /**
@@ -460,7 +460,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     popupClass: `${prefix}-popup`,
     popupListClass: `${prefix}-popup-list`,
     popupListNoResultsClass: `${prefix}-popup-list-no-results`,
-    selectAllRowClass: `${prefix}-select-all-row`,
+    chooseAllRowClass: `${prefix}-choose-all-row`,
     itemClass: `${prefix}-item`,
     itemFocusedClass: `${prefix}-item-focused`,
     itemDisabledClass: `${prefix}-item-disabled`,
@@ -601,7 +601,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   private itemEls: HTMLElement[] = []
   private focusedEl: HTMLElement | undefined
   /**
-   * The leading row element (`LLSelectMultiple`'s select-all) for the current
+   * The leading row element (`LLSelectMultiple`'s choose-all) for the current
    * render, or `undefined` when absent. Never part of `itemEls`.
    */
   private leadingRowEl: HTMLElement | undefined
@@ -1628,7 +1628,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * lands on it, up-actions clamp there) but never inside `itemEls`, so the
    * `itemEls[i] <-> getVisibleItems()[i]` alignment is untouched. Rebuilt on
    * every `renderPopupList`. Base default: `null` = no leading row.
-   * `LLSelectMultiple` builds its select-all row here (`selectAllRow` setting).
+   * `LLSelectMultiple` builds its choose-all row here (`chooseAllRow` setting).
    * @group Subclassing: rendering
    */
   protected createPopupListLeadingRowEl(): HTMLElement | null { return null }

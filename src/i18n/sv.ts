@@ -16,5 +16,5 @@ export const sv: LLSelectUiTranslationPack = {
     if (chosenCount === totalCount) { return `Alla ${chosenCount} valda` }
     return `${chosenCount} av ${totalCount} valda`
   },
-  selectAllRowText: (chosenCount, totalCount) => `Välj alla (${chosenCount} / ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `Välj alla (${chosenCount} / ${totalCount})`,
 }

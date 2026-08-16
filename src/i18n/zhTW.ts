@@ -13,5 +13,5 @@ export const zhTW: LLSelectUiTranslationPack = {
   tagRemoveButtonAriaLabel: (itemText) => `移除 ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `已選全部 ${chosenCount} 項` : `已選 ${chosenCount} / ${totalCount} 項`,
-  selectAllRowText: (chosenCount, totalCount) => `全選（${chosenCount} / ${totalCount}）`,
+  chooseAllRowText: (chosenCount, totalCount) => `全選（${chosenCount} / ${totalCount}）`,
 }

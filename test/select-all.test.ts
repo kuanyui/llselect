@@ -3,8 +3,8 @@ import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 
-// Phase 13 select-all row: opt-in tri-state leading row acting on the VISIBLE
-// enabled subset. Contract: docs/llm/A11Y.md "Select-all"; design: docs/llm/TODO.md.
+// Phase 13 choose-all row: opt-in tri-state leading row acting on the VISIBLE
+// enabled subset. Contract: docs/llm/A11Y.md "Choose-all"; design: docs/llm/TODO.md.
 
 function mount(): HTMLElement {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
@@ -12,14 +12,14 @@ function mount(): HTMLElement {
 }
 
 function row(sel: LLSelectMultiple<string>): HTMLElement | null {
-  return sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.selectAllRowClass}`)
+  return sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.chooseAllRowClass}`)
 }
 
 function fireKey(target: HTMLElement, key: string): void {
   target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
 }
 
-test('off by default: no select-all row', () => {
+test('off by default: no choose-all row', () => {
   const sel = new LLSelectMultiple<string>(mount())
   sel.setItems(['a', 'b'])
   sel.open()
@@ -27,7 +27,7 @@ test('off by default: no select-all row', () => {
 })
 
 test('renders as the first option with tri-state attributes and a counting text', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
+  const sel = new LLSelectMultiple<string>(mount(), { chooseAllRow: true })
   sel.setItems(['a', 'b', 'c'])
   sel.toggleItem('a')
   sel.open()
@@ -41,7 +41,7 @@ test('renders as the first option with tri-state attributes and a counting text'
 })
 
 test('click toggles the visible enabled subset; tri-state and label update', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
+  const sel = new LLSelectMultiple<string>(mount(), { chooseAllRow: true })
   sel.setItems(['a', 'b', 'c'])
   sel.open()
   row(sel)!.click()
@@ -55,7 +55,7 @@ test('click toggles the visible enabled subset; tri-state and label update', () 
 })
 
 test('filtered scope: acts on visible matches only; hidden choices preserved', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true, filterable: true })
+  const sel = new LLSelectMultiple<string>(mount(), { chooseAllRow: true, filterable: true })
   sel.setItems(['apple', 'banana', 'cherry'])
   sel.setChosenItems(['cherry'])
   sel.open()
@@ -71,7 +71,7 @@ test('filtered scope: acts on visible matches only; hidden choices preserved', (
 
 test('disabled items are excluded from the scope and the counts', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
-    selectAllRow: true,
+    chooseAllRow: true,
     itemDisabledFn: (i) => i === 'b',
   })
   sel.setItems(['a', 'b', 'c'])
@@ -82,11 +82,11 @@ test('disabled items are excluded from the scope and the counts', () => {
 })
 
 test('keyboard ring: opens ON the row when nothing is chosen; ArrowDown/Up + Home + Enter', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
+  const sel = new LLSelectMultiple<string>(mount(), { chooseAllRow: true })
   sel.setItems(['a', 'b'])
   sel.open()
   const r = row(sel)!
-  // Nothing chosen -> the select-all row IS the first option -> initial focus.
+  // Nothing chosen -> the choose-all row IS the first option -> initial focus.
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), r.id)
   assert.ok(r.classList.contains(sel.classIdMap.itemFocusedClass))
   fireKey(sel.triggerEl, 'ArrowDown') // down to the first item
@@ -103,7 +103,7 @@ test('keyboard ring: opens ON the row when nothing is chosen; ArrowDown/Up + Hom
 })
 
 test('opens focused on the first chosen item (not the row) when something is chosen', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
+  const sel = new LLSelectMultiple<string>(mount(), { chooseAllRow: true })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['b'])
   sel.open()
@@ -112,7 +112,7 @@ test('opens focused on the first chosen item (not the row) when something is cho
 })
 
 test('toggleItem keeps the row fresh via the O(1) leading-row replace (items untouched)', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
+  const sel = new LLSelectMultiple<string>(mount(), { chooseAllRow: true })
   sel.setItems(['a', 'b'])
   sel.open()
   const before = sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')
@@ -123,12 +123,12 @@ test('toggleItem keeps the row fresh via the O(1) leading-row replace (items unt
   assert.equal(row(sel)!.textContent, 'Select all (1 of 2)')
 })
 
-test('createSelectAllRowContentElFn fills the row; accessible name stays the counting text', () => {
+test('createChooseAllRowContentElFn fills the row; accessible name stays the counting text', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
-    selectAllRow: true,
-    createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
+    chooseAllRow: true,
+    createChooseAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
       const el = document.createElement('span')
-      el.className = 'rich-select-all'
+      el.className = 'rich-choose-all'
       el.setAttribute('data-got', `${chosenState}:${chosenCount}:${totalCount}`)
       return el
     },
@@ -137,14 +137,14 @@ test('createSelectAllRowContentElFn fills the row; accessible name stays the cou
   sel.toggleItem('a')
   sel.open()
   const r = row(sel)!
-  assert.equal(r.querySelector('.rich-select-all')!.getAttribute('data-got'), 'some:1:2')
+  assert.equal(r.querySelector('.rich-choose-all')!.getAttribute('data-got'), 'some:1:2')
   assert.equal(r.getAttribute('aria-label'), 'Select all (1 of 2)') // name pinned to the label
 })
 
-test('createSelectAllRowContentElFn returning null falls back to the plain label (no aria-label)', () => {
+test('createChooseAllRowContentElFn returning null falls back to the plain label (no aria-label)', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
-    selectAllRow: true,
-    createSelectAllRowContentElFn: () => null,
+    chooseAllRow: true,
+    createChooseAllRowContentElFn: () => null,
   })
   sel.setItems(['a'])
   sel.open()
@@ -153,7 +153,7 @@ test('createSelectAllRowContentElFn returning null falls back to the plain label
 })
 
 test('default content: just the plain counting text - no indicator element', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { selectAllRow: true })
+  const sel = new LLSelectMultiple<string>(mount(), { chooseAllRow: true })
   sel.setItems(['a', 'b'])
   sel.open()
   assert.equal(row(sel)!.textContent, 'Select all (0 of 2)')
@@ -165,8 +165,8 @@ test('default content: just the plain counting text - no indicator element', () 
 
 test('custom content is the whole row content; the label moves to aria-label', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
-    selectAllRow: true,
-    createSelectAllRowContentElFn: () => {
+    chooseAllRow: true,
+    createChooseAllRowContentElFn: () => {
       const el = document.createElement('span')
       el.textContent = 'custom'
       return el
@@ -177,32 +177,32 @@ test('custom content is the whole row content; the label moves to aria-label', (
   assert.equal(row(sel)!.textContent, 'custom')
 })
 
-test('a subclass createSelectAllRowContentEl override replaces the setting (override wins)', () => {
+test('a subclass createChooseAllRowContentEl override replaces the setting (override wins)', () => {
   class Derived extends LLSelectMultiple<string> {
-    protected override createSelectAllRowContentEl(): HTMLElement | null {
+    protected override createChooseAllRowContentEl(): HTMLElement | null {
       const el = document.createElement('b')
-      el.className = 'derived-select-all'
+      el.className = 'derived-choose-all'
       el.textContent = 'derived'
       return el
     }
   }
   const sel = new Derived(mount(), {
-    selectAllRow: true,
-    createSelectAllRowContentElFn: () => {
+    chooseAllRow: true,
+    createChooseAllRowContentElFn: () => {
       const i = document.createElement('i')
-      i.className = 'fn-select-all'
+      i.className = 'fn-choose-all'
       return i
     },
   })
   sel.setItems(['a'])
   sel.open()
-  assert.ok(row(sel)!.querySelector('.derived-select-all')) // override wins
-  assert.equal(row(sel)!.querySelector('.fn-select-all'), null)
+  assert.ok(row(sel)!.querySelector('.derived-choose-all')) // override wins
+  assert.equal(row(sel)!.querySelector('.fn-choose-all'), null)
 })
 
 test('no actionable items -> no row (everything disabled)', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
-    selectAllRow: true,
+    chooseAllRow: true,
     itemDisabledFn: () => true,
   })
   sel.setItems(['a'])

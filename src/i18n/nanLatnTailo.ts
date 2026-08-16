@@ -16,5 +16,5 @@ export const nanLatnTailo: LLSelectUiTranslationPack = {
   tagRemoveButtonAriaLabel: (itemText) => `Kā ${itemText} the̍h-tiāu`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Tsuân-pōo ${chosenCount} hāng lóng kíng--ah` : `${totalCount} hāng kíng ${chosenCount} hāng`,
-  selectAllRowText: (chosenCount, totalCount) => `Lóng-tsóng kíng (${chosenCount} / ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `Lóng-tsóng kíng (${chosenCount} / ${totalCount})`,
 }

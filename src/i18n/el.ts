@@ -16,5 +16,5 @@ export const el: LLSelectUiTranslationPack = {
     if (chosenCount === totalCount) { return `Επιλέχθηκαν όλα (${chosenCount})` }
     return `Επιλέχθηκαν ${chosenCount} από ${totalCount}`
   },
-  selectAllRowText: (chosenCount, totalCount) => `Επιλογή όλων (${chosenCount} / ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `Επιλογή όλων (${chosenCount} / ${totalCount})`,
 }

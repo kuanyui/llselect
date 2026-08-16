@@ -60,12 +60,12 @@
   </section>
 
   <section>
-    <h2>2. Basic: &lt;llselect-multiple&gt; - count / tags / select-all</h2>
+    <h2>2. Basic: &lt;llselect-multiple&gt; - count / tags / choose-all</h2>
     <p>
       The trigger has two displays: the default <code>'count'</code> summary and
       <code>ll-trigger-display="'tags'"</code> chips. Rows carry live checkbox
       icons by default (<code>ll-checkboxes="false"</code> opts out), and
-      <code>ll-select-all-row="true"</code> adds the tri-state row acting on the
+      <code>ll-choose-all-row="true"</code> adds the tri-state row acting on the
       visible enabled subset.
     </p>
 
@@ -88,7 +88,7 @@
     <div class="out">ng-model = {{ vm.langs | json }}</div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="2b"><code></code></pre></details>
 
-    <h3>2c. Select-all row</h3>
+    <h3>2c. Choose-all row</h3>
     <p>
       <code>ll-checkboxes</code> (default true) draws SVG checkboxes on the
       rows and this row; <code>ll-checkboxes="false"</code> strips them all,
@@ -96,7 +96,7 @@
       5.7).
     </p>
     <div class="demo-row" data-src="2c">
-      <llselect-multiple ng-model="vm.langsAll" ll-filterable="true" ll-select-all-row="true"
+      <llselect-multiple ng-model="vm.langsAll" ll-filterable="true" ll-choose-all-row="true"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>

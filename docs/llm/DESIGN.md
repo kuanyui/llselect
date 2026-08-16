@@ -302,13 +302,13 @@ Same trick as the arrow: clear and arrow are separate slots, so `createTriggerCo
 - You optionally fill the icon via `createTriggerClearButtonContentElFn: () => HTMLElement | SVGElement | null` (mirrors `createTriggerArrowContentElFn`); `null` = theme CSS glyph (`.llselect-trigger-clear-button:empty::before { content: '\00d7' }`).
 - `protected clearSelection()`: base no-op; single -> `setChosenItem(undefined)`, multiple -> `setChosenItems([])`. Both go through the normal setters, so `onChange` fires with the empty value - no separate `onClear`. Clear means "back to empty / placeholder", not "back to some default option" (do that yourself in `onChange` if wanted).
 
-## Select-all default: plain counting text (no indicator)
+## Choose-all default: plain counting text (no indicator)
 
-The select-all row's default content is JUST the counting text (`uiTranslationPack.selectAllRowText`, e.g. "Select all (3 of 10)"). No icon, no glyph. RULED:
+The choose-all row's default content is JUST the counting text (`uiTranslationPack.chooseAllRowText`, e.g. "Select all (3 of 10)"). No icon, no glyph. RULED:
 
-- Consistency: the library ships no default visual indicator anywhere - no trigger arrow, no per-item checkboxes; selected state is theme styling off `aria-selected`. A select-all-only indicator was the single exception, and nothing ever required one.
+- Consistency: the library ships no default visual indicator anywhere - no trigger arrow, no per-item checkboxes; selected state is theme styling off `aria-selected`. A choose-all-only indicator was the single exception, and nothing ever required one.
 - The counting text already encodes the tri-state: "0 of 10" / "3 of 10" / "10 of 10". Any indicator restates the numbers.
-- The hooks stay: `data-chosen-state="none|some|all"` on the row for CSS, `createSelectAllRowContentElFn` for real content (e.g. `createOutlinedCheckboxSvgEl`). Batteries-included defaults live a layer up - the AngularJS package's `ll-checkboxes` does exactly that.
+- The hooks stay: `data-chosen-state="none|some|all"` on the row for CSS, `createChooseAllRowContentElFn` for real content (e.g. `createOutlinedCheckboxSvgEl`). Batteries-included defaults live a layer up - the AngularJS package's `ll-checkboxes` does exactly that.
 - History, so this is not re-litigated: the default indicator was first a theme `::before` glyph gated by `:not(:has(*))` (a gate above the browser support floor, so it silently died on floor browsers, and generated content lands in the accessible-name computation), then a core-rendered `createOutlinedCheckboxSvgEl` (couples `icons.ts` into every multi bundle and makes the core pick outlined vs filled), then a core-rendered aria-hidden text glyph (redundant with the numbers, font-dependent look). Each step fixed the previous mechanism's defect; the actual answer was that the indicator itself was never needed.
 
 ## Popup width policy

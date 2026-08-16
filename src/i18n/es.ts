@@ -16,5 +16,5 @@ export const es: LLSelectUiTranslationPack = {
     if (chosenCount === totalCount) { return `Todos los ${chosenCount} seleccionados` }
     return `${chosenCount} de ${totalCount} seleccionados`
   },
-  selectAllRowText: (chosenCount, totalCount) => `Seleccionar todo (${chosenCount} de ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `Seleccionar todo (${chosenCount} de ${totalCount})`,
 }

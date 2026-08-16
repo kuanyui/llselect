@@ -15,7 +15,7 @@ import {
 export type LLSelectTriggerDisplay = 'count' | 'tags'
 
 /**
- * Tri-state of the select-all row (also the `data-chosen-state` attribute
+ * Tri-state of the choose-all row (also the `data-chosen-state` attribute
  * value): how much of the VISIBLE enabled subset is currently chosen.
  * @group Settings
  * @category Multiple
@@ -100,33 +100,34 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    */
   createTagRemoveButtonContentElFn: ((item: T) => HTMLElement | SVGElement | null) | null
   /**
-   * Whether the popup shows a select-all row as the FIRST option of the
+   * Whether the popup shows a choose-all row (the industry's "select all"
+   * feature) as the FIRST option of the
    * listbox (`false` default). Tri-state (none / some / all chosen - carried
    * by the counting text's numbers and the `data-chosen-state` CSS hook;
-   * the accessible name comes from `uiTranslationPack.selectAllRowText`);
+   * the accessible name comes from `uiTranslationPack.chooseAllRowText`);
    * Enter / click toggles. Acts on the VISIBLE
    * enabled subset (the filtered list while a filter query is active) - the
    * public `chooseAll` / `unchooseAll` / `toggleAll` keep their whole-list
-   * semantics. See `docs/llm/A11Y.md` "Select-all".
-   * @group Select-all
+   * semantics. See `docs/llm/A11Y.md` "Choose-all".
+   * @group Choose-all
    */
-  selectAllRow: boolean
+  chooseAllRow: boolean
   /**
-   * The select-all row's visible content ELEMENT, without subclassing - e.g.
+   * The choose-all row's visible content ELEMENT, without subclassing - e.g.
    * a tri-state SVG checkbox (`createOutlinedCheckboxSvgEl`) + the counting text. Mirrors
-   * `createItemContentElFn`. Only used with `selectAllRow: true`.
+   * `createItemContentElFn`. Only used with `chooseAllRow: true`.
    * - Receives the tri-state and the counts of the visible enabled subset.
    * - Return an `HTMLElement`: inserted as the row's content; the accessible
-   *   name stays pinned to `uiTranslationPack.selectAllRowText` via `aria-label`, so
+   *   name stays pinned to `uiTranslationPack.chooseAllRowText` via `aria-label`, so
    *   icon-only content is still announced with the counts.
    * - `null` (setting default, or returned): the default content - just the
    *   plain counting text; its numbers carry the tri-state. The library
    *   ships no default indicator (consistent with items and the arrow);
    *   passing this setting is how one (e.g. `createOutlinedCheckboxSvgEl`)
-   *   gets added. See DESIGN.md "Select-all default: plain counting text".
-   * @group Select-all
+   *   gets added. See DESIGN.md "Choose-all default: plain counting text".
+   * @group Choose-all
    */
-  createSelectAllRowContentElFn:
+  createChooseAllRowContentElFn:
     ((chosenState: LLSelectChosenState, chosenCount: number, totalCount: number) => HTMLElement | null) | null
 }
 
@@ -177,8 +178,8 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       triggerDisplay: settings?.triggerDisplay ?? 'count',
       createTagContentElFn: settings?.createTagContentElFn ?? null,
       createTagRemoveButtonContentElFn: settings?.createTagRemoveButtonContentElFn ?? null,
-      selectAllRow: settings?.selectAllRow ?? false,
-      createSelectAllRowContentElFn: settings?.createSelectAllRowContentElFn ?? null,
+      chooseAllRow: settings?.chooseAllRow ?? false,
+      createChooseAllRowContentElFn: settings?.createChooseAllRowContentElFn ?? null,
     } satisfies Omit<LLSelectMultipleSettings<T, GK>, keyof LLSelectBaseSettings<T, GK>>)
     this.popupListEl.setAttribute('aria-multiselectable', 'true')
     this.renderTrigger()
@@ -229,7 +230,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       this.chosenItems = [...previous, item]
     }
     // Only one item's selection changed, so the popup list replaces just that
-    // one row (plus the select-all tri-state) instead of rebuilding every row -
+    // one row (plus the choose-all tri-state) instead of rebuilding every row -
     // O(1) in list size. The trigger is refreshed too; its cost depends on
     // triggerDisplay (count = constant, tags = one chip per chosen item,
     // custom = caller-defined), so the whole update is not unconditionally O(1).
@@ -420,34 +421,34 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   /**
-   * Build the select-all row (`selectAllRow` setting) as the listbox's
+   * Build the choose-all row (`chooseAllRow` setting) as the listbox's
    * leading `role="option"` row: `data-chosen-state="none|some|all"` (a CSS
    * styling hook), `aria-selected` only when ALL visible
    * enabled items are chosen, accessible name + visible text from
-   * `uiTranslationPack.selectAllRowText(chosenCount, totalCount)` over the visible
+   * `uiTranslationPack.chooseAllRowText(chosenCount, totalCount)` over the visible
    * enabled subset. `null` when the setting is off or nothing is actionable.
    * @group Subclassing: rendering
    */
   protected override createPopupListLeadingRowEl(): HTMLElement | null {
-    if (!this.settings.selectAllRow) { return null }
+    if (!this.settings.chooseAllRow) { return null }
     const actionable = this.getVisibleItems().filter(i => !this.isItemEffectivelyDisabled(i))
     if (actionable.length === 0) { return null }
     const chosenCount = actionable.filter(i => this.isChosen(i)).length
     const state: LLSelectChosenState = chosenCount === 0 ? 'none' : chosenCount === actionable.length ? 'all' : 'some'
     const el = document.createElement('div')
-    el.id = `${this.classIdMap.popupListId}-select-all`
-    el.className = `${this.classIdMap.itemClass} ${this.classIdMap.selectAllRowClass}`
+    el.id = `${this.classIdMap.popupListId}-choose-all`
+    el.className = `${this.classIdMap.itemClass} ${this.classIdMap.chooseAllRowClass}`
     el.setAttribute('role', 'option')
     el.setAttribute('data-chosen-state', state)
     // ARIA option has no `mixed`: the indeterminate state is conveyed by the
     // visual (data-chosen-state) + the counting accessible name only.
     el.setAttribute('aria-selected', String(state === 'all'))
-    const text = this.settings.uiTranslationPack.selectAllRowText(chosenCount, actionable.length)
-    const content = this.createSelectAllRowContentEl(state, chosenCount, actionable.length)
+    const text = this.settings.uiTranslationPack.chooseAllRowText(chosenCount, actionable.length)
+    const content = this.createChooseAllRowContentEl(state, chosenCount, actionable.length)
     if (content === null) {
       // Default content: just the counting text - its numbers already carry
       // the tri-state, and the library ships no default indicator anywhere
-      // (DESIGN.md "Select-all default: plain counting text").
+      // (DESIGN.md "Choose-all default: plain counting text").
       el.textContent = text
     } else {
       // Custom content fills the visuals only; the accessible name stays the
@@ -464,26 +465,26 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   /**
-   * The select-all row's visible content (rich tri-state). Mirrors
+   * The choose-all row's visible content (rich tri-state). Mirrors
    * `createItemContentEl`.
-   * - Default reads `createSelectAllRowContentElFn`; `null` (setting unset,
+   * - Default reads `createChooseAllRowContentElFn`; `null` (setting unset,
    *   or returned) = the default content: plain text from
-   *   `uiTranslationPack.selectAllRowText`.
+   *   `uiTranslationPack.chooseAllRowText`.
    * - Override only when extending; for one-off content pass the setting.
    * @group Subclassing: rendering
    */
-  protected createSelectAllRowContentEl(
+  protected createChooseAllRowContentEl(
     chosenState: LLSelectChosenState,
     chosenCount: number,
     totalCount: number,
   ): HTMLElement | null {
-    return this.settings.createSelectAllRowContentElFn
-      ? this.settings.createSelectAllRowContentElFn(chosenState, chosenCount, totalCount)
+    return this.settings.createChooseAllRowContentElFn
+      ? this.settings.createChooseAllRowContentElFn(chosenState, chosenCount, totalCount)
       : null
   }
 
   /**
-   * Activate the select-all row: when every visible enabled item is chosen,
+   * Activate the choose-all row: when every visible enabled item is chosen,
    * unchoose exactly those; otherwise add the missing ones. Choices outside
    * the visible subset (filtered-out or disabled) are preserved either way.
    * @group Subclassing: reactions
@@ -528,7 +529,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
 
   /**
    * On open, focus the first chosen item (if present and enabled). Otherwise
-   * the FIRST OPTION - which is the select-all row when rendered (A11Y.md:
+   * the FIRST OPTION - which is the choose-all row when rendered (A11Y.md:
    * activedescendant points at the first chosen option, else the first
    * option; the row is the topmost option), so keyboard users discover it
    * immediately. Else the first enabled item. Indices are into

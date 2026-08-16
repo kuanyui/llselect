@@ -278,8 +278,8 @@
         <div class="demo-pane">
           <div id="mount-multi-all"></div>
           <div class="demo-row" style="margin-top: 0.5rem;">
-            <button id="btn-select-all" type="button">Select all</button>
-            <button id="btn-deselect-all" type="button">Deselect all</button>
+            <button id="btn-choose-all" type="button">Select all</button>
+            <button id="btn-dechoose-all" type="button">Deselect all</button>
             <button id="btn-toggle-all" type="button">Toggle all</button>
           </div>
           <div class="out" id="out-multi-all">chosen: []</div>
@@ -322,18 +322,18 @@
     </article>
 
     <article>
-      <h3>5.5 Select-all row (tri-state)</h3>
+      <h3>5.5 Choose-all row (tri-state)</h3>
       <p class="hint">
-        <code>selectAllRow: true</code> pins a tri-state row acting on the
+        <code>chooseAllRow: true</code> pins a tri-state row acting on the
         VISIBLE enabled subset: type a filter, toggle the row - only the
-        matches change. <code>createSelectAllRowContentElFn</code> swaps the
+        matches change. <code>createChooseAllRowContentElFn</code> swaps the
         default plain-text row (5.7) for the outlined SVG; items reuse
         5.4's checkbox.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
-          <div id="mount-select-all"></div>
-          <div class="out" id="out-select-all">chosen: 0 items</div>
+          <div id="mount-choose-all"></div>
+          <div class="out" id="out-choose-all">chosen: 0 items</div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="5.5"><code></code></pre></details>
       </div>
@@ -344,7 +344,7 @@
       <p class="hint">
         5.5 drawn with <code>createFilledCheckboxSvgEl</code> (tick / dash cut
         out of a solid box); same settings checkbox as 5.4. Choose a few
-        items - the select-all row shows the filled indeterminate state.
+        items - the choose-all row shows the filled indeterminate state.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -356,7 +356,7 @@
     </article>
 
     <article>
-      <h3>5.7 Select-all default look</h3>
+      <h3>5.7 Choose-all default look</h3>
       <p class="hint">
         No content fn: the row is just the counting text, and its numbers
         ARE the tri-state. The library draws no default indicator anywhere;
@@ -364,7 +364,7 @@
       </p>
       <div class="demo-split">
         <div class="demo-pane">
-          <div id="mount-select-all-default"></div>
+          <div id="mount-choose-all-default"></div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="5.7"><code></code></pre></details>
       </div>

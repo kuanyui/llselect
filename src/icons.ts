@@ -72,7 +72,7 @@ export function createCheckmarkSvgEl(opts: IconOptions = {}): SVGElement {
 
 /**
  * Visual state of {@link createOutlinedCheckboxSvgEl} / {@link createFilledCheckboxSvgEl}.
- * `indeterminate` is the "mixed" / partial state used by a select-all control
+ * `indeterminate` is the "mixed" / partial state used by a choose-all control
  * (`aria-checked="mixed"`).
  * @group Icons
  * @category Checkmarks & checkboxes
@@ -101,15 +101,15 @@ export interface CheckboxIconOptions extends IconOptions {
   /**
    * Which checkbox state to draw. Accepts the icon vocabulary
    * (`'unchecked' | 'checked' | 'indeterminate'`) or, as a convenience, the
-   * select-all row's chosen-state vocabulary (`'none'` -> unchecked,
+   * choose-all row's chosen-state vocabulary (`'none'` -> unchecked,
    * `'some'` -> indeterminate, `'all'` -> checked), so
-   * `createSelectAllRowContentElFn` can pass its state straight through.
+   * `createChooseAllRowContentElFn` can pass its state straight through.
    * Default `'unchecked'`.
    */
   state?: CheckboxState | 'none' | 'some' | 'all'
 }
 
-/** Map the select-all row's chosen-state vocabulary onto the icon vocabulary. */
+/** Map the choose-all row's chosen-state vocabulary onto the icon vocabulary. */
 function resolveCheckboxState(raw: NonNullable<CheckboxIconOptions['state']>): CheckboxState {
   return raw === 'none' ? 'unchecked' : raw === 'some' ? 'indeterminate' : raw === 'all' ? 'checked' : raw
 }
@@ -118,7 +118,7 @@ function resolveCheckboxState(raw: NonNullable<CheckboxIconOptions['state']>): C
  * Outlined checkbox icon: box border with the tick (`checked`) / dash
  * (`indeterminate`) drawn inside, all in `currentColor`; the filled twin is
  * {@link createFilledCheckboxSvgEl}. Intended for multi-select item rows and
- * the select-all control. Decorative only (`aria-hidden`); the real state is
+ * the choose-all control. Decorative only (`aria-hidden`); the real state is
  * carried by `aria-selected` on the item or `aria-checked` on the control.
  * @group Icons
  * @category Checkmarks & checkboxes

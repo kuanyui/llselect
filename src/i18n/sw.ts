@@ -15,5 +15,5 @@ export const sw: LLSelectUiTranslationPack = {
   // noun-class agreement with an unknown item class.
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Umechagua zote (${chosenCount})` : `Umechagua ${chosenCount} kati ya ${totalCount}`,
-  selectAllRowText: (chosenCount, totalCount) => `Chagua zote (${chosenCount} / ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `Chagua zote (${chosenCount} / ${totalCount})`,
 }

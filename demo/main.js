@@ -475,9 +475,9 @@ const selMultiAll = new LLSelectMultiple(
   }
 )
 selMultiAll.setItems(COUNTRIES)
-document.getElementById('btn-select-all')
+document.getElementById('btn-choose-all')
   .addEventListener('click', () => selMultiAll.chooseAll())
-document.getElementById('btn-deselect-all')
+document.getElementById('btn-dechoose-all')
   .addEventListener('click', () => selMultiAll.unchooseAll())
 document.getElementById('btn-toggle-all')
   .addEventListener('click', () => selMultiAll.toggleAll())
@@ -504,47 +504,47 @@ selTags.setChosenItems(['Japan', 'Brazil', 'Canada'])
 //#endregion
 
 //#region 5.5
-// Select-all row: opt-in, tri-state, acting on the VISIBLE enabled subset -
+// Choose-all row: opt-in, tri-state, acting on the VISIBLE enabled subset -
 // filter first, then activate the row: only the matches toggle, hidden
 // choices are preserved. The public chooseAll/unchooseAll/toggleAll keep
-// their whole-list semantics. createSelectAllRowContentElFn fills the row
+// their whole-list semantics. createChooseAllRowContentElFn fills the row
 // with a tri-state SVG checkbox (createOutlinedCheckboxSvgEl) + the library's own
 // counting text (en pack). Without the hook the row is just the counting
-// text (5.7). The accessible name stays uiTranslationPack.selectAllRowText.
+// text (5.7). The accessible name stays uiTranslationPack.chooseAllRowText.
 // The ITEMS get the same visual language via 5.4's settings-path checkbox,
 // so the row and the items read as one consistent list.
-const outSelectAll = document.getElementById('out-select-all')
-let selSelectAll
-selSelectAll = new LLSelectMultiple(
-  document.getElementById('mount-select-all'),
+const outChooseAll = document.getElementById('out-choose-all')
+let selChooseAll
+selChooseAll = new LLSelectMultiple(
+  document.getElementById('mount-choose-all'),
   {
     placeholder: 'Pick countries',
     filterable: true,
-    selectAllRow: true,
+    chooseAllRow: true,
     createItemContentElFn: (item) => {
       const row = document.createElement('span')
       row.className = 'lang-row'
-      row.append(createOutlinedCheckboxSvgEl({ state: selSelectAll.isChosen(item) ? 'checked' : 'unchecked' }), item)
+      row.append(createOutlinedCheckboxSvgEl({ state: selChooseAll.isChosen(item) ? 'checked' : 'unchecked' }), item)
       return row
     },
-    createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
+    createChooseAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
       const row = document.createElement('span')
       row.className = 'lang-row' // inline-flex + gap (demo CSS)
       row.append(
         // The icon helper accepts the chosen-state vocabulary directly.
         createOutlinedCheckboxSvgEl({ state: chosenState }),
-        en.selectAllRowText(chosenCount, totalCount), // reuse the library's translation
+        en.chooseAllRowText(chosenCount, totalCount), // reuse the library's translation
       )
       return row
     },
-    onChange: (chosen) => { outSelectAll.textContent = 'chosen: ' + chosen.length + ' items' },
+    onChange: (chosen) => { outChooseAll.textContent = 'chosen: ' + chosen.length + ' items' },
   }
 )
-selSelectAll.setItems(COUNTRIES)
+selChooseAll.setItems(COUNTRIES)
 //#endregion
 
 //#region 5.6
-// 5.5's select-all pattern drawn with the Material-look icon instead:
+// 5.5's choose-all pattern drawn with the Material-look icon instead:
 // createFilledCheckboxSvgEl - solid rounded box, tick / dash cut out. Same
 // options as createOutlinedCheckboxSvgEl (incl. the chosen-state vocabulary);
 // unchecked is the same outline box in both.
@@ -555,19 +555,19 @@ selFilledCheckbox = new LLSelectMultiple(
   {
     placeholder: 'Pick countries',
     filterable: true,
-    selectAllRow: true,
+    chooseAllRow: true,
     createItemContentElFn: (item) => {
       const row = document.createElement('span')
       row.className = 'lang-row'
       row.append(createFilledCheckboxSvgEl({ state: selFilledCheckbox.isChosen(item) ? 'checked' : 'unchecked' }), item)
       return row
     },
-    createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
+    createChooseAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
       const row = document.createElement('span')
       row.className = 'lang-row' // inline-flex + gap (demo CSS)
       row.append(
         createFilledCheckboxSvgEl({ state: chosenState }),
-        en.selectAllRowText(chosenCount, totalCount),
+        en.chooseAllRowText(chosenCount, totalCount),
       )
       return row
     },
@@ -578,14 +578,14 @@ selFilledCheckbox.setItems(COUNTRIES)
 //#endregion
 
 //#region 5.7
-// The select-all DEFAULT look: no content fn - just the counting text,
+// The choose-all DEFAULT look: no content fn - just the counting text,
 // whose numbers carry the tri-state. No default indicator, like everywhere
 // else in the library.
-const selSelectAllDefault = new LLSelectMultiple(
-  document.getElementById('mount-select-all-default'),
-  { placeholder: 'Pick countries', selectAllRow: true }
+const selChooseAllDefault = new LLSelectMultiple(
+  document.getElementById('mount-choose-all-default'),
+  { placeholder: 'Pick countries', chooseAllRow: true }
 )
-selSelectAllDefault.setItems(COUNTRIES)
+selChooseAllDefault.setItems(COUNTRIES)
 //#endregion
 
 //#region 9.1
@@ -972,7 +972,7 @@ let selRtlCheckboxes
 selRtlCheckboxes = new LLSelectMultiple(
   document.getElementById('mount-rtl-checkboxes'),
   {
-    selectAllRow: true,
+    chooseAllRow: true,
     uiTranslationPack: ar,
     createItemContentElFn: (item) => {
       const row = document.createElement('span')
@@ -980,10 +980,10 @@ selRtlCheckboxes = new LLSelectMultiple(
       row.append(createOutlinedCheckboxSvgEl({ state: selRtlCheckboxes.isChosen(item) ? 'checked' : 'unchecked' }), item)
       return row
     },
-    createSelectAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
+    createChooseAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
       const row = document.createElement('span')
       row.className = 'lang-row'
-      row.append(createOutlinedCheckboxSvgEl({ state: chosenState }), ar.selectAllRowText(chosenCount, totalCount))
+      row.append(createOutlinedCheckboxSvgEl({ state: chosenState }), ar.chooseAllRowText(chosenCount, totalCount))
       return row
     },
     onChange: (chosen) => { outRtlCheckboxes.textContent = 'chosen: ' + chosen.length + ' items' },

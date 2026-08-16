@@ -44,7 +44,7 @@ test('every pack: strings non-empty, message functions total over count shapes',
     // Singular / partial / all / degenerate single-item shapes all render.
     for (const [chosen, total] of [[1, 5], [3, 5], [5, 5], [1, 1]] as const) {
       assert.ok(pack.triggerCountSummary(chosen, total).length > 0, `${tag} triggerCountSummary(${chosen}, ${total})`)
-      assert.ok(pack.selectAllRowText(chosen, total).length > 0, `${tag} selectAllRowText(${chosen}, ${total})`)
+      assert.ok(pack.chooseAllRowText(chosen, total).length > 0, `${tag} chooseAllRowText(${chosen}, ${total})`)
     }
     assert.notEqual(pack.triggerCountSummary(3, 5), pack.triggerCountSummary(5, 5), `${tag} partial vs all differ`)
   }

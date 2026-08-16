@@ -13,5 +13,5 @@ export const pl: LLSelectUiTranslationPack = {
   tagRemoveButtonAriaLabel: (itemText) => `Usuń ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Wybrano wszystkie (${chosenCount})` : `Wybrano ${chosenCount} z ${totalCount}`,
-  selectAllRowText: (chosenCount, totalCount) => `Zaznacz wszystko (${chosenCount} / ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `Zaznacz wszystko (${chosenCount} / ${totalCount})`,
 }

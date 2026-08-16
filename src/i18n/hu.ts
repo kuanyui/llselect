@@ -13,5 +13,5 @@ export const hu: LLSelectUiTranslationPack = {
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} eltávolítása`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Összes kijelölve (${chosenCount})` : `${chosenCount} / ${totalCount} kijelölve`,
-  selectAllRowText: (chosenCount, totalCount) => `Összes kijelölése (${chosenCount} / ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `Összes kijelölése (${chosenCount} / ${totalCount})`,
 }

@@ -14,5 +14,5 @@ export const nanTW: LLSelectUiTranslationPack = {
   tagRemoveButtonAriaLabel: (itemText) => `共 ${itemText} 提掉`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `全部 ${chosenCount} 項攏揀矣` : `${totalCount} 項揀 ${chosenCount} 項`,
-  selectAllRowText: (chosenCount, totalCount) => `攏總揀（${chosenCount} / ${totalCount}）`,
+  chooseAllRowText: (chosenCount, totalCount) => `攏總揀（${chosenCount} / ${totalCount}）`,
 }

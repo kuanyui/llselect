@@ -330,17 +330,17 @@
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
           if (attrs.llTriggerDisplay) { settings.triggerDisplay = scope.$eval(attrs.llTriggerDisplay) }
-          if (attrs.llSelectAllRow) { settings.selectAllRow = scope.$eval(attrs.llSelectAllRow) }
+          if (attrs.llChooseAllRow) { settings.chooseAllRow = scope.$eval(attrs.llChooseAllRow) }
           var tagContentFn = evalFnAttr(scope, attrs, 'llTagContentFn')
           if (tagContentFn) { settings.createTagContentElFn = tagContentFn }
           var tagRemoveIconFn = evalFnAttr(scope, attrs, 'llTagRemoveButtonContentFn')
           if (tagRemoveIconFn) { settings.createTagRemoveButtonContentElFn = tagRemoveIconFn }
 
           // Batteries-included checkboxes: every row gets a live checkbox icon,
-          // and (with ll-select-all-row) the row gets the matching tri-state
+          // and (with ll-choose-all-row) the row gets the matching tri-state
           // one plus the pack's counting text. ll-checkboxes="false" opts out;
           // everything then falls back to the core defaults, which draw no
-          // indicator at all (the select-all row is just its counting text).
+          // indicator at all (the choose-all row is just its counting text).
           // Core ships no icons; per item its answer is the subclass recipe
           // (demo 5.4 / 5.5), and this package's answer is a default. Rows
           // render only after construction, so reading `sel` here is safe.
@@ -364,8 +364,8 @@
               return checkboxRowEl(sel && sel.isChosen(item) ? 'checked' : 'unchecked',
                 content || document.createTextNode(settings.itemToStringFn(item)))
             }
-            settings.createSelectAllRowContentElFn = function (chosenState, chosenCount, totalCount) {
-              return checkboxRowEl(chosenState, document.createTextNode(sel.getUiTranslationPack().selectAllRowText(chosenCount, totalCount)))
+            settings.createChooseAllRowContentElFn = function (chosenState, chosenCount, totalCount) {
+              return checkboxRowEl(chosenState, document.createTextNode(sel.getUiTranslationPack().chooseAllRowText(chosenCount, totalCount)))
             }
           }
 

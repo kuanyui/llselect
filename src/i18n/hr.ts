@@ -13,5 +13,5 @@ export const hr: LLSelectUiTranslationPack = {
   tagRemoveButtonAriaLabel: (itemText) => `Ukloni ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Odabrano sve (${chosenCount})` : `Odabrano ${chosenCount} od ${totalCount}`,
-  selectAllRowText: (chosenCount, totalCount) => `Odaberi sve (${chosenCount} / ${totalCount})`,
+  chooseAllRowText: (chosenCount, totalCount) => `Odaberi sve (${chosenCount} / ${totalCount})`,
 }
