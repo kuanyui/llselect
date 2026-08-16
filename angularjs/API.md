@@ -93,6 +93,31 @@ Disabling must go through llselect's own `setDisabled()`:
 
 **Expression** -> `filterable`. Shows the search box. `true` / `false` / a predicate `(items) => boolean`.
 
+### `ll-filter-fn`
+
+**Expression** -> `filterFn`. Custom match logic for the search box.
+
+- Evaluated once at link time to a function `(item, query) => boolean`.
+- `query` is the raw input: not trimmed, not lower-cased. Normalize it yourself.
+- Not called while the query is empty (an empty box shows every item).
+- Without it, the default filter is a case-insensitive substring match against the item text from `ll-options` - what is SHOWN is what matches.
+
+A real case: items are `{interfaceType: 'vlan', interfaceNo: '2'}`, shown as "VLAN 2". The default filter already matches "vlan 2" (the shown text is the haystack). The custom fn below also matches the space-less "vlan2":
+
+```js
+$scope.ifaceText = function (i) { return i.interfaceType.toUpperCase() + ' ' + i.interfaceNo }
+$scope.ifaceMatch = function (i, query) {
+  function norm(s) { return String(s).toLowerCase().replace(/\s+/g, '') }
+  return norm($scope.ifaceText(i)).indexOf(norm(query)) !== -1
+}
+```
+
+```html
+<llselect-single ng-model="picked" ll-filterable="true" ll-filter-fn="ifaceMatch"
+  ll-options="ifaceText(i) for i in interfaces track by i.interfaceNo">
+</llselect-single>
+```
+
 ### `ll-clearable`
 
 **Expression** -> `clearable`. Shows the trigger's clear (x) button.
@@ -304,6 +329,33 @@ Migrating a call site, at a glance:
 | `ng-disabled` / the `disabled` attribute | `setDisabled()`, via `attrs.$observe('disabled')` - the exact mechanism ui-select itself uses, its string quirks included (a truthy string like interpolated `"false"` disables). The observed attribute stays inert on the host, so hover - and a why-tooltip - keep working while disabled |
 | `$select.selected`, `$select.search`, `$select.multiple` | published on each template's scope |
 | `$index` | from `createItemEl(item, index)` |
+
+### Filtering
+
+Your `| filter:` chain in `repeat` IS the custom filter - same syntax as ui-select, so a migrated call site keeps its matching behavior. The same interface case as [`ll-filter-fn`](#ll-filter-fn), written ui-select style as a registered filter:
+
+```js
+angular.module('app').filter('ifaceMatch', function () {
+  function norm(s) { return String(s).toLowerCase().replace(/\s+/g, '') }
+  return function (items, query) {
+    if (!query) { return items }
+    return (items || []).filter(function (i) {
+      return norm(i.interfaceType + ' ' + i.interfaceNo).indexOf(norm(query)) !== -1
+    })
+  }
+})
+```
+
+```html
+<ui-llselect-choices repeat="i in vm.interfaces | ifaceMatch: $select.search" ll-item-text="ifaceText(i)">
+```
+
+Differences from real ui-select:
+
+- Cost: ui-select re-evaluates the repeat (filter included) on EVERY digest, per row; the bridge evaluates it ONCE per typed query and answers membership from the result.
+- The search box is llselect's own; `$select.search` is still published to your templates (e.g. for `| highlight:`).
+- A bare `| filter: $select.search` matches each property separately, so a query spanning two fields ("vlan 2") matches nothing - in real ui-select AND here. That is Angular's `filter` filter; write one like the above.
+- Async searching (`refresh`, `refresh-delay`, `minimum-input-length`, `spinner-enabled`) is not bridged: [Not supported](#not-supported).
 
 ### `ll-item-text`
 

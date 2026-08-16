@@ -167,6 +167,8 @@
     if (attrs.llArrow) { arrow = attrs.llArrow }
     var itemContentFn = evalFnAttr(scope, attrs, 'llItemContentFn')
     if (itemContentFn) { settings.createItemContentElFn = itemContentFn }
+    var filterFn = evalFnAttr(scope, attrs, 'llFilterFn')
+    if (filterFn) { settings.filterFn = filterFn }
     var triggerContentFn = evalFnAttr(scope, attrs, 'llTriggerContentFn')
     if (triggerContentFn) { settings.createTriggerContentElFn = triggerContentFn }
 

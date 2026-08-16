@@ -456,3 +456,30 @@ test('ll-label-el with an unknown id is reported and no widget is left behind', 
   assert.match(a.errors[0].message, /ll-label-el: no element with id "nope"/)
   assert.equal(a.$('.llselect-trigger'), null)
 })
+
+test('ll-filter-fn drives the search box beyond the label-text default', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.iface" ll-filterable="true" ll-filter-fn="vm.match"
+        ll-options="(i.t + ' ' + i.n) for i in vm.ifaces track by i.n"></llselect-single>
+    </div>`,
+    controller: function () {
+      this.ifaces = [{ t: 'vlan', n: '2' }, { t: 'vlan', n: '10' }, { t: 'eth', n: '0' }]
+      this.iface = undefined
+      this.match = function (i, q) {
+        return (i.t + i.n).indexOf(q.trim().toLowerCase().replace(/\s+/g, '')) !== -1
+      }
+    },
+  })
+  assert.deepEqual(a.errors, [])
+  a.$('.llselect-trigger').click()
+  const input = a.$('.llselect-filter-input')
+  // "vlan2" is NOT a substring of any label ("vlan 2") - only the custom fn
+  // (which strips spaces) can match it, so one row proves the wiring.
+  input.value = 'vlan2'
+  input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
+  const rows = a.$$('.llselect-item')
+  assert.equal(rows.length, 1)
+  assert.equal(rows[0].textContent, 'vlan 2')
+})
