@@ -307,7 +307,7 @@ Migrating a call site, at a glance:
 
 ### `ll-item-text`
 
-**Expression** -> `itemToStringFn`. **This attribute does not exist in ui-select - it is the ONE thing you add when migrating.** llselect needs one string per item - the option's accessible name and the search text - and ui-select's markup has no place that states it (its row content is template DOM).
+**Expression** -> `itemToStringFn`. **This attribute does not exist in ui-select - it is the ONE thing you add when migrating.** llselect needs one string per item - the option's accessible name and the plain-text renderings (trigger fallback, template-less rows) - and ui-select's markup has no place that states it (its row content is template DOM).
 
 Sits on `<ui-llselect-choices>`, written over the `repeat` variable:
 
@@ -348,7 +348,8 @@ Any of ui-select's template shapes carries over - plus one ui-select cannot do:
 <ui-llselect-choices repeat="p in vm.people | filter: $select.search" ll-item-text="p.name"></ui-llselect-choices>
 ```
 
-- The template and `ll-item-text` are separate channels: the template is what a row SHOWS, `ll-item-text` is the plain string (accessible name + search text). The bridge never derives one from the other - reading the rendered DOM back would put the role hint above into the option's spoken name.
+- The template and `ll-item-text` are separate channels: the template is what a row SHOWS, `ll-item-text` is the plain string (the accessible name + plain-text renderings). The bridge never derives one from the other - reading the rendered DOM back would put the role hint above into the option's spoken name.
+- Searching does NOT use it. The `| filter: $select.search` expression in `repeat` stays the filter, exactly as in ui-select (see [What carries over](#what-carries-over)): there is no single "search string" - your filter expression decides what matches (a bare `| filter:` matches every property of the item).
 - Without `ll-item-text`, an object item degrades to `String(item)` ("[object Object]").
 
 ### Two deliberate deviations
