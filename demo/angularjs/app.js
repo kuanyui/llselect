@@ -80,7 +80,7 @@
     { name: 'Java', icon: 'language-java', color: '#e76f00' },
   ]
 
-  angular.module('demo', ['llselect', 'llselect.uiCompat', 'ngSanitize', 'ghiscoding.validation'])
+  angular.module('demo', ['llselect', 'llselect.uiCompat', 'ngSanitize', 'ui.bootstrap', 'ghiscoding.validation'])
 
     // The house style, set once. Per-element ll-* attributes still win.
     .config(['llselectConfigProvider', function (llselectConfigProvider) {
@@ -170,6 +170,8 @@
       vm.person2 = USERS[2] // preset so allow-clear's x is visible on load
       vm.person3 = undefined // 8d, bare text template
       vm.person4 = undefined // 8d, no template
+      vm.person5 = undefined // 8f, ng-disabled + tooltip
+      vm.quotaLocked = true // 8f starts disabled so the tooltip point shows
       vm.people = []
       vm.locked = false
       vm.avFruit = undefined

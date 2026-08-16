@@ -310,7 +310,8 @@
       content carries over untouched. CSS does not - llselect owns the DOM, so
       this is styled by the llselect theme.
     </p>
-    <div data-src="8">
+    <h3>8a. Rich row template (highlight + ui-disable-choice)</h3>
+    <div data-src="8a">
     <ui-llselect ng-model="vm.person" name="person" required>
       <ui-llselect-match placeholder="Pick a person">{{$select.selected.name}}</ui-llselect-match>
       <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"
@@ -321,8 +322,9 @@
     </ui-llselect>
     </div>
     <div class="out">ng-model = {{ vm.person | json }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8a"><code></code></pre></details>
 
+    <h3>8b. Multiple: chips from the match template</h3>
     <div data-src="8b">
     <ui-llselect ng-model="vm.people" multiple>
       <ui-llselect-match>{{$item.name}}</ui-llselect-match>
@@ -334,6 +336,7 @@
     <div class="out">ng-model = {{ vm.people.length }} selected</div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="8b"><code></code></pre></details>
 
+    <h3>8c. allow-clear</h3>
     <div data-src="8c">
     <ui-llselect ng-model="vm.person2">
       <ui-llselect-match placeholder="Pick a person" allow-clear="true">{{$select.selected.name}}</ui-llselect-match>
@@ -345,6 +348,7 @@
     <div class="out">ng-model = {{ vm.person2.name || 'undefined' }} <span class="hint">(ui-select's own allow-clear carries over: the x clears back to undefined)</span></div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="8c"><code></code></pre></details>
 
+    <h3>8d. Template shapes: bare text / none</h3>
     <p>
       The template has three shapes: elements (above), a bare text node, or
       none at all - rows then render the <code>ll-item-text</code> string
@@ -378,6 +382,25 @@
     </div>
     <div class="out">ng-model = {{ vm.iface2 | json }}</div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="8e"><code></code></pre></details>
+
+    <h3>8f. ng-disabled + a why-tooltip</h3>
+    <p>
+      <code>ng-disabled</code> carries over here (ui-select parity, via
+      <code>attrs.$observe</code>; the main directives use
+      <code>ll-disabled</code> instead). The attribute is inert on this host,
+      so hover still works - the <code>uib-tooltip</code> explains WHY it is
+      disabled.
+    </p>
+    <div class="demo-row" data-src="8f">
+      <label><input type="checkbox" ng-model="vm.quotaLocked"> quota lock</label>
+      <ui-llselect ng-model="vm.person5" ng-disabled="vm.quotaLocked"
+        uib-tooltip="Locked: people quota exceeded" tooltip-enable="vm.quotaLocked">
+        <ui-llselect-match placeholder="Pick a person">{{$select.selected.name}}</ui-llselect-match>
+        <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"></ui-llselect-choices>
+      </ui-llselect>
+    </div>
+    <div class="out">ng-model = {{ vm.person5.name || 'undefined' }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8f"><code></code></pre></details>
 
     <p class="hint">
       Not bridged, by rule (llselect has no such concept, so it is ignored rather
@@ -472,6 +495,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/angular@1.8.3/angular.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/angular-sanitize@1.8.3/angular-sanitize.min.js"></script>
+  <!-- ui-bootstrap: only for 8f's uib-tooltip. -->
+  <script src="https://cdn.jsdelivr.net/npm/angular-ui-bootstrap@2.5.6/dist/ui-bootstrap-tpls.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/angular-translate@2.19.1/dist/angular-translate.min.js"></script>
   <!-- useStaticFilesLoader is NOT in angular-translate core; it is its own
        package, and it lives at the package root, not under dist/. Without it,

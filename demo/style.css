@@ -34,6 +34,18 @@ code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
 .back-to-top:hover { background: #f2f2f2; }
 .back-to-top svg { width: 1em; height: 1em; }
 
+/* angularjs 8f: minimal look for ui-bootstrap's uib-tooltip (this page loads
+   no Bootstrap CSS; opacity: 1 also counters Bootstrap's .tooltip fade base
+   if one ever loads). */
+.tooltip { position: absolute; z-index: 1100; font-size: 0.8rem; opacity: 1; }
+.tooltip-inner {
+  background: #333;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  max-width: 220px;
+}
+
 h1 {
   font-size: 2rem;
   margin: 0 0 0.5rem;
@@ -291,7 +303,8 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 /* #endregion */
 
-/* 10.1 / 10.2 rich item content - icon + label row (used in the list rows). */
+/* Icon + text rows for rich item content (core 5.4-5.6, 11.x, 13.2;
+   angularjs 7). */
 .lang-row {
   display: inline-flex;
   align-items: center;
