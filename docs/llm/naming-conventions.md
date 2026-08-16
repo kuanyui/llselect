@@ -300,6 +300,7 @@ DONE - all three phases applied (npm test passes; npm run build green).
 | `openClass` (`.llselect-open`)               | a state class on root, not an element name                                                                                     |
 | `triggerDisplay`                             | already family-prefixed                                                                                                        |
 | `popupListNoResults*`                        | named for what it DESCRIBES (the list's empty state), not where it sits (a popup child, the listbox's sibling)                 |
+| `selectAllRow` (element) vs `chooseAll` (action) | the ELEMENT is named by its user-visible copy and the industry feature name ("Select all" - what the row literally says); the ACTIONS stay in the `choose*` family with `All` as the bulk suffix. "select" otherwise appears only as the product noun (`LLSelect*`, `llselect-*`) |
 | keyboard / positioning / icons module fns    | audited, all conform to s1-s3                                                                                                  |
 
 ### 7d. Rulings
