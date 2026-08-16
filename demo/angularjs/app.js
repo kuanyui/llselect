@@ -121,7 +121,7 @@
       return function (items, query) {
         if (!query) { return items }
         return (items || []).filter(function (i) {
-          return normIface(i.interfaceType + ' ' + i.interfaceNo).indexOf(normIface(query)) !== -1
+          return normIface(i.interfaceType + ' ' + i.interfaceNo).includes(normIface(query))
         })
       }
     })
@@ -192,7 +192,7 @@
 
       /** 11: custom match - "vlan2", "VLAN 2" and "2" all hit "VLAN 2". */
       vm.ifaceMatch = function (i, query) {
-        return normIface(vm.ifaceText(i)).indexOf(normIface(query)) !== -1
+        return normIface(vm.ifaceText(i)).includes(normIface(query))
       }
 
       /**

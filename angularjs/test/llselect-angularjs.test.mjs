@@ -468,7 +468,7 @@ test('ll-filter-fn drives the search box beyond the label-text default', () => {
       this.ifaces = [{ t: 'vlan', n: '2' }, { t: 'vlan', n: '10' }, { t: 'eth', n: '0' }]
       this.iface = undefined
       this.match = function (i, q) {
-        return (i.t + i.n).indexOf(q.trim().toLowerCase().replace(/\s+/g, '')) !== -1
+        return (i.t + i.n).includes(q.trim().toLowerCase().replace(/\s+/g, ''))
       }
     },
   })

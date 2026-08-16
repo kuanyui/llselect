@@ -102,13 +102,13 @@ Disabling must go through llselect's own `setDisabled()`:
 - Not called while the query is empty (an empty box shows every item).
 - Without it, the default filter is a case-insensitive substring match against the item text from `ll-options` - what is SHOWN is what matches.
 
-A real case: items are `{interfaceType: 'vlan', interfaceNo: '2'}`, shown as "VLAN 2". The default filter already matches "vlan 2" (the shown text is the haystack). The custom fn below also matches the space-less "vlan2":
+A real case: items are `{interfaceType: 'vlan', interfaceNo: '2'}`, shown as `VLAN 2`. The default filter already matches `vlan 2` (the shown text is the haystack). The custom fn below also matches the space-less `vlan2`:
 
 ```js
 $scope.ifaceText = function (i) { return i.interfaceType.toUpperCase() + ' ' + i.interfaceNo }
 $scope.ifaceMatch = function (i, query) {
   function norm(s) { return String(s).toLowerCase().replace(/\s+/g, '') }
-  return norm($scope.ifaceText(i)).indexOf(norm(query)) !== -1
+  return norm($scope.ifaceText(i)).includes(norm(query))
 }
 ```
 
@@ -332,7 +332,7 @@ Migrating a call site, at a glance:
 
 ### Filtering
 
-Your `| filter:` chain in `repeat` IS the custom filter - same syntax as ui-select, so a migrated call site keeps its matching behavior. The same interface case as [`ll-filter-fn`](#ll-filter-fn), written ui-select style as a registered filter:
+Your `| filter:` chain in `repeat` IS the custom filter - same syntax as ui-select, so a migrated call site keeps its matching behavior. The running case (same as [`ll-filter-fn`](#ll-filter-fn)): items are `{interfaceType: 'vlan', interfaceNo: '2'}`, shown as `VLAN 2` via [`ll-item-text`](#ll-item-text), and the space-less `vlan2` must still match. ui-select style, that is a registered filter:
 
 ```js
 angular.module('app').filter('ifaceMatch', function () {
@@ -340,7 +340,7 @@ angular.module('app').filter('ifaceMatch', function () {
   return function (items, query) {
     if (!query) { return items }
     return (items || []).filter(function (i) {
-      return norm(i.interfaceType + ' ' + i.interfaceNo).indexOf(norm(query)) !== -1
+      return norm(i.interfaceType + ' ' + i.interfaceNo).includes(norm(query))
     })
   }
 })
@@ -354,7 +354,7 @@ Differences from real ui-select:
 
 - Cost: ui-select re-evaluates the repeat (filter included) on EVERY digest, per row; the bridge evaluates it ONCE per typed query and answers membership from the result.
 - The search box is llselect's own; `$select.search` is still published to your templates (e.g. for `| highlight:`).
-- A bare `| filter: $select.search` matches each property separately, so a query spanning two fields ("vlan 2") matches nothing - in real ui-select AND here. That is Angular's `filter` filter; write one like the above.
+- A bare `| filter: $select.search` matches each property separately, so a query spanning two fields (`vlan 2`) matches nothing - in real ui-select AND here. That is Angular's `filter` filter; write one like the above.
 - Async searching (`refresh`, `refresh-delay`, `minimum-input-length`, `spinner-enabled`) is not bridged: [Not supported](#not-supported).
 
 ### `ll-item-text`

@@ -367,8 +367,8 @@
     <h3>8e. Custom filter, ui-select style</h3>
     <p>
       The <code>| filter:</code> chain IS the custom filter, re-evaluated once
-      per typed query. Try "vlan2" - the <code>ifaceMatch</code> filter
-      (app.js) ignores spaces.
+      per typed query. Try <code>vlan2</code> - the <code>ifaceMatch</code>
+      filter (app.js) ignores spaces.
     </p>
     <div class="demo-row" data-src="8e">
     <ui-llselect ng-model="vm.iface2">
@@ -444,9 +444,9 @@
     <h2>11. Custom filter: ll-filter-fn</h2>
     <p>
       Items are <code>{interfaceType: 'vlan', interfaceNo: '2'}</code>, shown
-      as "VLAN 2". The default filter matches the shown text ("vlan 2"
-      works out of the box); the custom fn also matches the space-less
-      "vlan2".
+      as <code>VLAN 2</code>. The default filter matches the shown text
+      (<code>vlan 2</code> works out of the box); the custom fn also matches
+      the space-less <code>vlan2</code>.
     </p>
     <div class="demo-row" data-src="11">
       <llselect-single ng-model="vm.iface" ll-filterable="true" ll-filter-fn="vm.ifaceMatch"
