@@ -142,23 +142,34 @@ function collectKinds(moduleReflection) {
 // signature `()`, and retry once without a leading modifier word (the
 // `abstract` / `readonly` etc. code chips typedoc puts before the name).
 const HEADING_MODIFIERS = new Set(['abstract', 'readonly', 'static', 'protected', 'optional', 'const', 'get', 'set'])
-function resolveHeadingKind(innerHtml, kinds) {
+function resolveHeadingKey(innerHtml, kinds) {
   let text = innerHtml.replace(/<[^>]+>/g, '').replace(/&[a-z0-9#]+;/gi, '').trim()
   if (text.endsWith('()')) { text = text.slice(0, -2) }
-  if (kinds.has(text)) { return kinds.get(text) }
+  if (kinds.has(text)) { return text }
   const space = text.indexOf(' ')
   if (space !== -1 && HEADING_MODIFIERS.has(text.slice(0, space))) {
     const rest = text.slice(space + 1)
-    if (kinds.has(rest)) { return kinds.get(rest) }
+    if (kinds.has(rest)) { return rest }
   }
   return null
 }
-function injectKindBadges(body, kinds) {
-  return body.replace(/<h([2-6]) id="([^"]+)">(.*?)<\/h\1>/g, (whole, depth, id, inner) => {
-    const label = resolveHeadingKind(inner, kinds)
-    if (label === null) { return whole }
+function injectKindBadges(body, kinds, { strictUnused = false } = {}) {
+  const matched = new Set()
+  const out = body.replace(/<h([2-6]) id="([^"]+)">(.*?)<\/h\1>/g, (whole, depth, id, inner) => {
+    const key = resolveHeadingKey(inner, kinds)
+    if (key === null) { return whole }
+    matched.add(key)
+    const label = kinds.get(key)
     return `<h${depth} id="${id}" data-kind="${label}" title="${label}">${inner}</h${depth}>`
   })
+  // A hand-written map drifts silently on renames; make the drift loud.
+  if (strictUnused) {
+    const unused = [...kinds.keys()].filter((k) => !matched.has(k))
+    if (unused.length > 0) {
+      throw new Error(`build:site: kind-map entries matched no heading (stale after a rename?): ${unused.join(', ')}`)
+    }
+  }
+  return out
 }
 
 // The AngularJS attribute entries open with their binding mode in bold
@@ -176,6 +187,17 @@ function injectBindingBadges(body) {
     }
     return heading.replace(' data-kind="attribute"', ` data-kind="attribute" data-binding="${norm}"`) + pOpen
   })
+}
+// Reverse guard: an entry that OPENS with a binding token but carries no
+// attribute kind means the hand-written kind map missed it (new attribute
+// never added, or renamed away). Silent = an unmarked entry on the page.
+function assertNoUnclassifiedAttributes(body) {
+  const stray = [...body.matchAll(/<h([2-6]) id="([^"]+)"(?![^>]*data-kind)[^>]*>.*?<\/h\1>\n<p><strong>([^<]*)<\/strong>/g)]
+    .filter((m) => BINDING_TOKENS.has(m[3].toLowerCase()))
+  if (stray.length > 0) {
+    throw new Error(`build:site: entries open with a binding token but are missing from the kind map: ${stray.map((m) => m[2]).join(', ')}`)
+  }
+  return body
 }
 
 // Sidebar outline for the (long) API pages: a generic nested tree from the
@@ -641,11 +663,11 @@ function wrapSections(body, tocIds) {
   return out
 }
 
-function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links, toc = false, subnav = null, kinds = null }) {
+function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links, toc = false, subnav = null, kinds = null, kindsStrict = false }) {
   slugCounts.clear()
   let body = marked.parse(readFileSync(mdPath, 'utf8'))
   body = links ? links(body) : rewriteLinks(body, posix.dirname(mdPath).replace(/^\.$/, ''))
-  if (kinds !== null) { body = injectBindingBadges(injectKindBadges(body, kinds)) }
+  if (kinds !== null) { body = assertNoUnclassifiedAttributes(injectBindingBadges(injectKindBadges(body, kinds, { strictUnused: kindsStrict }))) }
   let tocHtml = null
   if (toc) {
     const built = buildTocHtml(body)
@@ -682,20 +704,23 @@ renderMarkdownPage('README.md', 'public/index.html', { title: 'llselect', descri
 renderMarkdownPage('angularjs/README.md', 'public/angularjs/index.html', { title: 'llselect + AngularJS 1.x', description: ngPkg.description, prefix: '../', current: 'AngularJS', subnav: angularjsSubnavHtml('../', 'README') })
 // The AngularJS reference is hand-written (markup is not a TypeScript
 // surface), so its badge map is hand-written too: keys are heading texts in
-// angularjs/API.md. A heading missing here simply renders without a badge.
+// angularjs/API.md. Drift is LOUD in both directions: a map key matching no
+// heading throws (kindsStrict), and an entry opening with a binding token
+// but missing from this map throws (assertNoUnclassifiedAttributes).
 const NG_KINDS = new Map(Object.entries({
   'llselect-single': 'directive', 'llselect-multiple': 'directive', 'ui-llselect': 'directive',
   'ng-model': 'attribute', 'ng-change': 'attribute', 'll-options': 'attribute', name: 'attribute', required: 'attribute',
-  'll-disabled': 'attribute', 'll-placeholder': 'attribute', 'll-filterable': 'attribute',
+  'll-disabled': 'attribute', 'll-placeholder': 'attribute', 'll-filterable': 'attribute', 'll-filter-fn': 'attribute',
   'll-clearable': 'attribute', 'll-popup-width-policy': 'attribute', 'll-arrow': 'attribute',
   'll-item-content-fn': 'attribute', 'll-trigger-content-fn': 'attribute',
   'll-tag-content-fn': 'attribute', 'll-tag-remove-button-content-fn': 'attribute',
-  'll-aria-label': 'attribute', 'll-aria-labelledby': 'attribute', 'll-trigger-display': 'attribute',
-  'll-select-all-row': 'attribute', 'll-checkboxes': 'attribute', 'll-label': 'attribute',
+  'll-aria-label': 'attribute', 'll-aria-labelledby': 'attribute', 'll-label-el': 'attribute',
+  'll-trigger-display': 'attribute',
+  'll-choose-all-row': 'attribute', 'll-checkboxes': 'attribute', 'll-item-text': 'attribute',
   defaults: 'method', instance: 'method',
   arrow: 'property', filterable: 'property', popupWidthPolicy: 'property', uiTranslationPack: 'property',
 }))
-renderMarkdownPage('angularjs/API.md', 'public/angularjs/api.html', { title: '@llselect/angularjs API', description: 'Attribute reference for the @llselect/angularjs AngularJS 1.x directives', prefix: '../', current: 'AngularJS', subnav: angularjsSubnavHtml('../', 'API'), toc: true, kinds: NG_KINDS })
+renderMarkdownPage('angularjs/API.md', 'public/angularjs/api.html', { title: '@llselect/angularjs API', description: 'Attribute reference for the @llselect/angularjs AngularJS 1.x directives', prefix: '../', current: 'AngularJS', subnav: angularjsSubnavHtml('../', 'API'), toc: true, kinds: NG_KINDS, kindsStrict: true })
 
 if (!existsSync('.build/api-md/@llselect/core.md')) {
   throw new Error('.build/api-md/ is missing: the build:site npm script runs typedoc first')
