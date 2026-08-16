@@ -53,6 +53,21 @@
     return 'hsl(' + hexToHue(lang.color) + ' 75% 32%)'
   }
 
+  // 11 / 8e: the custom-filter case - the item text is derived, and search
+  // must match forms no raw field contains (e.g. the space-less "vlan2").
+  var INTERFACES = [
+    { interfaceType: 'vlan', interfaceNo: '2' },
+    { interfaceType: 'vlan', interfaceNo: '10' },
+    { interfaceType: 'eth', interfaceNo: '0' },
+    { interfaceType: 'eth', interfaceNo: '1' },
+    { interfaceType: 'lo', interfaceNo: '0' },
+  ]
+
+  // Space-less, case-less normal form shared by both filter flavors.
+  function normIface(s) {
+    return String(s).toLowerCase().replace(/\s+/g, '')
+  }
+
   // icon/color drive example 7's custom rows (same data shape as the core
   // demo's PROGRAMMING_LANGUAGES); the other examples read only .name.
   var LANGUAGES = [
@@ -98,6 +113,16 @@
         return query && matchItem
           ? ('' + matchItem).replace(new RegExp(escapeRegexp(query), 'gi'), '<span class="ui-select-highlight">$&</span>')
           : matchItem
+      }
+    })
+
+    // 8e, ui-select style: the repeat's filter chain is the custom filter.
+    .filter('ifaceMatch', function () {
+      return function (items, query) {
+        if (!query) { return items }
+        return (items || []).filter(function (i) {
+          return normIface(i.interfaceType + ' ' + i.interfaceNo).indexOf(normIface(query)) !== -1
+        })
       }
     })
 
@@ -155,6 +180,20 @@
       vm.user2 = undefined
       vm.langTinted = undefined
       vm.labelFruit = undefined
+      vm.interfaces = INTERFACES
+      vm.iface = undefined // 11, ll-filter-fn
+      vm.iface2 = undefined // 8e, filter chain
+
+      /** 11 / 8e: the derived item text - "VLAN 2", "ETH 0", ... */
+      vm.ifaceText = function (i) {
+        if (!i) { return '' }
+        return i.interfaceType.toUpperCase() + ' ' + i.interfaceNo
+      }
+
+      /** 11: custom match - "vlan2", "VLAN 2" and "2" all hit "VLAN 2". */
+      vm.ifaceMatch = function (i, query) {
+        return normIface(vm.ifaceText(i)).indexOf(normIface(query)) !== -1
+      }
 
       /**
        * 7a. A render-time DOM factory: called by llselect outside any digest,

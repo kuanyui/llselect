@@ -364,6 +364,21 @@
     <div class="out">ng-model = {{ vm.person3.name || 'undefined' }} / {{ vm.person4.name || 'undefined' }}</div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="8d"><code></code></pre></details>
 
+    <h3>8e. Custom filter, ui-select style</h3>
+    <p>
+      The <code>| filter:</code> chain IS the custom filter, re-evaluated once
+      per typed query. Try "vlan2" - the <code>ifaceMatch</code> filter
+      (app.js) ignores spaces.
+    </p>
+    <div class="demo-row" data-src="8e">
+    <ui-llselect ng-model="vm.iface2">
+      <ui-llselect-match placeholder="Pick an interface">{{vm.ifaceText($select.selected)}}</ui-llselect-match>
+      <ui-llselect-choices repeat="i in vm.interfaces | ifaceMatch: $select.search" ll-item-text="vm.ifaceText(i)"></ui-llselect-choices>
+    </ui-llselect>
+    </div>
+    <div class="out">ng-model = {{ vm.iface2 | json }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8e"><code></code></pre></details>
+
     <p class="hint">
       Not bridged, by rule (llselect has no such concept, so it is ignored rather
       than half-implemented): tagging, sortable, append-to-body, async refresh,
@@ -426,7 +441,24 @@
   </section>
 
   <section>
-    <h2>11. Full source</h2>
+    <h2>11. Custom filter: ll-filter-fn</h2>
+    <p>
+      Items are <code>{interfaceType: 'vlan', interfaceNo: '2'}</code>, shown
+      as "VLAN 2". The default filter matches the shown text ("vlan 2"
+      works out of the box); the custom fn also matches the space-less
+      "vlan2".
+    </p>
+    <div class="demo-row" data-src="11">
+      <llselect-single ng-model="vm.iface" ll-filterable="true" ll-filter-fn="vm.ifaceMatch"
+        ll-options="vm.ifaceText(i) for i in vm.interfaces track by i.interfaceNo">
+      </llselect-single>
+    </div>
+    <div class="out">ng-model = {{ vm.iface | json }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="11"><code></code></pre></details>
+  </section>
+
+  <section>
+    <h2>12. Full source</h2>
     <p>
       The whole of what this page loads. Nothing is generated and nothing is
       minified: this is the file you copy.
