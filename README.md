@@ -332,6 +332,8 @@ const sel = new LLSelectSingle(el, {
 })
 ```
 
+Event callbacks are constructor-time settings - frozen like every setting, one callback per event. To swap the handler at runtime or fan out to several listeners, wrap it in your own reference: `onChange: (current, previous) => myHandler?.(current, previous)`.
+
 ### Subclassing (extending the library)
 
 Subclass only when settings cannot express it:
