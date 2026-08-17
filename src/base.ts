@@ -4,6 +4,7 @@
 // item click.
 
 import { createPositioner, isAnchorHidden, type Positioner, type WidthPolicy } from './positioning.js'
+import { gatherItemsByGroupKey } from './grouping.js'
 import {
   LLSelectAction,
   ensureVisibleInScroll,
@@ -265,12 +266,32 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * - `null` (setting, default): grouping off - flat list, no headers.
    * - fn returns `null`: this item is in no group; renders ungrouped.
    * - Contiguous items with an equal key (per `groupKeyCompareFn`) form one
-   *   group, so the data must be pre-sorted by group. See `docs/llm/DESIGN.md`.
+   *   group. By default non-contiguous data is first gathered into display
+   *   order (`gatherGroups`); with `gatherGroups: false` the data must be
+   *   pre-sorted by group. See `docs/llm/DESIGN.md`.
    * @group Grouping
    */
   itemToGroupKeyFn: ((item: T) => GK | null) | null
   /**
-   * Equality for two group keys; decides whether adjacent items share a group.
+   * Whether the library gathers non-contiguous groups before rendering
+   * (`true`, default). Grouping renders contiguous runs, so scattered items
+   * sharing a key would otherwise produce a duplicate header per gap.
+   * - `true`: the DISPLAY order is derived via {@link gatherItemsByGroupKey}:
+   *   groups in first-appearance order, within-group order kept, ungrouped
+   *   (`null`-key) items in place. The data itself (`items` / `getItems()`)
+   *   is never reordered, and already-contiguous data is detected in one
+   *   scan and used as-is.
+   * - `false`: strict mode - you guarantee the data is pre-sorted by group; a
+   *   key reappearing after a gap renders a duplicate header and
+   *   `console.warn`s, so a broken sort is surfaced instead of silently
+   *   fixed.
+   * No effect while grouping is off (`itemToGroupKeyFn: null`).
+   * @group Grouping
+   */
+  gatherGroups: boolean
+  /**
+   * Equality for two group keys; decides whether items share a group (both
+   * the `gatherGroups` gather and the contiguous-run rendering use it).
    * - `null` (default) = strict `===` (right for string / number keys).
    * - Supply only when `GK` is an object without usable reference identity.
    * - Mirrors `compareFn`, one level up.
@@ -640,6 +661,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   private filterActive: boolean
   private query = ''
   private filteredItems: T[] | undefined
+  /** Memoized display order of `items` (`gatherGroups` gather); `undefined` = recompute on next need. */
+  private gatheredItems: readonly T[] | undefined
   private composing = false
 
   /**
@@ -698,6 +721,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       itemToStringFn: settings?.itemToStringFn ?? null,
       createItemContentElFn: settings?.createItemContentElFn ?? null,
       itemToGroupKeyFn: settings?.itemToGroupKeyFn ?? null,
+      gatherGroups: settings?.gatherGroups ?? true,
       groupKeyCompareFn: settings?.groupKeyCompareFn ?? null,
       groupKeyToStringFn: settings?.groupKeyToStringFn ?? null,
       groupDisabledFn: settings?.groupDisabledFn ?? null,
@@ -1144,6 +1168,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    */
   public setItems(items: T[]): void {
     this.items = items.slice()
+    this.gatheredItems = undefined
     if (this.filterActive) { this.recomputeFilteredItems() }
     if (this.opened) { this.renderPopupList() }
     this.onItemsChanged()
@@ -1364,7 +1389,9 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * touches no DOM. Group headers are NOT added to `itemEls`, so `itemEls[i]`
    * stays aligned with `getVisibleItems()[i]` and keyboard nav skips headers for
    * free. `console.warn`s once per non-contiguous key reappearance (unsorted
-   * data would otherwise emit a duplicate header for the same group).
+   * data would otherwise emit a duplicate header for the same group) -
+   * reachable only with `gatherGroups: false`; the default gather feeds this
+   * an already-contiguous list.
    */
   private computePopupSegments(list: readonly T[], els: HTMLElement[]): PopupListSegment<T, GK>[] {
     const keyOf = this.settings.itemToGroupKeyFn
@@ -2049,15 +2076,32 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Items currently displayed in the popup. Equals `items` when not
-   * filterable or when no filter is active; equals the filtered subset when
-   * the user has typed in the filter input. Subclasses may read this when
-   * they need the visible list (e.g. for selection-by-index). Returns the
-   * LIVE internal array, typed read-only - never mutate it (see `getItems`).
+   * Items currently displayed in the popup, in DISPLAY order. Equals the
+   * display base (`items`, gathered per `gatherGroups` when grouping is on)
+   * when no filter query is active; equals the filtered subset when the user
+   * has typed in the filter input. Subclasses may read this when they need
+   * the visible list (e.g. for selection-by-index). Returns the LIVE
+   * internal array, typed read-only - never mutate it (see `getItems`).
    * @group Subclassing: semantics
    */
   protected getVisibleItems(): readonly T[] {
-    return this.filteredItems ?? this.items
+    return this.filteredItems ?? this.getDisplayBaseItems()
+  }
+
+  /**
+   * The base list in DISPLAY order: `items` gathered per `gatherGroups`
+   * (memoized until the next `setItems`), or `items` as-is while grouping is
+   * off or `gatherGroups` is false. Filtering and rendering read this, never
+   * `items` directly - so the gather runs lazily, at first need after a
+   * `setItems`.
+   */
+  private getDisplayBaseItems(): readonly T[] {
+    const keyOf = this.settings.itemToGroupKeyFn
+    if (!this.settings.gatherGroups || keyOf === null) { return this.items }
+    if (this.gatheredItems === undefined) {
+      this.gatheredItems = gatherItemsByGroupKey(this.items, keyOf, this.settings.groupKeyCompareFn)
+    }
+    return this.gatheredItems
   }
 
   /**
@@ -2083,7 +2127,10 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   private recomputeFilteredItems(): void {
     if (!this.filterActive) { return }
     const q = this.query
-    this.filteredItems = q === '' ? this.items.slice() : this.items.filter(it => this.matchesQuery(it, q))
+    // Filter over the display base (gathered order): filtering preserves
+    // contiguity, so a group's position cannot jump while typing.
+    const base = this.getDisplayBaseItems()
+    this.filteredItems = q === '' ? base.slice() : base.filter(it => this.matchesQuery(it, q))
   }
 
   /**

@@ -223,15 +223,16 @@ Why this shape, in this codebase specifically:
 - **Settings compose; no subclass split.** Same reasoning as the filter box: a capability that combines with others (filter x optgroup x ...) must be a setting, not a subclass, or the class count multiplies.
 - **Nested's unique wins are out of scope.** A nested shape is only strictly needed for empty groups (a header with no items), one item in multiple groups, or group order decoupled from item order. Native `<select>` supports none of these and neither do we ("Library scope"), so we give up nothing real.
 
-Honest cost (accepted): grouping requires the data to be pre-sorted by group (see contiguous-run below); llselect does not reorder items to gather groups.
+Honest cost, since softened: rendering works on contiguous runs. By default the library derives the DISPLAY order by gathering non-contiguous groups (`gatherGroups: true`, see contiguous-run below); the DATA (`items` / `getItems()`) is never reordered. `gatherGroups: false` restores the strict pre-sorted requirement.
 
 ### Settings
 
-All live on `LLSelectBaseSettings<T, GK>` (single + multiple; `GK = string` default). Named by return type per the callback convention ("Function-typed settings"; `naming-conventions.md` s3). Each `null` documented per CLAUDE.md:
+All live on `LLSelectBaseSettings<T, GK>` (single + multiple; `GK = string` default). Named by return type per the callback convention ("Function-typed settings"; `naming-conventions.md` s3). All but the boolean `gatherGroups` are `| null`; each `null` documented per CLAUDE.md:
 
 - `itemToGroupKeyFn: ((item: T) => GK | null) | null` (default `null`). The one setting that turns grouping on; returns the key of the group an item belongs to. Two distinct `null`s:
   - **setting `null`** (default): grouping off entirely - flat list, no headers, zero behavior change from today.
   - **fn returns `null`** for an item: that item is in no group and renders ungrouped (like an `<option>` outside any `<optgroup>`); consecutive ungrouped items are not gathered into one group. Backed by `protected itemToGroupKey(item)` (Customization model: override to replace).
+- `gatherGroups: boolean` (default `true`). Gathers non-contiguous groups into display order before rendering; `false` = strict pre-sorted mode (duplicate header + `console.warn` on violation). The gather itself is the exported pure function `gatherItemsByGroupKey(items, itemToGroupKeyFn, groupKeyCompareFn?)` - the instance runs the same function internally, so a caller opting out can pre-gather with it.
 - `groupKeyCompareFn: ((a: GK, b: GK) => boolean) | null` (default `null` = strict `===`). Decides whether two adjacent items share a group (see contiguous-run). Mirrors `compareFn`; only worth setting when `GK` is an object without usable reference identity.
 - `groupKeyToStringFn: ((groupKey: GK) => string) | null` (default `null` = `String(groupKey)`). The `GK -> display text` projection; the i18n seam. Backed by `protected groupKeyToString(key)`.
 - `groupDisabledFn: ((groupKey: GK) => boolean) | null` (default `null` = no group disabled). `true` = every item in that group is treated as disabled. Backed by `protected isGroupDisabled(key)`.
@@ -239,14 +240,18 @@ All live on `LLSelectBaseSettings<T, GK>` (single + multiple; `GK = string` defa
 
 The full-control escape hatch mirrors `createItemEl`: `protected createGroupEl(key, index, items, itemEls)` builds the whole group container (id, `role="group"`, `aria-label`, label element, items) and is overridable for a custom group element.
 
-### Grouping semantic (contiguous-run)
+### Grouping semantic (gather + contiguous-run)
 
-Consecutive visible items whose keys are equal (per `groupKeyCompareFn`) form one group; a differing key opens a new section header. Items whose key is `null` are ungrouped. This preserves `getVisibleItems()` order and the `itemEls[i] <-> getVisibleItems()[i]` index alignment exactly. The known trap (same as MUI's `groupBy`): if the data is not sorted by group, a key that reappears after a gap produces a second header for the same group. The render pass detects an already-closed key reappearing and `console.warn`s once - it does not reorder the data (caller's responsibility) and does not otherwise change behavior.
+Consecutive visible items whose keys are equal (per `groupKeyCompareFn`) form one group; a differing key opens a new section header. Items whose key is `null` are ungrouped. This preserves the visible-list order and the `itemEls[i] <-> getVisibleItems()[i]` index alignment exactly.
+
+Display order is derived BEFORE rendering: with `gatherGroups: true` (default) the base list runs through `gatherItemsByGroupKey` - groups gather at their key's first appearance, within-group relative order kept, `null`-key items in place; already-contiguous input is detected in one scan and returned as the same array, so sorted data behaves byte-identically to strict mode. The gather is memoized and lazy: `setItems` only invalidates; it materializes at first need (open, or a filter recompute) and the DATA (`items` / `getItems()`) is never reordered - the gather is display-only. Filtering runs over the gathered base, so filter keystrokes never re-gather and a group's position cannot jump while typing (pinned by first appearance in the FULL list).
+
+`gatherGroups: false` is the strict mode for callers who guarantee pre-sorted data (pre-gathering with the exported function counts): the known trap (same as MUI's `groupBy`) returns - a key reappearing after a gap produces a second header for the same group - and the render pass `console.warn`s once, surfacing the broken sort instead of silently fixing it. Two visually separate sections with the same header text stay expressible in both modes: two distinct keys mapped to one display string by `groupKeyToStringFn`.
 
 ### Interaction with existing machinery
 
 - **Keyboard / index alignment: free.** Group headers are NOT added to `itemEls`, so `getVisibleItems()` stays a flat `T[]` and keyboard nav skips headers with no extra logic.
-- **Filtering: composes for free.** Filter the flat list first, regroup the survivors at render; a group whose every item was filtered out emits no header (empty groups vanish).
+- **Filtering: composes for free.** The base list is gathered once (memoized per `setItems`); the filter then runs over that gathered base per keystroke. Filtering preserves contiguity, so regrouping the survivors at render needs nothing extra, and a group whose every item was filtered out emits no header (empty groups vanish).
 - **Disabled layering.** `isItemEffectivelyDisabled(item)` also returns `true` when the item's group is disabled (`isGroupDisabled(itemToGroupKey(item))`) - so every existing item-disabled behavior (no click selection, keyboard skip, `aria-disabled`, selection retention, bulk-op skipping) covers group-disabled automatically, with no new code paths. This is the layering the Phase 9 design deferred here.
 - **Render granularity unchanged.** Toggling one item's selection does not change its group membership, so multi-select `replacePopupListItemElInDom` stays O(1) DOM work; the group structure is untouched.
 

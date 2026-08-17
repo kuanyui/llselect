@@ -190,16 +190,17 @@ test('itemDisabledFn and groupDisabledFn layer (either one disables)', () => {
   assert.equal(byText('banana').getAttribute('aria-disabled'), 'true') // group-level
 })
 
-// --- contiguous-run warn -----------------------------------------------------
+// --- contiguous-run warn (strict mode) ---------------------------------------
 
-test('a non-contiguous key reappearance warns once', () => {
+test('gatherGroups: false - a non-contiguous key reappearance warns once and renders a duplicate header', () => {
   const warnings: unknown[][] = []
   const orig = console.warn
   console.warn = (...args: unknown[]) => { warnings.push(args) }
   try {
-    const sel = new LLSelectSingle<string>(mount(), { itemToGroupKeyFn: (s) => s[0]! })
+    const sel = new LLSelectSingle<string>(mount(), { itemToGroupKeyFn: (s) => s[0]!, gatherGroups: false })
     sel.setItems(['apple', 'banana', 'avocado']) // a, b, a -> 'a' reappears after 'b'
     sel.open()
+    assert.equal(groupEls(sel).length, 3) // a, b, a - strict mode does not gather
   } finally {
     console.warn = orig
   }

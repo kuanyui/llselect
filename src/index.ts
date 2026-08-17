@@ -35,6 +35,10 @@ export type {
   LLSelectTriggerDisplay,
 } from './multiple.js'
 
+// The gather the `gatherGroups` setting runs internally, exported for callers
+// who pre-gather themselves (with `gatherGroups: false`).
+export { gatherItemsByGroupKey } from './grouping.js'
+
 // Types observable through public settings / DOM attributes: importable,
 // never infer-only (`popupWidthPolicy` setting; `data-placement` attribute).
 export type { WidthPolicy, Placement } from './positioning.js'
