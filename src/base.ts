@@ -285,7 +285,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   key reappearing after a gap renders a duplicate header and
    *   `console.warn`s, so a broken sort is surfaced instead of silently
    *   fixed.
-   * No effect while grouping is off (`itemToGroupKeyFn: null`).
+   * No effect while grouping is off (every key `null`).
    * @group Grouping
    */
   gatherGroups: boolean
@@ -1028,11 +1028,15 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * while open) to rebuild from current state; touches no DOM directly. Use this
    * when external code mutates an item object's properties (e.g.
    * `users[0].name = 'X'`) without replacing the items array - the library has
-   * no way to detect that on its own. Does NOT fire `onChange`, does NOT run
-   * `onItemsChanged`. Pure visual refresh.
+   * no way to detect that on its own. Re-derives the display order (the
+   * `gatherGroups` gather) and, while the filter is active, re-evaluates the
+   * filter against the current item text - both read the mutated data. Does
+   * NOT fire `onChange`, does NOT run `onItemsChanged`. Pure visual refresh.
    * @group Lifecycle
    */
   public rerender(): void {
+    this.gatheredItems = undefined
+    if (this.filterActive) { this.recomputeFilteredItems() }
     this.renderTrigger()
     if (this.opened) { this.renderPopupList() }
   }
@@ -1385,24 +1389,24 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
 
   /**
    * Split the flat visible list into render segments: ungrouped item elements
-   * and contiguous same-key groups. Pure computation - reads the group settings,
-   * touches no DOM. Group headers are NOT added to `itemEls`, so `itemEls[i]`
+   * and contiguous same-key groups. Pure computation - resolves keys via
+   * `itemToGroupKey` (the subclass seam; all-`null` keys = flat list) and key
+   * equality via `groupKeyCompareFn`, touches no DOM. Group headers are NOT
+   * added to `itemEls`, so `itemEls[i]`
    * stays aligned with `getVisibleItems()[i]` and keyboard nav skips headers for
    * free. `console.warn`s once per non-contiguous key reappearance (unsorted
    * data would otherwise emit a duplicate header for the same group) -
-   * reachable only with `gatherGroups: false`; the default gather feeds this
-   * an already-contiguous list.
+   * reachable with `gatherGroups: false`; the default gather feeds this an
+   * already-contiguous list.
    */
   private computePopupSegments(list: readonly T[], els: HTMLElement[]): PopupListSegment<T, GK>[] {
-    const keyOf = this.settings.itemToGroupKeyFn
-    if (!keyOf) { return els.map((el): PopupListSegment<T, GK> => ({ group: false, el })) }
     const keyEq = this.settings.groupKeyCompareFn ?? ((a: GK, b: GK) => a === b)
     const segments: PopupListSegment<T, GK>[] = []
     const closedKeys: GK[] = []
     let groupIndex = 0
     let i = 0
     while (i < list.length) {
-      const key = keyOf(list[i]!)
+      const key = this.itemToGroupKey(list[i]!)
       if (key === null) {
         segments.push({ group: false, el: els[i]! })
         i += 1
@@ -1412,7 +1416,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       const groupEls: HTMLElement[] = [els[i]!]
       let j = i + 1
       while (j < list.length) {
-        const next = keyOf(list[j]!)
+        const next = this.itemToGroupKey(list[j]!)
         if (next === null || !keyEq(key, next)) { break }
         groupItems.push(list[j]!)
         groupEls.push(els[j]!)
@@ -1614,6 +1618,12 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
 
   /**
    * Map an item to its group key, or `null` when it belongs to no group.
+   * The authoritative seam: rendering, the `gatherGroups` gather, and the
+   * disabled layer all resolve keys through this method, so an override
+   * drives them all - returning keys turns grouping on even with the setting
+   * unset (all-`null` keys = flat list). An override reading external state
+   * must call `rerender()` after that state changes (same contract as
+   * mutating item objects).
    * - Default reads `itemToGroupKeyFn`, else `null` (grouping off).
    * - Override only when extending; configure via the setting.
    * @group Subclassing: semantics
@@ -2098,10 +2108,12 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * `setItems`.
    */
   private getDisplayBaseItems(): readonly T[] {
-    const keyOf = this.settings.itemToGroupKeyFn
-    if (!this.settings.gatherGroups || keyOf === null) { return this.items }
+    if (!this.settings.gatherGroups) { return this.items }
     if (this.gatheredItems === undefined) {
-      this.gatheredItems = gatherItemsByGroupKey(this.items, keyOf, this.settings.groupKeyCompareFn)
+      // Keys resolve via the protected itemToGroupKey (the subclass seam), so
+      // an override drives the gather exactly like the render. All-null keys
+      // (grouping off) detect as contiguous and return `items` itself.
+      this.gatheredItems = gatherItemsByGroupKey(this.items, (item) => this.itemToGroupKey(item), this.settings.groupKeyCompareFn)
     }
     return this.gatheredItems
   }

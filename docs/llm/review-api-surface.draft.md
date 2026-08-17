@@ -165,15 +165,21 @@ Assessment: two different domains with one convention each, both internally cons
 
 Proposal: no behavior change; add one sentence to DESIGN.md recording the value-side rationale so the split stops looking accidental.
 
-## 11. Found during implementation: a subclass `itemToGroupKey` override does not drive grouping render - OPEN
+## 11. Found during implementation: a subclass `itemToGroupKey` override did not drive grouping render - FIXED (user: fix per the customization model)
 
-Facts: `computePopupSegments` reads the SETTING directly (`const keyOf = this.settings.itemToGroupKeyFn`, `src/base.ts`), and the new gather mirrors it (deliberately, so render and gather can never disagree). But the protected method `itemToGroupKey(item)` is documented as the subclass seam, and `isItemEffectivelyDisabled` DOES call the method. Consequence: an extender who overrides `itemToGroupKey` changes only the disabled layer - the override neither turns grouping on nor changes which group an item renders in.
+Was: `computePopupSegments` and the gather read the SETTING directly, while the protected method `itemToGroupKey(item)` is the documented subclass seam (only the disabled layer called it) - so an override neither turned grouping on nor changed rendered groups, contradicting DESIGN.md's customization model ("the library calls the method directly").
 
-This contradicts the recorded customization model (DESIGN.md "Customization model": "the library calls the method directly"). Pre-existing, not introduced by the gather. Possible fixes: (a) resolve keys via `this.itemToGroupKey` inside segmentation + gather while keeping "grouping on" gated by the setting being non-null (partial conformance: an override can change keys, still cannot enable grouping); (b) docstring-only fix declaring the override's real scope. Needs a user call; not fixed in this round's commits.
+Fix: segmentation and the gather now resolve every key via `this.itemToGroupKey`, unconditionally - no "grouping on" gate is needed because all-`null` keys produce the exact same flat segments as the old early return. So an override that returns keys turns grouping on even with the setting unset, matching the model's "override = replace".
+
+- Q: Why is there no gating problem ("how does the library know grouping is on if the setting is null but the method is overridden")?
+  - A: The gate was an optimization, not a semantic: rendering a list where every key is `null` is byte-identical to the grouping-off early return, and the gather detects all-`null` as contiguous and returns `items` itself. "Grouping off" IS "all keys null".
+- Costs accepted: non-grouping selects now pay n no-op `itemToGroupKey` calls per render / per gather detect - noise next to the n DOM nodes the same render builds.
+- Closed alongside: the gather memo could go stale when an override reads external state that changes (or when item objects are mutated in place, the documented `rerender()` case). `rerender()` now invalidates the gather memo and, while the filter is active, re-runs the filter - so the documented "mutated data -> call `rerender()`" contract refreshes everything. The `itemToGroupKey` docstring states the same contract for overrides reading external state.
+- Verified: subclass-seam tests in `test/optgroup.test.ts` (override-enables-grouping incl. gather; external-state flip + `rerender()`).
 
 ## Decisions needed (user)
 
-IMPLEMENTED (commits on master): 1 (`isOpened()` + `opened` + ctx cascade), 4 (`setPlaceholder`), 8 (`gatherGroups` + `gatherItemsByGroupKey`, lazy memoized gather, strict mode keeps the warn), 9 (verb-boundary ruling in naming-conventions s2 + docstrings), 10 (clear stays total; `unchooseAll` rationale reworded; A11Y.md records the native-parity rule). Still open: 2 / 3 (visible items / query readers), 5 (`toggleAllVisible`), 6 (events), 7 (subclassSettings), and item 11 above.
+IMPLEMENTED (commits on master): 1 (`isOpened()` + `opened` + ctx cascade), 4 (`setPlaceholder`), 8 (`gatherGroups` + `gatherItemsByGroupKey`, lazy memoized gather, strict mode keeps the warn), 9 (verb-boundary ruling in naming-conventions s2 + docstrings), 10 (clear stays total; `unchooseAll` rationale reworded; A11Y.md records the native-parity rule), 11 (grouping resolves keys via the `itemToGroupKey` seam; `rerender()` refreshes gather + filter). Still open: 2 / 3 (visible items / query readers), 5 (`toggleAllVisible`), 6 (events), 7 (subclassSettings).
 
 Per CLAUDE.md, naming decisions come with full signatures:
 

@@ -278,3 +278,31 @@ test('createGroupEl can be overridden for full control of the group element', ()
   const group = groupEls(sel).find((g) => g.getAttribute('aria-label') === 'a')!
   assert.equal(group.getAttribute('data-count'), '2')
 })
+
+// --- subclass seam: itemToGroupKey override ----------------------------------
+
+test('an itemToGroupKey override turns grouping on without the setting, gather included', () => {
+  class KeyedSelect extends LLSelectSingle<string> {
+    protected override itemToGroupKey(item: string): string | null { return item[0]! }
+  }
+  const sel = new KeyedSelect(mount())
+  sel.setItems(['apple', 'banana', 'avocado']) // unsorted on purpose
+  sel.open()
+  assert.equal(groupEls(sel).length, 2) // a (apple, avocado), b
+  assert.deepEqual(options(sel).map(el => el.textContent), ['apple', 'avocado', 'banana'])
+})
+
+test('rerender() re-derives grouping when an override reads changed external state', () => {
+  class ModalSelect extends LLSelectSingle<string> {
+    public grouped = false
+    protected override itemToGroupKey(item: string): string | null { return this.grouped ? item[0]! : null }
+  }
+  const sel = new ModalSelect(mount())
+  sel.setItems(['apple', 'banana', 'avocado'])
+  sel.open()
+  assert.equal(groupEls(sel).length, 0) // all-null keys: flat
+  sel.grouped = true
+  sel.rerender()
+  assert.equal(groupEls(sel).length, 2)
+  assert.deepEqual(options(sel).map(el => el.textContent), ['apple', 'avocado', 'banana'])
+})
