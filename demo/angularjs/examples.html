@@ -383,13 +383,16 @@
     <div class="out">ng-model = {{ vm.iface2 | json }}</div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="8e"><code></code></pre></details>
 
-    <h3>8f. ng-disabled + a why-tooltip</h3>
+    <h3>8f. ng-disabled + uib-tooltip (angular-ui-bootstrap)</h3>
     <p>
-      <code>ng-disabled</code> carries over here (ui-select parity, via
-      <code>attrs.$observe</code>; the main directives use
-      <code>ll-disabled</code> instead). The attribute is inert on this host,
-      so hover works in BOTH states - the <code>uib-tooltip</code> stays
-      available while disabled and its text follows the state.
+      Interop with <code>uib-tooltip</code> from
+      <a href="https://angular-ui.github.io/bootstrap/">angular-ui-bootstrap</a>
+      - the component kit most AngularJS apps already carry: both directives
+      sit on the same element, no conflict. <code>ng-disabled</code> carries
+      over here (ui-select parity, via <code>attrs.$observe</code>; the main
+      directives use <code>ll-disabled</code>). The attribute is inert on
+      this host, so hover works in BOTH states - the tooltip keeps working
+      while disabled, which a native <code>disabled</code> control forbids.
     </p>
     <div class="demo-row" data-src="8f">
       <label><input type="checkbox" ng-model="vm.quotaLocked"> quota lock</label>
