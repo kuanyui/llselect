@@ -565,8 +565,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @group State (protected)
    */
   protected readonly settings: LLSelectBaseSettings<T, GK>
-  /** Raw constructor `placeholder` input; `setUiTranslationPack` re-resolves against it. */
-  private readonly explicitPlaceholder: string | null
+  /** Raw explicit `placeholder` (constructor or `setPlaceholder`); `setUiTranslationPack` re-resolves against it. */
+  private explicitPlaceholder: string | null
   /** True when the constructor minted `classIdMap.labelId` onto `labelEl`; `destroy()` then removes it. */
   private labelElIdMinted = false
   /** Click handler bound to `labelEl`: focus the trigger, never open (native label parity). */
@@ -1113,6 +1113,25 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     const clearButtonEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerClearButtonClass}`)
     if (clearButtonEl !== null) { clearButtonEl.setAttribute('aria-label', pack.triggerClearButtonAriaLabel) }
     this.rerender()
+  }
+
+  /**
+   * Replace the trigger placeholder text at runtime - a deliberate exception
+   * (like `setUiTranslationPack`) to constructor-frozen settings.
+   * - `null` = fall back to the pack default (`uiTranslationPack.triggerPlaceholder`),
+   *   mirroring an unset constructor `placeholder`. An explicit value keeps
+   *   winning over later `setUiTranslationPack` calls, exactly like the
+   *   constructor input.
+   * - Takes effect immediately. Visible only while nothing is chosen - the
+   *   placeholder never renders otherwise (the trigger is still re-rendered,
+   *   which also refreshes the hidden accessible-value mirror).
+   * @group Trigger
+   */
+  public setPlaceholder(placeholder: string | null): void {
+    if (this.explicitPlaceholder === placeholder) { return }
+    this.explicitPlaceholder = placeholder
+    this.settings.placeholder = placeholder ?? this.settings.uiTranslationPack.triggerPlaceholder
+    this.renderTrigger()
   }
 
   /**
