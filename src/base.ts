@@ -2119,6 +2119,16 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
+   * The filter input's current query - what the user has typed this open
+   * cycle, exactly the string passed to `filterFn`. `''` while the popup is
+   * closed, while the filter is inactive, or while the input is empty.
+   * @group Filtering
+   */
+  public getFilterQuery(): string {
+    return this.query
+  }
+
+  /**
    * Per-item match predicate for the filter input.
    * - Default reads `filterFn`; else case-insensitive substring on
    *   `itemToString`.

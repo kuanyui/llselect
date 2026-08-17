@@ -422,3 +422,24 @@ test('getVisibleItems() is public: full list while closed, filtered subset while
   sel.close()
   assert.deepEqual([...sel.getVisibleItems()], ['alpha', 'beta'])
 })
+
+test('getFilterQuery() mirrors the typed query and resets to empty on close', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { filterable: true })
+  sel.setItems(['alpha', 'beta'])
+  assert.equal(sel.getFilterQuery(), '') // closed
+  sel.open()
+  assert.equal(sel.getFilterQuery(), '') // open, nothing typed
+  const input = filterInput(sel)
+  input.value = 'al'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.equal(sel.getFilterQuery(), 'al')
+  sel.close()
+  assert.equal(sel.getFilterQuery(), '')
+})
+
+test('getFilterQuery() stays empty while the filter is inactive', () => {
+  const sel = new LLSelectMultiple<string>(mount())
+  sel.setItems(['alpha'])
+  sel.open()
+  assert.equal(sel.getFilterQuery(), '')
+})
