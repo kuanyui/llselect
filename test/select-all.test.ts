@@ -209,3 +209,29 @@ test('no actionable items -> no row (everything disabled)', () => {
   sel.open()
   assert.equal(row(sel), null)
 })
+
+// --- toggleAllVisible() (the row's action as a public method) ----------------
+
+test('toggleAllVisible() toggles only the filtered subset and preserves outside choices', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { filterable: true })
+  sel.setItems(['alpha', 'apricot', 'kiwi'])
+  sel.setChosenItems(['kiwi'])
+  sel.open()
+  const input = sel.popupEl.querySelector('input')!
+  input.value = 'a' // visible: alpha, apricot (kiwi has no 'a')
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  sel.toggleAllVisible()
+  assert.deepEqual([...sel.getChosenItems()], ['kiwi', 'alpha', 'apricot'])
+  sel.toggleAllVisible() // all visible chosen -> unchoose exactly those
+  assert.deepEqual([...sel.getChosenItems()], ['kiwi'])
+})
+
+test('toggleAllVisible() with no filter query acts on every enabled item, disabled preserved', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { itemDisabledFn: (i) => i === 'locked' })
+  sel.setItems(['a', 'b', 'locked'])
+  sel.setChosenItems(['locked'])
+  sel.toggleAllVisible() // closed popup: visible = full list
+  assert.deepEqual([...sel.getChosenItems()], ['locked', 'a', 'b'])
+  sel.toggleAllVisible()
+  assert.deepEqual([...sel.getChosenItems()], ['locked'])
+})

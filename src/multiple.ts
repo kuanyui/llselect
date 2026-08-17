@@ -269,13 +269,36 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * Toggle between "all enabled chosen" and "none chosen". Ignores disabled
    * items, like every `choose*` bulk op. The in-popup choose-all row is NOT
    * this method: the row acts on the VISIBLE enabled subset only
-   * (`chooseAllRow`).
+   * (`chooseAllRow`) - that action is public as {@link toggleAllVisible}.
    * @group Selection
    */
   public toggleAll(): void {
     const enabled = this.items.filter(it => !this.isItemEffectivelyDisabled(it))
     const allChosen = enabled.length > 0 && enabled.every(it => this.isChosen(it))
     if (allChosen) { this.unchooseAll() } else { this.chooseAll() }
+  }
+
+  /**
+   * Toggle the VISIBLE enabled subset: when every visible enabled item is
+   * chosen, unchoose exactly those; otherwise choose the missing ones.
+   * Choices outside the subset (filtered-out or disabled) are preserved
+   * either way. This is the choose-all row's action (`chooseAllRow`) as a
+   * public method; while no filter query is active the visible subset is
+   * every enabled item, so it then matches `toggleAll`. Fires `onChange`
+   * only when the set changes.
+   * @group Selection
+   */
+  public toggleAllVisible(): void {
+    const actionable = this.getVisibleItems().filter(i => !this.isItemEffectivelyDisabled(i))
+    if (actionable.length === 0) { return }
+    const allChosen = actionable.every(i => this.isChosen(i))
+    if (allChosen) {
+      this.setChosenItems(this.chosenItems.filter(c =>
+        !actionable.some(v => this.settings.compareFn(v, c))))
+    } else {
+      const additions = actionable.filter(v => !this.isChosen(v))
+      this.setChosenItems([...this.chosenItems, ...additions])
+    }
   }
 
   /**
@@ -493,22 +516,11 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   /**
-   * Activate the choose-all row: when every visible enabled item is chosen,
-   * unchoose exactly those; otherwise add the missing ones. Choices outside
-   * the visible subset (filtered-out or disabled) are preserved either way.
+   * Activate the choose-all row: delegates to {@link toggleAllVisible}.
    * @group Subclassing: reactions
    */
   protected override onLeadingRowActivated(): void {
-    const actionable = this.getVisibleItems().filter(i => !this.isItemEffectivelyDisabled(i))
-    if (actionable.length === 0) { return }
-    const allChosen = actionable.every(i => this.isChosen(i))
-    if (allChosen) {
-      this.setChosenItems(this.chosenItems.filter(c =>
-        !actionable.some(v => this.settings.compareFn(v, c))))
-    } else {
-      const additions = actionable.filter(v => !this.isChosen(v))
-      this.setChosenItems([...this.chosenItems, ...additions])
-    }
+    this.toggleAllVisible()
   }
 
   /**
