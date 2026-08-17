@@ -2090,13 +2090,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * Items currently displayed in the popup, in DISPLAY order. Equals the
    * display base (`items`, gathered per `gatherGroups` when grouping is on)
-   * when no filter query is active; equals the filtered subset when the user
-   * has typed in the filter input. Subclasses may read this when they need
-   * the visible list (e.g. for selection-by-index). Returns the LIVE
+   * while no filter query is active - including while the popup is closed -
+   * and the filtered subset while the user has typed in the filter input.
+   * Subclasses use it too (e.g. for selection-by-index). Returns the LIVE
    * internal array, typed read-only - never mutate it (see `getItems`).
-   * @group Subclassing: semantics
+   * @group Items
    */
-  protected getVisibleItems(): readonly T[] {
+  public getVisibleItems(): readonly T[] {
     return this.filteredItems ?? this.getDisplayBaseItems()
   }
 

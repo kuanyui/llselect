@@ -409,3 +409,16 @@ test('focusableWhenDisabled survives the filterable open/close cycle', () => {
   sel.setDisabled(true)
   assert.equal(sel.triggerEl.getAttribute('tabindex'), '0')
 })
+
+test('getVisibleItems() is public: full list while closed, filtered subset while querying', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { filterable: true })
+  sel.setItems(['alpha', 'beta'])
+  assert.deepEqual([...sel.getVisibleItems()], ['alpha', 'beta']) // closed = full list
+  sel.open()
+  const input = filterInput(sel)
+  input.value = 'al'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.deepEqual([...sel.getVisibleItems()], ['alpha'])
+  sel.close()
+  assert.deepEqual([...sel.getVisibleItems()], ['alpha', 'beta'])
+})
