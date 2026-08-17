@@ -54,20 +54,20 @@ test('createTriggerArrowContentElFn returning an element appends it to the arrow
   assert.equal(arrow.querySelector('#my-arrow')?.textContent, '▼')
 })
 
-test('createTriggerArrowContentElFn is invoked with isOpen state on open/close', () => {
+test('createTriggerArrowContentElFn is invoked with isOpened state on open/close', () => {
   const calls: Array<boolean> = []
   const sel = new LLSelectSingle<string>(mount(), {
-    createTriggerArrowContentElFn: ({ isOpen }) => {
-      calls.push(isOpen)
+    createTriggerArrowContentElFn: ({ isOpened }) => {
+      calls.push(isOpened)
       return null
     },
   })
   sel.setItems(['a', 'b'])
   // calls so far: [false] from constructor renderTriggerArrow
   sel.open()
-  // open calls renderTriggerArrow -> createTriggerArrowContentElFn with isOpen=true
+  // open calls renderTriggerArrow -> createTriggerArrowContentElFn with isOpened=true
   sel.close()
-  // close calls renderTriggerArrow -> createTriggerArrowContentElFn with isOpen=false
+  // close calls renderTriggerArrow -> createTriggerArrowContentElFn with isOpened=false
   assert.deepEqual(calls, [false, true, false])
 })
 

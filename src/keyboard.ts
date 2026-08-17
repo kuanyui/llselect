@@ -41,12 +41,12 @@ const PAGE_SIZE = 10
  */
 export function getActionFromKey(
   ev: KeyboardEvent,
-  isOpen: boolean,
+  isOpened: boolean,
   inTextInput = false,
 ): LLSelectAction | undefined {
   const { key, altKey } = ev
 
-  if (!isOpen) {
+  if (!isOpened) {
     if (key === 'ArrowDown' || key === 'ArrowUp' || key === 'Enter' || key === ' ') {
       return LLSelectAction.Open
     }

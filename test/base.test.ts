@@ -138,3 +138,18 @@ test('custom cssClassPrefix is honored', () => {
   assert.ok(inst.popupEl.className.includes('myprefix-popup'))
   assert.ok(inst.triggerEl.id.startsWith('myprefix'))
 })
+
+test('isOpened() reflects open/close/toggle and stays false on a disabled no-op open', () => {
+  const inst = new TestSelect<string>(mount())
+  inst.setItems(['a'])
+  assert.equal(inst.isOpened(), false)
+  inst.open()
+  assert.equal(inst.isOpened(), true)
+  assert.equal(inst.triggerEl.getAttribute('data-state'), 'open')
+  inst.toggle()
+  assert.equal(inst.isOpened(), false)
+  assert.equal(inst.triggerEl.getAttribute('data-state'), 'closed')
+  inst.setDisabled(true)
+  inst.open()
+  assert.equal(inst.isOpened(), false)
+})

@@ -106,12 +106,12 @@ export interface LLSelectBaseSettings<T, GK = string> {
   /**
    * The trigger arrow slot's content ELEMENT (typically a dropdown chevron or
    * triangle). Called whenever the arrow may need to change - including on
-   * every open/close - so the returned element can vary with `isOpen`.
+   * every open/close - so the returned element can vary with `isOpened`.
    * - fn returns `null` - no arrow for that state.
    * - setting is `null` (default) - the library adds nothing to the arrow slot.
    * @group Trigger
    */
-  createTriggerArrowContentElFn: ((state: { isOpen: boolean }) => HTMLElement | SVGElement | null) | null
+  createTriggerArrowContentElFn: ((state: { isOpened: boolean }) => HTMLElement | SVGElement | null) | null
   /**
    * Whether the trigger shows a clear (x) button that empties the selection.
    * `false` (default). The button sits in its OWN trigger slot (like the arrow,
@@ -576,11 +576,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @group State (protected)
    */
   protected items: T[] = []
-  /**
-   * Whether the popup is currently open.
-   * @group State (protected)
-   */
-  protected isOpen = false
+  /** Whether the popup is currently open; public reader {@link isOpened}. */
+  private opened = false
   /**
    * Index (into `items`) of the currently keyboard-focused item, or `-1`
    * when nothing is focused (closed popup, or no items).
@@ -872,7 +869,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @group Open & close
    */
   public open(): void {
-    if (this.isOpen || this.disabled) { return }
+    if (this.opened || this.disabled) { return }
     // A trigger already scrolled out of view / clipped by an ancestor when
     // open() runs cannot host a visible popup, so opening is a no-op (mirrors
     // the disabled guard). This also prevents the positioner's initial
@@ -883,7 +880,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     // returns and cannot recover them).
     if (isAnchorHidden(this.triggerEl)) { return }
     const restoreWindowScroll = this.captureWindowScroll()
-    this.isOpen = true
+    this.opened = true
     // Filter mode is (re)evaluated once per open cycle, before anything that
     // depends on it (role, focus host, filtering).
     this.filterActive = this.computeFilterActive()
@@ -953,9 +950,9 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @group Open & close
    */
   public close(): void {
-    if (!this.isOpen) { return }
+    if (!this.opened) { return }
     const shouldReturnFocus = this.filterActive && document.activeElement === this.filterInputEl
-    this.isOpen = false
+    this.opened = false
     this.triggerEl.setAttribute('aria-expanded', 'false')
     this.triggerEl.setAttribute('data-state', 'closed')
     this.syncTriggerTabindex()
@@ -1013,7 +1010,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    */
   public rerender(): void {
     this.renderTrigger()
-    if (this.isOpen) { this.renderPopupList() }
+    if (this.opened) { this.renderPopupList() }
   }
 
   /**
@@ -1045,11 +1042,22 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @group Open & close
    */
   public toggle(): void {
-    if (this.isOpen) {
+    if (this.opened) {
       this.close()
     } else {
       this.open()
     }
+  }
+
+  /**
+   * Whether the popup is currently open. Pairs with `isDisabled()` (state via
+   * method). The same state is mirrored on the DOM as CSS hooks:
+   * `data-state="open|closed"` on the trigger, `classIdMap.openClass` on the
+   * root.
+   * @group Open & close
+   */
+  public isOpened(): boolean {
+    return this.opened
   }
 
   /**
@@ -1118,7 +1126,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   public setItems(items: T[]): void {
     this.items = items.slice()
     if (this.filterActive) { this.recomputeFilteredItems() }
-    if (this.isOpen) { this.renderPopupList() }
+    if (this.opened) { this.renderPopupList() }
     this.onItemsChanged()
   }
 
@@ -1134,7 +1142,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   public setDisabled(value: boolean): void {
     if (this.disabled === value) { return }
     this.disabled = value
-    if (value && this.isOpen) { this.close() }
+    if (value && this.opened) { this.close() }
     this.syncDisabledStateToDom()
   }
 
@@ -1168,7 +1176,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    */
   private syncTriggerTabindex(): void {
     const disabledAndUnfocusable = this.disabled && !this.settings.focusableWhenDisabled
-    const filterOwnsFocus = this.isOpen && this.filterActive
+    const filterOwnsFocus = this.opened && this.filterActive
     this.triggerEl.setAttribute('tabindex', disabledAndUnfocusable || filterOwnsFocus ? '-1' : '0')
   }
 
@@ -1277,11 +1285,11 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * Orchestrator: composes the `*ToDom` / `*El` primitives to (re)build the
    * trigger's arrow slot from state; touches no DOM directly. Calls
-   * `createTriggerArrowContentEl` with the current `isOpen` and commits whatever it returns
+   * `createTriggerArrowContentEl` with the current `isOpened` and commits whatever it returns
    * (including `null` -> no arrow for this state).
    */
   private renderTriggerArrow(): void {
-    this.commitTriggerArrowContentElToDom(this.createTriggerArrowContentEl({ isOpen: this.isOpen }))
+    this.commitTriggerArrowContentElToDom(this.createTriggerArrowContentEl({ isOpened: this.opened }))
   }
 
   /**
@@ -1292,7 +1300,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    *   Mirrors `createTriggerClearButtonEl` / `createItemContentEl`.
    * @group Subclassing: rendering
    */
-  protected createTriggerArrowContentEl(state: { isOpen: boolean }): HTMLElement | SVGElement | null {
+  protected createTriggerArrowContentEl(state: { isOpened: boolean }): HTMLElement | SVGElement | null {
     return this.settings.createTriggerArrowContentElFn ? this.settings.createTriggerArrowContentElFn(state) : null
   }
 
@@ -1448,7 +1456,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @group Subclassing: rendering
    */
   protected replacePopupListItemElInDom(item: T): void {
-    if (!this.isOpen) { return }
+    if (!this.opened) { return }
     const list = this.getVisibleItems()
     const index = list.findIndex(i => this.settings.compareFn(i, item))
     if (index < 0) { return }
@@ -1694,7 +1702,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @group Subclassing: rendering
    */
   protected replaceLeadingRowElInDom(): void {
-    if (!this.isOpen || !this.leadingRowEl) { return }
+    if (!this.opened || !this.leadingRowEl) { return }
     const next = this.createPopupListLeadingRowEl()
     if (next === null) {
       this.renderPopupList()
@@ -1856,7 +1864,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     if (ev.isComposing || this.composing) { return }
     if (this.disabled) { return }
     const inText = ev.currentTarget === this.filterInputEl
-    const action = getActionFromKey(ev, this.isOpen, inText)
+    const action = getActionFromKey(ev, this.opened, inText)
     if (action === undefined) { return }
     ev.preventDefault()
 
