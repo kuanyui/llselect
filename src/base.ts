@@ -2045,7 +2045,9 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * Empty the selection (invoked by the clear button). Base is a no-op; single
    * clears to `undefined`, multiple to `[]`. Goes through the normal setters, so
-   * `onChange` fires with the empty value.
+   * `onChange` fires with the empty value. The wipe is total - chosen disabled
+   * items are cleared too (native `<select>` parity; `unchooseAll` is the
+   * enabled-only bulk op).
    * @group Subclassing: semantics
    */
   protected clearSelection(): void {}

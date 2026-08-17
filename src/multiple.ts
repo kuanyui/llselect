@@ -196,7 +196,9 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   /**
    * Replace the entire chosen-items set. The input is shallow-copied. Fires
    * `onChange` only when the new set differs element-wise (order-sensitive)
-   * from the current set.
+   * from the current set. No disabled filtering - this is the raw assignment
+   * channel (native `<select>` parity): it can add and drop disabled items,
+   * unlike the `choose*` bulk ops.
    * @group Selection
    */
   public setChosenItems(items: T[]): void {
@@ -241,9 +243,11 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   /**
-   * Choose every enabled item. Already-chosen disabled items are preserved
-   * (they cannot be toggled through the UI, so bulk ops leave them as-is).
-   * Fires `onChange` only when the set actually changes.
+   * Choose every enabled item. Enabled-only like every `choose*` bulk op
+   * (bulk ops mirror clicking, and clicking cannot reach disabled items);
+   * already-chosen disabled items are preserved. The raw disabled-blind
+   * channel is `setChosenItems`. Fires `onChange` only when the set actually
+   * changes.
    * @group Selection
    */
   public chooseAll(): void {
@@ -251,8 +255,10 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   /**
-   * Clear enabled choices. Already-chosen disabled items are preserved (not
-   * togglable through the UI). Fires `onChange` only when the set changes.
+   * Clear enabled choices. Already-chosen disabled items are preserved (bulk
+   * ops mirror clicking, which cannot reach disabled items); the clear button
+   * and `setChosenItems([])` are the total channels that do drop them. Fires
+   * `onChange` only when the set changes.
    * @group Selection
    */
   public unchooseAll(): void {
@@ -260,7 +266,10 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   /**
-   * Toggle between "all enabled chosen" and "none chosen". Ignores disabled.
+   * Toggle between "all enabled chosen" and "none chosen". Ignores disabled
+   * items, like every `choose*` bulk op. The in-popup choose-all row is NOT
+   * this method: the row acts on the VISIBLE enabled subset only
+   * (`chooseAllRow`).
    * @group Selection
    */
   public toggleAll(): void {
