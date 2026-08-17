@@ -2,6 +2,64 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (public API surface)
+
+External review of the public API surface, relayed by the user; every item converged and landed. Naming rulings live in naming-conventions.md (s2 verb boundary, s5 decisions log, s7a.9); behavior contracts in DESIGN.md / A11Y.md.
+
+- [x] **[MEDIUM-33] - open/close/toggle had no public open-state reader**
+  - Symptom: reading open state required DOM attributes (`data-state`) or mirroring `onOpen` / `onClose`; the flag was a protected field.
+  - Fix: public `isOpened()` (base.ts); field renamed to private `opened`; the `createTriggerArrowContentElFn` ctx renamed `{ isOpen }` -> `{ isOpened }`, keyboard.ts's param following.
+  - Verified: test/base.test.ts pins open/toggle/disabled-no-op; full suite green.
+  - Q: Why `isOpened()`, not `isOpen()` matching the state adjective and industry habit?
+    - A: s7a.9 (user ruling): with `open()` the verb on the same class, `isOpen` has a competing parse; `isOpened` reads one way only - idiom never outweighs ambiguity.
+- [x] **[MEDIUM-34] - visible items and the filter query were unreachable for consumers**
+  - Symptom: `getVisibleItems()` was protected and the query private; the in-repo ui-select emulation had to reconstruct `$select.search` by caching the query inside its `filterFn` (angularjs/llselect-ui-select.js) - the predicted wrapper-author wall, already hit.
+  - Fix: `getVisibleItems()` widened to public (live read-only array, display order, full list while closed) and `getFilterQuery()` added (base.ts).
+  - Verified: test/filterable.test.ts covers closed / filtered / reset-on-close for both.
+- [x] **[QUALITY-35] - placeholder was frozen; a runtime change meant rebuilding the instance**
+  - Fix: `setPlaceholder(placeholder: string | null)` - `null` reverts to `uiTranslationPack.triggerPlaceholder`; an explicit value keeps winning over later pack changes (base.ts `explicitPlaceholder`). DESIGN.md's "sole exception" wording became "two exceptions".
+  - Verified: test/placeholder.test.ts (explicit-wins, null-reverts, multiple trigger).
+  - Q: Why did `filterable` and `clearable` get no setter?
+    - A: `filterable`'s predicate form re-evaluates on every open, so `filterable: () => flag` already is the runtime toggle; `clearable` changes are rare enough that rebuild-on-change is acceptable.
+- [x] **[QUALITY-36] - single constructor-time event callbacks, no on()/off()**
+  - Fix: none - by design. Settings-for-consumers + protected hooks-for-subclasses is the recorded two-channel model; both in-repo wrappers bind once at link time. README now shows the one-line closure recipe for swapping / fanning out handlers.
+  - Q: Why no subscription API when the settings freeze makes handlers unswappable?
+    - A: wrappers own multiplexing; an emitter adds teardown and ordering semantics for a need a one-line closure covers, and the low-level positioning (README) makes the wrapper the right layer.
+- [x] **[QUALITY-37] - subclassSettings channel weakly typed for third-party extenders**
+  - Fix: none - by design (DESIGN.md "Settings vs methods"): the merge cast is confined to one commented site and in-repo payloads are `satisfies`-checked.
+  - Q: Why not a third generic param `S` typing the channel?
+    - A: TS still cannot prove base-resolved + `Omit<S, ...>` reassembles an arbitrary `S`, so the cast survives anyway while every mention of the base type grows a param; the current shape pays the cost only at the one seam.
+- [x] **[QUALITY-38] - getItems() returns the live internal array (plain-JS mutation footgun)**
+  - Fix: none - deliberate, documented at the method; the same contract is stated on `getChosenItems` / `getUiTranslationPack` and now `getVisibleItems`.
+  - Q: Why not a defensive copy or `Object.freeze`?
+    - A: a copy is O(n) garbage per render (`renderTriggerContent` reads it every render); freeze only protects strict-mode JS callers and taxes every set. The docstring warning is the chosen mitigation.
+- [x] **[QUALITY-39] - "all" bulk-op names do not show their enabled-only scope**
+  - Symptom: `chooseAll` / `unchooseAll` / `toggleAll` act on enabled items only and preserve chosen-disabled entries; the names alone do not say so.
+  - Fix: names kept (user ruling); the verb boundary is recorded in naming-conventions s2 (`choose*` / `toggle*` = UI-parity, enabled-only; `set*` / `clearSelection` = raw disabled-blind total channel) and each method docstring states its side. `toggleAllVisible()` added: the choose-all row's visible-subset action as a public method (multiple.ts; the row delegates to it), closing the "row semantics unreachable programmatically" gap.
+  - Verified: test/select-all.test.ts covers filtered-subset toggling + outside-choice preservation.
+  - Q: Why keep the names instead of renaming to `*AllEnabled`?
+    - A: "select all" is universally scoped to actionable items; `toggleAllEnabled` misparses as toggling an enabled flag; and no sane-length name carries the preservation rule anyway - the docstring stays load-bearing.
+- [x] **[QUALITY-40] - clear button wiped chosen-disabled items while unchooseAll preserves them**
+  - Symptom: `unchooseAll`'s rationale said disabled items "cannot be toggled through the UI", yet the clear button (UI) removed them - looked inconsistent.
+  - Fix: behavior kept - the user ruled native `<select>` as the standard, and native matches on every applicable point: a selected option that becomes disabled stays selected, programmatic mutation and clearing ignore disabled entirely, and form submission (the one nuance omitting disabled options) has no core analogue. The rationale wording was corrected (bulk ops mirror clicking) and A11Y.md "Clear button" records the total-wipe rule.
+- [x] **[QUALITY-41] - setChosenItems equality is order-sensitive (claim: weird for a "set")**
+  - Fix: none - correct as is. `chosenItems` is an ordered list by contract (insertion order; tags render in it), so `[a, b] -> [b, a]` must re-render and fire `onChange`; order-insensitive equality would leave stale tag order. "set" in the name is the verb, not the data structure.
+- [x] **[MEDIUM-42] - grouping required pre-sorted data; non-contiguous keys rendered duplicate headers**
+  - Fix: `gatherGroups: boolean` setting (default `true`): the display order is derived by the exported pure `gatherItemsByGroupKey` (grouping.ts) - groups gather at their key's first appearance, within-group order kept, `null`-key items in place, contiguous input returned as-is (zero copy). Lazy + memoized (invalidated by `setItems` / `rerender()`); the DATA order (`getItems()`) is never touched. `gatherGroups: false` = strict mode keeping the duplicate-header + `console.warn` behavior for callers who guarantee sorted data. DESIGN.md "Grouping semantic (gather + contiguous-run)".
+  - Verified: test/gather.test.ts (pure fn + instance + laziness + filter interplay); test/optgroup.test.ts strict-mode warn.
+  - Q: Why gather once then filter, not filter then re-gather per keystroke?
+    - A: a group's position must not jump while typing - it stays pinned by its first appearance in the FULL list (exactly what pre-sorted data does), and one gather per items-change beats one per keystroke.
+  - Q: Why not the nested `{ label, items }[]` input shape instead?
+    - A: the recorded rejection stands (single write channel, identity-driven grouping, generic `GK`, setting composability); the gather removes the footgun without a second data channel.
+- [x] **[MEDIUM-43] - a subclass itemToGroupKey override did not drive grouping render**
+  - Symptom: segmentation (and initially the gather) read the `itemToGroupKeyFn` setting directly; only the disabled layer called the protected method - an override could neither turn grouping on nor change rendered groups, contradicting DESIGN.md's customization model ("the library calls the method directly").
+  - Fix: every key now resolves via `this.itemToGroupKey` (base.ts `computePopupSegments` + the gather), unconditionally. `rerender()` additionally invalidates the gather memo and re-runs an active filter, so overrides reading external state (and in-place item mutation) refresh through the documented `rerender()` path.
+  - Verified: test/optgroup.test.ts subclass-seam tests (override enables grouping incl. gather; external-state flip + rerender).
+  - Q: How does the library know grouping is on when the setting is null but the method is overridden?
+    - A: it does not need to - rendering an all-`null`-key list is byte-identical to the old grouping-off early return, and the gather detects all-null as contiguous and returns `items` itself. "Grouping off" IS "all keys null"; the old setting-gate was an optimization, not a semantic.
+- [x] **[DOCUMENTATION-44] - the settings-null vs value-undefined split looked accidental**
+  - Fix: DESIGN.md "Settings vs methods" now records the value-side rationale: `undefined` keeps `null` usable as a real item value for `T` and matches JS's absent-return convention (`Array.prototype.find`).
+
 ## review (real-browser acceptance run)
 
 - [x] **[MEDIUM-31] - filterable tags trigger accname duplicated chip labels ("Apple Remove Apple")**
