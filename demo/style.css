@@ -36,14 +36,31 @@ code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
 
 /* angularjs 8f: minimal look for ui-bootstrap's uib-tooltip (this page loads
    no Bootstrap CSS; opacity: 1 also counters Bootstrap's .tooltip fade base
-   if one ever loads). */
+   if one ever loads). The arrow div is unstyled markup without Bootstrap
+   CSS, so draw it here; the example pins tooltip-placement="top", so only
+   the top arrow is needed. */
 .tooltip { position: absolute; z-index: 1100; font-size: 0.8rem; opacity: 1; }
+.tooltip.top { padding: 5px 0; }
 .tooltip-inner {
   background: #333;
   color: #fff;
   padding: 0.25rem 0.5rem;
   border-radius: 3px;
   max-width: 220px;
+}
+.tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+}
+.tooltip.top .tooltip-arrow {
+  bottom: 0;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px 5px 0;
+  border-top-color: #333;
 }
 
 h1 {

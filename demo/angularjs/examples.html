@@ -388,13 +388,14 @@
       <code>ng-disabled</code> carries over here (ui-select parity, via
       <code>attrs.$observe</code>; the main directives use
       <code>ll-disabled</code> instead). The attribute is inert on this host,
-      so hover still works - the <code>uib-tooltip</code> explains WHY it is
-      disabled.
+      so hover works in BOTH states - the <code>uib-tooltip</code> stays
+      available while disabled and its text follows the state.
     </p>
     <div class="demo-row" data-src="8f">
       <label><input type="checkbox" ng-model="vm.quotaLocked"> quota lock</label>
       <ui-llselect ng-model="vm.person5" ng-disabled="vm.quotaLocked"
-        uib-tooltip="Locked: people quota exceeded" tooltip-enable="vm.quotaLocked">
+        uib-tooltip="{{vm.quotaLocked ? 'Locked: people quota exceeded' : 'Pick anyone you like'}}"
+        tooltip-placement="top">
         <ui-llselect-match placeholder="Pick a person">{{$select.selected.name}}</ui-llselect-match>
         <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"></ui-llselect-choices>
       </ui-llselect>
