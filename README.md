@@ -82,9 +82,11 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 ## Benchmark
 
 > [!NOTE]
-> - Tested on Intel 13900HX (Linux, Wayland, KDE 6 power profile: Performance), Chromium 151. Library versions are pinned in the bundle-size table below.
+> - Tested on Intel 13900HX (Linux, Wayland, KDE 6 power profile: Performance), Chromium 151.
 > - Tested versions of each libraries are the latest versions as of **2026-08-17**.
-> - All tests are single select, and every widget is built WITH a pre-selected value (the benchmark page's `pre-select at build time`).
+>   - Library versions are pinned in the bundle-size table below.
+> - All tests are single select.
+>   - Every widget is built WITH a pre-selected value (the benchmark page's `pre-select at build time`).
 > - The following table shows **instantiation** only, other tests (interactions like open popup, filter candidates, choose candidate, ... etc) cannot be accurately benchmarked nor able to be fairly compared across libraries due to the details in implementations of each library. But you still can test by yourself in benchmark page (Live Benchmark: [GitHub Page](https://kuanyui.github.io/llselect/demo/benchmark.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/benchmark.html). Source Code: [HTML](demo/benchmark.html), [JS](demo/benchmark.js)), and interact with them and feel the "real experience" instead of relying on inaccurate benchmark results.
 
 ### 100 selects x 100 candidates
@@ -187,6 +189,7 @@ The bare URLs `https://cdn.jsdelivr.net/npm/@llselect/core` and `https://unpkg.c
 - **No asynchronous data-fetching API.** llselect is aimed to be a simple `<select>` replacement. Fetch if you really want, then call `setItems(...)`.
 - **No virtual scrolling.** llselect is aimed to be a simple `<select>` replacement, not an omnipotent library.
 - **No alphabetic prefix typeahead** (the native `<select>` behavior) - because it is unusable for East Asian languages and IME input. Use the `filterable` option instead.
+- **No auto destroy.** - You *must* call `destroy()` manually when unmounting.
 - **No official React / Vue / Angular wrapper** - llselect provides the minimal library and the CSS themes only.
   > Because:
   >
@@ -198,8 +201,7 @@ The bare URLs `https://cdn.jsdelivr.net/npm/@llselect/core` and `https://unpkg.c
   > All of the above affects the performance, and complexity of wrapper.
   > A generic wrapper for a frontend framework / library may unnecessarily increase complexity and impact performance (and surely I also have no interests to follow up these quickly-outdated libraries / frameworks). so I decide not to provide official wrapper for frontend frameworks / libraries.
   >
-  > How you wrap llselect in your project and the trade-offs should be decided by yourself, according to your using scenario.
-- **No auto destroy.** - You *must* call `destroy()` manually when unmounting.
+  > How you wrap `llselect` in your project and the trade-offs should be decided by yourself, according to your using scenario.
 
 ## `<form>` integration
 
@@ -349,8 +351,8 @@ This project heavily relies on LLM agents. More than 99% of the working code was
 
 #### So you are just a fucking idiot vibe coder? What on Earth were you responsible for in this project, if LLM has done so much?
 
-1. I review crucial modifications (before or after `git commit`) via `git diff` as possible as I can, to avoid obvious anti-patterns and bad-smelling code.
-2. I
+- I:
+   - Review crucial modifications (before or after `git commit`) via `git diff` as possible as I can, to avoid obvious anti-patterns and bad-smelling code.
    - correct unreasonable APIs according to my development experience, trying to avoid the painful APIs and anti-patterns common among existing select UI component libraries,
    - make the technical decisions,
    - decide API naming conventions,
