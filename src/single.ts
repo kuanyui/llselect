@@ -176,7 +176,7 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
   }
 
   /**
-   * On open, highlight the chosen item (if present and enabled), else the first
+   * On open, focus the chosen item (if present and enabled), else the first
    * enabled item. Indices are into `getVisibleItems()` (the rendered list).
    * @group Subclassing: focus
    */

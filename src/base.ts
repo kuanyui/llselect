@@ -402,7 +402,7 @@ export interface LLSelectClassIdMap {
   itemClass: string
   /**
    * Extra class added to the currently keyboard-focused item element.
-   * Use this to style the focus highlight.
+   * Use this to style the focused item.
    */
   itemFocusedClass: string
   /**
@@ -1576,8 +1576,9 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
     } else {
       el.addEventListener('click', () => {
         // Move focus to the clicked item before activating it. Without this,
-        // multi mode (which keeps the popup open) leaves the previous keyboard-
-        // focused item highlighted while a different item was just clicked.
+        // multi mode (which keeps the popup open) leaves the focused styling
+        // on the previous keyboard-focused item while a different one was
+        // just clicked.
         this.setFocusedIndex(index)
         this.onItemActivated(item)
       })
