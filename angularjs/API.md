@@ -141,6 +141,7 @@ $scope.ifaceMatch = function (i, query) {
 - Evaluated once at link time to a function `(item) => HTMLElement | null`.
 - `null` (for one item, or no attribute at all) = the plain item text from `ll-options`.
 - Runs per rendered row per render (open / filter / list change), entirely outside any digest. The element is NOT `$compile`d - no Angular directives or bindings inside; build plain DOM (`document.createElement`, or clone a `<template>`).
+- To highlight the filter matches, wrap your text with the core helper `llselect.createHighlightedTextEl(text, query)` and read the query via the controller's `instance().getFilterQuery()` - the per-keystroke re-render keeps the marks current.
 - The accessible name and the filter text stay owned by the `label` clause of `ll-options` no matter what you render (the library sets the option's `aria-label` from it).
 - On `<llselect-multiple>` the element renders beside the default checkbox icon; `ll-checkboxes="false"` hands it the whole row.
 - Need real per-row Angular templates? That is [`<ui-llselect>`](#ui-llselect) - one child scope and one `$compile` per row is exactly the trade it prices in.

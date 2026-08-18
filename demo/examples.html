@@ -502,6 +502,23 @@
         <details class="code-toggle"><summary>code</summary><pre data-demo="7.3"><code></code></pre></details>
       </div>
     </article>
+
+    <article>
+      <h3>7.4 Highlight the matches (<code>createHighlightedTextEl</code>)</h3>
+      <p class="hint">
+        The exported helper wraps each query match in <code>&lt;mark&gt;</code>.
+        <code>createItemContentElFn</code> re-runs on every keystroke, so the
+        marks follow the query; the option's <code>aria-label</code> stays the
+        plain text.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-search-highlight"></div>
+          <div class="out" id="out-search-highlight">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="7.4"><code></code></pre></details>
+      </div>
+    </article>
   </section>
 
   <section>
@@ -702,7 +719,8 @@
       <h3>11.5 Faded hint text</h3>
       <p class="hint">
         Primary text + a faded <code>.hint</code> pushed to the row's right
-        edge (<code>.user-row</code>). Visual only: the option's
+        edge (<code>.user-row</code>); the name highlights the filter match
+        (<code>createHighlightedTextEl</code>). Visual only: the option's
         <code>aria-label</code> stays the plain <code>itemToString</code> name.
       </p>
       <div class="demo-split">

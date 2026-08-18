@@ -1,4 +1,4 @@
-import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createOutlinedCheckboxSvgEl, createFilledCheckboxSvgEl, createCheckmarkSvgEl } from '../dist/index.mjs'
+import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createOutlinedCheckboxSvgEl, createFilledCheckboxSvgEl, createCheckmarkSvgEl, createHighlightedTextEl } from '../dist/index.mjs'
 import { ar, en, he, ja, zhTW, uiTranslationPackByLocale } from '../dist/i18n.mjs'
 import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS, MIXED_DIRECTION_COUNTRIES } from './data.js'
 import { highlightJs } from './highlight.js'
@@ -437,6 +437,24 @@ const selSearchUsers = new LLSelectSingle(
 selSearchUsers.setItems(USERS)
 //#endregion
 
+//#region 7.4
+// createHighlightedTextEl wraps each query match in <mark>, mirroring the
+// built-in filter's matching. The content fn re-runs on every keystroke, so
+// the marks follow the query; the option's aria-label stays the plain text.
+const outSearchHighlight = document.getElementById('out-search-highlight')
+let selSearchHighlight
+selSearchHighlight = new LLSelectSingle(
+  document.getElementById('mount-search-highlight'),
+  {
+    placeholder: 'Pick a country',
+    filterable: true,
+    createItemContentElFn: (item) => createHighlightedTextEl(item, selSearchHighlight.getFilterQuery()),
+    onChange: (v) => { outSearchHighlight.textContent = 'chosen: ' + JSON.stringify(v) },
+  }
+)
+selSearchHighlight.setItems(COUNTRIES)
+//#endregion
+
 //#region 8.1
 const outSingleHuge = document.getElementById('out-single-huge')
 const selSingleHuge = new LLSelectSingle(
@@ -759,8 +777,8 @@ selTagIcons.setChosenItems([PROGRAMMING_LANGUAGES[1], PROGRAMMING_LANGUAGES[3]])
 function createUserRowEl(user) {
   const row = document.createElement('span')
   row.className = 'user-row'
-  const name = document.createElement('span')
-  name.textContent = user.name
+  // The name highlights the filter match; the faded role hint stays plain.
+  const name = createHighlightedTextEl(user.name, selUserHints.getFilterQuery())
   const hint = document.createElement('small')
   hint.className = 'hint'
   hint.textContent = user.role
