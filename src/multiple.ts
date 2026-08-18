@@ -100,15 +100,17 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    */
   createTagRemoveButtonContentElFn: ((item: T) => HTMLElement | SVGElement | null) | null
   /**
-   * Whether the popup shows a choose-all row (the industry's "select all"
-   * feature) as the FIRST option of the
-   * listbox (`false` default). Tri-state (none / some / all chosen - carried
-   * by the counting text's numbers and the `data-chosen-state` CSS hook;
-   * the accessible name comes from `uiTranslationPack.chooseAllRowText`);
-   * Enter / click toggles. Acts on the VISIBLE
-   * enabled subset (the filtered list while a filter query is active) - the
-   * public `chooseAll` / `unchooseAll` / `toggleAll` keep their whole-list
-   * semantics. See `docs/llm/A11Y.md` "Choose-all".
+   * Whether the popup shows a choose-all row (the industry's "select all")
+   * as the first option of the listbox.
+   * - Default `false`.
+   * - Activating the row (Enter / click) runs `toggleAllVisible`: it toggles
+   *   the visible enabled subset (the matching subset while a filter query
+   *   is active). The public `chooseAll` / `unchooseAll` / `toggleAll` keep
+   *   their whole-list semantics.
+   * - The row is tri-state (none / some / all chosen), carried by the
+   *   counting text's numbers and the `data-chosen-state` CSS hook.
+   * - Its accessible name comes from `uiTranslationPack.chooseAllRowText`.
+   * - See `docs/llm/A11Y.md` "Choose-all".
    * @group Choose-all
    */
   chooseAllRow: boolean
