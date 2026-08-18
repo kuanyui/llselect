@@ -1024,14 +1024,14 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Orchestrator: composes `renderTrigger` + `renderPopupList` (the latter only
-   * while open) to rebuild from current state; touches no DOM directly. Use this
-   * when external code mutates an item object's properties (e.g.
-   * `users[0].name = 'X'`) without replacing the items array - the library has
-   * no way to detect that on its own. Re-derives the display order (the
-   * `gatherGroups` gather) and, while the filter is active, re-evaluates the
-   * filter against the current item text - both read the mutated data. Does
-   * NOT fire `onChange`, does NOT run `onItemsChanged`. Pure visual refresh.
+   * Rebuild the trigger and (while open) the popup list from current state.
+   * Use it after mutating item OBJECTS in place (e.g. `users[0].name = 'X'`)
+   * - the library cannot detect that on its own.
+   * - Re-derives the display order (the `gatherGroups` gather).
+   * - While the filter is active, re-runs the filter against the current item text.
+   * - Pure visual refresh: does NOT fire `onChange`, does NOT run `onItemsChanged`.
+   * - Orchestrator: composes `renderTrigger` + `renderPopupList`; touches no
+   *   DOM directly.
    * @group Lifecycle
    */
   public rerender(): void {
@@ -1078,10 +1078,11 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Whether the popup is currently open. Pairs with `isDisabled()` (state via
-   * method). The same state is mirrored on the DOM as CSS hooks:
-   * `data-state="open|closed"` on the trigger, `classIdMap.openClass` on the
-   * root.
+   * Whether the popup is currently open.
+   * - Pairs with `isDisabled()` (state read via method).
+   * - The same state is mirrored on the DOM as CSS hooks:
+   *   `data-state="open|closed"` on the trigger, `classIdMap.openClass` on
+   *   the root.
    * @group Open & close
    */
   public isOpened(): boolean {
@@ -1089,13 +1090,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Return the current item list.
-   * - The returned array is the LIVE internal array, typed read-only. Do not
-   *   mutate it (TS blocks it; plain-JS callers must treat it as frozen) -
-   *   structural mutation would silently bypass chosen-state reconciliation,
-   *   re-filtering, and re-render.
-   * - Structural change goes through `setItems`; mutating item OBJECTS +
-   *   `rerender()` is the supported in-place path.
+   * Return the current item list, in data order (as passed to `setItems`).
+   * - The rendered list may differ in order and content: see `getVisibleItems`.
+   * - Returns the LIVE internal array, typed read-only. Do not mutate it
+   *   (TS blocks it; plain-JS callers must treat it as frozen).
+   * - Structural mutation would silently bypass chosen-state reconciliation,
+   *   re-filtering, and re-render. Replace the list via `setItems` instead.
+   * - Mutating item OBJECTS + `rerender()` is the supported in-place path.
    * @group Items
    */
   public getItems(): readonly T[] {
@@ -1163,11 +1164,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Replace the item list. The input is shallow-copied so external mutation
-   * does not affect the select. If the popup is currently open it is
-   * re-rendered; otherwise the DOM is built lazily on the next `open()`.
-   * Subclasses may reconcile chosen-state via {@link onItemsChanged}
-   * (e.g. single mode drops a chosen value that is no longer in the list).
+   * Replace the item list.
+   * - The input is shallow-copied; later external mutation does not affect
+   *   the select.
+   * - Open popup: re-rendered now. Closed: the DOM is built lazily on the
+   *   next `open()`.
+   * - Subclasses may reconcile chosen-state via {@link onItemsChanged}
+   *   (e.g. single mode drops a chosen value that is no longer in the list).
    * @group Items
    */
   public setItems(items: T[]): void {
@@ -2088,12 +2091,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Items currently displayed in the popup, in DISPLAY order. Equals the
-   * display base (`items`, gathered per `gatherGroups` when grouping is on)
-   * while no filter query is active - including while the popup is closed -
-   * and the filtered subset while the user has typed in the filter input.
-   * Subclasses use it too (e.g. for selection-by-index). Returns the LIVE
-   * internal array, typed read-only - never mutate it (see `getItems`).
+   * Return the items the popup list renders, in display order.
+   * - No filter query active (including while closed): the full list,
+   *   gathered per `gatherGroups` when grouping is on.
+   * - Filter query active: the matching subset.
+   * - Returns the LIVE internal array, typed read-only. Never mutate it
+   *   (see `getItems`).
+   * - Subclasses use it too (e.g. for selection-by-index).
    * @group Items
    */
   public getVisibleItems(): readonly T[] {
@@ -2119,9 +2123,11 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * The filter input's current query - what the user has typed this open
-   * cycle, exactly the string passed to `filterFn`. `''` while the popup is
-   * closed, while the filter is inactive, or while the input is empty.
+   * Return the filter input's current query, exactly the string passed to
+   * `filterFn`.
+   * - `''` while the popup is closed, the filter is inactive, or the input
+   *   is empty.
+   * - Resets on close: each open cycle starts empty.
    * @group Filtering
    */
   public getFilterQuery(): string {
