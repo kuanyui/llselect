@@ -338,6 +338,11 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 .user-row .hint { margin-left: auto; }
 
+/* ui-select's own one-line look for its `highlight` filter (angularjs 8a);
+   its CSS is not bridged, so the demo carries this rule the same way app.js
+   carries the filter. */
+.ui-select-highlight { font-weight: bold; }
+
 /* #region 11.6 */
 /* core 11.6 / angularjs 7e: the ONE thing the renderer's inline styles
    cannot reach - the option element's own padding. Zero it so the row

@@ -246,3 +246,34 @@ test('a bare text-node template (no element) works, as in ui-select', () => {
   assert.equal(a.$$('.llselect-item')[0].textContent, 'Alice (admin)')
   assert.equal(a.$$('.llselect-item')[0].getAttribute('aria-label'), 'Alice') // the string channel stays ll-item-text
 })
+
+test('$select.search resets when the query is cleared, so rows stop highlighting it', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person">
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
+            <span>{{p.name}}|{{$select.search}}</span>
+          </ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () {
+      this.users = USERS
+      this.person = undefined
+    },
+  })
+  assert.deepEqual(a.errors, [])
+  a.$('.llselect-trigger').click()
+  const input = a.$('.llselect-filter-input')
+  input.value = 'ali'
+  input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
+  assert.equal(a.$('.llselect-item').textContent, 'Alice|ali')
+  input.value = ''
+  input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
+  // filterFn is never called for an empty query; only the render-time sync
+  // can reset $select.search here. Before it, this still said "Alice|ali".
+  assert.equal(a.$('.llselect-item').textContent, 'Alice|')
+})

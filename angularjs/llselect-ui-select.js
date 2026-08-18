@@ -224,6 +224,11 @@
         : null,
       createItemContentElFn: function (item) {
         if (!slots.choicesHtml) { return null }
+        // Row templates read $select.search (`| highlight:`). filterFn alone
+        // cannot keep it current: the library never calls it for an EMPTY
+        // query (clearing, close-resets), so the stale query would keep
+        // highlighting. Sync from the source of truth at render time.
+        $select.search = sel ? sel.getFilterQuery() : ''
         var rowScope = newTemplateScope(item)
         rowScope.$index = bridge.rowIndex
         return compileSlot(slots.choicesHtml, rowScope)
