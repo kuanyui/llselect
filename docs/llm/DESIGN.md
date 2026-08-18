@@ -173,6 +173,17 @@ Locked decisions for the filterable variant. Keyboard / focus / ARIA contract is
 - **No subclass split.** Filtering is a capability setting on the existing `LLSelectSingle` / `LLSelectMultiple`. Subclassing per feature would multiply combinatorially (filter x optgroup x ...); a setting composes.
 - **Settings:** `filterable: boolean | ((items: readonly T[]) => boolean)` (default `false`). The predicate form is the conditional-display knob (select2's `minimumResultsForSearch`, rewritten as a caller-authored predicate so the condition is self-documenting and not count-only): evaluated against the full item list on every `open()`, never mid-open - crossing the threshold via `setItems` applies on the next open, so the focus host is never yanked while the popup is up. Also: `filterFn: ((item, query) => boolean) | null` (default `null` = case-insensitive substring on `itemToString`); `uiTranslationPack.filterInputAriaLabel` (default `'Search'` - a FALLBACK accessible name for the input, used only when the app supplies neither `ariaLabel` nor `ariaLabelledBy`; the field name replaces it otherwise) and `uiTranslationPack.filterInputPlaceholder` (default `'Filter (Esc to clear)'` - also teaches the Esc-clears-filter behavior; `null` = no placeholder) - see "Texts (i18n)" below. IME-aware filtering (composition-guarded) is part of the contract; see `A11Y.md`.
 
+### Query-match highlighting (helper, not a setting)
+
+`createHighlightedTextEl(text, query, createMatchElFn?)` (query-highlight.ts) builds a detached `<span>` with each case-insensitive `query` occurrence wrapped in `<mark>` (or the caller's element). Decisions:
+
+- Exported pure helper, NOT a boolean setting: the seam already exists - `createItemContentElFn` re-runs per rendered row per render (filter keystrokes included), so core carries no highlight state. A setting could only affect the default text path and would silently stop the moment a custom content fn takes over; the helper composes with any content fn. Same packaging as `gatherItemsByGroupKey` / the icon builders.
+- Mirrors the built-in matcher exactly (`toLowerCase` both sides, no trim): the marks must agree with what filtering kept. A custom `filterFn`'s ranges are unknowable to the library; the docstring says to mark your own.
+- Accessible names are immune by construction: when a content fn returns an element the option's `aria-label` comes from `itemToString`, so `<mark>` never leaks into what AT speaks.
+- Offsets are found on the lower-cased pair and applied to the original string; when lower-casing changes a length (a Unicode expansion, e.g. U+0130) it degrades to unmarked plain text rather than marking wrong ranges.
+- Default mark is a bare `<mark>`: native styling works with zero CSS; themes may restyle. `createMatchElFn` returns a fully built element inserted as-is.
+- The ctx-param question (letting `createItemContentElFn` receive the query without the `let sel` closure) is deferred: TODO.md "Callback context / instance access review".
+
 ## Disabled (Phase 9)
 
 Two independent axes, modelled differently on purpose.

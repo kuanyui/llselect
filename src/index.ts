@@ -39,6 +39,10 @@ export type {
 // who pre-gather themselves (with `gatherGroups: false`).
 export { gatherItemsByGroupKey } from './grouping.js'
 
+// Query-match highlighting for item content (wraps filter matches in <mark>),
+// for use inside createItemContentElFn / createItemContentEl.
+export { createHighlightedTextEl } from './query-highlight.js'
+
 // Types observable through public settings / DOM attributes: importable,
 // never infer-only (`popupWidthPolicy` setting; `data-placement` attribute).
 export type { WidthPolicy, Placement } from './positioning.js'

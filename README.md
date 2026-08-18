@@ -320,6 +320,7 @@ The capability line between the two:
 | Trigger content (e.g. tag chips) | `createTriggerContentElFn`      |
 | Disable individual items         | `itemDisabledFn`                |
 | Search matching                  | `filterFn`                      |
+| Highlight filter matches in rows | `createItemContentElFn` + the `createHighlightedTextEl` helper |
 | Equality for object items        | `compareFn`                     |
 | Dropdown arrow                   | `createTriggerArrowContentElFn` |
 | Events                           | `onChange`, `onOpen`, `onClose` |
@@ -333,6 +334,24 @@ const sel = new LLSelectSingle(el, {
 ```
 
 Event callbacks are constructor-time settings - frozen like every setting, one callback per event. To swap the handler at runtime or fan out to several listeners, wrap it in your own reference: `onChange: (current, previous) => myHandler?.(current, previous)`.
+
+#### Highlight what the filter matched
+
+The exported helper `createHighlightedTextEl(text, query)` wraps every match of `query` in a `<mark>` element. Pair it with `createItemContentElFn`, which re-runs on every filter keystroke:
+
+```js
+import { LLSelectSingle, createHighlightedTextEl } from '@llselect/core'
+
+let sel
+sel = new LLSelectSingle(el, {
+  filterable: true,
+  createItemContentElFn: (item) => createHighlightedTextEl(item, sel.getFilterQuery()),
+})
+```
+
+- Matching mirrors the built-in filter: case-insensitive substring. If you set a custom `filterFn`, mark your own matches instead.
+- Screen readers are unaffected: the option's accessible name comes from `itemToString`, not from the rendered content.
+- A third argument replaces the default `<mark>`: `(matchedText) => HTMLElement`, inserted as-is.
 
 ### Subclassing (extending the library)
 
