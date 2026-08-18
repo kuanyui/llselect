@@ -149,6 +149,22 @@
       }
     })
 
+    /**
+     * 7c / 7f: publishes the llselect directive controller into the scope
+     * slot named by the attribute value, so a plain controller fn (here an
+     * ll-item-content-fn) can call instance().getFilterQuery() late. The
+     * controller exists before any row renders; instance() stays late-bound.
+     */
+    .directive('demoPublishApi', ['$parse', function ($parse) {
+      return {
+        restrict: 'A',
+        require: ['?llselectSingle', '?llselectMultiple'],
+        link: function (scope, element, attrs, ctrls) {
+          $parse(attrs.demoPublishApi).assign(scope, ctrls[0] || ctrls[1])
+        },
+      }
+    }])
+
     .controller('DemoCtrl', ['$scope', function ($scope) {
       var vm = this
 
@@ -180,6 +196,9 @@
       vm.langsRich = []
       vm.langsTags = []
       vm.user2 = undefined
+      vm.userApi = null // 7c, set by demo-publish-api
+      vm.hlCountry = undefined // 7f
+      vm.hlApi = null // 7f, set by demo-publish-api
       vm.langTinted = undefined
       vm.labelFruit = undefined
       vm.interfaces = INTERFACES
@@ -236,13 +255,22 @@
       vm.renderUserRow = function (u) {
         var row = document.createElement('span')
         row.className = 'user-row'
-        var name = document.createElement('span')
-        name.textContent = u.name
+        // The name highlights the filter match; the faded hint stays plain.
+        var name = window.llselect.createHighlightedTextEl(u.name, vm.userApi ? vm.userApi.instance().getFilterQuery() : '')
         var hint = document.createElement('small')
         hint.className = 'hint'
         hint.textContent = u.role + (u.suspended ? ' - suspended' : '')
         row.append(name, hint)
         return row
+      }
+
+      /**
+       * 7f: the core createHighlightedTextEl helper wraps each query match in
+       * <mark>. Rows re-render per keystroke, so the marks follow the query;
+       * demo-publish-api supplies instance() for getFilterQuery().
+       */
+      vm.renderHighlightedRow = function (country) {
+        return window.llselect.createHighlightedTextEl(country, vm.hlApi ? vm.hlApi.instance().getFilterQuery() : '')
       }
 
       /**
