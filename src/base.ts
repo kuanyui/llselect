@@ -1027,11 +1027,11 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Rebuild the trigger and (while open) the popup list from current state.
    * - Use it after mutating item OBJECTS in place (e.g.
    *   `users[0].name = 'X'`). The library cannot detect that on its own.
-   * - Re-derives the display order (the `gatherGroups` gather).
-   * - While the filter is active, re-runs the filter against the current
+   * - It re-derives the display order (the `gatherGroups` gather).
+   * - While the filter is active, it re-runs the filter against the current
    *   item text.
-   * - Pure visual refresh: does NOT fire `onChange`, does NOT run
-   *   `onItemsChanged`.
+   * - The refresh is purely visual: it does NOT fire `onChange` and does NOT
+   *   run `onItemsChanged`.
    * - Orchestrator: composes `renderTrigger` + `renderPopupList`; touches no
    *   DOM directly.
    * @group Lifecycle
@@ -1121,10 +1121,10 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * Replace the UI-translation pack at runtime, so switching language needs
    * no re-`new`.
-   * - A deliberate exception to constructor-frozen settings, like
+   * - This is a deliberate exception to constructor-frozen settings, like
    *   `setDisabled`.
-   * - Resolved exactly like the constructor: merged over the built-in English
-   *   pack, NOT over the previously set pack.
+   * - The pack is resolved exactly like the constructor's: merged over the
+   *   built-in English pack, NOT over the previously set pack.
    * - An explicit constructor `placeholder` keeps winning over the new pack's
    *   `triggerPlaceholder`.
    * - Re-renders the trigger and the open popup.
@@ -1172,8 +1172,8 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Replace the item list.
    * - The input is shallow-copied; later external mutation does not affect
    *   the select.
-   * - Open popup: re-rendered now. Closed: the DOM is built lazily on the
-   *   next `open()`.
+   * - If the popup is open, it re-renders now. While closed, the DOM is
+   *   built lazily on the next `open()`.
    * - Subclasses may reconcile chosen-state via {@link onItemsChanged}
    *   (e.g. single mode drops a chosen value that is no longer in the list).
    * @group Items
@@ -2097,9 +2097,9 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
 
   /**
    * Return the items the popup list renders, in display order.
-   * - No filter query active (including while closed): the full list,
-   *   gathered per `gatherGroups` when grouping is on.
-   * - Filter query active: the matching subset.
+   * - If no filter query is active (including while closed), it returns the
+   *   full list, gathered per `gatherGroups` when grouping is on.
+   * - If a filter query is active, it returns the matching subset.
    * - Returns the LIVE internal array, typed read-only. Never mutate it
    *   (see `getItems`).
    * - Subclasses use it too (e.g. for selection-by-index).
@@ -2130,9 +2130,9 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   /**
    * Return the filter input's current query, exactly the string passed to
    * `filterFn`.
-   * - `''` while the popup is closed, the filter is inactive, or the input
-   *   is empty.
-   * - Resets on close: each open cycle starts empty.
+   * - It is `''` while the popup is closed, the filter is inactive, or the
+   *   input is empty.
+   * - It resets on close: each open cycle starts empty.
    * @group Filtering
    */
   public getFilterQuery(): string {

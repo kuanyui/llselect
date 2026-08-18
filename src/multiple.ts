@@ -199,8 +199,9 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * - Fires `onChange` only when the new list differs from the current one.
    *   The comparison is order-sensitive: chosen order is visible state
    *   (tags render in it).
-   * - No disabled filtering: it can add and drop disabled items, unlike the
-   *   `choose*` bulk ops. Assigning to a native `<select>` behaves the same.
+   * - It ignores disabled state: it can add and drop disabled items, unlike
+   *   the `choose*` bulk ops. Assigning to a native `<select>` behaves the
+   *   same.
    * @group Selection
    */
   public setChosenItems(items: T[]): void {
@@ -246,8 +247,8 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
 
   /**
    * Choose every enabled item.
-   * - Enabled-only, like every `choose*` bulk op. Bulk ops mirror clicking,
-   *   and clicking cannot reach disabled items.
+   * - It acts on enabled items only, like every `choose*` bulk op. Bulk ops
+   *   mirror clicking, and clicking cannot reach disabled items.
    * - Already-chosen disabled items are preserved. To change disabled items
    *   too, use `setChosenItems`.
    * - Fires `onChange` only when the chosen items actually change.
@@ -271,9 +272,9 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
 
   /**
    * Toggle between "all enabled chosen" and "none chosen".
-   * - Ignores disabled items, like every `choose*` bulk op.
-   * - NOT the in-popup choose-all row's action. The row acts on the visible
-   *   enabled subset only: see {@link toggleAllVisible}.
+   * - It ignores disabled items, like every `choose*` bulk op.
+   * - This is NOT the in-popup choose-all row's action. The row acts on the
+   *   visible enabled subset only: see {@link toggleAllVisible}.
    * @group Selection
    */
   public toggleAll(): void {
@@ -287,16 +288,17 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * - This is the choose-all row's action (the `chooseAllRow` setting) as a
    *   public method. The row delegates here.
    * - Acts on exactly the items that satisfy all of the following:
-   *   - Visible: the item matches the active filter query. No query active:
-   *     every item counts as visible. Same list as `getVisibleItems`.
+   *   - Visible: the item matches the active filter query. If no query is
+   *     active, every item is visible. This is the same list as
+   *     `getVisibleItems`.
    *   - Enabled: not disabled via `itemDisabledFn`, and not in a disabled
    *     group.
-   * - All of them already chosen: unchooses exactly those.
-   * - Otherwise: chooses the ones still missing.
+   * - If all of them are already chosen, it unchooses exactly those.
+   * - Otherwise, it chooses the ones still missing.
    * - Choices outside that set (filtered-out or disabled) are preserved
    *   either way.
-   * - No filter query active: the acted-on set is every enabled item, the
-   *   same scope as `toggleAll`.
+   * - If no filter query is active, the acted-on set is every enabled item,
+   *   the same scope as `toggleAll`.
    * - Fires `onChange` only when the chosen items actually change.
    * @group Selection
    */
@@ -319,9 +321,10 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
    * is a count summary; override (or pass the `createTriggerContentElFn`
    * setting) to display tags / custom markup / etc.
    *
-   * - 0 chosen: `placeholder`
-   * - n > 0: `uiTranslationPack.triggerCountSummary(n, total)` (English default:
-   *   `"n / total selected"`, or `"All n selected"` when all are chosen)
+   * - If 0 items are chosen, the text is `placeholder`.
+   * - If n > 0, the text is `uiTranslationPack.triggerCountSummary(n, total)`
+   *   (English default: `"n / total selected"`, or `"All n selected"` when
+   *   all are chosen).
    * @group Subclassing: rendering
    */
   protected override renderTriggerContent(): void {

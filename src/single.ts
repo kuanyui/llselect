@@ -104,8 +104,8 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
    * - Accepts an item that is not (yet) in the items list, for async data
    *   flows. If a later `setItems` does not include it, it is dropped
    *   automatically.
-   * - No disabled check: a disabled item can be chosen programmatically.
-   *   Native `<select>` behaves the same.
+   * - It does not check disabled state: a disabled item can be chosen
+   *   programmatically. Native `<select>` behaves the same.
    * @group Selection
    */
   public setChosenItem(item: T | undefined): void {
@@ -123,8 +123,10 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
   /**
    * Orchestrator: composes `syncEmptyStateToDom` + `commitTriggerContentToDom`
    * to (re)build the trigger from state; touches no DOM directly.
-   * - `createTriggerContentElFn` first; `null` / unset falls to the default.
-   * - Default: the chosen item's string, or the placeholder when empty.
+   * - `createTriggerContentElFn` is tried first; if it returns `null` or is
+   *   unset, the default applies.
+   * - The default is the chosen item's string, or the placeholder when
+   *   nothing is chosen.
    * @group Subclassing: rendering
    */
   protected override renderTriggerContent(): void {
