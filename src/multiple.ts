@@ -194,13 +194,13 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   /**
-   * Replace the entire chosen-items set.
+   * Replace the entire chosen-items list.
    * - The input is shallow-copied.
-   * - Fires `onChange` only when the new set differs element-wise
-   *   (order-sensitive) from the current set.
-   * - No disabled filtering - the raw assignment channel (native `<select>`
-   *   parity): it can add and drop disabled items, unlike the `choose*`
-   *   bulk ops.
+   * - Fires `onChange` only when the new list differs from the current one.
+   *   The comparison is order-sensitive: chosen order is visible state
+   *   (tags render in it).
+   * - No disabled filtering: it can add and drop disabled items, unlike the
+   *   `choose*` bulk ops. Assigning to a native `<select>` behaves the same.
    * @group Selection
    */
   public setChosenItems(items: T[]): void {
@@ -246,11 +246,11 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
 
   /**
    * Choose every enabled item.
-   * - Enabled-only, like every `choose*` bulk op: bulk ops mirror clicking,
+   * - Enabled-only, like every `choose*` bulk op. Bulk ops mirror clicking,
    *   and clicking cannot reach disabled items.
-   * - Already-chosen disabled items are preserved. The raw disabled-blind
-   *   channel is `setChosenItems`.
-   * - Fires `onChange` only when the set actually changes.
+   * - Already-chosen disabled items are preserved. To change disabled items
+   *   too, use `setChosenItems`.
+   * - Fires `onChange` only when the chosen items actually change.
    * @group Selection
    */
   public chooseAll(): void {
@@ -259,11 +259,10 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
 
   /**
    * Unchoose every enabled item.
-   * - Already-chosen disabled items are preserved (bulk ops mirror clicking,
-   *   which cannot reach disabled items).
-   * - The total channels that DO drop them: the clear button and
-   *   `setChosenItems([])`.
-   * - Fires `onChange` only when the set changes.
+   * - Already-chosen disabled items are preserved. Bulk ops mirror clicking,
+   *   and clicking cannot reach disabled items.
+   * - Two paths DO drop them: the clear button, and `setChosenItems([])`.
+   * - Fires `onChange` only when the chosen items actually change.
    * @group Selection
    */
   public unchooseAll(): void {
@@ -273,8 +272,8 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   /**
    * Toggle between "all enabled chosen" and "none chosen".
    * - Ignores disabled items, like every `choose*` bulk op.
-   * - NOT the in-popup choose-all row's action: that row acts on the VISIBLE
-   *   enabled subset only - see {@link toggleAllVisible}.
+   * - NOT the in-popup choose-all row's action. The row acts on the visible
+   *   enabled subset only: see {@link toggleAllVisible}.
    * @group Selection
    */
   public toggleAll(): void {
@@ -284,15 +283,21 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   /**
-   * Toggle the VISIBLE enabled subset - the choose-all row's action
-   * (`chooseAllRow`) as a public method.
-   * - Every visible enabled item chosen: unchooses exactly those.
-   * - Otherwise: chooses the missing ones.
-   * - Choices outside the subset (filtered-out or disabled) are preserved
+   * Toggle the visible enabled items between all-chosen and all-unchosen.
+   * - This is the choose-all row's action (the `chooseAllRow` setting) as a
+   *   public method. The row delegates here.
+   * - Acts on exactly the items that satisfy all of the following:
+   *   - Visible: the item matches the active filter query. No query active:
+   *     every item counts as visible. Same list as `getVisibleItems`.
+   *   - Enabled: not disabled via `itemDisabledFn`, and not in a disabled
+   *     group.
+   * - All of them already chosen: unchooses exactly those.
+   * - Otherwise: chooses the ones still missing.
+   * - Choices outside that set (filtered-out or disabled) are preserved
    *   either way.
-   * - No filter query active: the visible subset is every enabled item, so
-   *   it then matches `toggleAll`.
-   * - Fires `onChange` only when the set changes.
+   * - No filter query active: the acted-on set is every enabled item, the
+   *   same scope as `toggleAll`.
+   * - Fires `onChange` only when the chosen items actually change.
    * @group Selection
    */
   public toggleAllVisible(): void {

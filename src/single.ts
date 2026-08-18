@@ -97,13 +97,15 @@ export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK
   }
 
   /**
-   * Programmatically set the chosen item; `undefined` clears.
+   * Set the chosen item programmatically.
+   * - `undefined` clears the choice.
    * - Fires `onChange` only when the item actually differs from the current
    *   one (compared via `compareFn`).
-   * - Accepts an item that is not (yet) in the items list (async data flows).
-   *   If a later `setItems` does not include it, it is dropped automatically.
-   * - No disabled check (native `<select>` parity): a disabled item can be
-   *   chosen programmatically.
+   * - Accepts an item that is not (yet) in the items list, for async data
+   *   flows. If a later `setItems` does not include it, it is dropped
+   *   automatically.
+   * - No disabled check: a disabled item can be chosen programmatically.
+   *   Native `<select>` behaves the same.
    * @group Selection
    */
   public setChosenItem(item: T | undefined): void {

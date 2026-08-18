@@ -1025,11 +1025,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
 
   /**
    * Rebuild the trigger and (while open) the popup list from current state.
-   * Use it after mutating item OBJECTS in place (e.g. `users[0].name = 'X'`)
-   * - the library cannot detect that on its own.
+   * - Use it after mutating item OBJECTS in place (e.g.
+   *   `users[0].name = 'X'`). The library cannot detect that on its own.
    * - Re-derives the display order (the `gatherGroups` gather).
-   * - While the filter is active, re-runs the filter against the current item text.
-   * - Pure visual refresh: does NOT fire `onChange`, does NOT run `onItemsChanged`.
+   * - While the filter is active, re-runs the filter against the current
+   *   item text.
+   * - Pure visual refresh: does NOT fire `onChange`, does NOT run
+   *   `onItemsChanged`.
    * - Orchestrator: composes `renderTrigger` + `renderPopupList`; touches no
    *   DOM directly.
    * @group Lifecycle
@@ -1104,11 +1106,12 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Resolved chrome strings (English defaults + the `uiTranslationPack` setting merged).
-   * Reuse the library's translations in your own UI - e.g. a tooltip on a tag
-   * remove button: `sel.getUiTranslationPack().tagRemoveButtonAriaLabel(label)` - instead
-   * of maintaining a second translation source. Live object, treat as
-   * immutable (same contract as `getItems`).
+   * Return the resolved UI strings: the built-in English defaults merged
+   * with the `uiTranslationPack` setting.
+   * - Reuse these in your own UI instead of keeping a second translation
+   *   source. For example, a tag remove button tooltip:
+   *   `sel.getUiTranslationPack().tagRemoveButtonAriaLabel(label)`.
+   * - Returns the LIVE object. Treat it as immutable, like `getItems`.
    * @group i18n
    */
   public getUiTranslationPack(): Readonly<LLSelectUiTranslationPack> {
@@ -1116,16 +1119,18 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /**
-   * Replace the UI-translation pack at runtime, so switching language needs no
-   * re-`new` - a deliberate exception (like `setDisabled`) to
-   * constructor-frozen settings.
+   * Replace the UI-translation pack at runtime, so switching language needs
+   * no re-`new`.
+   * - A deliberate exception to constructor-frozen settings, like
+   *   `setDisabled`.
    * - Resolved exactly like the constructor: merged over the built-in English
    *   pack, NOT over the previously set pack.
    * - An explicit constructor `placeholder` keeps winning over the new pack's
    *   `triggerPlaceholder`.
-   * - Re-renders the trigger and the open popup, and re-applies the pack-owned
-   *   attributes `rerender()` cannot reach (filter input placeholder and
-   *   fallback `aria-label`, clear button `aria-label`).
+   * - Re-renders the trigger and the open popup.
+   * - Also re-applies the pack-owned attributes `rerender()` cannot reach:
+   *   the filter input placeholder, its fallback `aria-label`, and the clear
+   *   button `aria-label`.
    * @group i18n
    */
   public setUiTranslationPack(uiTranslationPack: Partial<LLSelectUiTranslationPack>): void {

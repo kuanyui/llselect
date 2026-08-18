@@ -84,8 +84,8 @@ export interface LLSelectUiTranslationPack {
   triggerCountSummary: (chosenCount: number, totalCount: number) => string
   /**
    * Label (visible text + accessible name) of the multi choose-all row
-   * (`chooseAllRow` setting). Counts refer to the VISIBLE enabled subset the
-   * row acts on.
+   * (`chooseAllRow` setting). Counts refer to the visible enabled subset the
+   * row acts on. `toggleAllVisible` documents that subset.
    */
   chooseAllRowText: (chosenCount: number, totalCount: number) => string
 }
