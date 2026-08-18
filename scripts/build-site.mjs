@@ -711,14 +711,14 @@ const NG_KINDS = new Map(Object.entries({
   'llselect-single': 'directive', 'llselect-multiple': 'directive', 'ui-llselect': 'directive',
   'ng-model': 'attribute', 'ng-change': 'attribute', 'll-options': 'attribute', name: 'attribute', required: 'attribute',
   'll-disabled': 'attribute', 'll-placeholder': 'attribute', 'll-filterable': 'attribute', 'll-filter-fn': 'attribute',
-  'll-clearable': 'attribute', 'll-popup-width-policy': 'attribute', 'll-arrow': 'attribute',
+  'll-clearable': 'attribute', 'll-popup-width-policy': 'attribute', 'll-arrow': 'attribute', 'll-highlight': 'attribute',
   'll-item-content-fn': 'attribute', 'll-trigger-content-fn': 'attribute',
   'll-tag-content-fn': 'attribute', 'll-tag-remove-button-content-fn': 'attribute',
   'll-aria-label': 'attribute', 'll-aria-labelledby': 'attribute', 'll-label-el': 'attribute',
   'll-trigger-display': 'attribute',
   'll-choose-all-row': 'attribute', 'll-checkboxes': 'attribute', 'll-item-text': 'attribute',
   defaults: 'method', instance: 'method',
-  arrow: 'property', filterable: 'property', popupWidthPolicy: 'property', uiTranslationPack: 'property',
+  arrow: 'property', filterable: 'property', highlight: 'property', popupWidthPolicy: 'property', uiTranslationPack: 'property',
 }))
 renderMarkdownPage('angularjs/API.md', 'public/angularjs/api.html', { title: '@llselect/angularjs API', description: 'Attribute reference for the @llselect/angularjs AngularJS 1.x directives', prefix: '../', current: 'AngularJS', subnav: angularjsSubnavHtml('../', 'API'), toc: true, kinds: NG_KINDS, kindsStrict: true })
 

@@ -292,17 +292,16 @@
     <div class="out">ng-model = {{ vm.langTinted || 'undefined' }}</div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="7e"><code></code></pre></details>
 
-    <h3>7f. Highlight the filter matches</h3>
+    <h3>7f. Highlight the filter matches: ll-highlight</h3>
     <p>
-      The core helper <code>llselect.createHighlightedTextEl</code> wraps each
-      query match in <code>&lt;mark&gt;</code>; rows re-render per keystroke,
-      so the marks follow the typing. <code>demo-publish-api</code> stores the
-      directive controller so the render fn can read
-      <code>instance().getFilterQuery()</code>.
+      <code>ll-highlight="true"</code> wraps each query match in the default
+      item text in <code>&lt;mark&gt;</code> (the core
+      <code>createHighlightedTextEl</code>); the marks follow the typing.
+      With a custom <code>ll-item-content-fn</code> call the helper yourself,
+      the way 7c does.
     </p>
     <div class="demo-row" data-src="7f">
-      <llselect-single ng-model="vm.hlCountry" ll-filterable="true"
-        demo-publish-api="vm.hlApi" ll-item-content-fn="vm.renderHighlightedRow"
+      <llselect-single ng-model="vm.hlCountry" ll-filterable="true" ll-highlight="true"
         ll-options="c for c in vm.countries">
       </llselect-single>
     </div>

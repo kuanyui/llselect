@@ -483,3 +483,73 @@ test('ll-filter-fn drives the search box beyond the label-text default', () => {
   assert.equal(rows.length, 1)
   assert.equal(rows[0].textContent, 'vlan 2')
 })
+
+test('ll-highlight wraps filter matches in <mark>, and the marks clear with the query', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.fruit" ll-filterable="true" ll-highlight="true"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () {
+      this.fruits = FRUITS.slice()
+      this.fruit = undefined
+    },
+  })
+  assert.deepEqual(a.errors, [])
+  a.$('.llselect-trigger').click()
+  const input = a.$('.llselect-filter-input')
+  input.value = 'an'
+  input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
+  const rows = a.$$('.llselect-item')
+  assert.equal(rows.length, 1) // Banana
+  assert.deepEqual([...rows[0].querySelectorAll('mark')].map((m) => m.textContent), ['an', 'an'])
+  assert.equal(rows[0].textContent, 'Banana') // marks style the text, never change it
+  input.value = ''
+  input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
+  assert.equal(a.$('.llselect-item mark'), null)
+})
+
+test('ll-highlight + ll-item-content-fn is a conflict and throws at link', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.fruit" ll-filterable="true" ll-highlight="true"
+        ll-item-content-fn="vm.render"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () {
+      this.fruits = FRUITS.slice()
+      this.fruit = undefined
+      this.render = function () { return document.createElement('b') }
+    },
+  })
+  assert.equal(a.errors.length, 1)
+  assert.match(a.errors[0].message, /ll-highlight/)
+})
+
+test('config highlight default reaches a multiple; the checkbox row text carries the marks', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-multiple ng-model="vm.tops" ll-filterable="true"
+        ll-options="f for f in vm.fruits"></llselect-multiple>
+    </div>`,
+    controller: function () {
+      this.fruits = FRUITS.slice()
+      this.tops = []
+    },
+    config: ['llselectConfigProvider', function (llselectConfigProvider) {
+      llselectConfigProvider.defaults({ highlight: true })
+    }],
+  })
+  assert.deepEqual(a.errors, [])
+  a.$('.llselect-trigger').click()
+  const input = a.$('.llselect-filter-input')
+  input.value = 'ap'
+  input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
+  const rows = a.$$('.llselect-item')
+  assert.equal(rows.length, 1) // Apple
+  assert.ok(rows[0].querySelector('svg'), 'the default checkbox icon is gone')
+  assert.equal(rows[0].querySelector('mark').textContent, 'Ap')
+})

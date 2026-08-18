@@ -150,8 +150,8 @@
     })
 
     /**
-     * 7c / 7f: publishes the llselect directive controller into the scope
-     * slot named by the attribute value, so a plain controller fn (here an
+     * 7c: publishes the llselect directive controller into the scope slot
+     * named by the attribute value, so a plain controller fn (here an
      * ll-item-content-fn) can call instance().getFilterQuery() late. The
      * controller exists before any row renders; instance() stays late-bound.
      */
@@ -198,7 +198,6 @@
       vm.user2 = undefined
       vm.userApi = null // 7c, set by demo-publish-api
       vm.hlCountry = undefined // 7f
-      vm.hlApi = null // 7f, set by demo-publish-api
       vm.langTinted = undefined
       vm.labelFruit = undefined
       vm.interfaces = INTERFACES
@@ -262,15 +261,6 @@
         hint.textContent = u.role + (u.suspended ? ' - suspended' : '')
         row.append(name, hint)
         return row
-      }
-
-      /**
-       * 7f: the core createHighlightedTextEl helper wraps each query match in
-       * <mark>. Rows re-render per keystroke, so the marks follow the query;
-       * demo-publish-api supplies instance() for getFilterQuery().
-       */
-      vm.renderHighlightedRow = function (country) {
-        return window.llselect.createHighlightedTextEl(country, vm.hlApi ? vm.hlApi.instance().getFilterQuery() : '')
       }
 
       /**

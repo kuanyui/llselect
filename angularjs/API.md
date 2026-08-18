@@ -29,7 +29,7 @@ Attributes of both `<llselect-single>` and `<llselect-multiple>`. Every entry op
 - **Literal**: plain attribute text.
 - **Flag**: acts by presence alone.
 
-App-wide defaults for `arrow` / `filterable` / `popupWidthPolicy` / `uiTranslationPack` are set once via [`llselectConfigProvider`](#llselectconfigprovider); a per-element attribute always wins.
+App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` / `uiTranslationPack` are set once via [`llselectConfigProvider`](#llselectconfigprovider); a per-element attribute always wins.
 
 ### `ng-model`
 
@@ -141,7 +141,7 @@ $scope.ifaceMatch = function (i, query) {
 - Evaluated once at link time to a function `(item) => HTMLElement | null`.
 - `null` (for one item, or no attribute at all) = the plain item text from `ll-options`.
 - Runs per rendered row per render (open / filter / list change), entirely outside any digest. The element is NOT `$compile`d - no Angular directives or bindings inside; build plain DOM (`document.createElement`, or clone a `<template>`).
-- To highlight the filter matches, wrap your text with the core helper `llselect.createHighlightedTextEl(text, query)` and read the query via the controller's `instance().getFilterQuery()` - the per-keystroke re-render keeps the marks current.
+- To highlight the filter matches, wrap your text with the core helper `llselect.createHighlightedTextEl(text, query)` and read the query via the controller's `instance().getFilterQuery()` - the per-keystroke re-render keeps the marks current. When the DEFAULT text is all you need, [`ll-highlight`](#ll-highlight) does that wiring for you.
 - The accessible name and the filter text stay owned by the `label` clause of `ll-options` no matter what you render (the library sets the option's `aria-label` from it).
 - On `<llselect-multiple>` the element renders beside the default checkbox icon; `ll-checkboxes="false"` hands it the whole row.
 - Need real per-row Angular templates? That is [`<ui-llselect>`](#ui-llselect) - one child scope and one `$compile` per row is exactly the trade it prices in.
@@ -161,6 +161,16 @@ $scope.renderRow = function (fruit) {
 <llselect-single ng-model="picked" ll-item-content-fn="renderRow"
   ll-options="f.name for f in fruits"></llselect-single>
 ```
+
+### `ll-highlight`
+
+**Expression** -> boolean. Wraps each filter-query match in the default item text in a `<mark>` element (the core `createHighlightedTextEl` helper).
+
+- The marks re-render per keystroke and clear with the query.
+- Only the DEFAULT item text: combined with [`ll-item-content-fn`](#ll-item-content-fn) it throws - a custom content fn owns its whole content, so call `llselect.createHighlightedTextEl` inside it instead.
+- On `<llselect-multiple>` the text beside the default checkbox gets the marks.
+- App-wide default: the `highlight` key of [`llselectConfigProvider`](#llselectconfigprovider).
+- The option's accessible name stays the plain `ll-options` text (core contract).
 
 ### `ll-trigger-content-fn`
 
@@ -230,6 +240,7 @@ angular.module('app', ['llselect'])
     llselectConfigProvider.defaults({
       arrow: 'chevron',          // 'chevron' | 'triangle' | null (null = the theme draws it)
       filterable: true,          // boolean, or a predicate (items) => boolean
+      highlight: true,           // wrap filter matches in the default item text in <mark>
       popupWidthPolicy: 'match-trigger',  // llselect's own default is 'fit-content'
       uiTranslationPack: llselectI18n.zhTW,  // an llselect language pack
     })
@@ -247,6 +258,10 @@ Takes the defaults bag above. Only settings that are app-wide **by nature** are 
 #### `filterable`
 
 Boolean, or a predicate `(items) => boolean`. The app-wide default behind [`ll-filterable`](#ll-filterable).
+
+#### `highlight`
+
+Boolean. The app-wide default behind [`ll-highlight`](#ll-highlight): wrap each filter-query match in the default item text in `<mark>`.
 
 #### `popupWidthPolicy`
 
@@ -408,7 +423,7 @@ Any of ui-select's template shapes carries over - plus one ui-select cannot do:
 ### Two deliberate deviations
 
 - **No `scope: true`.** ui-select creates a child scope for `<ui-select>`, which silently shadows a non-dotted `ng-model`: `ng-model="p"` writes `p` onto the child and the parent never sees it. (That is the real reason ui-select's docs push `ng-model="ctrl.p"`.) Every template `<ui-llselect>` compiles gets its own child scope anyway, so `$select` lives there instead and `ng-model` keeps the parent scope. Strictly better, and more compatible in practice.
-- **The `highlight` filter is not provided.** It is ui-select's, not llselect's, so the rule says do not bridge it. It is 8 lines; `app.js` copies it from ui-select (MIT) so the demo's templates work without loading ui-select. Copy it the same way if your templates use `| highlight: $select.search`.
+- **The `highlight` filter is not provided.** It is ui-select's, not llselect's, so the rule says do not bridge it. It is 8 lines; `app.js` copies it from ui-select (MIT) so the demo's templates work without loading ui-select. Copy it the same way if your templates use `| highlight: $select.search`. Its `.ui-select-highlight` class also needs ui-select's one CSS line (`font-weight: bold`) - theme CSS is not bridged either, so copy that rule too (the demo's `style.css` does).
 
 Ignored attributes are listed under [Not supported](#not-supported).
 

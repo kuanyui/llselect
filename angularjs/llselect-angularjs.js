@@ -176,6 +176,33 @@
     return settings
   }
 
+  /**
+   * ll-highlight resolves the config default then the attribute, like
+   * filterable. Only the DEFAULT item text can be wrapped - a custom
+   * ll-item-content-fn owns its whole content, so combining the two is a
+   * conflict, not a merge.
+   */
+  function resolveHighlight(scope, attrs, config, settings) {
+    var highlight = !!config.highlight
+    if (attrs.llHighlight) { highlight = !!scope.$eval(attrs.llHighlight) }
+    if (highlight && settings.createItemContentElFn) {
+      throw new Error('llselect-angularjs: ll-highlight wraps the default item text; with ll-item-content-fn call llselect.createHighlightedTextEl in your own fn instead')
+    }
+    return highlight
+  }
+
+  /**
+   * The content fn ll-highlight installs: the default item text with each
+   * filter-query match wrapped in <mark> (core createHighlightedTextEl).
+   * getSel is late-bound - rows render only after construction.
+   */
+  function highlightedTextFn(settings, getSel) {
+    return function (item) {
+      var sel = getSel()
+      return llselect.createHighlightedTextEl(settings.itemToStringFn(item), sel ? sel.getFilterQuery() : '')
+    }
+  }
+
   /** ll-disabled maps to the setDisabled() method, so it gets a watcher. */
   function wireDisabled(scope, attrs, sel) {
     if (!attrs.llDisabled) { return }
@@ -255,6 +282,8 @@
         arrow: null,
         /** boolean | ((items) => boolean) | null. null = llselect's own default (off). */
         filterable: null,
+        /** boolean | null. true = wrap each filter-query match in the default item text in a <mark> (core createHighlightedTextEl). */
+        highlight: null,
         /** 'match-trigger' | 'fit-content' | null. null = llselect's own default. */
         popupWidthPolicy: null,
         /** A UI-translation pack (@llselect/core/i18n), or null for the English defaults. */
@@ -283,6 +312,9 @@
           var settings = commonSettings(scope, attrs, parsed, llselectConfig)
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
+          if (resolveHighlight(scope, attrs, llselectConfig, settings)) {
+            settings.createItemContentElFn = highlightedTextFn(settings, function () { return sel })
+          }
 
           var gate = makeWriteBackGate()
           // $setViewValue self-applies: it checks $$rootScope.$$phase and wraps
@@ -337,6 +369,9 @@
           if (tagContentFn) { settings.createTagContentElFn = tagContentFn }
           var tagRemoveIconFn = evalFnAttr(scope, attrs, 'llTagRemoveButtonContentFn')
           if (tagRemoveIconFn) { settings.createTagRemoveButtonContentElFn = tagRemoveIconFn }
+          var highlightFn = resolveHighlight(scope, attrs, llselectConfig, settings)
+            ? highlightedTextFn(settings, function () { return sel })
+            : null
 
           // Batteries-included checkboxes: every row gets a live checkbox icon,
           // and (with ll-choose-all-row) the row gets the matching tri-state
@@ -364,11 +399,13 @@
             settings.createItemContentElFn = function (item) {
               var content = userContentFn && userContentFn(item)
               return checkboxRowEl(sel && sel.isChosen(item) ? 'checked' : 'unchecked',
-                content || document.createTextNode(settings.itemToStringFn(item)))
+                content || (highlightFn ? highlightFn(item) : document.createTextNode(settings.itemToStringFn(item))))
             }
             settings.createChooseAllRowContentElFn = function (chosenState, chosenCount, totalCount) {
               return checkboxRowEl(chosenState, document.createTextNode(sel.getUiTranslationPack().chooseAllRowText(chosenCount, totalCount)))
             }
+          } else if (highlightFn) {
+            settings.createItemContentElFn = highlightFn
           }
 
           var gate = makeWriteBackGate()
