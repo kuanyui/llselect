@@ -365,6 +365,7 @@
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
           if (attrs.llTriggerDisplay) { settings.triggerDisplay = scope.$eval(attrs.llTriggerDisplay) }
           if (attrs.llChooseAllRow) { settings.chooseAllRow = scope.$eval(attrs.llChooseAllRow) }
+          if (attrs.llHideChosenRows) { settings.hideChosenRows = scope.$eval(attrs.llHideChosenRows) }
           var tagContentFn = evalFnAttr(scope, attrs, 'llTagContentFn')
           if (tagContentFn) { settings.createTagContentElFn = tagContentFn }
           var tagRemoveIconFn = evalFnAttr(scope, attrs, 'llTagRemoveButtonContentFn')

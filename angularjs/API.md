@@ -221,6 +221,15 @@ $scope.renderRow = function (fruit) {
 
 **Expression** -> `chooseAllRow`. A tri-state choose-all row as the first row of the popup; it gets the tri-state icon matching the row checkboxes plus the pack's counting text.
 
+### `ll-hide-chosen-rows`
+
+**Expression** -> `hideChosenRows`. Chosen items' rows leave the popup list; unchoosing (e.g. removing a tag) puts them back.
+
+- Pairs naturally with `ll-trigger-display="'tags'"`: the tags show what is chosen, the popup lists what is still choosable.
+- With the default checkbox rows, every rendered checkbox is unchecked by construction - consider `ll-checkboxes="false"`.
+- With `ll-choose-all-row`, the row acts as "choose everything still listed" and disappears with the last listed row.
+- When every item is chosen, the popup shows the no-results message.
+
 ### `ll-checkboxes`
 
 **Expression**, default `true`. Whether `<llselect-multiple>` rows get this package's live checkbox icons.

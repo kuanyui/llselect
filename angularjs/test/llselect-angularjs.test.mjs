@@ -253,6 +253,23 @@ test('multiple defaults to checkbox rows, live state; ll-checkboxes="false" opts
   assert.ok(c.$('.llselect-choose-all-row svg'), 'choose-all tri-state icon missing')
 })
 
+test('ll-hide-chosen-rows: choosing removes the row; the model still gains the item', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-multiple ng-model="vm.t" ll-hide-chosen-rows="true" ll-checkboxes="false"
+        ll-options="f for f in vm.fruits"></llselect-multiple>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.t = [] },
+  })
+  assert.deepEqual(a.errors, [])
+  a.$('.llselect-trigger').click()
+  assert.equal(a.$$('.llselect-item').length, 3)
+  a.$('.llselect-item').click() // chooses 'Apple'
+  assert.deepEqual([...a.scope.vm.t], ['Apple']) // copy: the jsdom-realm Array prototype fails deepEqual
+  assert.deepEqual(a.$$('.llselect-item').map((el) => el.textContent), ['Banana', 'Cherry'])
+})
+
 function customRowApp(markup) {
   return boot({
     deps: ['llselect'],
