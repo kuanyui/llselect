@@ -177,6 +177,7 @@
       vm.country = undefined
       vm.country2 = 'Japan'
       vm.langs = []
+      vm.langsHidden = [] // 2d
       vm.langsCount = []
       vm.langsAll = []
       vm.fruit = 'Cherry'

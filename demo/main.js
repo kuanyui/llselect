@@ -606,6 +606,24 @@ const selChooseAllDefault = new LLSelectMultiple(
 selChooseAllDefault.setItems(COUNTRIES)
 //#endregion
 
+//#region 5.8
+// hideChosenRows: a chosen item's row leaves the popup list; unchoosing (the
+// tag x) puts it back. Every consumer of "visible" follows - keyboard nav,
+// choose-all counts, and the no-results state once everything is chosen.
+const outHideChosen = document.getElementById('out-hide-chosen')
+const selHideChosen = new LLSelectMultiple(
+  document.getElementById('mount-hide-chosen'),
+  {
+    placeholder: 'Pick countries',
+    triggerDisplay: 'tags',
+    filterable: true,
+    hideChosenRows: true,
+    onChange: (chosen) => { outHideChosen.textContent = 'chosen: ' + chosen.join(', ') },
+  }
+)
+selHideChosen.setItems(COUNTRIES)
+//#endregion
+
 //#region 9.1
 const PRODUCTS = [
   { name: 'Espresso', stock: 8 },

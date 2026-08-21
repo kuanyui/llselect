@@ -102,6 +102,21 @@
     </div>
     <div class="out">ng-model = {{ vm.langsAll | json }}</div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="2c"><code></code></pre></details>
+
+    <h3>2d. Hide chosen rows: ll-hide-chosen-rows</h3>
+    <p>
+      Chosen items leave the popup; removing a tag puts them back. Pairs with
+      the tags trigger, and with <code>ll-checkboxes="false"</code> - a listed
+      row here is always unchecked, so checkboxes would say nothing.
+    </p>
+    <div class="demo-row" data-src="2d">
+      <llselect-multiple ng-model="vm.langsHidden" ll-filterable="true"
+        ll-trigger-display="'tags'" ll-hide-chosen-rows="true" ll-checkboxes="false"
+        ll-options="l.name for l in vm.languages track by l.name">
+      </llselect-multiple>
+    </div>
+    <div class="out">ng-model = {{ vm.langsHidden | json }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="2d"><code></code></pre></details>
   </section>
 
   <section>
@@ -343,6 +358,12 @@
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="8a"><code></code></pre></details>
 
     <h3>8b. Multiple: chips from the match template</h3>
+    <p>
+      As in real ui-select, a chosen person leaves the dropdown:
+      <code>remove-selected</code> defaults to true and is bridged onto
+      <code>hideChosenRows</code>. <code>remove-selected="false"</code> keeps
+      the rows listed.
+    </p>
     <div data-src="8b">
     <ui-llselect ng-model="vm.people" multiple>
       <ui-llselect-match>{{$item.name}}</ui-llselect-match>

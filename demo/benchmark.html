@@ -411,8 +411,13 @@
 
   <h2 id="bundle">Bundle size</h2>
   <p>Minified transfer bytes, <em>uncompressed</em> - the same method for every
-    script, fetched live from the CDN (gzip shrinks them all by roughly 3x).
-    Select2 also requires jQuery, listed separately.</p>
+    script: each cell fetches the library's minified UMD build live (competitors
+    from the CDN, llselect its own <code>dist/index.umd.js</code> - the very
+    script this page runs) and reports the byte length; gzip shrinks them all by
+    roughly 3x. llselect's number is the complete usable library: the built-in
+    English UI strings are inside it, and the optional
+    <code>dist/i18n.umd.js</code> (every other language pack) is neither
+    required nor counted. Select2 also requires jQuery, listed separately.</p>
   <table id="sizes">
     <thead><tr><th>Script</th><th>Version</th><th>Minified bytes</th></tr></thead>
     <tbody></tbody>
