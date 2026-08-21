@@ -454,6 +454,16 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
    mark rule (0.2em padding) cannot bloat the rows when a BS theme is active */
 .toc mark { padding: 0; background: #ffe066; color: inherit; border-radius: 2px; }
 
+/* Scroll-following block highlight: the content answers the sidebar's active
+   row, same look as the site API pages (build-site.mjs .current-block).
+   Constant padding + compensating margins keep geometry net-zero, so
+   toggling the class never shifts layout mid-scroll; the article override
+   preserves its 1rem left indent (0.4rem margin + 0.6rem padding). Gated on
+   .has-toc: without the injected TOC nothing paints and nothing changes. */
+.has-toc main section { padding: 0 0.6rem; margin: 2rem -0.6rem 3rem; border-radius: 4px; transition: background-color 0.15s; }
+.has-toc main article { padding: 0 0.6rem; margin: 1.5rem -0.6rem 2rem 0.4rem; border-radius: 4px; transition: background-color 0.15s; }
+.has-toc main .current-block { background: #eef3fb; box-shadow: inset 3px 0 0 #2456a6; }
+
 /* drawer chrome exists only below the breakpoint */
 .toc-toggle { display: none; }
 .toc-backdrop { display: none; }

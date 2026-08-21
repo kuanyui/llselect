@@ -1,5 +1,6 @@
 // Shared interactive TOC for the two examples pages (core and AngularJS).
-// Wide screens: sticky left sidebar with scrollspy + text filter. Below 62rem
+// Wide screens: sticky left sidebar with scrollspy + text filter; the content
+// block owning the active heading is painted in step (.current-block). Below 62rem
 // (the site pages' sidebar breakpoint): an off-canvas left drawer behind a
 // fixed "Sections" button. Everything is injected at runtime, so without JS
 // the pages keep their plain single-column layout (.page-layout only becomes
@@ -81,6 +82,7 @@ if (layout && mainEl) {
 
   // --- scrollspy -----------------------------------------------------------
   let activeLink = null
+  let currentBlockEl = null
   const sync = () => {
     // Fit the sticky sidebar to the VISIBLE viewport: while the page nav is
     // still in view the aside starts below the viewport top, so a fixed
@@ -91,10 +93,17 @@ if (layout && mainEl) {
     }
     const y = window.scrollY + 120
     let cur = null
-    for (const [el, link] of targets) { if (el.offsetTop <= y) { cur = link } else { break } }
+    let curEl = null
+    for (const [el, link] of targets) { if (el.offsetTop <= y) { cur = link; curEl = el } else { break } }
     if (cur === activeLink) { return }
     if (activeLink) { activeLink.classList.remove('active') }
     activeLink = cur
+    // The content side answers the sidebar: paint the block owning the active
+    // anchor (the article for an h3 inside one, else its section) - the same
+    // scroll-following highlight as the site API pages (build-site.mjs).
+    if (currentBlockEl) { currentBlockEl.classList.remove('current-block') }
+    currentBlockEl = curEl ? curEl.closest('article, section') : null
+    if (currentBlockEl) { currentBlockEl.classList.add('current-block') }
     if (activeLink) {
       activeLink.classList.add('active')
       // Keep the highlight visible inside the sidebar's own overflow - but
