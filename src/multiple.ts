@@ -1,5 +1,6 @@
 import {
   LLSelectBase,
+  defaultCompareFn,
   type LLSelectBaseSettings,
   type LLSelectSettingsInputOf,
 } from './base.js'
@@ -100,6 +101,22 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    */
   createTagRemoveButtonContentElFn: ((item: T) => HTMLElement | SVGElement | null) | null
   /**
+   * Hide the rows of chosen items from the popup list.
+   * - Default `false`: chosen rows stay listed and show their state.
+   * - While `true`, choosing an item removes its row at once and unchoosing
+   *   puts it back. Tags, the trigger and `getChosenItems` are unaffected.
+   * - When every item is chosen, the popup shows the no-results element.
+   * - With `chooseAllRow`, the visible subset is always fully unchosen, so
+   *   the row acts as "choose everything still listed", its tri-state never
+   *   reaches all-chosen, and it disappears with the last actionable row.
+   * - Internals: a `getVisibleItems` subtraction. The default `compareFn`
+   *   uses a Set lookup; a custom `compareFn` costs O(visible x chosen) per
+   *   list rebuild. `toggleItem` swaps its O(1) row replace for a full
+   *   rebuild.
+   * @group Items
+   */
+  hideChosenRows: boolean
+  /**
    * Whether the popup shows a choose-all row (the industry's "select all")
    * as the first option of the listbox.
    * - Default `false`.
@@ -180,6 +197,7 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       triggerDisplay: settings?.triggerDisplay ?? 'count',
       createTagContentElFn: settings?.createTagContentElFn ?? null,
       createTagRemoveButtonContentElFn: settings?.createTagRemoveButtonContentElFn ?? null,
+      hideChosenRows: settings?.hideChosenRows ?? false,
       chooseAllRow: settings?.chooseAllRow ?? false,
       createChooseAllRowContentElFn: settings?.createChooseAllRowContentElFn ?? null,
     } satisfies Omit<LLSelectMultipleSettings<T, GK>, keyof LLSelectBaseSettings<T, GK>>)
@@ -226,6 +244,8 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   /**
    * Toggle the membership of `item` in the chosen-items set. Adds at the end
    * if not present; removes if present. Fires `onChange`.
+   * - While `hideChosenRows` is on, the popup list is rebuilt so the row
+   *   leaves or re-enters it.
    * @group Selection
    */
   public toggleItem(item: T): void {
@@ -238,12 +258,18 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
     }
     // Only one item's selection changed, so the popup list replaces just that
     // one row (plus the choose-all tri-state) instead of rebuilding every row -
-    // O(1) in list size. The trigger is refreshed too; its cost depends on
-    // triggerDisplay (count = constant, tags = one chip per chosen item,
-    // custom = caller-defined), so the whole update is not unconditionally O(1).
+    // O(1) in list size. Exception: hideChosenRows moves the row in or out of
+    // the list and shifts the indexes, so it rebuilds the list instead. The
+    // trigger is refreshed too; its cost depends on triggerDisplay (count =
+    // constant, tags = one chip per chosen item, custom = caller-defined), so
+    // the whole update is not unconditionally O(1).
     this.renderTrigger()
-    this.replacePopupListItemElInDom(item)
-    this.replaceLeadingRowElInDom()
+    if (this.settings.hideChosenRows) {
+      if (this.isOpened()) { this.renderPopupList() }
+    } else {
+      this.replacePopupListItemElInDom(item)
+      this.replaceLeadingRowElInDom()
+    }
     this.fireChange(previous)
   }
 
@@ -315,6 +341,25 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       const additions = actionable.filter(v => !this.isChosen(v))
       this.setChosenItems([...this.chosenItems, ...additions])
     }
+  }
+
+  /**
+   * Return the items the popup list renders, in display order.
+   * - Identical to the base behavior (the matching subset while a filter
+   *   query is active, otherwise the full list, gathered per `gatherGroups`),
+   *   minus the chosen items while `hideChosenRows` is on.
+   * - While `hideChosenRows` is on and something is chosen, it returns a
+   *   fresh array, not the live internal one.
+   * @group Items
+   */
+  public override getVisibleItems(): readonly T[] {
+    const list = super.getVisibleItems()
+    if (!this.settings.hideChosenRows || this.chosenItems.length === 0) { return list }
+    if (this.settings.compareFn === defaultCompareFn) {
+      const chosen = new Set(this.chosenItems)
+      return list.filter(it => !chosen.has(it))
+    }
+    return list.filter(it => !this.isChosen(it))
   }
 
   /**

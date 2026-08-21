@@ -466,7 +466,8 @@ const DEFAULT_PREFIX = 'llselect'
 
 let instanceCounter = 0
 
-function defaultCompareFn<T>(a: T, b: T): boolean {
+/** Package-internal (not re-exported): subclasses detect it to pick fast paths. */
+export function defaultCompareFn<T>(a: T, b: T): boolean {
   return a === b
 }
 

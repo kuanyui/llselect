@@ -327,6 +327,18 @@ The choose-all row's default content is JUST the counting text (`uiTranslationPa
 - The hooks stay: `data-chosen-state="none|some|all"` on the row for CSS, `createChooseAllRowContentElFn` for real content (e.g. `createOutlinedCheckboxSvgEl`). Batteries-included defaults live a layer up - the AngularJS package's `ll-checkboxes` does exactly that.
 - History, so this is not re-litigated: the default indicator was first a theme `::before` glyph gated by `:not(:has(*))` (a gate above the browser support floor, so it silently died on floor browsers, and generated content lands in the accessible-name computation), then a core-rendered `createOutlinedCheckboxSvgEl` (couples `icons.ts` into every multi bundle and makes the core pick outlined vs filled), then a core-rendered aria-hidden text glyph (redundant with the numbers, font-dependent look). Each step fixed the previous mechanism's defect; the actual answer was that the indicator itself was never needed.
 
+## hideChosenRows: chosen rows leave the popup list (multiple)
+
+`hideChosenRows: true` (LLSelectMultiple, default `false`) removes chosen items' rows from the popup list; unchoosing puts them back. RULED:
+
+- A setting, not a new default: ui-select (`remove-selected`) and react-select (`hideSelectedOptions`) hide by default, while select2 and native `<select multiple>` keep chosen rows listed. Both camps are legitimate, so the flag defaults to llselect's shipped behavior (keep).
+- Multiple only. A single's chosen row staying listed is universal.
+- The subtraction is a `getVisibleItems()` override, so every consumer of "visible" (rendering, keyboard nav, `toggleAllVisible`, the choose-all counts, the no-results state) agrees for free. The default `compareFn` gets a Set lookup; a custom `compareFn` costs O(visible x chosen) per list rebuild.
+- `toggleItem` keeps its O(1) single-row DOM swap only while the flag is off. With it on, the toggled row leaves or re-enters the list and shifts the indexes, so it falls back to a full `renderPopupList`.
+- chooseAllRow + hideChosenRows is ALLOWED, not a throw. Recorded design intent: chooseAllRow is designed for checkbox-style multiples - rows that stay listed and show their chosen state. Combined with hiding, the visible subset is always fully unchosen: the row degrades to "choose everything still listed", its tri-state never reaches all-chosen, and it disappears with the last actionable row (the standing no-actionable -> no-leading-row rule).
+- Why permissive here, unlike the AngularJS ll-highlight + ll-item-content-fn throw: that conflict has no coherent behavior (two owners of one content slot), while this combination has exactly one well-defined behavior that falls out of the standing visible-subset semantics. Core stays low level and does not forbid an unusual-but-coherent UI choice.
+- When every item is chosen, the popup shows the regular no-results element. No new translation key.
+
 ## Popup width policy
 
 Two policies, chosen by the `popupWidthPolicy` setting; `'fit-content'` is the default.
