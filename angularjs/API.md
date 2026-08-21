@@ -425,6 +425,9 @@ Any of ui-select's template shapes carries over - plus one ui-select cannot do:
 - **No `scope: true`.** ui-select creates a child scope for `<ui-select>`, which silently shadows a non-dotted `ng-model`: `ng-model="p"` writes `p` onto the child and the parent never sees it. (That is the real reason ui-select's docs push `ng-model="ctrl.p"`.) Every template `<ui-llselect>` compiles gets its own child scope anyway, so `$select` lives there instead and `ng-model` keeps the parent scope. Strictly better, and more compatible in practice.
 - **The `highlight` filter is not provided.** It is ui-select's, not llselect's, so the rule says do not bridge it. It is 8 lines; `app.js` copies it from ui-select (MIT) so the demo's templates work without loading ui-select. Copy it the same way if your templates use `| highlight: $select.search`. Its `.ui-select-highlight` class also needs ui-select's one CSS line (`font-weight: bold`) - theme CSS is not bridged either, so copy that rule too (the demo's `style.css` does).
 
+> [!NOTE]
+> Rebuilding the `highlight` filter on the core `createHighlightedTextEl` helper was considered and rejected. A filter name is app-global, so the bridge's version would silently replace ui-select's filter everywhere the app uses it. The two also render differently: ui-select's filter never escapes the text, while the core helper escapes everything. Full reasoning is in [`DESIGN.md`](DESIGN.md), under "Why the highlight filter is not rebuilt on the core helper".
+
 Ignored attributes are listed under [Not supported](#not-supported).
 
 ## Not supported

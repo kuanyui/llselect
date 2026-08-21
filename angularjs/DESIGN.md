@@ -107,3 +107,17 @@ Those child chains, element types, and the `[theme=]` attribute selector do not 
 ```
 
 For the record, reproducing ui-select exactly would also mean reproducing its bugs, since real apps depend on observed behavior. A sample found while reading the source: `uiSelectConfig` has no `paste` key but the controller reads it (`uiSelectController.js:19`, always `undefined`); `close-on-select` is `$parse(attrs.closeOnSelect)()` with no scope, so only literals work; `scope.$watch('sortable', ...)` watches a scope property of that literal name which normally never exists, so `sortable` / `removeSelected` / `skipFocusser` effectively evaluate once and never react; select2 + multiple never renders `no-choice` because that template lacks the slot; and `on-highlight` fires from inside `isActive`, i.e. once per digest per active row rather than once per highlight change.
+
+### Why the highlight filter is not rebuilt on the core helper
+
+Core ships `createHighlightedTextEl`, so rebuilding ui-select's `highlight` filter on it looks like the obvious reuse. It was considered and rejected for three reasons.
+
+- An AngularJS filter name is app-global. Apps use `| highlight:` outside selects too, for example in tables. If the bridge registered its own `highlight` filter, the module loaded last would silently replace the filter for the whole app. That breaks the file header's promise that the bridge does not conflict with a still-loaded ui-select.
+- The two implementations behave differently, and a migrating app would see every difference:
+  - ui-select's filter is a regex replace on the raw string. It never escapes, so markup inside item data reaches `ng-bind-html` and renders.
+  - The core helper builds text nodes, so everything is escaped. That is safer, but the same data now renders differently.
+  - Case-insensitive matching disagrees on some Unicode characters: the regex `i` flag folds case differently than the core helper's `toLowerCase` scan.
+  - Real apps depend on observed behavior (see the bug list above). A more correct result is still a behavior change.
+- The reuse would not save anything. The filter is 8 frozen lines (ui-select 0.19.8, MIT). A core-based version would build DOM for every row on every keystroke, then serialize it back into a string for the sanitizer to parse again.
+
+So the division of labor stands. The bridge syncs `$select.search` at row render; that is the state the app's own filter reads. The filter itself stays the app's: copy it as [`API.md`](API.md)'s "Two deliberate deviations" describes, or keep loading ui-select for it. The core helper serves the native directives instead, through `ll-highlight` and custom content fns.
