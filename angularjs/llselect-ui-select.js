@@ -15,8 +15,8 @@
  * Scope: the call-site markup and your transcluded templates carry over from
  * ui-select. Its CSS themes do not - llselect owns the DOM, so style with an
  * llselect theme. Anything llselect has no concept of (tagging, sortable,
- * append-to-body, async refresh, limit, remove-selected) is NOT bridged: those
- * attributes are ignored, never half-implemented. See README.md.
+ * append-to-body, async refresh, limit) is NOT bridged: those attributes are
+ * ignored, never half-implemented. See README.md.
  */
 ;(function (angular, llselect) {
   'use strict'
@@ -255,6 +255,11 @@
     var sel
     if (isMultiple) {
       settings.triggerDisplay = 'tags'
+      // ui-select defaults removeSelected to true (common.js:108) and applies
+      // it in multiple mode only (uiSelectController.js:240-241; single is an
+      // in-source TODO). Follow its default, like search-enabled: this is its
+      // markup, so its defaults are what the call site expects.
+      settings.hideChosenRows = attrs.removeSelected ? !!scope.$eval(attrs.removeSelected) : true
       // <ui-llselect-match> in multiple mode is per selected item (ui-select
       // ng-repeats it over $select.selected), so it maps onto one tag's
       // content, not the whole trigger.

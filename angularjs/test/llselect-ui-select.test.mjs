@@ -247,6 +247,47 @@ test('a bare text-node template (no element) works, as in ui-select', () => {
   assert.equal(a.$$('.llselect-item')[0].getAttribute('aria-label'), 'Alice') // the string channel stays ll-item-text
 })
 
+function multiApp(extraAttrs = '') {
+  return boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect multiple ng-model="vm.people" ${extraAttrs}>
+          <ui-llselect-match placeholder="Pick">{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
+            <span>{{p.name}}</span>
+          </ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () {
+      this.users = USERS
+      this.people = []
+    },
+  })
+}
+
+test('multiple follows remove-selected: chosen rows leave the dropdown by default, exactly like ui-select', () => {
+  // ui-select defaults removeSelected to true (common.js:108) and applies it
+  // in multiple mode only (uiSelectController.js:240-241). The bridge maps it
+  // onto hideChosenRows with the same default, like search-enabled.
+  const a = multiApp()
+  assert.deepEqual(a.errors, [])
+  a.$('ui-llselect .llselect-trigger').click()
+  assert.equal(a.$$('ui-llselect .llselect-item').length, 3)
+  a.$$('ui-llselect .llselect-item')[0].click() // chooses Alice
+  assert.equal(a.scope.vm.people[0].name, 'Alice')
+  assert.deepEqual(a.$$('ui-llselect .llselect-item').map((el) => el.textContent), ['Bob', 'Carol'])
+})
+
+test('remove-selected="false" keeps chosen rows listed', () => {
+  const a = multiApp('remove-selected="false"')
+  a.$('ui-llselect .llselect-trigger').click()
+  a.$$('ui-llselect .llselect-item')[0].click()
+  assert.equal(a.scope.vm.people.length, 1)
+  assert.equal(a.$$('ui-llselect .llselect-item').length, 3)
+})
+
 test('$select.search resets when the query is cleared, so rows stop highlighting it', () => {
   const a = boot({
     files: ['llselect-angularjs.js', 'llselect-ui-select.js'],

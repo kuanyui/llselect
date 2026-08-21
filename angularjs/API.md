@@ -383,6 +383,7 @@ Migrating a call site, at a glance:
 | `ui-disable-choice` | `itemDisabledFn` |
 | `multiple` | `LLSelectMultiple` (+ `triggerDisplay: 'tags'`) |
 | `search-enabled` | `filterable`. Defaults to `true`, following ui-select's default rather than llselect's `false` - it is ui-select's markup, so its defaults are what the call site expects |
+| `remove-selected` (multiple only, as in ui-select) | `hideChosenRows`. Defaults to `true` like ui-select (chosen items leave the dropdown), rather than llselect's `false` - same fidelity rule as `search-enabled`. Pass `remove-selected="false"` to keep chosen rows listed |
 | `placeholder`, `allow-clear` (on `<ui-select-match>`) | `placeholder`, `clearable` |
 | `on-select`, `on-remove` | derived from `onChange` by diffing against the previous set |
 | `ng-disabled` / the `disabled` attribute | `setDisabled()`, via `attrs.$observe('disabled')` - the exact mechanism ui-select itself uses, its string quirks included (a truthy string like interpolated `"false"` disables). The observed attribute stays inert on the host, so hover - and a why-tooltip - keep working while disabled |
@@ -493,5 +494,5 @@ Both directive sets:
 
 - `tagging`, `tagging-label`, `tagging-tokens` (llselect never creates items).
 - `refresh`, `refresh-delay`, `minimum-input-length`, `spinner-enabled` (no async data-fetching API; root README, "No asynchronous data-fetching API").
-- `sortable`, `limit`, `remove-selected`, `paste`, `append-to-body`, `close-on-select`, `theme`.
+- `sortable`, `limit`, `paste`, `append-to-body`, `close-on-select`, `theme`.
 - `$select` members that take a row scope: `isActive`, `isDisabled`, `isLocked`, plus `on-highlight` and `ui-lock-choice`. See [Why it is not a full ui-select reimplementation](README.md#why-it-is-not-a-full-ui-select-reimplementation) in the README.
