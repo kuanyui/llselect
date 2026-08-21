@@ -618,6 +618,7 @@ const selHideChosen = new LLSelectMultiple(
     triggerDisplay: 'tags',
     filterable: true,
     hideChosenRows: true,
+    clearable: true,
     onChange: (chosen) => { outHideChosen.textContent = 'chosen: ' + chosen.join(', ') },
   }
 )

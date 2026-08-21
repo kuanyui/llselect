@@ -112,12 +112,13 @@
     <article>
     <h3>2d. Hide chosen rows: ll-hide-chosen-rows</h3>
     <p>
-      Chosen items leave the popup; removing a tag puts them back. Pairs with
-      the tags trigger, and with <code>ll-checkboxes="false"</code> - a listed
-      row here is always unchecked, so checkboxes would say nothing.
+      Chosen items leave the popup; removing a tag puts them back, and the
+      clear button puts everything back at once. Pairs with the tags trigger,
+      and with <code>ll-checkboxes="false"</code> - a listed row here is
+      always unchecked, so checkboxes would say nothing.
     </p>
     <div class="demo-row" data-src="2d">
-      <llselect-multiple ng-model="vm.langsHidden" ll-filterable="true"
+      <llselect-multiple ng-model="vm.langsHidden" ll-filterable="true" ll-clearable="true"
         ll-trigger-display="'tags'" ll-hide-chosen-rows="true" ll-checkboxes="false"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
