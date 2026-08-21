@@ -418,6 +418,49 @@ test('an app policy directive reaches the instance via require and stays safe on
   assert.equal(a.$$('.llselect-trigger')[0].getAttribute('data-disabled'), 'false', 'must re-enable')
 })
 
+test('the i18n recipe: same-name directives re-pack live widgets from $translate', () => {
+  // Pins the documented recipe (API.md, "Switching the UI language at
+  // runtime"): a SECOND directive under each existing name (angular.js keeps
+  // an array of directives per name), $watch on $translate.use(), and partial
+  // packs merging over the English defaults. $translate is a fake; the tests
+  // do not depend on angular-translate.
+  let lang // what the fake $translate.use() returns; undefined = still loading
+  function i18nPackSync(ctrlName) {
+    return ['$translate', 'LLSELECT_I18N_PACKS', function ($translate, PACKS) {
+      return {
+        restrict: 'E',
+        require: ctrlName,
+        link: function (scope, element, attrs, ctrl) {
+          scope.$watch(function () { return $translate.use() }, function (langKey) {
+            if (langKey) { ctrl.instance().setUiTranslationPack(PACKS[langKey] || {}) }
+          })
+        },
+      }
+    }]
+  }
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.fruit" ll-options="f for f in vm.fruits"></llselect-single>
+      <llselect-multiple ng-model="vm.t" ll-options="f for f in vm.fruits"></llselect-multiple>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.fruit = null; this.t = [] },
+    config: ['$provide', '$compileProvider', function ($provide, $compileProvider) {
+      $provide.value('$translate', { use: function () { return lang } })
+      $provide.constant('LLSELECT_I18N_PACKS', { de: { triggerPlaceholder: 'Bitte auswaehlen' } })
+      $compileProvider.directive('llselectSingle', i18nPackSync('llselectSingle'))
+      $compileProvider.directive('llselectMultiple', i18nPackSync('llselectMultiple'))
+    }],
+  })
+  assert.deepEqual(a.errors, [])
+  const triggerTexts = () => a.$$('.llselect-trigger-content').map((el) => el.textContent)
+  assert.deepEqual(triggerTexts(), ['Please select', 'Please select'], 'undefined language must leave the default pack')
+  a.scope.$apply(() => { lang = 'de' })
+  assert.deepEqual(triggerTexts(), ['Bitte auswaehlen', 'Bitte auswaehlen'], 'both directives must re-pack')
+  a.scope.$apply(() => { lang = 'fr' })
+  assert.deepEqual(triggerTexts(), ['Please select', 'Please select'], 'an unmapped key must restore the English defaults')
+})
+
 test('a non-function ll-item-content-fn is reported and no widget is left behind', () => {
   const a = app()
   const el = a.compile('<llselect-single ng-model="x" ll-item-content-fn="\'nope\'" ll-options="f for f in vm.fruits"></llselect-single>')

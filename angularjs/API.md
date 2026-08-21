@@ -269,7 +269,7 @@ Boolean. The app-wide default behind [`ll-highlight`](#ll-highlight): wrap each 
 
 #### `uiTranslationPack`
 
-An llselect language pack (e.g. `llselectI18n.zhTW`). The clearest app-wide-by-nature case: an app picks its language once, and llselect's chrome strings are not per-field copy.
+An llselect language pack (e.g. `llselectI18n.zhTW`). The clearest app-wide-by-nature case: an app picks its language once, and llselect's chrome strings are not per-field copy. Applied when a widget is built; to switch the language of live widgets, see [Switching the UI language at runtime](#switching-the-ui-language-at-runtime).
 
 ## Reaching the instance from your own directive
 
@@ -307,6 +307,40 @@ angular.module('app').directive('ownDisabled', ['permissions', function (permiss
 <llselect-single own-disabled ng-model="vm.fruit" ll-options="f for f in vm.fruits"></llselect-single>
 <input own-disabled type="text">
 ```
+
+### Switching the UI language at runtime
+
+The core method `setUiTranslationPack(pack)` swaps llselect's own UI strings in place, so switching language needs no widget rebuild. The wiring belongs to the app, because the current language is app state; it uses the same `require` + `instance()` door.
+
+This recipe integrates angular-translate and changes no call site (this exact shape is pinned by a test):
+
+```js
+angular.module('app')
+  .constant('LLSELECT_I18N_PACKS', { 'zh-TW': llselectI18n.zhTW, ja: llselectI18n.ja })
+  .directive('llselectSingle', i18nPackSync('llselectSingle'))
+  .directive('llselectMultiple', i18nPackSync('llselectMultiple'))
+
+function i18nPackSync(ctrlName) {
+  return ['$translate', 'LLSELECT_I18N_PACKS', function ($translate, PACKS) {
+    return {
+      restrict: 'E',
+      require: ctrlName,
+      link: function (scope, element, attrs, ctrl) {
+        scope.$watch(function () { return $translate.use() }, function (langKey) {
+          if (langKey) { ctrl.instance().setUiTranslationPack(PACKS[langKey] || {}) }
+        })
+      },
+    }
+  }]
+}
+```
+
+- A second directive registered under the SAME name decorates every matching element. AngularJS runs all directives sharing a name (angular.js 1.8.3, the `hasDirectives` registry).
+- `$translate.use()` with no argument returns the current language key (angular-translate 2.19.1, `$translate.use`). While the first language file is still loading it returns `undefined`, so the guard skips.
+- The `$watch` applies the pack for the initial language and again on every switch. It deregisters with the scope, so there is nothing to clean up.
+- When no pack matches the key, `{}` restores the English defaults. `setUiTranslationPack` merges its argument over English, never over the previously set pack.
+- An explicit `ll-placeholder` keeps winning over each new pack's `triggerPlaceholder`.
+- A pack set via [`llselectConfigProvider`](#llselectconfigprovider) seeds widgets when they are built; this directive is what updates the ones already on screen.
 
 ## `<ui-llselect>`
 
