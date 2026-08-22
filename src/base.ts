@@ -1377,6 +1377,14 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * `getVisibleItems()`; touches no DOM directly. Called by `open()` and by
    * `setItems()` while open. Also clamps `focusedIndex` if the list shrank and
    * re-applies focus visuals.
+   * - Extend it by wrapping: override, do your work before or after, then
+   *   call `super.renderPopupList()`. The ui-select bridge frees its row
+   *   scopes this way. Or override one of the seams it calls through `this`:
+   *   `createItemEl`, `createPopupListLeadingRowEl`, `itemToGroupKey`,
+   *   `getVisibleItems`.
+   * - Its other internals stay private on purpose. They re-establish the
+   *   `itemEls[i] <-> getVisibleItems()[i]` alignment as one unit, so no
+   *   subclass can leave keyboard nav or `aria-activedescendant` half-synced.
    * @group Subclassing: rendering
    */
   protected renderPopupList(): void {
@@ -2099,12 +2107,29 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
 
   /**
    * Return the items the popup list renders, in display order.
+   *
+   * ```text
+   * items                (setItems)
+   *   |  gather          (only with grouping on; result cached until setItems)
+   *   v
+   * display base list
+   *   |  filter query    (only while a query is active)
+   *   v
+   * visible items        (this method's return value)
+   *   |  render
+   *   v
+   * DOM rows
+   * ```
+   *
    * - If no filter query is active (including while closed), it returns the
    *   full list, gathered per `gatherGroups` when grouping is on.
    * - If a filter query is active, it returns the matching subset.
+   * - Disabled items are included. They render (grayed); only actions skip
+   *   them (keyboard focus, the choose-all row's subset).
    * - Returns the LIVE internal array, typed read-only. Never mutate it
    *   (see `getItems`).
-   * - Subclasses use it too (e.g. for selection-by-index).
+   * - Subclasses use it too (e.g. for selection-by-index), and may override
+   *   it to add a step: `LLSelectMultiple` does for `hideChosenRows`.
    * @group Items
    */
   public getVisibleItems(): readonly T[] {
