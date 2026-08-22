@@ -17,7 +17,8 @@
  *   follows the expand state, and a tri-state checkbox derived from the
  *   leaf descendants. The caret / folder are MDI font icons
  *   (`<i class="mdi mdi-...">`, loaded by the examples page) - swap for
- *   your own icon system when copying.
+ *   your own icon system when copying. The caret's hit-area and hover
+ *   styling live in the demo's style.css (region 14.2); copy that rule too.
  * - `onItemActivated` override: activating a branch toggles its whole leaf
  *   subtree; leaves keep the normal toggle (`super`).
  *
@@ -33,7 +34,7 @@
  */
 import {
   LLSelectMultiple,
-  createOutlinedCheckboxSvgEl,
+  createFilledCheckboxSvgEl,
   type CheckboxState,
   type LLSelectMultipleSettings,
   type LLSelectSettingsInputOf,
@@ -193,7 +194,7 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
     if (isBranch(node)) {
       const expanded = this.expandedBranches.has(node)
       const caret = document.createElement('i')
-      caret.className = `tree-caret mdi ${expanded ? 'mdi-chevron-down' : 'mdi-chevron-right'}`
+      caret.className = `tree-caret mdi ${expanded ? 'mdi-menu-down' : 'mdi-menu-right'}`
       caret.setAttribute('aria-hidden', 'true')
       // The row's mousedown is default-prevented by the library (focus
       // stays on the combobox host), but click still fires. Stop it here so
@@ -203,19 +204,18 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
         this.toggleExpanded(node)
       })
       wrap.appendChild(caret)
-      wrap.appendChild(createOutlinedCheckboxSvgEl({ state: this.branchState(node) }))
+      wrap.appendChild(createFilledCheckboxSvgEl({ state: this.branchState(node) }))
       const folder = document.createElement('i')
       folder.className = `mdi ${expanded ? 'mdi-folder-open-outline' : 'mdi-folder-outline'}`
       folder.setAttribute('aria-hidden', 'true')
       wrap.appendChild(folder)
     } else {
-      // Same width as a caret, so sibling leaf and branch texts align.
+      // Same width as the caret box (styled in the demo CSS), so sibling
+      // leaf and branch texts align.
       const spacer = document.createElement('span')
       spacer.className = 'tree-caret-spacer'
-      spacer.style.display = 'inline-block'
-      spacer.style.width = '1em'
       wrap.appendChild(spacer)
-      wrap.appendChild(createOutlinedCheckboxSvgEl({ state: this.isChosen(node) ? 'checked' : 'unchecked' }))
+      wrap.appendChild(createFilledCheckboxSvgEl({ state: this.isChosen(node) ? 'checked' : 'unchecked' }))
     }
     wrap.appendChild(document.createTextNode(node.text))
     return wrap

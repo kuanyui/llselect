@@ -393,6 +393,26 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 /* #endregion */
 
+/* #region 14.2 */
+/* Tree caret: a real hit target, not a bare glyph - a centered 1.6em box
+   with hover feedback; negative vertical margin keeps the row height as if
+   the box were glyph-sized. The leaf spacer matches the box width so
+   sibling branch / leaf texts align. */
+.tree-caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6em;
+  height: 1.6em;
+  margin-block: -0.3em;
+  border-radius: 4px;
+  font-size: 1.15em;
+  cursor: pointer;
+}
+.tree-caret:hover { background: rgba(0, 0, 0, 0.1); }
+.tree-caret-spacer { display: inline-block; width: 1.6em; }
+/* #endregion */
+
 /* --- shared interactive TOC (both examples pages; injected by toc.js) ----
    Wide screens: sticky left sidebar with scrollspy + filter. Below 62rem
    (the site pages' sidebar breakpoint): off-canvas left drawer behind a
