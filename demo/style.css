@@ -414,8 +414,8 @@ article { margin: 1.5rem 0 2rem 1rem; }
    spacer share the row's em, so they stay aligned. */
 .tree-caret::before { font-size: 1.5em; }
 .tree-caret:hover { background: rgba(36, 86, 166, 0.18); color: #2456a6; }
-/* The single mdi-play triangle points right (collapsed); rotate it down
-   when the branch row says expanded. */
+/* The single chevron points right (collapsed); rotate it down when the
+   branch row says expanded. */
 .llselect-item[data-tree-state='expanded'] .tree-caret { transform: rotate(90deg); }
 .tree-caret-spacer { display: inline-block; width: 1.6em; }
 /* The classic file-manager palette, so branches read at a glance. */
