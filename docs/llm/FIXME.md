@@ -39,9 +39,10 @@ External review of the public API surface, relayed by the user; every item conve
   - Q: Why no subscription API when the settings freeze makes handlers unswappable?
     - A: wrappers own multiplexing; an emitter adds teardown and ordering semantics for a need a one-line closure covers, and the low-level positioning (README) makes the wrapper the right layer.
 - [x] **[QUALITY-37] - subclassSettings channel weakly typed for third-party extenders**
-  - Fix: none - by design (DESIGN.md "Settings vs methods"): the merge cast is confined to one commented site and in-repo payloads are `satisfies`-checked.
-  - Q: Why not a third generic param `S` typing the channel?
-    - A: TS still cannot prove base-resolved + `Omit<S, ...>` reassembles an arbitrary `S`, so the cast survives anyway while every mention of the base type grows a param; the current shape pays the cost only at the one seam.
+  - Fix (supersedes an earlier "none - by design" ruling): the settings type became each class's third generic param `S`, defaulted to its own settings type. `this.settings` is `S` (the `declare` re-types are gone) and each constructor's `subclassSettings` param accepts exactly `Omit<S, keyof OwnSettings>` - an extender's typo or missing field is now a compile error. One commented cast per constructor seam remains (base / single / multiple).
+  - Verified: tsc strict + the full suite; the typed channel is exercised by the tree-select subclass example.
+  - Q: Why was it first ruled "by design", and what was wrong with that call?
+    - A: The ruling's two costs were real but overweighted. The surviving cast is confined and commented either way; and a DEFAULTED third param keeps every existing `LLSelect*<T>` mention valid, so nothing "grows a param". What flipped the call: a real third-party extender path (the tree-select example) made the `Record<string, unknown>` hole concrete - `satisfies` only ever protected in-repo call sites, never an extender's.
 - [x] **[QUALITY-38] - getItems() returns the live internal array (plain-JS mutation footgun)**
   - Fix: none - deliberate, documented at the method; the same contract is stated on `getChosenItems` / `getUiTranslationPack` and now `getVisibleItems`.
   - Q: Why not a defensive copy or `Object.freeze`?
@@ -63,7 +64,7 @@ External review of the public API surface, relayed by the user; every item conve
   - Q: Why gather once then filter, not filter then re-gather per keystroke?
     - A: a group's position must not jump while typing - it stays pinned by its first appearance in the FULL list (exactly what pre-sorted data does), and one gather per items-change beats one per keystroke.
   - Q: Why not the nested `{ label, items }[]` input shape instead?
-    - A: the recorded rejection stands (single write channel, identity-driven grouping, generic `GK`, setting composability); the gather removes the footgun without a second data channel.
+    - A: the recorded rejection stands (single write channel, identity-driven grouping, generic `GroupKey`, setting composability); the gather removes the footgun without a second data channel.
 - [x] **[MEDIUM-43] - a subclass itemToGroupKey override did not drive grouping render**
   - Symptom: segmentation (and initially the gather) read the `itemToGroupKeyFn` setting directly; only the disabled layer called the protected method - an override could neither turn grouping on nor change rendered groups, contradicting DESIGN.md's customization model ("the library calls the method directly").
   - Fix: every key now resolves via `this.itemToGroupKey` (base.ts `computePopupSegments` + the gather), unconditionally. `rerender()` additionally invalidates the gather memo and re-runs an active filter, so overrides reading external state (and in-place item mutation) refresh through the documented `rerender()` path.

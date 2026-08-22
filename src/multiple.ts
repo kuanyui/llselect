@@ -40,7 +40,7 @@ export interface LLSelectMultipleTriggerContext<T> {
  * @group Settings
  * @category Multiple
  */
-export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSettings<T, GK> {
+export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelectBaseSettings<T, GroupKey> {
   /**
    * Fired when the chosen-items set actually changes. Receives the new set
    * and the PREVIOUS one (the snapshot from before this change) - diff them
@@ -157,7 +157,7 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
  * @group Settings
  * @category Multiple
  */
-export type LLSelectMultipleSettingsInput<T, GK = string> = LLSelectSettingsInputOf<LLSelectMultipleSettings<T, GK>>
+export type LLSelectMultipleSettingsInput<T, GroupKey = string> = LLSelectSettingsInputOf<LLSelectMultipleSettings<T, GroupKey>>
 
 /**
  * Multi-selection select. Clicking an item toggles its membership in the
@@ -170,29 +170,28 @@ export type LLSelectMultipleSettingsInput<T, GK = string> = LLSelectSettingsInpu
  * subclass `renderTriggerContent`) to customise (e.g. tag chips).
  *
  * @typeParam T - item type.
+ * @typeParam GroupKey - group key type of `itemToGroupKeyFn`; see
+ *   {@link LLSelectBase}.
+ * @typeParam S - resolved settings type, for subclasses extending the
+ *   settings bag; see {@link LLSelectBase}.
  * @group Select classes
  */
-export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, GK> {
+export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelectMultipleSettings<T, GroupKey> = LLSelectMultipleSettings<T, GroupKey>> extends LLSelectBase<T, GroupKey, S> {
   /**
    * Currently chosen items, in insertion order.
    * @group State (protected)
    */
   protected chosenItems: T[] = []
-  /**
-   * Re-type only (`declare` emits no field): the multi-mode fields are passed,
-   * resolved, through `super()`, so the bag is complete before any base
-   * construction code runs.
-   * @group State (protected)
-   */
-  protected declare readonly settings: LLSelectMultipleSettings<T, GK>
 
   /**
    * Build the control inside `targetEl`. Settings are resolved once here
    * (missing fields get defaults) and are immutable afterwards.
+   * `subclassSettings` is the typed pass-through for subclasses that extend
+   * the settings bag further; see `LLSelectBase`'s `S` param.
    * @group Lifecycle
    */
-  constructor(targetEl: HTMLElement, settings?: LLSelectMultipleSettingsInput<T, GK>) {
-    super(targetEl, settings, {
+  constructor(targetEl: HTMLElement, settings?: LLSelectSettingsInputOf<S>, subclassSettings?: Omit<S, keyof LLSelectMultipleSettings<T, GroupKey>>) {
+    const ownExtras = {
       onChange: settings?.onChange ?? null,
       createTriggerContentElFn: settings?.createTriggerContentElFn ?? null,
       triggerDisplay: settings?.triggerDisplay ?? 'count',
@@ -201,7 +200,11 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
       hideChosenRows: settings?.hideChosenRows ?? false,
       chooseAllRow: settings?.chooseAllRow ?? false,
       createChooseAllRowContentElFn: settings?.createChooseAllRowContentElFn ?? null,
-    } satisfies Omit<LLSelectMultipleSettings<T, GK>, keyof LLSelectBaseSettings<T, GK>>)
+    } satisfies Omit<LLSelectMultipleSettings<T, GroupKey>, keyof LLSelectBaseSettings<T, GroupKey>>
+    // Cast mirrored from the base seam: TS cannot prove "own extras +
+    // Omit<S, own keys>" reassembles a generic S's extras. Own extras stay
+    // satisfies-checked above; incoming extras are param-typed.
+    super(targetEl, settings, { ...ownExtras, ...subclassSettings } as Omit<S, keyof LLSelectBaseSettings<T, GroupKey>>)
     this.popupListEl.setAttribute('aria-multiselectable', 'true')
     this.renderTrigger()
   }

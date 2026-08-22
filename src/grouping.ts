@@ -23,24 +23,24 @@
  *   (same contract as the `groupKeyCompareFn` setting)
  * @group Grouping
  */
-export function gatherItemsByGroupKey<T, GK = string>(
+export function gatherItemsByGroupKey<T, GroupKey = string>(
   items: readonly T[],
-  itemToGroupKeyFn: (item: T) => GK | null,
-  groupKeyCompareFn?: ((a: GK, b: GK) => boolean) | null,
+  itemToGroupKeyFn: (item: T) => GroupKey | null,
+  groupKeyCompareFn?: ((a: GroupKey, b: GroupKey) => boolean) | null,
 ): readonly T[] {
   const eq = groupKeyCompareFn ?? null
   // Seen-key lookup: Map for the default identity (O(1) per item), linear
   // scan over first-seen keys for a custom predicate (a Map cannot key by
   // predicate).
-  const seenMap = eq === null ? new Map<GK, true>() : null
-  const seenList: GK[] = []
-  const hasSeen = (k: GK): boolean => (seenMap !== null ? seenMap.has(k) : seenList.some(s => eq!(s, k)))
-  const keyEquals = (a: GK, b: GK): boolean => (eq !== null ? eq(a, b) : a === b)
+  const seenMap = eq === null ? new Map<GroupKey, true>() : null
+  const seenList: GroupKey[] = []
+  const hasSeen = (k: GroupKey): boolean => (seenMap !== null ? seenMap.has(k) : seenList.some(s => eq!(s, k)))
+  const keyEquals = (a: GroupKey, b: GroupKey): boolean => (eq !== null ? eq(a, b) : a === b)
 
   // Pass 1, detect only (no per-item allocation): contiguous means every
   // non-null key either equals the previous item's key or was never seen.
   let contiguous = true
-  let prevKey: GK | null = null
+  let prevKey: GroupKey | null = null
   for (const item of items) {
     const key = itemToGroupKeyFn(item)
     if (key === null) { prevKey = null; continue }
@@ -54,8 +54,8 @@ export function gatherItemsByGroupKey<T, GK = string>(
   // Pass 2, rebuild: one bucket per key in first-appearance order; null-key
   // items are their own single-item segment.
   const segments: T[][] = []
-  const bucketMap = eq === null ? new Map<GK, T[]>() : null
-  const keyedBuckets: { key: GK; bucket: T[] }[] = []
+  const bucketMap = eq === null ? new Map<GroupKey, T[]>() : null
+  const keyedBuckets: { key: GroupKey; bucket: T[] }[] = []
   for (const item of items) {
     const key = itemToGroupKeyFn(item)
     if (key === null) {

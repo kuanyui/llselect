@@ -34,7 +34,7 @@ export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
  * @group Settings
  * @category Base
  */
-export interface LLSelectBaseSettings<T, GK = string> {
+export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Prefix used for every CSS class and DOM id the library generates
    * (default `'llselect'`). NOTE: the shipped themes target the default
@@ -271,7 +271,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   pre-sorted by group. See `docs/llm/DESIGN.md`.
    * @group Grouping
    */
-  itemToGroupKeyFn: ((item: T) => GK | null) | null
+  itemToGroupKeyFn: ((item: T) => GroupKey | null) | null
   /**
    * Whether the library gathers non-contiguous groups before rendering
    * (`true`, default). Grouping renders contiguous runs, so scattered items
@@ -293,18 +293,18 @@ export interface LLSelectBaseSettings<T, GK = string> {
    * Equality for two group keys; decides whether items share a group (both
    * the `gatherGroups` gather and the contiguous-run rendering use it).
    * - `null` (default) = strict `===` (right for string / number keys).
-   * - Supply only when `GK` is an object without usable reference identity.
+   * - Supply only when `GroupKey` is an object without usable reference identity.
    * - Mirrors `compareFn`, one level up.
    * @group Grouping
    */
-  groupKeyCompareFn: ((a: GK, b: GK) => boolean) | null
+  groupKeyCompareFn: ((a: GroupKey, b: GroupKey) => boolean) | null
   /**
    * Group key -> the header's display text. The i18n seam: keep keys stable,
    * translate here.
    * - `null` (default) = `String(groupKey)`.
    * @group Grouping
    */
-  groupKeyToStringFn: ((groupKey: GK) => string) | null
+  groupKeyToStringFn: ((groupKey: GroupKey) => string) | null
   /**
    * Predicate: is this whole group disabled?
    * - `null` (default) = no group disabled.
@@ -312,7 +312,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   `itemDisabledFn`).
    * @group Grouping
    */
-  groupDisabledFn: ((groupKey: GK) => boolean) | null
+  groupDisabledFn: ((groupKey: GroupKey) => boolean) | null
   /**
    * Group header -> its visible content ELEMENT (icon / count badge / rich
    * markup), without subclassing. Mirrors `createItemContentElFn`.
@@ -325,7 +325,7 @@ export interface LLSelectBaseSettings<T, GK = string> {
    *   summary without recomputing the grouping.
    * @group Grouping
    */
-  createGroupLabelContentElFn: ((groupKey: GK, itemsInGroup: readonly T[]) => HTMLElement | null) | null
+  createGroupLabelContentElFn: ((groupKey: GroupKey, itemsInGroup: readonly T[]) => HTMLElement | null) | null
   /**
    * Fired right after the popup opens. A no-op `open()` (already open, or a
    * disabled control) does not fire it. Fires in ADDITION to the protected
@@ -360,7 +360,7 @@ export type LLSelectSettingsInputOf<S extends { uiTranslationPack: LLSelectUiTra
  * @group Settings
  * @category Base
  */
-export type LLSelectBaseSettingsInput<T, GK = string> = LLSelectSettingsInputOf<LLSelectBaseSettings<T, GK>>
+export type LLSelectBaseSettingsInput<T, GroupKey = string> = LLSelectSettingsInputOf<LLSelectBaseSettings<T, GroupKey>>
 
 /**
  * Resolved CSS class names and DOM ids for one instance. Exposed on
@@ -507,9 +507,9 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
  * group (header + its item elements). Computed from the flat visible list;
  * group headers never enter `itemEls`, so index alignment is preserved.
  */
-type PopupListSegment<T, GK> =
+type PopupListSegment<T, GroupKey> =
   | { readonly group: false; readonly el: HTMLElement }
-  | { readonly group: true; readonly key: GK; readonly index: number; readonly items: T[]; readonly els: HTMLElement[] }
+  | { readonly group: true; readonly key: GroupKey; readonly index: number; readonly items: T[]; readonly els: HTMLElement[] }
 
 /**
  * Abstract base for all select variants. Owns DOM scaffolding, ARIA wiring,
@@ -521,9 +521,18 @@ type PopupListSegment<T, GK> =
  * @typeParam T - item value type. Use `unknown` (default) only when you
  *   intend to narrow inside templates / handlers; usually pass a concrete
  *   type like `string` or your domain object.
+ * @typeParam GroupKey - the group key type `itemToGroupKeyFn` returns
+ *   (`null` from that fn means "this item is in no group"). Defaults to
+ *   `string`. Open it to objects only together with `groupKeyCompareFn`; see
+ *   DESIGN.md "Data model".
+ * @typeParam S - the resolved settings type, for subclasses that EXTEND the
+ *   settings bag. Plain use never passes it. A subclass declares
+ *   `extends LLSelectBase<T, GroupKey, MySettings>` and `this.settings` is
+ *   typed `MySettings`; the constructor's `subclassSettings` param then only
+ *   accepts exactly the extra fields.
  * @group Select classes
  */
-export abstract class LLSelectBase<T = unknown, GK = string> {
+export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLSelectBaseSettings<T, GroupKey> = LLSelectBaseSettings<T, GroupKey>> {
   /**
    * The caller-passed mount element, now decorated as the select's root.
    * Library does not replace this node, so the caller's original reference,
@@ -581,12 +590,13 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
 
   /**
    * Resolved settings (defaults applied) - ONE bag for the whole hierarchy.
-   * Subclasses that extend the settings pass their resolved fields through the
-   * constructor's `subclassSettings` param and re-type this field with
-   * `declare` (see `LLSelectSingle` / `LLSelectMultiple`).
+   * Typed by the class's `S` param: a subclass that extends the settings
+   * passes its resolved extra fields through the constructor's
+   * `subclassSettings` param, and this field is `S` with no re-typing
+   * (see `LLSelectSingle` / `LLSelectMultiple`).
    * @group State (protected)
    */
-  protected readonly settings: LLSelectBaseSettings<T, GK>
+  protected readonly settings: S
   /** Raw explicit `placeholder` (constructor or `setPlaceholder`); `setUiTranslationPack` re-resolves against it. */
   private explicitPlaceholder: string | null
   /** True when the constructor minted `classIdMap.labelId` onto `labelEl`; `destroy()` then removes it. */
@@ -673,16 +683,17 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @param settings - optional partial settings. Missing fields use defaults
    *   ({@link LLSelectBaseSettings}).
    * @param subclassSettings - for subclasses that EXTEND the settings bag: their
-   *   own fields, already resolved (defaults applied). Merged into
-   *   `this.settings` right here, so the bag is complete before any base
-   *   construction code (e.g. `createTriggerClearButtonEl` via `createTriggerEl`) can read
-   *   it. Pair with a `declare` re-type of `settings` in the subclass.
+   *   own fields, already resolved (defaults applied). Typed by the class's
+   *   `S` param, so it accepts exactly the extra fields and nothing else.
+   *   Merged into `this.settings` right here, so the bag is complete before
+   *   any base construction code (e.g. `createTriggerClearButtonEl` via
+   *   `createTriggerEl`) can read it.
    * @group Lifecycle
    */
   constructor(
     targetEl: HTMLElement,
-    settings?: LLSelectBaseSettingsInput<T, GK>,
-    subclassSettings?: Record<string, unknown>,
+    settings?: LLSelectSettingsInputOf<S>,
+    subclassSettings?: Omit<S, keyof LLSelectBaseSettings<T, GroupKey>>,
   ) {
     // classIdMap first: labelEl id minting below needs labelId.
     this.classIdMap = createClassIdMap(settings?.cssClassPrefix ?? DEFAULT_PREFIX)
@@ -729,11 +740,12 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
       createGroupLabelContentElFn: settings?.createGroupLabelContentElFn ?? null,
       onOpen: settings?.onOpen ?? null,
       onClose: settings?.onClose ?? null,
-      // Sole settings cast: the subclass spread widens the literal's type past
-      // what TS can reconcile with the base type; the extras themselves are
-      // `satisfies`-checked at each subclass call site.
+      // Settings cast (one per constructor seam, see single / multiple): TS
+      // cannot prove "base fields + Omit<S, base keys>" reassembles a generic
+      // S. The channel itself is typed: the subclassSettings param accepts
+      // exactly the extra fields.
       ...subclassSettings,
-    } as LLSelectBaseSettings<T, GK>
+    } as S
     // Label click focuses the trigger (native <select> label behavior: focus
     // only, never open). The one listener destroy() must undo outside the root.
     if (labelEl !== null) { labelEl.addEventListener('click', this.handleLabelElClick) }
@@ -1416,10 +1428,10 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * reachable with `gatherGroups: false`; the default gather feeds this an
    * already-contiguous list.
    */
-  private computePopupSegments(list: readonly T[], els: HTMLElement[]): PopupListSegment<T, GK>[] {
-    const keyEq = this.settings.groupKeyCompareFn ?? ((a: GK, b: GK) => a === b)
-    const segments: PopupListSegment<T, GK>[] = []
-    const closedKeys: GK[] = []
+  private computePopupSegments(list: readonly T[], els: HTMLElement[]): PopupListSegment<T, GroupKey>[] {
+    const keyEq = this.settings.groupKeyCompareFn ?? ((a: GroupKey, b: GroupKey) => a === b)
+    const segments: PopupListSegment<T, GroupKey>[] = []
+    const closedKeys: GroupKey[] = []
     let groupIndex = 0
     let i = 0
     while (i < list.length) {
@@ -1451,7 +1463,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
   }
 
   /** Replace every popup-list child with the leading row (when present) + the rendered segments. */
-  private commitPopupSegmentsToDom(segments: PopupListSegment<T, GK>[]): void {
+  private commitPopupSegmentsToDom(segments: PopupListSegment<T, GroupKey>[]): void {
     const children = segments.map(seg =>
       seg.group ? this.createGroupEl(seg.key, seg.index, seg.items, seg.els) : seg.el,
     )
@@ -1473,7 +1485,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * @param itemEls - the group's already-built option elements
    * @group Subclassing: rendering
    */
-  protected createGroupEl(key: GK, index: number, items: readonly T[], itemEls: HTMLElement[]): HTMLElement {
+  protected createGroupEl(key: GroupKey, index: number, items: readonly T[], itemEls: HTMLElement[]): HTMLElement {
     const text = this.groupKeyToString(key)
     const group = document.createElement('div')
     group.id = `${this.classIdMap.popupListId}-group${index}`
@@ -1507,7 +1519,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * - Override only when extending; for one-off rich headers pass the setting.
    * @group Subclassing: rendering
    */
-  protected createGroupLabelContentEl(key: GK, itemsInGroup: readonly T[]): HTMLElement | null {
+  protected createGroupLabelContentEl(key: GroupKey, itemsInGroup: readonly T[]): HTMLElement | null {
     return this.settings.createGroupLabelContentElFn
       ? this.settings.createGroupLabelContentElFn(key, itemsInGroup)
       : null
@@ -1646,7 +1658,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * - Override only when extending; configure via the setting.
    * @group Subclassing: semantics
    */
-  protected itemToGroupKey(item: T): GK | null {
+  protected itemToGroupKey(item: T): GroupKey | null {
     return this.settings.itemToGroupKeyFn ? this.settings.itemToGroupKeyFn(item) : null
   }
 
@@ -1655,7 +1667,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * - Default reads `groupKeyToStringFn`, else `String(key)`.
    * @group Subclassing: semantics
    */
-  protected groupKeyToString(key: GK): string {
+  protected groupKeyToString(key: GroupKey): string {
     return this.settings.groupKeyToStringFn ? this.settings.groupKeyToStringFn(key) : String(key)
   }
 
@@ -1663,7 +1675,7 @@ export abstract class LLSelectBase<T = unknown, GK = string> {
    * Whether the whole group `key` is disabled per `groupDisabledFn` (false when unset).
    * @group Subclassing: semantics
    */
-  protected isGroupDisabled(key: GK): boolean {
+  protected isGroupDisabled(key: GroupKey): boolean {
     return this.settings.groupDisabledFn ? this.settings.groupDisabledFn(key) : false
   }
 

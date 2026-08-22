@@ -21,7 +21,7 @@ export interface LLSelectSingleTriggerContext<T> {
  * @group Settings
  * @category Single
  */
-export interface LLSelectSingleSettings<T, GK = string> extends LLSelectBaseSettings<T, GK> {
+export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBaseSettings<T, GroupKey> {
   /**
    * Fired when the chosen item actually changes (compared via `compareFn`).
    * Receives the new value and the PREVIOUS one (the snapshot from before
@@ -52,39 +52,42 @@ export interface LLSelectSingleSettings<T, GK = string> extends LLSelectBaseSett
  * @group Settings
  * @category Single
  */
-export type LLSelectSingleSettingsInput<T, GK = string> = LLSelectSettingsInputOf<LLSelectSingleSettings<T, GK>>
+export type LLSelectSingleSettingsInput<T, GroupKey = string> = LLSelectSettingsInputOf<LLSelectSingleSettings<T, GroupKey>>
 
 /**
  * Single-selection select. Picking an item replaces any prior chosen item
  * and closes the popup. Use `setChosenItem(undefined)` to clear the selection.
  *
  * @typeParam T - item type. Supply your own `compareFn` for non-primitive `T`.
+ * @typeParam GroupKey - group key type of `itemToGroupKeyFn`; see
+ *   {@link LLSelectBase}.
+ * @typeParam S - resolved settings type, for subclasses extending the
+ *   settings bag; see {@link LLSelectBase}.
  * @group Select classes
  */
-export class LLSelectSingle<T = unknown, GK = string> extends LLSelectBase<T, GK> {
+export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSingleSettings<T, GroupKey> = LLSelectSingleSettings<T, GroupKey>> extends LLSelectBase<T, GroupKey, S> {
   /**
    * Currently chosen item, or `undefined` if none.
    * @group State (protected)
    */
   protected chosenItem: T | undefined = undefined
-  /**
-   * Re-type only (`declare` emits no field): the single-mode fields are passed,
-   * resolved, through `super()`, so the bag is complete before any base
-   * construction code runs.
-   * @group State (protected)
-   */
-  protected declare readonly settings: LLSelectSingleSettings<T, GK>
 
   /**
    * Build the control inside `targetEl`. Settings are resolved once here
    * (missing fields get defaults) and are immutable afterwards.
+   * `subclassSettings` is the typed pass-through for subclasses that extend
+   * the settings bag further; see `LLSelectBase`'s `S` param.
    * @group Lifecycle
    */
-  constructor(targetEl: HTMLElement, settings?: LLSelectSingleSettingsInput<T, GK>) {
-    super(targetEl, settings, {
+  constructor(targetEl: HTMLElement, settings?: LLSelectSettingsInputOf<S>, subclassSettings?: Omit<S, keyof LLSelectSingleSettings<T, GroupKey>>) {
+    const ownExtras = {
       onChange: settings?.onChange ?? null,
       createTriggerContentElFn: settings?.createTriggerContentElFn ?? null,
-    } satisfies Omit<LLSelectSingleSettings<T, GK>, keyof LLSelectBaseSettings<T, GK>>)
+    } satisfies Omit<LLSelectSingleSettings<T, GroupKey>, keyof LLSelectBaseSettings<T, GroupKey>>
+    // Cast mirrored from the base seam: TS cannot prove "own extras +
+    // Omit<S, own keys>" reassembles a generic S's extras. Own extras stay
+    // satisfies-checked above; incoming extras are param-typed.
+    super(targetEl, settings, { ...ownExtras, ...subclassSettings } as Omit<S, keyof LLSelectBaseSettings<T, GroupKey>>)
     this.renderTrigger()
   }
 

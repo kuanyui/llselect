@@ -161,11 +161,11 @@ Settings (s3 by return type). All are `| null` and document their `null` (s4b: g
 
 | Vis     | Name                | Signature                   | s3 category     |
 | ------- | ------------------- | --------------------------- | --------------- |
-| setting | `itemToGroupKeyFn`  | `(item: T) => GK \| null`   | map item->key   |
-| setting | `groupKeyCompareFn` | `(a: GK, b: GK) => boolean` | predicate       |
-| setting | `groupKeyToStringFn` | `(key: GK) => string`       | map key->string |
-| setting | `groupDisabledFn`   | `(key: GK) => boolean`      | predicate       |
-| setting | `createGroupLabelContentElFn` | `(key: GK, items: readonly T[]) => HTMLElement \| null` | `create*ElFn` |
+| setting | `itemToGroupKeyFn`  | `(item: T) => GroupKey \| null`   | map item->key   |
+| setting | `groupKeyCompareFn` | `(a: GroupKey, b: GroupKey) => boolean` | predicate       |
+| setting | `groupKeyToStringFn` | `(key: GroupKey) => string`       | map key->string |
+| setting | `groupDisabledFn`   | `(key: GroupKey) => boolean`      | predicate       |
+| setting | `createGroupLabelContentElFn` | `(key: GroupKey, items: readonly T[]) => HTMLElement \| null` | `create*ElFn` |
 
 Methods / type:
 
