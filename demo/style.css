@@ -396,8 +396,9 @@ article { margin: 1.5rem 0 2rem 1rem; }
 /* #region 14.2 */
 /* Tree caret: a real hit target, not a bare glyph - a centered 1.6em box
    with hover feedback; negative vertical margin keeps the row height as if
-   the box were glyph-sized. The leaf spacer matches the box width so
-   sibling branch / leaf texts align. */
+   the box were glyph-sized. The hover tint is accent-colored, because a
+   plain dark alpha drowns in the row's own hover background. The leaf
+   spacer matches the box width so sibling branch / leaf texts align. */
 .tree-caret {
   display: inline-flex;
   align-items: center;
@@ -408,9 +409,13 @@ article { margin: 1.5rem 0 2rem 1rem; }
   border-radius: 4px;
   font-size: 1.15em;
   cursor: pointer;
+  color: #555;
 }
-.tree-caret:hover { background: rgba(0, 0, 0, 0.1); }
+.tree-caret:hover { background: rgba(36, 86, 166, 0.18); color: #2456a6; }
 .tree-caret-spacer { display: inline-block; width: 1.6em; }
+/* The classic file-manager palette, so branches read at a glance. */
+.tree-folder { color: #fbc02d; }
+.tree-file { color: #42a5f5; }
 /* #endregion */
 
 /* --- shared interactive TOC (both examples pages; injected by toc.js) ----

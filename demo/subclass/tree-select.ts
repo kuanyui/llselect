@@ -181,10 +181,10 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
   }
 
   /**
-   * Branch: caret + tri-state checkbox + folder + text. Leaf: an alignment
-   * spacer + checkbox + text. The caret and the folder are MDI font icons
-   * (the examples page loads the font); the checkboxes are the library's
-   * inline SVGs.
+   * Branch: caret + tri-state checkbox + folder (amber) + text. Leaf: an
+   * alignment spacer + checkbox + file (blue) + text. The caret, folder and
+   * file are MDI font icons (the examples page loads the font; colors in
+   * the demo CSS); the checkboxes are the library's inline SVGs.
    */
   protected override createItemContentEl(node: LLTreeNode): HTMLElement {
     const wrap = document.createElement('span')
@@ -206,7 +206,7 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
       wrap.appendChild(caret)
       wrap.appendChild(createFilledCheckboxSvgEl({ state: this.branchState(node) }))
       const folder = document.createElement('i')
-      folder.className = `mdi ${expanded ? 'mdi-folder-open-outline' : 'mdi-folder-outline'}`
+      folder.className = `tree-folder mdi ${expanded ? 'mdi-folder-open' : 'mdi-folder'}`
       folder.setAttribute('aria-hidden', 'true')
       wrap.appendChild(folder)
     } else {
@@ -216,6 +216,10 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
       spacer.className = 'tree-caret-spacer'
       wrap.appendChild(spacer)
       wrap.appendChild(createFilledCheckboxSvgEl({ state: this.isChosen(node) ? 'checked' : 'unchecked' }))
+      const file = document.createElement('i')
+      file.className = 'tree-file mdi mdi-file'
+      file.setAttribute('aria-hidden', 'true')
+      wrap.appendChild(file)
     }
     wrap.appendChild(document.createTextNode(node.text))
     return wrap
