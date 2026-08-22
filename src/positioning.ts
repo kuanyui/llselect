@@ -29,6 +29,16 @@ export interface PositionInput {
   anchorRect: AnchorRect
   viewportWidth: number
   viewportHeight: number
+  /**
+   * Origin of the VISIBLE viewport in layout-viewport (client) coordinates.
+   * `0` except under pinch zoom, where the visual viewport shrinks AND pans
+   * (`visualViewport.offsetLeft/offsetTop`); anchor rects stay in client
+   * coordinates, so clamping against `[0, viewportWidth]` alone would drag
+   * the floating element toward the layout origin. Default `0`.
+   */
+  viewportLeft?: number
+  /** See {@link PositionInput.viewportLeft}. Default `0`. */
+  viewportTop?: number
   /** Measured height of the floating element. Pass 0 if unknown. */
   floatingHeight: number
   /** Width policy. Optional; default `'fit-content'`. */
@@ -83,6 +93,11 @@ const VIEWPORT_PADDING = 8
  * `viewport - 2 * VIEWPORT_PADDING`, and keeps the popup inside the viewport
  * margins. Growth direction follows `direction`: ltr aligns left edges and
  * grows rightward; rtl aligns RIGHT edges and grows leftward (the mirror).
+ *
+ * The "viewport" here is the VISIBLE window in client coordinates:
+ * `[viewportLeft, viewportLeft + viewportWidth]` x
+ * `[viewportTop, viewportTop + viewportHeight]`. The offsets are 0 except
+ * under pinch zoom (see {@link PositionInput.viewportLeft}).
  * `widthPolicy === 'match-trigger'` returns `width = anchor.width` and
  * `left = anchor.left` (no collision handling - popup is the same width as
  * trigger; direction-independent).
@@ -92,6 +107,8 @@ export function computePosition(input: PositionInput): PositionResult {
     anchorRect,
     viewportWidth,
     viewportHeight,
+    viewportLeft = 0,
+    viewportTop = 0,
     floatingHeight,
     widthPolicy = 'fit-content',
     floatingNaturalWidth = 0,
@@ -99,8 +116,9 @@ export function computePosition(input: PositionInput): PositionResult {
     currentPlacement,
   } = input
 
-  const spaceBelow = viewportHeight - anchorRect.bottom - GAP - VIEWPORT_PADDING
-  const spaceAbove = anchorRect.top - GAP - VIEWPORT_PADDING
+  const viewportBottom = viewportTop + viewportHeight
+  const spaceBelow = viewportBottom - anchorRect.bottom - GAP - VIEWPORT_PADDING
+  const spaceAbove = anchorRect.top - viewportTop - GAP - VIEWPORT_PADDING
 
   const fitsBelow = floatingHeight <= spaceBelow
   const fitsAbove = floatingHeight <= spaceAbove
@@ -123,9 +141,9 @@ export function computePosition(input: PositionInput): PositionResult {
   let maxHeight: number
   if (placement === 'below') {
     top = anchorRect.bottom + GAP
-    maxHeight = Math.max(0, viewportHeight - top - VIEWPORT_PADDING)
+    maxHeight = Math.max(0, viewportBottom - top - VIEWPORT_PADDING)
   } else {
-    maxHeight = Math.max(0, anchorRect.top - GAP - VIEWPORT_PADDING)
+    maxHeight = Math.max(0, anchorRect.top - viewportTop - GAP - VIEWPORT_PADDING)
     top = anchorRect.top - GAP - Math.min(floatingHeight, maxHeight)
   }
 
@@ -138,13 +156,14 @@ export function computePosition(input: PositionInput): PositionResult {
     const desiredWidth = Math.max(anchorRect.width, floatingNaturalWidth)
     const maxAvailable = viewportWidth - 2 * VIEWPORT_PADDING
     width = Math.min(desiredWidth, Math.max(0, maxAvailable))
-    const rightEdge = viewportWidth - VIEWPORT_PADDING
+    const leftEdge = viewportLeft + VIEWPORT_PADDING
+    const rightEdge = viewportLeft + viewportWidth - VIEWPORT_PADDING
     if (direction === 'rtl') {
       // Mirror of ltr: right edges aligned, growth goes leftward; push back
       // inside the LEFT margin first, then clamp at the right one.
       left = anchorRect.right - width
-      if (left < VIEWPORT_PADDING) {
-        left = VIEWPORT_PADDING
+      if (left < leftEdge) {
+        left = leftEdge
       }
       if (left + width > rightEdge) {
         left = rightEdge - width
@@ -154,8 +173,8 @@ export function computePosition(input: PositionInput): PositionResult {
       if (left + width > rightEdge) {
         left = rightEdge - width
       }
-      if (left < VIEWPORT_PADDING) {
-        left = VIEWPORT_PADDING
+      if (left < leftEdge) {
+        left = leftEdge
       }
     }
   }
@@ -277,10 +296,13 @@ function measureNaturalWidth(el: HTMLElement): number {
  * `visualViewport` when present gives the real visible area, so the popup's
  * `maxHeight` clamps to what the user can actually see.
  */
-function getVisibleViewport(): { width: number; height: number } {
+function getVisibleViewport(): { left: number; top: number; width: number; height: number } {
   const vv = window.visualViewport
-  if (vv) { return { width: vv.width, height: vv.height } }
-  return { width: window.innerWidth, height: window.innerHeight }
+  // The offsets matter under pinch zoom: the visual viewport pans inside the
+  // layout viewport, while anchor rects and `position: fixed` stay in layout
+  // (client) coordinates. Both are 0 without zoom.
+  if (vv) { return { left: vv.offsetLeft, top: vv.offsetTop, width: vv.width, height: vv.height } }
+  return { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight }
 }
 
 /**
@@ -318,7 +340,7 @@ export function createPositioner(
   function reposition(allowHide: boolean): void {
     if (!attached) { return }
     const rect = anchor.getBoundingClientRect()
-    const { width: viewportWidth, height: viewportHeight } = getVisibleViewport()
+    const { left: viewportLeft, top: viewportTop, width: viewportWidth, height: viewportHeight } = getVisibleViewport()
     // Visibility test uses the LAYOUT viewport (window.innerWidth/Height), NOT
     // the visual viewport. A virtual keyboard / URL bar shrinks the visual
     // viewport from the bottom without scrolling the anchor away, while
@@ -356,6 +378,8 @@ export function createPositioner(
       },
       viewportWidth,
       viewportHeight,
+      viewportLeft,
+      viewportTop,
       floatingHeight,
       widthPolicy,
       floatingNaturalWidth,

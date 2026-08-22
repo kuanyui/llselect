@@ -507,6 +507,61 @@ test('sticky yields: neither side fits -> larger side wins regardless of current
   assert.equal(r.placement, 'above')
 })
 
+test('pinch-zoom offsets: an anchor inside the panned visible window keeps its x', () => {
+  // Visible window [500, 900] in client coords (visualViewport panned right).
+  // The old [0, viewportWidth] clamp dragged left toward the layout origin.
+  const r = computePosition({
+    anchorRect: { top: 100, left: 600, right: 800, bottom: 130, width: 200, height: 30 },
+    viewportWidth: 400,
+    viewportHeight: 768,
+    viewportLeft: 500,
+    viewportTop: 0,
+    floatingHeight: 200,
+  })
+  assert.equal(r.placement, 'below')
+  assert.equal(r.left, 600)
+})
+
+test('pinch-zoom offsets: the right-edge clamp happens at the VISIBLE right edge', () => {
+  const r = computePosition({
+    anchorRect: { top: 100, left: 850, right: 890, bottom: 130, width: 40, height: 30 },
+    viewportWidth: 400,
+    viewportHeight: 768,
+    viewportLeft: 500,
+    viewportTop: 0,
+    floatingHeight: 200,
+    floatingNaturalWidth: 200,
+  })
+  // rightEdge = 500 + 400 - 8 = 892; width 200 -> left = 692.
+  assert.equal(r.left, 692)
+})
+
+test('pinch-zoom offsets: vertical space measures against the visible window', () => {
+  // Visible window [300, 1068]; the anchor sits above it, so only "below"
+  // has room, and maxHeight runs to the VISIBLE bottom.
+  const r = computePosition({
+    anchorRect: ANCHOR_AT_TOP,
+    viewportWidth: 1024,
+    viewportHeight: 768,
+    viewportLeft: 0,
+    viewportTop: 300,
+    floatingHeight: 200,
+  })
+  assert.equal(r.placement, 'below')
+  assert.equal(r.top, 134)
+  assert.equal(r.maxHeight, 300 + 768 - 134 - 8)
+})
+
+test('zero offsets reproduce the unshifted math exactly', () => {
+  const base = computePosition({
+    anchorRect: ANCHOR_AT_TOP, viewportWidth: 1024, viewportHeight: 768, floatingHeight: 200,
+  })
+  const explicit = computePosition({
+    anchorRect: ANCHOR_AT_TOP, viewportWidth: 1024, viewportHeight: 768, viewportLeft: 0, viewportTop: 0, floatingHeight: 200,
+  })
+  assert.deepEqual(explicit, base)
+})
+
 test('positioner: natural height comes from the inner scroller, not the clamped box', () => {
   setupDom('<!doctype html><html><body></body></html>')
   const anchor = document.createElement('div')
