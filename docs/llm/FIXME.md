@@ -2,6 +2,14 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (user-reported, pinch-zoom popup drift)
+
+- [ ] **[HIGH-45] - pinch-zoom drifts the popup left of the trigger (Linux, Firefox AND Chromium)**
+  - Symptom: open the popup, two-finger pinch-zoom past some level: only llselect's popup shifts left and stops aligning with the trigger's x; the competitor libraries stay aligned. Reproduced by the user on Linux in both engines.
+  - Cause: unverified. Prime suspect: `getVisibleViewport()` (positioning.ts) returns `visualViewport.width/height`, and the popup is `position: fixed`, i.e. LAYOUT-viewport coordinates. Under pinch zoom the visual viewport shrinks and pans (`offsetLeft/offsetTop`), so clamping x into `[0, vv.width]` without the vv offset drags the popup toward the left edge even though the trigger's client x is legitimate.
+  - Impact: popup misalignment under pinch zoom; no data loss. jsdom cannot reproduce (no visual viewport); needs the real-browser pass.
+  - Fix: pending. Direction to evaluate: clamp against `[vv.offsetLeft, vv.offsetLeft + vv.width]` (same for y), or clamp against the layout viewport and use vv only for `maxHeight`. Reproduce with the benchmark page's hands-on playground (built for this), fix, re-verify with the same pinch gesture.
+
 ## review (hideChosenRows performance audit)
 
 Micro-bench after shipping `hideChosenRows` (jsdom, 10k items; numbers are rough but order-of-magnitude): flag off costs nothing measurable (`toggleItem` keeps its O(1) path, `getVisibleItems` adds one boolean check). Flag on with the default `compareFn` is fine: the Set-path subtraction is ~0.6 ms per call at 5000 chosen, and opening got FASTER (443 ms vs 659 ms) because hidden rows are never built. The by-design costs (full list rebuild per toggle while open; documented in the docstring) measured ~1x popup-open per click at 10k items.

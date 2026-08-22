@@ -1100,3 +1100,44 @@ document.getElementById('ix-closebtn').addEventListener('change', () => { ixClea
 document.getElementById('versions').textContent =
   ORDER.map(k => `${DISPLAY[k].name} ${DISPLAY[k].version}`).join('  |  ') + '  |  jQuery 3.7.1 (for Select2)'
 measureSizes()
+
+// --- hands-on playground ---------------------------------------------------
+// Not a benchmark: no timing, no table. Every library builds one live
+// single-select and one live multi-select with n candidates, for judging the
+// feel by hand and for reproducing environment-specific issues (pinch-zoom
+// alignment and the like) against every library at once.
+{
+  const grid = document.getElementById('pg-grid')
+  let pgLive = []
+  document.getElementById('pg-build').addEventListener('click', () => {
+    for (const { key, h } of pgLive) { try { ADAPTERS[key].teardown(h) } catch (e) { /* ignore */ } }
+    pgLive = []
+    grid.replaceChildren()
+    const items = buildItems(parseInt(document.getElementById('pg-size').value, 10))
+    for (const key of ORDER) {
+      const row = document.createElement('div')
+      row.className = 'pg-row'
+      const name = document.createElement('div')
+      name.className = 'pg-name'
+      name.textContent = DISPLAY[key].name
+      row.appendChild(name)
+      for (const multi of [false, true]) {
+        const cell = document.createElement('div')
+        cell.className = 'pg-cell'
+        const label = document.createElement('span')
+        label.className = 'hint'
+        label.textContent = multi ? 'multi' : 'single'
+        cell.appendChild(label)
+        const mount = document.createElement('div')
+        cell.appendChild(mount)
+        row.appendChild(cell)
+        try {
+          pgLive.push({ key, h: ADAPTERS[key].setup(mount, items, { multi, custom: false, preselect: false, closeBtn: true }) })
+        } catch (e) {
+          mount.textContent = 'setup failed: ' + e.message
+        }
+      }
+      grid.appendChild(row)
+    }
+  })
+}

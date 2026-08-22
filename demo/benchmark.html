@@ -29,6 +29,9 @@
       color: #0b3d66 !important;
       font-weight: 600;
     }
+    .pg-row { display: grid; grid-template-columns: 9rem 1fr 1fr; gap: 1rem; align-items: start; margin: 0.8rem 0; }
+    .pg-name { font-weight: 600; padding-top: 0.4rem; }
+    .pg-cell .hint { display: block; margin-bottom: 0.2rem; }
   </style>
 </head>
 <body>
@@ -56,6 +59,7 @@
     <a href="#fair">Fairness</a>
     <a href="#bundle">Bundle size</a>
     <a href="#method">Method and caveats</a>
+    <a href="#playground">Playground</a>
   </nav>
 
   <h2 id="mass">Mass instantiation</h2>
@@ -456,6 +460,28 @@
       not drive that library on the loaded CDN version - tell me which cell.</li>
     <li>Versions under test: <span id="versions"></span></li>
   </ul>
+
+  <h2 id="playground">Hands-on playground</h2>
+  <p>
+    Not a benchmark: nothing is measured here. Each library just builds one
+    live single-select and one live multi-select with n candidates, so you can
+    judge the feel yourself - open, filter, choose, scroll - and reproduce
+    environment-specific issues (pinch-zoom alignment, IME, screen readers)
+    against every library at once.
+  </p>
+  <div class="bench-toolbar" id="pg-toolbar">
+    <div class="bench-row">
+      <label>Items
+        <select id="pg-size">
+          <option value="100">100</option>
+          <option value="1000" selected>1,000</option>
+          <option value="10000">10,000</option>
+        </select>
+      </label>
+      <button id="pg-build" class="ix-run-all">Build all</button>
+    </div>
+  </div>
+  <div id="pg-grid"></div>
 
   <!-- Competitor libraries via CDN (UMD globals). jQuery must precede Select2. -->
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
