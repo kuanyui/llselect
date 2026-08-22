@@ -109,6 +109,18 @@ test('custom compareFn: an equal (not identical) chosen object hides the row', (
   assert.deepEqual(itemTexts(sel), ['#1'])
 })
 
+test('the subtracted list is cached: same reference between changes, a new one after a change', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { hideChosenRows: true })
+  sel.setItems(['a', 'b', 'c'])
+  sel.toggleItem('a')
+  const first = sel.getVisibleItems()
+  assert.equal(sel.getVisibleItems(), first)
+  sel.toggleItem('b')
+  const second = sel.getVisibleItems()
+  assert.notEqual(second, first)
+  assert.deepEqual([...second], ['c'])
+})
+
 test('choosing the focused last row clamps focus to the new last row', () => {
   const sel = new LLSelectMultiple<string>(mount(), { hideChosenRows: true })
   sel.setItems(['a', 'b', 'c'])

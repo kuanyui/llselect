@@ -6,11 +6,12 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 Micro-bench after shipping `hideChosenRows` (jsdom, 10k items; numbers are rough but order-of-magnitude): flag off costs nothing measurable (`toggleItem` keeps its O(1) path, `getVisibleItems` adds one boolean check). Flag on with the default `compareFn` is fine: the Set-path subtraction is ~0.6 ms per call at 5000 chosen, and opening got FASTER (443 ms vs 659 ms) because hidden rows are never built. The by-design costs (full list rebuild per toggle while open; documented in the docstring) measured ~1x popup-open per click at 10k items.
 
-- [ ] **[PERFORMANCE-31] - hideChosenRows with a custom compareFn makes getVisibleItems O(visible x chosen), recomputed on every call**
+- [x] **[PERFORMANCE-31] - hideChosenRows with a custom compareFn makes getVisibleItems O(visible x chosen), recomputed on every call**
   - Symptom: 10k items + 5000 chosen + custom `compareFn`: one `getVisibleItems()` call costs ~416 ms (jsdom micro-bench). Hot paths call it repeatedly: `renderPopupList` at least twice (its own pass + the choose-all row's re-query), keyboard nav once per key.
-  - Cause: the subtraction falls back to per-item `isChosen` (a linear scan of `chosenItems`) whenever `compareFn` is not the identity default, and the result is never cached across calls.
+  - Cause: the subtraction falls back to per-item `isChosen` (a linear scan of `chosenItems`) whenever `compareFn` is not the identity default, and the result was never cached across calls.
   - Impact: only custom-`compareFn` apps with large lists AND large chosen sets. Default `compareFn` takes the Set path and stays ~0.6 ms at the same scale.
-  - Fix: memoize the subtracted list, invalidated on `setItems` / chosen-set changes / filter runs; and pass `renderPopupList`'s already-computed list into `createPopupListLeadingRowEl` instead of re-querying.
+  - Fix: the subtraction result is cached on the instance (`visibleItemsCache` in multiple.ts). Validity is two reference checks (base list + chosen set) - complete, because every upstream layer and the chosen set replace their arrays on change. The choose-all row's second query now hits the cache, so no hook-signature change was needed.
+  - Verified: micro-bench re-run on the rebuilt dist: 100x `getVisibleItems` at 10k items / 5000 chosen went from ~64 ms to ~0 ms with the default `compareFn`, and from ~42 s to ~0.66 s with a custom one (one real compute + 99 cache hits; absolute times vary run to run, within-run ratios are the signal). A reference-identity test pins the cache contract (hide-chosen-rows.test.ts).
   - Q: Why did this ship un-memoized?
     - A: Because the O(visible x chosen) bound was known and documented in the docstring, but the magnitude (hundreds of ms per single call at 10k/5k) and the call multiplicity per operation were only measured afterward. The lesson: for costs written into a docstring, measure the worst case before shipping, not after.
 

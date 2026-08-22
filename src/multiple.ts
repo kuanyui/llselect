@@ -110,9 +110,10 @@ export interface LLSelectMultipleSettings<T, GK = string> extends LLSelectBaseSe
    *   the row acts as "choose everything still listed", its tri-state never
    *   reaches all-chosen, and it disappears with the last actionable row.
    * - Internals: a `getVisibleItems` subtraction. The default `compareFn`
-   *   uses a Set lookup; a custom `compareFn` costs O(visible x chosen) per
-   *   list rebuild. `toggleItem` swaps its O(1) row replace for a full
-   *   rebuild.
+   *   uses a Set lookup; a custom `compareFn` costs O(visible x chosen).
+   *   Either cost is paid once per change of the list or the chosen set -
+   *   the result is cached between changes. `toggleItem` swaps its O(1) row
+   *   replace for a full rebuild.
    * @group Items
    */
   hideChosenRows: boolean
@@ -344,22 +345,45 @@ export class LLSelectMultiple<T = unknown, GK = string> extends LLSelectBase<T, 
   }
 
   /**
+   * hideChosenRows subtraction cache. Every layer above (items, gather,
+   * filter) and the chosen set REPLACE their arrays on change, never mutate
+   * in place - so two reference checks are a complete validity test and no
+   * invalidation wiring is needed.
+   */
+  private visibleItemsCache: { base: readonly T[], chosen: readonly T[], result: readonly T[] } | null = null
+
+  /**
    * Return the items the popup list renders, in display order.
-   * - Identical to the base behavior (the matching subset while a filter
-   *   query is active, otherwise the full list, gathered per `gatherGroups`),
-   *   minus the chosen items while `hideChosenRows` is on.
+   *
+   * ```text
+   * base visible items   (LLSelectBase.getVisibleItems: gather + filter)
+   *   |  minus chosen    (only while hideChosenRows is on; result cached)
+   *   v
+   * visible items        (this method's return value)
+   * ```
+   *
+   * - Identical to the base behavior, minus the chosen items while
+   *   `hideChosenRows` is on.
    * - While `hideChosenRows` is on and something is chosen, it returns a
-   *   fresh array, not the live internal one.
+   *   cached fresh array, not the live internal one.
+   * - The subtraction recomputes only when the base list or the chosen set
+   *   changed. Calls in between return the same cached array.
    * @group Items
    */
   public override getVisibleItems(): readonly T[] {
     const list = super.getVisibleItems()
     if (!this.settings.hideChosenRows || this.chosenItems.length === 0) { return list }
+    const cache = this.visibleItemsCache
+    if (cache !== null && cache.base === list && cache.chosen === this.chosenItems) { return cache.result }
+    let result: readonly T[]
     if (this.settings.compareFn === defaultCompareFn) {
       const chosen = new Set(this.chosenItems)
-      return list.filter(it => !chosen.has(it))
+      result = list.filter(it => !chosen.has(it))
+    } else {
+      result = list.filter(it => !this.isChosen(it))
     }
-    return list.filter(it => !this.isChosen(it))
+    this.visibleItemsCache = { base: list, chosen: this.chosenItems, result }
+    return result
   }
 
   /**
