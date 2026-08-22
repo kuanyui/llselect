@@ -190,6 +190,8 @@
       vm.person5 = undefined // 8f, ng-disabled + tooltip
       vm.quotaLocked = true // 8f starts disabled so the tooltip point shows
       vm.people = []
+      vm.peopleHide = [] // 8g
+      vm.peopleKeep = [] // 8g
       vm.locked = false
       vm.avFruit = undefined
       vm.country3 = undefined

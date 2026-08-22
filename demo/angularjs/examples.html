@@ -384,9 +384,7 @@
     <h3>8b. Multiple: chips from the match template</h3>
     <p>
       As in real ui-select, a chosen person leaves the dropdown:
-      <code>remove-selected</code> defaults to true and is bridged onto
-      <code>hideChosenRows</code>. <code>remove-selected="false"</code> keeps
-      the rows listed.
+      <code>remove-selected</code> defaults to true (8g shows the opt-out).
     </p>
     <div data-src="8b">
     <ui-llselect ng-model="vm.people" multiple>
@@ -476,13 +474,44 @@
     </div>
     <div class="out">ng-model = {{ vm.person5.name || 'undefined' }}</div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="8f"><code></code></pre></details>
+    </article>
+
+    <article>
+    <h3>8g. remove-selected: hide or keep chosen rows</h3>
+    <p>
+      Top: the default. A chosen person leaves the list, exactly like
+      ui-select (<code>remove-selected</code> defaults to true; bridged onto
+      <code>hideChosenRows</code>). Its <code>allow-clear</code> puts everyone
+      back at once - the deviation the API page documents. Bottom:
+      <code>remove-selected="false"</code> keeps chosen rows listed.
+    </p>
+    <div data-src="8g">
+      <div class="demo-row">
+        <ui-llselect multiple ng-model="vm.peopleHide">
+          <ui-llselect-match placeholder="Default: chosen leave the list" allow-clear="true">{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
+            <span>{{p.name}}</span>
+          </ui-llselect-choices>
+        </ui-llselect>
+      </div>
+      <div class="demo-row">
+        <ui-llselect multiple remove-selected="false" ng-model="vm.peopleKeep">
+          <ui-llselect-match placeholder="remove-selected=false: rows stay">{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
+            <span>{{p.name}}</span>
+          </ui-llselect-choices>
+        </ui-llselect>
+      </div>
+    </div>
+    <div class="out">ng-model = {{ vm.peopleHide.length }} / {{ vm.peopleKeep.length }} selected</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8g"><code></code></pre></details>
+    </article>
 
     <p class="hint">
       Not bridged, by rule (llselect has no such concept, so it is ignored rather
       than half-implemented): tagging, sortable, append-to-body, async refresh,
-      limit, remove-selected, themes.
+      limit, themes.
     </p>
-    </article>
   </section>
 
   <section>
