@@ -120,4 +120,4 @@ Core ships `createHighlightedTextEl`, so rebuilding ui-select's `highlight` filt
   - Real apps depend on observed behavior (see the bug list above). A more correct result is still a behavior change.
 - The reuse would not save anything. The filter is 8 frozen lines (ui-select 0.19.8, MIT). A core-based version would build DOM for every row on every keystroke, then serialize it back into a string for the sanitizer to parse again.
 
-So the division of labor stands. The bridge syncs `$select.search` at row render; that is the state the app's own filter reads. The filter itself stays the app's: copy it as [`API.md`](API.md)'s "Two deliberate deviations" describes, or keep loading ui-select for it. The core helper serves the native directives instead, through `ll-highlight` and custom content fns.
+So the division of labor stands. The bridge syncs `$select.search` at row render; that is the state the app's own filter reads. The filter itself stays the app's: copy it as [`API.md`](API.md)'s "Deliberate deviations" describes, or keep loading ui-select for it. The core helper serves the native directives instead, through `ll-highlight` and custom content fns.

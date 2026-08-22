@@ -288,6 +288,35 @@ test('remove-selected="false" keeps chosen rows listed', () => {
   assert.equal(a.$$('ui-llselect .llselect-item').length, 3)
 })
 
+test('allow-clear on a multiple renders a working clear button - the documented deviation', () => {
+  // Real ui-select ignores allow-clear in multiple (its match-multiple
+  // templates have no clear anchor; default false, uiSelectMatchDirective.js:25).
+  // The bridge honors it in both modes: API.md "Deliberate deviations".
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect multiple ng-model="vm.people">
+          <ui-llselect-match placeholder="Pick" allow-clear="true">{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name">
+            <span>{{p.name}}</span>
+          </ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.people = [] },
+  })
+  assert.deepEqual(a.errors, [])
+  a.$('ui-llselect .llselect-trigger').click()
+  a.$$('ui-llselect .llselect-item')[0].click()
+  assert.equal(a.scope.vm.people.length, 1)
+  const clearBtn = a.$('ui-llselect .llselect-trigger-clear-button')
+  assert.ok(clearBtn, 'clear button missing')
+  clearBtn.click()
+  assert.equal(a.scope.vm.people.length, 0)
+  assert.equal(a.$$('ui-llselect .llselect-item').length, 3, 'clearing must relist every row (remove-selected default)')
+})
+
 test('$select.search resets when the query is cleared, so rows stop highlighting it', () => {
   const a = boot({
     files: ['llselect-angularjs.js', 'llselect-ui-select.js'],

@@ -240,6 +240,10 @@
     // llselect defaults filterable to false. Follow ui-select here - this is its
     // markup, so its defaults are what the call site expects.
     settings.filterable = attrs.searchEnabled ? scope.$eval(attrs.searchEnabled) : true
+    // Deliberate deviation: ui-select shows the clear button only in single
+    // mode (its match-multiple templates ignore allow-clear; default false,
+    // uiSelectMatchDirective.js:25). llselect's multiple has the concept, so
+    // the attribute is honored in both modes. See API.md "Deliberate deviations".
     if (slots.matchAttrs['allow-clear']) { settings.clearable = true }
     if (settings.filterable) { settings.filterFn = filterFn }
     // Batteries-included default arrow: every ui-select theme renders a caret,
