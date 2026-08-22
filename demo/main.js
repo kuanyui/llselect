@@ -1056,9 +1056,10 @@ selSubclassCheckbox.setItems(COUNTRIES)
 //#endregion
 
 //#region 14.2
-// A whole variant as a subclass, authored in TypeScript: the code toggle
-// shows subclass/tree-select.ts; the page runs the transpiled copy that
-// `npm run build:site` writes next to it.
+// Usage: import the subclass, configure it like any llselect (its own
+// defaultExpandDepth included), then hand it nested nodes. The page loads
+// the transpiled copy dynamically so a missing build degrades to a note; a
+// real app would use a static import.
 const TREE_FOODS = [
   { text: 'Fruits', children: [
     { text: 'Citrus', children: [{ text: 'Orange' }, { text: 'Lemon' }] },
@@ -1070,7 +1071,7 @@ const TREE_FOODS = [
     { text: 'Potato' },
   ] },
 ]
-try {
+async function initTreeSelect() {
   const { LLTreeMultipleSelect } = await import('./subclass/tree-select.js')
   const outTree = document.getElementById('out-tree')
   const selTree = new LLTreeMultipleSelect(document.getElementById('mount-tree'), {
@@ -1081,11 +1082,12 @@ try {
     onChange: (chosen) => { outTree.textContent = 'chosen: ' + chosen.map((n) => n.text).join(', ') },
   })
   selTree.setTreeItems(TREE_FOODS)
-} catch {
-  document.getElementById('mount-tree').textContent =
-    'subclass/tree-select.js is written by `npm run build:site` - serve public/ to see this example.'
 }
 //#endregion
+await initTreeSelect().catch(() => {
+  document.getElementById('mount-tree').textContent =
+    'subclass/tree-select.js is written by `npm run build:site` - serve public/ to see this example.'
+})
 
 // Self-extraction: fetch this file's source, locate `//#region NAME` ...
 // `//#endregion` blocks, and write each into the matching <code>.
