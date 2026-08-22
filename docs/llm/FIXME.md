@@ -2,6 +2,18 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (hideChosenRows performance audit)
+
+Micro-bench after shipping `hideChosenRows` (jsdom, 10k items; numbers are rough but order-of-magnitude): flag off costs nothing measurable (`toggleItem` keeps its O(1) path, `getVisibleItems` adds one boolean check). Flag on with the default `compareFn` is fine: the Set-path subtraction is ~0.6 ms per call at 5000 chosen, and opening got FASTER (443 ms vs 659 ms) because hidden rows are never built. The by-design costs (full list rebuild per toggle while open; documented in the docstring) measured ~1x popup-open per click at 10k items.
+
+- [ ] **[PERFORMANCE-31] - hideChosenRows with a custom compareFn makes getVisibleItems O(visible x chosen), recomputed on every call**
+  - Symptom: 10k items + 5000 chosen + custom `compareFn`: one `getVisibleItems()` call costs ~416 ms (jsdom micro-bench). Hot paths call it repeatedly: `renderPopupList` at least twice (its own pass + the choose-all row's re-query), keyboard nav once per key.
+  - Cause: the subtraction falls back to per-item `isChosen` (a linear scan of `chosenItems`) whenever `compareFn` is not the identity default, and the result is never cached across calls.
+  - Impact: only custom-`compareFn` apps with large lists AND large chosen sets. Default `compareFn` takes the Set path and stays ~0.6 ms at the same scale.
+  - Fix: memoize the subtracted list, invalidated on `setItems` / chosen-set changes / filter runs; and pass `renderPopupList`'s already-computed list into `createPopupListLeadingRowEl` instead of re-querying.
+  - Q: Why did this ship un-memoized?
+    - A: Because the O(visible x chosen) bound was known and documented in the docstring, but the magnitude (hundreds of ms per single call at 10k/5k) and the call multiplicity per operation were only measured afterward. The lesson: for costs written into a docstring, measure the worst case before shipping, not after.
+
 ## review (public API surface)
 
 External review of the public API surface, relayed by the user; every item converged and landed. Naming rulings live in naming-conventions.md (s2 verb boundary, s5 decisions log, s7a.9); behavior contracts in DESIGN.md / A11Y.md.
