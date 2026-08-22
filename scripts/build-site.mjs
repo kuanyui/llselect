@@ -18,6 +18,7 @@ import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writ
 import { posix } from 'node:path'
 import { marked } from 'marked'
 import { ReflectionKind } from 'typedoc'
+import ts from 'typescript'
 import { highlightJs, highlightHtml } from '../demo/highlight.js'
 
 const REPO_URL = 'https://gitlab.com/kuanyui/llselect'
@@ -32,6 +33,20 @@ rmSync('public', { recursive: true, force: true })
 mkdirSync('public/angularjs', { recursive: true })
 cpSync('demo', 'public/demo', { recursive: true })
 cpSync('dist', 'public/dist', { recursive: true })
+// The tree-select subclass example is authored in TypeScript
+// (demo/subclass/tree-select.ts); the page needs JS. One-file transpile via
+// the TS compiler API - the type CHECK runs in `npm test`
+// (tsconfig.test.json includes demo/subclass). The source imports
+// '../../src/index.js' so the test build runs it against .build/src; the
+// served copy runs against the built library, so that one specifier is
+// rewritten.
+{
+  const treeTs = readFileSync('demo/subclass/tree-select.ts', 'utf8')
+  const treeJs = ts.transpileModule(treeTs, {
+    compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.ESNext },
+  }).outputText.replace("'../../src/index.js'", "'../../dist/index.mjs'")
+  writeFileSync('public/demo/subclass/tree-select.js', treeJs)
+}
 for (const f of ['llselect-angularjs.js', 'llselect-ui-select.js']) {
   copyFileSync(`angularjs/${f}`, `public/angularjs/${f}`)
 }

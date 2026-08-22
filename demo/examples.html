@@ -888,6 +888,28 @@
         <details class="code-toggle"><summary>code</summary><pre data-demo="14.1"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="14.1"><code></code></pre></details>
       </div>
     </article>
+
+    <article>
+      <h3>14.2 Tree multiple select: a whole variant in TypeScript</h3>
+      <p class="hint">
+        Branch rows expand / collapse via the caret and show a tri-state
+        checkbox derived from their leaves; activating a branch toggles its
+        whole subtree. The model value is the chosen leaves. Built on the
+        extension seams: typed subclass settings
+        (<code>defaultExpandDepth</code>), a cached
+        <code>getVisibleItems</code> override, <code>createItemEl</code> /
+        <code>createItemContentEl</code>, <code>onItemActivated</code>. The
+        code shown is the TypeScript source
+        (<code>subclass/tree-select.ts</code>).
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-tree"></div>
+          <div class="out" id="out-tree">chosen: []</div>
+        </div>
+        <details class="code-toggle"><summary>code (TypeScript)</summary><pre data-src-file="subclass/tree-select.ts"><code></code></pre></details>
+      </div>
+    </article>
   </section>
   </main>
   </div>

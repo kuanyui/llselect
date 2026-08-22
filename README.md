@@ -305,6 +305,8 @@ Quick test: "Am I making a new, named, reusable kind of select?"
 - No, I just want this one dropdown to look / behave some way -> **settings**.
 - Yes -> **subclass**.
 
+A complete worked subclass, in TypeScript with typed subclass settings (the class's `S` generic param): the tree multiple select in demo section 14.2 (`demo/subclass/tree-select.ts`).
+
 The capability line between the two:
 
 - **Settings stop at the content layer.** A `create*ContentElFn` fills what an element shows - nothing more.

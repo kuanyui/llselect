@@ -1055,6 +1055,38 @@ const selSubclassCheckbox = new CheckboxMultiSelect(
 selSubclassCheckbox.setItems(COUNTRIES)
 //#endregion
 
+//#region 14.2
+// A whole variant as a subclass, authored in TypeScript: the code toggle
+// shows subclass/tree-select.ts; the page runs the transpiled copy that
+// `npm run build:site` writes next to it.
+const TREE_FOODS = [
+  { text: 'Fruits', children: [
+    { text: 'Citrus', children: [{ text: 'Orange' }, { text: 'Lemon' }] },
+    { text: 'Berries', children: [{ text: 'Strawberry' }, { text: 'Blueberry' }] },
+  ] },
+  { text: 'Vegetables', children: [
+    { text: 'Leafy', children: [{ text: 'Spinach' }, { text: 'Kale' }] },
+    { text: 'Carrot' },
+    { text: 'Potato' },
+  ] },
+]
+try {
+  const { LLTreeMultipleSelect } = await import('./subclass/tree-select.js')
+  const outTree = document.getElementById('out-tree')
+  const selTree = new LLTreeMultipleSelect(document.getElementById('mount-tree'), {
+    placeholder: 'Pick foods',
+    triggerDisplay: 'tags',
+    filterable: true,
+    defaultExpandDepth: 1,
+    onChange: (chosen) => { outTree.textContent = 'chosen: ' + chosen.map((n) => n.text).join(', ') },
+  })
+  selTree.setTreeItems(TREE_FOODS)
+} catch {
+  document.getElementById('mount-tree').textContent =
+    'subclass/tree-select.js is written by `npm run build:site` - serve public/ to see this example.'
+}
+//#endregion
+
 // Self-extraction: fetch this file's source, locate `//#region NAME` ...
 // `//#endregion` blocks, and write each into the matching <code>.
 {
@@ -1064,6 +1096,17 @@ selSubclassCheckbox.setItems(COUNTRIES)
   while ((m = re.exec(src)) !== null) {
     const target = document.querySelector(`pre[data-demo="${m[1]}"] code`)
     if (target) target.innerHTML = highlightJs(m[2])
+  }
+}
+
+// Whole-file sources: <pre data-src-file="path"><code> shows a file verbatim
+// (14.2 uses it for the TypeScript source of the tree subclass).
+for (const pre of document.querySelectorAll('pre[data-src-file]')) {
+  const target = pre.querySelector('code')
+  try {
+    target.innerHTML = highlightJs(await (await fetch(pre.dataset.srcFile)).text())
+  } catch {
+    target.textContent = 'fetch failed - serve the built site (npm run build:site, then make server)'
   }
 }
 
