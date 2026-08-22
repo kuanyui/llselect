@@ -13,8 +13,11 @@
  *   the same pattern as the core's `hideChosenRows` cache. Deriving a list
  *   per call without a cache is how a subclass ruins performance.
  * - `createItemEl` / `createItemContentEl` overrides: indent by depth, a
- *   caret on branch rows (click = expand / collapse), and a tri-state
- *   checkbox derived from the leaf descendants.
+ *   caret on branch rows (click = expand / collapse), a folder icon that
+ *   follows the expand state, and a tri-state checkbox derived from the
+ *   leaf descendants. The caret / folder are MDI font icons
+ *   (`<i class="mdi mdi-...">`, loaded by the examples page) - swap for
+ *   your own icon system when copying.
  * - `onItemActivated` override: activating a branch toggles its whole leaf
  *   subtree; leaves keep the normal toggle (`super`).
  *
@@ -176,17 +179,22 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
     return el
   }
 
-  /** Caret (branch), tri-state checkbox, text. */
+  /**
+   * Branch: caret + tri-state checkbox + folder + text. Leaf: an alignment
+   * spacer + checkbox + text. The caret and the folder are MDI font icons
+   * (the examples page loads the font); the checkboxes are the library's
+   * inline SVGs.
+   */
   protected override createItemContentEl(node: LLTreeNode): HTMLElement {
     const wrap = document.createElement('span')
     wrap.style.display = 'inline-flex'
     wrap.style.alignItems = 'center'
     wrap.style.gap = '0.4rem'
     if (isBranch(node)) {
-      const caret = document.createElement('span')
-      caret.className = 'tree-caret'
+      const expanded = this.expandedBranches.has(node)
+      const caret = document.createElement('i')
+      caret.className = `tree-caret mdi ${expanded ? 'mdi-chevron-down' : 'mdi-chevron-right'}`
       caret.setAttribute('aria-hidden', 'true')
-      caret.textContent = this.expandedBranches.has(node) ? '\u25BE' : '\u25B8' // small triangle: down / right
       // The row's mousedown is default-prevented by the library (focus
       // stays on the combobox host), but click still fires. Stop it here so
       // the caret only expands / collapses, never toggles the subtree.
@@ -196,7 +204,17 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
       })
       wrap.appendChild(caret)
       wrap.appendChild(createOutlinedCheckboxSvgEl({ state: this.branchState(node) }))
+      const folder = document.createElement('i')
+      folder.className = `mdi ${expanded ? 'mdi-folder-open-outline' : 'mdi-folder-outline'}`
+      folder.setAttribute('aria-hidden', 'true')
+      wrap.appendChild(folder)
     } else {
+      // Same width as a caret, so sibling leaf and branch texts align.
+      const spacer = document.createElement('span')
+      spacer.className = 'tree-caret-spacer'
+      spacer.style.display = 'inline-block'
+      spacer.style.width = '1em'
+      wrap.appendChild(spacer)
       wrap.appendChild(createOutlinedCheckboxSvgEl({ state: this.isChosen(node) ? 'checked' : 'unchecked' }))
     }
     wrap.appendChild(document.createTextNode(node.text))

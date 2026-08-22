@@ -24,10 +24,10 @@ function fixture() {
   return { roots: [fruits, veg], fruits, citrus, orange, lemon, strawberry, veg, carrot }
 }
 
-/** Rendered row texts, carets stripped. */
+/** Rendered row texts (the caret / folder are font icons, no text). */
 function rowTexts(sel: LLTreeMultipleSelect): string[] {
   return Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.itemClass}`))
-    .map(el => (el.textContent ?? '').replace(/^[\u25BE\u25B8]/, ''))
+    .map(el => el.textContent ?? '')
 }
 
 test('defaultExpandDepth 1 (default): roots expanded, grandchildren hidden', () => {
