@@ -193,8 +193,10 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
     wrap.style.gap = '0.4rem'
     if (isBranch(node)) {
       const expanded = this.expandedBranches.has(node)
+      // One big solid triangle (the macOS-style disclosure shape); the
+      // demo CSS rotates it to point down via the row's data-tree-state.
       const caret = document.createElement('i')
-      caret.className = `tree-caret mdi ${expanded ? 'mdi-menu-down' : 'mdi-menu-right'}`
+      caret.className = 'tree-caret mdi mdi-play'
       caret.setAttribute('aria-hidden', 'true')
       // The row's mousedown is default-prevented by the library (focus
       // stays on the combobox host), but click still fires. Stop it here so
