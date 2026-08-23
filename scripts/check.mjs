@@ -165,7 +165,8 @@ function headingSlugs(relMd) {
   for (const line of readFileSync(join(root, relMd), 'utf8').split('\n')) {
     if (/^\s*(```|~~~)/.test(line)) { inFence = !inFence; continue }
     if (inFence) { continue }
-    const m = /^#{1,6}\s+(.+)$/.exec(line)
+    // Blockquoted headings (`> #### ...`) also mint anchors on GitLab/GitHub.
+    const m = /^(?:>\s*)?#{1,6}\s+(.+)$/.exec(line)
     if (!m) { continue }
     let id = m[1].trim().replace(/`/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
     const n = counts.get(id) ?? 0
