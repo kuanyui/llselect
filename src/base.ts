@@ -85,7 +85,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   4. None set: the field is unnamed. A combobox requires a name
    *      (WAI-ARIA 1.2), so one `console.warn` per page reports the first
    *      offender.
-   * - `null` (default): this rung is skipped.
+   * - `null` (default): this rung is skipped. An empty or whitespace-only
+   *   string counts as unset too - the accname computation skips a blank
+   *   `aria-label`, and so does the ladder.
    * @group Accessible name
    */
   ariaLabel: string | null
@@ -514,6 +516,15 @@ export function defaultCompareFn<T>(a: T, b: T): boolean {
   return a === b
 }
 
+/**
+ * Blank and whitespace-only name settings count as UNSET: the accessible-name
+ * computation skips an empty `aria-label` and moves on, so the ladder (and
+ * the unnamed warn) must do the same instead of treating `''` as "named".
+ */
+function blankToNull(value: string | null | undefined): string | null {
+  return value == null || value.trim() === '' ? null : value
+}
+
 /** Once-per-page guard for the unnamed-accessible-name warning. */
 let warnedUnnamedName = false
 
@@ -772,8 +783,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.settings = {
       cssClassPrefix: settings?.cssClassPrefix ?? DEFAULT_PREFIX,
       placeholder: this.explicitPlaceholder ?? uiTranslationPack.triggerPlaceholder,
-      ariaLabel: settings?.ariaLabel ?? null,
-      ariaLabelledBy: settings?.ariaLabelledBy ?? (settings?.ariaLabel == null && labelEl !== null ? labelEl.id : null),
+      ariaLabel: blankToNull(settings?.ariaLabel),
+      ariaLabelledBy: blankToNull(settings?.ariaLabelledBy) ?? (blankToNull(settings?.ariaLabel) === null && labelEl !== null ? labelEl.id : null),
       labelEl,
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
@@ -1478,8 +1489,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.syncPopupListNoResultsToDom()
     this.positioner?.reposition()
     // Clamp focused index if the visible list shrank, then re-apply visuals.
+    // The clamp seeks BACKWARD to an enabled row: landing focus on a
+    // disabled one would break the disabled-skip contract (A11Y.md).
     if (this.focusedIndex >= list.length) {
-      this.focusedIndex = list.length === 0 ? -1 : list.length - 1
+      this.focusedIndex = list.length === 0 ? -1 : this.findNextEnabledIndex(list.length - 1, -1, list)
     }
     this.syncFocusedIndexToDom()
   }
@@ -2306,7 +2319,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.recomputeFilteredItems()
     this.focusedIndex = -1
     this.renderPopupList()
-    this.setFocusedIndex(0)
+    // First ENABLED match, not blindly index 0: disabled items are skipped
+    // by keyboard navigation (A11Y.md "Disabled"), and the active option a
+    // keystroke lands on is keyboard state.
+    this.setFocusedIndex(this.findNextEnabledIndex(0, 1, this.getVisibleItems()))
   }
 
   /** Outer popup wrapper. No ARIA role; structural only. */

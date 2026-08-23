@@ -155,3 +155,16 @@ test('an unnamed widget warns once per page; any name-ladder rung stays silent',
     assert.equal(warnings.length, 1, 'a named widget must not warn')
   } finally { console.warn = orig }
 })
+
+test('a blank ariaLabel counts as unset: the ladder moves on and the warn still fires', () => {
+  const warnings: unknown[][] = []
+  const orig = console.warn
+  console.warn = (...args: unknown[]) => { warnings.push(args) }
+  try {
+    resetUnnamedNameWarning()
+    new LLSelectSingle<string>(mount(), { ariaLabel: '   ' })
+    assert.equal(warnings.length, 1, 'whitespace-only ariaLabel must not suppress the warn')
+    const labeled = new LLSelectSingle<string>(mount(), { ariaLabel: '', labelEl: document.getElementById('field-label')! })
+    assert.equal(labeled.triggerEl.getAttribute('aria-labelledby')?.includes('field-label'), true, 'a blank ariaLabel must let the labelEl rung name the field')
+  } finally { console.warn = orig }
+})
