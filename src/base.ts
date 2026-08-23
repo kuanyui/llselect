@@ -1496,6 +1496,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // disabled one would break the disabled-skip contract (A11Y.md).
     if (this.focusedIndex >= list.length) {
       this.focusedIndex = list.length === 0 ? -1 : this.findNextEnabledIndex(list.length - 1, -1, list)
+    } else if (this.focusedIndex >= 0 && this.isItemEffectivelyDisabled(list[this.focusedIndex]!)) {
+      // Same contract when the row at the focused index BECAME disabled
+      // (setItems swapped the item in place): seek backward, else forward.
+      const back = this.findNextEnabledIndex(this.focusedIndex, -1, list)
+      this.focusedIndex = back >= 0 ? back : this.findNextEnabledIndex(this.focusedIndex, 1, list)
     }
     this.syncFocusedIndexToDom()
   }

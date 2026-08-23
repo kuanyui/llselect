@@ -205,3 +205,21 @@ test('disabled: the clear button and tag remove buttons are inert', () => {
   sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
   assert.deepEqual([...sel.getChosenItems()], [], 're-enabled clear must work')
 })
+
+test('a rerender moves focus off a row that BECAME disabled in place', () => {
+  let disabled = false
+  const sel = new LLSelectSingle<string>(mount(), {
+    ariaLabel: 'x',
+    itemDisabledFn: i => disabled && i === 'b',
+  })
+  sel.setItems(['a', 'b', 'c'])
+  sel.open()
+  fireKey(sel.triggerEl, 'ArrowDown') // a -> b? initial focus is 'a'; move to 'b'
+  const focusedText = () => sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)?.textContent
+  assert.equal(focusedText(), 'b', 'precondition: focus sits on b')
+  disabled = true
+  sel.rerender()
+  assert.equal(focusedText(), 'a', 'focus must seek backward off the now-disabled row')
+  const activeId = sel.triggerEl.getAttribute('aria-activedescendant')
+  assert.equal(activeId && document.getElementById(activeId)?.textContent, 'a', 'aria-activedescendant must follow')
+})
