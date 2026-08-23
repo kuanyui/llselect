@@ -1,6 +1,6 @@
 {
   "name": "@llselect/angularjs",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "AngularJS 1.x directives for llselect: <llselect-single> / <llselect-multiple> driven by an ng-options expression, plus a bridge that accepts ui-select's markup.",
   "main": "./llselect-angularjs.js",
   "files": [
@@ -22,7 +22,7 @@
     "check:types": "tsc -p tsconfig.check.json"
   },
   "peerDependencies": {
-    "@llselect/core": "^0.0.4",
+    "@llselect/core": "^0.0.5",
     "angular": "^1.5.0"
   },
   "devDependencies": {
