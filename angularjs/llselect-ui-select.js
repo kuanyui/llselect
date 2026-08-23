@@ -51,6 +51,13 @@
         if (bridge) { bridge.releaseRowScopes() }
         super.renderPopupList()
       }
+      renderTrigger() {
+        // The trigger (single match / tag chips) is rebuilt here, so the
+        // scopes backing the PREVIOUS trigger content die now - and only now.
+        var bridge = BRIDGES.get(this)
+        if (bridge) { bridge.releaseTriggerScopes() }
+        super.renderTrigger()
+      }
       createItemEl(item, index) {
         // createItemEl calls createItemContentEl synchronously, so the index is
         // still current when our createItemContentElFn reads it. That is what
@@ -148,13 +155,20 @@
     // live there instead: templates see it, ng-model keeps the parent scope.
     var $select = { selected: isMultiple ? [] : undefined, search: '', multiple: !!isMultiple }
 
+    // Template scopes tracked PER SLOT: popup rows die on every list rebuild,
+    // but tag chips and the single-mode match live in the TRIGGER, which the
+    // core re-renders on its own schedule (every toggle). One shared array
+    // meant a popup rebuild $destroy'ed scopes still backing live trigger
+    // DOM (frozen bindings), while never-opened popups accumulated row
+    // scopes. Each slot is now released exactly when its DOM is rebuilt.
     var rowScopes = []
+    var triggerScopes = []
 
-    function newTemplateScope(item) {
+    function newTemplateScope(item, slot) {
       var s = scope.$new()
       s.$select = $select
       s[itemName] = item
-      rowScopes.push(s)
+      ;(slot === 'trigger' ? triggerScopes : rowScopes).push(s)
       return s
     }
 
@@ -179,6 +193,20 @@
         for (var i = 0; i < rowScopes.length; i++) { rowScopes[i].$destroy() }
         rowScopes.length = 0
       },
+      releaseTriggerScopes: function () {
+        for (var i = 0; i < triggerScopes.length; i++) { triggerScopes[i].$destroy() }
+        triggerScopes.length = 0
+      },
+    }
+
+    /**
+     * on-select / on-remove run AFTER $setViewValue's self-applied digest has
+     * finished, so a plain call would leave anything the app expression
+     * writes to scope invisible until some unrelated digest. Real ui-select
+     * fires them inside ng-click's apply; mirror that phase-safely.
+     */
+    function applyOnScope(fn) {
+      if ($rootScope.$$phase) { fn() } else { scope.$apply(fn) }
     }
 
     var onSelectFn = attrs.onSelect ? $parse(attrs.onSelect) : null
@@ -231,7 +259,7 @@
         // query (clearing, close-resets), so the stale query would keep
         // highlighting. Sync from the source of truth at render time.
         $select.search = sel ? sel.getFilterQuery() : ''
-        var rowScope = newTemplateScope(item)
+        var rowScope = newTemplateScope(item, 'row')
         rowScope.$index = bridge.rowIndex
         return compileSlot(slots.choicesHtml, rowScope)
       },
@@ -246,7 +274,14 @@
     // mode (its match-multiple templates ignore allow-clear; default false,
     // uiSelectMatchDirective.js:25). llselect's multiple has the concept, so
     // the attribute is honored in both modes. See API.md "Deliberate deviations".
-    if (slots.matchAttrs['allow-clear']) { settings.clearable = true }
+    // ui-select's own parse (uiSelectMatchDirective.js:25): a bare attribute
+    // (empty value) means true, otherwise the string must be exactly 'true'
+    // case-insensitively. A raw truthy check inverted both edges
+    // (allow-clear="false" enabled it, bare allow-clear disabled it).
+    var allowClear = slots.matchAttrs['allow-clear']
+    if (allowClear !== undefined) {
+      settings.clearable = allowClear === '' ? true : String(allowClear).toLowerCase() === 'true'
+    }
     if (settings.filterable) { settings.filterFn = filterFn }
     // Batteries-included default arrow: every ui-select theme renders a caret,
     // so a bare trigger would read as broken to a migrating call site.
@@ -271,7 +306,7 @@
       // content, not the whole trigger.
       if (slots.matchHtml) {
         settings.createTagContentElFn = function (item) {
-          var tagScope = newTemplateScope(item)
+          var tagScope = newTemplateScope(item, 'trigger')
           tagScope.$item = item
           return compileSlot(slots.matchHtml, tagScope)
         }
@@ -280,7 +315,7 @@
         $select.selected = items.slice()
         if (gate.suppressed) { return }
         ngModelCtrl.$setViewValue(items.map(toModel))
-        fireSelectRemove(items, previous)
+        applyOnScope(function () { fireSelectRemove(items, previous) })
       }
       sel = new CompatMultiple(element[0], settings)
       ngModelCtrl.$isEmpty = function (value) { return !value || value.length === 0 }
@@ -289,7 +324,7 @@
         settings.createTriggerContentElFn = function (ctx) {
           if (ctx.chosenItem === undefined) { return null }
           $select.selected = ctx.chosenItem
-          return compileSlot(slots.matchHtml, newTemplateScope(ctx.chosenItem))
+          return compileSlot(slots.matchHtml, newTemplateScope(ctx.chosenItem, 'trigger'))
         }
       }
       settings.onChange = function (item) {
@@ -297,7 +332,7 @@
         if (gate.suppressed) { return }
         ngModelCtrl.$setViewValue(item === undefined ? null : toModel(item))
         if (onSelectFn && item !== undefined) {
-          onSelectFn(scope, { $item: item, $model: toModel(item), $select: $select })
+          applyOnScope(function () { onSelectFn(scope, { $item: item, $model: toModel(item), $select: $select }) })
         }
       }
       sel = new CompatSingle(element[0], settings)
@@ -359,6 +394,7 @@
 
     scope.$on('$destroy', function () {
       bridge.releaseRowScopes()
+      bridge.releaseTriggerScopes()
       sel.destroy()
     })
   }
