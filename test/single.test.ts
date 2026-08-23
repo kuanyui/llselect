@@ -92,6 +92,25 @@ test('setItems drops chosen if no longer present, fires onChange(undefined)', ()
   assert.deepEqual(fired, ['a', undefined])
 })
 
+test('setItems adopts a compareFn-equal replacement object; trigger refreshes, no onChange', () => {
+  interface Item { id: number; name: string }
+  const fired: Array<Item | undefined> = []
+  const sel = new LLSelectSingle<Item>(mount(), {
+    ariaLabel: 'x',
+    compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: (i) => i.name,
+    onChange: v => fired.push(v),
+  })
+  sel.setItems([{ id: 1, name: 'Alice' }])
+  sel.setChosenItem({ id: 1, name: 'Alice' })
+  fired.length = 0
+  const alicia = { id: 1, name: 'Alicia' }
+  sel.setItems([alicia])
+  assert.equal(sel.getChosenItem(), alicia, 'the chosen reference must be the new list object')
+  assert.equal(sel.triggerEl.textContent?.includes('Alicia'), true, 'the trigger must show the fresh fields')
+  assert.deepEqual(fired, [], 'adoption is not a logical change')
+})
+
 test('setItems keeps chosen if still present', () => {
   const fired: Array<string | undefined> = []
   const sel = new LLSelectSingle<string>(mount(), { onChange: v => fired.push(v) })

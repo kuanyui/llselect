@@ -198,6 +198,26 @@ test('setChosenItems dedups: duplicates collapse to the first occurrence', () =>
   assert.deepEqual([...sel.getChosenItems()], ['b'], 'one toggle must fully unchoose a')
 })
 
+test('setItems adopts compareFn-equal replacement objects; tags refresh, no onChange', () => {
+  interface Item { id: number; name: string }
+  const fired: Item[][] = []
+  const sel = new LLSelectMultiple<Item>(mount(), {
+    ariaLabel: 'x',
+    compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: (i) => i.name,
+    triggerDisplay: 'tags',
+    onChange: v => fired.push(v.slice()),
+  })
+  sel.setItems([{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }])
+  sel.setChosenItems([{ id: 1, name: 'Alice' }])
+  fired.length = 0
+  const alicia = { id: 1, name: 'Alicia' }
+  sel.setItems([alicia, { id: 2, name: 'Bob' }])
+  assert.equal(sel.getChosenItems()[0], alicia, 'the chosen reference must be the new list object')
+  assert.equal(sel.triggerEl.textContent?.includes('Alicia'), true, 'the tag must show the fresh fields')
+  assert.deepEqual(fired, [], 'adoption is not a logical change')
+})
+
 test('setChosenItems dedups via a custom compareFn, not identity', () => {
   const sel = new LLSelectMultiple<{ id: number }>(mount(), { compareFn: (a, b) => a.id === b.id })
   sel.setItems([{ id: 1 }, { id: 2 }])

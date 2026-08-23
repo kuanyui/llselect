@@ -664,18 +664,36 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Drop chosen entries that disappeared from the new items list.
+   * Reconcile the chosen entries with the new list after `setItems`.
+   * - Entries the list no longer holds (by `compareFn`) are dropped and
+   *   `onChange` fires for the drop.
+   * - Surviving entries adopt the list's own objects when a compareFn-equal
+   *   but DIFFERENT object arrived (`track by` style reload: same key, fresh
+   *   fields), and the trigger re-renders. Adoption alone is not a logical
+   *   change, so it does not fire `onChange`.
    * @group Subclassing: reactions
    */
   protected override onItemsChanged(): void {
     const previous = this.chosenItems
-    const filtered = previous.filter(c =>
-      this.items.some(item => this.settings.compareFn(item, c))
-    )
-    if (filtered.length === previous.length) { return }
-    this.chosenItems = filtered
-    this.renderTrigger()
-    this.fireChange(previous)
+    let adopted = false
+    const reconciled: T[] = []
+    for (const c of previous) {
+      const idx = this.items.findIndex(item => this.settings.compareFn(item, c))
+      if (idx < 0) { continue }
+      const canonical = this.items[idx]!
+      if (canonical !== c) { adopted = true }
+      reconciled.push(canonical)
+    }
+    if (reconciled.length !== previous.length) {
+      this.chosenItems = reconciled
+      this.renderTrigger()
+      this.fireChange(previous)
+      return
+    }
+    if (adopted) {
+      this.chosenItems = reconciled
+      this.renderTrigger()
+    }
   }
 
   /**
