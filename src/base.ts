@@ -115,11 +115,26 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   createTriggerArrowContentElFn: ((state: { isOpened: boolean }) => HTMLElement | SVGElement | null) | null
   /**
    * Whether the trigger shows a clear (x) button that empties the selection.
-   * `false` (default). The button sits in its OWN trigger slot (like the arrow,
-   * so it never collides with `createTriggerContentElFn`), is `tabindex="-1"` with
-   * an `aria-label`, and is hidden via `data-empty` when nothing is selected.
-   * Clearing goes through the normal setters, so `onChange` fires with the empty
-   * value (`undefined` / `[]`).
+   * - Default `false`.
+   * - Clearing sets the empty value: `undefined` for a single select, `[]`
+   *   for a multiple. It goes through the normal setters, so `onChange`
+   *   fires with that empty value. There is no separate clear event.
+   * - The empty value is not configurable, and no library makes it so:
+   *   "nothing chosen" already exists before the first choice, so the value
+   *   types carry `undefined` either way.
+   * - If your model is a plain type like `string` and must never hold
+   *   `undefined`, pick one of these:
+   *   - Add a real "none" item (for example `''` shown as "(none)") and skip
+   *     `clearable`. The model then stays `string` after the first choice,
+   *     exactly like a native `<select>` with a placeholder option.
+   *   - Keep `clearable` and coerce in `onChange`: `item ?? ''`.
+   * - "Clear" means back to empty and the placeholder, never "back to some
+   *   default option". If you want a default instead, set it yourself in
+   *   `onChange`.
+   * - The button sits in its OWN trigger slot (like the arrow, so it never
+   *   collides with `createTriggerContentElFn`), is `tabindex="-1"`, and
+   *   carries an `aria-label`. The theme hides it via `data-empty` while
+   *   nothing is selected.
    * @group Trigger
    */
   clearable: boolean

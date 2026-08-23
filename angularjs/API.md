@@ -122,6 +122,9 @@ $scope.ifaceMatch = function (i, query) {
 
 **Expression** -> `clearable`. Shows the trigger's clear (x) button.
 
+- Clearing writes the empty value into `ng-model`: `undefined` (single) / `[]` (multiple), through the normal `ng-change` pipeline.
+- If the model must stay a plain `string`, add a real "none" item to `ll-options` instead of enabling this - the same pattern as a native `<select>` placeholder option.
+
 ### `ll-popup-width-policy`
 
 **Expression** -> `popupWidthPolicy`. `'fit-content'` (llselect's default) / `'match-trigger'`.
