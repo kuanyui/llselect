@@ -68,7 +68,7 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 2. Performance
    - Create minimal elements on DOM when instantiating to optimize the page loading latency.
    - The DOM of popup and candidates are lazy-rendering, and remove unneeded element from DOM when unneeded to minimize memory footprints.
-   - Mutate minimal DOM if possible. Choosing candidate in popup list mutates only the DOM of the chosen candidate, instead of rebuilding the whole list.
+   - Mutate minimal DOM if possible. Toggling a candidate in the popup list replaces only the affected candidate rows (plus the trigger it must refresh), instead of rebuilding the whole list.
 3. Flexible
    - Highly customizable: HTML templates of select itself, popup, candidates list, candidate row, arrow icon, ...etc.
    - Easy to integrate into an existing project / library / style.
