@@ -13,6 +13,8 @@ Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex
   - Verified: llselect-angularjs async test (with and without `select as`); ui bridge async tests (an object preset renders from boot; an alias key resolves on arrival).
   - Q: The panel split 2 REJECT / 1 NEEDS-HUMAN-DECISION / 1 CERTAIN-BUG - what settled it?
     - A: A failing test, not votes: the probe showed 'Please select' where 'Apple' was expected, proving the CERTAIN-BUG vote's mechanism right. When reviewers disagree about a claimed runtime behavior, write the probe before arguing.
+  - Q: Without `track by`, reloading an object collection leaves the model's old object and the list's new equal object as two DISTINCT items (stale chip, row relisted, a second click can duplicate the model entry) - is the always-`$render` fix wrong?
+    - A: No - measured against real ui-select: it behaves identically (its selected tracking is identity-based without `track by`). Parity is the bridge's contract; `track by` is the stated requirement for object items (API.md / SPEC.md), and a test pins the behavior.
   - Q: Codex proposed the wrappers write back to ng-model only when `meta.source === 'user'` - why was that rejected (4/4)?
     - A: App code calling `instance().setChosenItems()` legitimately expects the model to sync. The write-back gate already suppresses the wrapper's own echo, which is the actual hazard; gating on 'user' would break direct API use for no gain.
 - [x] **[HIGH-54] - ui bridge template scopes leaked**
@@ -22,8 +24,8 @@ Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex
   - Verified: scope-count regression test (repeated toggles hold the total scope count flat); SPEC.md invariant updated.
 - [x] **[MEDIUM-55] - keyboard focus could land on, or stay on, a disabled row**
   - Symptom: three holes against A11Y.md "disabled rows are skipped": a filter keystroke focused index 0 even when disabled; the shrink clamp landed on a disabled last row; a rerender kept focus on a row that BECAME disabled in place.
-  - Fix: all three routes go through `findNextEnabledIndex` (keystroke forward from 0; clamp backward; in-place backward then forward).
-  - Verified: filterable + disabled tests; the clamp test reaches the clamp via `setItems` while open.
+  - Fix: all three routes go through `findNextEnabledIndex` (keystroke forward from 0; clamp backward; in-place backward first, then the choose-all leading row when one is rendered - it is the option above the first item - then forward).
+  - Verified: filterable + disabled tests; the clamp test reaches the clamp via `setItems` while open; select-all test pins the leading-row hand-back.
   - Q: The first version of the clamp test was green before the fix too - why?
     - A: The filter path resets `focusedIndex` before rendering, so typing can never reach the clamp; only `setItems` while open can. A pin must FAIL on the pre-fix code - run it against the old code once before trusting it.
 - [x] **[MEDIUM-56] - bridge reused a stale filter result when the collection changed**
@@ -65,7 +67,7 @@ Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex
   - Q: How did it slip in?
     - A: One directive mixing Literal and expression attributes invites exactly this. Caught by the mandated re-review of the fixes - which is why that step exists.
 - [x] **[DOCUMENTATION-64] - doc drift left behind by the fixes**
-  - Symptom: the provider `arrow` docstring and the API.md config example still described `null` as "the theme draws it" (it is the package chevron default; `'none'` is theme-drawn); `createTriggerContentElFn`'s docstring said the setting loses to a subclass override (it wins - DESIGN.md "Customization model" is the authority); the `changeSource` docstring still said the source stays 'user' for the whole gesture, though the first `onChange` now resets it; API.md's filter-cost bullet claimed "evaluates ONCE per typed query" while the items watcher still evaluates the full expression per digest.
+  - Symptom: the provider `arrow` docstring and the API.md config example still described `null` as "the theme draws it" (it is the package chevron default; `'none'` is theme-drawn); `createTriggerContentElFn`'s docstring claimed the SETTING wins over a subclass override; DESIGN.md "Customization model" rules the opposite (override = replace, the override wins), and the docstring now says so; the `changeSource` docstring still said the source stays 'user' for the whole gesture, though the first `onChange` now resets it; API.md's filter-cost bullet claimed "evaluates ONCE per typed query" while the items watcher still evaluates the full expression per digest.
   - Fix: all corrected in place.
 - [x] **[DOCUMENTATION-65] - README regrown claims and broken links**
   - Symptom: wording resolved under DOCUMENTATION-22 ("Blazing fast", overbroad minimal-DOM claims) had partially survived; both Home links rendered with a stray `]`; the selection-perf bullet claimed only the chosen row mutates (single refreshes two rows; multiple also rebuilds the trigger and the choose-all row).
@@ -82,23 +84,23 @@ Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex
 Open items from the panel, awaiting the user's ruling:
 
 - [ ] **[MEDIUM-68] - mousedown on the popup's non-option areas closes the popup or strands the keyboard**
-  - Symptom: mousedown on the no-results message / popup padding blurs the focus host, so focusout closes the popup; mousedown on the list element itself focuses a `tabindex="-1"` element with no keydown handler - the keyboard goes dead. src/base.ts:896 (guard covers popupListEl descendants only).
+  - Symptom: mousedown on the no-results message / popup padding blurs the focus host, so focusout closes the popup; mousedown on the list element itself focuses a `tabindex="-1"` element with no keydown handler - the keyboard goes dead. src/base.ts:910 (guard covers popupListEl descendants only).
   - Panel: 4x NEEDS-HUMAN-DECISION - a fix touches the pinned scrollbar-drag behavior (test/focus.test.ts).
   - Proposed: preventDefault on the non-option areas (padding, the no-results element), keyboard forwarding on the list element; real-browser scrollbar pass before resolving.
 - [ ] **[QUALITY-69] - $eval'd enum attributes fall back silently on the likeliest typo**
-  - Symptom: `ll-trigger-display="tags"` (unquoted) evaluates to undefined and silently becomes 'count'. angularjs/llselect-angularjs.js:164.
+  - Symptom: `ll-trigger-display="tags"` (unquoted) evaluates to undefined and silently becomes 'count'. angularjs/llselect-angularjs.js:377.
   - Proposed: one `console.warn` when a non-empty attribute evaluates to undefined; never throw.
 - [ ] **[MEDIUM-70] - ui bridge has no ariaLabelledBy / labelEl path**
-  - Symptom: only `aria-label` / `title` map to a name. angularjs/llselect-ui-select.js:244.
+  - Symptom: only `aria-label` / `title` map to a name. angularjs/llselect-ui-select.js:268.
   - Proposed: forward the host's `aria-labelledby` attribute verbatim; no new vocabulary.
 - [ ] **[MEDIUM-71] - the no-results live region is rewritten identically on every keystroke**
-  - Symptom: `role="status"` content re-set while visible risks repeated announcements (AT-dependent; A11Y.md says announced once on appearance). src/base.ts:2349.
+  - Symptom: `role="status"` content re-set while visible risks repeated announcements (AT-dependent; A11Y.md says announced once on appearance). src/base.ts:2384.
   - Proposed: skip the write when the rendered text is unchanged.
 - [ ] **[PERFORMANCE-72] - `isChosen` is a linear scan per rendered row**
-  - Symptom: multi popup render is O(visible x chosen); `setChosenItems` full-rerenders even though selection cannot change grouping. src/multiple.ts:262.
+  - Symptom: multi popup render is O(visible x chosen); `setChosenItems` full-rerenders even though selection cannot change grouping. src/multiple.ts:264.
   - Proposed: a chosenSet fast path mirroring PERFORMANCE-31 plus a chosen-only refresh; needs its own design wave (cache invalidation).
 - [ ] **[PERFORMANCE-73] - bridge items watcher re-runs the whole `| filter:` chain every digest**
-  - Symptom: the watched expression retains `| filter: $select.search` with an empty query, so filterFilter deep-compares every item per digest per widget. angularjs/llselect-ui-select.js:396. The overstated doc claim is already corrected (DOCUMENTATION-64).
+  - Symptom: the watched expression retains `| filter: $select.search` with an empty query, so filterFilter deep-compares every item per digest per widget. angularjs/llselect-ui-select.js:437. The overstated doc claim is already corrected (DOCUMENTATION-64).
   - Proposed: watch the bare source by splitting the filters off (ui-select's own parser does this); behavior change, so it awaits the ruling.
 - [ ] **[QUALITY-74] - the icon type trio lacks the LLSelect prefix**
   - Symptom: `IconOptions` / `CheckboxState` / `CheckboxIconOptions` are unprefixed exports; `WidthPolicy` / `Placement` stay as-is per the recorded naming ruling.
@@ -108,13 +110,13 @@ Open items from the panel, awaiting the user's ruling:
   - Panel: split 2 CERTAIN-BUG / 2 REJECT (the proposed labelEl remedy arguably makes the name worse).
   - Proposed: align the spoken name with the visible text; direction open.
 - [ ] **[MEDIUM-76] - hosted inside an app's shadow root, option clicks read as outside clicks**
-  - Symptom: the document-level outside handler uses `rootEl.contains(ev.target)`; composed events retarget to the shadow host, so clicks inside close the popup. llselect itself uses NO shadow DOM - this is about being hosted in one. src/base.ts:1957.
+  - Symptom: the document-level outside handlers use `rootEl.contains(ev.target)`; composed events retarget to the shadow host, so clicks inside close the popup. llselect itself uses NO shadow DOM - this is about being hosted in one. src/base.ts:1986.
   - Proposed: `ev.composedPath?.()[0] ?? ev.target` in the document-level handlers; the API is available across the support floor.
 - [ ] **[MEDIUM-77] - duplicate compareFn-equal items get stale selection DOM**
-  - Symptom: partial updates use `findIndex`, so only the first equivalent row's `aria-selected` refreshes. src/base.ts:1625.
+  - Symptom: partial updates use `findIndex`, so only the first equivalent row's `aria-selected` refreshes. src/base.ts:1632.
   - Proposed: document "items must be unique under compareFn" (plus a dev warn) rather than supporting duplicates.
 - [ ] **[MEDIUM-78] - constructors invoke overridable render before subclass fields initialize**
-  - Symptom: a subclass override of a render seam that reads subclass fields runs during `super()`, before the subclass's field initializers (classic virtual-call-in-constructor). src/single.ts:97, src/multiple.ts:214.
+  - Symptom: a subclass override of a render seam that reads subclass fields runs during `super()`, before the subclass's field initializers (classic virtual-call-in-constructor). src/single.ts:97, src/multiple.ts:216.
   - Proposed: document the constraint on the seams ("tolerate defaults during construction, or rerender() in your own constructor"); two-phase init deferred as a pre-1.0 question.
 
 ## review (user-reported, Firefox mass-build gap)
