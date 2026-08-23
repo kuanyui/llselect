@@ -725,6 +725,30 @@ selDisFocusable.setDisabled(true)
 selDisFocusable.triggerEl.setAttribute('title', 'Disabled, but Tab can still reach me')
 //#endregion
 
+//#region 9.3
+// Disabled means inert EVERYWHERE: open, keyboard, the clear button, and
+// every tag's x are all guarded. Chips stay visible in the closed trigger,
+// so their buttons are reachable while disabled - and must do nothing.
+const outDisabledTags = document.getElementById('out-disabled-tags')
+const selDisabledTags = new LLSelectMultiple(
+  document.getElementById('mount-disabled-tags'),
+  {
+    ariaLabel: 'Fruits',
+    triggerDisplay: 'tags',
+    clearable: true,
+    onChange: (chosen) => { outDisabledTags.textContent = 'chosen: ' + (chosen.join(', ') || '(none)') },
+  }
+)
+selDisabledTags.setItems(['Apple', 'Banana', 'Cherry', 'Durian'])
+selDisabledTags.setChosenItems(['Apple', 'Banana'])
+const btnDisabledTags = document.getElementById('btn-toggle-disabled-tags')
+btnDisabledTags.addEventListener('click', () => {
+  const next = !selDisabledTags.isDisabled()
+  selDisabledTags.setDisabled(next)
+  btnDisabledTags.textContent = next ? 'Enable' : 'Disable'
+})
+//#endregion
+
 //#region 10.1
 // Optgroup: flat items + itemToGroupKeyFn. Items are pre-sorted by category;
 // contiguous same-key items form one group. The key is the identity; the display text
