@@ -34,7 +34,7 @@
    * rebuilds the whole list in renderPopupList (open / filter / setItems /
    * rerender) - old scopes die wholesale there - and repaints ONE row in
    * replacePopupListItemElInDom (multi toggle), where only the replaced row's
-   * scope dies (swept by element disconnection). Subclassing is the sanctioned
+   * scope dies (released once its element is out of the DOM). Subclassing is the sanctioned
    * way to extend llselect for a wrapper (DESIGN.md, "Customization model");
    * the bridge hangs off a WeakMap because it cannot exist before super() runs.
    */
@@ -69,7 +69,7 @@
       }
       replacePopupListItemElInDom(item) {
         // The single-row repaint path (multi toggle) bypasses renderPopupList,
-        // so the replaced row's scope must be swept here or it leaks per toggle.
+        // so the replaced row's scope must be released here or it leaks per toggle.
         super.replacePopupListItemElInDom(item)
         var bridge = BRIDGES.get(this)
         if (bridge) { bridge.releaseDetachedRowScopes() }
@@ -211,8 +211,8 @@
         triggerScopes.length = 0
       },
       // After a partial row replacement (multi toggle repaints ONE row), the
-      // old row's scope backs disconnected DOM. Full rebuilds go through
-      // releaseRowScopes; this sweeps the replaced-in-place leftovers.
+      // old row's scope backs DOM that is no longer connected. Full rebuilds
+      // go through releaseRowScopes; this releases only those replaced rows.
       releaseDetachedRowScopes: function () {
         for (var i = rowScopes.length - 1; i >= 0; i--) {
           if (!rowScopes[i].el.isConnected) {
@@ -387,9 +387,10 @@
             .filter(function (i) { return i !== undefined })
           $select.selected = chosen
           sel.setChosenItems(chosen)
-          // Re-sync to what the core actually holds: setItems adopts the
-          // list's own object for a track-by-equal reload (fresh fields),
-          // and the templates must read the adopted one, not our stale input.
+          // Re-sync to what the core actually holds: on a track-by reload
+          // (same key, fresh fields) the core swaps a chosen reference to the
+          // list's own object, and the templates must read that object, not
+          // our stale input.
           $select.selected = sel.getChosenItems().slice()
           return
         }

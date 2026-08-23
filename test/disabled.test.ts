@@ -190,7 +190,7 @@ test('unchooseAll preserves disabled-chosen items', () => {
   assert.deepEqual([...sel.getChosenItems()], ['b']) // 'a' cleared, disabled 'b' kept
 })
 
-test('disabled: the clear button and tag remove buttons are inert', () => {
+test('disabled: the clear button and tag remove buttons do nothing', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     ariaLabel: 'x', clearable: true, triggerDisplay: 'tags',
   })

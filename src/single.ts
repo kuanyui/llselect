@@ -204,13 +204,13 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   }
 
   /**
-   * Reconcile the chosen item with the new list after `setItems`.
+   * Re-match the chosen item against the new list after `setItems`.
    * - If the list no longer holds it (by `compareFn`), it is dropped and
    *   `onChange` fires.
    * - If the list holds a compareFn-equal but DIFFERENT object (`track by`
-   *   style reload: same key, fresh fields), that object is adopted and the
-   *   trigger re-renders. The logical value did not change, so `onChange`
-   *   does not fire.
+   *   style reload: same key, fresh fields), the stored reference is swapped
+   *   to the list's object and the trigger re-renders. The logical value did
+   *   not change, so `onChange` does not fire.
    * @group Subclassing: reactions
    */
   protected override onItemsChanged(): void {
@@ -223,9 +223,9 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
       this.fireChange(previous)
       return
     }
-    const canonical = this.items[idx]!
-    if (canonical !== previous) {
-      this.chosenItem = canonical
+    const matched = this.items[idx]!
+    if (matched !== previous) {
+      this.chosenItem = matched
       this.renderTrigger()
     }
   }

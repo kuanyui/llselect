@@ -515,7 +515,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
-      // Same inertness rule as the clear button: tag chips sit in the
+      // Same disabled guard as the clear button: tag chips sit in the
       // trigger, reachable while the control is disabled.
       if (this.isDisabled()) { return }
       this.withUserChangeSource(() => this.toggleItem(item))
@@ -664,34 +664,34 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Reconcile the chosen entries with the new list after `setItems`.
+   * Re-match the chosen entries against the new list after `setItems`.
    * - Entries the list no longer holds (by `compareFn`) are dropped and
    *   `onChange` fires for the drop.
-   * - Surviving entries adopt the list's own objects when a compareFn-equal
-   *   but DIFFERENT object arrived (`track by` style reload: same key, fresh
-   *   fields), and the trigger re-renders. Adoption alone is not a logical
-   *   change, so it does not fire `onChange`.
+   * - When the list holds a compareFn-equal but DIFFERENT object (`track by`
+   *   style reload: same key, fresh fields), the stored reference is swapped
+   *   to the list's object and the trigger re-renders. A reference swap is
+   *   not a logical change, so it does not fire `onChange`.
    * @group Subclassing: reactions
    */
   protected override onItemsChanged(): void {
     const previous = this.chosenItems
-    let adopted = false
-    const reconciled: T[] = []
+    let swapped = false
+    const nextChosen: T[] = []
     for (const c of previous) {
       const idx = this.items.findIndex(item => this.settings.compareFn(item, c))
       if (idx < 0) { continue }
-      const canonical = this.items[idx]!
-      if (canonical !== c) { adopted = true }
-      reconciled.push(canonical)
+      const matched = this.items[idx]!
+      if (matched !== c) { swapped = true }
+      nextChosen.push(matched)
     }
-    if (reconciled.length !== previous.length) {
-      this.chosenItems = reconciled
+    if (nextChosen.length !== previous.length) {
+      this.chosenItems = nextChosen
       this.renderTrigger()
       this.fireChange(previous)
       return
     }
-    if (adopted) {
-      this.chosenItems = reconciled
+    if (swapped) {
+      this.chosenItems = nextChosen
       this.renderTrigger()
     }
   }

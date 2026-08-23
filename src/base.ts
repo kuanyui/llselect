@@ -2171,7 +2171,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
-      // A disabled control must be inert everywhere, and the clear button is
+      // A disabled control must not change value through ANY path, and the clear button is
       // reachable while closed - open() and keydown are already guarded.
       if (this.isDisabled()) { return }
       this.withUserChangeSource(() => this.clearSelection())

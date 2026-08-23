@@ -22,7 +22,7 @@
  * - `onItemActivated` override: activating a branch toggles its whole leaf
  *   subtree; leaves keep the normal toggle (`super`).
  * - Leaves-only model contract: `setChosenItems` drops branches (the one
- *   door raw arrays come through), and `getVisibleEnabledItems` +
+ *   entry point every raw array passes through), and `getVisibleEnabledItems` +
  *   `toggleAll` overrides keep the bulk ops deciding over leaves only.
  *
  * Deliberate demo cuts, so the example stays readable:
@@ -173,8 +173,8 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
   }
 
   /**
-   * The model holds LEAVES only. Every raw array comes through this door,
-   * so branch nodes are dropped here.
+   * The model holds LEAVES only. Every raw array passes through this one
+   * entry point, so branch nodes are dropped here.
    */
   public override setChosenItems(items: readonly LLTreeNode[]): void {
     super.setChosenItems(items.filter(node => !isBranch(node)))

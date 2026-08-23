@@ -726,7 +726,7 @@ selDisFocusable.triggerEl.setAttribute('title', 'Disabled, but Tab can still rea
 //#endregion
 
 //#region 9.3
-// Disabled means inert EVERYWHERE: open, keyboard, the clear button, and
+// Disabled blocks EVERY entrance: open, keyboard, the clear button, and
 // every tag's x are all guarded. Chips stay visible in the closed trigger,
 // so their buttons are reachable while disabled - and must do nothing.
 const outDisabledTags = document.getElementById('out-disabled-tags')

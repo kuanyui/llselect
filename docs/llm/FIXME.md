@@ -4,7 +4,7 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (five-model panel over two independent full-repo reviews)
 
-Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex gpt-5.6-sol at max effort). Convergent findings were fixed outright. Single-source findings went to a five-model panel (Fable 5, Opus 5, Opus 4.8, Codex Sol, Codex ChatGPT 5.5) voting CERTAIN-BUG / NEEDS-HUMAN-DECISION / REJECT per finding. The fix waves were then re-reviewed by both original reviewers, whose findings on the fixes were fixed in turn. Everything else in the waves was explicitly judged sound by both re-reviewers. Open entries below await the user's ruling.
+Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex gpt-5.6-sol at max effort). Convergent findings were fixed outright. Single-source findings went to a five-model panel (Fable 5, Opus 5, Opus 4.8, Codex Sol, Codex ChatGPT 5.5) voting CERTAIN-BUG / NEEDS-HUMAN-DECISION / REJECT per finding. Each round of fixes was then re-reviewed, and findings on the fixes were fixed in turn. Everything else in those rounds was explicitly judged sound by the re-reviewers. Open entries below await the user's ruling.
 
 - [x] **[HIGH-53] - an async preset ng-model never resolves once items arrive**
   - Symptom: a preset model with an initially empty (async) list stays on the placeholder forever, in all three directives.
@@ -18,7 +18,7 @@ Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex
 - [x] **[HIGH-54] - ui bridge template scopes leaked**
   - Symptom: compiled template scopes accumulated: popup rebuilds leaked row scopes, trigger rebuilds leaked match / tag scopes, and single-row repaints (multi toggle with `remove-selected="false"`) leaked one scope per toggle even after the first fix.
   - Cause: one shared array released only in `renderPopupList`; the trigger and the partial-row path rebuild their DOM on their own schedules.
-  - Fix: per-slot tracking (row vs trigger), each released where its slot's DOM dies; entries carry their element, and `replacePopupListItemElInDom` / `close` sweep scopes whose element is disconnected.
+  - Fix: per-slot tracking (row vs trigger), each released where its slot's DOM dies; entries carry their element, and `replacePopupListItemElInDom` / `close` release the scopes whose element is no longer in the DOM.
   - Verified: scope-count regression test (repeated toggles hold the total scope count flat); SPEC.md invariant updated.
 - [x] **[MEDIUM-55] - keyboard focus could land on, or stay on, a disabled row**
   - Symptom: three holes against A11Y.md "disabled rows are skipped": a filter keystroke focused index 0 even when disabled; the shrink clamp landed on a disabled last row; a rerender kept focus on a row that BECAME disabled in place.
@@ -33,19 +33,19 @@ Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex
   - Verified: bridge test adds a matching item mid-query.
 - [x] **[MEDIUM-57] - a track-by reload left stale chosen objects showing**
   - Symptom: replacing `{id:1, name:'Alice'}` with `{id:1, name:'Alicia'}` under a key `compareFn` left the trigger showing Alice.
-  - Cause: `setChosenItem(s)` short-circuits on compareFn equality, so re-resolution kept the old reference; the ui bridge additionally overwrote `$select.selected` with its stale input after the core had adopted.
-  - Fix: core `setItems` adopts the list's own object when a compareFn-equal but DIFFERENT one arrives (trigger re-renders; no `onChange` - the logical value did not change, matching ngOptions, which never rewrites the model). The ui bridge re-syncs `$select.selected` from the core after `$render`.
-  - Verified: core single + multiple adoption tests; bridge track-by rename test.
+  - Cause: `setChosenItem(s)` short-circuits on compareFn equality, so re-resolution kept the old reference; the ui bridge additionally overwrote `$select.selected` with its stale input after the core had already swapped.
+  - Fix: core `setItems` swaps the stored reference to the list's own object when a compareFn-equal but DIFFERENT one arrives (trigger re-renders; no `onChange` - the logical value did not change, matching ngOptions, which never rewrites the model). The ui bridge re-syncs `$select.selected` from the core after `$render`.
+  - Verified: core single + multiple reference-swap tests; bridge track-by rename test.
 - [x] **[MEDIUM-58] - tree demo: inherited bulk ops could break the leaves-only model**
-  - Symptom: `setChosenItems([branch])` put branches in the model; the first fix (filter branches there) then made `toggleAll` and the choose-all row ONE-WAY - branches can never be chosen, so their all-chosen checks never held and the row's counts were wrong.
-  - Fix: `setChosenItems` drops branches (the one raw-array door); a new protected `getVisibleEnabledItems` seam in `LLSelectMultiple` - the choose-all row and `toggleAllVisible` are documented as acting on the SAME set and now share the one method - is narrowed to leaves, plus a `toggleAll` override.
+  - Symptom: `setChosenItems([branch])` put branches in the model; the first fix (filter branches there) then left `toggleAll` and the choose-all row able only to choose, never to clear - branches can never be chosen, so their all-chosen checks never held - and the row's counts were wrong.
+  - Fix: `setChosenItems` drops branches (the one entry point every raw array passes through); a new protected `getVisibleEnabledItems` seam in `LLSelectMultiple` - the choose-all row and `toggleAllVisible` are documented as acting on the SAME set and now share the one method - is narrowed to leaves, plus a `toggleAll` override.
   - Verified: leaves-only bulk test; `toggleAll` round-trip; choose-all row counts / tri-state / click test.
   - Q: Why a core seam instead of overriding `createPopupListLeadingRowEl` in the demo?
     - A: Without a shared method a subclass can only keep the row and `toggleAllVisible` in agreement by duplicating the whole row builder. The seam is the smallest honest fix and follows the existing create*/get* seam architecture.
 - [x] **[MEDIUM-59] - a disabled control's embedded buttons stayed live**
   - Symptom: with `setDisabled(true)`, the tag remove buttons and the clear button still mutated the selection - they sit in the trigger, reachable while closed, and only open/keyboard were guarded.
   - Fix: both clicks no-op while disabled (buttons stay visible so the value stays readable). A11Y.md Disabled / Tags / Clear sections and both builder docstrings state it; demo 9.3 shows it.
-  - Verified: inert-buttons test, including the re-enabled path.
+  - Verified: disabled-buttons test, including the re-enabled path.
 - [x] **[QUALITY-60] - bridge `on-select` / `on-remove` ran outside a digest**
   - Symptom: scope writes in the app's callbacks stayed invisible until an unrelated digest.
   - Fix: `applyOnScope` wrapper (`$$phase`-safe) around `fireSelectRemove` and the single-mode `on-select`.
@@ -65,7 +65,7 @@ Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex
   - Q: How did it slip in?
     - A: One directive mixing Literal and expression attributes invites exactly this. Caught by the mandated re-review of the fixes - which is why that step exists.
 - [x] **[DOCUMENTATION-64] - doc drift left behind by the fixes**
-  - Symptom: the provider `arrow` docstring and the API.md config example still described `null` as "the theme draws it" (it is the package chevron default; `'none'` is theme-drawn); `createTriggerContentElFn`'s docstring said the setting loses to a subclass override (it wins - DESIGN.md "Customization model" is the authority); the `changeSource` docstring predated consume-on-fire; API.md's filter-cost bullet claimed "evaluates ONCE per typed query" while the items watcher still evaluates the full expression per digest.
+  - Symptom: the provider `arrow` docstring and the API.md config example still described `null` as "the theme draws it" (it is the package chevron default; `'none'` is theme-drawn); `createTriggerContentElFn`'s docstring said the setting loses to a subclass override (it wins - DESIGN.md "Customization model" is the authority); the `changeSource` docstring still said the source stays 'user' for the whole gesture, though the first `onChange` now resets it; API.md's filter-cost bullet claimed "evaluates ONCE per typed query" while the items watcher still evaluates the full expression per digest.
   - Fix: all corrected in place.
 - [x] **[DOCUMENTATION-65] - README regrown claims and broken links**
   - Symptom: wording resolved under DOCUMENTATION-22 ("Blazing fast", overbroad minimal-DOM claims) had partially survived; both Home links rendered with a stray `]`; the selection-perf bullet claimed only the chosen row mutates (single refreshes two rows; multiple also rebuilds the trigger and the choose-all row).
@@ -77,14 +77,14 @@ Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex
   - Fix: all surfaces added; the summary line counts them (79 punctuation / 114 AST / 22 markdown-linked files at time of writing).
 - [x] **[QUALITY-67] - (rejected) filterable predicate evaluated against the empty construction list**
   - Symptom claimed: `filterable: (items) => ...` wires the role from an empty list, flipping on first open.
-  - Fix: none - unanimous panel REJECT. The predicate re-evaluates per open by documented design; construction wiring from the initial (empty) list is the documented cold state.
+  - Fix: none - unanimous panel REJECT. The predicate re-evaluates per open by documented design; wiring computed from the initial (empty) list is the documented starting state before the first open.
 
 Open items from the panel, awaiting the user's ruling:
 
-- [ ] **[MEDIUM-68] - mousedown on popup non-option chrome closes the popup or strands the keyboard**
+- [ ] **[MEDIUM-68] - mousedown on the popup's non-option areas closes the popup or strands the keyboard**
   - Symptom: mousedown on the no-results message / popup padding blurs the focus host, so focusout closes the popup; mousedown on the list element itself focuses a `tabindex="-1"` element with no keydown handler - the keyboard goes dead. src/base.ts:896 (guard covers popupListEl descendants only).
   - Panel: 4x NEEDS-HUMAN-DECISION - a fix touches the pinned scrollbar-drag behavior (test/focus.test.ts).
-  - Proposed: preventDefault on non-list chrome, keyboard forwarding on the list; real-browser scrollbar pass before resolving.
+  - Proposed: preventDefault on the non-option areas (padding, the no-results element), keyboard forwarding on the list element; real-browser scrollbar pass before resolving.
 - [ ] **[QUALITY-69] - $eval'd enum attributes fall back silently on the likeliest typo**
   - Symptom: `ll-trigger-display="tags"` (unquoted) evaluates to undefined and silently becomes 'count'. angularjs/llselect-angularjs.js:164.
   - Proposed: one `console.warn` when a non-empty attribute evaluates to undefined; never throw.

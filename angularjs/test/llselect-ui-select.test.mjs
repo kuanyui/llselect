@@ -452,7 +452,7 @@ test('track by reload: a renamed same-key item refreshes the trigger', () => {
   })
   assert.equal(a.text('.llselect-trigger-content'), 'Alice')
   a.scope.$apply(() => { a.scope.vm.users = [{ id: 1, name: 'Alicia' }] })
-  assert.equal(a.text('.llselect-trigger-content'), 'Alicia', 'the adopted list object must repaint the trigger')
+  assert.equal(a.text('.llselect-trigger-content'), 'Alicia', 'the swapped-in list object must repaint the trigger')
 })
 
 test('repeated toggles with remove-selected="false" do not leak row scopes', () => {
@@ -475,8 +475,8 @@ test('repeated toggles with remove-selected="false" do not leak row scopes', () 
     return n
   }
   a.$('ui-llselect .llselect-trigger').click()
-  a.$$('ui-llselect .llselect-item')[0].click() // first toggle settles chip + row scopes
-  const settled = countScopes()
+  a.$$('ui-llselect .llselect-item')[0].click() // first toggle creates the chip + row scopes to compare against
+  const baseline = countScopes()
   for (let i = 0; i < 6; i++) { a.$$('ui-llselect .llselect-item')[0].click() }
-  assert.equal(countScopes(), settled, 'partial row repaints must free the replaced rows\' scopes')
+  assert.equal(countScopes(), baseline, 'partial row repaints must free the replaced rows\' scopes')
 })
