@@ -390,6 +390,7 @@ Migrating a call site, at a glance:
 | `placeholder`, `allow-clear` (on `<ui-select-match>`) | `placeholder`, `clearable` |
 | `on-select`, `on-remove` | derived from `onChange` by diffing against the previous set |
 | `ng-disabled` / the `disabled` attribute | `setDisabled()`, via `attrs.$observe('disabled')` - the exact mechanism ui-select itself uses, its string quirks included (a truthy string like interpolated `"false"` disables). The observed attribute stays inert on the host, so hover - and a why-tooltip - keep working while disabled |
+| `title` / `aria-label` (on `<ui-llselect>`) | `ariaLabel` - the field's accessible name. `aria-label` wins over `title`; `title` keeps ui-select parity (its templates feed their aria labels from it) |
 | `$select.selected`, `$select.search`, `$select.multiple` | published on each template's scope |
 | `$index` | from `createItemEl(item, index)` |
 

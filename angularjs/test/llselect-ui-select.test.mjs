@@ -317,6 +317,23 @@ test('allow-clear on a multiple renders a working clear button - the documented 
   assert.equal(a.$$('ui-llselect .llselect-item').length, 3, 'clearing must relist every row (remove-selected default)')
 })
 
+test('aria-label on the host names the field; it wins over title', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person" aria-label="Assignee" title="Person">
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.person = undefined },
+  })
+  assert.deepEqual(a.errors, [])
+  assert.equal(a.$('ui-llselect .llselect-trigger').getAttribute('aria-label'), 'Assignee')
+})
+
 test('$select.search resets when the query is cleared, so rows stop highlighting it', () => {
   const a = boot({
     files: ['llselect-angularjs.js', 'llselect-ui-select.js'],

@@ -211,7 +211,9 @@
     }
 
     var settings = {
-      ariaLabel: attrs.title || null,
+      // aria-label is the HTML-native way to name the field; title keeps the
+      // ui-select-parity mapping (its templates feed aria labels from title).
+      ariaLabel: attrs.ariaLabel || attrs.title || null,
       itemToStringFn: itemTextFn
         ? function (item) { return String(itemTextFn(scope, locals(item))) }
         : null,
