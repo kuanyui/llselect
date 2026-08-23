@@ -532,11 +532,14 @@ test('single without track by: aria-selected and open-focus survive an equal-obj
     controller: function () { this.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }]; this.person = undefined },
   })
   a.$('ui-llselect .llselect-trigger').click()
-  a.$$('ui-llselect .llselect-item')[0].click() // choose Alice; single closes
+  // Choose Bob, NOT the first row: the first row is also focusInitial's
+  // fallback, so an identity regression would focus it anyway and the focus
+  // assertion would pin nothing.
+  a.$$('ui-llselect .llselect-item')[1].click() // choose Bob; single closes
   a.scope.$apply(() => { a.scope.vm.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] })
   a.$('ui-llselect .llselect-trigger').click() // reopen
   const selected = a.$$('ui-llselect .llselect-item').map(r => r.getAttribute('aria-selected'))
-  assert.deepEqual(selected, ['true', 'false'], 'the equal fresh row must stay marked selected')
+  assert.deepEqual(selected, ['false', 'true'], 'the equal fresh row must stay marked selected')
   const focused = a.$('ui-llselect .llselect-item-focused')
-  assert.ok(focused && focused.textContent.includes('Alice'), 'reopen must focus the chosen row')
+  assert.ok(focused && focused.textContent.includes('Bob'), 'reopen must focus the chosen row, not the first-row fallback')
 })
