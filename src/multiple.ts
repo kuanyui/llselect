@@ -219,7 +219,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
 
   /**
    * Replace the entire chosen-items list.
-   * - The input is shallow-copied.
+   * - The input is copied, and duplicates (per `compareFn`) collapse to
+   *   their first occurrence: the chosen items are a set.
    * - Fires `onChange` only when the new list differs from the current one.
    *   The comparison is order-sensitive: chosen order is visible state
    *   (tags render in it).
@@ -228,8 +229,20 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *   same.
    * @group Selection
    */
-  public setChosenItems(items: T[]): void {
-    const next = items.slice()
+  public setChosenItems(items: readonly T[]): void {
+    // Set semantics, as compareFn's contract promises. The choose* bulk ops
+    // filter through isChosen and never produce duplicates; this setter is
+    // the one door raw arrays (framework model write-back included) come in
+    // through, so the dedup lives here.
+    let next: T[]
+    if (this.settings.compareFn === defaultCompareFn) {
+      next = [...new Set(items)]
+    } else {
+      next = []
+      for (const item of items) {
+        if (!next.some(c => this.settings.compareFn(c, item))) { next.push(item) }
+      }
+    }
     if (this.arraysEqual(next, this.chosenItems)) { return }
     const previous = this.chosenItems
     this.chosenItems = next

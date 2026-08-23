@@ -188,3 +188,19 @@ test('object items work via compareFn', () => {
   assert.equal(sel.isChosen({ id: 2, label: 'different label' }), true)
   assert.equal(sel.isChosen({ id: 1, label: 'one' }), false)
 })
+
+test('setChosenItems dedups: duplicates collapse to the first occurrence', () => {
+  const sel = new LLSelectMultiple<string>(mount())
+  sel.setItems(['a', 'b', 'c'])
+  sel.setChosenItems(['a', 'b', 'a', 'a'])
+  assert.deepEqual([...sel.getChosenItems()], ['a', 'b'])
+  sel.toggleItem('a')
+  assert.deepEqual([...sel.getChosenItems()], ['b'], 'one toggle must fully unchoose a')
+})
+
+test('setChosenItems dedups via a custom compareFn, not identity', () => {
+  const sel = new LLSelectMultiple<{ id: number }>(mount(), { compareFn: (a, b) => a.id === b.id })
+  sel.setItems([{ id: 1 }, { id: 2 }])
+  sel.setChosenItems([{ id: 1 }, { id: 1 }, { id: 2 }])
+  assert.deepEqual(sel.getChosenItems().map(i => i.id), [1, 2])
+})
