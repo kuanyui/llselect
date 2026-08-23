@@ -82,8 +82,8 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 ## Benchmark
 
 > [!NOTE]
-> - Tested on Intel 13900HX (Linux, Wayland, KDE 6 power profile: Performance), Chromium 151.
-> - Tested versions of each libraries are the latest versions as of **2026-08-17**.
+> - Tested on Intel i5-1334U (Linux, Wayland, KDE 6 power profile: Performance), Chromium 150.
+> - Tested versions of each libraries are the latest versions as of **2026-08-23**.
 >   - Library versions are pinned in the bundle-size table below.
 > - All tests are single select.
 >   - Every widget is built WITH a pre-selected value (the benchmark page's `pre-select at build time`).
@@ -93,22 +93,22 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 
 | Library           | Build total (all widgets, ms) | DOM nodes (all, resting) | Teardown total (all widgets, ms) |
 |-------------------|-------------------------------|--------------------------|----------------------------------|
-| Native `<select>` | 44                            | 10,200                   | 4.10                             |
-| llselect          | 14                            | 900                      | 0.90                             |
-| Choices.js        | 202                           | 20,900                   | 8.00                             |
-| Select2           | 195                           | 10,900                   | 14                               |
-| Tom Select        | 68                            | 900                      | 1.30                             |
-| Slim Select       | 109                           | 11,000                   | 7.10                             |
+| Native `<select>` | 38                            | 10,200                   | 3.70                             |
+| llselect          | 18                            | 900                      | 0.60                             |
+| Choices.js        | 215                           | 20,900                   | 7.80                             |
+| Select2           | 171                           | 10,900                   | 12                               |
+| Tom Select        | 82                            | 900                      | 3.40                             |
+| Slim Select       | 96                            | 11,000                   | 5.80                             |
 
 ### 1000 selects x 10 candidates
 | Library           | Build total (all widgets, ms) | DOM nodes (all, resting) | Teardown total (all widgets, ms) |
 |-------------------|-------------------------------|--------------------------|----------------------------------|
-| Native `<select>` | 48                            | 12,000                   | 7.30                             |
-| llselect          | 41                            | 9,000                    | 6.30                             |
-| Choices.js        | 999                           | 29,000                   | 34                               |
-| Select2           | 579                           | 19,000                   | 45                               |
-| Tom Select        | 523                           | 9,000                    | 20                               |
-| Slim Select       | 166                           | 20,000                   | 28                               |
+| Native `<select>` | 37                            | 12,000                   | 8.90                             |
+| llselect          | 32                            | 9,000                    | 4.80                             |
+| Choices.js        | 1,176                         | 29,000                   | 35                               |
+| Select2           | 544                           | 19,000                   | 46                               |
+| Tom Select        | 609                           | 9,000                    | 23                               |
+| Slim Select       | 159                           | 20,000                   | 32                               |
 
 ### Bundle size
 
@@ -116,7 +116,7 @@ Minified bytes as loaded by the benchmark page (llselect from the local `dist/in
 
 | Library                      | Version    | Minified |
 |------------------------------|------------|----------|
-| llselect                     | 0.0.4      | 34.7 KB  |
+| llselect                     | 0.0.5      | 37.1 KB  |
 | Choices.js                   | 11.1.0     | 73.6 KB  |
 | Select2                      | 4.1.0-rc.0 | 71.4 KB  |
 | Tom Select                   | 2.4.3      | 49.1 KB  |
