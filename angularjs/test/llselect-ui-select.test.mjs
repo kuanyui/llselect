@@ -481,11 +481,12 @@ test('repeated toggles with remove-selected="false" do not leak row scopes', () 
   assert.equal(countScopes(), baseline, 'partial row repaints must free the replaced rows\' scopes')
 })
 
-test('no track by: a reload with equal-but-fresh objects keeps the model object as its own item (ui-select parity)', () => {
-  // Identity tracking, exactly like real ui-select without track by: after a
-  // reload the model's old object and the list's new equal object are two
-  // distinct items. track by is the stated requirement for object items
-  // (API.md "Deviations").
+test('no track by: a reload with equal-but-fresh objects keeps ONE selection (ui-select parity via angular.equals)', () => {
+  // ui-select's multiple-mode comparison is angular.equals
+  // (_isItemSelected, uiSelectController.js:332): a reload's structurally
+  // equal fresh object is the SAME item. Pin: one chip, the fresh row stays
+  // hidden under remove-selected (default true), the model keeps its object,
+  // and no second entry is addable. Identity here once allowed a double-add.
   const a = boot({
     files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
     deps: ['llselect', 'llselect.uiCompat'],
@@ -504,10 +505,11 @@ test('no track by: a reload with equal-but-fresh objects keeps the model object 
   const chosenBefore = a.scope.vm.people[0]
   a.scope.$apply(() => { a.scope.vm.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] })
   assert.equal(a.scope.vm.people[0], chosenBefore, 'the model must keep its own object across the reload')
-  assert.equal(a.$$('ui-llselect .llselect-tag, ui-llselect .llselect-trigger-content').length >= 1, true)
-  // The fresh equal object is a DIFFERENT item under identity: its row is
-  // listed again (the popup is still open) although remove-selected (default
-  // true) hides chosen rows.
+  const chips = a.$$('ui-llselect .llselect-tag').map(t => t.textContent.trim())
+  assert.deepEqual(chips, ['Alice'], 'exactly one chip must survive the reload')
+  // The popup is still open: the equals-equal fresh Alice is the chosen item,
+  // so remove-selected keeps her row hidden - only Bob is listed, and no
+  // second Alice entry can be added.
   const texts = a.$$('ui-llselect .llselect-item').map(r => r.textContent.trim())
-  assert.ok(texts.some(t => t.includes('Alice')), 'the fresh Alice row must be listed - it is not the chosen object')
+  assert.deepEqual(texts, ['Bob'], 'the fresh equal object must stay hidden as the chosen item')
 })
