@@ -152,7 +152,12 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
       if (this.isOpened()) { this.renderPopupList() }
       return
     }
-    const actionable = (this.leafDescendants.get(node) ?? []).filter(leaf => !this.isItemEffectivelyDisabled(leaf))
+    this.toggleSubtree(node)
+  }
+
+  /** Toggle every enabled leaf under `branch` between all-chosen and none. */
+  private toggleSubtree(branch: LLTreeNode): void {
+    const actionable = (this.leafDescendants.get(branch) ?? []).filter(leaf => !this.isItemEffectivelyDisabled(leaf))
     if (actionable.length === 0) { return }
     const allChosen = actionable.every(leaf => this.isChosen(leaf))
     if (allChosen) {
@@ -162,6 +167,25 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
       const additions = actionable.filter(leaf => !this.isChosen(leaf))
       this.setChosenItems([...this.getChosenItems(), ...additions])
     }
+  }
+
+  /**
+   * The model holds LEAVES only, but the inherited bulk ops (`chooseAll`,
+   * `toggleAll`, the choose-all row) see every node as an item. This is the
+   * one door raw arrays come through, so the contract is kept here: branch
+   * nodes are dropped.
+   */
+  public override setChosenItems(items: readonly LLTreeNode[]): void {
+    super.setChosenItems(items.filter(node => !isBranch(node)))
+  }
+
+  /** A branch toggles its whole leaf subtree, same as activating its row. */
+  public override toggleItem(node: LLTreeNode): void {
+    if (isBranch(node)) {
+      this.toggleSubtree(node)
+      return
+    }
+    super.toggleItem(node)
   }
 
   /**

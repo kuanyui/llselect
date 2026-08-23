@@ -109,3 +109,16 @@ test('a filter query renders the flat matching subset', () => {
   input.dispatchEvent(new Event('input', { bubbles: true }))
   assert.deepEqual(rowTexts(sel), ['Strawberry'])
 })
+
+test('inherited bulk APIs keep the model leaves-only', () => {
+  const f = fixture()
+  const sel = new LLTreeMultipleSelect(mount())
+  sel.setTreeItems(f.roots)
+  sel.chooseAll()
+  assert.deepEqual(sel.getChosenItems().map(n => n.text).sort(), ['Carrot', 'Lemon', 'Orange', 'Strawberry'])
+  sel.setChosenItems([f.fruits, f.orange])
+  assert.deepEqual(sel.getChosenItems().map(n => n.text), ['Orange'], 'a branch handed to setChosenItems must be dropped')
+  sel.unchooseAll()
+  sel.toggleItem(f.citrus)
+  assert.deepEqual(sel.getChosenItems().map(n => n.text).sort(), ['Lemon', 'Orange'], 'toggleItem(branch) must toggle the subtree')
+})
