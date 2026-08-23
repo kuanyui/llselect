@@ -50,7 +50,7 @@
       clause maps onto an llselect setting; see the table in the README.
     </p>
     <div class="demo-row" data-src="1a">
-      <llselect-single ll-aria-label="'Country'" ng-model="vm.country" ll-filterable="true" ll-clearable="true"
+      <llselect-single ll-aria-label="Country" ng-model="vm.country" ll-filterable="true" ll-clearable="true"
         ll-placeholder="'Pick a country'"
         ll-options="c for c in vm.countries">
       </llselect-single>
@@ -72,7 +72,7 @@
     <article>
     <h3>2a. Default trigger: count summary</h3>
     <div class="demo-row" data-src="2a">
-      <llselect-multiple ll-aria-label="'Languages'" ng-model="vm.langsCount" ll-filterable="true" ll-clearable="true"
+      <llselect-multiple ll-aria-label="Languages" ng-model="vm.langsCount" ll-filterable="true" ll-clearable="true"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>
@@ -83,7 +83,7 @@
     <article>
     <h3>2b. Tags trigger</h3>
     <div class="demo-row" data-src="2b">
-      <llselect-multiple ll-aria-label="'Languages'" ng-model="vm.langs" ll-filterable="true"
+      <llselect-multiple ll-aria-label="Languages" ng-model="vm.langs" ll-filterable="true"
         ll-trigger-display="'tags'"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
@@ -101,7 +101,7 @@
       5.7).
     </p>
     <div class="demo-row" data-src="2c">
-      <llselect-multiple ll-aria-label="'Languages'" ng-model="vm.langsAll" ll-filterable="true" ll-choose-all-row="true"
+      <llselect-multiple ll-aria-label="Languages" ng-model="vm.langsAll" ll-filterable="true" ll-choose-all-row="true"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>
@@ -118,7 +118,7 @@
       always unchecked, so checkboxes would say nothing.
     </p>
     <div class="demo-row" data-src="2d">
-      <llselect-multiple ll-aria-label="'Languages'" ng-model="vm.langsHidden" ll-filterable="true" ll-clearable="true"
+      <llselect-multiple ll-aria-label="Languages" ng-model="vm.langsHidden" ll-filterable="true" ll-clearable="true"
         ll-trigger-display="'tags'" ll-hide-chosen-rows="true" ll-checkboxes="false"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
@@ -138,12 +138,12 @@
     </p>
     <form name="myForm" novalidate data-src="3">
       <div class="demo-row">
-        <llselect-single ll-aria-label="'Fruit'" name="fruit" ng-model="vm.fruit" required ll-clearable="true"
+        <llselect-single ll-aria-label="Fruit" name="fruit" ng-model="vm.fruit" required ll-clearable="true"
           ll-options="f for f in vm.fruits">
         </llselect-single>
       </div>
       <div class="demo-row">
-        <llselect-multiple ll-aria-label="'Toppings'" name="toppings" ng-model="vm.toppings" required
+        <llselect-multiple ll-aria-label="Toppings" name="toppings" ng-model="vm.toppings" required
           ll-trigger-display="'tags'"
           ll-options="t for t in vm.fruits">
         </llselect-multiple>
@@ -173,7 +173,7 @@
       <code>ng-options</code> does.
     </p>
     <div class="demo-row" data-src="4">
-      <llselect-single ll-aria-label="'User'" ng-model="vm.userId" ll-filterable="true"
+      <llselect-single ll-aria-label="User" ng-model="vm.userId" ll-filterable="true"
         ll-options="u.id as u.name group by u.role disable when u.suspended for u in vm.users track by u.id">
       </llselect-single>
     </div>
@@ -189,7 +189,7 @@
     </p>
     <div class="demo-row" data-src="5">
       <label><input type="checkbox" ng-model="vm.locked"> lock</label>
-      <llselect-single ll-aria-label="'Country'" ng-model="vm.country2" ll-disabled="vm.locked"
+      <llselect-single ll-aria-label="Country" ng-model="vm.country2" ll-disabled="vm.locked"
         ll-options="c for c in vm.countries">
       </llselect-single>
     </div>
@@ -207,7 +207,7 @@
       per-element <code>ll-arrow</code> wins over it.
     </p>
     <div class="demo-row" data-src="6">
-      <llselect-single ll-aria-label="'Country'" ng-model="vm.country3" ll-arrow="triangle"
+      <llselect-single ll-aria-label="Country" ng-model="vm.country3" ll-arrow="triangle"
         ll-options="c for c in vm.countries">
       </llselect-single>
     </div>
@@ -236,7 +236,7 @@
       makes the trigger show the chosen row - there is no auto-projection.
     </p>
     <div class="demo-row" data-src="7a">
-      <llselect-single ll-aria-label="'Language'" ng-model="vm.lang" ll-filterable="true" ll-item-content-fn="vm.renderLangRow"
+      <llselect-single ll-aria-label="Language" ng-model="vm.lang" ll-filterable="true" ll-item-content-fn="vm.renderLangRow"
         ll-trigger-content-fn="vm.renderLangTrigger"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-single>
@@ -257,7 +257,7 @@
       <template id="lang-row-tpl">
         <span class="lang-row"><i class="mdi" aria-hidden="true"></i><span class="lang-name"></span></span>
       </template>
-      <llselect-multiple ll-aria-label="'Languages'" ng-model="vm.langsRich" ll-item-content-fn="vm.renderLangRowFromTpl"
+      <llselect-multiple ll-aria-label="Languages" ng-model="vm.langsRich" ll-item-content-fn="vm.renderLangRowFromTpl"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>
@@ -274,7 +274,7 @@
       via the core <code>createHighlightedTextEl</code> (7f's pattern).
     </p>
     <div class="demo-row" data-src="7c">
-      <llselect-single ll-aria-label="'User'" ng-model="vm.user2" ll-filterable="true" demo-publish-api="vm.userApi"
+      <llselect-single ll-aria-label="User" ng-model="vm.user2" ll-filterable="true" demo-publish-api="vm.userApi"
         ll-item-content-fn="vm.renderUserRow"
         ll-options="u.name disable when u.suspended for u in vm.users track by u.id">
       </llselect-single>
@@ -291,7 +291,7 @@
       the theme's CSS glyph draws the x.
     </p>
     <div class="demo-row" data-src="7d">
-      <llselect-multiple ll-aria-label="'Languages'" ng-model="vm.langsTags" ll-trigger-display="'tags'"
+      <llselect-multiple ll-aria-label="Languages" ng-model="vm.langsTags" ll-trigger-display="'tags'"
         ll-item-content-fn="vm.renderLangRow" ll-tag-content-fn="vm.renderLangRow"
         ll-tag-remove-button-content-fn="vm.renderTagRemoveIcon"
         ll-options="l.name for l in vm.languages track by l.name">
@@ -315,7 +315,7 @@
       "Reaching the instance from your own directive").
     </p>
     <div class="demo-row" data-src="7e">
-      <llselect-single ll-aria-label="'Language'" ng-model="vm.langTinted" class="lang-tinted"
+      <llselect-single ll-aria-label="Language" ng-model="vm.langTinted" class="lang-tinted"
         demo-tint-trigger="vm.langTinted"
         ll-item-content-fn="vm.renderTintedLangRow"
         ll-trigger-content-fn="vm.renderLangTrigger"
@@ -336,7 +336,7 @@
       the way 7c does.
     </p>
     <div class="demo-row" data-src="7f">
-      <llselect-single ll-aria-label="'Country'" ng-model="vm.hlCountry" ll-filterable="true" ll-highlight="true"
+      <llselect-single ll-aria-label="Country" ng-model="vm.hlCountry" ll-filterable="true" ll-highlight="true"
         ll-options="c for c in vm.countries">
       </llselect-single>
     </div>
@@ -528,7 +528,7 @@
     </p>
     <form name="avForm" novalidate data-src="9">
       <div class="demo-row">
-        <llselect-single ll-aria-label="'Fruit'" name="avFruit" ng-model="vm.avFruit" validation="required"
+        <llselect-single ll-aria-label="Fruit" name="avFruit" ng-model="vm.avFruit" validation="required"
           ll-clearable="true" ll-options="f for f in vm.fruits">
         </llselect-single>
       </div>
@@ -577,7 +577,7 @@
       the space-less <code>vlan2</code>.
     </p>
     <div class="demo-row" data-src="11">
-      <llselect-single ll-aria-label="'Interface'" ng-model="vm.iface" ll-filterable="true" ll-filter-fn="vm.ifaceMatch"
+      <llselect-single ll-aria-label="Interface" ng-model="vm.iface" ll-filterable="true" ll-filter-fn="vm.ifaceMatch"
         ll-options="vm.ifaceText(i) for i in vm.interfaces track by i.interfaceNo">
       </llselect-single>
     </div>
