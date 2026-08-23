@@ -185,7 +185,12 @@ $scope.renderRow = function (fruit) {
 
 ### `ll-aria-label`
 
-**Literal** -> `ariaLabel`. The accessible name. Always set this or `ll-aria-labelledby`.
+**Literal** -> `ariaLabel`. The accessible name. The field's name resolves by the FIRST set rung, mirroring the W3C accessible-name computation order:
+
+1. [`ll-aria-labelledby`](#ll-aria-labelledby).
+2. `ll-aria-label` (this attribute).
+3. [`ll-label-el`](#ll-label-el).
+4. None set: the field is unnamed - a WAI-ARIA 1.2 violation, warned once per page in the console.
 
 ### `ll-aria-labelledby`
 

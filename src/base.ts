@@ -77,10 +77,15 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * `<select>` (e.g. `'Country'`).
    * - Applied to the trigger, the popup listbox, and (while the filter is active)
    *   the filter input; per-mode wiring: `docs/llm/A11Y.md` "Accessible name".
-   * - `null` (default): the library sets no name. Provide `ariaLabelledBy`
-   *   instead; if BOTH stay `null` the field has no accessible name, which
-   *   violates WAI-ARIA 1.2 - always supply one of the two.
-   * - Ignored when `ariaLabelledBy` is set (ARIA name precedence).
+   * - The name resolves by the FIRST set rung, mirroring the W3C
+   *   accessible-name computation order:
+   *   1. `ariaLabelledBy`.
+   *   2. `ariaLabel` (this setting).
+   *   3. `labelEl` - its element's id becomes the resolved `ariaLabelledBy`.
+   *   4. None set: the field is unnamed. A combobox requires a name
+   *      (WAI-ARIA 1.2), so one `console.warn` per page reports the first
+   *      offender.
+   * - `null` (default): this rung is skipped.
    * @group Accessible name
    */
   ariaLabel: string | null
@@ -91,7 +96,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   spoken name then always matches the visible text.
    * - `null` (default): not forwarded; see `ariaLabel` for the naming
    *   requirement.
-   * - Wins over `ariaLabel` when both are set (ARIA name precedence).
+   * - Rung 1 of the resolution order (the numbered list at `ariaLabel`): it
+   *   wins whenever set, matching the ARIA name computation.
    * @group Accessible name
    */
   ariaLabelledBy: string | null
@@ -101,11 +107,11 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * in both directions:
    * - clicking it focuses the trigger (focus ONLY; native `<select>` does not
    *   open on label click, neither does this);
-   * - it feeds the accessible name at the BOTTOM of the ladder
-   *   `ariaLabelledBy` > `ariaLabel` > `labelEl`: with neither aria setting
-   *   given, the label's id becomes the resolved `ariaLabelledBy` (an id is
-   *   minted from `classIdMap.labelId` if the element has none) - a live
-   *   reference, so later label text changes stay correct.
+   * - it feeds the accessible name as rung 3 of the resolution order (the
+   *   numbered list at `ariaLabel`): with neither aria setting given, the
+   *   label's id becomes the resolved `ariaLabelledBy` (an id is minted from
+   *   `classIdMap.labelId` if the element has none) - a live reference, so
+   *   later label text changes stay correct.
    * - `null` = no label element; the name ladder just skips this rung.
    * - `destroy()` removes the click listener and a minted id.
    * @group Accessible name
