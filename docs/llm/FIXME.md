@@ -2,6 +2,16 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (user-reported, Firefox mass-build gap)
+
+- [x] **[PERFORMANCE-52] - the 1000x10 mass build reads ~2.6x slower on Firefox than Chromium (81 ms vs 31 ms), while competitors do not degrade**
+  - Symptom: user-measured, repeatable. llselect 81 ms on Firefox vs 31 ms on Chromium; the other libraries move much less between engines.
+  - Cause: no llselect defect. Verified in real headless Firefox + Chromium (Playwright, the rootless recipe): phase-timed construction shows NO phase spike - construct 34 vs 21 ms, reflow 12 vs 10, destroy 6 vs 4 per 1000 widgets (warm minimums). The gap is a generic engine factor (~1.5x warm) on DOM-scaffold construction, amplified to ~2.2-2.6x by the benchmark's cold first run (Firefox JIT warms slower) and its chunked build with a forced reflow per chunk (amplifies both engines ~3x equally).
+  - Impact: none actionable. 81 us per widget on Firefox is still 2.3x faster than the nearest library (Slim Select, 187 ms) and 2.9x native - while every competitor sits at 6.7-24x native on the same run.
+  - Fix: none - no defect to fix. The README benchmark table states its engine (Chromium 150); engine-to-engine ratios are expected to differ.
+  - Q: Was the Popover API the culprit (the one llselect-only feature, with `popover="manual"` set per construction)?
+    - A: No - hypothesized first, then refuted by an A/B/A run deleting `showPopover` before construction: 102 / 82 / 72 ms in Firefox, i.e. warm-up noise larger than any popover signal, and Chromium showed the same pattern. The lesson: engine-difference reports need a phase-timed measurement before naming any culprit; the one-liner A/B lever (`delete HTMLElement.prototype.showPopover`) plus the rootless Playwright recipe made the real measurement cheap.
+
 ## review (external, ChatGPT API review)
 
 Five findings relayed by the user; each verified against source before logging. Two halves were already ruled in the public-API round (single callback: QUALITY-36; live arrays: QUALITY-38) - the new substance is logged here.
