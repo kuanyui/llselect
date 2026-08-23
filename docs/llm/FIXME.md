@@ -6,25 +6,28 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 Five findings relayed by the user; each verified against source before logging. Two halves were already ruled in the public-API round (single callback: QUALITY-36; live arrays: QUALITY-38) - the new substance is logged here.
 
-- [ ] **[MEDIUM-47] - an unnamed widget is representable, and nothing warns**
+- [x] **[MEDIUM-47] - an unnamed widget is representable, and nothing warns**
   - Symptom: `ariaLabel` / `ariaLabelledBy` / `labelEl` are all optional; with none given the combobox has no accessible name. The docs state the violation plainly (base.ts `ariaLabel` docstring; A11Y.md name-ladder table's "unnamed" column) but the default construction stays silent.
   - Impact: a library that leads with a11y ships unnamed widgets by default; the docs-only guard catches only doc readers.
-  - Fix (proposed): `console.warn` once at construction when the name ladder resolves to unnamed - matches the house "reported in the console, never silent" style (the non-contiguous-group warn is precedent). A type-union forcing one source was considered and is worse: it breaks every minimal snippet and cannot express the `labelEl` rung.
+  - Fix: `console.warn` at construction when the name ladder resolves to unnamed (base.ts) - the house "reported in the console, never silent" style; the non-contiguous-group warn is precedent. A type-union forcing one source was considered and is worse: it breaks every minimal snippet and cannot express the `labelEl` rung.
+  - Verified: aria-name.test.ts pins the warn on an unnamed widget and silence for each ladder rung; the two group-warn spy tests now name their widgets so their counts stay about the group warn.
 - [ ] **[QUALITY-48] - onChange carries no source, and programmatic setters cannot update silently**
   - Symptom: `setChosenItem(s)` fires the same `onChange` as a user click; the callback receives values only - no user-vs-api flag, no silent option.
   - Impact: every wrapper must build echo suppression. The in-repo AngularJS wrapper's write-back gate IS that workaround, so the pain is proven, not hypothetical.
   - Fix (proposed): additive third argument to `onChange` (e.g. a source of `'user' | 'api'`), which is non-breaking; a `silent` flag was the weaker option (two ways to mutate = two truths). The single-callback half of the criticism stays ruled by QUALITY-36 (closure fan-out; DOM CustomEvents are the recorded revisit path).
-- [ ] **[QUALITY-49] - mutating setters demand mutable arrays: `setItems(items: T[])`, `setChosenItems(items: T[])`**
+- [x] **[QUALITY-49] - mutating setters demand mutable arrays: `setItems(items: T[])`, `setChosenItems(items: T[])`**
   - Symptom: an immutable-typed app (`readonly T[]` state) cannot pass its arrays without a cast, even though both setters defensively `slice()` anyway.
-  - Fix (proposed): widen both parameters to `readonly T[]`. Parameter-position widening is non-breaking. The returns-live-array half of the criticism stays ruled by QUALITY-38.
-- [ ] **[HIGH-50] - setChosenItems accepts duplicates while the contract promises set semantics**
+  - Fix: both parameters widened to `readonly T[]` (base.ts setItems, multiple.ts setChosenItems). Parameter-position widening is non-breaking. The returns-live-array half of the criticism stays ruled by QUALITY-38.
+  - Verified: tsc strict across the repo; full suite green.
+- [x] **[HIGH-50] - setChosenItems accepts duplicates while the contract promises set semantics**
   - Symptom: `compareFn`'s docstring says it is "Used for selection, dedup, ..." (base.ts), but `setChosenItems` stores `items.slice()` with no dedup: `[a, a]` is representable, `toggleItem(a)` then removes only the first, and count summaries / choose-all tallies skew.
   - Cause: the bulk `choose*` ops filter through `isChosen` and never create duplicates, so the gap is reachable only through `setChosenItems` (including framework model write-back) and was never exercised.
-  - Fix (proposed): dedup in `setChosenItems` via `compareFn`, first occurrence wins, with the `defaultCompareFn` Set fast path; docstring + test follow. This is a contract bug, not a default flip - the dedup promise is already written.
-- [ ] **[DOCUMENTATION-51] - "a replacement of native `<select>`" overclaims form association**
+  - Fix: dedup in `setChosenItems` via `compareFn`, first occurrence wins, with the `defaultCompareFn` Set fast path; docstring states the set semantics. This is a contract bug fix, not a default flip - the dedup promise was already written.
+  - Verified: multiple.test.ts pins identity and custom-`compareFn` dedup, and that one `toggleItem` fully unchooses after a duplicate-carrying assignment.
+- [x] **[DOCUMENTATION-51] - "a replacement of native `<select>`" overclaims form association**
   - Symptom: README's headline says "aims to be a replacement of native HTML `<select>`", while the widget deliberately does not participate in form submission / reset / constraint validation / `<label for>` (all documented, with the hidden-input recipe and the `labelEl` click emulation).
   - Impact: the gaps are documented decisions, but the headline word "replacement" invites exactly this review's objection.
-  - Fix (proposed): positioning copy is the user's call - e.g. "a replacement for `<select>`'s UI" plus a pointer to the form-integration recipe. No behavior change on the table.
+  - Fix: none for now - user ruling: the headline stays; revisit only as a positioning-copy pass. The form-integration section keeps carrying the tradeoffs.
 
 ## review (settings-freeze boundary)
 
