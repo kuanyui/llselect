@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle } from '../src/single.js'
 import { LLSelectMultiple } from '../src/multiple.js'
+import { resetUnnamedNameWarning } from '../src/base.js'
 
 // Accessible-name contract (ariaLabel / ariaLabelledBy settings): see
 // docs/llm/A11Y.md "Accessible name" for the per-mode wiring these tests pin down.
@@ -134,14 +135,18 @@ test('tags mode: hidden value span carries plain labels, not remove-button names
   assert.equal(sel.triggerContentEl.querySelectorAll('button').length, 2)
 })
 
-test('an unnamed widget warns at construction; any name-ladder rung silences it', () => {
+test('an unnamed widget warns once per page; any name-ladder rung stays silent', () => {
   const warnings: unknown[][] = []
   const orig = console.warn
   console.warn = (...args: unknown[]) => { warnings.push(args) }
   try {
+    resetUnnamedNameWarning()
     new LLSelectSingle<string>(mount())
     assert.equal(warnings.length, 1)
     assert.match(String(warnings[0]![0]), /accessible name/)
+    new LLSelectSingle<string>(mount())
+    assert.equal(warnings.length, 1, 'once per page, not per instance')
+    resetUnnamedNameWarning()
     new LLSelectSingle<string>(mount(), { ariaLabel: 'Country' })
     new LLSelectSingle<string>(mount(), { ariaLabelledBy: 'field-label' })
     new LLSelectSingle<string>(mount(), { labelEl: document.getElementById('field-label')! })

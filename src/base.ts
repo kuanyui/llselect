@@ -486,6 +486,14 @@ export function defaultCompareFn<T>(a: T, b: T): boolean {
   return a === b
 }
 
+/** Once-per-page guard for the unnamed-accessible-name warning. */
+let warnedUnnamedName = false
+
+/** Package-internal test hook (not re-exported): reset the once-per-page unnamed-name warning. */
+export function resetUnnamedNameWarning(): void {
+  warnedUnnamedName = false
+}
+
 function createClassIdMap(prefix: string): LLSelectClassIdMap {
   const uniq = `${prefix}${++instanceCounter}`
   return {
@@ -763,8 +771,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     } as S
     // Loud failure over a silent a11y violation, like the group-order warn:
     // an unnamed combobox violates WAI-ARIA 1.2 (A11Y.md, name ladder).
-    if (this.settings.ariaLabel === null && this.settings.ariaLabelledBy === null) {
-      console.warn('llselect: no accessible name - pass ariaLabelledBy, ariaLabel, or labelEl. An unnamed combobox violates WAI-ARIA 1.2.')
+    // Once per page, not per instance - a page full of unnamed widgets (a
+    // benchmark, a sandbox) must not flood the console nor pay a per-build
+    // cost; one nudge carries the rule.
+    if (!warnedUnnamedName && this.settings.ariaLabel === null && this.settings.ariaLabelledBy === null) {
+      warnedUnnamedName = true
+      console.warn('llselect: no accessible name - pass ariaLabelledBy, ariaLabel, or labelEl. An unnamed combobox violates WAI-ARIA 1.2. (warned once per page)')
     }
     // Label click focuses the trigger (native <select> label behavior: focus
     // only, never open). The one listener destroy() must undo outside the root.
