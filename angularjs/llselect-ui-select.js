@@ -377,8 +377,12 @@
     scope.$watchCollection(function () {
       return repeat.sourceFn(scope, { $select: { search: '' } })
     }, function (items) {
-      withoutWriteBack(function () { sel.setItems(items ? items.slice() : []) })
+      // Invalidate BEFORE setItems: while a query is active, setItems
+      // refilters synchronously through filterFn, which would otherwise
+      // answer from the previous collection's matchSet and hide newly added
+      // matching items until the next keystroke.
       lastQuery = null
+      withoutWriteBack(function () { sel.setItems(items ? items.slice() : []) })
       if (repeat.modelMapperFn) { ngModelCtrl.$render() }
     })
 
