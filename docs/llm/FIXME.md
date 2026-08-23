@@ -13,8 +13,8 @@ Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex
   - Verified: llselect-angularjs async test (with and without `select as`); ui bridge async tests (an object preset renders from boot; an alias key resolves on arrival).
   - Q: The panel split 2 REJECT / 1 NEEDS-HUMAN-DECISION / 1 CERTAIN-BUG - what settled it?
     - A: A failing test, not votes: the probe showed 'Please select' where 'Apple' was expected, proving the CERTAIN-BUG vote's mechanism right. When reviewers disagree about a claimed runtime behavior, write the probe before arguing.
-  - Q: Without `track by`, reloading an object collection leaves the model's old object and the list's new equal object as two DISTINCT items (stale chip, row relisted, a second click can duplicate the model entry) - is the always-`$render` fix wrong?
-    - A: No - measured against real ui-select: it behaves identically (its selected tracking is identity-based without `track by`). Parity is the bridge's contract; `track by` is the stated requirement for object items (API.md / SPEC.md), and a test pins the behavior.
+  - Q: Without `track by`, should a reload's structurally equal fresh object count as a SECOND item (relisted, separately addable), as the identity default made it?
+    - A: No. One reviewer read ui-select's `refreshItems` (`indexOf`, identity) and called identity parity; a direct probe of real ui-select 0.19.8 refuted that - its multiple-mode comparison is `_isItemSelected`'s `angular.equals` (`uiSelectController.js:332`), so the fresh object is the same item and a double-add is impossible. The bridge now wires `compareFn` to `angular.equals` for no-`track by` multiple; a test pins one chip / hidden row / no second entry. Lesson (again): source-reading claims about another library lose to a direct probe of it.
   - Q: Codex proposed the wrappers write back to ng-model only when `meta.source === 'user'` - why was that rejected (4/4)?
     - A: App code calling `instance().setChosenItems()` legitimately expects the model to sync. The write-back gate already suppresses the wrapper's own echo, which is the actual hazard; gating on 'user' would break direct API use for no gain.
 - [x] **[HIGH-54] - ui bridge template scopes leaked**
@@ -100,7 +100,7 @@ Open items from the panel, awaiting the user's ruling:
   - Symptom: multi popup render is O(visible x chosen); `setChosenItems` full-rerenders even though selection cannot change grouping. src/multiple.ts:264.
   - Proposed: a chosenSet fast path mirroring PERFORMANCE-31 plus a chosen-only refresh; needs its own design wave (cache invalidation).
 - [ ] **[PERFORMANCE-73] - bridge items watcher re-runs the whole `| filter:` chain every digest**
-  - Symptom: the watched expression retains `| filter: $select.search` with an empty query, so filterFilter deep-compares every item per digest per widget. angularjs/llselect-ui-select.js:437. The overstated doc claim is already corrected (DOCUMENTATION-64).
+  - Symptom: the watched expression retains `| filter: $select.search` with an empty query, so filterFilter deep-compares every item per digest per widget. angularjs/llselect-ui-select.js:405. The overstated doc claim is already corrected (DOCUMENTATION-64).
   - Proposed: watch the bare source by splitting the filters off (ui-select's own parser does this); behavior change, so it awaits the ruling.
 - [ ] **[QUALITY-74] - the icon type trio lacks the LLSelect prefix**
   - Symptom: `IconOptions` / `CheckboxState` / `CheckboxIconOptions` are unprefixed exports; `WidthPolicy` / `Placement` stay as-is per the recorded naming ruling.
