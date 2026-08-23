@@ -49,6 +49,8 @@ const demoTs = walk('demo', '.ts')
 const demoJs = walk('demo', '.js')
 const angularjsJs = walk('angularjs', '.js').filter((f) => !f.endsWith('.min.js') && !f.includes('/test/') && !f.includes('\\test\\'))
 const angularjsTestMjs = walk('angularjs/test', '.mjs')
+const testUtilsTs = walk('test-utils', '.ts')
+const rootConfigMjs = ['rollup.config.mjs']
 
 const asciiFiles = [
   ...srcTs.filter((f) => !f.startsWith('src/i18n/')),
@@ -58,6 +60,8 @@ const asciiFiles = [
   ...scriptFiles,
   ...demoTs,
   ...angularjsJs,
+  ...testUtilsTs,
+  ...rootConfigMjs,
   'README.md',
   'CLAUDE.md',
   'package.json',
@@ -139,7 +143,7 @@ for (const rel of asciiFiles) {
 
 // --- rules 3 / 4 on TS + script sources; rule 1 on masked test sources ----
 
-for (const rel of [...srcTs, ...scriptFiles, ...demoTs, ...demoJs, ...angularjsJs]) {
+for (const rel of [...srcTs, ...scriptFiles, ...demoTs, ...demoJs, ...angularjsJs, ...testUtilsTs, ...rootConfigMjs]) {
   checkAst(rel, readFileSync(join(root, rel), 'utf8'))
 }
 for (const rel of [...testTs, ...angularjsTestMjs]) {
@@ -229,4 +233,4 @@ if (problems.length > 0) {
   console.error(`check: ${problems.length} problem(s)\n` + problems.join('\n'))
   process.exit(1)
 }
-console.log(`check: OK (${asciiFiles.length + testTs.length + angularjsTestMjs.length} files punctuation-scanned, ${markdownFiles.length} markdown link-checked, ${srcTs.length + scriptFiles.length + demoTs.length + demoJs.length + angularjsJs.length + testTs.length + angularjsTestMjs.length} AST-checked)`)
+console.log(`check: OK (${asciiFiles.length + testTs.length + angularjsTestMjs.length} files punctuation-scanned, ${markdownFiles.length} markdown link-checked, ${srcTs.length + scriptFiles.length + demoTs.length + demoJs.length + angularjsJs.length + testUtilsTs.length + rootConfigMjs.length + testTs.length + angularjsTestMjs.length} AST-checked)`)
