@@ -667,8 +667,31 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 /* --- benchmark table of contents (not collapsible) ---------------------- */
 .bench-toc { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; margin: 0.5rem 0 1.5rem; padding: 0.6rem 0.9rem; background: #f6f8fa; border: 1px solid #e2e2e2; border-radius: 6px; font-size: 0.9rem; }
 .bench-toc span { color: #555; font-weight: 600; }
-.bench-toc a { color: #2456a6; text-decoration: none; }
+.bench-toc a { color: #2456a6; text-decoration: none; border-radius: 3px; }
 .bench-toc a:hover { text-decoration: underline; }
+.bench-toc a.active { background: #eef3fb; font-weight: 600; }
+/* On a large desktop the quick-jump list docks to the LEFT GUTTER of the
+   centered 1200px body as a small fixed panel - deliberately NOT
+   full-height, it is only a jump list. 100rem keeps it out of the gutter
+   until (viewport - body) / 2 genuinely fits it. bench-toc.js drives the
+   scrollspy .active in both layouts. */
+@media (min-width: 100rem) {
+  .bench-toc {
+    position: fixed;
+    left: 1rem;
+    top: 5.5rem;
+    z-index: 20;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.1rem;
+    width: 10.5rem;
+    margin: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+  .bench-toc span { margin-bottom: 0.25rem; }
+  .bench-toc a { padding: 0.15rem 0.4rem; }
+  .bench-toc a:hover { text-decoration: none; background: #eef3fb; }
+}
 
 /* --- benchmark scroll-block overlay during a run ------------------------- */
 #bench-overlay { position: fixed; inset: 0; z-index: 9999; display: none; align-items: flex-start; justify-content: center; background: rgba(20, 30, 50, 0.06); cursor: progress; }
