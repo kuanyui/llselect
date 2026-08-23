@@ -2,6 +2,16 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (settings-freeze boundary)
+
+- [x] **[QUALITY-46] - the settings-freeze exceptions read as arbitrary (why setPlaceholder but no setClearable?)**
+  - Symptom: an external review read "frozen after the constructor" plus the exceptions (`setPlaceholder`, `setUiTranslationPack`, `setDisabled`) as an arbitrary boundary.
+  - Cause: the rule existed in the code but was never stated. The premise also miscounts: `disabled` was never a setting (it is instance state behind `setDisabled()`, and its capability `focusableWhenDisabled` stays frozen), so the true exceptions are only the two text ones.
+  - Fix: the boundary is now stated in DESIGN.md "Settings vs methods": state and copy move at runtime; capabilities are frozen. State = what a native `<select>` also mutates live (items, value, disabled). Copy = locale-owned text (pack, placeholder). Capability = decides structure / wiring / ARIA topology at construction.
+  - Verified: docs only; check + link pass.
+  - Q: Why does `placeholder` get a setter while `clearable` gets none?
+    - A: `placeholder` is copy: a text-node swap, driven by i18n, a normal runtime event. `clearable` gates whether the clear-button element exists and is wired at all (base.ts, trigger build), so a `setClearable` is a mini-rebuild plus permanent API for a rare need - rebuilding the instance costs ~0.2 ms and covers it. The designed valve for genuinely-runtime capability needs is a function-valued setting evaluated per use (`filterable`'s predicate), and the always-built-hidden filter input is the promotion precedent.
+
 ## review (user-reported, pinch-zoom popup drift)
 
 - [x] **[HIGH-45] - pinch-zoom drifts the popup left of the trigger (Linux, Firefox AND Chromium)**
