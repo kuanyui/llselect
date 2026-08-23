@@ -804,7 +804,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // cost; one nudge carries the rule.
     if (!warnedUnnamedName && this.settings.ariaLabel === null && this.settings.ariaLabelledBy === null) {
       warnedUnnamedName = true
-      console.warn('llselect: no accessible name - pass ariaLabelledBy, ariaLabel, or labelEl. An unnamed combobox violates WAI-ARIA 1.2. (warned once per page)')
+      // The element rides along so DevTools can jump straight to the first
+      // offender instead of leaving the developer to hunt.
+      console.warn('llselect: this widget has no accessible name - pass ariaLabelledBy, ariaLabel, or labelEl. An unnamed combobox violates WAI-ARIA 1.2. (warned once per page; first offender:)', targetEl)
     }
     // Label click focuses the trigger (native <select> label behavior: focus
     // only, never open). The one listener destroy() must undo outside the root.

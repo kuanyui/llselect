@@ -141,9 +141,11 @@ test('an unnamed widget warns once per page; any name-ladder rung stays silent',
   console.warn = (...args: unknown[]) => { warnings.push(args) }
   try {
     resetUnnamedNameWarning()
-    new LLSelectSingle<string>(mount())
+    const offenderMount = mount()
+    new LLSelectSingle<string>(offenderMount)
     assert.equal(warnings.length, 1)
     assert.match(String(warnings[0]![0]), /accessible name/)
+    assert.equal(warnings[0]![1], offenderMount, 'the offending element must ride along for DevTools jumping')
     new LLSelectSingle<string>(mount())
     assert.equal(warnings.length, 1, 'once per page, not per instance')
     resetUnnamedNameWarning()
