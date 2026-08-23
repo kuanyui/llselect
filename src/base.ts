@@ -97,7 +97,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - Prefer this over `ariaLabel` when a visible label element exists: the
    *   spoken name then always matches the visible text.
    * - `null` (default): not forwarded; see `ariaLabel` for the naming
-   *   requirement.
+   *   requirement. An empty or whitespace-only string counts as unset too,
+   *   same as `ariaLabel`.
    * - Rung 1 of the resolution order (the numbered list at `ariaLabel`): it
    *   wins whenever set, matching the ARIA name computation.
    * @group Accessible name
@@ -682,7 +683,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private disabled = false
   /**
    * Who the change being applied right now is attributed to; the variants'
-   * `onChange` firing reads it. `'api'` except inside `withUserChangeSource`.
+   * `onChange` firing reads it. Set to `'user'` by `withUserChangeSource`
+   * and consumed (reset to `'api'`) by the first `onChange` fired, so a
+   * nested api-driven change inside an `onChange` handler reports `'api'`.
    * @group State (protected)
    */
   protected changeSource: LLSelectChangeSource = 'api'
@@ -2147,7 +2150,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * Build the clear (x) button for the `clearable` trigger slot. The library owns
    * the button + its click (stops propagation so it never toggles the popup, then
-   * `clearSelection`) + `aria-label` (text from `uiTranslationPack.triggerClearButtonAriaLabel`);
+   * `clearSelection`; a no-op while the control is disabled) + `aria-label`
+   * (text from `uiTranslationPack.triggerClearButtonAriaLabel`);
    * `createTriggerClearButtonContentElFn` optionally fills the icon,
    * else the theme's CSS glyph. The theme hides it via `data-empty` when empty.
    * @group Subclassing: rendering

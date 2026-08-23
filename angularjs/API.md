@@ -255,7 +255,7 @@ A house style set once, rather than repeated on 40 elements. Per-element `ll-*` 
 angular.module('app', ['llselect'])
   .config(['llselectConfigProvider', function (llselectConfigProvider) {
     llselectConfigProvider.defaults({
-      arrow: 'chevron',          // 'chevron' | 'triangle' | null (null = the theme draws it)
+      arrow: 'chevron',          // 'chevron' | 'triangle' | 'none' | null (null = the chevron default)
       filterable: true,          // boolean, or a predicate (items) => boolean
       highlight: true,           // wrap filter matches in the default item text in <mark>
       popupWidthPolicy: 'match-trigger',  // llselect's own default is 'fit-content'
