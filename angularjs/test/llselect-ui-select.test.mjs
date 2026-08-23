@@ -364,3 +364,34 @@ test('$select.search resets when the query is cleared, so rows stop highlighting
   // can reset $select.search here. Before it, this still said "Alice|ali".
   assert.equal(a.$('.llselect-item').textContent, 'Alice|')
 })
+
+test('allow-clear="false" disables and a bare allow-clear enables, like ui-select', () => {
+  // ui-select's parse (uiSelectMatchDirective.js:25): '' -> true, otherwise
+  // only the string 'true'. The old raw truthy check inverted both edges.
+  const off = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person" aria-label="P">
+          <ui-llselect-match placeholder="Pick" allow-clear="false">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.person = undefined },
+  })
+  assert.equal(off.$('ui-llselect .llselect-trigger-clear-button'), null, 'allow-clear="false" must not enable the clear button')
+  const bare = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person" aria-label="P">
+          <ui-llselect-match placeholder="Pick" allow-clear>{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.person = undefined },
+  })
+  assert.ok(bare.$('ui-llselect .llselect-trigger-clear-button'), 'a bare allow-clear must enable the clear button')
+})
