@@ -106,3 +106,38 @@ test('a disabled control does not fire onOpen', () => {
   sel.open() // blocked
   assert.equal(opens, 0)
 })
+
+test('onChange meta.source (single): a click reports user, setChosenItem reports api', () => {
+  const sources: string[] = []
+  const sel = new LLSelectSingle<string>(mount(), {
+    ariaLabel: 'Fruit',
+    onChange: (_item, _prev, meta) => { sources.push(meta.source) },
+  })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  sel.popupListEl.querySelector<HTMLElement>('[role="option"]')!.click()
+  sel.setChosenItem('b')
+  assert.deepEqual(sources, ['user', 'api'])
+})
+
+test('onChange meta.source (multiple): every built-in interaction reports user, every method reports api', () => {
+  const sources: string[] = []
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'Fruits',
+    clearable: true,
+    chooseAllRow: true,
+    triggerDisplay: 'tags',
+    onChange: (_items, _prev, meta) => { sources.push(meta.source) },
+  })
+  sel.setItems(['a', 'b', 'c'])
+  sel.open()
+  const itemRow = () => sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.itemClass}:not(.${sel.classIdMap.chooseAllRowClass})`)!
+  itemRow().click() // toggle 'a' on
+  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click() // tag x removes 'a'
+  sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.chooseAllRowClass}`)!.click() // choose-all
+  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click() // clear button
+  sel.toggleItem('a')
+  sel.setChosenItems(['b'])
+  sel.chooseAll()
+  assert.deepEqual(sources, ['user', 'user', 'user', 'user', 'api', 'api', 'api'])
+})

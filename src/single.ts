@@ -1,6 +1,7 @@
 import {
   LLSelectBase,
   type LLSelectBaseSettings,
+  type LLSelectChangeMeta,
   type LLSelectSettingsInputOf,
 } from './base.js'
 
@@ -28,9 +29,12 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * this change); `undefined` means "no selection" on either side. Does NOT
    * fire on construction nor on `setChosenItem` with an equivalent item.
    * `null` (default) = no listener.
+   * - `meta.source` says who initiated the change: `'user'` for a pointer or
+   *   keyboard interaction inside the widget, `'api'` for any programmatic
+   *   call. See {@link LLSelectChangeMeta}.
    * @group Events
    */
-  onChange: ((chosenItem: T | undefined, previousChosenItem: T | undefined) => void) | null
+  onChange: ((chosenItem: T | undefined, previousChosenItem: T | undefined, meta: LLSelectChangeMeta) => void) | null
   /**
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen item
@@ -220,6 +224,6 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
 
   private fireChange(previousChosenItem: T | undefined): void {
     this.onChosenChanged()
-    this.settings.onChange?.(this.chosenItem, previousChosenItem)
+    this.settings.onChange?.(this.chosenItem, previousChosenItem, { source: this.changeSource })
   }
 }

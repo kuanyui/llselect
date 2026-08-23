@@ -2,6 +2,7 @@ import {
   LLSelectBase,
   defaultCompareFn,
   type LLSelectBaseSettings,
+  type LLSelectChangeMeta,
   type LLSelectSettingsInputOf,
 } from './base.js'
 
@@ -48,9 +49,13 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * construction nor on a setter call that yields an equivalent set
    * (element-wise compared via `compareFn`, order-sensitive).
    * `null` (default) = no listener.
+   * - `meta.source` says who initiated the change: `'user'` for a pointer or
+   *   keyboard interaction inside the widget (an option toggle, a tag's
+   *   remove button, the clear button, the choose-all row), `'api'` for any
+   *   programmatic call. See {@link LLSelectChangeMeta}.
    * @group Events
    */
-  onChange: ((chosenItems: readonly T[], previousChosenItems: readonly T[]) => void) | null
+  onChange: ((chosenItems: readonly T[], previousChosenItems: readonly T[], meta: LLSelectChangeMeta) => void) | null
   /**
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen items
@@ -490,7 +495,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
-      this.toggleItem(item)
+      this.withUserChangeSource(() => this.toggleItem(item))
     })
     return btn
   }
@@ -593,7 +598,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     el.addEventListener('click', () => {
       // Focus-then-activate, mirroring the item click wiring.
       this.focusLeadingRow()
-      this.onLeadingRowActivated()
+      this.withUserChangeSource(() => this.onLeadingRowActivated())
     })
     return el
   }
@@ -685,6 +690,6 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
 
   private fireChange(previousChosenItems: readonly T[]): void {
     this.onChosenChanged()
-    this.settings.onChange?.(this.chosenItems, previousChosenItems)
+    this.settings.onChange?.(this.chosenItems, previousChosenItems, { source: this.changeSource })
   }
 }

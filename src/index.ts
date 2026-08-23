@@ -7,6 +7,8 @@ export { LLSelectBase } from './base.js'
 export type {
   LLSelectBaseSettings,
   LLSelectBaseSettingsInput,
+  LLSelectChangeMeta,
+  LLSelectChangeSource,
   LLSelectClassIdMap,
   LLSelectOutsideClickBehavior,
   LLSelectSettingsInputOf,

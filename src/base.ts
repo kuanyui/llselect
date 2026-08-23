@@ -34,6 +34,28 @@ export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
  * @group Settings
  * @category Base
  */
+/**
+ * Who initiated a chosen-state change, delivered to `onChange` as
+ * `meta.source`.
+ * - `'user'`: a pointer or keyboard interaction inside the widget - an
+ *   option toggle, a tag's remove button, the clear button, the choose-all
+ *   row.
+ * - `'api'`: any programmatic call - `setChosenItem` / `setChosenItems`,
+ *   `toggleItem`, the `choose*` bulk ops, `setItems` reconciliation.
+ * @group Events
+ */
+export type LLSelectChangeSource = 'user' | 'api'
+
+/**
+ * Extra facts about one `onChange` firing, as the callback's third argument.
+ * An object on purpose: future fields can be added without breaking the
+ * callback signature.
+ * @group Events
+ */
+export interface LLSelectChangeMeta {
+  source: LLSelectChangeSource
+}
+
 export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Prefix used for every CSS class and DOM id the library generates
@@ -641,6 +663,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected focusedIndex = -1
   /** Control-level disabled state (whole select); toggled via `setDisabled`. */
   private disabled = false
+  /**
+   * Who the change being applied right now is attributed to; the variants'
+   * `onChange` firing reads it. `'api'` except inside `withUserChangeSource`.
+   * @group State (protected)
+   */
+  protected changeSource: LLSelectChangeSource = 'api'
   private triggerArrowEl: HTMLElement
   private positioner: Positioner | undefined
   /**
@@ -1633,7 +1661,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         // on the previous keyboard-focused item while a different one was
         // just clicked.
         this.setFocusedIndex(index)
-        this.onItemActivated(item)
+        this.withUserChangeSource(() => this.onItemActivated(item))
       })
     }
     return el
@@ -1758,6 +1786,23 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: rendering
    */
   protected createPopupListLeadingRowEl(): HTMLElement | null { return null }
+
+  /**
+   * Run `fn` with chosen-state changes attributed to the user. The library
+   * wraps exactly its pointer / keyboard entry points with it - option
+   * activation, the tag remove button, the clear button, the choose-all row;
+   * everything else reports `'api'`.
+   * @group Subclassing: reactions
+   */
+  protected withUserChangeSource<R>(fn: () => R): R {
+    const previous = this.changeSource
+    this.changeSource = 'user'
+    try {
+      return fn()
+    } finally {
+      this.changeSource = previous
+    }
+  }
 
   /**
    * Subclass hook: the leading row was activated - Enter while it is focused
@@ -2003,14 +2048,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         return
       case LLSelectAction.Select: {
         if (this.leadingRowFocused) {
-          this.onLeadingRowActivated()
+          this.withUserChangeSource(() => this.onLeadingRowActivated())
           return
         }
         const list = this.getVisibleItems()
         if (this.focusedIndex >= 0 && this.focusedIndex < list.length) {
           const item = list[this.focusedIndex]!
           // Defensive: nav never lands on a disabled item, but guard anyway.
-          if (!this.isItemEffectivelyDisabled(item)) { this.onItemActivated(item) }
+          if (!this.isItemEffectivelyDisabled(item)) { this.withUserChangeSource(() => this.onItemActivated(item)) }
         }
         return
       }
@@ -2096,7 +2141,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
-      this.clearSelection()
+      this.withUserChangeSource(() => this.clearSelection())
     })
     return btn
   }
