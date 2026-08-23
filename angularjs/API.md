@@ -421,7 +421,7 @@ angular.module('app').filter('ifaceMatch', function () {
 
 Differences from real ui-select:
 
-- Cost: ui-select re-evaluates the repeat (filter included) on EVERY digest, per row; the bridge evaluates it ONCE per typed query and answers membership from the result.
+- Cost: for TYPING, ui-select re-evaluates the repeat (filter included) on every digest, per row; the bridge evaluates it once per typed query and answers membership from the result. The bridge's items `$watchCollection` still evaluates the full expression (with an empty query) once per digest to detect collection changes - same order of work as ui-select's own watcher, so no regression, but not free either.
 - The search box is llselect's own; `$select.search` is still published to your templates (e.g. for `| highlight:`).
 - A bare `| filter: $select.search` matches each property separately, so a query spanning two fields (`vlan 2`) matches nothing - in real ui-select AND here. That is Angular's `filter` filter; write one like the above.
 - Async searching (`refresh`, `refresh-delay`, `minimum-input-length`, `spinner-enabled`) is not bridged: [Not supported](#not-supported).
