@@ -32,10 +32,11 @@
   /**
    * Row scopes live as long as the DOM llselect built for them. llselect
    * rebuilds the whole list in renderPopupList (open / filter / setItems /
-   * rerender), so that is the one place old scopes become garbage. Subclassing
-   * is the sanctioned way to extend llselect for a wrapper (DESIGN.md,
-   * "Customization model"); the bridge hangs off a WeakMap because it cannot
-   * exist before super() runs.
+   * rerender) - old scopes die wholesale there - and repaints ONE row in
+   * replacePopupListItemElInDom (multi toggle), where only the replaced row's
+   * scope dies (swept by element disconnection). Subclassing is the sanctioned
+   * way to extend llselect for a wrapper (DESIGN.md, "Customization model");
+   * the bridge hangs off a WeakMap because it cannot exist before super() runs.
    */
   var BRIDGES = new WeakMap()
 
@@ -65,6 +66,18 @@
         var bridge = BRIDGES.get(this)
         if (bridge) { bridge.rowIndex = index }
         return super.createItemEl(item, index)
+      }
+      replacePopupListItemElInDom(item) {
+        // The single-row repaint path (multi toggle) bypasses renderPopupList,
+        // so the replaced row's scope must be swept here or it leaks per toggle.
+        super.replacePopupListItemElInDom(item)
+        var bridge = BRIDGES.get(this)
+        if (bridge) { bridge.releaseDetachedRowScopes() }
+      }
+      close() {
+        super.close()
+        var bridge = BRIDGES.get(this)
+        if (bridge) { bridge.releaseDetachedRowScopes() }
       }
     }
   }
@@ -164,38 +177,49 @@
     var rowScopes = []
     var triggerScopes = []
 
-    function newTemplateScope(item, slot) {
+    /**
+     * Compile one template slot on a fresh child scope and hand llselect an
+     * element that is ALREADY interpolated. $compile alone does not fill
+     * bindings - AngularJS does that on the next digest - and llselect renders
+     * from native events, i.e. outside one. Returning an unevaluated clone
+     * means llselect measures and positions the popup against the literal
+     * "{{p.name}}" text, which then resizes a tick later: the flicker on first
+     * open. Digesting the row scope now fills it in place. If a digest is
+     * already running (a $watchCollection-driven render), $digest would throw,
+     * and the ambient one already traverses the new child.
+     * The scope is registered WITH its element, so partial row replacement can
+     * release exactly the scopes whose DOM llselect just discarded.
+     */
+    function compileTemplateSlot(html, item, slot, setupScope) {
       var s = scope.$new()
       s.$select = $select
       s[itemName] = item
-      ;(slot === 'trigger' ? triggerScopes : rowScopes).push(s)
-      return s
-    }
-
-    /**
-     * Compile one template slot and hand llselect an element that is ALREADY
-     * interpolated. $compile alone does not fill bindings - AngularJS does that
-     * on the next digest - and llselect renders from native events, i.e. outside
-     * one. Returning an unevaluated clone means llselect measures and positions
-     * the popup against the literal "{{p.name}}" text, which then resizes a tick
-     * later: the flicker on first open. Digesting the row scope now fills it in
-     * place. If a digest is already running (a $watchCollection-driven render),
-     * $digest would throw, and the ambient one already traverses the new child.
-     */
-    function compileSlot(html, rowScope) {
-      var el = $compile('<span>' + html + '</span>')(rowScope)[0]
-      if (!$rootScope.$$phase) { rowScope.$digest() }
+      if (setupScope) { setupScope(s) }
+      var el = $compile('<span>' + html + '</span>')(s)[0]
+      if (!$rootScope.$$phase) { s.$digest() }
+      ;(slot === 'trigger' ? triggerScopes : rowScopes).push({ s: s, el: el })
       return el
     }
     var bridge = {
       rowIndex: 0,
       releaseRowScopes: function () {
-        for (var i = 0; i < rowScopes.length; i++) { rowScopes[i].$destroy() }
+        for (var i = 0; i < rowScopes.length; i++) { rowScopes[i].s.$destroy() }
         rowScopes.length = 0
       },
       releaseTriggerScopes: function () {
-        for (var i = 0; i < triggerScopes.length; i++) { triggerScopes[i].$destroy() }
+        for (var i = 0; i < triggerScopes.length; i++) { triggerScopes[i].s.$destroy() }
         triggerScopes.length = 0
+      },
+      // After a partial row replacement (multi toggle repaints ONE row), the
+      // old row's scope backs disconnected DOM. Full rebuilds go through
+      // releaseRowScopes; this sweeps the replaced-in-place leftovers.
+      releaseDetachedRowScopes: function () {
+        for (var i = rowScopes.length - 1; i >= 0; i--) {
+          if (!rowScopes[i].el.isConnected) {
+            rowScopes[i].s.$destroy()
+            rowScopes.splice(i, 1)
+          }
+        }
       },
     }
 
@@ -259,9 +283,8 @@
         // query (clearing, close-resets), so the stale query would keep
         // highlighting. Sync from the source of truth at render time.
         $select.search = sel ? sel.getFilterQuery() : ''
-        var rowScope = newTemplateScope(item, 'row')
-        rowScope.$index = bridge.rowIndex
-        return compileSlot(slots.choicesHtml, rowScope)
+        var rowIndex = bridge.rowIndex
+        return compileTemplateSlot(slots.choicesHtml, item, 'row', function (s) { s.$index = rowIndex })
       },
     }
 
@@ -306,9 +329,7 @@
       // content, not the whole trigger.
       if (slots.matchHtml) {
         settings.createTagContentElFn = function (item) {
-          var tagScope = newTemplateScope(item, 'trigger')
-          tagScope.$item = item
-          return compileSlot(slots.matchHtml, tagScope)
+          return compileTemplateSlot(slots.matchHtml, item, 'trigger', function (s) { s.$item = item })
         }
       }
       settings.onChange = function (items, previous) {
@@ -324,7 +345,7 @@
         settings.createTriggerContentElFn = function (ctx) {
           if (ctx.chosenItem === undefined) { return null }
           $select.selected = ctx.chosenItem
-          return compileSlot(slots.matchHtml, newTemplateScope(ctx.chosenItem, 'trigger'))
+          return compileTemplateSlot(slots.matchHtml, ctx.chosenItem, 'trigger', null)
         }
       }
       settings.onChange = function (item) {
@@ -366,11 +387,16 @@
             .filter(function (i) { return i !== undefined })
           $select.selected = chosen
           sel.setChosenItems(chosen)
+          // Re-sync to what the core actually holds: setItems adopts the
+          // list's own object for a track-by-equal reload (fresh fields),
+          // and the templates must read the adopted one, not our stale input.
+          $select.selected = sel.getChosenItems().slice()
           return
         }
         var item = (value === null || value === undefined) ? undefined : fromModel(value, items)
         $select.selected = item
         sel.setChosenItem(item)
+        $select.selected = sel.getChosenItem()
       })
     }
 
@@ -383,7 +409,12 @@
       // matching items until the next keystroke.
       lastQuery = null
       withoutWriteBack(function () { sel.setItems(items ? items.slice() : []) })
-      if (repeat.modelMapperFn) { ngModelCtrl.$render() }
+      // Always re-render: setItems prunes a chosen item the new list lacks,
+      // but ui-select's selection is the MODEL, not a membership - an async
+      // preset must come back once (or even though) its item arrives. With an
+      // alias the value is a key needing a fresh reverse lookup; without one
+      // fromModel is identity, faithfully re-choosing $viewValue as-is.
+      ngModelCtrl.$render()
     })
 
     // Disabled, ui-select's own way (select.js:1135): observe the ATTRIBUTE

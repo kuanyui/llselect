@@ -395,3 +395,88 @@ test('allow-clear="false" disables and a bare allow-clear enables, like ui-selec
   })
   assert.ok(bare.$('ui-llselect .llselect-trigger-clear-button'), 'a bare allow-clear must enable the clear button')
 })
+
+test('async choices: presets resolve; plain objects show from boot, alias keys once items arrive', () => {
+  // ui-select semantics: the selection is the MODEL, not a membership test -
+  // a plain-object preset renders even while the collection is still empty.
+  const plain = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person" aria-label="P">
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = []; this.person = { id: 1, name: 'Alice' } },
+  })
+  assert.equal(plain.text('.llselect-trigger-content'), 'Alice', 'object preset must render before items arrive')
+  plain.scope.$apply(() => { plain.scope.vm.users = [{ id: 1, name: 'Alice' }] })
+  assert.equal(plain.text('.llselect-trigger-content'), 'Alice', 'and must survive their arrival')
+
+  // With an alias the model holds a key into the list, so it can only
+  // resolve once the list is there.
+  const keyed = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.personId" aria-label="P">
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p.id as p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = []; this.personId = 2 },
+  })
+  assert.equal(keyed.text('.llselect-trigger-content'), 'Pick', 'a key preset cannot resolve from an empty list')
+  keyed.scope.$apply(() => { keyed.scope.vm.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] })
+  assert.equal(keyed.text('.llselect-trigger-content'), 'Bob', 'key preset must resolve once items arrive')
+})
+
+test('track by reload: a renamed same-key item refreshes the trigger', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person" aria-label="P">
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users track by p.id" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () {
+      this.users = [{ id: 1, name: 'Alice' }]
+      this.person = this.users[0]
+    },
+  })
+  assert.equal(a.text('.llselect-trigger-content'), 'Alice')
+  a.scope.$apply(() => { a.scope.vm.users = [{ id: 1, name: 'Alicia' }] })
+  assert.equal(a.text('.llselect-trigger-content'), 'Alicia', 'the adopted list object must repaint the trigger')
+})
+
+test('repeated toggles with remove-selected="false" do not leak row scopes', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect multiple remove-selected="false" ng-model="vm.people" aria-label="P">
+          <ui-llselect-match placeholder="Pick">{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.people = [] },
+  })
+  const countScopes = () => {
+    let n = 0
+    const walk = (s) => { for (let c = s.$$childHead; c; c = c.$$nextSibling) { n += 1; walk(c) } }
+    walk(a.scope.$root)
+    return n
+  }
+  a.$('ui-llselect .llselect-trigger').click()
+  a.$$('ui-llselect .llselect-item')[0].click() // first toggle settles chip + row scopes
+  const settled = countScopes()
+  for (let i = 0; i < 6; i++) { a.$$('ui-llselect .llselect-item')[0].click() }
+  assert.equal(countScopes(), settled, 'partial row repaints must free the replaced rows\' scopes')
+})
