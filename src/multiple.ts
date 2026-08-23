@@ -352,10 +352,12 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * - If no filter query is active, the acted-on set is every enabled item,
    *   the same scope as `toggleAll`.
    * - Fires `onChange` only when the chosen items actually change.
+   * - The acted-on set is computed by the `getVisibleEnabledItems` seam,
+   *   shared with the choose-all row.
    * @group Selection
    */
   public toggleAllVisible(): void {
-    const actionable = this.getVisibleItems().filter(i => !this.isItemEffectivelyDisabled(i))
+    const actionable = this.getVisibleEnabledItems()
     if (actionable.length === 0) { return }
     const allChosen = actionable.every(i => this.isChosen(i))
     if (allChosen) {
@@ -365,6 +367,21 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       const additions = actionable.filter(v => !this.isChosen(v))
       this.setChosenItems([...this.chosenItems, ...additions])
     }
+  }
+
+  /**
+   * Return the visible enabled subset: the items `toggleAllVisible` and the
+   * choose-all row act on.
+   * - It is `getVisibleItems()` minus the effectively disabled items
+   *   (`itemDisabledFn`, disabled groups).
+   * - Both the choose-all row (its counts, tri-state, and click) and
+   *   `toggleAllVisible` read this one method, so an override keeps them in
+   *   agreement. Example: the tree-select demo subclass narrows it to leaf
+   *   nodes.
+   * @group Subclassing: semantics
+   */
+  protected getVisibleEnabledItems(): readonly T[] {
+    return this.getVisibleItems().filter(i => !this.isItemEffectivelyDisabled(i))
   }
 
   /**
@@ -480,8 +497,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
 
   /**
    * Build one chip's remove (x) button. The library owns the button + its click
-   * (`stopPropagation` so it never toggles the popup, then `toggleItem`) +
-   * `tabindex="-1"` + `aria-label` (from `itemToTagRemoveButtonAriaLabel`);
+   * (`stopPropagation` so it never toggles the popup, then `toggleItem`; a
+   * no-op while the control is disabled) + `tabindex="-1"` + `aria-label`
+   * (from `itemToTagRemoveButtonAriaLabel`);
    * `createTagRemoveButtonContentElFn` optionally fills the icon, else the theme's CSS glyph.
    * Mirrors the clear button's `createTriggerClearButtonEl`. Override for full control of
    * the button element.
@@ -575,7 +593,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    */
   protected override createPopupListLeadingRowEl(): HTMLElement | null {
     if (!this.settings.chooseAllRow) { return null }
-    const actionable = this.getVisibleItems().filter(i => !this.isItemEffectivelyDisabled(i))
+    const actionable = this.getVisibleEnabledItems()
     if (actionable.length === 0) { return null }
     const chosenCount = actionable.filter(i => this.isChosen(i)).length
     const state: LLSelectChosenState = chosenCount === 0 ? 'none' : chosenCount === actionable.length ? 'all' : 'some'

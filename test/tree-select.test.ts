@@ -122,3 +122,30 @@ test('inherited bulk APIs keep the model leaves-only', () => {
   sel.toggleItem(f.citrus)
   assert.deepEqual(sel.getChosenItems().map(n => n.text).sort(), ['Lemon', 'Orange'], 'toggleItem(branch) must toggle the subtree')
 })
+
+test('toggleAll round-trips: branches never block the all-chosen direction', () => {
+  const f = fixture()
+  const sel = new LLTreeMultipleSelect(mount())
+  sel.setTreeItems(f.roots)
+  sel.toggleAll()
+  assert.deepEqual(sel.getChosenItems().map(n => n.text).sort(), ['Carrot', 'Lemon', 'Orange', 'Strawberry'])
+  // All leaves chosen; unchoosable branches must not flip this back to "choose".
+  sel.toggleAll()
+  assert.deepEqual(sel.getChosenItems(), [])
+})
+
+test('choose-all row: counts, tri-state and click act on visible leaves only', () => {
+  const f = fixture()
+  const sel = new LLTreeMultipleSelect(mount(), { chooseAllRow: true })
+  sel.setTreeItems(f.roots)
+  sel.open()
+  // Default expansion shows leaves Strawberry + Carrot (Citrus stays collapsed).
+  const row = () => sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.chooseAllRowClass}`)!
+  assert.equal(row().textContent, 'Select all (0 of 2)', 'total must count leaves, not every node')
+  assert.equal(row().getAttribute('data-chosen-state'), 'none')
+  row().click()
+  assert.deepEqual(sel.getChosenItems().map(n => n.text).sort(), ['Carrot', 'Strawberry'])
+  assert.equal(row().getAttribute('data-chosen-state'), 'all', 'all visible leaves chosen must read as all, branches ignored')
+  row().click()
+  assert.deepEqual(sel.getChosenItems(), [], 'the second click must clear, not re-choose')
+})

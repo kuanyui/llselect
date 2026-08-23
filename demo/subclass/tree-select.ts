@@ -21,6 +21,9 @@
  *   styling live in the demo's style.css (region 14.2); copy that rule too.
  * - `onItemActivated` override: activating a branch toggles its whole leaf
  *   subtree; leaves keep the normal toggle (`super`).
+ * - Leaves-only model contract: `setChosenItems` drops branches (the one
+ *   door raw arrays come through), and `getVisibleEnabledItems` +
+ *   `toggleAll` overrides keep the bulk ops deciding over leaves only.
  *
  * Deliberate demo cuts, so the example stays readable:
  * - The model value is the chosen LEAVES; branches are never in it.
@@ -170,13 +173,29 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
   }
 
   /**
-   * The model holds LEAVES only, but the inherited bulk ops (`chooseAll`,
-   * `toggleAll`, the choose-all row) see every node as an item. This is the
-   * one door raw arrays come through, so the contract is kept here: branch
-   * nodes are dropped.
+   * The model holds LEAVES only. Every raw array comes through this door,
+   * so branch nodes are dropped here.
    */
   public override setChosenItems(items: readonly LLTreeNode[]): void {
     super.setChosenItems(items.filter(node => !isBranch(node)))
+  }
+
+  /**
+   * Bulk ops must also DECIDE over leaves only: branches can never be
+   * chosen, so leaving them in the all-chosen checks would keep `toggleAll`
+   * and the choose-all row stuck in their "choose" direction (and the row's
+   * counts wrong). This seam narrows `toggleAllVisible` + the choose-all
+   * row; `toggleAll` below narrows the whole-list variant.
+   */
+  protected override getVisibleEnabledItems(): readonly LLTreeNode[] {
+    return super.getVisibleEnabledItems().filter(node => !isBranch(node))
+  }
+
+  /** Same leaves-only narrowing for the whole-list toggle. */
+  public override toggleAll(): void {
+    const leaves = this.getItems().filter(node => !isBranch(node) && !this.isItemEffectivelyDisabled(node))
+    const allChosen = leaves.length > 0 && leaves.every(leaf => this.isChosen(leaf))
+    if (allChosen) { this.unchooseAll() } else { this.chooseAll() }
   }
 
   /** A branch toggles its whole leaf subtree, same as activating its row. */
