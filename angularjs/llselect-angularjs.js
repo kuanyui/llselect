@@ -62,7 +62,6 @@
 
     return {
       itemsFn: itemsFn,
-      hasModelProjection: !!selectAsFn,
       /** item -> the value ng-model holds. Identity unless `select as` is used. */
       toModelValue: function (scope, item) {
         return selectAsFn ? selectAsFn(scope, locals(item)) : item
@@ -76,10 +75,12 @@
        * list strand an async preset on the placeholder forever.
        */
       fromModelValue: function (scope, value, items) {
+        // The value's own key does not vary per item - compute it once.
+        var valueKey = (!selectAsFn && trackByFn) ? trackByFn(scope, locals(value)) : undefined
         for (var i = 0; i < items.length; i++) {
           var hit = selectAsFn
             ? selectAsFn(scope, locals(items[i])) === value
-            : (trackByFn ? trackByFn(scope, locals(items[i])) === trackByFn(scope, locals(value)) : items[i] === value)
+            : (trackByFn ? trackByFn(scope, locals(items[i])) === valueKey : items[i] === value)
           if (hit) { return items[i] }
         }
         return undefined
