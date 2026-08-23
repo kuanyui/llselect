@@ -141,3 +141,22 @@ test('onChange meta.source (multiple): every built-in interaction reports user, 
   sel.chooseAll()
   assert.deepEqual(sources, ['user', 'user', 'user', 'user', 'api', 'api', 'api'])
 })
+
+test('meta.source: a programmatic setter inside the onChange callback reports api', () => {
+  const sources: string[] = []
+  let reentered = false
+  const sel: LLSelectMultiple<string> = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x',
+    onChange: (items, _prev, meta) => {
+      sources.push(meta.source)
+      if (!reentered) {
+        reentered = true
+        sel.setChosenItems([...items, 'b'])
+      }
+    },
+  })
+  sel.setItems(['a', 'b', 'c'])
+  sel.open()
+  sel.popupListEl.querySelector<HTMLElement>('[role="option"]')!.click()
+  assert.deepEqual(sources, ['user', 'api'])
+})

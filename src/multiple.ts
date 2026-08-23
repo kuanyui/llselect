@@ -64,7 +64,9 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    *   real markup such as tag chips.
    * - fn returns `null` - use the default for this render (count summary / tags).
    * - setting is `null` (default) - always use that default rendering.
-   * Checked before `renderTriggerContent`, so it wins over a subclass override.
+   * The DEFAULT `renderTriggerContent` checks it first; a subclass override
+   * replaces that default entirely and may ignore the setting - override
+   * wins, per DESIGN.md "Customization model".
    * @group Trigger
    */
   createTriggerContentElFn: ((ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null) | null
@@ -495,6 +497,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
+      // Same inertness rule as the clear button: tag chips sit in the
+      // trigger, reachable while the control is disabled.
+      if (this.isDisabled()) { return }
       this.withUserChangeSource(() => this.toggleItem(item))
     })
     return btn
@@ -689,7 +694,12 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   private fireChange(previousChosenItems: readonly T[]): void {
+    // Consume the source before any observer runs: a programmatic setter
+    // called from inside onChange (or a subclass reaction) must report
+    // 'api', not inherit the outer interaction's 'user' attribution.
+    const meta: LLSelectChangeMeta = { source: this.changeSource }
+    this.changeSource = 'api'
     this.onChosenChanged()
-    this.settings.onChange?.(this.chosenItems, previousChosenItems, { source: this.changeSource })
+    this.settings.onChange?.(this.chosenItems, previousChosenItems, meta)
   }
 }

@@ -44,7 +44,9 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * - fn returns `null` - use the default for this render: the chosen item's
    *   `itemToString`, or the placeholder when nothing is chosen.
    * - setting is `null` (default) - always use that default rendering.
-   * Checked before `renderTriggerContent`, so it wins over a subclass override.
+   * The DEFAULT `renderTriggerContent` checks it first; a subclass override
+   * replaces that default entirely and may ignore the setting - override
+   * wins, per DESIGN.md "Customization model".
    * @group Trigger
    */
   createTriggerContentElFn: ((ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | null) | null
@@ -223,7 +225,12 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   }
 
   private fireChange(previousChosenItem: T | undefined): void {
+    // Consume the source before any observer runs: a programmatic setter
+    // called from inside onChange (or a subclass reaction) must report
+    // 'api', not inherit the outer interaction's 'user' attribution.
+    const meta: LLSelectChangeMeta = { source: this.changeSource }
+    this.changeSource = 'api'
     this.onChosenChanged()
-    this.settings.onChange?.(this.chosenItem, previousChosenItem, { source: this.changeSource })
+    this.settings.onChange?.(this.chosenItem, previousChosenItem, meta)
   }
 }

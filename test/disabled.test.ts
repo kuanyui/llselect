@@ -189,3 +189,19 @@ test('unchooseAll preserves disabled-chosen items', () => {
   sel.unchooseAll()
   assert.deepEqual([...sel.getChosenItems()], ['b']) // 'a' cleared, disabled 'b' kept
 })
+
+test('disabled: the clear button and tag remove buttons are inert', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x', clearable: true, triggerDisplay: 'tags',
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a'])
+  sel.setDisabled(true)
+  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
+  assert.deepEqual([...sel.getChosenItems()], ['a'], 'tag x must not remove while disabled')
+  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
+  assert.deepEqual([...sel.getChosenItems()], ['a'], 'clear must not clear while disabled')
+  sel.setDisabled(false)
+  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
+  assert.deepEqual([...sel.getChosenItems()], [], 're-enabled clear must work')
+})
