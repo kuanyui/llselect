@@ -12,12 +12,12 @@ Findings are named by what they are, never by a bare code.
 
 ## Restructure (move out of demo/)
 
-- [x] **Move the source to `angularjs/`** as its own package, so llselect's own `package.json` / `tsconfig` / `rollup` / `sideEffects` stay untouched. Rename on the way: `demo/angularjs/llselect-angularjs.js` -> `angularjs/angularjs-llselect.js`, `demo/angularjs/ui-llselect.js` -> `angularjs/angularjs-ui-llselect.js`.
+- [x] **Move the source to `angularjs/`** as its own package, so llselect's own `package.json` / `tsconfig` / `rollup` / `sideEffects` stay untouched. Landed names: `demo/angularjs/`'s directive files became `angularjs/llselect-angularjs.js` and `angularjs/llselect-ui-select.js`.
 - [x] **`angularjs/package.json`**: `peerDependencies` on `llselect` + `angular`; `devDependencies` for the tests (`angular`, `jsdom`); `files` listing the source + minified files; `main` pointing at the unminified source.
 - [x] **Minify step, terser only - no rollup, no bundler.** The file is already a plain IIFE reading `window.angular` / `window.llselect`, which is the format angular.js itself, ui-select and angular-validation all ship (3 of 4 surveyed; only angular-translate is UMD), so there is nothing to bundle or transpile. Ship both `angularjs-llselect.js` and `angularjs-llselect.min.js`: the target usage is download the file, drop it in `vendor/`, add a `<script src>` in `<head>` - that user has no build pipeline of their own to minify it for them.
 - [x] **Move the tests in** so they run as this package's `npm test` (jsdom + real angular from devDependencies, not a CDN). They exist and pass already; they live in the session scratchpad and must not stay there. Cover, at minimum, what is already verified: model <-> view both ways, `name` + `required` + `form.$valid`, the `$isEmpty` override for multiple, the write-back gate (including its mutation test - disabling the gate must turn exactly those assertions red), `<ui-llselect>` transclusion, `ll-item-text` becoming the accessible name, and `ui-disable-choice` reaching llselect.
 - [x] **Docs, in the package**, split by audience: `README.md` (usage), `DESIGN.md` (why, and the rejected alternatives), `SPEC.md` (the contract plus a file:line for every non-obvious claim). All three are back in `package.json`'s `files`.
-- [x] **Point the demo at the package** (`demo/angularjs/index.html` and `benchmark.html` load `../../angularjs/*.js`), and say in the demo that the package is the source of truth and the demo is not a copy.
+- [x] **Point the demo at the package** (`demo/angularjs/examples.html` and `benchmark.html` load `../../angularjs/*.js`), and say in the demo that the package is the source of truth and the demo is not a copy.
 - [x] **Add the package's verification command to the root `CLAUDE.md`.** Without it, a green root `npm test` reads as "everything is tested" while covering none of this.
 
 ## Demo structure
@@ -36,7 +36,7 @@ Findings are named by what they are, never by a bare code.
 ## Lessons
 
 - Q: Why did the benchmark's off-screen stage pass every jsdom run and then fail instantly in a browser?
-  - A: Because llselect refuses to open a trigger that is off-screen or clipped (`positioning.ts` `isAnchorHidden`), and jsdom is structurally blind to it: every rect is 0x0 at 0,0, and the check uses strict comparisons *precisely* so an unsized jsdom anchor reads as "in viewport, no rect yet". So `position: absolute; left: -9999px` - written to exclude paint - silently measured an open that never happened, and no jsdom test could ever have caught it. `test/offscreen.test.mjs` now stubs the rect so the path is at least observable.
+  - A: Because llselect refuses to open a trigger that is off-screen or clipped (`positioning.ts` `isAnchorHidden`), and jsdom is structurally blind to it: every rect is 0x0 at 0,0, and the check uses strict comparisons *precisely* so an unsized jsdom anchor reads as "in viewport, no rect yet". So `position: absolute; left: -9999px` - written to exclude paint - silently measured an open that never happened, and no jsdom test could ever have caught it. `angularjs/test/offscreen.test.mjs` now stubs the rect so the path is at least observable.
   - The deeper miss: `demo/benchmark.js` had already learned this the hard way (`6d7a29f`, "scroll a widget on-screen before measuring it - off-screen open() no-ops") and says so in a comment. A second benchmark was written in the same repo without reading what the first one paid for. Read the existing one's caveats before writing a new one.
 
 - Q: Why does the benchmark harness fail on console output instead of just printing it?

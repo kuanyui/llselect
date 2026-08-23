@@ -7,7 +7,9 @@
 //      unicode test fixtures, demo i18n data, external review inputs).
 //      Test sources are scanned with string literals masked: fixture DATA may
 //      be unicode, the surrounding code / comments must stay ASCII.
-//   2. Markdown relative links must point at existing files.
+//   2. Markdown relative links must point at existing files; `#anchor`
+//      fragments (same-file or into another checked .md) must match a real
+//      heading slug; backticked repo paths must exist on disk.
 //   3. if / else / while / for / do bodies must be wrapped in { }.
 //   4. `any` needs an explaining comment on the same or previous line.
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
@@ -41,6 +43,12 @@ function walk(rel, extension) {
 const srcTs = walk('src', '.ts').filter((f) => !f.endsWith('draft.ts'))
 const testTs = walk('test', '.ts')
 const scriptFiles = walk('scripts', '.mjs')
+// Plain-JS surfaces carry the brace rule too (CLAUDE.md: the angularjs
+// directory keeps the ASCII / brace / comment rules; demo JS is real code).
+const demoTs = walk('demo', '.ts')
+const demoJs = walk('demo', '.js')
+const angularjsJs = walk('angularjs', '.js').filter((f) => !f.endsWith('.min.js') && !f.includes('/test/') && !f.includes('\\test\\'))
+const angularjsTestMjs = walk('angularjs/test', '.mjs')
 
 const asciiFiles = [
   ...srcTs.filter((f) => !f.startsWith('src/i18n/')),
@@ -48,6 +56,8 @@ const asciiFiles = [
   ...walk('docs', '.md'),
   ...walk('angularjs', '.md'),
   ...scriptFiles,
+  ...demoTs,
+  ...angularjsJs,
   'README.md',
   'CLAUDE.md',
   'package.json',
@@ -129,10 +139,10 @@ for (const rel of asciiFiles) {
 
 // --- rules 3 / 4 on TS + script sources; rule 1 on masked test sources ----
 
-for (const rel of [...srcTs, ...scriptFiles]) {
+for (const rel of [...srcTs, ...scriptFiles, ...demoTs, ...demoJs, ...angularjsJs]) {
   checkAst(rel, readFileSync(join(root, rel), 'utf8'))
 }
-for (const rel of testTs) {
+for (const rel of [...testTs, ...angularjsTestMjs]) {
   const masked = []
   checkAst(rel, readFileSync(join(root, rel), 'utf8'), { maskedLinesOut: masked })
   scanPunctuation(rel, masked)
@@ -142,15 +152,72 @@ for (const rel of testTs) {
 
 const LINK = /\]\(([^)\s]+)\)/g
 
+// Heading slugs per markdown file (GitLab-style, deduped GitHub-style) - the
+// same scheme scripts/build-site.mjs and demo/toc.js mint, so a `#anchor`
+// that passes here resolves on the rendered site too. Fenced code blocks are
+// skipped so `# comment` lines in examples do not register as headings.
+const slugCache = new Map()
+function headingSlugs(relMd) {
+  if (slugCache.has(relMd)) { return slugCache.get(relMd) }
+  const ids = new Set()
+  const counts = new Map()
+  let inFence = false
+  for (const line of readFileSync(join(root, relMd), 'utf8').split('\n')) {
+    if (/^\s*(```|~~~)/.test(line)) { inFence = !inFence; continue }
+    if (inFence) { continue }
+    const m = /^#{1,6}\s+(.+)$/.exec(line)
+    if (!m) { continue }
+    let id = m[1].trim().replace(/`/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    const n = counts.get(id) ?? 0
+    counts.set(id, n + 1)
+    if (n > 0) { id = `${id}-${n}` }
+    ids.add(id)
+  }
+  slugCache.set(relMd, ids)
+  return ids
+}
+
 for (const rel of markdownFiles) {
   const text = readFileSync(join(root, rel), 'utf8')
   for (const m of text.matchAll(LINK)) {
     const target = m[1]
-    if (/^(https?:|mailto:|#)/.test(target)) { continue }
-    const path = resolve(root, dirname(rel), target.split('#')[0])
+    const line = () => text.slice(0, m.index).split('\n').length
+    if (/^(https?:|mailto:)/.test(target)) { continue }
+    if (target.startsWith('#')) {
+      if (!headingSlugs(rel).has(target.slice(1))) {
+        problems.push(`${rel}:${line()}: dead same-file anchor: ${target}`)
+      }
+      continue
+    }
+    const [file, fragment] = target.split('#')
+    const path = resolve(root, dirname(rel), file)
     if (!existsSync(path)) {
+      problems.push(`${rel}:${line()}: broken relative link: ${target}`)
+      continue
+    }
+    if (fragment !== undefined && file.endsWith('.md')) {
+      const targetRel = join(dirname(rel), file)
+      if (!headingSlugs(targetRel).has(fragment)) {
+        problems.push(`${rel}:${line()}: dead anchor into ${file}: #${fragment}`)
+      }
+    }
+  }
+}
+
+// --- rule 2b: backticked repo paths exist ---------------------------------
+// Only paths rooted in a checked-in top-level directory count - hypothetical
+// example paths never start with one, and build outputs (dist/, public/,
+// .build/) are legitimately absent on a fresh clone. docs/llm/archive/ is
+// exempt: an archive records history, and history references past paths.
+const PATHY = /`((?:src|test|test-utils|docs|angularjs|demo|scripts)\/[A-Za-z0-9_@./-]+\.(?:ts|mjs|cjs|js|css|md|json|html))`/g
+
+for (const rel of markdownFiles) {
+  if (rel.includes('docs/llm/archive/') || rel.includes('docs\\llm\\archive\\')) { continue }
+  const text = readFileSync(join(root, rel), 'utf8')
+  for (const m of text.matchAll(PATHY)) {
+    if (!existsSync(join(root, m[1]))) {
       const line = text.slice(0, m.index).split('\n').length
-      problems.push(`${rel}:${line}: broken relative link: ${target}`)
+      problems.push(`${rel}:${line}: backticked path does not exist: ${m[1]}`)
     }
   }
 }
@@ -161,4 +228,4 @@ if (problems.length > 0) {
   console.error(`check: ${problems.length} problem(s)\n` + problems.join('\n'))
   process.exit(1)
 }
-console.log(`check: OK (${asciiFiles.length + testTs.length} files punctuation-scanned, ${markdownFiles.length} markdown link-checked, ${srcTs.length + testTs.length + scriptFiles.length} AST-checked)`)
+console.log(`check: OK (${asciiFiles.length + testTs.length + angularjsTestMjs.length} files punctuation-scanned, ${markdownFiles.length} markdown link-checked, ${srcTs.length + scriptFiles.length + demoTs.length + demoJs.length + angularjsJs.length + testTs.length + angularjsTestMjs.length} AST-checked)`)

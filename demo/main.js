@@ -1146,7 +1146,7 @@ await initTreeSelect().catch(() => {
   let m
   while ((m = re.exec(src)) !== null) {
     const target = document.querySelector(`pre[data-demo="${m[1]}"] code`)
-    if (target) target.innerHTML = highlightJs(m[2])
+    if (target) { target.innerHTML = highlightJs(m[2]) }
   }
 }
 
@@ -1183,6 +1183,6 @@ for (const pre of document.querySelectorAll('pre[data-src-file]')) {
 {
   const dataSrc = await (await fetch('./data.js')).text()
   const target = document.getElementById('data-source')
-  if (target) target.innerHTML = highlightJs(dataSrc)
+  if (target) { target.innerHTML = highlightJs(dataSrc) }
 }
 

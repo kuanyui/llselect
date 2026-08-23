@@ -6,8 +6,8 @@ A JavaScript library aims to be a replacement of native HTML `<select>`. Focus o
 
 It is a minimal but flexible implementation of `<select>` in JavaScript that you can easily wrap and integrate into your existing UI library / framework / style.
 
-- GitHub: [Git](https://github.com/kuanyui/llselect) | [Home](https://kuanyui.github.io/llselect/] | [Demo](https://kuanyui.github.io/llselect/demo/) | [API](https://kuanyui.github.io/llselect/api/)
-- GitLab: [Git](https://gitlab.com/kuanyui/llselect) | [Home](https://kuanyui.gitlab.io/llselect/] | [Demo](https://kuanyui.gitlab.io/llselect/demo/) | [API](https://kuanyui.gitlab.io/llselect/api/)
+- GitHub: [Git](https://github.com/kuanyui/llselect) | [Home](https://kuanyui.github.io/llselect/) | [Demo](https://kuanyui.github.io/llselect/demo/) | [API](https://kuanyui.github.io/llselect/api/)
+- GitLab: [Git](https://gitlab.com/kuanyui/llselect) | [Home](https://kuanyui.gitlab.io/llselect/) | [Demo](https://kuanyui.gitlab.io/llselect/demo/) | [API](https://kuanyui.gitlab.io/llselect/api/)
 
 > [!TIP]
 > #### Why not native `<select>`?
@@ -43,13 +43,13 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 - [Capabilities overview](#capabilities-overview)
 - [API reference](#api-reference)
 - [Customization: settings or subclassing?](#customization-settings-or-subclassing)
-- [Acknowledgment](#acknowledgment)
+- [Acknowledgments](#acknowledgments)
 - [License](#license)
 
 ## Features
 
 - No external JS / CSS dependency.
-- Blazing fast. Instantiation on DOM is sometimes even faster than native `<select>`.
+- Fast where it is measured: mass instantiation is sometimes even faster than native `<select>` (see [Benchmark](#benchmark)).
 - Does not rely on a native `<select>` and its `string` to store data: use `number`, customized object or any JavaScript value as the data model directly, without type-casting hell.
 - Native TypeScript support.
 - Customizable HTML renderer functions.
