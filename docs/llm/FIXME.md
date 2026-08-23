@@ -100,7 +100,7 @@ Open items from the panel, awaiting the user's ruling:
   - Symptom: multi popup render is O(visible x chosen); `setChosenItems` full-rerenders even though selection cannot change grouping. src/multiple.ts:264.
   - Proposed: a chosenSet fast path mirroring PERFORMANCE-31 plus a chosen-only refresh; needs its own design wave (cache invalidation).
 - [ ] **[PERFORMANCE-73] - bridge items watcher re-runs the whole `| filter:` chain every digest**
-  - Symptom: the watched expression retains `| filter: $select.search` with an empty query, so filterFilter deep-compares every item per digest per widget. angularjs/llselect-ui-select.js:405. The overstated doc claim is already corrected (DOCUMENTATION-64).
+  - Symptom: the watched expression retains `| filter: $select.search` with an empty query, so filterFilter deep-compares every item per digest per widget. angularjs/llselect-ui-select.js:414. The overstated doc claim is already corrected (DOCUMENTATION-64).
   - Proposed: watch the bare source by splitting the filters off (ui-select's own parser does this); behavior change, so it awaits the ruling.
 - [ ] **[QUALITY-74] - the icon type trio lacks the LLSelect prefix**
   - Symptom: `IconOptions` / `CheckboxState` / `CheckboxIconOptions` are unprefixed exports; `WidthPolicy` / `Placement` stay as-is per the recorded naming ruling.
@@ -113,7 +113,7 @@ Open items from the panel, awaiting the user's ruling:
   - Symptom: the document-level outside handlers use `rootEl.contains(ev.target)`; composed events retarget to the shadow host, so clicks inside close the popup. llselect itself uses NO shadow DOM - this is about being hosted in one. src/base.ts:1986.
   - Proposed: `ev.composedPath?.()[0] ?? ev.target` in the document-level handlers; the API is available across the support floor.
 - [ ] **[MEDIUM-77] - duplicate compareFn-equal items get stale selection DOM**
-  - Symptom: partial updates use `findIndex`, so only the first equivalent row's `aria-selected` refreshes. src/base.ts:1632.
+  - Symptom: partial updates use `findIndex`, so only the first equivalent row's `aria-selected` refreshes. src/base.ts:1632. Related data point: the ui bridge's `angular.equals` compare makes a MODEL holding structurally equal duplicates render one chip and lose an entry on the first user change (documented as an edge deviation in angularjs/API.md) - a duplicates policy would rule both.
   - Proposed: document "items must be unique under compareFn" (plus a dev warn) rather than supporting duplicates.
 - [ ] **[MEDIUM-78] - constructors invoke overridable render before subclass fields initialize**
   - Symptom: a subclass override of a render seam that reads subclass fields runs during `super()`, before the subclass's field initializers (classic virtual-call-in-constructor). src/single.ts:97, src/multiple.ts:216.

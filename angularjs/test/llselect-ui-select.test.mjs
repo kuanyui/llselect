@@ -505,6 +505,7 @@ test('no track by: a reload with equal-but-fresh objects keeps ONE selection (ui
   const chosenBefore = a.scope.vm.people[0]
   a.scope.$apply(() => { a.scope.vm.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] })
   assert.equal(a.scope.vm.people[0], chosenBefore, 'the model must keep its own object across the reload')
+  assert.equal(a.scope.vm.people.length, 1, 'no duplicate entry may enter the model')
   const chips = a.$$('ui-llselect .llselect-tag').map(t => t.textContent.trim())
   assert.deepEqual(chips, ['Alice'], 'exactly one chip must survive the reload')
   // The popup is still open: the equals-equal fresh Alice is the chosen item,
@@ -512,4 +513,30 @@ test('no track by: a reload with equal-but-fresh objects keeps ONE selection (ui
   // second Alice entry can be added.
   const texts = a.$$('ui-llselect .llselect-item').map(r => r.textContent.trim())
   assert.deepEqual(texts, ['Bob'], 'the fresh equal object must stay hidden as the chosen item')
+})
+
+test('single without track by: aria-selected and open-focus survive an equal-object reload', () => {
+  // With identity compare a reload dropped the chosen row's aria-selected
+  // (AT heard "nothing selected") while the trigger kept showing the choice,
+  // and reopening focused the first row. angular.equals keeps the marking.
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person" aria-label="P">
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }]; this.person = undefined },
+  })
+  a.$('ui-llselect .llselect-trigger').click()
+  a.$$('ui-llselect .llselect-item')[0].click() // choose Alice; single closes
+  a.scope.$apply(() => { a.scope.vm.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] })
+  a.$('ui-llselect .llselect-trigger').click() // reopen
+  const selected = a.$$('ui-llselect .llselect-item').map(r => r.getAttribute('aria-selected'))
+  assert.deepEqual(selected, ['true', 'false'], 'the equal fresh row must stay marked selected')
+  const focused = a.$('ui-llselect .llselect-item-focused')
+  assert.ok(focused && focused.textContent.includes('Alice'), 'reopen must focus the chosen row')
 })

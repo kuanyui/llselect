@@ -276,13 +276,16 @@
         ? function (a, b) {
             return repeat.trackByFn(scope, locals(a)) === repeat.trackByFn(scope, locals(b))
           }
-        // Multiple without track by: ui-select's own comparison. Its
-        // _isItemSelected deep-compares (angular.equals, uiSelectController
-        // .js:332), so a reload's structurally-equal fresh object is the SAME
-        // item - the row stays hidden under remove-selected and re-adding is
-        // impossible. Identity here allowed a double-add ui-select prevents.
-        // Same per-compare cost as ui-select pays; track by avoids it.
-        : (isMultiple ? function (a, b) { return angular.equals(a, b) } : null),
+        // No track by: compare with angular.equals, both modes. Multiple is
+        // ui-select's own comparison (_isItemSelected deep-compares,
+        // uiSelectController.js:332): a reload's structurally-equal fresh
+        // object is the SAME item - the row stays hidden under
+        // remove-selected and re-adding is impossible; identity allowed a
+        // double-add ui-select prevents. Single gets it for aria-selected
+        // truth: with identity, a reload dropped the chosen row's marking
+        // while the trigger kept showing the choice. Same per-compare cost
+        // as ui-select pays; track by avoids it.
+        : function (a, b) { return angular.equals(a, b) },
       createItemContentElFn: function (item) {
         if (!slots.choicesHtml) { return null }
         // Row templates read $select.search (`| highlight:`). filterFn alone
