@@ -480,3 +480,34 @@ test('repeated toggles with remove-selected="false" do not leak row scopes', () 
   for (let i = 0; i < 6; i++) { a.$$('ui-llselect .llselect-item')[0].click() }
   assert.equal(countScopes(), baseline, 'partial row repaints must free the replaced rows\' scopes')
 })
+
+test('no track by: a reload with equal-but-fresh objects keeps the model object as its own item (ui-select parity)', () => {
+  // Identity tracking, exactly like real ui-select without track by: after a
+  // reload the model's old object and the list's new equal object are two
+  // distinct items. track by is the stated requirement for object items
+  // (API.md "Deviations").
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect multiple ng-model="vm.people" aria-label="P">
+          <ui-llselect-match placeholder="Pick">{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }]; this.people = [] },
+  })
+  a.$('ui-llselect .llselect-trigger').click()
+  a.$$('ui-llselect .llselect-item')[0].click() // choose Alice
+  assert.equal(a.scope.vm.people.length, 1)
+  const chosenBefore = a.scope.vm.people[0]
+  a.scope.$apply(() => { a.scope.vm.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] })
+  assert.equal(a.scope.vm.people[0], chosenBefore, 'the model must keep its own object across the reload')
+  assert.equal(a.$$('ui-llselect .llselect-tag, ui-llselect .llselect-trigger-content').length >= 1, true)
+  // The fresh equal object is a DIFFERENT item under identity: its row is
+  // listed again (the popup is still open) although remove-selected (default
+  // true) hides chosen rows.
+  const texts = a.$$('ui-llselect .llselect-item').map(r => r.textContent.trim())
+  assert.ok(texts.some(t => t.includes('Alice')), 'the fresh Alice row must be listed - it is not the chosen object')
+})

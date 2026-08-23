@@ -34,7 +34,8 @@
    * rebuilds the whole list in renderPopupList (open / filter / setItems /
    * rerender) - old scopes die wholesale there - and repaints ONE row in
    * replacePopupListItemElInDom (multi toggle), where only the replaced row's
-   * scope dies (released once its element is out of the DOM). Subclassing is the sanctioned
+   * scope dies (released once its element is out of the DOM); close() detaches
+   * every row and runs the same element-connectivity release. Subclassing is the sanctioned
    * way to extend llselect for a wrapper (DESIGN.md, "Customization model");
    * the bridge hangs off a WeakMap because it cannot exist before super() runs.
    */

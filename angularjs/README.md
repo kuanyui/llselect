@@ -97,9 +97,9 @@ All verified against AngularJS 1.8.3 source, not folk wisdom.
 - **`$setViewValue` self-applies. Do not wrap it in `$scope.$apply()`.** Contrary to what most guides say, `$$debounceViewValueCommit` checks `$$rootScope.$$phase` and wraps `$commitViewValue` in `$scope.$apply` itself when called outside a digest. Wrapping it again is merely redundant. You only need `$apply` if you touch other scope state in the same callback.
 - **`LLSelectMultiple` must override `$isEmpty`.** The default is `isUndefined(value) || value === '' || value === null || value !== value` (`angular.js:30570`), so `[]` is not empty and `required` silently passes on an empty multi-selection. AngularJS applies the same fix in its own `<select multiple>` branch (`angular.js:35932`), and `llselect-angularjs.js` copies it.
 - **Model -> view must not write back.** llselect's `setChosenItem` / `setChosenItems` fire `onChange` whenever the value really changes, including when *we* change it while rendering the model into the view. `setItems` compounds this: it drops a chosen item that is not in the new list and fires `onChange` for that too (`onItemsChanged` in `src/single.ts` / `src/multiple.ts`). Wired naively, loading data asynchronously marks the form `$dirty` and can null the model, for a field the user never touched. `llselect-angularjs.js` arms view -> model only around real interaction (`makeWriteBackGate`).
-- **The model must be re-resolved (`$render`) after every `setItems`.** An async preset can only resolve once its item arrives. Re-rendering is safe because `fromModelValue` resolves by membership: a value the new list lacks resolves to `undefined` (view empty, model kept), so it never re-adds a dropped item.
+- **The model must be re-resolved (`$render`) after every `setItems`.** An async preset can only resolve once its item arrives. In `<llselect-single>` / `<llselect-multiple>` re-rendering is safe because `fromModelValue` resolves by membership: a value the new list lacks resolves to `undefined` (view empty, model kept), so it never re-adds a dropped item. `<ui-llselect>` deliberately skips the membership test without an alias - the selection is the model itself, real ui-select's semantics.
 - **Settings are immutable; only methods are watched.** llselect resolves its settings bag once at construction, so `ll-placeholder` / `ll-filterable` / `ll-popup-width-policy` are read once at link time. Only `ll-disabled` gets a `$watch`, because it maps to the `setDisabled()` method.
-- **When the chosen item vanishes from the list, the model keeps its value and the view goes empty.** This matches `ngOptions`, which shows its "unknown option" in the same situation and does not null the model. Note the shared consequence: `required` still passes, because the model is not empty.
+- **When the chosen item vanishes from the list, the model keeps its value and the view goes empty** - in `<llselect-single>` / `<llselect-multiple>`. This matches `ngOptions`, which shows its "unknown option" in the same situation and does not null the model. Note the shared consequence: `required` still passes, because the model is not empty. `<ui-llselect>` instead keeps rendering the model value, like real ui-select.
 
 ## ghiscoding/angular-validation
 
@@ -124,10 +124,13 @@ Four things to know when wiring it up:
 
 ### Implementation notes
 
-Two `protected` methods are overridden by subclassing, which DESIGN.md ("Customization model") names as the sanctioned path for a framework wrapper:
+Four `protected` methods plus `close()` are overridden by subclassing, which DESIGN.md ("Customization model") names as the sanctioned path for a framework wrapper:
 
-- `renderPopupList` - the single entry point for a list rebuild (open / filter / `setItems` / `rerender`), so it is where the previous round of row scopes is destroyed. Without this, every filter keystroke leaks a scope per row.
+- `renderPopupList` - the entry point for a full list rebuild (open / filter / `setItems` / `rerender`), so it is where the previous round of row scopes is destroyed. Without this, every filter keystroke leaks a scope per row.
+- `renderTrigger` - same idea for the trigger: the scopes behind the previous match / tag content die exactly when that content is rebuilt.
 - `createItemEl(item, index)` - it calls `createItemContentEl` synchronously, so stashing the index there is what makes `$index` available to templates.
+- `replacePopupListItemElInDom(item)` - a multi toggle repaints ONE row; afterwards the replaced row's scope is released (found by its element no longer being in the DOM).
+- `close()` - detaches every row, so the same element-connectivity release runs there too.
 
 The bridge hangs off a `WeakMap` rather than an instance field because it cannot exist before `super()` runs.
 
