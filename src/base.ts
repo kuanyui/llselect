@@ -1498,9 +1498,15 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.focusedIndex = list.length === 0 ? -1 : this.findNextEnabledIndex(list.length - 1, -1, list)
     } else if (this.focusedIndex >= 0 && this.isItemEffectivelyDisabled(list[this.focusedIndex]!)) {
       // Same contract when the row at the focused index BECAME disabled
-      // (setItems swapped the item in place): seek backward, else forward.
+      // (setItems swapped the item in place): seek backward - the option
+      // above the first item is the choose-all leading row when present
+      // (A11Y.md ring order) - else forward.
       const back = this.findNextEnabledIndex(this.focusedIndex, -1, list)
-      this.focusedIndex = back >= 0 ? back : this.findNextEnabledIndex(this.focusedIndex, 1, list)
+      if (back >= 0) {
+        this.focusedIndex = back
+      } else if (!this.focusLeadingRow()) {
+        this.focusedIndex = this.findNextEnabledIndex(this.focusedIndex, 1, list)
+      }
     }
     this.syncFocusedIndexToDom()
   }
@@ -2171,7 +2177,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
-      // A disabled control must not change value through ANY path, and the clear button is
+      // Disabled blocks every USER path to a value change (programmatic
+      // setters still work), and the clear button is
       // reachable while closed - open() and keydown are already guarded.
       if (this.isDisabled()) { return }
       this.withUserChangeSource(() => this.clearSelection())

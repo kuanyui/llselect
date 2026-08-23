@@ -235,3 +235,22 @@ test('toggleAllVisible() with no filter query acts on every enabled item, disabl
   sel.toggleAllVisible()
   assert.deepEqual([...sel.getChosenItems()], ['locked'])
 })
+
+test('the first item becoming disabled in place hands focus back to the choose-all row', () => {
+  let disabled = false
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x',
+    chooseAllRow: true,
+    itemDisabledFn: i => disabled && i === 'a',
+  })
+  sel.setItems(['a', 'b', 'c'])
+  sel.open()
+  fireKey(sel.triggerEl, 'ArrowDown') // leading row -> item a
+  const aRow = sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')[1]!
+  assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), aRow.id, 'precondition: focus sits on a')
+  disabled = true
+  sel.rerender()
+  // Backward from a there is no enabled ITEM, but the option above a is the
+  // choose-all row (A11Y.md ring order) - focus lands there, not forward on b.
+  assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), row(sel)!.id)
+})
