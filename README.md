@@ -6,8 +6,8 @@ A JavaScript library aims to be a replacement of native HTML `<select>`. Focus o
 
 It is a minimal but flexible implementation of `<select>` in JavaScript that you can easily wrap and integrate into your existing UI library / framework / style.
 
-- GitHub: [Git Repo](https://github.com/kuanyui/llselect) | [Live Demo](https://kuanyui.github.io/llselect/demo/)
-- GitLab: [Git Repo](https://gitlab.com/kuanyui/llselect) | [Live Demo](https://kuanyui.gitlab.io/llselect/demo/)
+- GitHub: [Git](https://github.com/kuanyui/llselect) | [Home](https://kuanyui.github.io/llselect/] | [Demo](https://kuanyui.github.io/llselect/demo/) | [API](https://kuanyui.github.io/llselect/api/)
+- GitLab: [Git](https://gitlab.com/kuanyui/llselect) | [Home](https://kuanyui.gitlab.io/llselect/] | [Demo](https://kuanyui.gitlab.io/llselect/demo/) | [API](https://kuanyui.gitlab.io/llselect/api/)
 
 > [!TIP]
 > #### Why not native `<select>`?
@@ -21,7 +21,7 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 >
 > #### Arrrrgh... Yet another select library? Why not existing select libraries? Are you too bored?
 >
-> Yeeeee, it's just because all of the existing libraries are unable to satisfy my requirements, mainly on aspect of performance, then flexibility, and explicitly.
+> Yeeeee, it's just because all of the existing libraries are unable to satisfy my requirements, mainly on aspect of performance (initializing hundreds of instances), then flexibility, and explicitly.
 >
 > At least as of May 2026, this situation was still not solved. The only way was implement one to fit my ideal.
 
@@ -376,7 +376,7 @@ This project heavily relies on LLM agents. More than 99% of the working code was
 
 - I:
    - Review crucial modifications (before or after `git commit`) via `git diff` as possible as I can, to avoid obvious anti-patterns and bad-smelling code.
-   - correct unreasonable APIs according to my development experience, trying to avoid the painful APIs and anti-patterns common among existing select UI component libraries,
+   - correct unreasonable APIs according to my development experience, trying to avoid misleading APIs naming and anti-patterns common among existing UI component libraries,
    - make the technical decisions,
    - decide API naming conventions,
    - test on real browsers and OSes (Firefox / Chromium, Linux / Android) and decide the UI/UX details.
