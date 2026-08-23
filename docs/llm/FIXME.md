@@ -4,12 +4,12 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (user-reported, pinch-zoom popup drift)
 
-- [ ] **[HIGH-45] - pinch-zoom drifts the popup left of the trigger (Linux, Firefox AND Chromium)**
+- [x] **[HIGH-45] - pinch-zoom drifts the popup left of the trigger (Linux, Firefox AND Chromium)**
   - Symptom: open the popup, two-finger pinch-zoom past some level: only llselect's popup shifts left and stops aligning with the trigger's x; the competitor libraries stay aligned. Reproduced by the user on Linux in both engines.
   - Cause: unverified. Prime suspect: `getVisibleViewport()` (positioning.ts) returns `visualViewport.width/height`, and the popup is `position: fixed`, i.e. LAYOUT-viewport coordinates. Under pinch zoom the visual viewport shrinks and pans (`offsetLeft/offsetTop`), so clamping x into `[0, vv.width]` without the vv offset drags the popup toward the left edge even though the trigger's client x is legitimate.
   - Impact: popup misalignment under pinch zoom; no data loss. jsdom cannot reproduce (no visual viewport); needs the real-browser pass.
   - Fix: landed (positioning.ts). The visible window is now a RECT in client coordinates: `getVisibleViewport()` returns `visualViewport`'s offsets alongside its size, and `computePosition` measures every edge against `[left, left + width]` x `[top, top + height]` (x clamp edges, spaceAbove/Below, maxHeight). With offsets 0 the math reduces exactly to the old formulas, so nothing changes outside pinch zoom; unit tests pin the offset cases and the zero-offset equivalence (positioning.test.ts).
-  - Needs the real pinch gesture to close: reproduce with the benchmark playground, zoom, confirm the popup keeps the trigger's x. jsdom has no visual viewport.
+  - Verified: by the user with the real pinch gesture on Linux (the benchmark playground): the popup keeps the trigger's x through zoom in both Firefox and Chromium. Unit tests pin the offset math and the zero-offset equivalence (positioning.test.ts); jsdom itself has no visual viewport.
 
 ## review (hideChosenRows performance audit)
 
