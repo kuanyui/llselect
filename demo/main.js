@@ -43,6 +43,7 @@ const outCountries = document.getElementById('out-countries')
 const selCountries = new LLSelectSingle(
   document.getElementById('mount-countries'),
   {
+  ariaLabel: 'Pick a country',
     placeholder: 'Pick a country',
     onChange: (v) => { outCountries.textContent = 'chosen: ' + JSON.stringify(v) },
   }
@@ -56,6 +57,7 @@ const outUsers = document.getElementById('out-users')
 const selUsers = new LLSelectSingle(
   document.getElementById('mount-users'),
   {
+  ariaLabel: 'Pick a user',
     placeholder: 'Pick a user',
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: (user) => `#${user.id} ${user.name} (${user.role})`,
@@ -74,6 +76,7 @@ const outClearable = document.getElementById('out-clearable')
 const selClearable = new LLSelectSingle(
   document.getElementById('mount-clearable'),
   {
+  ariaLabel: 'Pick a country',
     placeholder: 'Pick a country',
     clearable: true,
     onChange: (v) => { outClearable.textContent = 'chosen: ' + JSON.stringify(v) },
@@ -104,6 +107,7 @@ const outRichSingle = document.getElementById('out-rich-single')
 const selRichSingle = new LLSelectSingle(
   document.getElementById('mount-rich-single'),
   {
+  ariaLabel: 'Pick a language',
     placeholder: 'Pick a language',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (lang) => lang.name,      // accessible name + search text
@@ -120,6 +124,7 @@ const outScroll = document.getElementById('out-scroll')
 const selScroll = new LLSelectSingle(
   document.getElementById('mount-scroll'),
   {
+  ariaLabel: 'Pick a country (in scroll container)',
     placeholder: 'Pick a country (in scroll container)',
     onChange: (v) => { outScroll.textContent = 'chosen: ' + JSON.stringify(v) },
   }
@@ -137,6 +142,7 @@ const outTransform = document.getElementById('out-transform')
 const selTransform = new LLSelectSingle(
   document.getElementById('mount-transform'),
   {
+  ariaLabel: 'Open me - popup must align under the trigger',
     placeholder: 'Open me - popup must align under the trigger',
     onChange: (v) => { outTransform.textContent = 'chosen: ' + JSON.stringify(v) },
   }
@@ -158,7 +164,8 @@ btnPass.addEventListener('click', () => {
 })
 const selPass = new LLSelectSingle(
   document.getElementById('mount-pass'),
-  { placeholder: 'pass-through select' }  // default outsideClickBehavior
+  {
+  ariaLabel: 'pass-through select', placeholder: 'pass-through select' }  // default outsideClickBehavior
 )
 selPass.setItems(COUNTRIES)
 //#endregion
@@ -173,6 +180,7 @@ btnBlock.addEventListener('click', () => {
 const selBlock = new LLSelectSingle(
   document.getElementById('mount-block'),
   {
+  ariaLabel: 'block select',
     placeholder: 'block select',
     outsideClickBehavior: 'block',
   }
@@ -183,7 +191,8 @@ selBlock.setItems(COUNTRIES)
 //#region 4.1
 new LLSelectSingle(
   document.getElementById('mount-ind-none'),
-  { placeholder: 'No arrow' },
+  {
+  ariaLabel: 'No arrow', placeholder: 'No arrow' },
 ).setItems(COUNTRIES)
 //#endregion
 
@@ -192,6 +201,7 @@ new LLSelectSingle(
 new LLSelectSingle(
   document.getElementById('mount-ind-chevron'),
   {
+  ariaLabel: 'chevron',
     placeholder: 'chevron',
     createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
   },
@@ -201,6 +211,7 @@ new LLSelectSingle(
 new LLSelectSingle(
   document.getElementById('mount-ind-triangle'),
   {
+  ariaLabel: 'triangle',
     placeholder: 'triangle',
     createTriggerArrowContentElFn: () => createTriangleDownSvgEl(),
   },
@@ -211,6 +222,7 @@ new LLSelectSingle(
 new LLSelectSingle(
   document.getElementById('mount-ind-mdi'),
   {
+  ariaLabel: 'mdi icon',
     placeholder: 'mdi icon',
     createTriggerArrowContentElFn: () => {
       const i = document.createElement('i')
@@ -225,7 +237,8 @@ new LLSelectSingle(
 // Lib does nothing in the arrow slot; the demo styles a ::after pseudo-element.
 new LLSelectSingle(
   document.getElementById('mount-ind-css'),
-  { placeholder: 'CSS triangle (no JS)' },
+  {
+  ariaLabel: 'CSS triangle (no JS)', placeholder: 'CSS triangle (no JS)' },
 ).setItems(COUNTRIES)
 //#endregion
 
@@ -235,6 +248,7 @@ new LLSelectSingle(
 const selArrowClear = new LLSelectSingle(
   document.getElementById('mount-arrow-clear'),
   {
+  ariaLabel: 'Pick a country',
     placeholder: 'Pick a country',
     createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
     clearable: true,
@@ -249,6 +263,7 @@ const outMulti = document.getElementById('out-multi')
 const selMulti = new LLSelectMultiple(
   document.getElementById('mount-multi'),
   {
+  ariaLabel: 'Pick countries',
     placeholder: 'Pick countries',
     onChange: (chosen) => {
       outMulti.textContent = 'chosen: ' + JSON.stringify(chosen)
@@ -267,6 +282,7 @@ let selMultiCheckbox
 selMultiCheckbox = new LLSelectMultiple(
   document.getElementById('mount-multi-checkbox'),
   {
+  ariaLabel: 'Pick countries (checkboxes)',
     placeholder: 'Pick countries (checkboxes)',
     createItemContentElFn: (item) => {
       const row = document.createElement('span')
@@ -290,6 +306,7 @@ const outRichMulti = document.getElementById('out-rich-multi')
 const selRichMulti = new LLSelectMultiple(
   document.getElementById('mount-rich-multi'),
   {
+  ariaLabel: 'Pick languages',
     placeholder: 'Pick languages',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (lang) => lang.name,
@@ -309,6 +326,7 @@ const outLongWrap = document.getElementById('out-long-wrap')
 const selLongWrap = new LLSelectSingle(
   document.getElementById('mount-long-wrap'),
   {
+  ariaLabel: 'Pick a country',
     placeholder: 'Pick a country',
     popupWidthPolicy: 'match-trigger',
     onChange: (v) => { outLongWrap.textContent = 'chosen: ' + JSON.stringify(v) },
@@ -336,6 +354,7 @@ const outLongEllipsis = document.getElementById('out-long-ellipsis')
 const selLongEllipsis = new EllipsisSingle(
   document.getElementById('mount-long-ellipsis'),
   {
+  ariaLabel: 'Pick a country',
     placeholder: 'Pick a country',
     popupWidthPolicy: 'match-trigger',
     onChange: (v) => { outLongEllipsis.textContent = 'chosen: ' + JSON.stringify(v) },
@@ -357,6 +376,7 @@ const outLongNoConstraint = document.getElementById('out-long-noconstraint')
 const selLongNoConstraint = new LLSelectSingle(
   document.getElementById('mount-long-noconstraint'),
   {
+  ariaLabel: 'Pick a country - try the long sentence',
     placeholder: 'Pick a country - try the long sentence',
     onChange: (v) => { outLongNoConstraint.textContent = 'chosen: ' + JSON.stringify(v) },
   }
@@ -372,6 +392,7 @@ const outLongFitContent = document.getElementById('out-long-fitcontent')
 const selLongFitContent = new LLSelectSingle(
   document.getElementById('mount-long-fitcontent'),
   {
+  ariaLabel: 'Pick a country',
     placeholder: 'Pick a country',
     onChange: (v) => { outLongFitContent.textContent = 'chosen: ' + JSON.stringify(v) },
   }
@@ -385,6 +406,7 @@ const outSearchSingle = document.getElementById('out-search-single')
 const selSearchSingle = new LLSelectSingle(
   document.getElementById('mount-search-single'),
   {
+  ariaLabel: 'Pick a country',
     placeholder: 'Pick a country',
     filterable: true,
     onChange: (v) => { outSearchSingle.textContent = 'chosen: ' + JSON.stringify(v) },
@@ -400,6 +422,7 @@ let selSearchMulti
 selSearchMulti = new LLSelectMultiple(
   document.getElementById('mount-search-multi'),
   {
+  ariaLabel: 'Pick countries',
     placeholder: 'Pick countries',
     filterable: true,
     createItemContentElFn: (item) => {
@@ -421,6 +444,7 @@ const outSearchUsers = document.getElementById('out-search-users')
 const selSearchUsers = new LLSelectSingle(
   document.getElementById('mount-search-users'),
   {
+  ariaLabel: 'Search users by name OR role',
     placeholder: 'Search users by name OR role',
     filterable: true,
     compareFn: (a, b) => a.id === b.id,
@@ -446,6 +470,7 @@ let selSearchHighlight
 selSearchHighlight = new LLSelectSingle(
   document.getElementById('mount-search-highlight'),
   {
+  ariaLabel: 'Pick a country',
     placeholder: 'Pick a country',
     filterable: true,
     createItemContentElFn: (item) => createHighlightedTextEl(item, selSearchHighlight.getFilterQuery()),
@@ -460,6 +485,7 @@ const outSingleHuge = document.getElementById('out-single-huge')
 const selSingleHuge = new LLSelectSingle(
   document.getElementById('mount-single-huge'),
   {
+  ariaLabel: 'Pick from 10,000 rows',
     placeholder: 'Pick from 10,000 rows',
     onChange: (v) => { outSingleHuge.textContent = 'chosen: ' + JSON.stringify(v) },
   }
@@ -472,6 +498,7 @@ const outMultiHuge = document.getElementById('out-multi-huge')
 const selMultiHuge = new LLSelectMultiple(
   document.getElementById('mount-multi-huge'),
   {
+  ariaLabel: 'Pick from 10,000 rows',
     placeholder: 'Pick from 10,000 rows',
     onChange: (chosen) => {
       outMultiHuge.textContent = 'chosen: ' + chosen.length + ' items'
@@ -486,6 +513,7 @@ const outMultiAll = document.getElementById('out-multi-all')
 const selMultiAll = new LLSelectMultiple(
   document.getElementById('mount-multi-all'),
   {
+  ariaLabel: 'Pick countries (with bulk actions)',
     placeholder: 'Pick countries (with bulk actions)',
     onChange: (chosen) => {
       outMultiAll.textContent = 'chosen: ' + chosen.length + ' items'
@@ -511,6 +539,7 @@ const outTags = document.getElementById('out-tags')
 const selTags = new LLSelectMultiple(
   document.getElementById('mount-tags'),
   {
+  ariaLabel: 'Pick countries',
     placeholder: 'Pick countries',
     triggerDisplay: 'tags',
     filterable: true,
@@ -536,6 +565,7 @@ let selChooseAll
 selChooseAll = new LLSelectMultiple(
   document.getElementById('mount-choose-all'),
   {
+  ariaLabel: 'Pick countries',
     placeholder: 'Pick countries',
     filterable: true,
     chooseAllRow: true,
@@ -571,6 +601,7 @@ let selFilledCheckbox
 selFilledCheckbox = new LLSelectMultiple(
   document.getElementById('mount-filled-checkbox'),
   {
+  ariaLabel: 'Pick countries',
     placeholder: 'Pick countries',
     filterable: true,
     chooseAllRow: true,
@@ -601,7 +632,8 @@ selFilledCheckbox.setItems(COUNTRIES)
 // else in the library.
 const selChooseAllDefault = new LLSelectMultiple(
   document.getElementById('mount-choose-all-default'),
-  { placeholder: 'Pick countries', chooseAllRow: true }
+  {
+  ariaLabel: 'Pick countries', placeholder: 'Pick countries', chooseAllRow: true }
 )
 selChooseAllDefault.setItems(COUNTRIES)
 //#endregion
@@ -614,6 +646,7 @@ const outHideChosen = document.getElementById('out-hide-chosen')
 const selHideChosen = new LLSelectMultiple(
   document.getElementById('mount-hide-chosen'),
   {
+  ariaLabel: 'Pick countries',
     placeholder: 'Pick countries',
     triggerDisplay: 'tags',
     filterable: true,
@@ -646,6 +679,7 @@ class ProductSelect extends LLSelectSingle {
 const selDisItems = new ProductSelect(
   document.getElementById('mount-disabled-items'),
   {
+  ariaLabel: 'Pick a drink',
     placeholder: 'Pick a drink',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (p) => p.stock > 0 ? `${p.name} (${p.stock} left)` : `${p.name} - sold out`,
@@ -661,6 +695,7 @@ const outDisCtrl = document.getElementById('out-disabled-ctrl')
 const selDisCtrl = new LLSelectSingle(
   document.getElementById('mount-disabled-ctrl'),
   {
+  ariaLabel: 'Pick a country',
     placeholder: 'Pick a country',
     onChange: (v) => { outDisCtrl.textContent = 'chosen: ' + JSON.stringify(v) },
   }
@@ -682,7 +717,8 @@ btnToggleDisabled.addEventListener('click', () => {
 // Constructed disabled, but kept Tab-focusable so AT users can read the tooltip.
 const selDisFocusable = new LLSelectSingle(
   document.getElementById('mount-disabled-focusable'),
-  { placeholder: 'Disabled (focusable)', focusableWhenDisabled: true }
+  {
+  ariaLabel: 'Disabled (focusable)', placeholder: 'Disabled (focusable)', focusableWhenDisabled: true }
 )
 selDisFocusable.setItems(COUNTRIES)
 selDisFocusable.setDisabled(true)
@@ -697,6 +733,7 @@ const outGroup = document.getElementById('out-group')
 const selGroup = new LLSelectSingle(
   document.getElementById('mount-group'),
   {
+  ariaLabel: 'Pick a food',
     placeholder: 'Pick a food',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (f) => f.name,
@@ -715,6 +752,7 @@ const outGroupDisabled = document.getElementById('out-group-disabled')
 const selGroupDisabled = new LLSelectMultiple(
   document.getElementById('mount-group-disabled'),
   {
+  ariaLabel: 'Pick foods (Dairy group disabled)',
     placeholder: 'Pick foods (Dairy group disabled)',
     filterable: true,
     compareFn: (a, b) => a.name === b.name,
@@ -748,6 +786,7 @@ function createCategoryHeaderEl(category, items) {
 const selGroupRich = new LLSelectSingle(
   document.getElementById('mount-group-rich'),
   {
+  ariaLabel: 'Pick a food',
     placeholder: 'Pick a food',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (f) => f.name,
@@ -769,6 +808,7 @@ const outTagIcons = document.getElementById('out-tag-icons')
 const selTagIcons = new LLSelectMultiple(
   document.getElementById('mount-tag-icons'),
   {
+  ariaLabel: 'Pick languages',
     placeholder: 'Pick languages',
     triggerDisplay: 'tags',
     compareFn: (a, b) => a.name === b.name,
@@ -808,6 +848,7 @@ const outUserHints = document.getElementById('out-user-hints')
 const selUserHints = new LLSelectSingle(
   document.getElementById('mount-user-hints'),
   {
+  ariaLabel: 'Pick a user',
     placeholder: 'Pick a user',
     filterable: true,
     compareFn: (a, b) => a.id === b.id,
@@ -882,6 +923,7 @@ const outLangTinted = document.getElementById('out-lang-tinted')
 const selLangTinted = new LLSelectSingle(
   document.getElementById('mount-lang-tinted'),
   {
+  ariaLabel: 'Pick a language',
     placeholder: 'Pick a language',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (lang) => lang.name,
@@ -934,11 +976,13 @@ const i18nPackSelect = document.getElementById('i18n-pack-select')
 const i18nMounts = ['mount-i18n-single', 'mount-i18n-tags', 'mount-i18n-count'].map((id) => document.getElementById(id))
 const i18nSelects = [
   new LLSelectSingle(i18nMounts[0], {
+    ariaLabel: 'Country (single)',
     filterable: true,
     clearable: true,
     createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
   }),
   new LLSelectMultiple(i18nMounts[1], {
+    ariaLabel: 'Countries (tags)',
     filterable: true,
     clearable: true,
     triggerDisplay: 'tags',
@@ -946,6 +990,7 @@ const i18nSelects = [
     onChange: (chosen) => { outI18n.textContent = 'chosen: ' + chosen.join(', ') },
   }),
   new LLSelectMultiple(i18nMounts[2], {
+    ariaLabel: 'Countries (count)',
     filterable: true,
     clearable: true,
     createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
@@ -991,6 +1036,7 @@ for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
   card.append(cardLabel, mount)
   i18nAllGrid.append(card)
   const allSel = new LLSelectSingle(mount, {
+    labelEl: cardLabel, // the visible per-language card label doubles as the accessible name
     filterable: true,
     clearable: true,
     createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
@@ -1009,6 +1055,7 @@ let selRtlCheckboxes
 selRtlCheckboxes = new LLSelectMultiple(
   document.getElementById('mount-rtl-checkboxes'),
   {
+  ariaLabel: 'RTL checkboxes',
     chooseAllRow: true,
     uiTranslationPack: ar,
     createItemContentElFn: (item) => {
@@ -1046,6 +1093,7 @@ const outSubclassCheckbox = document.getElementById('out-subclass-checkbox')
 const selSubclassCheckbox = new CheckboxMultiSelect(
   document.getElementById('mount-subclass-checkbox'),
   {
+  ariaLabel: 'Pick countries (checkboxes)',
     placeholder: 'Pick countries (checkboxes)',
     onChange: (chosen) => {
       outSubclassCheckbox.textContent = 'chosen: ' + JSON.stringify(chosen)
@@ -1075,6 +1123,7 @@ async function initTreeSelect() {
   const { LLTreeMultipleSelect } = await import('./subclass/tree-select.js')
   const outTree = document.getElementById('out-tree')
   const selTree = new LLTreeMultipleSelect(document.getElementById('mount-tree'), {
+  ariaLabel: 'Pick foods',
     placeholder: 'Pick foods',
     triggerDisplay: 'tags',
     filterable: true,

@@ -150,7 +150,7 @@ const ADAPTERS = {
   llselect: {
     setup(mount, items, opts) {
       const Ctor = opts.multi ? window.llselect.LLSelectMultiple : window.llselect.LLSelectSingle
-      const o = { filterable: true }
+      const o = { filterable: true, ariaLabel: 'Benchmark select' }
       // Match the competitors: their multi-selects render each chosen item as a
       // tag, so llselect renders tags too (not the lighter count summary),
       // otherwise it would be doing less per-selection work than they do.
