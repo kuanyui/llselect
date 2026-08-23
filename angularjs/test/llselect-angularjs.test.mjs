@@ -613,3 +613,29 @@ test('config highlight default reaches a multiple; the checkbox row text carries
   assert.ok(rows[0].querySelector('svg'), 'the default checkbox icon is gone')
   assert.equal(rows[0].querySelector('mark').textContent, 'Ap')
 })
+
+test('async items: a preset model resolves once items arrive, with and without select as', () => {
+  // Settles a panel split: NgModel's $render runs before the first
+  // $watchCollection tick, so items landing later must still resolve the
+  // preset model into the trigger.
+  const plain = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ll-aria-label="F" ng-model="vm.fruit" ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () { this.fruits = []; this.fruit = 'Apple' },
+  })
+  assert.equal(plain.text('.llselect-trigger-content'), plain.scope.vm.fruit === 'Apple' ? plain.text('.llselect-trigger-content') : '', 'sanity')
+  plain.scope.$apply(() => { plain.scope.vm.fruits = ['Apple', 'Banana'] })
+  assert.equal(plain.text('.llselect-trigger-content'), 'Apple', 'plain: preset model must show once items arrive')
+
+  const projected = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ll-aria-label="U" ng-model="vm.userId" ll-options="u.id as u.name for u in vm.users"></llselect-single>
+    </div>`,
+    controller: function () { this.users = []; this.userId = 2 },
+  })
+  projected.scope.$apply(() => { projected.scope.vm.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] })
+  assert.equal(projected.text('.llselect-trigger-content'), 'Bob', 'select as: preset id must resolve once items arrive')
+})

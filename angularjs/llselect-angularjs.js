@@ -67,11 +67,20 @@
       toModelValue: function (scope, item) {
         return selectAsFn ? selectAsFn(scope, locals(item)) : item
       },
-      /** ng-model value -> item. Reverse lookup; only needed with `select as`. */
+      /**
+       * ng-model value -> item, by membership in `items`. With `select as`
+       * the value is a key projected FROM an item; without it the value IS
+       * the item - but a value absent from the list must resolve to
+       * undefined (ngOptions semantics: the view goes empty, the model keeps
+       * its value). Passing it through raw instead let the initial empty
+       * list strand an async preset on the placeholder forever.
+       */
       fromModelValue: function (scope, value, items) {
-        if (!selectAsFn) { return value }
         for (var i = 0; i < items.length; i++) {
-          if (selectAsFn(scope, locals(items[i])) === value) { return items[i] }
+          var hit = selectAsFn
+            ? selectAsFn(scope, locals(items[i])) === value
+            : (trackByFn ? trackByFn(scope, locals(items[i])) === trackByFn(scope, locals(value)) : items[i] === value)
+          if (hit) { return items[i] }
         }
         return undefined
       },
@@ -340,10 +349,11 @@
 
           scope.$watchCollection(parsed.itemsFn, function (items) {
             gate.run(function () { sel.setItems(items || []) })
-            // A `select as` model value is a key pointing INTO the list, so a new
-            // list must re-resolve it. Without the projection the model holds the
-            // item itself and llselect's own setItems already reconciled it.
-            if (parsed.hasModelProjection) { ngModelCtrl.$render() }
+            // Re-resolve the model against the NEW list, projection or not:
+            // setItems drops a chosen item the new list lacks, and an async
+            // preset only becomes resolvable once its list arrives. The gate
+            // inside $render keeps the re-resolution from writing back.
+            ngModelCtrl.$render()
           })
 
           wireDisabled(scope, attrs, sel)
@@ -444,7 +454,9 @@
 
           scope.$watchCollection(parsed.itemsFn, function (items) {
             gate.run(function () { sel.setItems(items || []) })
-            if (parsed.hasModelProjection) { ngModelCtrl.$render() }
+            // Same rule as the single directive: always re-resolve the model
+            // against the new list; the gate keeps it from writing back.
+            ngModelCtrl.$render()
           })
 
           wireDisabled(scope, attrs, sel)
