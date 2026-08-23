@@ -460,19 +460,22 @@ test('a filter keystroke focuses the first ENABLED match, skipping disabled rows
 })
 
 test('the shrink clamp also skips a disabled last row', () => {
+  // The filter path resets focusedIndex before rendering, so the clamp is
+  // reachable only by shrinking the list under a live focus: setItems while
+  // open. Non-filterable, so End moves the focused row (in the filter input
+  // End is a caret move).
   const sel = new LLSelectSingle<string>(mount(), {
     ariaLabel: 'x',
-    filterable: true,
     itemDisabledFn: (item) => item === 'apricot',
   })
   sel.setItems(['ant', 'apple', 'apricot', 'banana'])
   sel.open()
-  const input = filterInput(sel)
-  // Focus the last visible row (banana, index 3), then shrink the list so
-  // the clamp fires with a DISABLED new-last row (apricot).
-  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }))
-  input.value = 'ap'
-  input.dispatchEvent(new Event('input', { bubbles: true }))
+  sel.triggerEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }))
+  assert.equal(
+    sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)?.textContent,
+    'banana', 'precondition: End must land on the last row',
+  )
+  sel.setItems(['ant', 'apple', 'apricot'])
   const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)
-  assert.equal(focused?.textContent, 'apple', 'the clamp must seek backward past the disabled row')
+  assert.equal(focused?.textContent, 'apple', 'the clamp must seek backward past the disabled new-last row')
 })

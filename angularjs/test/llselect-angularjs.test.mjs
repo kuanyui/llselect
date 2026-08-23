@@ -625,7 +625,7 @@ test('async items: a preset model resolves once items arrive, with and without s
     </div>`,
     controller: function () { this.fruits = []; this.fruit = 'Apple' },
   })
-  assert.equal(plain.text('.llselect-trigger-content'), plain.scope.vm.fruit === 'Apple' ? plain.text('.llselect-trigger-content') : '', 'sanity')
+  assert.equal(plain.text('.llselect-trigger-content'), 'Please select', 'before items arrive the trigger shows the placeholder')
   plain.scope.$apply(() => { plain.scope.vm.fruits = ['Apple', 'Banana'] })
   assert.equal(plain.text('.llselect-trigger-content'), 'Apple', 'plain: preset model must show once items arrive')
 
