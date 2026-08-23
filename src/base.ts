@@ -761,6 +761,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // exactly the extra fields.
       ...subclassSettings,
     } as S
+    // Loud failure over a silent a11y violation, like the group-order warn:
+    // an unnamed combobox violates WAI-ARIA 1.2 (A11Y.md, name ladder).
+    if (this.settings.ariaLabel === null && this.settings.ariaLabelledBy === null) {
+      console.warn('llselect: no accessible name - pass ariaLabelledBy, ariaLabel, or labelEl. An unnamed combobox violates WAI-ARIA 1.2.')
+    }
     // Label click focuses the trigger (native <select> label behavior: focus
     // only, never open). The one listener destroy() must undo outside the root.
     if (labelEl !== null) { labelEl.addEventListener('click', this.handleLabelElClick) }
@@ -1206,7 +1211,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   (e.g. single mode drops a chosen value that is no longer in the list).
    * @group Items
    */
-  public setItems(items: T[]): void {
+  public setItems(items: readonly T[]): void {
     this.items = items.slice()
     this.gatheredItems = undefined
     if (this.filterActive) { this.recomputeFilteredItems() }

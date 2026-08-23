@@ -133,3 +133,18 @@ test('tags mode: hidden value span carries plain labels, not remove-button names
   // The visible chips are still there, remove buttons intact.
   assert.equal(sel.triggerContentEl.querySelectorAll('button').length, 2)
 })
+
+test('an unnamed widget warns at construction; any name-ladder rung silences it', () => {
+  const warnings: unknown[][] = []
+  const orig = console.warn
+  console.warn = (...args: unknown[]) => { warnings.push(args) }
+  try {
+    new LLSelectSingle<string>(mount())
+    assert.equal(warnings.length, 1)
+    assert.match(String(warnings[0]![0]), /accessible name/)
+    new LLSelectSingle<string>(mount(), { ariaLabel: 'Country' })
+    new LLSelectSingle<string>(mount(), { ariaLabelledBy: 'field-label' })
+    new LLSelectSingle<string>(mount(), { labelEl: document.getElementById('field-label')! })
+    assert.equal(warnings.length, 1, 'a named widget must not warn')
+  } finally { console.warn = orig }
+})

@@ -197,7 +197,7 @@ test('gatherGroups: false - a non-contiguous key reappearance warns once and ren
   const orig = console.warn
   console.warn = (...args: unknown[]) => { warnings.push(args) }
   try {
-    const sel = new LLSelectSingle<string>(mount(), { itemToGroupKeyFn: (s) => s[0]!, gatherGroups: false })
+    const sel = new LLSelectSingle<string>(mount(), { itemToGroupKeyFn: (s) => s[0]!, gatherGroups: false, ariaLabel: 'x' }) // named: keep the spy's count to the group warn
     sel.setItems(['apple', 'banana', 'avocado']) // a, b, a -> 'a' reappears after 'b'
     sel.open()
     assert.equal(groupEls(sel).length, 3) // a, b, a - strict mode does not gather

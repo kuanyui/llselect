@@ -64,7 +64,7 @@ test('unsorted data renders ONE header per group, in first-appearance order', ()
   const orig = console.warn
   console.warn = (...args: unknown[]) => { warnings.push(args) }
   try {
-    const sel = new LLSelectSingle<string>(mount(), { itemToGroupKeyFn: firstChar })
+    const sel = new LLSelectSingle<string>(mount(), { itemToGroupKeyFn: firstChar, ariaLabel: 'x' }) // named: keep the spy's count to the group warn
     sel.setItems(['apple', 'banana', 'avocado'])
     sel.open()
     assert.equal(groupEls(sel).length, 2) // a, b - no duplicate 'a' header
