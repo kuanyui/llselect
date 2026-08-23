@@ -278,7 +278,7 @@
      */
     .provider('llselectConfig', function () {
       var config = {
-        /** 'chevron' | 'triangle' | null. null = whatever the theme draws. */
+        /** 'chevron' | 'triangle' | 'none' | null. null = this package's default (the chevron); 'none' leaves the slot to the theme. */
         arrow: null,
         /** boolean | ((items) => boolean) | null. null = llselect's own default (off). */
         filterable: null,

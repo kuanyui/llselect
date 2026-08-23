@@ -270,7 +270,7 @@ Takes the defaults bag above. Only settings that are app-wide **by nature** are 
 
 #### `arrow`
 
-`'chevron' | 'triangle' | null` - `null` means the theme draws the arrow. The app-wide default behind [`ll-arrow`](#ll-arrow).
+`'chevron' | 'triangle' | 'none' | null` - `null` (the default) resolves to this package's batteries-included chevron; `'none'` leaves the arrow slot to the theme. The app-wide default behind [`ll-arrow`](#ll-arrow).
 
 #### `filterable`
 
