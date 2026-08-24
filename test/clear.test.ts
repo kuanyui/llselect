@@ -291,10 +291,11 @@ test('QUALITY-89: a content fn that reuses one icon element keeps the focus hand
 })
 
 test('QUALITY-89: a createTriggerClearButtonEl override that returns the same element every time keeps it in place', () => {
-  // The memo lives in a closure, not an instance field: the first build runs
-  // inside super() (the LLSelectSingle constructor's first render), and an
-  // instance field would be (re)defined after super() returns - the very trap
-  // the extender docs describe.
+  // The memo lives in a closure: the first build runs inside super() (the
+  // LLSelectSingle constructor's first render). An INITIALIZED instance field
+  // would be reassigned after super() returns (ES2020 set semantics), wiping
+  // the value - the trap the extender docs describe; a closure never is, under
+  // Define semantics too.
   let memo: HTMLElement | undefined
   class Memoized extends LLSelectSingle<string> {
     protected override createTriggerClearButtonEl(): HTMLElement {
