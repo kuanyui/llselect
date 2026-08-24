@@ -125,3 +125,49 @@ test('clear coexists with a custom trigger content (own slot, no collision)', ()
   assert.ok(sel.triggerEl.querySelector('.ct'))
   assert.ok(clearBtn(sel))
 })
+
+test('QUALITY-89: rerender() rebuilds the clear button through createTriggerClearButtonEl, repairing an override that reads subclass fields', () => {
+  class Fancy extends LLSelectSingle<string> {
+    private icon = 'X'
+    protected override createTriggerClearButtonEl(): HTMLElement {
+      const btn = super.createTriggerClearButtonEl()
+      // During the base constructor this subclass field is still undefined.
+      btn.setAttribute('data-icon', this.icon ?? 'unset')
+      return btn
+    }
+  }
+  const sel = new Fancy(mount(), { clearable: true, ariaLabel: 'x' })
+  const first = clearBtn(sel)!
+  assert.equal(first.getAttribute('data-icon'), 'unset', 'the first build runs before the subclass field initializer')
+  sel.rerender()
+  const rebuilt = clearBtn(sel)!
+  assert.notEqual(rebuilt, first)
+  assert.equal(rebuilt.getAttribute('data-icon'), 'X', 'rerender() re-runs the override with the field present')
+  // Still in its own slot, between content and arrow, and still wired.
+  const children = [...sel.triggerEl.children]
+  assert.equal(children.length, 3)
+  assert.equal(children.indexOf(rebuilt), 1)
+  sel.setItems(['a'])
+  sel.setChosenItem('a')
+  clearBtn(sel)!.click()
+  assert.equal(sel.getChosenItem(), undefined)
+})
+
+test('QUALITY-89: a rerender() while the clear button holds focus keeps focus on the rebuilt button', () => {
+  const sel = new LLSelectSingle<string>(mount(), { clearable: true, ariaLabel: 'x' })
+  sel.setItems(['a'])
+  sel.setChosenItem('a')
+  const before = clearBtn(sel)!
+  before.focus()
+  assert.equal(document.activeElement, before)
+  sel.rerender()
+  const after = clearBtn(sel)!
+  assert.notEqual(after, before)
+  assert.equal(document.activeElement, after)
+})
+
+test('QUALITY-89: without clearable, rerender() adds no clear button', () => {
+  const sel = new LLSelectSingle<string>(mount(), { ariaLabel: 'x' })
+  sel.rerender()
+  assert.equal(clearBtn(sel), null)
+})

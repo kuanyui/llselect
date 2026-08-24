@@ -730,6 +730,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   protected changeSource: LLSelectChangeSource = 'api'
   private triggerArrowEl: HTMLElement
+  /** The clear button while `clearable`, else `null`; `rerender()` rebuilds it through `createTriggerClearButtonEl`. */
+  private triggerClearButtonEl: HTMLElement | null = null
   private positioner: Positioner | undefined
   /**
    * Whether the Popover API exists (feature-detected once per instance).
@@ -1185,13 +1187,18 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   item text.
    * - The refresh is purely visual: it does NOT fire `onChange` and does NOT
    *   run `onItemsChanged`.
-   * - Orchestrator: composes `renderTrigger` + `renderPopupList`; touches no
-   *   DOM directly.
+   * - It rebuilds the clear button (`clearable`) through
+   *   `createTriggerClearButtonEl`, so an override of that method is repaired
+   *   here like every other trigger method. If the old button held focus, the
+   *   rebuilt one gets it.
+   * - Orchestrator: composes `replaceTriggerClearButtonElInDom` +
+   *   `renderTrigger` + `renderPopupList`; touches no DOM directly.
    * @group Lifecycle
    */
   public rerender(): void {
     this.gatheredItems = undefined
     if (this.filterActive) { this.recomputeFilteredItems() }
+    this.replaceTriggerClearButtonElInDom()
     this.renderTrigger()
     if (this.opened) { this.renderPopupList() }
   }
@@ -1282,23 +1289,22 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `triggerPlaceholder`.
    * - Re-renders the trigger and the open popup.
    * - Also re-applies the pack-owned attributes `rerender()` cannot reach:
-   *   the filter input placeholder, its fallback `aria-label`, and the clear
-   *   button `aria-label`.
+   *   the filter input placeholder and its fallback `aria-label`. The clear
+   *   button is rebuilt by `rerender()`, so its `aria-label` follows on its own.
    * @group i18n
    */
   public setUiTranslationPack(uiTranslationPack: Partial<LLSelectUiTranslationPack>): void {
     const pack: LLSelectUiTranslationPack = { ...DEFAULT_UI_TRANSLATION_PACK, ...uiTranslationPack }
     this.settings.uiTranslationPack = pack
     this.settings.placeholder = this.explicitPlaceholder ?? pack.triggerPlaceholder
-    // Constructor-built elements that rerender() does not rebuild:
+    // Constructor-built elements that rerender() does not rebuild (the clear
+    // button it does):
     this.syncFieldNameToDom()
     if (pack.filterInputPlaceholder !== null) {
       this.filterInputEl.placeholder = pack.filterInputPlaceholder
     } else {
       this.filterInputEl.removeAttribute('placeholder')
     }
-    const clearButtonEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerClearButtonClass}`)
-    if (clearButtonEl !== null) { clearButtonEl.setAttribute('aria-label', pack.triggerClearButtonAriaLabel) }
     this.rerender()
   }
 
@@ -1467,10 +1473,6 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `rerender()` at the end of your own constructor.
    * - The popup-list methods do NOT run here; they wait for `open()`. See
    *   DESIGN.md "Customization model".
-   * - Exception: the clear-button methods (`createTriggerClearButtonEl` /
-   *   `createTriggerClearButtonContentEl`, built once in the base constructor when
-   *   `clearable`) run even earlier, and `rerender()` does NOT rebuild them. Such
-   *   an override must tolerate uninitialized fields; `rerender()` cannot repair it.
    * @group Subclassing: rendering
    */
   protected renderTrigger(): void {
@@ -2272,7 +2274,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     content.id = this.classIdMap.triggerContentId
     content.className = this.classIdMap.triggerContentClass
     el.append(content)
-    if (this.settings.clearable) { el.append(this.createTriggerClearButtonEl()) }
+    if (this.settings.clearable) {
+      this.triggerClearButtonEl = this.createTriggerClearButtonEl()
+      el.append(this.triggerClearButtonEl)
+    }
     const arrow = document.createElement('span')
     arrow.className = this.classIdMap.triggerArrowClass
     el.append(arrow)
@@ -2280,12 +2285,19 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Build the clear (x) button for the `clearable` trigger slot. The library owns
-   * the button + its click (stops propagation so it never toggles the popup, then
-   * `clearSelection`; a no-op while the control is disabled) + `aria-label`
-   * (text from `uiTranslationPack.triggerClearButtonAriaLabel`);
-   * `createTriggerClearButtonContentElFn` optionally fills the icon,
-   * else the theme's CSS glyph. The theme hides it via `data-empty` when empty.
+   * Build the clear (x) button for the `clearable` trigger slot.
+   * - The library owns the button, its click (stops propagation so it never
+   *   toggles the popup, then `clearSelection`; a no-op while the control is
+   *   disabled) and its `aria-label` (text from
+   *   `uiTranslationPack.triggerClearButtonAriaLabel`).
+   * - `createTriggerClearButtonContentElFn` optionally fills the icon; else the
+   *   theme's CSS glyph draws it.
+   * - The theme hides the button via `data-empty` while nothing is chosen.
+   * - It runs at construction (in the base constructor, before any subclass
+   *   field initializer) and again on every `rerender()`, which swaps the
+   *   button in place. An override that reads subclass fields calls
+   *   `rerender()` at the end of its constructor, like every other trigger
+   *   method.
    * @group Subclassing: rendering
    */
   protected createTriggerClearButtonEl(): HTMLElement {
@@ -2305,6 +2317,22 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.withUserChangeSource(() => this.clearSelection())
     })
     return btn
+  }
+
+  /**
+   * Swap the clear button for a fresh one built by `createTriggerClearButtonEl`
+   * (the overridable builder), so `rerender()` repairs an override that reads
+   * subclass fields. Keeps DOM focus on the new button when the old one held
+   * it. No-op without `clearable`.
+   */
+  private replaceTriggerClearButtonElInDom(): void {
+    const old = this.triggerClearButtonEl
+    if (old === null) { return }
+    const next = this.createTriggerClearButtonEl()
+    const hadFocus = document.activeElement === old
+    old.replaceWith(next)
+    this.triggerClearButtonEl = next
+    if (hadFocus) { next.focus({ preventScroll: true }) }
   }
 
   /**

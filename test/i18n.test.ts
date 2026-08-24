@@ -124,7 +124,8 @@ test('setUiTranslationPack switches every chrome string at runtime (en -> zhTW)'
   assert.equal(sel.triggerContentEl.textContent, en.triggerPlaceholder)
   sel.setUiTranslationPack(zhTW)
   assert.equal(sel.triggerContentEl.textContent, zhTW.triggerPlaceholder)
-  // Elements rerender() does not rebuild get their attributes re-applied:
+  // The filter input is not rebuilt by rerender(), so its attributes are
+  // re-applied; the clear button IS rebuilt, with the new pack text:
   const input = sel.popupEl.querySelector('input')!
   assert.equal(input.getAttribute('aria-label'), zhTW.filterInputAriaLabel)
   assert.equal(input.placeholder, zhTW.filterInputPlaceholder)
