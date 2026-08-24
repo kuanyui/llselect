@@ -730,7 +730,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   protected changeSource: LLSelectChangeSource = 'api'
   private triggerArrowEl: HTMLElement
-  /** The clear button once a trigger render has built it (`clearable` only), else `null`; every later trigger render swaps it through `createTriggerClearButtonEl`. */
+  /** The clear button once a trigger render has built it (`clearable` only), else `null`; every later trigger render swaps it through `createTriggerClearButtonEl` (or keeps it, if that override returns the same element). */
   private triggerClearButtonEl: HTMLElement | null = null
   private positioner: Positioner | undefined
   /**
@@ -2296,9 +2296,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   theme's CSS glyph draws it.
    * - The theme hides the button via `data-empty` while nothing is chosen.
    * - It runs on every trigger render (`renderTrigger`).
-   * - The first run builds the button. That run is the `LLSelectSingle` /
-   *   `LLSelectMultiple` constructor's render, right after `super()`.
-   * - That first run happens before a FURTHER subclass's field initializers.
+   * - The first run builds the button.
+   * - For `LLSelectSingle` / `LLSelectMultiple` and their subclasses, that
+   *   first run is the variant constructor's render, right after `super()`,
+   *   so it happens before a FURTHER subclass's field initializers.
+   * - A direct `LLSelectBase` subclass renders when it calls `renderTrigger`;
+   *   until then there is no button, like the rest of its trigger.
    * - Every later run (a value change, `setPlaceholder`,
    *   `setUiTranslationPack`, `rerender()`) swaps the button in place, unless
    *   this method returns the previous element - then it stays in place.
@@ -2359,13 +2362,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *    hands back the same icon element each time reparents that icon into
    *    the new button, and the reparenting must not move the focused node.
    * 3. Build the new button.
-   * 4. Insert it; if step 1 found focus, move focus to it.
-   * 5. Only then remove the old one.
-   * Why this order: removing the old button first drops DOM focus to `<body>`
-   * in every engine. Where the engine also fires `focusout` on that removal,
-   * its `relatedTarget` is `null`, which the open popup's focus-out guard
-   * reads as focus leaving the widget. Moving focus first makes the new
-   * button the `relatedTarget`, inside the root.
+   * 4. Insert it.
+   * 5. If step 1 found focus, move focus to the new button.
+   * 6. Only then remove the old one.
+   * Why this order:
+   * - Removing the old button first drops DOM focus to `<body>` in every
+   *   engine.
+   * - Where the engine also fires `focusout` on that removal, its
+   *   `relatedTarget` is `null`. The open popup's focus-out guard reads that
+   *   as focus leaving the widget.
+   * - Moving focus first makes the new button the `relatedTarget`, inside the
+   *   root.
    * A builder override that returns the SAME element every time is allowed:
    * the element is kept in place, and focus goes back to the node step 1
    * found, because nothing was rebuilt.
