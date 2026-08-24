@@ -44,11 +44,27 @@ test('QUALITY-92: setItems holding the same NaN item is not a reference swap (ch
   // re-renders the trigger but keeps the array.
   assert.equal(multi.getChosenItems(), chosenBefore, 'a NaN item matching itself is the same value, not a swap')
 
-  let singleRenders = 0
-  const single = new LLSelectSingle<number>(mount(), { ariaLabel: 'x', createTriggerContentElFn: () => { singleRenders++; return null } })
+  let fired = 0
+  const single = new LLSelectSingle<number>(mount(), { ariaLabel: 'x', onChange: () => { fired++ } })
   single.setItems([NaN, 1])
   single.setChosenItem(NaN)
-  const singleBefore = singleRenders
   single.setItems([NaN, 1])
-  assert.equal(singleRenders, singleBefore)
+  assert.equal(fired, 1, 'the NaN choice is kept: no drop, no onChange')
+  assert.ok(Number.isNaN(single.getChosenItem()))
+})
+
+test('MEDIUM-93: a single custom trigger that reads items refreshes after a same-reference setItems', () => {
+  const single = new LLSelectSingle<string>(mount(), {
+    ariaLabel: 'x',
+    createTriggerContentElFn: (ctx) => {
+      const el = document.createElement('span')
+      el.textContent = `${ctx.chosenItem ?? '-'} of ${ctx.items.length}`
+      return el
+    },
+  })
+  single.setItems(['a', 'b'])
+  single.setChosenItem('a')
+  assert.equal(single.triggerEl.textContent, 'a of 2')
+  single.setItems(['a', 'b', 'c'])
+  assert.equal(single.triggerEl.textContent, 'a of 3')
 })

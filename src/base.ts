@@ -1441,9 +1441,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Orchestrator: composes `renderTriggerContent` + `renderTriggerArrow` to
    * (re)build the whole trigger from state; touches no DOM directly. Subclasses
    * normally override {@link renderTriggerContent}, not this.
-   * - Runs on every change of the chosen value, the placeholder or the pack, and
-   *   after `setItems` while something is chosen (multiple: the count summary
-   *   shows the list total).
+   * - Runs on every change of the chosen value, the placeholder or the pack.
+   *   `setItems` runs `renderTriggerContent` alone (the content reads the list:
+   *   the multiple count total, a custom `createTriggerContentElFn`'s `items`);
+   *   only a dropped chosen entry runs the whole trigger.
    * - Runs once from the `LLSelectSingle` / `LLSelectMultiple` constructor, right
    *   after `super()`.
    * - On that first run a FURTHER subclass's own fields are still `undefined`:

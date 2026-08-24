@@ -247,15 +247,24 @@ test('setChosenItems dedups via a custom compareFn, not identity', () => {
   assert.deepEqual(sel.getChosenItems().map(i => i.id), [1, 2])
 })
 
-test('MEDIUM-93: setItems refreshes the count summary while something is chosen; nothing chosen = no render', () => {
-  let renders = 0
-  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', createTriggerContentElFn: () => { renders++; return null } })
+test('MEDIUM-93: setItems refreshes the trigger - the count total, and custom content that reads items', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x' })
   sel.setItems(['a', 'b'])
-  const idle = renders
-  sel.setItems(['a', 'b', 'c'])
-  assert.equal(renders, idle, 'nothing chosen: a list change does not touch the trigger')
   sel.setChosenItems(['a'])
-  assert.equal(sel.triggerEl.textContent, '1 / 3 selected')
-  sel.setItems(['a', 'b', 'c', 'd'])
-  assert.equal(sel.triggerEl.textContent, '1 / 4 selected', 'the total follows the new list')
+  assert.equal(sel.triggerEl.textContent, '1 / 2 selected')
+  sel.setItems(['a', 'b', 'c'])
+  assert.equal(sel.triggerEl.textContent, '1 / 3 selected', 'the total follows the new list')
+
+  const custom = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x',
+    createTriggerContentElFn: (ctx) => {
+      const el = document.createElement('span')
+      el.textContent = `${ctx.chosenItems.length} of ${ctx.items.length}`
+      return el
+    },
+  })
+  custom.setItems(['a', 'b'])
+  assert.equal(custom.triggerEl.textContent, '0 of 2')
+  custom.setItems(['a', 'b', 'c'])
+  assert.equal(custom.triggerEl.textContent, '0 of 3', 'custom content sees the new list even with nothing chosen')
 })

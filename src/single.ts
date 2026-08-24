@@ -220,27 +220,30 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
    *   `onChange` fires.
    * - If the list holds a compareFn-equal but DIFFERENT object (`track by`
    *   style reload: same key, fresh fields), the stored reference is swapped
-   *   to the list's object and the trigger re-renders. The logical value did
-   *   not change, so `onChange` does not fire.
+   *   to the list's object. The logical value did not change, so `onChange`
+   *   does not fire.
+   * - The trigger content re-renders after every `setItems` (the arrow does
+   *   not): a custom `createTriggerContentElFn` receives `items`.
    * @group Subclassing: reactions
    */
   protected override onItemsChanged(): void {
     const previous = this.chosenItem
-    if (previous === undefined) { return }
-    const idx = this.items.findIndex(o => this.settings.compareFn(o, previous))
-    if (idx < 0) {
-      this.chosenItem = undefined
-      this.renderTrigger()
-      this.fireChange(previous)
-      return
+    if (previous !== undefined) {
+      const idx = this.items.findIndex(o => this.settings.compareFn(o, previous))
+      if (idx < 0) {
+        this.chosenItem = undefined
+        this.renderTrigger()
+        this.fireChange(previous)
+        return
+      }
+      const matched = this.items[idx]!
+      // Reference swap = a different VALUE under SameValueZero, so a NaN item
+      // matching itself is not a swap.
+      if (!defaultCompareFn(matched, previous)) { this.chosenItem = matched }
     }
-    const matched = this.items[idx]!
-    // Reference swap = a different VALUE under SameValueZero, so a NaN item
-    // matching itself is not a swap (no spurious re-render).
-    if (!defaultCompareFn(matched, previous)) {
-      this.chosenItem = matched
-      this.renderTrigger()
-    }
+    // A custom trigger receives `items`, so every list change refreshes the
+    // content; the arrow does not depend on the list.
+    this.renderTriggerContent()
   }
 
   private areEqual(a: T | undefined, b: T | undefined): boolean {
