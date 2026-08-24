@@ -34,16 +34,15 @@ test('QUALITY-92: single fires onChange once for a repeated NaN choice, and setI
   assert.ok(Number.isNaN(sel.getChosenItem()))
 })
 
-test('QUALITY-92: setItems holding the same NaN item is not a reference swap (chosen array kept, no re-render)', () => {
-  let renders = 0
-  const multi = new LLSelectMultiple<number>(mount(), { ariaLabel: 'x', createTriggerContentElFn: () => { renders++; return null } })
+test('QUALITY-92: setItems holding the same NaN item is not a reference swap (chosen array kept; single: no re-render)', () => {
+  const multi = new LLSelectMultiple<number>(mount(), { ariaLabel: 'x' })
   multi.setItems([NaN, 1])
   multi.setChosenItems([NaN])
   const chosenBefore = multi.getChosenItems()
-  const rendersBefore = renders
   multi.setItems([NaN, 1])
+  // A swap would replace the chosen array; the list-total refresh (MEDIUM-93)
+  // re-renders the trigger but keeps the array.
   assert.equal(multi.getChosenItems(), chosenBefore, 'a NaN item matching itself is the same value, not a swap')
-  assert.equal(renders, rendersBefore, 'no trigger re-render without a swap')
 
   let singleRenders = 0
   const single = new LLSelectSingle<number>(mount(), { ariaLabel: 'x', createTriggerContentElFn: () => { singleRenders++; return null } })

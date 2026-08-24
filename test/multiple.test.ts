@@ -246,3 +246,16 @@ test('setChosenItems dedups via a custom compareFn, not identity', () => {
   sel.setChosenItems([{ id: 1 }, { id: 1 }, { id: 2 }])
   assert.deepEqual(sel.getChosenItems().map(i => i.id), [1, 2])
 })
+
+test('MEDIUM-93: setItems refreshes the count summary while something is chosen; nothing chosen = no render', () => {
+  let renders = 0
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', createTriggerContentElFn: () => { renders++; return null } })
+  sel.setItems(['a', 'b'])
+  const idle = renders
+  sel.setItems(['a', 'b', 'c'])
+  assert.equal(renders, idle, 'nothing chosen: a list change does not touch the trigger')
+  sel.setChosenItems(['a'])
+  assert.equal(sel.triggerEl.textContent, '1 / 3 selected')
+  sel.setItems(['a', 'b', 'c', 'd'])
+  assert.equal(sel.triggerEl.textContent, '1 / 4 selected', 'the total follows the new list')
+})

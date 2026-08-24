@@ -715,6 +715,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *   style reload: same key, fresh fields), the stored reference is swapped
    *   to the list's object and the trigger re-renders. A reference swap is
    *   not a logical change, so it does not fire `onChange`.
+   * - While something is chosen, the trigger re-renders after every `setItems`
+   *   even without a drop or a swap: the count summary shows the list total,
+   *   and a custom `createTriggerContentElFn` receives `items`.
    * @group Subclassing: reactions
    */
   protected override onItemsChanged(): void {
@@ -738,7 +741,11 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     if (swapped) {
       this.chosenItems = nextChosen
       this.renderTrigger()
+      return
     }
+    // The count summary reads the list total (and a custom trigger receives
+    // `items`), so a list change alone must refresh the trigger too.
+    if (previous.length > 0) { this.renderTrigger() }
   }
 
   /**
