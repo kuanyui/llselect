@@ -56,12 +56,16 @@
         if (bridge) { bridge.releaseRowScopes() }
         super.renderPopupList()
       }
-      renderTrigger() {
-        // The trigger (single match / tag chips) is rebuilt here, so the
-        // scopes backing the PREVIOUS trigger content die now - and only now.
+      renderTriggerContent() {
+        // The trigger content (single match / tag chips) is rebuilt here, so
+        // the scopes backing the PREVIOUS content die now - and only now.
+        // Hooked at the content method, not renderTrigger: setItems rebuilds
+        // the content alone (core onItemsChanged), and renderTrigger reaches
+        // here too, so every rebuild releases (MEDIUM-93 leaked one chip
+        // scope per reload when this sat on renderTrigger).
         var bridge = BRIDGES.get(this)
         if (bridge) { bridge.releaseTriggerScopes() }
-        super.renderTrigger()
+        super.renderTriggerContent()
       }
       createItemEl(item, index) {
         // createItemEl calls createItemContentEl synchronously, so the index is
@@ -382,6 +386,10 @@
       // so NaN included) answers first: retained items keep their reference
       // between `previous` and `items`, and a pairwise angular.equals scan
       // over every retained item would be O(k^2) deep compares per toggle.
+      // The compareFn fallback is defensive: the core swaps chosen references
+      // to the list's objects on every reload, and reload-driven changes are
+      // write-back gated, so no in-bridge path hands a fresh equal object
+      // here; a direct core `setItems` from app code could.
       var has = function (list, item) {
         return list.includes(item) || list.some(function (other) { return settings.compareFn(other, item) })
       }

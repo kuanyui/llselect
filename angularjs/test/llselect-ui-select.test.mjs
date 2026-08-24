@@ -554,7 +554,7 @@ test('single without track by: aria-selected and open-focus survive an equal-obj
   assert.ok(focused && focused.textContent.includes('Bob'), 'reopen must focus the chosen row, not the first-row fallback')
 })
 
-test('QUALITY-92: on-select diffs by the bridge compareFn, so a NaN already chosen does not re-fire', () => {
+test('QUALITY-92: on-select membership is SameValueZero, so a NaN already chosen does not re-fire', () => {
   const a = boot({
     files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
     deps: ['llselect', 'llselect.uiCompat'],
@@ -593,4 +593,33 @@ test('QUALITY-92: a NaN model value resolves through a repeat alias too (the rev
   })
   assert.deepEqual(a.errors, [])
   assert.equal(a.$('ui-llselect .llselect-trigger-content').textContent.trim(), 'NaN')
+})
+
+test('MEDIUM-93: reloads with chips on screen do not leak trigger scopes (setItems rebuilds the content alone)', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect multiple ng-model="vm.people" aria-label="P">
+          <ui-llselect-match placeholder="Pick">{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS.map((u) => ({ ...u })); this.people = [] },
+  })
+  const countScopes = () => {
+    let n = 0
+    const walk = (s) => { for (let c = s.$$childHead; c; c = c.$$nextSibling) { n += 1; walk(c) } }
+    walk(a.scope.$root)
+    return n
+  }
+  a.$('ui-llselect .llselect-trigger').click()
+  a.$$('ui-llselect .llselect-item')[0].click() // one chip on screen
+  const reload = () => { a.scope.$apply(() => { a.scope.vm.users = a.scope.vm.users.map((u) => ({ ...u })) }) }
+  reload() // equal-but-fresh objects: the chosen reference swaps, the chip rebuilds
+  const baseline = countScopes()
+  for (let i = 0; i < 6; i++) { reload() }
+  assert.equal(countScopes(), baseline, 'every trigger-content rebuild must free the previous chip scopes')
+  assert.equal(a.$$('ui-llselect .llselect-tag').length, 1)
 })
