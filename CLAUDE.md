@@ -101,6 +101,12 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - REVIEW / TODO / FIXME finding ids must be descriptive (the `[SEVERITY-N]` format below), never cryptic invented codes like `R20` / `F7` / `REVIEW 1.2`. Refer to a finding by what it is ("the off-screen-open listener leak") - in docs, in commit messages, and when reporting to the user - with the id at most a trailing reference; a bare code forces the reader to look it up. This is ONLY about those tracking ids; it is not a general ban on abbreviations, so it needs no list of allowed words.
 - Commit messages: ONE line, in the house shape `type: [scope] terse summary`. The summary names WHAT changed, nothing more - mechanism, rationale, and sub-part inventories belong in the diff, docs, and FIXME/TODO entries. Length: aim ~72 chars for the whole subject, normally stay under 100; when the content genuinely needs it (e.g. two long API names in a rename) up to 140 is acceptable, never more. At most one `;`-joined second clause, and only when the commit genuinely does two things (e.g. add + rename). Needing more room means the message is explaining instead of naming, or the commit should be split. For the register read the EARLY history (`git log --reverse | head -40`), not recent commits - matching the latest entries is exactly how subjects once drifted past 400 chars. No paragraph bodies. Trailers (e.g. Co-Authored-By) stay, after a blank line.
 
+### Review panel and decision escalation (llselect)
+
+- Review panel: a fixed set of five models, each run at MAX effort - Fable 5, Opus 5, Opus 4.8, Codex 5.5, Codex Sol. This is the panel the `docs/llm/FIXME.md` rounds refer to, and the one any "ask the panel" / "convene the reviewers" instruction means.
+- When you hit a genuine fork - a design choice, a claim you cannot settle alone, anything where guessing wrong is costly - do NOT settle it solo: first convene the OTHER FOUR panel members (every panel model except the one you are running as) to review and discuss it together, by whatever channel reaches them (subagents for the models a tool can spawn, the user's relay for the rest).
+- Then hand the user the call to make, in short plain unambiguous language: state the question, the options, your recommendation, and the exact decision they must ratify. Keep it scannable - no dense tables, no long-winded framing.
+
 ### Verification commands (llselect)
 
 Run before claiming a change is done; all must pass:
