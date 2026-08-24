@@ -127,7 +127,7 @@ Four things to know when wiring it up:
 Four `protected` methods plus `close()` are overridden by subclassing, which DESIGN.md ("Customization model") names as the sanctioned path for a framework wrapper:
 
 - `renderPopupList` - the entry point for a full list rebuild (open / filter / `setItems` / `rerender`), so it is where the previous round of row scopes is destroyed. Without this, every filter keystroke leaks a scope per row.
-- `renderTrigger` - same idea for the trigger: the scopes behind the previous match / tag content die exactly when that content is rebuilt.
+- `renderTriggerContent` - same idea for the trigger: the scopes behind the previous match / tag content die exactly when that content is rebuilt. Hooked at the content method, not `renderTrigger`, because `setItems` rebuilds the trigger content without running `renderTrigger`.
 - `createItemEl(item, index)` - it calls `createItemContentEl` synchronously, so stashing the index there is what makes `$index` available to templates.
 - `replacePopupListItemElInDom(item)` - a multi toggle repaints ONE row; afterwards the replaced row's scope is released (found by its element no longer being in the DOM).
 - `close()` - detaches every row, so the same element-connectivity release runs there too.

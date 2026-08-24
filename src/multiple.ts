@@ -713,8 +713,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *   `onChange` fires for the drop.
    * - When the list holds a compareFn-equal but DIFFERENT object (`track by`
    *   style reload: same key, fresh fields), the stored reference is swapped
-   *   to the list's object and the trigger re-renders. A reference swap is
-   *   not a logical change, so it does not fire `onChange`.
+   *   to the list's object. A reference swap is not a logical change, so it
+   *   does not fire `onChange`.
    * - The trigger content re-renders after every `setItems`, swap or not (the
    *   arrow does not): the count summary shows the list total, and a custom
    *   `createTriggerContentElFn` receives `items`. In `'tags'` mode that is
