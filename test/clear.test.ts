@@ -269,34 +269,37 @@ test('QUALITY-89: a content fn that reuses one icon element keeps the focus hand
   const target = mount() // before creating the icon: mount() installs the document
   const icon = document.createElement('span')
   icon.tabIndex = -1
+  let activeAtBuild: Element | null = null
   const sel = new LLSelectSingle<string>(target, {
     clearable: true,
     ariaLabel: 'x',
-    createTriggerClearButtonContentElFn: () => icon, // the same node every time: the rebuild reparents it
+    // The same node every time: the rebuild reparents it. The fn also records
+    // where focus sits while the new button is being built.
+    createTriggerClearButtonContentElFn: () => { activeAtBuild = document.activeElement; return icon },
   })
   sel.setItems(['a'])
   sel.setChosenItem('a')
   assert.equal(clearBtn(sel)!.firstElementChild, icon, 'precondition: the reused icon sits in the button')
   icon.focus()
   assert.equal(document.activeElement, icon)
+  const before = clearBtn(sel)!
   sel.rerender()
+  assert.equal(activeAtBuild, before, 'focus was parked on the old button before the icon was reparented')
   const rebuilt = clearBtn(sel)!
   assert.equal(rebuilt.firstElementChild, icon, 'the icon moved into the rebuilt button')
   assert.equal(document.activeElement, rebuilt, 'focus follows the rebuilt button even though building it moved the focused icon')
 })
 
 test('QUALITY-89: a createTriggerClearButtonEl override that returns the same element every time keeps it in place', () => {
+  // The memo lives in a closure, not an instance field: the first build runs
+  // inside super() (the LLSelectSingle constructor's first render), and an
+  // instance field would be (re)defined after super() returns - the very trap
+  // the extender docs describe.
+  let memo: HTMLElement | undefined
   class Memoized extends LLSelectSingle<string> {
-    // No initializer on purpose: the first build runs inside super() (the
-    // LLSelectSingle constructor's first render), and a `= null` initializer
-    // would then wipe the memo once super() returns - the very trap the
-    // extender docs describe. (Holds under the ES2020 target, where
-    // useDefineForClassFields is off; an ES2022 target would define the
-    // field as undefined after super() and wipe it too.)
-    private button?: HTMLElement
     protected override createTriggerClearButtonEl(): HTMLElement {
-      if (this.button === undefined) { this.button = super.createTriggerClearButtonEl() }
-      return this.button
+      if (memo === undefined) { memo = super.createTriggerClearButtonEl() }
+      return memo
     }
   }
   const sel = new Memoized(mount(), { clearable: true, ariaLabel: 'x' })
@@ -320,4 +323,28 @@ test('QUALITY-89: a direct LLSelectBase subclass gets its clear button on its fi
   sel.paint()
   assert.ok(clearBtn(sel))
   assert.equal([...sel.triggerEl.children].indexOf(clearBtn(sel)!), 1)
+})
+
+test('QUALITY-89: with a builder that returns the same element, a render hands focus back to the icon that held it', () => {
+  const target = mount()
+  const icon = document.createElement('span')
+  icon.tabIndex = -1
+  let memo: HTMLElement | undefined
+  class Memoized extends LLSelectSingle<string> {
+    protected override createTriggerClearButtonEl(): HTMLElement {
+      if (memo === undefined) {
+        memo = super.createTriggerClearButtonEl()
+        memo.appendChild(icon)
+      }
+      return memo
+    }
+  }
+  const sel = new Memoized(target, { clearable: true, ariaLabel: 'x' })
+  sel.setItems(['a'])
+  sel.setChosenItem('a')
+  icon.focus()
+  assert.equal(document.activeElement, icon)
+  sel.rerender()
+  assert.equal(clearBtn(sel), memo)
+  assert.equal(document.activeElement, icon, 'nothing was rebuilt, so focus goes back where it was (not parked on the button)')
 })

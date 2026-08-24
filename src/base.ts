@@ -2305,8 +2305,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - The base implementation returns a fresh element each run, so, like the
    *   arrow, nothing put on it from outside survives a render; customize it
    *   here.
-   * - An override that returns the same element every time owns refreshing
-   *   whatever state it keeps on that element.
+   * - An override that returns the same element every time owns everything
+   *   the rebuild would otherwise refresh on it, including its `aria-label`
+   *   after `setUiTranslationPack`.
    * - An override that reads subclass fields calls `rerender()` at the end of
    *   its constructor, like every other trigger method.
    * @group Subclassing: rendering
@@ -2331,14 +2332,19 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Whether DOM focus is on `el` or inside it, read from its own root: inside
-   * a shadow root `document.activeElement` is the shadow HOST, so the answer
-   * must come from the `ShadowRoot`'s `activeElement` (the `Document`'s
-   * otherwise).
+   * The element holding DOM focus if that is `el` or a descendant, else `null`.
+   * Read from `el`'s own root: inside a shadow root `document.activeElement`
+   * is the shadow HOST, so the answer must come from the `ShadowRoot`'s
+   * `activeElement` (the `Document`'s otherwise).
    */
-  private isFocused(el: Element): boolean {
+  private focusedElementIn(el: Element): Element | null {
     const active = (el.getRootNode() as Partial<DocumentOrShadowRoot>).activeElement ?? null
-    return active !== null && el.contains(active)
+    return active !== null && el.contains(active) ? active : null
+  }
+
+  /** Whether DOM focus is on `el` or inside it (see `focusedElementIn`). */
+  private isFocused(el: Element): boolean {
+    return this.focusedElementIn(el) !== null
   }
 
   /**
@@ -2348,35 +2354,43 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * subclass fields. Keeps DOM focus on the new button when the old one held it.
    * No-op without `clearable`.
    * The order of the steps is load-bearing:
-   * 1. Read whether focus is on or inside the old button.
-   * 2. If so, park it on the old button itself. A content fn that hands back
-   *    the same icon element each time reparents that icon into the new
-   *    button, and the reparenting must not move the focused node.
+   * 1. Read which node holds focus, if it is the old button or inside it.
+   * 2. If one does, park focus on the old button itself. A content fn that
+   *    hands back the same icon element each time reparents that icon into
+   *    the new button, and the reparenting must not move the focused node.
    * 3. Build the new button.
-   * 4. Insert it, then move focus to it (if the old one held focus).
+   * 4. Insert it; if step 1 found focus, move focus to it.
    * 5. Only then remove the old one.
-   * Why: removing the old button first would drop DOM focus to `<body>` in
-   * every engine, and, where the engine fires `focusout` on the removal of a
-   * focused element, with `relatedTarget = null` - which the open popup's
-   * focus-out guard reads as "focus left the widget". Moving focus first
-   * makes the new button the `relatedTarget`, inside the root.
+   * Why this order: removing the old button first drops DOM focus to `<body>`
+   * in every engine. Where the engine also fires `focusout` on that removal,
+   * its `relatedTarget` is `null`, which the open popup's focus-out guard
+   * reads as focus leaving the widget. Moving focus first makes the new
+   * button the `relatedTarget`, inside the root.
    * A builder override that returns the SAME element every time is allowed:
-   * the element is kept in place and not removed.
+   * the element is kept in place, and focus goes back to the node step 1
+   * found, because nothing was rebuilt.
    */
   private replaceTriggerClearButtonElInDom(): void {
     if (!this.settings.clearable) { return }
     const old = this.triggerClearButtonEl
-    const hadFocus = old !== null && this.isFocused(old)
-    if (old !== null && hadFocus) { old.focus({ preventScroll: true }) }
+    const focused = old === null ? null : this.focusedElementIn(old)
+    if (old !== null && focused !== null) { old.focus({ preventScroll: true }) }
     const next = this.createTriggerClearButtonEl()
     this.triggerClearButtonEl = next
     if (old === null) {
       this.triggerArrowEl.before(next)
       return
     }
-    if (next === old) { return }
+    if (next === old) {
+      // Nothing was rebuilt: hand focus back to the node that held it. A
+      // detached node's focus() is a no-op, so a rebuilt child leaves focus
+      // on the button.
+      const holder = focused as (Element & Partial<HTMLOrSVGElement>) | null
+      if (holder !== null && holder !== old && typeof holder.focus === 'function') { holder.focus({ preventScroll: true }) }
+      return
+    }
     old.before(next)
-    if (hadFocus) { next.focus({ preventScroll: true }) }
+    if (focused !== null) { next.focus({ preventScroll: true }) }
     old.remove()
   }
 
