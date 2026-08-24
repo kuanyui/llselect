@@ -140,6 +140,25 @@ test('typing in the filter input filters the visible list', () => {
   assert.deepEqual(rendered, ['Argentina'])
 })
 
+test('MEDIUM-71: a still-no-match keystroke does not rewrite the no-results region', () => {
+  const sel = new LLSelectSingle<string>(mount(), { filterable: true, ariaLabel: 'x' })
+  sel.setItems(['apple', 'banana'])
+  sel.open()
+  const input = filterInput(sel)
+  const msg = sel.popupEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListNoResultsClass}`)!
+  input.value = 'zzz'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.equal(msg.hidden, false, 'no-results shows for a no-match query')
+  const nodeAfterFirst = msg.firstChild
+  assert.ok(nodeAfterFirst, 'no-results is filled on first appearance')
+  // A second, still-no-match keystroke keeps the SAME text. A fresh textContent
+  // write would replace this text node and re-announce via role="status", so the
+  // identical text must not be rewritten - the very same node must survive.
+  input.value = 'zzzq'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.equal(msg.firstChild, nodeAfterFirst, 'unchanged no-results text must not be rewritten (same text node)')
+})
+
 test('custom filterFn is used when provided', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     filterable: true,

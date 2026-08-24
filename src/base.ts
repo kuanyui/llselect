@@ -741,6 +741,15 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * list has entries.
    */
   private popupListNoResultsEl!: HTMLElement
+
+  /**
+   * Text last written into the no-results region, or `null` while it is hidden.
+   * Guards a re-announcement: `role="status"` speaks on every content change, so
+   * a keystroke that keeps the list empty must not rewrite identical text (A11Y.md:
+   * announced once per appearance). Reset to `null` when the region hides, so the
+   * next appearance announces again.
+   */
+  private lastNoResultsText: string | null = null
   /**
    * Whether the filter input is active for the CURRENT open cycle. Evaluated
    * from the `filterable` setting (predicate form reads the current items) in
@@ -2383,16 +2392,26 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Mirror the visible-list-empty state onto the no-results message element:
-   * `hidden` while there is at least one visible item; when shown, (re)fill
-   * its content - `createPopupListNoResultsContentEl(query)` first, else the
-   * plain text from `uiTranslationPack.popupListNoResults`. Same null-branch shape as
+   * `hidden` while there is at least one visible item; when shown, fill its
+   * content - `createPopupListNoResultsContentEl(query)` first, else the plain
+   * text from `uiTranslationPack.popupListNoResults`. Same null-branch shape as
    * `createItemEl` / `createGroupEl`.
+   * - The write is SKIPPED when the resolved text matches what is already shown,
+   *   so a still-empty next keystroke does not re-announce (see `lastNoResultsText`).
    */
   private syncPopupListNoResultsToDom(): void {
     const empty = this.getVisibleItems().length === 0
     this.popupListNoResultsEl.hidden = !empty
-    if (!empty) { return }
+    if (!empty) {
+      this.lastNoResultsText = null
+      return
+    }
     const content = this.createPopupListNoResultsContentEl(this.query)
+    const nextText = content === null
+      ? this.settings.uiTranslationPack.popupListNoResults
+      : content.textContent ?? ''
+    if (nextText === this.lastNoResultsText) { return }
+    this.lastNoResultsText = nextText
     if (content === null) {
       this.popupListNoResultsEl.textContent = this.settings.uiTranslationPack.popupListNoResults
     } else {

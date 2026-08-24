@@ -120,9 +120,10 @@ Open items from the panel, awaiting the user's ruling:
   - Symptom: only `aria-label` / `title` mapped to a name. angularjs/llselect-ui-select.js.
   - Fix: the host's `aria-labelledby` attribute is forwarded verbatim to `settings.ariaLabelledBy`; the core name ladder picks it over `aria-label` per ARIA. No new vocabulary. labelEl stays out - ui-select has no label-element concept, and `aria-labelledby` is the by-reference path.
   - Verified: ui-select test asserts a host `aria-labelledby` reaches the trigger's name chain.
-- [ ] **[MEDIUM-71] - the no-results live region is rewritten identically on every keystroke**
-  - Symptom: `role="status"` content re-set while visible risks repeated announcements (AT-dependent; A11Y.md says announced once on appearance). src/base.ts:2384.
-  - Proposed: skip the write when the rendered text is unchanged.
+- [x] **[MEDIUM-71] - the no-results live region was rewritten identically on every keystroke**
+  - Symptom: `role="status"` content re-set while visible risks repeated announcements (AT-dependent; A11Y.md: announced once on appearance). src/base.ts.
+  - Fix: `syncPopupListNoResultsToDom` records the last written text (`lastNoResultsText`) and skips the write when the resolved text is unchanged; it resets to `null` when the region hides, so the next appearance re-announces. Custom `createPopupListNoResultsContentElFn` output is compared by its `textContent` (what the status region speaks), so a query-dependent message still rewrites when its text actually changes.
+  - Verified: filterable test pins that a second still-no-match keystroke keeps the SAME text node (an identical-text rewrite would replace it and re-announce). Demonstrated failing with the skip disabled.
 - [ ] **[PERFORMANCE-72] - `isChosen` is a linear scan per rendered row**
   - Symptom: multi popup render is O(visible x chosen); `setChosenItems` full-rerenders even though selection cannot change grouping. src/multiple.ts:264.
   - Proposed: a chosenSet fast path mirroring PERFORMANCE-31 plus a chosen-only refresh; needs its own design wave (cache invalidation).
