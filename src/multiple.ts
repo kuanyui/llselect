@@ -715,14 +715,14 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *   style reload: same key, fresh fields), the stored reference is swapped
    *   to the list's object. A reference swap is not a logical change, so it
    *   does not fire `onChange`.
-   * - The trigger content re-renders after every `setItems`, swap or not. The
-   *   arrow does not, unless a chosen entry was dropped: that re-renders the
-   *   whole trigger.
+   * - The trigger content re-renders after every `setItems`, swap or not.
+   * - The arrow does not re-render. If a chosen entry was dropped, the whole
+   *   trigger re-renders, arrow included.
    * - Why: the count summary shows the list total, and a custom
    *   `createTriggerContentElFn` receives `items`.
-   * - In `'tags'` mode (opt-in; `'count'` is the default), with its built-in
-   *   chip renderer, that is one chip per chosen item per `setItems`; a bulk
-   *   call, so acceptable.
+   * - `'tags'` mode is opt-in; `'count'` is the default.
+   * - In `'tags'` mode, with its built-in chip renderer, that render is one
+   *   chip per chosen item per `setItems`. A bulk call, so acceptable.
    * @group Subclassing: reactions
    */
   protected override onItemsChanged(): void {

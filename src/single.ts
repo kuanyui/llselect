@@ -223,8 +223,9 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
    *   to the list's object. The logical value did not change, so `onChange`
    *   does not fire.
    * - The trigger content re-renders after every `setItems`: a custom
-   *   `createTriggerContentElFn` receives `items`. The arrow does not, unless
-   *   the chosen item was dropped: that re-renders the whole trigger.
+   *   `createTriggerContentElFn` receives `items`.
+   * - The arrow does not re-render. If the chosen item was dropped, the whole
+   *   trigger re-renders, arrow included.
    * @group Subclassing: reactions
    */
   protected override onItemsChanged(): void {

@@ -275,7 +275,7 @@ test('MEDIUM-93: setItems refreshes the trigger - the count total, and custom co
   custom.setItems(['a', 'b', 'c'])
   assert.equal(custom.triggerEl.textContent, '0 of 3', 'custom content sees the new list even with nothing chosen')
   assert.equal(contentRenders, contentBefore + 2, 'exactly one content render for the second setItems')
-  assert.equal(arrowRenders, arrowBefore, 'setItems does not re-render the arrow')
+  assert.equal(arrowRenders, arrowBefore, 'setItems without a dropped chosen entry does not re-render the arrow')
 })
 
 test('MEDIUM-93: render counts per setItems branch - swap: content only; drop: the whole trigger', () => {
