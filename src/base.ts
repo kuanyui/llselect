@@ -28,13 +28,6 @@ import type { LLSelectUiTranslationPack } from './i18n.js'
 export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
 
 /**
- * Resolved (defaults applied) settings shared by all select variants.
- * Subclasses (`LLSelectSingle`, `LLSelectMultiple`) extend this with their
- * mode-specific options such as `onChange`.
- * @group Settings
- * @category Base
- */
-/**
  * Who initiated a chosen-state change, delivered to `onChange` as
  * `meta.source`.
  * - `'user'`: a pointer or keyboard interaction inside the widget - an
@@ -56,6 +49,25 @@ export interface LLSelectChangeMeta {
   source: LLSelectChangeSource
 }
 
+/**
+ * Resolved (defaults applied) settings shared by all select variants.
+ * Subclasses (`LLSelectSingle`, `LLSelectMultiple`) extend this with their
+ * mode-specific options such as `onChange`.
+ *
+ * Settings are frozen after the constructor. What still changes at runtime:
+ * - State changes by method, and never was a setting: the items
+ *   (`setItems`), the chosen value (`setChosenItem` / `setChosenItems`),
+ *   `disabled` (`setDisabled`).
+ * - Two settings have a setter, because they are text: `uiTranslationPack`
+ *   (`setUiTranslationPack`) and `placeholder` (`setPlaceholder`).
+ * - Every other setting is fixed for the instance's lifetime.
+ * - To change a fixed setting, build a new instance. One build takes about
+ *   0.2 ms.
+ * - If a setting must vary at runtime, use its function form where one
+ *   exists. `filterable: (items) => boolean` is re-evaluated on every open.
+ * @group Settings
+ * @category Base
+ */
 export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Prefix used for every CSS class and DOM id the library generates
@@ -379,8 +391,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   createGroupLabelContentElFn: ((groupKey: GroupKey, itemsInGroup: readonly T[]) => HTMLElement | null) | null
   /**
-   * Fired right after the popup opens. A no-op `open()` (already open, or a
-   * disabled control) does not fire it. Fires in ADDITION to the protected
+   * Fired right after the popup opens. An `open()` call that does not actually
+   * open the popup (already open, a disabled control, or a trigger scrolled out
+   * of view or clipped) does not fire it. Fires in ADDITION to the protected
    * `onOpened` hook - the setting is for consumers, the hook for subclasses;
    * both run. `null` (default) = nothing.
    * @group Events
@@ -1259,8 +1272,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * Replace the UI-translation pack at runtime, so switching language needs
    * no re-`new`.
-   * - This is a deliberate exception to constructor-frozen settings, like
-   *   `setDisabled`.
+   * - One of the two settings with a runtime setter (the other is
+   *   `setPlaceholder`); both are copy. The rule: {@link LLSelectBaseSettings}.
    * - The pack is resolved exactly like the constructor's: merged over the
    *   built-in English pack, NOT over the previously set pack.
    * - An explicit constructor `placeholder` keeps winning over the new pack's
@@ -1288,8 +1301,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Replace the trigger placeholder text at runtime - a deliberate exception
-   * (like `setUiTranslationPack`) to constructor-frozen settings.
+   * Replace the trigger placeholder text at runtime. It is one of the two
+   * settings with a runtime setter (the other is `setUiTranslationPack`);
+   * both are copy. The rule: {@link LLSelectBaseSettings}.
    * - `null` = fall back to the pack default (`uiTranslationPack.triggerPlaceholder`),
    *   mirroring an unset constructor `placeholder`. An explicit value keeps
    *   winning over later `setUiTranslationPack` calls, exactly like the

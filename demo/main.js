@@ -984,9 +984,9 @@ labelDemoSel.setItems(['Apple', 'Banana', 'Cherry', 'Durian'])
 // Language packs (imported at the top: `import { en, ja, zhTW } from
 // '@llselect/core/i18n'`) fill the `uiTranslationPack` setting whole; per-key
 // overrides spread on top (`uiTranslationPack: { ...zhTW, ... }`). The three
-// instances are built ONCE; the switcher calls setUiTranslationPack - the one
-// deliberate exception to constructor-frozen settings - so chosen state
-// survives the language switch. Deliberately NO `placeholder` (so the pack's
+// instances are built ONCE; the switcher calls setUiTranslationPack (one of
+// the two settings with a runtime setter) so chosen state survives the
+// language switch. Deliberately NO `placeholder` (so the pack's
 // localized `triggerPlaceholder` default shows; an explicit `placeholder` is
 // app copy and would win) and nothing preselected at load, so every visible
 // change comes from the pack alone. Three instances: a single (localized

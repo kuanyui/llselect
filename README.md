@@ -335,7 +335,7 @@ const sel = new LLSelectSingle(el, {
 })
 ```
 
-Event callbacks are constructor-time settings - frozen like every setting, one callback per event. To swap the handler at runtime or fan out to several listeners, wrap it in your own reference: `onChange: (current, previous) => myHandler?.(current, previous)`.
+Event callbacks are constructor-time settings - frozen, one callback per event (only `placeholder` and `uiTranslationPack` have runtime setters). To swap the handler at runtime or fan out to several listeners, wrap it in your own reference: `onChange: (current, previous) => myHandler?.(current, previous)`.
 
 #### Highlight what the filter matched
 
