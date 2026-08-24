@@ -1293,8 +1293,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const pack: LLSelectUiTranslationPack = { ...DEFAULT_UI_TRANSLATION_PACK, ...uiTranslationPack }
     this.settings.uiTranslationPack = pack
     this.settings.placeholder = this.explicitPlaceholder ?? pack.triggerPlaceholder
-    // Constructor-built elements that rerender() does not rebuild (the clear
-    // button it does):
+    // Pack-owned attributes rerender() cannot reach:
     this.syncFieldNameToDom()
     if (pack.filterInputPlaceholder !== null) {
       this.filterInputEl.placeholder = pack.filterInputPlaceholder
@@ -2275,10 +2274,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     content.id = this.classIdMap.triggerContentId
     content.className = this.classIdMap.triggerContentClass
     el.append(content)
-    if (this.settings.clearable) {
-      this.triggerClearButtonEl = this.createTriggerClearButtonEl()
-      el.append(this.triggerClearButtonEl)
-    }
+    // The clear button is not built here: the first trigger render builds it
+    // (replaceTriggerClearButtonElInDom), so it is built once, not once here
+    // and again at that render.
     const arrow = document.createElement('span')
     arrow.className = this.classIdMap.triggerArrowClass
     el.append(arrow)
@@ -2294,13 +2292,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - `createTriggerClearButtonContentElFn` optionally fills the icon; else the
    *   theme's CSS glyph draws it.
    * - The theme hides the button via `data-empty` while nothing is chosen.
-   * - It first runs in the base constructor, before any subclass field
-   *   initializer.
-   * - It runs again on every trigger render (`renderTrigger`), which swaps the
-   *   button in place: the `LLSelectSingle` / `LLSelectMultiple` constructor's
-   *   first render (still before a FURTHER subclass's field initializers),
-   *   every value change, `setPlaceholder`, `setUiTranslationPack`, and
-   *   `rerender()`.
+   * - It runs on every trigger render (`renderTrigger`). The first run is the
+   *   `LLSelectSingle` / `LLSelectMultiple` constructor's render, right after
+   *   `super()` and before a FURTHER subclass's field initializers; it builds
+   *   the button. Every later render (a value change, `setPlaceholder`,
+   *   `setUiTranslationPack`, `rerender()`) swaps it in place.
    * - Like the arrow, the element is not kept across renders. Put nothing on
    *   it from outside; customize it here.
    * - An override that reads subclass fields calls `rerender()` at the end of
@@ -2327,33 +2323,40 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Whether `el` holds DOM focus, read from its own root: inside a shadow root
-   * `document.activeElement` is the shadow HOST, so the answer must come from
-   * the `ShadowRoot`'s `activeElement` (the `Document`'s otherwise).
+   * Whether DOM focus is on `el` or inside it, read from its own root: inside
+   * a shadow root `document.activeElement` is the shadow HOST, so the answer
+   * must come from the `ShadowRoot`'s `activeElement` (the `Document`'s
+   * otherwise).
    */
   private isFocused(el: Element): boolean {
-    const root = el.getRootNode() as Partial<DocumentOrShadowRoot>
-    return (root.activeElement ?? null) === el
+    const active = (el.getRootNode() as Partial<DocumentOrShadowRoot>).activeElement ?? null
+    return active !== null && el.contains(active)
   }
 
   /**
-   * Swap the clear button for a fresh one built by `createTriggerClearButtonEl`
-   * (the overridable builder) on every trigger render, so `rerender()` repairs
-   * an override that reads subclass fields. Keeps DOM focus on the new button
-   * when the old one held it. No-op without `clearable`.
+   * Build the clear button on the first trigger render, and swap it for a fresh
+   * one on every later render, always through `createTriggerClearButtonEl` (the
+   * overridable builder) - so `rerender()` repairs an override that reads
+   * subclass fields. Keeps DOM focus on the new button when the old one held it.
+   * No-op without `clearable`.
    * - Order matters: the new button is inserted and focused BEFORE the old one
-   *   is removed. Removing a focused element first would fire `focusout` with
-   *   `relatedTarget = null`, which the open popup's focus-out guard reads as
-   *   "focus left the widget" and closes on. Moving focus first fires it with
-   *   the new button as `relatedTarget`, inside the root, so the guard passes.
+   *   is removed. Removing the old button first would drop DOM focus to
+   *   `<body>` in every engine, and, where the engine fires `focusout` on the
+   *   removal of a focused element, with `relatedTarget = null` - which the
+   *   open popup's focus-out guard reads as "focus left the widget". Moving
+   *   focus first makes the new button the `relatedTarget`, inside the root.
    */
   private replaceTriggerClearButtonElInDom(): void {
-    const old = this.triggerClearButtonEl
-    if (old === null) { return }
+    if (!this.settings.clearable) { return }
     const next = this.createTriggerClearButtonEl()
+    const old = this.triggerClearButtonEl
+    this.triggerClearButtonEl = next
+    if (old === null) {
+      this.triggerArrowEl.before(next)
+      return
+    }
     const hadFocus = this.isFocused(old)
     old.before(next)
-    this.triggerClearButtonEl = next
     if (hadFocus) { next.focus({ preventScroll: true }) }
     old.remove()
   }

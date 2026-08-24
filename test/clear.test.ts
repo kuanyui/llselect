@@ -228,3 +228,37 @@ test('QUALITY-89: inside a shadow root, the rebuild still keeps focus on the new
   assert.notEqual(after, before)
   assert.equal(shadow.activeElement, after)
 })
+
+test('QUALITY-89: construction builds the clear button exactly once (the first trigger render), then once per render', () => {
+  let builds = 0
+  const sel = new LLSelectMultiple<string>(mount(), {
+    clearable: true,
+    ariaLabel: 'x',
+    createTriggerClearButtonContentElFn: () => { builds++; return null },
+  })
+  assert.equal(builds, 1, 'the base constructor no longer pre-builds a throwaway button')
+  assert.ok(clearBtn(sel), 'the button exists right after new')
+  assert.equal([...sel.triggerEl.children].indexOf(clearBtn(sel)!), 1, 'content | clear | arrow')
+  sel.setItems(['a'])
+  sel.setChosenItems(['a'])
+  assert.equal(builds, 2, 'one rebuild for the value change')
+})
+
+test('QUALITY-89: focus inside a custom clear-button icon still counts as the button holding focus', () => {
+  const sel = new LLSelectSingle<string>(mount(), {
+    clearable: true,
+    ariaLabel: 'x',
+    createTriggerClearButtonContentElFn: () => {
+      const icon = document.createElement('span')
+      icon.tabIndex = -1
+      return icon
+    },
+  })
+  sel.setItems(['a'])
+  sel.setChosenItem('a')
+  const icon = clearBtn(sel)!.querySelector('span')!
+  icon.focus()
+  assert.equal(document.activeElement, icon)
+  sel.rerender()
+  assert.equal(document.activeElement, clearBtn(sel), 'the rebuilt button takes the focus its icon held')
+})
