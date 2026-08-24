@@ -153,9 +153,10 @@ Open items from the panel, awaiting the user's ruling:
   - Fix (policy - user ruling + five-model direction panel): items must be UNIQUE under `compareFn`; duplicates are NOT supported (index/identity selection would fight the set-valued model). `setItems` warns once per page under the DEFAULT compareFn (O(n) Set, never throws); a custom compareFn is documented only (an O(n^2) scan would tax large lists, per PERFORMANCE-31). Contract in the `setItems` docstring, DESIGN.md "Data model", and angularjs/API.md.
   - Verified: base.test.ts pins the default-compareFn duplicate warn (once per page, not per call) and that a custom compareFn is NOT scanned.
   - Related (five-model round on MEDIUM-79): with a custom `compareFn`, a chosen chip holds the `chosenItems` object while the popup row holds the `items` object; if their `itemDisabledFn` / group projections disagree, the chip can render enabled (x removable) while the row is `aria-disabled`. Same root as the duplicates gap - ruled by the same uniqueness / projection-congruence contract, not per-site reconciliation.
-- [ ] **[MEDIUM-78] - constructors invoke overridable render before subclass fields initialize**
-  - Symptom: a subclass override of a render seam that reads subclass fields runs during `super()`, before the subclass's field initializers (classic virtual-call-in-constructor). src/single.ts:97, src/multiple.ts:216.
-  - Proposed: document the constraint on the seams ("tolerate defaults during construction, or rerender() in your own constructor"); two-phase init deferred as a pre-1.0 question.
+- [x] **[MEDIUM-78] - constructors invoke overridable render before subclass fields initialize**
+  - Symptom: a subclass override of a render seam that reads subclass fields runs during `super()`, before the subclass's field initializers (classic virtual-call-in-constructor). src/single.ts, src/multiple.ts.
+  - Fix (user ruling + five-model direction panel - document, NOT two-phase init): the constraint is stated on `renderTrigger` (the seam the constructors run) and in DESIGN.md "Customization model" - only the trigger seams run at construction, the popup-list seams wait for `open()`. An override reading its own fields tolerates defaults or calls `rerender()` at the end of its constructor. Two-phase init was rejected: it taxes every user (not just extenders) with a mandatory second call, for a footgun a one-line `rerender()` already fixes.
+  - Verified: docs only; the tree-select demo (reads its fields only in popup-list seams) needs no change. check + build green.
 
 ## review (user-reported, Firefox mass-build gap)
 

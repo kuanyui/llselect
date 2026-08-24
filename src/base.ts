@@ -1414,6 +1414,18 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * post-state-change, etc.).
    * @group Subclassing: rendering
    */
+  /**
+   * Repaint the trigger (content slot + arrow). Runs on every value / state
+   * change AND once from the `LLSelectSingle` / `LLSelectMultiple` constructor
+   * (right after `super()`). Construction-time consequence: an override of
+   * `renderTriggerContent` - or a `create*El` it calls - that reads a FURTHER
+   * subclass's OWN fields sees them `undefined` on that first render, because JS
+   * runs a subclass's field initializers only after its super constructor returns
+   * (virtual-call-in-constructor). Tolerate defaults during construction, or call
+   * `rerender()` at the end of your own constructor. The popup-list seams do not
+   * run here (they wait for `open()`). See DESIGN.md "Customization model".
+   * @group Subclassing: rendering
+   */
   protected renderTrigger(): void {
     this.renderTriggerContent()
     this.renderTriggerArrow()
