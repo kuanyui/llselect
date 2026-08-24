@@ -2294,11 +2294,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - `createTriggerClearButtonContentElFn` optionally fills the icon; else the
    *   theme's CSS glyph draws it.
    * - The theme hides the button via `data-empty` while nothing is chosen.
-   * - It runs at construction, in the base constructor, before any subclass
-   *   field initializer.
-   * - It runs again on every trigger render (`renderTrigger`: every value
-   *   change, `rerender()`, `setUiTranslationPack`), which swaps the button in
-   *   place.
+   * - It first runs in the base constructor, before any subclass field
+   *   initializer.
+   * - It runs again on every trigger render (`renderTrigger`), which swaps the
+   *   button in place: the `LLSelectSingle` / `LLSelectMultiple` constructor's
+   *   first render (still before a FURTHER subclass's field initializers),
+   *   every value change, `setPlaceholder`, `setUiTranslationPack`, and
+   *   `rerender()`.
    * - Like the arrow, the element is not kept across renders. Put nothing on
    *   it from outside; customize it here.
    * - An override that reads subclass fields calls `rerender()` at the end of
