@@ -246,7 +246,7 @@
     function fromModel(value, items) {
       if (!repeat.modelMapperFn) { return value }
       for (var i = 0; i < items.length; i++) {
-        if (repeat.modelMapperFn(scope, locals(items[i])) === value) { return items[i] }
+        if (sameValueZero(repeat.modelMapperFn(scope, locals(items[i])), value)) { return items[i] }
       }
       return undefined
     }

@@ -221,7 +221,8 @@
    * expression error must not abort llselect's open() / close() midway.
    * The close that destroy() runs at scope teardown fires too (core parity:
    * the popup did close); AngularJS broadcasts $destroy before disabling the
-   * scope, so a cleanup expression still works there.
+   * scope, so writes to parent-owned state (vm.*, a service) persist - writes
+   * to the dying child scope itself are lost with it.
    */
   function wireEventAttr(scope, attrs, name, settings, key, exceptionHandler) {
     if (!attrs[name]) { return }

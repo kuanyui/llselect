@@ -575,3 +575,22 @@ test('QUALITY-92: on-select diffs by the bridge compareFn, so a NaN already chos
   assert.equal(a.scope.vm.n.length, 2)
   assert.deepEqual(a.scope.vm.picked, [1], 'only the newly chosen item fires on-select; an indexOf diff would also re-fire the NaN')
 })
+
+test('QUALITY-92: a NaN model value resolves through a repeat alias too (the reverse lookup is SameValueZero)', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.n">
+          <ui-llselect-match placeholder="Pick">{{$select.selected}}</ui-llselect-match>
+          <ui-llselect-choices repeat="x as x in vm.nums" ll-item-text="x + ''">
+            <span>{{x}}</span>
+          </ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.nums = [NaN, 1]; this.n = NaN },
+  })
+  assert.deepEqual(a.errors, [])
+  assert.equal(a.$('ui-llselect .llselect-trigger-content').textContent.trim(), 'NaN')
+})
