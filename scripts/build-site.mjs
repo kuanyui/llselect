@@ -315,7 +315,12 @@ function renderPage({ title, description, nav, body, toc, subnav = null }) {
 <style>
 :root { color-scheme: light dark; --fg: #1a1a1a; --fg-muted: #656565; --bg: #ffffff; --muted: #f4f4f4; --line: #d0d0d0; --link: #0550ae; --nav-link: #2456a6; --nav-hover: #eef3fb; --mark: #ffe066; }
 @media (prefers-color-scheme: dark) { :root { --fg: #d8d8d8; --fg-muted: #9a9a9a; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --nav-link: #7fb1f5; --nav-hover: #263344; --mark: rgba(187, 128, 9, 0.45); } }
-body { margin: 0 auto; padding: 0 1rem 4rem; max-width: 52rem; font: 16px/1.6 system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+/* overflow-wrap lets long identifiers (LLSelectMultipleSettings.createTriggerContentElFn,
+   in prose / links / bold / inline code) break instead of widening the page body - a
+   body horizontal overflow throws off the visual viewport on real phones and trims the
+   fixed TOC drawer. Code blocks keep their format (white-space:pre) and scroll via pre;
+   wide tables scroll inside themselves (see the table rule). */
+body { margin: 0 auto; padding: 0 1rem 4rem; max-width: 52rem; font: 16px/1.6 system-ui, sans-serif; color: var(--fg); background: var(--bg); overflow-wrap: break-word; }
 /* Explicit heading scale: browser defaults shrink h5/h6 BELOW body text,
    which the API pages (members are h5) cannot live with. */
 h1 { font-size: 1.9em; }
@@ -357,7 +362,10 @@ pre code { padding: 0; background: transparent; color: inherit; }
 .hl-keyword { color: #f92672; }
 .hl-number { color: #ae81ff; }
 .hl-func { color: #a6e22e; }
-table { border-collapse: collapse; }
+/* Wide tables scroll inside themselves (display:block makes overflow-x work on
+   a table) so they never widen the page body - a body horizontal overflow
+   throws off the visual viewport on real phones, trimming the fixed TOC drawer. */
+table { border-collapse: collapse; display: block; overflow-x: auto; max-width: 100%; }
 th, td { border: 1px solid var(--line); padding: 0.3em 0.6em; }
 /* Two-column shell for pages with a sidebar outline */
 body.with-toc { max-width: 78rem; }
