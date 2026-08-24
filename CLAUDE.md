@@ -105,6 +105,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 - Review panel: a fixed set of five models, each run at MAX effort - Fable 5, Opus 5, Opus 4.8, Codex 5.5, Codex Sol. This is the panel the `docs/llm/FIXME.md` rounds refer to, and the one any "ask the panel" / "convene the reviewers" instruction means.
 - When you hit a genuine fork - a design choice, a claim you cannot settle alone, anything where guessing wrong is costly - do NOT settle it solo: first convene the OTHER FOUR panel members (every panel model except the one you are running as) to review and discuss it together, by whatever channel reaches them (subagents for the models a tool can spawn, the user's relay for the rest).
+- Every fix goes to the OTHER FOUR panel members for a POST-FIX review before it counts as done - even a low-risk one executed directly (the MEDIUM-79 round proved the post-fix review catches self-introduced defects, e.g. a DESIGN-forbidden CSS rule). A genuine fork is reviewed BEFORE execution too (bullet above); a low-risk fix that only executes a panel-given direction is done directly, then reviewed. Batch related low-risk fixes into one review when practical.
 - Then hand the user the call to make, in short plain unambiguous language: state the question, the options, your recommendation, and the exact decision they must ratify. Keep it scannable - no dense tables, no long-winded framing.
 
 ### Verification commands (llselect)
