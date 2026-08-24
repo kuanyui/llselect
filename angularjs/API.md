@@ -54,7 +54,11 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ll-on-close`
 
-**Event expression** -> `onClose`. Evaluated on each close, inside a digest. Same rules as [`ll-on-open`](#ll-on-open). It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and AngularJS broadcasts `$destroy` before disabling the scope. Writes to parent-owned state (`vm.*`, a service) persist; writes to the dying child scope itself are lost with it.
+**Event expression** -> `onClose`. Evaluated on each close, inside a digest.
+
+- Same rules as [`ll-on-open`](#ll-on-open).
+- It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and AngularJS broadcasts `$destroy` before disabling the scope.
+- In that teardown case, writes to parent-owned state (`vm.*`, a service) persist; writes to the dying child scope itself are lost with it.
 
 ### `ll-options`
 

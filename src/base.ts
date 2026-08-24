@@ -541,6 +541,8 @@ let instanceCounter = 0
  * Package-internal (not re-exported): subclasses detect it to pick fast paths.
  * SameValueZero (`===` plus `NaN` equals `NaN`), matching the `Set` those fast
  * paths use - `===` alone let a `NaN` item be chosen twice (QUALITY-92).
+ * Second job: the reference-swap check in both `onItemsChanged` ("same value?",
+ * a different question from item identity). Keep it SameValueZero for that too.
  */
 export function defaultCompareFn<T>(a: T, b: T): boolean {
   return a === b || (a !== a && b !== b)
@@ -1439,7 +1441,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Orchestrator: composes `renderTriggerContent` + `renderTriggerArrow` to
    * (re)build the whole trigger from state; touches no DOM directly. Subclasses
    * normally override {@link renderTriggerContent}, not this.
-   * - Runs on every value / state change.
+   * - Runs on every change of the chosen value, the placeholder or the pack, and
+   *   after `setItems` while something is chosen (multiple: the count summary
+   *   shows the list total).
    * - Runs once from the `LLSelectSingle` / `LLSelectMultiple` constructor, right
    *   after `super()`.
    * - On that first run a FURTHER subclass's own fields are still `undefined`:
