@@ -386,10 +386,11 @@
       // so NaN included) answers first: retained items keep their reference
       // between `previous` and `items`, and a pairwise angular.equals scan
       // over every retained item would be O(k^2) deep compares per toggle.
-      // The compareFn fallback is defensive: the core swaps chosen references
-      // to the list's objects on every reload, and reload-driven changes are
-      // write-back gated, so no in-bridge path hands a fresh equal object
-      // here; a direct core `setItems` from app code could.
+      // The compareFn fallback is a guard with no reachable caller in the
+      // bridge today: the core swaps chosen references to the list's objects
+      // on every reload, and reload-driven changes are write-back gated, so
+      // no in-bridge path hands a fresh equal object here. Keep it: it is what
+      // stops a spurious on-select per swapped item if such a path appears.
       var has = function (list, item) {
         return list.includes(item) || list.some(function (other) { return settings.compareFn(other, item) })
       }

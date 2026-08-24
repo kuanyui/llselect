@@ -1332,9 +1332,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   responsibility (not scanned, to keep large lists cheap).
    * - If the popup is open, it re-renders now. While closed, the DOM is
    *   built lazily on the next `open()`.
-   * - The trigger content re-renders too (the multiple count total, custom
-   *   content that reads `items`); in `'tags'` mode that is one chip per
-   *   chosen item.
+   * - Both shipped variants re-render the trigger content from `onItemsChanged`
+   *   (the multiple count total, custom content that reads `items`).
+   * - In `'tags'` mode that content render is one chip per chosen item.
    * - Subclasses may reconcile chosen-state via {@link onItemsChanged}
    *   (e.g. single mode drops a chosen value that is no longer in the list).
    * @group Items
@@ -1445,10 +1445,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * (re)build the whole trigger from state; touches no DOM directly. Subclasses
    * normally override {@link renderTriggerContent}, not this.
    * - Runs on every change of the chosen value, the placeholder or the pack.
-   *   `setItems` runs `renderTriggerContent` alone (the content reads the list:
-   *   the multiple count total, a custom `createTriggerContentElFn`'s `items`);
-   *   only a dropped chosen entry runs the whole trigger. `rerender()` runs it
-   *   too.
+   * - `rerender()` runs it too.
+   * - `setItems` runs `renderTriggerContent` alone, because only the content
+   *   reads the list (the multiple count total, a custom
+   *   `createTriggerContentElFn`'s `items`).
+   * - A `setItems` that drops the chosen entry runs the whole trigger.
    * - Runs once from the `LLSelectSingle` / `LLSelectMultiple` constructor, right
    *   after `super()`.
    * - On that first run a FURTHER subclass's own fields are still `undefined`:

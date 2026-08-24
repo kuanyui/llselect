@@ -255,16 +255,24 @@ test('MEDIUM-93: setItems refreshes the trigger - the count total, and custom co
   sel.setItems(['a', 'b', 'c'])
   assert.equal(sel.triggerEl.textContent, '1 / 3 selected', 'the total follows the new list')
 
+  let contentRenders = 0
+  let arrowRenders = 0
   const custom = new LLSelectMultiple<string>(mount(), {
     ariaLabel: 'x',
     createTriggerContentElFn: (ctx) => {
+      contentRenders++
       const el = document.createElement('span')
       el.textContent = `${ctx.chosenItems.length} of ${ctx.items.length}`
       return el
     },
+    createTriggerArrowContentElFn: () => { arrowRenders++; return null },
   })
+  const contentBefore = contentRenders
+  const arrowBefore = arrowRenders
   custom.setItems(['a', 'b'])
   assert.equal(custom.triggerEl.textContent, '0 of 2')
   custom.setItems(['a', 'b', 'c'])
   assert.equal(custom.triggerEl.textContent, '0 of 3', 'custom content sees the new list even with nothing chosen')
+  assert.equal(contentRenders, contentBefore + 2, 'exactly one content render per setItems')
+  assert.equal(arrowRenders, arrowBefore, 'setItems does not re-render the arrow')
 })
