@@ -171,3 +171,39 @@ test('QUALITY-89: without clearable, rerender() adds no clear button', () => {
   sel.rerender()
   assert.equal(clearBtn(sel), null)
 })
+
+test('QUALITY-89: rerender() with the popup open and the clear button focused keeps the popup open', () => {
+  // jsdom fires no focusout when a focused element is removed, so this pins
+  // the intended state only; the real-browser check is in TODO.md.
+  const sel = new LLSelectSingle<string>(mount(), { clearable: true, ariaLabel: 'x' })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItem('a')
+  sel.open()
+  const before = clearBtn(sel)!
+  before.focus()
+  sel.rerender()
+  assert.equal(sel.isOpened(), true, 'the rebuild must not read as focus leaving the widget')
+  assert.equal(document.activeElement, clearBtn(sel))
+})
+
+test('QUALITY-89: every trigger render rebuilds the clear button - a single value change and a multiple clear click each yield a fresh, working button', () => {
+  const single = new LLSelectSingle<string>(mount(), { clearable: true, ariaLabel: 'x' })
+  single.setItems(['a', 'b'])
+  const built = clearBtn(single)!
+  single.setChosenItem('a')
+  const afterChange = clearBtn(single)!
+  assert.notEqual(afterChange, built, 'a value change renders the trigger, which rebuilds the button')
+  assert.equal(afterChange.getAttribute('aria-label'), 'Clear selection')
+
+  const multi = new LLSelectMultiple<string>(mount(), { clearable: true, ariaLabel: 'x' })
+  multi.setItems(['a', 'b'])
+  multi.setChosenItems(['a', 'b'])
+  const clicked = clearBtn(multi)!
+  clicked.click() // clearSelection -> setChosenItems([]) -> rerender: the button replaces itself inside its own handler
+  assert.deepEqual(multi.getChosenItems(), [])
+  const rebuilt = clearBtn(multi)!
+  assert.notEqual(rebuilt, clicked)
+  multi.setChosenItems(['b'])
+  clearBtn(multi)!.click()
+  assert.deepEqual(multi.getChosenItems(), [], 'the rebuilt button still clears')
+})

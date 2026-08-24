@@ -1187,18 +1187,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   item text.
    * - The refresh is purely visual: it does NOT fire `onChange` and does NOT
    *   run `onItemsChanged`.
-   * - It rebuilds the clear button (`clearable`) through
-   *   `createTriggerClearButtonEl`, so an override of that method is repaired
-   *   here like every other trigger method.
-   * - If the old clear button held focus, the rebuilt one gets it.
-   * - Orchestrator: composes `replaceTriggerClearButtonElInDom` +
-   *   `renderTrigger` + `renderPopupList`; touches no DOM directly.
+   * - Orchestrator: composes `renderTrigger` + `renderPopupList`; touches no
+   *   DOM directly.
    * @group Lifecycle
    */
   public rerender(): void {
     this.gatheredItems = undefined
     if (this.filterActive) { this.recomputeFilteredItems() }
-    this.replaceTriggerClearButtonElInDom()
     this.renderTrigger()
     if (this.opened) { this.renderPopupList() }
   }
@@ -1451,11 +1446,15 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected onItemsChanged(): void {}
 
   /**
-   * Orchestrator: composes `renderTriggerContent` + `renderTriggerArrow` to
-   * (re)build the whole trigger from state; touches no DOM directly. Subclasses
-   * normally override {@link renderTriggerContent}, not this.
+   * Orchestrator: composes the clear-button rebuild + `renderTriggerContent` +
+   * `renderTriggerArrow` to (re)build the whole trigger from state; touches no
+   * DOM directly. Subclasses normally override {@link renderTriggerContent},
+   * not this.
    * - Runs on every change of the chosen value, the placeholder or the pack.
    * - `rerender()` runs it too.
+   * - While `clearable` is on, every run rebuilds the clear button through
+   *   `createTriggerClearButtonEl`, like the arrow.
+   * - If the old clear button held focus, the rebuilt one gets it.
    * - `setItems` runs `renderTriggerContent` alone, because only the content
    *   reads the list (the multiple count total, a custom
    *   `createTriggerContentElFn`'s `items`).
@@ -1477,6 +1476,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: rendering
    */
   protected renderTrigger(): void {
+    this.replaceTriggerClearButtonElInDom()
     this.renderTriggerContent()
     this.renderTriggerArrow()
   }
@@ -2296,7 +2296,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - The theme hides the button via `data-empty` while nothing is chosen.
    * - It runs at construction, in the base constructor, before any subclass
    *   field initializer.
-   * - It runs again on every `rerender()`, which swaps the button in place.
+   * - It runs again on every trigger render (`renderTrigger`: every value
+   *   change, `rerender()`, `setUiTranslationPack`), which swaps the button in
+   *   place. Like the arrow, it is not kept across renders, so put nothing on
+   *   the element from outside; customize it here.
    * - An override that reads subclass fields calls `rerender()` at the end of
    *   its constructor, like every other trigger method.
    * @group Subclassing: rendering
@@ -2322,18 +2325,24 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Swap the clear button for a fresh one built by `createTriggerClearButtonEl`
-   * (the overridable builder), so `rerender()` repairs an override that reads
-   * subclass fields. Keeps DOM focus on the new button when the old one held
-   * it. No-op without `clearable`.
+   * (the overridable builder) on every trigger render, so `rerender()` repairs
+   * an override that reads subclass fields. Keeps DOM focus on the new button
+   * when the old one held it. No-op without `clearable`.
+   * - Order matters: the new button is inserted and focused BEFORE the old one
+   *   is removed. Removing a focused element first would fire `focusout` with
+   *   `relatedTarget = null`, which the open popup's focus-out guard reads as
+   *   "focus left the widget" and closes on. Moving focus first fires it with
+   *   the new button as `relatedTarget`, inside the root, so the guard passes.
    */
   private replaceTriggerClearButtonElInDom(): void {
     const old = this.triggerClearButtonEl
     if (old === null) { return }
     const next = this.createTriggerClearButtonEl()
     const hadFocus = document.activeElement === old
-    old.replaceWith(next)
+    old.before(next)
     this.triggerClearButtonEl = next
     if (hadFocus) { next.focus({ preventScroll: true }) }
+    old.remove()
   }
 
   /**
