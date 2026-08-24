@@ -510,3 +510,19 @@ test('the shrink clamp also skips a disabled last row', () => {
   const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)
   assert.equal(focused?.textContent, 'apple', 'the clamp must seek backward past the disabled new-last row')
 })
+
+test('QUALITY-89: inside a shadow root, close() still returns focus from the filter input to the trigger', () => {
+  setupDom('<!doctype html><html><body></body></html>')
+  const host = document.createElement('div')
+  document.body.appendChild(host)
+  const mountEl = document.createElement('div')
+  const shadow = host.attachShadow({ mode: 'open' })
+  shadow.appendChild(mountEl)
+  const sel = new LLSelectSingle<string>(mountEl, { filterable: true, ariaLabel: 'x' })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  const input = sel.popupEl.querySelector('input')!
+  assert.equal(shadow.activeElement, input, 'precondition: open moved focus into the filter input')
+  sel.close()
+  assert.equal(shadow.activeElement, sel.triggerEl, 'the focus read must use the shadow root, not document.activeElement (the host)')
+})

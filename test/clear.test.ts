@@ -207,3 +207,24 @@ test('QUALITY-89: every trigger render rebuilds the clear button - a single valu
   clearBtn(multi)!.click()
   assert.deepEqual(multi.getChosenItems(), [], 'the rebuilt button still clears')
 })
+
+test('QUALITY-89: inside a shadow root, the rebuild still keeps focus on the new clear button', () => {
+  // document.activeElement is the shadow HOST there; the focus read must come
+  // from the shadow root itself.
+  setupDom('<!doctype html><html><body></body></html>')
+  const host = document.createElement('div')
+  document.body.appendChild(host)
+  const mountEl = document.createElement('div')
+  const shadow = host.attachShadow({ mode: 'open' })
+  shadow.appendChild(mountEl)
+  const sel = new LLSelectSingle<string>(mountEl, { clearable: true, ariaLabel: 'x' })
+  sel.setItems(['a'])
+  sel.setChosenItem('a')
+  const before = clearBtn(sel)!
+  before.focus()
+  assert.equal(shadow.activeElement, before, 'precondition: the button holds focus inside the shadow root')
+  sel.rerender()
+  const after = clearBtn(sel)!
+  assert.notEqual(after, before)
+  assert.equal(shadow.activeElement, after)
+})

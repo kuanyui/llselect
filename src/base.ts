@@ -1127,7 +1127,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   public close(): void {
     if (!this.opened) { return }
-    const shouldReturnFocus = this.filterActive && document.activeElement === this.filterInputEl
+    const shouldReturnFocus = this.filterActive && this.isFocused(this.filterInputEl)
     this.opened = false
     this.triggerEl.setAttribute('aria-expanded', 'false')
     this.triggerEl.setAttribute('data-state', 'closed')
@@ -2298,8 +2298,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   field initializer.
    * - It runs again on every trigger render (`renderTrigger`: every value
    *   change, `rerender()`, `setUiTranslationPack`), which swaps the button in
-   *   place. Like the arrow, it is not kept across renders, so put nothing on
-   *   the element from outside; customize it here.
+   *   place.
+   * - Like the arrow, the element is not kept across renders. Put nothing on
+   *   it from outside; customize it here.
    * - An override that reads subclass fields calls `rerender()` at the end of
    *   its constructor, like every other trigger method.
    * @group Subclassing: rendering
@@ -2324,6 +2325,16 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
+   * Whether `el` holds DOM focus, read from its own root: inside a shadow root
+   * `document.activeElement` is the shadow HOST, so the answer must come from
+   * the `ShadowRoot`'s `activeElement` (the `Document`'s otherwise).
+   */
+  private isFocused(el: Element): boolean {
+    const root = el.getRootNode() as Partial<DocumentOrShadowRoot>
+    return (root.activeElement ?? null) === el
+  }
+
+  /**
    * Swap the clear button for a fresh one built by `createTriggerClearButtonEl`
    * (the overridable builder) on every trigger render, so `rerender()` repairs
    * an override that reads subclass fields. Keeps DOM focus on the new button
@@ -2338,7 +2349,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const old = this.triggerClearButtonEl
     if (old === null) { return }
     const next = this.createTriggerClearButtonEl()
-    const hadFocus = document.activeElement === old
+    const hadFocus = this.isFocused(old)
     old.before(next)
     this.triggerClearButtonEl = next
     if (hadFocus) { next.focus({ preventScroll: true }) }
