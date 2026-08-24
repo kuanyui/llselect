@@ -745,3 +745,20 @@ test('QUALITY-92: a NaN model value resolves to the NaN item (the wrapper matche
   })
   assert.equal(a.$('.llselect-trigger-content').textContent, 'NaN')
 })
+
+test('QUALITY-92: NaN also resolves through `select as` and `track by` (wrapper key comparisons are SameValueZero)', () => {
+  const asProjection = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.n" ll-options="n as n for n in vm.nums"></llselect-single></div>`,
+    controller: function () { this.nums = [NaN, 1]; this.n = NaN },
+  })
+  assert.equal(asProjection.$('.llselect-trigger-content').textContent, 'NaN')
+  const trackBy = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.n" ll-options="n for n in vm.nums track by n"></llselect-single></div>`,
+    controller: function () { this.nums = [NaN, 1]; this.n = NaN },
+  })
+  assert.equal(trackBy.$('.llselect-trigger-content').textContent, 'NaN')
+})

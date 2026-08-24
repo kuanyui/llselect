@@ -1,5 +1,6 @@
 import {
   LLSelectBase,
+  defaultCompareFn,
   type LLSelectBaseSettings,
   type LLSelectChangeMeta,
   type LLSelectSettingsInputOf,
@@ -234,7 +235,9 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
       return
     }
     const matched = this.items[idx]!
-    if (matched !== previous) {
+    // Reference swap = a different VALUE under SameValueZero, so a NaN item
+    // matching itself is not a swap (no spurious re-render).
+    if (!defaultCompareFn(matched, previous)) {
       this.chosenItem = matched
       this.renderTrigger()
     }

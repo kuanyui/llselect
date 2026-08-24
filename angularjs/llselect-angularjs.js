@@ -30,15 +30,15 @@
   //         6 object key name, 7 object value name, 8 collection, 9 track by.
   var NG_OPTIONS_REGEXP = /^\s*([\s\S]+?)(?:\s+as\s+([\s\S]+?))?(?:\s+group\s+by\s+([\s\S]+?))?(?:\s+disable\s+when\s+([\s\S]+?))?\s+for\s+(?:([$\w][$\w]*)|(?:\(\s*([$\w][$\w]*)\s*,\s*([$\w][$\w]*)\s*\)))\s+in\s+([\s\S]+?)(?:\s+track\s+by\s+([\s\S]+?))?$/
 
+  /** SameValueZero - the core default compareFn's rule (NaN equals NaN). */
+  function sameValueZero(a, b) { return a === b || (a !== a && b !== b) }
+
   /**
    * Compiles an ng-options-style expression into the llselect settings it maps
    * onto. The clause -> setting mapping is 1:1 except `select as`, which has no
    * llselect equivalent by design: it is the ngModel value projection, and the
    * app (not the library) declares it - exactly what ngOptions does.
    */
-  /** SameValueZero - the core default compareFn's rule (NaN equals NaN). */
-  function sameValueZero(a, b) { return a === b || (a !== a && b !== b) }
-
   function compileLlOptions($parse, expression) {
     var m = String(expression || '').match(NG_OPTIONS_REGEXP)
     if (!m) {
@@ -82,8 +82,8 @@
         var valueKey = (!selectAsFn && trackByFn) ? trackByFn(scope, locals(value)) : undefined
         for (var i = 0; i < items.length; i++) {
           var hit = selectAsFn
-            ? selectAsFn(scope, locals(items[i])) === value
-            : (trackByFn ? trackByFn(scope, locals(items[i])) === valueKey : sameValueZero(items[i], value))
+            ? sameValueZero(selectAsFn(scope, locals(items[i])), value)
+            : (trackByFn ? sameValueZero(trackByFn(scope, locals(items[i])), valueKey) : sameValueZero(items[i], value))
           if (hit) { return items[i] }
         }
         return undefined
@@ -97,7 +97,7 @@
           // ngOptions' `track by` is a per-item hash; llselect asks for pairwise
           // equality. Same semantic, different shape.
           compareFn: trackByFn
-            ? function (a, b) { return trackByFn(scope, locals(a)) === trackByFn(scope, locals(b)) }
+            ? function (a, b) { return sameValueZero(trackByFn(scope, locals(a)), trackByFn(scope, locals(b))) }
             : null,
         }
       },

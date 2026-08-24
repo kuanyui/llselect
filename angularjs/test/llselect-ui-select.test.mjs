@@ -553,3 +553,25 @@ test('single without track by: aria-selected and open-focus survive an equal-obj
   const focused = a.$('ui-llselect .llselect-item-focused')
   assert.ok(focused && focused.textContent.includes('Bob'), 'reopen must focus the chosen row, not the first-row fallback')
 })
+
+test('QUALITY-92: on-select diffs by the bridge compareFn, so a NaN already chosen does not re-fire', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect multiple ng-model="vm.n" on-select="vm.picked.push($item)">
+          <ui-llselect-match placeholder="Pick">{{$item}}</ui-llselect-match>
+          <ui-llselect-choices repeat="x in vm.nums" ll-item-text="x + ''">
+            <span>{{x}}</span>
+          </ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.nums = [NaN, 1]; this.n = [NaN]; this.picked = [] },
+  })
+  assert.deepEqual(a.errors, [])
+  a.$('ui-llselect .llselect-trigger').click()
+  a.$$('ui-llselect .llselect-item')[0].click() // chooses 1 (the chosen NaN row is hidden by remove-selected)
+  assert.equal(a.scope.vm.n.length, 2)
+  assert.deepEqual(a.scope.vm.picked, [1], 'only the newly chosen item fires on-select; an indexOf diff would also re-fire the NaN')
+})

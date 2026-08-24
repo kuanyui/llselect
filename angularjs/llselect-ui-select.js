@@ -41,6 +41,9 @@
    */
   var BRIDGES = new WeakMap()
 
+  /** SameValueZero - the core default compareFn's rule (NaN equals NaN). */
+  function sameValueZero(a, b) { return a === b || (a !== a && b !== b) }
+
   /**
    * @template {new (...args: any[]) => any} B
    * @param {B} Base
@@ -277,7 +280,7 @@
       itemDisabledFn: disableFn ? function (item) { return !!disableFn(scope, locals(item)) } : null,
       compareFn: repeat.trackByFn
         ? function (a, b) {
-            return repeat.trackByFn(scope, locals(a)) === repeat.trackByFn(scope, locals(b))
+            return sameValueZero(repeat.trackByFn(scope, locals(a)), repeat.trackByFn(scope, locals(b)))
           }
         // No track by: compare with angular.equals, both modes. Multiple is
         // ui-select's own comparison (_isItemSelected deep-compares,
@@ -373,16 +376,22 @@
     }
 
     function fireSelectRemove(items, previous) {
+      // Membership by the bridge's own identity (settings.compareFn: the
+      // track-by key, else angular.equals), never indexOf - so a NaN item or
+      // a structurally equal reload object counts as the same item here too.
+      var has = function (list, item) {
+        return list.some(function (other) { return settings.compareFn(other, item) })
+      }
       if (onSelectFn) {
         items.forEach(function (item) {
-          if (previous.indexOf(item) === -1) {
+          if (!has(previous, item)) {
             onSelectFn(scope, { $item: item, $model: toModel(item), $select: $select })
           }
         })
       }
       if (onRemoveFn) {
         previous.forEach(function (item) {
-          if (items.indexOf(item) === -1) {
+          if (!has(items, item)) {
             onRemoveFn(scope, { $item: item, $model: toModel(item), $select: $select })
           }
         })

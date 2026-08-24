@@ -725,7 +725,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       const idx = this.items.findIndex(item => this.settings.compareFn(item, c))
       if (idx < 0) { continue }
       const matched = this.items[idx]!
-      if (matched !== c) { swapped = true }
+      // SameValueZero, so a NaN item matching itself is not a swap.
+      if (!defaultCompareFn(matched, c)) { swapped = true }
       nextChosen.push(matched)
     }
     if (nextChosen.length !== previous.length) {
