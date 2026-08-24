@@ -717,7 +717,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *   not a logical change, so it does not fire `onChange`.
    * - The trigger content re-renders after every `setItems`, swap or not (the
    *   arrow does not): the count summary shows the list total, and a custom
-   *   `createTriggerContentElFn` receives `items`.
+   *   `createTriggerContentElFn` receives `items`. In `'tags'` mode that is
+   *   one chip per chosen item per `setItems` - a bulk call, so acceptable.
    * @group Subclassing: reactions
    */
   protected override onItemsChanged(): void {
