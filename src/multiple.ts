@@ -718,12 +718,13 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * - The trigger content re-renders after every `setItems`, swap or not.
    * - Why: the count summary shows the list total, and a custom
    *   `createTriggerContentElFn` receives `items`.
-   * - The arrow does not re-render. If a chosen entry was dropped, the whole
-   *   trigger re-renders, arrow included.
+   * - The arrow re-renders only when a chosen entry is dropped, because that
+   *   runs the whole trigger.
    * - `triggerDisplay: 'tags'` is opt-in; `'count'` is the default.
-   * - In `'tags'` mode that render is one chip per chosen item per `setItems`,
-   *   unless `createTriggerContentElFn` replaces the content. A bulk call, so
-   *   acceptable.
+   * - When `triggerDisplay` is `'tags'`, that render is one chip per chosen
+   *   item per `setItems`, unless `createTriggerContentElFn` replaces the
+   *   content.
+   * - That cost is acceptable: `setItems` is a bulk call.
    * @group Subclassing: reactions
    */
   protected override onItemsChanged(): void {

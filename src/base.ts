@@ -1336,8 +1336,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   (the multiple count total, custom content that reads `items`).
    * - `LLSelectMultiple`'s `triggerDisplay: 'tags'` mode is opt-in; `'count'` is
    *   the default.
-   * - In `'tags'` mode that content render is one chip per chosen item, unless
-   *   `createTriggerContentElFn` replaces the content.
+   * - When `triggerDisplay` is `'tags'`, that content render is one chip per
+   *   chosen item, unless `createTriggerContentElFn` replaces the content.
    * - Subclasses may reconcile chosen-state via {@link onItemsChanged}
    *   (e.g. single mode drops a chosen value that is no longer in the list).
    * @group Items
