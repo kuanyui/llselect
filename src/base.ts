@@ -808,8 +808,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   own fields, already resolved (defaults applied). Typed by the class's
    *   `S` param, so it accepts exactly the extra fields and nothing else.
    *   Merged into `this.settings` right here, so the bag is complete before
-   *   any base construction code (e.g. `createTriggerClearButtonEl` via
-   *   `createTriggerEl`) can read it.
+   *   any base construction code (e.g. `createFilterInputEl` reading the
+   *   pack) can read it.
    * @group Lifecycle
    */
   constructor(
@@ -1451,8 +1451,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * not this.
    * - Runs on every change of the chosen value, the placeholder or the pack.
    * - `rerender()` runs it too.
-   * - While `clearable` is on, every run rebuilds the clear button through
-   *   `createTriggerClearButtonEl`, like the arrow.
+   * - While `clearable` is on, the first run builds the clear button and every
+   *   later run swaps it for a fresh one, through `createTriggerClearButtonEl`,
+   *   like the arrow.
    * - If the old clear button held focus, the rebuilt one gets it.
    * - `setItems` runs `renderTriggerContent` alone, because only the content
    *   reads the list (the multiple count total, a custom
@@ -2348,14 +2349,16 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   private replaceTriggerClearButtonElInDom(): void {
     if (!this.settings.clearable) { return }
-    const next = this.createTriggerClearButtonEl()
     const old = this.triggerClearButtonEl
+    // Read focus BEFORE building: a content fn that hands back the same icon
+    // element each time reparents it into the new button, which drops focus.
+    const hadFocus = old !== null && this.isFocused(old)
+    const next = this.createTriggerClearButtonEl()
     this.triggerClearButtonEl = next
     if (old === null) {
       this.triggerArrowEl.before(next)
       return
     }
-    const hadFocus = this.isFocused(old)
     old.before(next)
     if (hadFocus) { next.focus({ preventScroll: true }) }
     old.remove()

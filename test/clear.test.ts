@@ -262,3 +262,22 @@ test('QUALITY-89: focus inside a custom clear-button icon still counts as the bu
   sel.rerender()
   assert.equal(document.activeElement, clearBtn(sel), 'the rebuilt button takes the focus its icon held')
 })
+
+test('QUALITY-89: a content fn that reuses one icon element keeps the focus hand-over (focus is read before the rebuild)', () => {
+  const icon = document.createElement('span')
+  icon.tabIndex = -1
+  const sel = new LLSelectSingle<string>(mount(), {
+    clearable: true,
+    ariaLabel: 'x',
+    createTriggerClearButtonContentElFn: () => icon, // the same node every time: the rebuild reparents it
+  })
+  sel.setItems(['a'])
+  sel.setChosenItem('a')
+  assert.equal(clearBtn(sel)!.firstElementChild, icon, 'precondition: the reused icon sits in the button')
+  icon.focus()
+  assert.equal(document.activeElement, icon)
+  sel.rerender()
+  const rebuilt = clearBtn(sel)!
+  assert.equal(rebuilt.firstElementChild, icon, 'the icon moved into the rebuilt button')
+  assert.equal(document.activeElement, rebuilt, 'focus follows the rebuilt button even though building it moved the focused icon')
+})
