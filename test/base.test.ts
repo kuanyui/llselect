@@ -31,7 +31,10 @@ test('MEDIUM-77: duplicate items under the default compareFn warn once per page'
     assert.equal(warnings.length, 1, 'a duplicate under the default compareFn must warn')
     assert.match(String(warnings[0]![0]), /duplicate items/)
     sel.setItems([item, item])
-    assert.equal(warnings.length, 1, 'warned once per page, not per call')
+    assert.equal(warnings.length, 1, 'warned once per call, not repeatedly')
+    const sel2 = new TestSelect<{ id: number }>(mount(), { ariaLabel: 'x' })
+    sel2.setItems([item, item])
+    assert.equal(warnings.length, 1, 'once per PAGE - a second widget must not warn again')
   } finally { console.warn = orig }
 })
 

@@ -1321,6 +1321,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * the DEFAULT compareFn - an O(n) Set check. A custom compareFn is documented
    * only: an O(n^2) scan would tax large lists (see PERFORMANCE-31), and keeping
    * its identity unique is the caller's responsibility.
+   * - The Set is SameValueZero, so a repeated `NaN` item warns even though `===`
+   *   would not call it a duplicate - an absurd item value, not worth special-casing.
    */
   private warnOnDuplicateItems(): void {
     if (warnedDuplicateItems || this.settings.compareFn !== defaultCompareFn) { return }
@@ -1409,21 +1411,19 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * Orchestrator: composes `renderTriggerContent` + `renderTriggerArrow` to
    * (re)build the whole trigger from state; touches no DOM directly. Subclasses
-   * normally override {@link renderTriggerContent}, not this. Call this from
-   * subclass code when both slots need to refresh together (constructor,
-   * post-state-change, etc.).
-   * @group Subclassing: rendering
-   */
-  /**
-   * Repaint the trigger (content slot + arrow). Runs on every value / state
-   * change AND once from the `LLSelectSingle` / `LLSelectMultiple` constructor
-   * (right after `super()`). Construction-time consequence: an override of
-   * `renderTriggerContent` - or a `create*El` it calls - that reads a FURTHER
-   * subclass's OWN fields sees them `undefined` on that first render, because JS
-   * runs a subclass's field initializers only after its super constructor returns
-   * (virtual-call-in-constructor). Tolerate defaults during construction, or call
-   * `rerender()` at the end of your own constructor. The popup-list seams do not
-   * run here (they wait for `open()`). See DESIGN.md "Customization model".
+   * normally override {@link renderTriggerContent}, not this.
+   * - Runs on every value / state change, and once from the `LLSelectSingle` /
+   *   `LLSelectMultiple` constructor (right after `super()`), so an override of a
+   *   trigger seam (`renderTriggerContent`, or a `create*El` it calls) that reads
+   *   a FURTHER subclass's OWN fields sees them `undefined` on that first render -
+   *   JS runs a subclass's field initializers only after its super constructor
+   *   returns (virtual-call-in-constructor). Tolerate defaults during construction,
+   *   or call `rerender()` at the end of your own constructor. The popup-list seams
+   *   do NOT run here (they wait for `open()`). See DESIGN.md "Customization model".
+   * - Exception: the clear-button seams (`createTriggerClearButtonEl` /
+   *   `createTriggerClearButtonContentEl`, built once in the base constructor when
+   *   `clearable`) run even earlier and `rerender()` does NOT rebuild them - such an
+   *   override must tolerate uninitialized fields, `rerender()` cannot repair it.
    * @group Subclassing: rendering
    */
   protected renderTrigger(): void {

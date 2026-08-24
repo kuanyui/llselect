@@ -188,7 +188,10 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * Currently chosen items, in insertion order.
    * @group State (protected)
    */
-  protected chosenItems: T[] = []
+  // `readonly` so a subclass cannot `push`/`splice` it: every mutation must
+  // REPLACE the array (the invariant both `chosenSetCache` and `visibleItemsCache`
+  // rely on - a reference change is how they invalidate).
+  protected chosenItems: readonly T[] = []
 
   /**
    * Build the control inside `targetEl`. Settings are resolved once here
@@ -266,7 +269,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     // so a multi popup render is O(visible), not O(visible x chosen). The Set is
     // memoized and invalidated by the chosenItems array reference - every mutation
     // replaces the array, never mutates in place (mirrors visibleItemsCache). A
-    // custom compareFn cannot hash, so it stays linear.
+    // custom compareFn cannot hash, so it stays linear. (SameValueZero: isChosen(NaN)
+    // is true if a NaN item is chosen where === says false - an absurd item value,
+    // consistent with setChosenItems' own Set dedup.)
     if (this.settings.compareFn === defaultCompareFn) { return this.chosenSet().has(item) }
     return this.chosenItems.some(c => this.settings.compareFn(c, item))
   }
