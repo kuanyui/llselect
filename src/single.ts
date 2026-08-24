@@ -84,9 +84,9 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
    * - Settings are resolved once here; missing fields get defaults.
    * - They are frozen afterwards, except `placeholder` and `uiTranslationPack`,
    *   which have runtime setters; the rule is at {@link LLSelectBaseSettings}.
-   * - This plain form infers `T` from any typed callback in `settings`
-   *   (`itemToStringFn: (u: User) => ...`). With no callback, pass `T`
-   *   explicitly: `new LLSelectSingle<string>(...)`.
+   * - This plain form infers `T` from a typed callback in `settings` whose
+   *   signature contains `T` (`itemToStringFn: (u: User) => ...`). With no
+   *   such callback, pass `T` explicitly: `new LLSelectSingle<string>(...)`.
    * @group Lifecycle
    */
   constructor(targetEl: HTMLElement, settings?: LLSelectSingleSettingsInput<T, GroupKey>)

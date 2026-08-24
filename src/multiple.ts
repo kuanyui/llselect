@@ -198,9 +198,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * - Settings are resolved once here; missing fields get defaults.
    * - They are frozen afterwards, except `placeholder` and `uiTranslationPack`,
    *   which have runtime setters; the rule is at {@link LLSelectBaseSettings}.
-   * - This plain form infers `T` from any typed callback in `settings`
-   *   (`itemToStringFn: (u: User) => ...`). With no callback, pass `T`
-   *   explicitly: `new LLSelectMultiple<string>(...)`.
+   * - This plain form infers `T` from a typed callback in `settings` whose
+   *   signature contains `T` (`itemToStringFn: (u: User) => ...`). With no
+   *   such callback, pass `T` explicitly: `new LLSelectMultiple<string>(...)`.
    * @group Lifecycle
    */
   constructor(targetEl: HTMLElement, settings?: LLSelectMultipleSettingsInput<T, GroupKey>)

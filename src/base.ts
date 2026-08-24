@@ -1439,21 +1439,25 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Orchestrator: composes `renderTriggerContent` + `renderTriggerArrow` to
    * (re)build the whole trigger from state; touches no DOM directly. Subclasses
    * normally override {@link renderTriggerContent}, not this.
-   * - Runs on every value / state change, and once from the `LLSelectSingle` /
-   *   `LLSelectMultiple` constructor (right after `super()`), so an override of a
-   *   trigger method (`renderTriggerContent`, or a `create*El` it calls) that reads
-   *   a FURTHER subclass's OWN fields sees them `undefined` on that first render -
+   * - Runs on every value / state change.
+   * - Runs once from the `LLSelectSingle` / `LLSelectMultiple` constructor, right
+   *   after `super()`.
+   * - On that first run a FURTHER subclass's own fields are still `undefined`:
    *   JS runs a subclass's field initializers only after its super constructor
-   *   returns (virtual-call-in-constructor). Put construction-time configuration
-   *   in the typed `subclassSettings` constructor param instead - `this.settings`
-   *   is complete before any construction code runs. For genuine instance state,
-   *   tolerate defaults during construction or call `rerender()` at the end of
-   *   your own constructor. The popup-list methods do NOT run here (they wait
-   *   for `open()`). See DESIGN.md "Customization model".
+   *   returns (virtual-call-in-constructor). An override of a trigger method
+   *   (`renderTriggerContent`, or a `create*El` it calls) that reads such a
+   *   field sees `undefined` there.
+   * - The recipe: put construction-time configuration in the typed
+   *   `subclassSettings` constructor param. `this.settings` is complete before
+   *   any construction code runs.
+   * - For genuine instance state, tolerate defaults during construction, or call
+   *   `rerender()` at the end of your own constructor.
+   * - The popup-list methods do NOT run here; they wait for `open()`. See
+   *   DESIGN.md "Customization model".
    * - Exception: the clear-button methods (`createTriggerClearButtonEl` /
    *   `createTriggerClearButtonContentEl`, built once in the base constructor when
-   *   `clearable`) run even earlier and `rerender()` does NOT rebuild them - such an
-   *   override must tolerate uninitialized fields, `rerender()` cannot repair it.
+   *   `clearable`) run even earlier, and `rerender()` does NOT rebuild them. Such
+   *   an override must tolerate uninitialized fields; `rerender()` cannot repair it.
    * @group Subclassing: rendering
    */
   protected renderTrigger(): void {
@@ -2379,7 +2383,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private getDisplayBaseItems(): readonly T[] {
     if (!this.settings.gatherGroups) { return this.items }
     if (this.gatheredItems === undefined) {
-      // Keys resolve via the protected itemToGroupKey (overridable), so
+      // Keys resolve via the protected overridable method itemToGroupKey, so
       // an override drives the gather exactly like the render. All-null keys
       // (grouping off) detect as contiguous and return `items` itself.
       this.gatheredItems = gatherItemsByGroupKey(this.items, (item) => this.itemToGroupKey(item), this.settings.groupKeyCompareFn)
