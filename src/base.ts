@@ -926,16 +926,22 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
     this.triggerEl.addEventListener('click', () => this.toggle())
     this.triggerEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
-    // Clicking inside the list must not move DOM focus: the browser's
-    // mousedown focus-fixup would focus popupListEl (tabindex="-1" makes it
-    // CLICK-focusable) and silently kill keyboard input into the combobox
-    // host (filter input / trigger) - e.g. multi + filterable: mouse-toggle
-    // an item, then typing goes nowhere. Prevent the default on everything
-    // except the list element itself, so native scrollbar dragging on the
-    // list stays untouched. `click` still fires (it does not depend on the
-    // mousedown default), so selection wiring is unaffected.
-    this.popupListEl.addEventListener('mousedown', (ev) => {
-      if (ev.target !== this.popupListEl) { ev.preventDefault() }
+    // Hold DOM focus on the combobox host: a mousedown anywhere in the popup - an
+    // option, the no-results message, popup padding, or the list element itself
+    // (tabindex="-1", so click-focusable) - would move focus off the host and
+    // silently kill keyboard input (e.g. multi + filterable: mouse-toggle an item,
+    // then typing goes nowhere; or a padding/no-results mousedown blurs the host and
+    // focusout closes the popup). preventDefault keeps focus put; `click` still fires
+    // (it does not depend on the mousedown default), so selection is unaffected. The
+    // listener is on popupEl (not popupListEl) so it also covers the no-results
+    // element and padding. Exception: the filter input MUST take focus, so its
+    // subtree is let through. Native scrollbar dragging on the list is unaffected -
+    // a scrollbar mousedown is not a cancelable content event (verified in a real
+    // browser; see TODO.md).
+    this.popupEl.addEventListener('mousedown', (ev) => {
+      const t = this.eventTargetNode(ev)
+      if (t instanceof Node && this.filterInputEl.contains(t)) { return }
+      ev.preventDefault()
     })
     // Always wired, regardless of the current filter mode: a `hidden` input
     // receives no events, and the predicate form of `filterable` can activate

@@ -52,10 +52,28 @@ test('mousedown on an option is default-prevented (focus stays on the combobox h
   assert.equal(md.defaultPrevented, true)
 })
 
-test('mousedown on the popup list itself (scrollbar / padding) is NOT prevented', () => {
+test('MEDIUM-68: mousedown on the list element / no-results IS prevented (keeps focus on the host)', () => {
   const { sel } = mount()
   sel.open()
+  // The list element itself (padding, or a click that misses a row): previously
+  // NOT prevented, which let focus fall onto the tabindex="-1" list and kill the
+  // keyboard; now prevented so focus stays on the combobox host.
+  const onList = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+  sel.popupListEl.dispatchEvent(onList)
+  assert.equal(onList.defaultPrevented, true, 'list-element mousedown must be prevented')
+  // The no-results element sits in popupEl beside the list; a mousedown there must
+  // not blur the host (which would focusout-close the popup).
+  const noResults = sel.popupEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListNoResultsClass}`)!
+  const onNoResults = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+  noResults.dispatchEvent(onNoResults)
+  assert.equal(onNoResults.defaultPrevented, true, 'no-results mousedown must be prevented')
+})
+
+test('MEDIUM-68: mousedown in the filter input is NOT prevented (it must take focus)', () => {
+  const { sel } = mount()
+  sel.open()
+  const input = sel.popupEl.querySelector('input')!
   const md = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
-  sel.popupListEl.dispatchEvent(md)
-  assert.equal(md.defaultPrevented, false)
+  input.dispatchEvent(md)
+  assert.equal(md.defaultPrevented, false, 'the filter input must be allowed to focus')
 })
