@@ -68,7 +68,7 @@ test('length-changing lower-case mapping (U+0130) degrades to unmarked text', ()
   assert.deepEqual(markTexts(el), [])
 })
 
-// --- inside createItemContentElFn (the intended seam) ------------------------
+// --- inside createItemContentElFn (the intended customization point) ------------------------
 
 test('marks follow each filter keystroke; clearing the query clears them', () => {
   let sel!: LLSelectSingle<string>

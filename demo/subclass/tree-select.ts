@@ -3,7 +3,7 @@
  * LLSelectMultiple. Demo material; copy and adapt. Not part of the library:
  * a tree lives and dies by its data-structure choices, so it belongs in app
  * land (or its own package), and here it doubles as the worked example of
- * the extension seams:
+ * the extension points:
  *
  * - Typed subclass settings: `defaultExpandDepth` rides the constructor's
  *   `subclassSettings` channel (the base class's `S` generic param), so a
@@ -184,7 +184,7 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
    * Bulk ops must also DECIDE over leaves only: branches can never be
    * chosen, so leaving them in the all-chosen checks would keep `toggleAll`
    * and the choose-all row stuck in their "choose" direction (and the row's
-   * counts wrong). This seam narrows `toggleAllVisible` + the choose-all
+   * counts wrong). This override narrows `toggleAllVisible` + the choose-all
    * row; `toggleAll` below narrows the whole-list variant.
    */
   protected override getVisibleEnabledItems(): readonly LLTreeNode[] {

@@ -192,7 +192,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   filterable: boolean | ((items: readonly T[]) => boolean)
   /**
-   * Chrome strings (AT labels + generated text) - the i18n seam. Resolved
+   * Chrome strings (AT labels + generated text): the i18n customization point. Resolved
    * against English: pass a language pack whole (`uiTranslationPack: zhTW` from
    * `@llselect/core/i18n`) or override single keys
    * (`uiTranslationPack: { ...zhTW, filterInputPlaceholder: '...' }`).
@@ -838,7 +838,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       createGroupLabelContentElFn: settings?.createGroupLabelContentElFn ?? null,
       onOpen: settings?.onOpen ?? null,
       onClose: settings?.onClose ?? null,
-      // Settings cast (one per constructor seam, see single / multiple): TS
+      // Settings cast (one per constructor, see single / multiple): TS
       // cannot prove "base fields + Omit<S, base keys>" reassembles a generic
       // S. The channel itself is typed: the subclassSettings param accepts
       // exactly the extra fields.
@@ -1420,13 +1420,16 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * normally override {@link renderTriggerContent}, not this.
    * - Runs on every value / state change, and once from the `LLSelectSingle` /
    *   `LLSelectMultiple` constructor (right after `super()`), so an override of a
-   *   trigger seam (`renderTriggerContent`, or a `create*El` it calls) that reads
+   *   trigger method (`renderTriggerContent`, or a `create*El` it calls) that reads
    *   a FURTHER subclass's OWN fields sees them `undefined` on that first render -
    *   JS runs a subclass's field initializers only after its super constructor
-   *   returns (virtual-call-in-constructor). Tolerate defaults during construction,
-   *   or call `rerender()` at the end of your own constructor. The popup-list seams
-   *   do NOT run here (they wait for `open()`). See DESIGN.md "Customization model".
-   * - Exception: the clear-button seams (`createTriggerClearButtonEl` /
+   *   returns (virtual-call-in-constructor). Put construction-time configuration
+   *   in the typed `subclassSettings` constructor param instead - `this.settings`
+   *   is complete before any construction code runs. For genuine instance state,
+   *   tolerate defaults during construction or call `rerender()` at the end of
+   *   your own constructor. The popup-list methods do NOT run here (they wait
+   *   for `open()`). See DESIGN.md "Customization model".
+   * - Exception: the clear-button methods (`createTriggerClearButtonEl` /
    *   `createTriggerClearButtonContentEl`, built once in the base constructor when
    *   `clearable`) run even earlier and `rerender()` does NOT rebuild them - such an
    *   override must tolerate uninitialized fields, `rerender()` cannot repair it.
@@ -1539,7 +1542,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * re-applies focus visuals.
    * - Extend it by wrapping: override, do your work before or after, then
    *   call `super.renderPopupList()`. The ui-select bridge frees its row
-   *   scopes this way. Or override one of the seams it calls through `this`:
+   *   scopes this way. Or override one of the methods it calls through `this`:
    *   `createItemEl`, `createPopupListLeadingRowEl`, `itemToGroupKey`,
    *   `getVisibleItems`.
    * - Its other internals stay private on purpose. They re-establish the
@@ -1580,7 +1583,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * Split the flat visible list into render segments: ungrouped item elements
    * and contiguous same-key groups. Pure computation - resolves keys via
-   * `itemToGroupKey` (the subclass seam; all-`null` keys = flat list) and key
+   * `itemToGroupKey` (the overridable method; all-`null` keys = flat list) and key
    * equality via `groupKeyCompareFn`, touches no DOM. Group headers are NOT
    * added to `itemEls`, so `itemEls[i]`
    * stays aligned with `getVisibleItems()[i]` and keyboard nav skips headers for
@@ -1809,7 +1812,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Map an item to its group key, or `null` when it belongs to no group.
-   * The authoritative seam: rendering, the `gatherGroups` gather, and the
+   * The authoritative method: rendering, the `gatherGroups` gather, and the
    * disabled layer all resolve keys through this method, so an override
    * drives them all - returning keys turns grouping on even with the setting
    * unset (all-`null` keys = flat list). An override reading external state
@@ -2355,7 +2358,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private getDisplayBaseItems(): readonly T[] {
     if (!this.settings.gatherGroups) { return this.items }
     if (this.gatheredItems === undefined) {
-      // Keys resolve via the protected itemToGroupKey (the subclass seam), so
+      // Keys resolve via the protected itemToGroupKey (overridable), so
       // an override drives the gather exactly like the render. All-null keys
       // (grouping off) detect as contiguous and return `items` itself.
       this.gatheredItems = gatherItemsByGroupKey(this.items, (item) => this.itemToGroupKey(item), this.settings.groupKeyCompareFn)

@@ -279,7 +279,7 @@ test('createGroupEl can be overridden for full control of the group element', ()
   assert.equal(group.getAttribute('data-count'), '2')
 })
 
-// --- subclass seam: itemToGroupKey override ----------------------------------
+// --- subclass override: itemToGroupKey ----------------------------------
 
 test('an itemToGroupKey override turns grouping on without the setting, gather included', () => {
   class KeyedSelect extends LLSelectSingle<string> {

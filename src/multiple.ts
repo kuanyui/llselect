@@ -211,7 +211,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       chooseAllRow: settings?.chooseAllRow ?? false,
       createChooseAllRowContentElFn: settings?.createChooseAllRowContentElFn ?? null,
     } satisfies Omit<LLSelectMultipleSettings<T, GroupKey>, keyof LLSelectBaseSettings<T, GroupKey>>
-    // Cast mirrored from the base seam: TS cannot prove "own extras +
+    // Cast mirrored from the base constructor: TS cannot prove "own extras +
     // Omit<S, own keys>" reassembles a generic S's extras. Own extras stay
     // satisfies-checked above; incoming extras are param-typed.
     super(targetEl, settings, { ...ownExtras, ...subclassSettings } as Omit<S, keyof LLSelectBaseSettings<T, GroupKey>>)
@@ -374,7 +374,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * - If no filter query is active, the acted-on set is every enabled item,
    *   the same scope as `toggleAll`.
    * - Fires `onChange` only when the chosen items actually change.
-   * - The acted-on set is computed by the `getVisibleEnabledItems` seam,
+   * - The acted-on set is computed by the overridable method `getVisibleEnabledItems`,
    *   shared with the choose-all row.
    * @group Selection
    */

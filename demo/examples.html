@@ -642,7 +642,7 @@
     <p class="hint">
       <code>itemToGroupKeyFn</code> maps each item to a group key (contiguous
       same-key items form one group - pre-sort your data);
-      <code>groupKeyToStringFn</code> is the display / i18n seam. Keyboard nav
+      <code>groupKeyToStringFn</code> is the display / i18n customization point. Keyboard nav
       skips headers. Custom header content: 11.3.
     </p>
 
@@ -912,7 +912,7 @@
         Branch rows expand / collapse via the caret, wear a folder icon that
         follows the state, and show a tri-state checkbox derived from their
         leaves; activating a branch toggles its whole subtree. The model value is the chosen leaves. Built on the
-        extension seams: typed subclass settings
+        extension points: typed subclass settings
         (<code>defaultExpandDepth</code>), a cached
         <code>getVisibleItems</code> override, <code>createItemEl</code> /
         <code>createItemContentEl</code>, <code>onItemActivated</code>. The
