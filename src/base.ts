@@ -1452,8 +1452,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Runs on every change of the chosen value, the placeholder or the pack.
    * - `rerender()` runs it too.
    * - While `clearable` is on, the first run builds the clear button and every
-   *   later run swaps it for a fresh one, through `createTriggerClearButtonEl`,
-   *   like the arrow.
+   *   later run swaps it for whatever `createTriggerClearButtonEl` returns: a
+   *   fresh button from the base implementation, like the arrow. An override
+   *   may return the previous element; it is then kept in place.
    * - If the old clear button held focus - on it or inside its icon - the
    *   rebuilt BUTTON gets it.
    * - `setItems` runs `renderTriggerContent` alone, because only the content
@@ -2299,9 +2300,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `LLSelectMultiple` constructor's render, right after `super()`.
    * - That first run happens before a FURTHER subclass's field initializers.
    * - Every later run (a value change, `setPlaceholder`,
-   *   `setUiTranslationPack`, `rerender()`) swaps the button in place.
-   * - Like the arrow, the element is not kept across renders. Put nothing on
-   *   it from outside; customize it here.
+   *   `setUiTranslationPack`, `rerender()`) swaps the button in place, unless
+   *   this method returns the previous element - then it stays in place.
+   * - The base implementation returns a fresh element each run, so, like the
+   *   arrow, nothing put on it from outside survives a render; customize it
+   *   here.
+   * - An override that returns the same element every time owns refreshing
+   *   whatever state it keeps on that element.
    * - An override that reads subclass fields calls `rerender()` at the end of
    *   its constructor, like every other trigger method.
    * @group Subclassing: rendering
