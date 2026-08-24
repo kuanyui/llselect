@@ -1,6 +1,12 @@
 /* Demo-only layout. All llselect-* visual rules live in dist/themes/*.css
    (loaded via <link> and swapped by the theme picker). */
 
+/* Bootstrap 3's reset sets html{font-size:10px}, which shrinks this demo's
+   rem-based text (that theme only). Pin html to the 16px browser default so rem
+   is consistent across every theme; the demo loads Bootstrap first, so this
+   rule wins the cascade. */
+html { font-size: 16px; }
+
 body {
   font-family: system-ui, sans-serif;
   padding: 2rem;
