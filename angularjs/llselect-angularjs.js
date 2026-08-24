@@ -219,18 +219,14 @@
    * from inside a digest must not nest one, hence the phase check. Inside a
    * digest $eval has no error routing, so the catch mirrors $apply's - an
    * expression error must not abort llselect's open() / close() midway.
+   * The close that destroy() runs at scope teardown fires too (core parity:
+   * the popup did close); AngularJS broadcasts $destroy before disabling the
+   * scope, so a cleanup expression still works there.
    */
   function wireEventAttr(scope, attrs, name, settings, key, exceptionHandler) {
     if (!attrs[name]) { return }
     var expr = attrs[name]
-    // destroy() closes an open popup, and that close must not run the
-    // expression on a dying scope. This listener is registered before the
-    // directive's own $destroy listener (link calls commonSettings first), so
-    // it runs first.
-    var destroyed = false
-    scope.$on('$destroy', function () { destroyed = true })
     settings[key] = function () {
-      if (destroyed) { return }
       if (!scope.$root.$$phase) { scope.$apply(expr); return }
       try { scope.$eval(expr) } catch (e) { exceptionHandler(e) }
     }

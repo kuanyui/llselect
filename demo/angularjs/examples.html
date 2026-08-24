@@ -184,8 +184,8 @@
   <section>
     <h2>5. ll-disabled</h2>
     <p>
-      Settings are frozen at construction, so only <code>ll-disabled</code> gets
-      a <code>$watch</code> - it maps onto the <code>setDisabled()</code> method.
+      Attributes are read once at construction; <code>ll-disabled</code> gets
+      a <code>$watch</code> because it maps onto the <code>setDisabled()</code> method.
     </p>
     <div class="demo-row" data-src="5">
       <label><input type="checkbox" ng-model="vm.locked"> lock</label>

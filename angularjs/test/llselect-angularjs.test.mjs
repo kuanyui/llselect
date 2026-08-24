@@ -721,7 +721,7 @@ test('QUALITY-88: an ll-on-open error inside a digest goes to $exceptionHandler 
   assert.equal(trigger.ownerDocument.activeElement, a.$('.llselect-filter-input'), 'the tail of open() ran (focus moved to the filter input)')
 })
 
-test('QUALITY-88: ll-on-close does not run for the close that scope destruction triggers', () => {
+test('QUALITY-88: ll-on-close also runs for the close that scope destruction triggers (core parity)', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm">
@@ -733,7 +733,8 @@ test('QUALITY-88: ll-on-close does not run for the close that scope destruction 
   })
   a.$('.llselect-trigger').click() // open
   a.scope.$apply(() => { a.scope.vm.show = false }) // ng-if destroys the OPEN control: destroy() closes it
-  assert.equal(a.scope.vm.closes, 0, 'the teardown close must not evaluate the expression on a dying scope')
+  assert.equal(a.scope.vm.closes, 1, 'the popup did close; $destroy is broadcast before the scope is disabled, so the expression still runs')
+  assert.deepEqual(a.errors, [])
 })
 
 test('QUALITY-92: a NaN model value resolves to the NaN item (the wrapper matches the core default identity)', () => {

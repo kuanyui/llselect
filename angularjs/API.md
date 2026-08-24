@@ -54,7 +54,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ll-on-close`
 
-**Event expression** -> `onClose`. Evaluated on each close, inside a digest. Same rules as [`ll-on-open`](#ll-on-open), plus one: it does not fire for the close that destroying the element runs (for example `ng-if` removing an open control) - the scope is going away.
+**Event expression** -> `onClose`. Evaluated on each close, inside a digest. Same rules as [`ll-on-open`](#ll-on-open). It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and the scope is still alive during `$destroy`, so a cleanup expression works there.
 
 ### `ll-options`
 
@@ -89,7 +89,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ll-disabled`
 
-**Expression, watched** -> `setDisabled()`. Disables the widget. The only watched attribute, because it maps to a method rather than an immutable setting.
+**Expression, watched** -> `setDisabled()`. Disables the widget. The only watched attribute, because it maps to a method; the other attributes feed construction-time settings, read once.
 
 Disabling must go through llselect's own `setDisabled()`:
 
