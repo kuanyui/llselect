@@ -1286,7 +1286,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Also re-applies the pack-owned attributes `rerender()` cannot reach:
    *   the filter input placeholder and its fallback `aria-label`.
    * - The clear button needs no such step: `rerender()` rebuilds it, and the
-   *   rebuild reads the new pack.
+   *   rebuild reads the new pack - unless a `createTriggerClearButtonEl`
+   *   override returns the previous element, which then owns the label.
    * @group i18n
    */
   public setUiTranslationPack(uiTranslationPack: Partial<LLSelectUiTranslationPack>): void {
@@ -1455,8 +1456,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   later run swaps it for whatever `createTriggerClearButtonEl` returns: a
    *   fresh button from the base implementation, like the arrow. An override
    *   may return the previous element; it is then kept in place.
-   * - If the old clear button held focus - on it or inside its icon - the
-   *   rebuilt BUTTON gets it.
+   * - If the button is rebuilt and the old one held focus - on it or inside
+   *   its icon - the rebuilt BUTTON gets it.
    * - If the builder returned the same element, nothing was rebuilt, and focus
    *   goes back to the node that held it.
    * - `setItems` runs `renderTriggerContent` alone, because only the content
@@ -2302,8 +2303,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - For `LLSelectSingle` / `LLSelectMultiple` and their subclasses, that
    *   first run is the variant constructor's render, right after `super()`,
    *   so it happens before a FURTHER subclass's field initializers.
-   * - A direct `LLSelectBase` subclass renders when it calls `renderTrigger`;
-   *   until then there is no button, like the rest of its trigger.
+   * - A direct `LLSelectBase` subclass gets the button on its first trigger
+   *   render (its own `renderTrigger()` call, or `rerender()` /
+   *   `setPlaceholder`); until then the trigger is unrendered and there is no
+   *   button.
    * - Every later run (a value change, `setPlaceholder`,
    *   `setUiTranslationPack`, `rerender()`) swaps the button in place, unless
    *   this method returns the previous element - then it stays in place.
@@ -2377,7 +2380,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   root.
    * A builder override that returns the SAME element every time is allowed:
    * the element is kept in place, and focus goes back to the node step 1
-   * found, because nothing was rebuilt.
+   * found, because nothing was rebuilt - unless the override detached that
+   * node, in which case focus stays on the button.
    */
   private replaceTriggerClearButtonElInDom(): void {
     if (!this.settings.clearable) { return }

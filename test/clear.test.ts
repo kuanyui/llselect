@@ -349,3 +349,29 @@ test('QUALITY-89: with a builder that returns the same element, a render hands f
   assert.equal(clearBtn(sel), memo)
   assert.equal(document.activeElement, icon, 'nothing was rebuilt, so focus goes back where it was (not parked on the button)')
 })
+
+test('QUALITY-89: with a builder that returns the same element but swaps its icon, focus stays on the button (the old icon is detached)', () => {
+  const target = mount()
+  let memo: HTMLElement | undefined
+  let icon = document.createElement('span')
+  icon.tabIndex = -1
+  class Memoized extends LLSelectSingle<string> {
+    protected override createTriggerClearButtonEl(): HTMLElement {
+      if (memo === undefined) { memo = super.createTriggerClearButtonEl() }
+      memo.replaceChildren(icon) // every run installs whatever `icon` currently is
+      return memo
+    }
+  }
+  const sel = new Memoized(target, { clearable: true, ariaLabel: 'x' })
+  sel.setItems(['a'])
+  sel.setChosenItem('a')
+  const oldIcon = icon
+  oldIcon.focus()
+  assert.equal(document.activeElement, oldIcon)
+  icon = document.createElement('span') // the next build swaps in a fresh icon, detaching the focused one
+  icon.tabIndex = -1
+  sel.rerender()
+  assert.equal(clearBtn(sel), memo)
+  assert.equal(oldIcon.isConnected, false)
+  assert.equal(document.activeElement, memo, 'a detached node cannot take focus back, so it stays on the parked button')
+})
