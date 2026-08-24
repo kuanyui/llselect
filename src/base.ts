@@ -2003,6 +2003,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * host when llselect is hosted inside an app's shadow root, so an inside click
    * would read as outside and close the popup; `composedPath()[0]` pierces the
    * boundary. With no shadow tree (llselect uses none itself) this equals `ev.target`.
+   * - Limitation: a CLOSED host shadow root truncates `composedPath()` at the root,
+   *   so `[0]` is only the host and an inside click still reads as outside. A
+   *   document-level listener cannot see into a closed root; hosting in an OPEN
+   *   shadow root avoids it.
    */
   private eventTargetNode(ev: Event): EventTarget | null {
     return ev.composedPath?.()?.[0] ?? ev.target

@@ -50,6 +50,24 @@ test('MEDIUM-76: hosted in a shadow root, an inside pointer-down does not read a
   assert.equal(sel.isOpened(), true, 'an inside click must not read as outside and close the popup')
 })
 
+test('MEDIUM-76 (block mode): an inside click in a shadow root does not close', () => {
+  setupDom('<!doctype html><html><body></body></html>')
+  const host = document.createElement('div')
+  document.body.appendChild(host)
+  const mountEl = document.createElement('div')
+  host.attachShadow({ mode: 'open' }).appendChild(mountEl)
+  const sel = new LLSelectSingle<string>(mountEl, { ariaLabel: 'x', outsideClickBehavior: 'block' })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  assert.equal(sel.isOpened(), true, 'precondition: open')
+  // block mode closes on the captured document click; a composed click on an
+  // inside NON-option element (the listbox container, which has no select handler)
+  // must be recognized as inside via composedPath and NOT close. (Clicking an
+  // option would select+close in single mode - a different path.)
+  sel.popupListEl.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, cancelable: true }))
+  assert.equal(sel.isOpened(), true, 'block mode: an inside click must not read as outside')
+})
+
 test('block: click outside closes; outside button does NOT receive click', () => {
   setupDom('<!doctype html><html><body><div id="mount"></div><button id="other">click me</button></body></html>')
   const mount = document.getElementById('mount')!
