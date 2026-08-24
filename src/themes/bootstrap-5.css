@@ -175,6 +175,12 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+/* Embedded buttons are inert while the control is disabled: show not-allowed,
+   not the pointer cursor their own rule sets. */
+.llselect-trigger[data-disabled='true'] .llselect-tag-remove-button,
+.llselect-trigger[data-disabled='true'] .llselect-trigger-clear-button {
+  cursor: not-allowed;
+}
 
 .llselect-item-disabled {
   opacity: 0.45;
