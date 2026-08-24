@@ -290,7 +290,9 @@ test('QUALITY-89: a createTriggerClearButtonEl override that returns the same el
     // No initializer on purpose: the first build runs inside super() (the
     // LLSelectSingle constructor's first render), and a `= null` initializer
     // would then wipe the memo once super() returns - the very trap the
-    // extender docs describe.
+    // extender docs describe. (Holds under the ES2020 target, where
+    // useDefineForClassFields is off; an ES2022 target would define the
+    // field as undefined after super() and wipe it too.)
     private button?: HTMLElement
     protected override createTriggerClearButtonEl(): HTMLElement {
       if (this.button === undefined) { this.button = super.createTriggerClearButtonEl() }

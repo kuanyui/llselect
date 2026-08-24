@@ -2353,7 +2353,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *    the same icon element each time reparents that icon into the new
    *    button, and the reparenting must not move the focused node.
    * 3. Build the new button.
-   * 4. Insert it, then move focus to it.
+   * 4. Insert it, then move focus to it (if the old one held focus).
    * 5. Only then remove the old one.
    * Why: removing the old button first would drop DOM focus to `<body>` in
    * every engine, and, where the engine fires `focusout` on the removal of a
