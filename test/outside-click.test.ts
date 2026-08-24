@@ -32,6 +32,24 @@ test('pass-through (default): mousedown outside closes; click still triggers out
   assert.deepEqual(calls, [1])
 })
 
+test('MEDIUM-76: hosted in a shadow root, an inside pointer-down does not read as outside', () => {
+  setupDom('<!doctype html><html><body></body></html>')
+  const host = document.createElement('div')
+  document.body.appendChild(host)
+  const mountEl = document.createElement('div')
+  host.attachShadow({ mode: 'open' }).appendChild(mountEl)
+  const sel = new LLSelectSingle<string>(mountEl, { ariaLabel: 'x' })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  assert.equal(sel.isOpened(), true, 'precondition: open')
+  // A composed pointer-down on an option inside the shadow tree: at the document
+  // level ev.target retargets to the shadow host (outside rootEl), but
+  // composedPath()[0] is the real option, so the outside guard must not close.
+  const option = sel.popupListEl.querySelector<HTMLElement>('[role="option"]')!
+  option.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true, cancelable: true }))
+  assert.equal(sel.isOpened(), true, 'an inside click must not read as outside and close the popup')
+})
+
 test('block: click outside closes; outside button does NOT receive click', () => {
   setupDom('<!doctype html><html><body><div id="mount"></div><button id="other">click me</button></body></html>')
   const mount = document.getElementById('mount')!

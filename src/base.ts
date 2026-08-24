@@ -1998,13 +1998,23 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     }
   }
 
+  /**
+   * The element a pointer event actually hit. `ev.target` retargets to the shadow
+   * host when llselect is hosted inside an app's shadow root, so an inside click
+   * would read as outside and close the popup; `composedPath()[0]` pierces the
+   * boundary. With no shadow tree (llselect uses none itself) this equals `ev.target`.
+   */
+  private eventTargetNode(ev: Event): EventTarget | null {
+    return ev.composedPath?.()?.[0] ?? ev.target
+  }
+
   private attachOutsideClick(): void {
     const mode = this.settings.outsideClickBehavior
     if (mode === 'pass-through') {
       // mousedown fires before mouseup/click - feels snappier; we do not
       // preventDefault, so the outside click still triggers its own action.
       this.outsideHandler = (ev: Event) => {
-        const t = ev.target
+        const t = this.eventTargetNode(ev)
         if (t instanceof Node && !this.rootEl.contains(t)) {
           this.close()
         }
@@ -2021,7 +2031,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // outside mousedowns, so no focusout fires and the click capture stays
       // attached long enough to swallow the click.
       this.blockMouseDownHandler = (ev: Event) => {
-        const t = ev.target
+        const t = this.eventTargetNode(ev)
         if (t instanceof Node && !this.rootEl.contains(t)) {
           ev.preventDefault()
         }
@@ -2030,7 +2040,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // capture phase so we run before the target's own listeners; swallow
       // the click so the underlying button/link/etc. does not fire.
       this.outsideHandler = (ev: Event) => {
-        const t = ev.target
+        const t = this.eventTargetNode(ev)
         if (t instanceof Node && !this.rootEl.contains(t)) {
           ev.stopPropagation()
           ev.preventDefault()
