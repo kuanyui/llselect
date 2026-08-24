@@ -3,7 +3,7 @@
 // LLSelectMultiple. Subclasses own chosen-state and decide what happens on
 // item click.
 
-import { createPositioner, isAnchorHidden, type Positioner, type WidthPolicy } from './positioning.js'
+import { createPositioner, isAnchorHidden, type Positioner, type LLSelectWidthPolicy } from './positioning.js'
 import { gatherItemsByGroupKey } from './grouping.js'
 import {
   LLSelectAction,
@@ -242,7 +242,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   inside the popup.
    * @group Popup
    */
-  popupWidthPolicy: WidthPolicy
+  popupWidthPolicy: LLSelectWidthPolicy
   /**
    * Predicate deciding whether an individual item is disabled. `null` (default)
    * = nothing disabled. A disabled item is not selectable (click / Enter) and is

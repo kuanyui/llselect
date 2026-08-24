@@ -15,14 +15,14 @@ export interface AnchorRect {
  * Whether the floating element sits below or above the anchor.
  * @group Positioning
  */
-export type Placement = 'below' | 'above'
+export type LLSelectPlacement = 'below' | 'above'
 
 /**
  * How the floating element decides its width. See `LLSelectBaseSettings`
  * (`popupWidthPolicy` field) for the user-facing contract.
  * @group Positioning
  */
-export type WidthPolicy = 'fit-content' | 'match-trigger'
+export type LLSelectWidthPolicy = 'fit-content' | 'match-trigger'
 
 /** Input to the pure positioning calculation. */
 export interface PositionInput {
@@ -42,7 +42,7 @@ export interface PositionInput {
   /** Measured height of the floating element. Pass 0 if unknown. */
   floatingHeight: number
   /** Width policy. Optional; default `'fit-content'`. */
-  widthPolicy?: WidthPolicy
+  widthPolicy?: LLSelectWidthPolicy
   /**
    * Floating element's natural (max-content) width in px. Only consulted when
    * `widthPolicy === 'fit-content'`. Default `0`.
@@ -62,7 +62,7 @@ export interface PositionInput {
    * (e.g. a filter query matching nothing) does not flip the popup back and
    * forth. Omit / `undefined` (first placement) to pick fresh.
    */
-  currentPlacement?: Placement | undefined
+  currentPlacement?: LLSelectPlacement | undefined
 }
 
 /** Result of {@link computePosition}: coordinates and chosen placement. */
@@ -72,7 +72,7 @@ export interface PositionResult {
   width: number
   /** Maximum height the floating element may occupy. */
   maxHeight: number
-  placement: Placement
+  placement: LLSelectPlacement
 }
 
 const GAP = 4
@@ -126,7 +126,7 @@ export function computePosition(input: PositionInput): PositionResult {
     (currentPlacement === 'below' && fitsBelow) ||
     (currentPlacement === 'above' && fitsAbove)
 
-  let placement: Placement
+  let placement: LLSelectPlacement
   if (currentStillFits && currentPlacement !== undefined) {
     placement = currentPlacement
   } else if (fitsBelow) {
@@ -255,7 +255,7 @@ export interface PositionerOptions {
    * Width policy. Default `'fit-content'`, matching the `popupWidthPolicy`
    * setting default.
    */
-  widthPolicy?: WidthPolicy
+  widthPolicy?: LLSelectWidthPolicy
   /**
    * The floating element's inner scroll container (the popup list). Under an
    * active `maxHeight` clamp the floating element's overflow is absorbed as
@@ -325,14 +325,14 @@ export function createPositioner(
   options?: PositionerOptions,
 ): Positioner {
   let attached = true
-  const widthPolicy: WidthPolicy = options?.widthPolicy ?? 'fit-content'
+  const widthPolicy: LLSelectWidthPolicy = options?.widthPolicy ?? 'fit-content'
   // Snapshot at attach (= once per open cycle): direction changes are rare
   // and the next open re-reads it. Only fit-content consults it.
   const direction: 'ltr' | 'rtl' =
     window.getComputedStyle(anchor).direction === 'rtl' ? 'rtl' : 'ltr'
   // Placement chosen by the previous reposition, fed back for stickiness.
   // Positioner lifetime = one open cycle, so the next open picks fresh.
-  let lastPlacement: Placement | undefined
+  let lastPlacement: LLSelectPlacement | undefined
 
   // `allowHide`: whether this reposition may invoke `onHide` (auto-close).
   // Only scroll-driven repositions (and the initial placement) close the popup

@@ -13,7 +13,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg'
  * @group Icons
  * @category Shared
  */
-export interface IconOptions {
+export interface LLSelectIconOptions {
   /** Width and height of the SVG in pixels. Default 16. */
   size?: number
 }
@@ -39,7 +39,7 @@ function createSvgEl(viewBox: string, pathD: string, size: number): SVGElement {
  * @group Icons
  * @category Arrows
  */
-export function createTriangleDownSvgEl(opts: IconOptions = {}): SVGElement {
+export function createTriangleDownSvgEl(opts: LLSelectIconOptions = {}): SVGElement {
   return createSvgEl('0 0 24 24', 'M4 8l8 10 8-10z', opts.size ?? 16)
 }
 
@@ -48,7 +48,7 @@ export function createTriangleDownSvgEl(opts: IconOptions = {}): SVGElement {
  * @group Icons
  * @category Arrows
  */
-export function createChevronDownSvgEl(opts: IconOptions = {}): SVGElement {
+export function createChevronDownSvgEl(opts: LLSelectIconOptions = {}): SVGElement {
   return createSvgEl(
     '0 0 24 24',
     'M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z',
@@ -62,7 +62,7 @@ export function createChevronDownSvgEl(opts: IconOptions = {}): SVGElement {
  * @group Icons
  * @category Checkmarks & checkboxes
  */
-export function createCheckmarkSvgEl(opts: IconOptions = {}): SVGElement {
+export function createCheckmarkSvgEl(opts: LLSelectIconOptions = {}): SVGElement {
   return createSvgEl(
     '0 0 24 24',
     'M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z',
@@ -77,9 +77,9 @@ export function createCheckmarkSvgEl(opts: IconOptions = {}): SVGElement {
  * @group Icons
  * @category Checkmarks & checkboxes
  */
-export type CheckboxState = 'unchecked' | 'checked' | 'indeterminate'
+export type LLSelectCheckboxState = 'unchecked' | 'checked' | 'indeterminate'
 
-const OUTLINED_CHECKBOX_PATHS: Record<CheckboxState, string> = {
+const OUTLINED_CHECKBOX_PATHS: Record<LLSelectCheckboxState, string> = {
   // mdi checkbox-blank-outline
   unchecked:
     'M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,5V19H5V5H19Z',
@@ -97,7 +97,7 @@ const OUTLINED_CHECKBOX_PATHS: Record<CheckboxState, string> = {
  * @group Icons
  * @category Checkmarks & checkboxes
  */
-export interface CheckboxIconOptions extends IconOptions {
+export interface LLSelectCheckboxIconOptions extends LLSelectIconOptions {
   /**
    * Which checkbox state to draw. Accepts the icon vocabulary
    * (`'unchecked' | 'checked' | 'indeterminate'`) or, as a convenience, the
@@ -106,11 +106,11 @@ export interface CheckboxIconOptions extends IconOptions {
    * `createChooseAllRowContentElFn` can pass its state straight through.
    * Default `'unchecked'`.
    */
-  state?: CheckboxState | 'none' | 'some' | 'all'
+  state?: LLSelectCheckboxState | 'none' | 'some' | 'all'
 }
 
 /** Map the choose-all row's chosen-state vocabulary onto the icon vocabulary. */
-function resolveCheckboxState(raw: NonNullable<CheckboxIconOptions['state']>): CheckboxState {
+function resolveCheckboxState(raw: NonNullable<LLSelectCheckboxIconOptions['state']>): LLSelectCheckboxState {
   return raw === 'none' ? 'unchecked' : raw === 'some' ? 'indeterminate' : raw === 'all' ? 'checked' : raw
 }
 
@@ -123,12 +123,12 @@ function resolveCheckboxState(raw: NonNullable<CheckboxIconOptions['state']>): C
  * @group Icons
  * @category Checkmarks & checkboxes
  */
-export function createOutlinedCheckboxSvgEl(opts: CheckboxIconOptions = {}): SVGElement {
+export function createOutlinedCheckboxSvgEl(opts: LLSelectCheckboxIconOptions = {}): SVGElement {
   const state = resolveCheckboxState(opts.state ?? 'unchecked')
   return createSvgEl('0 0 24 24', OUTLINED_CHECKBOX_PATHS[state], opts.size ?? 16)
 }
 
-const FILLED_CHECKBOX_PATHS: Record<CheckboxState, string> = {
+const FILLED_CHECKBOX_PATHS: Record<LLSelectCheckboxState, string> = {
   // Material's unchecked is the same outline box in both looks.
   unchecked: OUTLINED_CHECKBOX_PATHS.unchecked,
   // mdi checkbox-marked (solid box, tick cut out)
@@ -148,7 +148,7 @@ const FILLED_CHECKBOX_PATHS: Record<CheckboxState, string> = {
  * @group Icons
  * @category Checkmarks & checkboxes
  */
-export function createFilledCheckboxSvgEl(opts: CheckboxIconOptions = {}): SVGElement {
+export function createFilledCheckboxSvgEl(opts: LLSelectCheckboxIconOptions = {}): SVGElement {
   const state = resolveCheckboxState(opts.state ?? 'unchecked')
   return createSvgEl('0 0 24 24', FILLED_CHECKBOX_PATHS[state], opts.size ?? 16)
 }

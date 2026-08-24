@@ -38,7 +38,7 @@
 import {
   LLSelectMultiple,
   createFilledCheckboxSvgEl,
-  type CheckboxState,
+  type LLSelectCheckboxState,
   type LLSelectMultipleSettings,
   type LLSelectSettingsInputOf,
 } from '../../src/index.js'
@@ -271,7 +271,7 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
   }
 
   /** Derived tri-state of a branch: how many of its leaf descendants are chosen. */
-  private branchState(branch: LLTreeNode): CheckboxState {
+  private branchState(branch: LLTreeNode): LLSelectCheckboxState {
     const leaves = this.leafDescendants.get(branch) ?? []
     let chosen = 0
     for (const leaf of leaves) {

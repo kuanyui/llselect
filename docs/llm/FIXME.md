@@ -123,9 +123,12 @@ Open items from the panel, awaiting the user's ruling:
 - [ ] **[PERFORMANCE-73] - bridge items watcher re-runs the whole `| filter:` chain every digest**
   - Symptom: the watched expression retains `| filter: $select.search` with an empty query, so filterFilter deep-compares every item per digest per widget. angularjs/llselect-ui-select.js:414. The overstated doc claim is already corrected (DOCUMENTATION-64).
   - Proposed: watch the bare source by splitting the filters off (ui-select's own parser does this); behavior change, so it awaits the ruling.
-- [ ] **[QUALITY-74] - the icon type trio lacks the LLSelect prefix**
-  - Symptom: `IconOptions` / `CheckboxState` / `CheckboxIconOptions` are unprefixed exports; `WidthPolicy` / `Placement` stay as-is per the recorded naming ruling.
-  - Proposed: rename the trio while still 0.0.x.
+- [x] **[QUALITY-74] - unprefixed public TYPE exports (icon trio + WidthPolicy / Placement)**
+  - Symptom: `IconOptions` / `CheckboxState` / `CheckboxIconOptions` were unprefixed exports; so were `WidthPolicy` / `Placement`. The owner also flagged that the icon builder FUNCTIONS carry no prefix either.
+  - Fix: the five TYPES gained the prefix - `LLSelectIconOptions`, `LLSelectCheckboxState`, `LLSelectCheckboxIconOptions`, `LLSelectWidthPolicy`, `LLSelectPlacement`. Exported FUNCTIONS (`createChevronDownSvgEl` ... `createHighlightedTextEl`, `gatherItemsByGroupKey`) and `version` stay unprefixed. Rule recorded in naming-conventions.md s3.
+  - Verified: build + 390 tests green after the rename (src + demo/subclass/tree-select.ts); no bare type name remains.
+  - Q: Why prefix TYPES but not FUNCTIONS - is that not inconsistent?
+    - A: Five-model panel, 5:0 (Opus 4.8 / Opus 5 / Fable 5 / Codex Sol max / Codex 5.5 xhigh), each verifying against real libraries: no reputable JS library prefixes a standalone exported FUNCTION with its own name (date-fns `format`, lodash `debounce`, MUI `createTheme`, D3 `select`, Floating UI `computePosition`, React `useState`) - named imports already namespace values, and a consumer wanting a uniform prefix writes `import * as LLSelect` (free; the Three.js / D3 / zod pattern). TYPES differ: they appear in `.d.ts` / hover / error messages with no import context and collide across libraries (`Placement` ships in both Popper and Floating UI), so the prefix is collision safety. zod is the living template - type `ZodType`, function `string()`.
 - [ ] **[QUALITY-75] - demo 4.2's visible labels and spoken names disagree**
   - Symptom: `<label>` elements with no `for=`, while the widgets get `ariaLabel: 'chevron'` / `'triangle'`. demo/examples.html:205.
   - Panel: split 2 CERTAIN-BUG / 2 REJECT (the proposed labelEl remedy arguably makes the name worse).

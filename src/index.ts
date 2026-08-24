@@ -47,7 +47,7 @@ export { createHighlightedTextEl } from './query-highlight.js'
 
 // Types observable through public settings / DOM attributes: importable,
 // never infer-only (`popupWidthPolicy` setting; `data-placement` attribute).
-export type { WidthPolicy, Placement } from './positioning.js'
+export type { LLSelectWidthPolicy, LLSelectPlacement } from './positioning.js'
 
 export {
   createChevronDownSvgEl,
@@ -57,9 +57,9 @@ export {
   createFilledCheckboxSvgEl,
 } from './icons.js'
 export type {
-  IconOptions,
-  CheckboxState,
-  CheckboxIconOptions,
+  LLSelectIconOptions,
+  LLSelectCheckboxState,
+  LLSelectCheckboxIconOptions,
 } from './icons.js'
 
 /**
