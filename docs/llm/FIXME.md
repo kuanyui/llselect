@@ -108,9 +108,10 @@ Open items from the panel, awaiting the user's ruling:
   - Symptom: mousedown on the no-results message / popup padding blurs the focus host, so focusout closes the popup; mousedown on the list element itself focuses a `tabindex="-1"` element with no keydown handler - the keyboard goes dead. src/base.ts:910 (guard covers popupListEl descendants only).
   - Panel: 4x NEEDS-HUMAN-DECISION - a fix touches the pinned scrollbar-drag behavior (test/focus.test.ts).
   - Proposed: preventDefault on the non-option areas (padding, the no-results element), keyboard forwarding on the list element; real-browser scrollbar pass before resolving.
-- [ ] **[QUALITY-69] - $eval'd enum attributes fall back silently on the likeliest typo**
-  - Symptom: `ll-trigger-display="tags"` (unquoted) evaluates to undefined and silently becomes 'count'. angularjs/llselect-angularjs.js:377.
-  - Proposed: one `console.warn` when a non-empty attribute evaluates to undefined; never throw.
+- [x] **[QUALITY-69] - $eval'd enum attributes fell back silently on the likeliest typo**
+  - Symptom: `ll-trigger-display="tags"` (inner quotes dropped) $eval'd to undefined and silently became the default 'count'. angularjs/llselect-angularjs.js.
+  - Fix: `evalEnumAttr` (mirrors `evalFnAttr`) wraps the `$eval` for `ll-trigger-display` and `ll-popup-width-policy`; an undefined result `console.warn`s (naming the attribute, its value, and the inner-quotes fix) and never throws - the default stays a working control. The ui-select bridge hardcodes `triggerDisplay = 'tags'`, so it has no such attribute.
+  - Verified: angularjs test asserts the warn fires for `ll-trigger-display="tags"`.
 - [ ] **[MEDIUM-70] - ui bridge has no ariaLabelledBy / labelEl path**
   - Symptom: only `aria-label` / `title` map to a name. angularjs/llselect-ui-select.js:268.
   - Proposed: forward the host's `aria-labelledby` attribute verbatim; no new vocabulary.

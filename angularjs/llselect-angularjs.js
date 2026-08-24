@@ -142,6 +142,24 @@
   }
 
   /**
+   * $eval an enum-literal attribute (ll-trigger-display, ll-popup-width-policy).
+   * The value is meant to be a QUOTED string literal ("'tags'"); the classic typo
+   * drops the inner quotes ("tags"), so $eval reads a non-existent scope property
+   * and yields undefined - which llselect would silently replace with the default.
+   * Warn (never throw: the default is still a working control).
+   * @returns the evaluated value (possibly undefined).
+   */
+  function evalEnumAttr(scope, attrs, name) {
+    var value = scope.$eval(attrs[name])
+    if (value === undefined) {
+      console.warn('llselect-angularjs: ' + attrs.$attr[name] + '="' + attrs[name] +
+        '" evaluated to undefined; an enum literal needs inner quotes (e.g. ' +
+        attrs.$attr[name] + '="\'tags\'"). Falling back to the default.')
+    }
+    return value
+  }
+
+  /**
    * Settings shared by both directives: config defaults first, then this
    * element's ll-* attributes on top.
    *
@@ -173,7 +191,7 @@
     // too, but as an app-wide config it has no per-element binding here.)
     if (attrs.llPlaceholder) { settings.placeholder = scope.$eval(attrs.llPlaceholder) }
     if (attrs.llFilterable) { settings.filterable = scope.$eval(attrs.llFilterable) }
-    if (attrs.llPopupWidthPolicy) { settings.popupWidthPolicy = scope.$eval(attrs.llPopupWidthPolicy) }
+    if (attrs.llPopupWidthPolicy) { settings.popupWidthPolicy = evalEnumAttr(scope, attrs, 'llPopupWidthPolicy') }
     if (attrs.llArrow) { arrow = attrs.llArrow }
     var itemContentFn = evalFnAttr(scope, attrs, 'llItemContentFn')
     if (itemContentFn) { settings.createItemContentElFn = itemContentFn }
@@ -374,7 +392,7 @@
           var settings = commonSettings(scope, attrs, parsed, llselectConfig)
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
-          if (attrs.llTriggerDisplay) { settings.triggerDisplay = scope.$eval(attrs.llTriggerDisplay) }
+          if (attrs.llTriggerDisplay) { settings.triggerDisplay = evalEnumAttr(scope, attrs, 'llTriggerDisplay') }
           if (attrs.llChooseAllRow) { settings.chooseAllRow = scope.$eval(attrs.llChooseAllRow) }
           if (attrs.llHideChosenRows) { settings.hideChosenRows = scope.$eval(attrs.llHideChosenRows) }
           var tagContentFn = evalFnAttr(scope, attrs, 'llTagContentFn')

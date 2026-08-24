@@ -68,6 +68,29 @@ test('group by and disable when reach llselect', () => {
   assert.equal(a.$$('[name=user] .llselect-item-disabled').length, 1, 'expected Bob disabled')
 })
 
+test('an enum literal missing its inner quotes warns instead of silently defaulting', () => {
+  const warnings = []
+  const orig = console.warn
+  console.warn = (...args) => { warnings.push(args.join(' ')) }
+  try {
+    boot({
+      deps: ['llselect'],
+      html: `
+        <div ng-controller="C as vm">
+          <llselect-multiple name="t" ng-model="vm.m" ll-options="f for f in vm.fruits"
+            ll-trigger-display="tags"></llselect-multiple>
+        </div>`,
+      controller: function () { this.fruits = FRUITS.slice(); this.m = [] },
+    })
+  } finally {
+    console.warn = orig
+  }
+  assert.ok(
+    warnings.some(w => w.includes('ll-trigger-display') && w.includes('undefined')),
+    'a missing-quotes enum literal (ll-trigger-display="tags") must warn'
+  )
+})
+
 test('write-back gate: reloading items neither dirties the form nor rewrites the model', () => {
   // llselect's setItems drops a chosen item that is gone from the new list and
   // fires onChange for it. Written back, that marks the form $dirty and nulls
