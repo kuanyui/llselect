@@ -1189,8 +1189,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   run `onItemsChanged`.
    * - It rebuilds the clear button (`clearable`) through
    *   `createTriggerClearButtonEl`, so an override of that method is repaired
-   *   here like every other trigger method. If the old button held focus, the
-   *   rebuilt one gets it.
+   *   here like every other trigger method.
+   * - If the old clear button held focus, the rebuilt one gets it.
    * - Orchestrator: composes `replaceTriggerClearButtonElInDom` +
    *   `renderTrigger` + `renderPopupList`; touches no DOM directly.
    * @group Lifecycle
@@ -1289,8 +1289,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `triggerPlaceholder`.
    * - Re-renders the trigger and the open popup.
    * - Also re-applies the pack-owned attributes `rerender()` cannot reach:
-   *   the filter input placeholder and its fallback `aria-label`. The clear
-   *   button is rebuilt by `rerender()`, so its `aria-label` follows on its own.
+   *   the filter input placeholder and its fallback `aria-label`.
+   * - The clear button needs no such step: `rerender()` rebuilds it, and the
+   *   rebuild reads the new pack.
    * @group i18n
    */
   public setUiTranslationPack(uiTranslationPack: Partial<LLSelectUiTranslationPack>): void {
@@ -2293,11 +2294,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - `createTriggerClearButtonContentElFn` optionally fills the icon; else the
    *   theme's CSS glyph draws it.
    * - The theme hides the button via `data-empty` while nothing is chosen.
-   * - It runs at construction (in the base constructor, before any subclass
-   *   field initializer) and again on every `rerender()`, which swaps the
-   *   button in place. An override that reads subclass fields calls
-   *   `rerender()` at the end of its constructor, like every other trigger
-   *   method.
+   * - It runs at construction, in the base constructor, before any subclass
+   *   field initializer.
+   * - It runs again on every `rerender()`, which swaps the button in place.
+   * - An override that reads subclass fields calls `rerender()` at the end of
+   *   its constructor, like every other trigger method.
    * @group Subclassing: rendering
    */
   protected createTriggerClearButtonEl(): HTMLElement {
