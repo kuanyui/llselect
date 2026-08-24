@@ -79,18 +79,28 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   protected chosenItem: T | undefined = undefined
 
   /**
-   * Build the control inside `targetEl`. Settings are resolved once here
-   * (missing fields get defaults) and are immutable afterwards.
-   * `subclassSettings` is the typed pass-through for subclasses that extend
-   * the settings bag further; see `LLSelectBase`'s `S` param.
+   * Build the control inside `targetEl`.
+   * - Settings are resolved once here; missing fields get defaults.
+   * - They are frozen afterwards, except `placeholder` and `uiTranslationPack`,
+   *   which have runtime setters; the rule is at {@link LLSelectBaseSettings}.
+   * - This plain form infers `T` from any typed callback in `settings`
+   *   (`itemToStringFn: (u: User) => ...`). With no callback, pass `T`
+   *   explicitly: `new LLSelectSingle<string>(...)`.
    * @group Lifecycle
    */
+  constructor(targetEl: HTMLElement, settings?: LLSelectSingleSettingsInput<T, GroupKey>)
+  /**
+   * Subclass form. `subclassSettings` is the typed pass-through for subclasses
+   * that extend the settings bag further; see `LLSelectBase`'s `S` param.
+   * @group Lifecycle
+   */
+  constructor(targetEl: HTMLElement, settings?: LLSelectSettingsInputOf<S>, subclassSettings?: Omit<S, keyof LLSelectSingleSettings<T, GroupKey>>)
   constructor(targetEl: HTMLElement, settings?: LLSelectSettingsInputOf<S>, subclassSettings?: Omit<S, keyof LLSelectSingleSettings<T, GroupKey>>) {
     const ownExtras = {
       onChange: settings?.onChange ?? null,
       createTriggerContentElFn: settings?.createTriggerContentElFn ?? null,
     } satisfies Omit<LLSelectSingleSettings<T, GroupKey>, keyof LLSelectBaseSettings<T, GroupKey>>
-    // Cast mirrored from the base seam: TS cannot prove "own extras +
+    // Cast mirrored from the base constructor: TS cannot prove "own extras +
     // Omit<S, own keys>" reassembles a generic S's extras. Own extras stay
     // satisfies-checked above; incoming extras are param-typed.
     super(targetEl, settings, { ...ownExtras, ...subclassSettings } as Omit<S, keyof LLSelectBaseSettings<T, GroupKey>>)

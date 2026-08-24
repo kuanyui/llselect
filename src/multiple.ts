@@ -194,12 +194,22 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   protected chosenItems: readonly T[] = []
 
   /**
-   * Build the control inside `targetEl`. Settings are resolved once here
-   * (missing fields get defaults) and are immutable afterwards.
-   * `subclassSettings` is the typed pass-through for subclasses that extend
-   * the settings bag further; see `LLSelectBase`'s `S` param.
+   * Build the control inside `targetEl`.
+   * - Settings are resolved once here; missing fields get defaults.
+   * - They are frozen afterwards, except `placeholder` and `uiTranslationPack`,
+   *   which have runtime setters; the rule is at {@link LLSelectBaseSettings}.
+   * - This plain form infers `T` from any typed callback in `settings`
+   *   (`itemToStringFn: (u: User) => ...`). With no callback, pass `T`
+   *   explicitly: `new LLSelectMultiple<string>(...)`.
    * @group Lifecycle
    */
+  constructor(targetEl: HTMLElement, settings?: LLSelectMultipleSettingsInput<T, GroupKey>)
+  /**
+   * Subclass form. `subclassSettings` is the typed pass-through for subclasses
+   * that extend the settings bag further; see `LLSelectBase`'s `S` param.
+   * @group Lifecycle
+   */
+  constructor(targetEl: HTMLElement, settings?: LLSelectSettingsInputOf<S>, subclassSettings?: Omit<S, keyof LLSelectMultipleSettings<T, GroupKey>>)
   constructor(targetEl: HTMLElement, settings?: LLSelectSettingsInputOf<S>, subclassSettings?: Omit<S, keyof LLSelectMultipleSettings<T, GroupKey>>) {
     const ownExtras = {
       onChange: settings?.onChange ?? null,
