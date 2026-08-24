@@ -1457,6 +1457,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   may return the previous element; it is then kept in place.
    * - If the old clear button held focus - on it or inside its icon - the
    *   rebuilt BUTTON gets it.
+   * - If the builder returned the same element, nothing was rebuilt, and focus
+   *   goes back to the node that held it.
    * - `setItems` runs `renderTriggerContent` alone, because only the content
    *   reads the list (the multiple count total, a custom
    *   `createTriggerContentElFn`'s `items`).
