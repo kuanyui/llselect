@@ -271,9 +271,10 @@ test('MEDIUM-93: setItems refreshes the trigger - the count total, and custom co
   const arrowBefore = arrowRenders
   custom.setItems(['a', 'b'])
   assert.equal(custom.triggerEl.textContent, '0 of 2')
+  assert.equal(contentRenders, contentBefore + 1, 'exactly one content render for the first setItems')
   custom.setItems(['a', 'b', 'c'])
   assert.equal(custom.triggerEl.textContent, '0 of 3', 'custom content sees the new list even with nothing chosen')
-  assert.equal(contentRenders, contentBefore + 2, 'exactly one content render per setItems')
+  assert.equal(contentRenders, contentBefore + 2, 'exactly one content render for the second setItems')
   assert.equal(arrowRenders, arrowBefore, 'setItems does not re-render the arrow')
 })
 

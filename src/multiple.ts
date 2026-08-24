@@ -716,7 +716,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *   to the list's object. A reference swap is not a logical change, so it
    *   does not fire `onChange`.
    * - The trigger content re-renders after every `setItems`, swap or not. The
-   *   arrow does not.
+   *   arrow does not, unless a chosen entry was dropped: that re-renders the
+   *   whole trigger.
    * - Why: the count summary shows the list total, and a custom
    *   `createTriggerContentElFn` receives `items`.
    * - In `'tags'` mode (opt-in; `'count'` is the default), with its built-in
