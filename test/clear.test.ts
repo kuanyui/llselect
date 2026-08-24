@@ -131,7 +131,8 @@ test('QUALITY-89: rerender() rebuilds the clear button through createTriggerClea
     private icon = 'X'
     protected override createTriggerClearButtonEl(): HTMLElement {
       const btn = super.createTriggerClearButtonEl()
-      // During the base constructor this subclass field is still undefined.
+      // During the LLSelectSingle constructor's first render (right after
+      // super()) this subclass field is still undefined.
       btn.setAttribute('data-icon', this.icon ?? 'unset')
       return btn
     }

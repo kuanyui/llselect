@@ -2351,8 +2351,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (!this.settings.clearable) { return }
     const old = this.triggerClearButtonEl
     // Read focus BEFORE building: a content fn that hands back the same icon
-    // element each time reparents it into the new button, which drops focus.
+    // element each time reparents it into the new button. Park focus on the
+    // old button itself first, so the reparenting never moves the focused
+    // node (an engine may fire focusout on that, with a null relatedTarget).
     const hadFocus = old !== null && this.isFocused(old)
+    if (old !== null && hadFocus) { old.focus({ preventScroll: true }) }
     const next = this.createTriggerClearButtonEl()
     this.triggerClearButtonEl = next
     if (old === null) {
