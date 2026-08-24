@@ -193,7 +193,7 @@ function injectKindBadges(body, kinds, { strictUnused = false } = {}) {
 // for the right-edge pill. Closed vocabulary plus a guard: an attribute
 // entry without a leading token fails the build - the binding mode is the
 // one thing the old reference table guaranteed per attribute.
-const BINDING_TOKENS = new Set(['expression', 'expression, watched', 'literal', 'flag', 'ng-options grammar'])
+const BINDING_TOKENS = new Set(['expression', 'expression, watched', 'event expression', 'literal', 'flag', 'ng-options grammar'])
 function injectBindingBadges(body) {
   return body.replace(/(<h([2-6]) id="([^"]+)" data-kind="attribute"[^>]*>.*?<\/h\2>\n)(<p><strong>([^<]*)<\/strong>)?/g, (_whole, heading, _depth, id, pOpen, token) => {
     const norm = (token ?? '').toLowerCase()
@@ -733,6 +733,7 @@ renderMarkdownPage('angularjs/README.md', 'public/angularjs/index.html', { title
 const NG_KINDS = new Map(Object.entries({
   'llselect-single': 'directive', 'llselect-multiple': 'directive', 'ui-llselect': 'directive',
   'ng-model': 'attribute', 'ng-change': 'attribute', 'll-options': 'attribute', name: 'attribute', required: 'attribute',
+  'll-on-open': 'attribute', 'll-on-close': 'attribute',
   'll-disabled': 'attribute', 'll-placeholder': 'attribute', 'll-filterable': 'attribute', 'll-filter-fn': 'attribute',
   'll-clearable': 'attribute', 'll-popup-width-policy': 'attribute', 'll-arrow': 'attribute', 'll-highlight': 'attribute',
   'll-item-content-fn': 'attribute', 'll-trigger-content-fn': 'attribute',

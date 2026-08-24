@@ -28,6 +28,7 @@ Attributes of both `<llselect-single>` and `<llselect-multiple>`. Every entry op
 - **Expression**: `$eval`'d against the scope ONCE at link time. llselect resolves its settings bag once at construction, so a later scope change does not move them; only the method-backed [`ll-disabled`](#ll-disabled) is watched (see the [Gotchas](README.md#gotchas)). String values need their own quotes: `ll-placeholder="'Pick one'"`.
 - **Literal**: plain attribute text.
 - **Flag**: acts by presence alone.
+- **Event expression**: evaluated on EACH event, inside a digest, like `ng-click`. Only [`ll-on-open`](#ll-on-open) / [`ll-on-close`](#ll-on-close).
 
 App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` / `uiTranslationPack` are set once via [`llselectConfigProvider`](#llselectconfigprovider); a per-element attribute always wins.
 
@@ -42,6 +43,18 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 - These directives drive a real ngModel; `ng-change` is the standard `$viewChangeListeners` pipeline, which runs only on the `$setViewValue` path: a real user choice.
 - It does NOT fire on load, on a programmatic model write, or when a data reload drops the chosen item - the write-back gate keeps those out of the view-change path (see the [Gotchas](README.md#gotchas)).
 - The same holds for everything else riding the ngModel pipeline: validators, `$dirty`, angular-validation.
+
+### `ll-on-open`
+
+**Event expression** -> `onOpen`. Evaluated on each open, inside a digest, so scope writes show up at once.
+
+- Fires on every open that actually happens, user-driven or programmatic (`instance().open()`). A call that does not actually open the popup - already open, disabled, or the trigger scrolled out of view / clipped - does not fire.
+- An error thrown by the expression goes to `$exceptionHandler`, like `ng-click`; it never aborts the open.
+- This is the only way to observe opening from the directive: the core `onOpen` setting is construction-frozen and the directive owns it.
+
+### `ll-on-close`
+
+**Event expression** -> `onClose`. Evaluated on each close, inside a digest. Same rules as [`ll-on-open`](#ll-on-open), plus one: it does not fire for the close that destroying the element runs (for example `ng-if` removing an open control) - the scope is going away.
 
 ### `ll-options`
 

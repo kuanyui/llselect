@@ -680,3 +680,68 @@ test('async items: a preset model resolves once items arrive, with and without s
   projected.scope.$apply(() => { projected.scope.vm.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] })
   assert.equal(projected.text('.llselect-trigger-content'), 'Bob', 'select as: preset id must resolve once items arrive')
 })
+
+test('QUALITY-88: ll-on-open / ll-on-close run on each open / close, inside a digest', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <span id="n">{{vm.opens}}/{{vm.closes}}</span>
+      <llselect-single ng-model="vm.x" ll-on-open="vm.opens = vm.opens + 1" ll-on-close="vm.closes = vm.closes + 1"
+        ll-options="f for f in vm.fruits"></llselect-single></div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.opens = 0; this.closes = 0 },
+  })
+  // The interpolated span proves the expression ran through a digest, not just
+  // against the scope object.
+  assert.equal(a.$('#n').textContent, '0/0')
+  a.$('.llselect-trigger').click() // open
+  assert.equal(a.$('#n').textContent, '1/0')
+  a.$('.llselect-trigger').click() // close
+  assert.equal(a.$('#n').textContent, '1/1')
+  // Programmatic open from inside a digest must not nest an $apply.
+  a.scope.$apply(() => { a.$('.llselect-trigger').click() })
+  assert.equal(a.$('#n').textContent, '2/1')
+})
+
+test('QUALITY-88: an ll-on-open error inside a digest goes to $exceptionHandler and the open still completes', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.x" ll-filterable="true" ll-on-open="vm.boom()"
+        ll-options="f for f in vm.fruits"></llselect-single></div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.boom = function () { throw new Error('boom') } },
+  })
+  // Inside a digest, like a controller method calling instance().open(): the
+  // $eval branch has no routing of its own, so the wrapper must route the error
+  // itself and let llselect's open() run to its end (focus into the filter).
+  a.scope.$apply(() => { a.$('.llselect-trigger').click() })
+  assert.equal(a.errors.length, 1)
+  assert.match(a.errors[0].message, /boom/)
+  const trigger = a.$('.llselect-trigger')
+  assert.equal(trigger.getAttribute('aria-expanded'), 'true', 'the open completed')
+  assert.equal(trigger.ownerDocument.activeElement, a.$('.llselect-filter-input'), 'the tail of open() ran (focus moved to the filter input)')
+})
+
+test('QUALITY-88: ll-on-close does not run for the close that scope destruction triggers', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <div ng-if="vm.show">
+        <llselect-single ng-model="vm.x" ll-on-close="vm.closes = vm.closes + 1"
+          ll-options="f for f in vm.fruits"></llselect-single>
+      </div></div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.show = true; this.closes = 0 },
+  })
+  a.$('.llselect-trigger').click() // open
+  a.scope.$apply(() => { a.scope.vm.show = false }) // ng-if destroys the OPEN control: destroy() closes it
+  assert.equal(a.scope.vm.closes, 0, 'the teardown close must not evaluate the expression on a dying scope')
+})
+
+test('QUALITY-92: a NaN model value resolves to the NaN item (the wrapper matches the core default identity)', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.n" ll-options="n for n in vm.nums"></llselect-single></div>`,
+    controller: function () { this.nums = [NaN, 1]; this.n = NaN },
+  })
+  assert.equal(a.$('.llselect-trigger-content').textContent, 'NaN')
+})

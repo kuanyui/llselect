@@ -172,7 +172,7 @@
    * none on purpose - it is per-field copy, not a house style - and neither do
    * items / disabled, which are per-field state.
    */
-  function commonSettings(scope, attrs, parsed, config) {
+  function commonSettings(scope, attrs, parsed, config, exceptionHandler) {
     var settings = parsed.settings(scope)
     settings.ariaLabelledBy = attrs.llAriaLabelledby || null
     settings.ariaLabel = attrs.llAriaLabel || null
@@ -204,9 +204,36 @@
     if (filterFn) { settings.filterFn = filterFn }
     var triggerContentFn = evalFnAttr(scope, attrs, 'llTriggerContentFn')
     if (triggerContentFn) { settings.createTriggerContentElFn = triggerContentFn }
+    wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler)
+    wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler)
 
     settings.createTriggerArrowContentElFn = resolveArrow(arrow)
     return settings
+  }
+
+  /**
+   * ll-on-open / ll-on-close: an event expression, evaluated on EACH event
+   * (like ng-click), not once at link like the other ll-* attributes. llselect
+   * fires onOpen / onClose from its own pointer / keyboard handlers, outside
+   * any digest, so the expression runs through $apply; a programmatic open()
+   * from inside a digest must not nest one, hence the phase check. Inside a
+   * digest $eval has no error routing, so the catch mirrors $apply's - an
+   * expression error must not abort llselect's open() / close() midway.
+   */
+  function wireEventAttr(scope, attrs, name, settings, key, exceptionHandler) {
+    if (!attrs[name]) { return }
+    var expr = attrs[name]
+    // destroy() closes an open popup, and that close must not run the
+    // expression on a dying scope. This listener is registered before the
+    // directive's own $destroy listener (link calls commonSettings first), so
+    // it runs first.
+    var destroyed = false
+    scope.$on('$destroy', function () { destroyed = true })
+    settings[key] = function () {
+      if (destroyed) { return }
+      if (!scope.$root.$$phase) { scope.$apply(expr); return }
+      try { scope.$eval(expr) } catch (e) { exceptionHandler(e) }
+    }
   }
 
   /**
@@ -334,7 +361,7 @@
       this.$get = function () { return config }
     })
 
-    .directive('llselectSingle', ['$parse', 'llselectConfig', function ($parse, llselectConfig) {
+    .directive('llselectSingle', ['$parse', '$exceptionHandler', 'llselectConfig', function ($parse, $exceptionHandler, llselectConfig) {
       return {
         restrict: 'E',
         require: ['ngModel', 'llselectSingle'],
@@ -342,7 +369,7 @@
         link: function (scope, element, attrs, ctrls) {
           var ngModelCtrl = ctrls[0]
           var parsed = compileLlOptions($parse, attrs.llOptions)
-          var settings = commonSettings(scope, attrs, parsed, llselectConfig)
+          var settings = commonSettings(scope, attrs, parsed, llselectConfig, $exceptionHandler)
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
           if (resolveHighlight(scope, attrs, llselectConfig, settings)) {
@@ -386,7 +413,7 @@
       }
     }])
 
-    .directive('llselectMultiple', ['$parse', 'llselectConfig', function ($parse, llselectConfig) {
+    .directive('llselectMultiple', ['$parse', '$exceptionHandler', 'llselectConfig', function ($parse, $exceptionHandler, llselectConfig) {
       return {
         restrict: 'E',
         require: ['ngModel', 'llselectMultiple'],
@@ -394,7 +421,7 @@
         link: function (scope, element, attrs, ctrls) {
           var ngModelCtrl = ctrls[0]
           var parsed = compileLlOptions($parse, attrs.llOptions)
-          var settings = commonSettings(scope, attrs, parsed, llselectConfig)
+          var settings = commonSettings(scope, attrs, parsed, llselectConfig, $exceptionHandler)
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
           if (attrs.llTriggerDisplay) { settings.triggerDisplay = evalEnumAttr(scope, attrs, 'llTriggerDisplay') }
