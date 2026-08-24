@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
-import { LLSelectBase } from '../src/base.js'
+import { LLSelectBase, resetDuplicateItemsWarning } from '../src/base.js'
 
 // Concrete subclass purely so tests can instantiate the abstract base.
 class TestSelect<T> extends LLSelectBase<T> {}
@@ -17,6 +17,34 @@ test('target element becomes rootEl', () => {
   const target = mount()
   const inst = new TestSelect<string>(target)
   assert.equal(inst.rootEl, target)
+})
+
+test('MEDIUM-77: duplicate items under the default compareFn warn once per page', () => {
+  const warnings: unknown[][] = []
+  const orig = console.warn
+  console.warn = (...args: unknown[]) => { warnings.push(args) }
+  try {
+    resetDuplicateItemsWarning()
+    const item = { id: 1 }
+    const sel = new TestSelect<{ id: number }>(mount(), { ariaLabel: 'x' })
+    sel.setItems([item, item]) // same reference twice -> duplicate under identity
+    assert.equal(warnings.length, 1, 'a duplicate under the default compareFn must warn')
+    assert.match(String(warnings[0]![0]), /duplicate items/)
+    sel.setItems([item, item])
+    assert.equal(warnings.length, 1, 'warned once per page, not per call')
+  } finally { console.warn = orig }
+})
+
+test('MEDIUM-77: a custom compareFn is not scanned for duplicates (no warn)', () => {
+  const warnings: unknown[][] = []
+  const orig = console.warn
+  console.warn = (...args: unknown[]) => { warnings.push(args) }
+  try {
+    resetDuplicateItemsWarning()
+    const sel = new TestSelect<{ id: number }>(mount(), { ariaLabel: 'x', compareFn: (a, b) => a.id === b.id })
+    sel.setItems([{ id: 1 }, { id: 1 }]) // duplicate under the custom compareFn, but not scanned
+    assert.equal(warnings.length, 0, 'a custom compareFn must not be scanned for duplicates')
+  } finally { console.warn = orig }
 })
 
 test('rootEl has default root class', () => {

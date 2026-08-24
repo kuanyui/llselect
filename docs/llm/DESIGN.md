@@ -231,6 +231,8 @@ Rejected: a nested shape (`(T | { label, items: T[] })[]` or a second `setGroups
 | full control (subclass) | `createItemEl` (protected) | `createGroupEl` (protected) |
 | disabled | `itemDisabledFn(item)`   | `groupDisabledFn(key)`                  |
 
+Items must be UNIQUE under `compareFn` - it defines item identity and the selection is a set, so compareFn-equal items get stale selection DOM. `setItems` warns once per page under the DEFAULT `compareFn` (an O(n) Set check); a custom `compareFn` is not scanned (an O(n^2) check would tax large lists, per PERFORMANCE-31) and keeping its identity unique is the caller's job. `GroupKey` mirrors this under `groupKeyCompareFn`.
+
 Why this shape, in this codebase specifically:
 
 - **Single source of truth.** `items` stays the only data channel. A nested shape is a second write channel - exactly the select2 / choices.js dual-write pattern this project already rejects ("Settings vs methods" above).

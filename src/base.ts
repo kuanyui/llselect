@@ -543,6 +543,14 @@ export function resetUnnamedNameWarning(): void {
   warnedUnnamedName = false
 }
 
+/** Once-per-page guard for the duplicate-items warning. */
+let warnedDuplicateItems = false
+
+/** Package-internal test hook (not re-exported): reset the once-per-page duplicate-items warning. */
+export function resetDuplicateItemsWarning(): void {
+  warnedDuplicateItems = false
+}
+
 function createClassIdMap(prefix: string): LLSelectClassIdMap {
   const uniq = `${prefix}${++instanceCounter}`
   return {
@@ -1289,6 +1297,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Replace the item list.
    * - The input is shallow-copied; later external mutation does not affect
    *   the select.
+   * - Items MUST be unique under `compareFn` (it defines item identity, and the
+   *   selection is a set). Duplicates render stale selection DOM; the default
+   *   compareFn warns once per page, a custom compareFn is the caller's
+   *   responsibility (not scanned, to keep large lists cheap).
    * - If the popup is open, it re-renders now. While closed, the DOM is
    *   built lazily on the next `open()`.
    * - Subclasses may reconcile chosen-state via {@link onItemsChanged}
@@ -1297,10 +1309,24 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   public setItems(items: readonly T[]): void {
     this.items = items.slice()
+    this.warnOnDuplicateItems()
     this.gatheredItems = undefined
     if (this.filterActive) { this.recomputeFilteredItems() }
     if (this.opened) { this.renderPopupList() }
     this.onItemsChanged()
+  }
+
+  /**
+   * Warn (once per page, never throw) when the item list has duplicates under
+   * the DEFAULT compareFn - an O(n) Set check. A custom compareFn is documented
+   * only: an O(n^2) scan would tax large lists (see PERFORMANCE-31), and keeping
+   * its identity unique is the caller's responsibility.
+   */
+  private warnOnDuplicateItems(): void {
+    if (warnedDuplicateItems || this.settings.compareFn !== defaultCompareFn) { return }
+    if (new Set(this.items).size === this.items.length) { return }
+    warnedDuplicateItems = true
+    console.warn('llselect: duplicate items passed to setItems - items must be unique under compareFn (it defines item identity, and the selection is a set). Duplicates render stale selection state. (warned once per page)')
   }
 
   /**
