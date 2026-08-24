@@ -2,6 +2,23 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (user-reported, disabled tag x + stale demo build)
+
+- [x] **[MEDIUM-79] - an item-disabled but chosen chip's x still removed it (pointer path)**
+  - Symptom: with `itemDisabledFn` / `groupDisabledFn` marking a CHOSEN item disabled, its tag x removed it on click - a pointer user could re-toggle a disabled selection, violating A11Y.md "only user re-toggling is blocked". Keyboard was already safe (disabled rows carry no click handler).
+  - Cause: MEDIUM-59 guarded only the whole-control case (`isDisabled()`) in the tag x handler; `toggleItem` is deliberately disabled-blind (the programmatic channel), so the item-level gesture leaked. The popup row and choose-all paths already routed through `isItemEffectivelyDisabled`; only the tag x did not.
+  - Fix: the tag x handler also returns on `isItemEffectivelyDisabled(item)` (covers disabled groups), kept at the gesture layer so `toggleItem` stays native-parity disabled-blind. The disabled chip + its x are marked (`aria-disabled` + `tagDisabledClass`; themes grey it and set the x `pointer-events: none`) so the inert x reads as disabled, not broken. Clear stays a total wipe. multiple.ts `createTagEl` / `createTagRemoveButtonEl`, base.ts `classIdMap`, the five themes, A11Y.md Tags + Disabled.
+  - Verified: test/disabled.test.ts pins the item- and group-disabled pointer no-op, the enabled chip still removing, the `aria-disabled` + class marking, and the rerender flip (became-disabled -> inert -> re-enabled removes). Each failed on the pre-fix code first.
+  - Q: Why guard at the tag x handler, not inside `toggleItem`?
+    - A: `toggleItem` is the raw programmatic channel (setChosenItems, framework write-back) and must stay disabled-blind to match native `<select>`. The contract blocks USER re-toggling only, so the guard belongs at the gesture entry points - where the popup row already sits (no click handler on a disabled row).
+  - Q: Why mark the chip disabled (visible-but-inert) instead of dropping its x (option C)?
+    - A: Panel fork. Real-browser probes: native `<select multiple>` keeps a disabled selected option greyed-but-inert (the user can never remove it), select2 and react-select both still remove it (select2 is this same bug), antd drops the control. The repo bases disabled on native (QUALITY-40), so the x stays visible-but-inert and greyed; dropping it would contradict llselect's own whole-control visible-but-inert rule and reflow the tag strip when `itemDisabledFn` flips (control-stability rule). A toggle setting was rejected (Simplicity First; overriding `createTagRemoveButtonEl` already covers the drop-the-x taste). Claude panel members converged (Opus 4.8 / Opus 5 / Fable 5); the Codex members were not reachable in this environment.
+- [x] **[QUALITY-80] - "the control-disabled tag x still works" was a stale build, not a code defect**
+  - Symptom: the user saw a disabled control's tag x still mutating the selection in the demo. The src fix (MEDIUM-59) was in and unit-green, but `dist/` and `public/dist/` were built before it, so `make server` served the un-guarded bundle.
+  - Fix: rebuilt (`npm run build` + `build:site`); no source change.
+  - Q: The guard for this lesson?
+    - A: A green `npm test` says nothing about what `make server` serves - `public/` only regenerates on `build:site`. When a "shipped fix does not work" report arrives, diff the built bundle against src before touching source.
+
 ## review (five-model panel over two independent full-repo reviews)
 
 Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex gpt-5.6-sol at max effort). Convergent findings were fixed outright. Single-source findings went to a five-model panel (Fable 5, Opus 5, Opus 4.8, Codex Sol, Codex ChatGPT 5.5) voting CERTAIN-BUG / NEEDS-HUMAN-DECISION / REJECT per finding. Each round of fixes was then re-reviewed, and findings on the fixes were fixed in turn. Everything else in those rounds was explicitly judged sound by the re-reviewers. Open entries below await the user's ruling.
@@ -48,6 +65,8 @@ Process: two independent full-repo reviews (a clean Claude Opus 5 session; Codex
   - Symptom: with `setDisabled(true)`, the tag remove buttons and the clear button still mutated the selection - they sit in the trigger, reachable while closed, and only open/keyboard were guarded.
   - Fix: both clicks no-op while disabled (buttons stay visible so the value stays readable). A11Y.md Disabled / Tags / Clear sections and both builder docstrings state it; demo 9.3 shows it.
   - Verified: disabled-buttons test, including the re-enabled path.
+  - Q: MEDIUM-79 later found this incomplete - an item-disabled chosen chip's x still removed it. Why did the original miss it?
+    - A: This fix and its only test covered one axis, whole-control `isDisabled()`. The other axis - an item-level disabled (`itemDisabledFn` / `groupDisabledFn`) CHOSEN item - is a separate gesture path that was never written down or tested. Lesson: "disabled" has two axes here; a guard added for one must be checked against the other.
 - [x] **[QUALITY-60] - bridge `on-select` / `on-remove` ran outside a digest**
   - Symptom: scope writes in the app's callbacks stayed invisible until an unrelated digest.
   - Fix: `applyOnScope` wrapper (`$$phase`-safe) around `fireSelectRemove` and the single-mode `on-select`.

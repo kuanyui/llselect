@@ -476,6 +476,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   /**
    * Build one removable tag chip: its content (from `createTagContentEl`, else
    * plain `itemToString`) plus its remove (x) button (from `createTagRemoveButtonEl`).
+   * A chip whose item is effectively disabled gets `aria-disabled="true"` +
+   * `tagDisabledClass`, and its x turns inert - mirroring a disabled option row.
    * Override for full control of the chip container; override the two sub-parts
    * for content-only / remove-button-only changes.
    * @group Subclassing: rendering
@@ -491,15 +493,22 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     } else {
       tag.appendChild(content)
     }
+    if (this.isItemEffectivelyDisabled(item)) {
+      // Mirror createItemEl's disabled marking: aria-disabled + the class grey the
+      // chip so its inert x reads as disabled, not broken (A11Y.md Tags).
+      tag.setAttribute('aria-disabled', 'true')
+      tag.classList.add(this.classIdMap.tagDisabledClass)
+    }
     tag.appendChild(this.createTagRemoveButtonEl(item))
     return tag
   }
 
   /**
    * Build one chip's remove (x) button. The library owns the button + its click
-   * (`stopPropagation` so it never toggles the popup, then `toggleItem`; a
-   * no-op while the control is disabled) + `tabindex="-1"` + `aria-label`
-   * (from `itemToTagRemoveButtonAriaLabel`);
+   * (`stopPropagation` so it never toggles the popup, then `toggleItem`; a no-op
+   * while the whole control OR the item itself is disabled) + `tabindex="-1"` +
+   * `aria-label` (from `itemToTagRemoveButtonAriaLabel`). An effectively-disabled
+   * item's button also gets `aria-disabled="true"`.
    * `createTagRemoveButtonContentElFn` optionally fills the icon, else the theme's CSS glyph.
    * Mirrors the clear button's `createTriggerClearButtonEl`. Override for full control of
    * the button element.
@@ -511,13 +520,17 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     btn.className = this.classIdMap.tagRemoveButtonClass
     btn.tabIndex = -1
     btn.setAttribute('aria-label', this.itemToTagRemoveButtonAriaLabel(item))
+    if (this.isItemEffectivelyDisabled(item)) { btn.setAttribute('aria-disabled', 'true') }
     const icon = this.createTagRemoveButtonContentEl(item)
     if (icon !== null) { btn.appendChild(icon) }
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
-      // Same disabled guard as the clear button: tag chips sit in the
-      // trigger, reachable while the control is disabled.
+      // Tag chips sit in the trigger, reachable while the whole control or the
+      // item itself is disabled. Both block removal (A11Y.md: only user
+      // re-toggling is blocked; the item stays chosen). toggleItem stays
+      // disabled-blind so the programmatic channel matches native <select>.
       if (this.isDisabled()) { return }
+      if (this.isItemEffectivelyDisabled(item)) { return }
       this.withUserChangeSource(() => this.toggleItem(item))
     })
     return btn

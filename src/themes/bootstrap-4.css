@@ -239,6 +239,15 @@
 
 .llselect-tag-remove-button:hover { opacity: 1; }
 
+/* A disabled item's chip: greyed, its x inert (the JS click guard is the real block). */
+.llselect-tag-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.llselect-tag-disabled .llselect-tag-remove-button {
+  pointer-events: none;
+}
+
 /* --- clear button (clearable) -------------------------------- */
 /* :empty::before draws the x only when createTriggerClearButtonContentElFn gave no icon. */
 

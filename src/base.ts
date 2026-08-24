@@ -473,6 +473,12 @@ export interface LLSelectClassIdMap {
   /** Class on a tag's remove (x) button; `aria-label` names the item, `tabindex="-1"`. */
   tagRemoveButtonClass: string
   /**
+   * Class on a tag chip whose item is effectively disabled (which also carries
+   * `aria-disabled="true"`, and whose x button no longer removes it). Mirrors
+   * `itemDisabledClass`; a stable hook for greying the inert chip.
+   */
+  tagDisabledClass: string
+  /**
    * Class added to `rootEl` while the popup is open. Use it as a CSS hook
    * for open-state styling (also available as `[data-state='open']` on the
    * trigger).
@@ -554,6 +560,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     tagsClass: `${prefix}-tags`,
     tagClass: `${prefix}-tag`,
     tagRemoveButtonClass: `${prefix}-tag-remove-button`,
+    tagDisabledClass: `${prefix}-tag-disabled`,
     openClass: `${prefix}-open`,
     triggerId: `${uniq}-trigger`,
     labelId: `${uniq}-label`,

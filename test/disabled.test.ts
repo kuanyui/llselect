@@ -223,3 +223,64 @@ test('a rerender moves focus off a row that BECAME disabled in place', () => {
   const activeId = sel.triggerEl.getAttribute('aria-activedescendant')
   assert.equal(activeId && document.getElementById(activeId)?.textContent, 'a', 'aria-activedescendant must follow')
 })
+
+// --- item-disabled + tags: the chip x is inert and marked --------------------
+
+function tagRemoveButtons(sel: LLSelectMultiple<string>): HTMLElement[] {
+  return Array.from(sel.triggerEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`))
+}
+
+test('item-disabled: the tag x does not remove the item, but an enabled chip still does', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x', triggerDisplay: 'tags', itemDisabledFn: i => i === 'a',
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a', 'b']) // 'a' is chosen AND disabled -> its chip must be inert
+  const [xa, xb] = tagRemoveButtons(sel)
+  xa!.click()
+  assert.deepEqual([...sel.getChosenItems()], ['a', 'b'], 'a disabled item must not be removable via its chip x')
+  xb!.click()
+  assert.deepEqual([...sel.getChosenItems()], ['a'], 'an enabled chip x still removes')
+})
+
+test('group-disabled: the tag x does not remove a chosen item in a disabled group', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x', triggerDisplay: 'tags',
+    itemToGroupKeyFn: i => (i === 'a' ? 'g' : null),
+    groupDisabledFn: k => k === 'g',
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a', 'b'])
+  tagRemoveButtons(sel)[0]!.click() // 'a' sits in the disabled group
+  assert.deepEqual([...sel.getChosenItems()], ['a', 'b'], 'a group-disabled item must not be removable via its chip x')
+})
+
+test('item-disabled: the chip and its x carry aria-disabled + the disabled class', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x', triggerDisplay: 'tags', itemDisabledFn: i => i === 'a',
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a', 'b'])
+  const tags = Array.from(sel.triggerEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`))
+  assert.equal(tags[0]!.getAttribute('aria-disabled'), 'true', 'the disabled chip is marked')
+  assert.ok(tags[0]!.classList.contains(sel.classIdMap.tagDisabledClass), 'the disabled chip carries the class')
+  assert.equal(tags[1]!.hasAttribute('aria-disabled'), false, 'the enabled chip is not marked')
+  assert.equal(tagRemoveButtons(sel)[0]!.getAttribute('aria-disabled'), 'true', 'the disabled chip x is marked')
+})
+
+test('item-disabled flips on rerender: a became-disabled chip x turns inert, and back', () => {
+  let disabled = false
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x', triggerDisplay: 'tags', itemDisabledFn: i => disabled && i === 'a',
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a', 'b'])
+  disabled = true
+  sel.rerender()
+  tagRemoveButtons(sel)[0]!.click()
+  assert.deepEqual([...sel.getChosenItems()], ['a', 'b'], 'the became-disabled chip x is now inert')
+  disabled = false
+  sel.rerender()
+  tagRemoveButtons(sel)[0]!.click()
+  assert.deepEqual([...sel.getChosenItems()], ['b'], 'the re-enabled chip x removes again')
+})
