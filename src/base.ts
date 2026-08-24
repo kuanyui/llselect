@@ -1459,7 +1459,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - If the button is rebuilt and the old one held focus - on it or inside
    *   its icon - the rebuilt BUTTON gets it.
    * - If the builder returned the same element, nothing was rebuilt, and focus
-   *   goes back to the node that held it.
+   *   goes back to the node that held it, if that node is still inside the
+   *   button; otherwise focus stays on the button.
    * - `setItems` runs `renderTriggerContent` alone, because only the content
    *   reads the list (the multiple count total, a custom
    *   `createTriggerContentElFn`'s `items`).
@@ -2341,9 +2342,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * The element holding DOM focus if that is `el` or a descendant, else `null`.
-   * Read from `el`'s own root: inside a shadow root `document.activeElement`
-   * is the shadow HOST, so the answer must come from the `ShadowRoot`'s
-   * `activeElement` (the `Document`'s otherwise).
+   * - Read from `el`'s own root: inside a shadow root `document.activeElement`
+   *   is the shadow HOST, so the answer must come from the `ShadowRoot`'s
+   *   `activeElement` (the `Document`'s otherwise).
+   * - The result can sit inside an open shadow root under `el`, so
+   *   `el.contains()` may reject it; use `containsComposed` for that check.
+   * - A CLOSED shadow root is opaque, so its host is returned.
    */
   private focusedElementIn(el: Element): Element | null {
     const active = (el.getRootNode() as Partial<DocumentOrShadowRoot>).activeElement ?? null
@@ -2360,11 +2364,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     let cursor: Node | null = node
     while (cursor !== null) {
       if (el.contains(cursor)) { return true }
-      // A detached element is its own root, and an `<a>` / `<area>` root has
-      // a STRING `host` (its URL host), so only a Node-valued host is a
-      // shadow host worth climbing to.
-      const host: unknown = (cursor.getRootNode() as { host?: unknown }).host
-      cursor = host instanceof Node ? host : null
+      // Only a ShadowRoot (a DocumentFragment, nodeType 11) has a host worth
+      // climbing to. A detached element is its own root, and an `<a>` /
+      // `<area>` root carries a STRING `host` (its URL host) - never follow
+      // that. nodeType, not instanceof, so a foreign-realm root still counts.
+      const root = cursor.getRootNode()
+      cursor = root.nodeType === 11 ? (root as Partial<ShadowRoot>).host ?? null : null
     }
     return false
   }
@@ -2387,7 +2392,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *    the new button, and the reparenting must not move the focused node.
    * 3. Build the new button.
    * 4. Insert it.
-   * 5. If step 1 found focus, move focus to the new button.
+   * 5. If step 1 found focus, move focus to the new button - or, if that
+   *    element cannot take focus, to the trigger.
    * 6. Only then remove the old one.
    * Why this order:
    * - Removing the old button first drops DOM focus to `<body>` in every
@@ -2425,7 +2431,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       return
     }
     old.before(next)
-    if (focused !== null) { next.focus({ preventScroll: true }) }
+    if (focused !== null) {
+      next.focus({ preventScroll: true })
+      // An override may return a non-focusable element; then the old button
+      // still holds focus and removing it would drop focus to <body>. Keep it
+      // in the widget instead.
+      if (this.focusedElementIn(next) === null) { this.triggerEl.focus({ preventScroll: true }) }
+    }
     old.remove()
   }
 

@@ -454,3 +454,24 @@ test('QUALITY-89: a detached <a> icon (a string `host` on its own root) does not
   assert.equal(oldIcon.isConnected, false)
   assert.equal(document.activeElement, memo, 'the detached anchor cannot take focus back, so it stays on the button')
 })
+
+test('QUALITY-89: a builder override that returns a non-focusable element keeps focus in the widget (on the trigger)', () => {
+  class Plain extends LLSelectSingle<string> {
+    protected override createTriggerClearButtonEl(): HTMLElement {
+      const el = document.createElement('span') // no tabindex: cannot take focus
+      el.className = this.classIdMap.triggerClearButtonClass
+      return el
+    }
+  }
+  const sel = new Plain(mount(), { clearable: true, ariaLabel: 'x' })
+  // The first (construction) render already installed the span; give the
+  // trigger a focusable stand-in for "the old button held focus" by focusing
+  // the span's predecessor state: use the base button first, via rerender().
+  const old = sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  old.tabIndex = -1 // make THIS instance focusable so the scenario is reachable
+  old.focus()
+  assert.equal(document.activeElement, old)
+  sel.rerender() // builds a fresh non-focusable span and removes the focused old one
+  assert.notEqual(document.activeElement, document.body, 'focus must not drop to <body>')
+  assert.equal(document.activeElement, sel.triggerEl, 'it moves to the trigger instead')
+})
