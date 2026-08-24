@@ -246,7 +246,7 @@
   cursor: not-allowed;
 }
 .llselect-tag-disabled .llselect-tag-remove-button {
-  pointer-events: none;
+  cursor: not-allowed;
 }
 
 /* --- clear button (clearable) --------------------------------- */

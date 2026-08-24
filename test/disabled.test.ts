@@ -284,3 +284,42 @@ test('item-disabled flips on rerender: a became-disabled chip x turns inert, and
   tagRemoveButtons(sel)[0]!.click()
   assert.deepEqual([...sel.getChosenItems()], ['b'], 'the re-enabled chip x removes again')
 })
+
+test('group-disabled: the chip and its x carry aria-disabled + the disabled class', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x', triggerDisplay: 'tags',
+    itemToGroupKeyFn: i => (i === 'a' ? 'g' : null),
+    groupDisabledFn: k => k === 'g',
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a', 'b'])
+  const tags = Array.from(sel.triggerEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`))
+  assert.equal(tags[0]!.getAttribute('aria-disabled'), 'true', 'the group-disabled chip is marked')
+  assert.ok(tags[0]!.classList.contains(sel.classIdMap.tagDisabledClass), 'the group-disabled chip carries the class')
+  assert.equal(tagRemoveButtons(sel)[0]!.getAttribute('aria-disabled'), 'true', 'the group-disabled chip x is marked')
+})
+
+test('toggleItem stays disabled-blind: the programmatic channel still removes a disabled chosen item', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x', triggerDisplay: 'tags', itemDisabledFn: i => i === 'a',
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a', 'b'])
+  sel.toggleItem('a') // programmatic call, not a user gesture - native <select> parity: no disabled restriction
+  assert.deepEqual([...sel.getChosenItems()], ['b'], 'toggleItem is disabled-blind; only USER re-toggling is blocked')
+})
+
+// jsdom .click() dispatches straight to the button, so this pins the stopPropagation
+// contract, NOT the CSS hit-testing (pointer-events must NOT be `none` - a real
+// coordinate click needs a browser; tracked in TODO.md "manual verification").
+test('item-disabled: clicking the chip x never opens the popup and never removes', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x', triggerDisplay: 'tags', itemDisabledFn: i => i === 'a',
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a', 'b'])
+  assert.equal(sel.isOpened(), false, 'precondition: closed')
+  tagRemoveButtons(sel)[0]!.click()
+  assert.equal(sel.isOpened(), false, 'a disabled chip x must not open the popup')
+  assert.deepEqual([...sel.getChosenItems()], ['a', 'b'], 'and must not remove the item')
+})
