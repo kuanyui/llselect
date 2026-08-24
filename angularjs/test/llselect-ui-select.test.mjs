@@ -37,6 +37,16 @@ test('links, builds llselect DOM, and strips its own template slots', () => {
   assert.equal(a.$('ui-llselect ui-llselect-choices'), null, '<ui-llselect-choices> survived into the DOM')
 })
 
+test('a host aria-labelledby is forwarded into the trigger name (MEDIUM-70)', () => {
+  const a = app('aria-labelledby="lbl-id"')
+  const trigger = a.$('ui-llselect .llselect-trigger')
+  const labelledby = trigger.getAttribute('aria-labelledby') || ''
+  assert.ok(
+    labelledby.split(/\s+/).includes('lbl-id'),
+    `trigger aria-labelledby ("${labelledby}") must reference the host's lbl-id`
+  )
+})
+
 test('name + required work here too', () => {
   const a = app()
   assert.ok(a.scope.f.person, 'myForm.person is not registered')

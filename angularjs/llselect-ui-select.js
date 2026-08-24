@@ -264,8 +264,11 @@
     }
 
     var settings = {
-      // aria-label is the HTML-native way to name the field; title keeps the
-      // ui-select-parity mapping (its templates feed aria labels from title).
+      // aria-labelledby (the host attribute, forwarded verbatim) names the field
+      // by reference and wins over aria-label per ARIA; aria-label is the
+      // HTML-native name; title keeps the ui-select-parity mapping (its templates
+      // feed aria labels from title). The core name ladder picks labelledby first.
+      ariaLabelledBy: attrs.ariaLabelledby || null,
       ariaLabel: attrs.ariaLabel || attrs.title || null,
       itemToStringFn: itemTextFn
         ? function (item) { return String(itemTextFn(scope, locals(item))) }

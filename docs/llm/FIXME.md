@@ -112,9 +112,10 @@ Open items from the panel, awaiting the user's ruling:
   - Symptom: `ll-trigger-display="tags"` (inner quotes dropped) $eval'd to undefined and silently became the default 'count'. angularjs/llselect-angularjs.js.
   - Fix: `evalEnumAttr` (mirrors `evalFnAttr`) wraps the `$eval` for `ll-trigger-display` and `ll-popup-width-policy`; an undefined result `console.warn`s (naming the attribute, its value, and the inner-quotes fix) and never throws - the default stays a working control. The ui-select bridge hardcodes `triggerDisplay = 'tags'`, so it has no such attribute.
   - Verified: angularjs test asserts the warn fires for `ll-trigger-display="tags"`.
-- [ ] **[MEDIUM-70] - ui bridge has no ariaLabelledBy / labelEl path**
-  - Symptom: only `aria-label` / `title` map to a name. angularjs/llselect-ui-select.js:268.
-  - Proposed: forward the host's `aria-labelledby` attribute verbatim; no new vocabulary.
+- [x] **[MEDIUM-70] - ui bridge had no ariaLabelledBy path**
+  - Symptom: only `aria-label` / `title` mapped to a name. angularjs/llselect-ui-select.js.
+  - Fix: the host's `aria-labelledby` attribute is forwarded verbatim to `settings.ariaLabelledBy`; the core name ladder picks it over `aria-label` per ARIA. No new vocabulary. labelEl stays out - ui-select has no label-element concept, and `aria-labelledby` is the by-reference path.
+  - Verified: ui-select test asserts a host `aria-labelledby` reaches the trigger's name chain.
 - [ ] **[MEDIUM-71] - the no-results live region is rewritten identically on every keystroke**
   - Symptom: `role="status"` content re-set while visible risks repeated announcements (AT-dependent; A11Y.md says announced once on appearance). src/base.ts:2384.
   - Proposed: skip the write when the rendered text is unchanged.
