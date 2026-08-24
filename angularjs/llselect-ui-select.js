@@ -377,10 +377,13 @@
 
     function fireSelectRemove(items, previous) {
       // Membership by the bridge's own identity (settings.compareFn: the
-      // track-by key, else angular.equals), never indexOf - so a NaN item or
-      // a structurally equal reload object counts as the same item here too.
+      // track-by key, else angular.equals), so a structurally equal reload
+      // object counts as the same item here too. `includes` (SameValueZero,
+      // so NaN included) answers first: retained items keep their reference
+      // between `previous` and `items`, and a pairwise angular.equals scan
+      // over every retained item would be O(k^2) deep compares per toggle.
       var has = function (list, item) {
-        return list.some(function (other) { return settings.compareFn(other, item) })
+        return list.includes(item) || list.some(function (other) { return settings.compareFn(other, item) })
       }
       if (onSelectFn) {
         items.forEach(function (item) {

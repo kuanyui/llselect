@@ -44,7 +44,7 @@ select as label group by group disable when disable for (key, value) in collecti
 | 5 | array item name | the locals key every clause is evaluated against |
 | 6, 7 | object key / value names | **refused**: `(key, value) in object` is not supported |
 | 8 | collection | `setItems()` via `$watchCollection` |
-| 9 | `track by` | `compareFn`, as `(a, b) => trackBy(a) === trackBy(b)` |
+| 9 | `track by` | `compareFn`, as `(a, b) => sameValueZero(trackBy(a), trackBy(b))` (`===`, plus `NaN` equals `NaN`) |
 
 `displayFn` is `$parse(match[2] || match[1])` and `valueFn` is `$parse(match[2] ? match[1] : valueName)` - i.e. with no ` as `, group 1 IS the label. The directives reproduce that, so `c.name for c in colors` and `c as c.name for c in colors` behave as ngOptions does.
 

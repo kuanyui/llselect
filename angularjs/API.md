@@ -76,7 +76,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 | `select as` (group 1, when ` as ` is present) | no equivalent, by design |
 
 - `select as` is the ngModel value projection: "what does this item become in the model". Deliberately no llselect setting - the projection belongs to the app, and `ng-options` is the app stating it. (Also why the core has no `itemToValueFn`: reusing `itemToString` would conflate display with identity, so switching `uiTranslationPack` to another language would change your submitted values.)
-- `track by` is a per-item hash; `compareFn` is pairwise equality. Same semantic, different shape: `compareFn: (a, b) => trackBy(a) === trackBy(b)`.
+- `track by` is a per-item hash; `compareFn` is pairwise equality. Same semantic, different shape: `compareFn: (a, b) => sameValueZero(trackBy(a), trackBy(b))` - `===`, plus `NaN` equals `NaN`, the core's default identity rule.
 - `(key, value) in object` collections throw - pass an array (see [Not supported](#not-supported)).
 - `NG_OPTIONS_REGEXP` and its 9 capture groups are copied verbatim from `angular.js` (MIT, (c) 2010-2020 Google LLC) into `llselect-angularjs.js`; nothing else from AngularJS is copied.
 
