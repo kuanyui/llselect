@@ -2360,8 +2360,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     let cursor: Node | null = node
     while (cursor !== null) {
       if (el.contains(cursor)) { return true }
-      const root = cursor.getRootNode()
-      cursor = 'host' in root ? (root as ShadowRoot).host : null
+      // A detached element is its own root, and an `<a>` / `<area>` root has
+      // a STRING `host` (its URL host), so only a Node-valued host is a
+      // shadow host worth climbing to.
+      const host: unknown = (cursor.getRootNode() as { host?: unknown }).host
+      cursor = host instanceof Node ? host : null
     }
     return false
   }

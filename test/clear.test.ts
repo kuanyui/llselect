@@ -429,3 +429,28 @@ test('QUALITY-89: focus inside a shadow-rooted icon is handed back to the real e
   sel.rerender()
   assert.equal(host.shadowRoot!.activeElement, inner, 'handed back to the element that really held focus, not to its host')
 })
+
+test('QUALITY-89: a detached <a> icon (a string `host` on its own root) does not break the same-element focus hand-back', () => {
+  const target = mount()
+  let memo: HTMLElement | undefined
+  let icon: HTMLElement = document.createElement('a')
+  icon.tabIndex = -1
+  class Memoized extends LLSelectSingle<string> {
+    protected override createTriggerClearButtonEl(): HTMLElement {
+      if (memo === undefined) { memo = super.createTriggerClearButtonEl() }
+      memo.replaceChildren(icon)
+      return memo
+    }
+  }
+  const sel = new Memoized(target, { clearable: true, ariaLabel: 'x' })
+  sel.setItems(['a'])
+  sel.setChosenItem('a')
+  const oldIcon = icon
+  oldIcon.focus()
+  assert.equal(document.activeElement, oldIcon)
+  icon = document.createElement('a') // the next build detaches the focused anchor: its root is itself, with a string `host`
+  icon.tabIndex = -1
+  sel.rerender() // must not throw
+  assert.equal(oldIcon.isConnected, false)
+  assert.equal(document.activeElement, memo, 'the detached anchor cannot take focus back, so it stays on the button')
+})
