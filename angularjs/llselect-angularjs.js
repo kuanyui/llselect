@@ -144,17 +144,19 @@
   /**
    * $eval an enum-literal attribute (ll-trigger-display, ll-popup-width-policy).
    * The value is meant to be a QUOTED string literal ("'tags'"); the classic typo
-   * drops the inner quotes ("tags"), so $eval reads a non-existent scope property
-   * and yields undefined - which llselect would silently replace with the default.
-   * Warn (never throw: the default is still a working control).
-   * @returns the evaluated value (possibly undefined).
+   * drops the inner quotes. A valid enum value is always a string, so anything else
+   * is a typo: "tags" reads a non-existent scope property (undefined), while a
+   * dashed literal like "match-trigger" / "fit-content" $evals as subtraction to 0.
+   * Warn on any non-string (naming the attribute and re-quoting the given value as
+   * the fix); never throw - the default is still a working control.
+   * @returns the evaluated value (a valid string, or the non-string that warned).
    */
   function evalEnumAttr(scope, attrs, name) {
     var value = scope.$eval(attrs[name])
-    if (value === undefined) {
+    if (typeof value !== 'string') {
       console.warn('llselect-angularjs: ' + attrs.$attr[name] + '="' + attrs[name] +
-        '" evaluated to undefined; an enum literal needs inner quotes (e.g. ' +
-        attrs.$attr[name] + '="\'tags\'"). Falling back to the default.')
+        '" did not evaluate to a string; an enum literal needs inner quotes, e.g. ' +
+        attrs.$attr[name] + '="\'' + attrs[name] + '\'". Falling back to the default.')
     }
     return value
   }

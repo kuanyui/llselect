@@ -68,7 +68,12 @@ test('group by and disable when reach llselect', () => {
   assert.equal(a.$$('[name=user] .llselect-item-disabled').length, 1, 'expected Bob disabled')
 })
 
-test('an enum literal missing its inner quotes warns instead of silently defaulting', () => {
+// QUALITY-69: an enum literal that drops its inner quotes must warn (never throw).
+// ll-trigger-display="tags" $evals to undefined; ll-popup-width-policy="match-trigger"
+// $evals to 0 (AngularJS reads the `-` as subtraction), so the guard must reject any
+// non-string, not just undefined. ll-aria-label names the field so the unrelated
+// unnamed-widget warning stays out of the captured list.
+function bridgeWarnings(attr) {
   const warnings = []
   const orig = console.warn
   console.warn = (...args) => { warnings.push(args.join(' ')) }
@@ -77,18 +82,31 @@ test('an enum literal missing its inner quotes warns instead of silently default
       deps: ['llselect'],
       html: `
         <div ng-controller="C as vm">
-          <llselect-multiple name="t" ng-model="vm.m" ll-options="f for f in vm.fruits"
-            ll-trigger-display="tags"></llselect-multiple>
+          <llselect-multiple name="t" ng-model="vm.m" ll-aria-label="F"
+            ll-options="f for f in vm.fruits" ${attr}></llselect-multiple>
         </div>`,
       controller: function () { this.fruits = FRUITS.slice(); this.m = [] },
     })
   } finally {
     console.warn = orig
   }
-  assert.ok(
-    warnings.some(w => w.includes('ll-trigger-display') && w.includes('undefined')),
-    'a missing-quotes enum literal (ll-trigger-display="tags") must warn'
-  )
+  return warnings
+}
+
+test('QUALITY-69: ll-trigger-display="tags" (evals to undefined) warns', () => {
+  const w = bridgeWarnings('ll-trigger-display="tags"')
+  assert.ok(w.some(m => m.includes('ll-trigger-display')), 'a missing-quotes ll-trigger-display must warn')
+})
+
+test('QUALITY-69: ll-popup-width-policy="match-trigger" (evals to 0) warns', () => {
+  const w = bridgeWarnings('ll-popup-width-policy="match-trigger"')
+  assert.ok(w.some(m => m.includes('ll-popup-width-policy')),
+    'll-popup-width-policy="match-trigger" $evals to 0, not undefined, and must still warn')
+})
+
+test('QUALITY-69: a correctly-quoted enum literal does NOT warn', () => {
+  const w = bridgeWarnings(`ll-trigger-display="'tags'"`)
+  assert.ok(!w.some(m => m.includes('ll-trigger-display')), `a quoted "'tags'" must not warn`)
 })
 
 test('write-back gate: reloading items neither dirties the form nor rewrites the model', () => {
