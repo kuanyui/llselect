@@ -730,7 +730,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   protected changeSource: LLSelectChangeSource = 'api'
   private triggerArrowEl: HTMLElement
-  /** The clear button while `clearable`, else `null`; `rerender()` rebuilds it through `createTriggerClearButtonEl`. */
+  /** The clear button once a trigger render has built it (`clearable` only), else `null`; every later trigger render swaps it through `createTriggerClearButtonEl`. */
   private triggerClearButtonEl: HTMLElement | null = null
   private positioner: Positioner | undefined
   /**
@@ -1454,7 +1454,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - While `clearable` is on, the first run builds the clear button and every
    *   later run swaps it for a fresh one, through `createTriggerClearButtonEl`,
    *   like the arrow.
-   * - If the old clear button held focus, the rebuilt one gets it.
+   * - If the old clear button held focus - on it or inside its icon - the
+   *   rebuilt BUTTON gets it.
    * - `setItems` runs `renderTriggerContent` alone, because only the content
    *   reads the list (the multiple count total, a custom
    *   `createTriggerContentElFn`'s `items`).
@@ -2340,20 +2341,22 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * overridable builder) - so `rerender()` repairs an override that reads
    * subclass fields. Keeps DOM focus on the new button when the old one held it.
    * No-op without `clearable`.
-   * - Order matters: the new button is inserted and focused BEFORE the old one
-   *   is removed. Removing the old button first would drop DOM focus to
-   *   `<body>` in every engine, and, where the engine fires `focusout` on the
-   *   removal of a focused element, with `relatedTarget = null` - which the
-   *   open popup's focus-out guard reads as "focus left the widget". Moving
-   *   focus first makes the new button the `relatedTarget`, inside the root.
+   * - Order matters. The sequence is: read whether focus is on or inside the
+   *   old button; if so, park it on the old button itself (a content fn that
+   *   hands back the same icon element each time reparents that icon into the
+   *   new button, and the reparenting must not move the focused node); build
+   *   the new button; insert it; move focus to it; only then remove the old
+   *   one. Removing the old button first would drop DOM focus to `<body>` in
+   *   every engine, and, where the engine fires `focusout` on the removal of a
+   *   focused element, with `relatedTarget = null` - which the open popup's
+   *   focus-out guard reads as "focus left the widget". Moving focus first
+   *   makes the new button the `relatedTarget`, inside the root.
+   * - A builder override that returns the SAME element every time is allowed:
+   *   the element is kept in place and not removed.
    */
   private replaceTriggerClearButtonElInDom(): void {
     if (!this.settings.clearable) { return }
     const old = this.triggerClearButtonEl
-    // Read focus BEFORE building: a content fn that hands back the same icon
-    // element each time reparents it into the new button. Park focus on the
-    // old button itself first, so the reparenting never moves the focused
-    // node (an engine may fire focusout on that, with a null relatedTarget).
     const hadFocus = old !== null && this.isFocused(old)
     if (old !== null && hadFocus) { old.focus({ preventScroll: true }) }
     const next = this.createTriggerClearButtonEl()
@@ -2362,6 +2365,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.triggerArrowEl.before(next)
       return
     }
+    if (next === old) { return }
     old.before(next)
     if (hadFocus) { next.focus({ preventScroll: true }) }
     old.remove()

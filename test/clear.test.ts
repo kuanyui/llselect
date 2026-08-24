@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
+import { LLSelectBase } from '../src/base.js'
 import { LLSelectSingle } from '../src/single.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 
@@ -265,9 +266,10 @@ test('QUALITY-89: focus inside a custom clear-button icon still counts as the bu
 })
 
 test('QUALITY-89: a content fn that reuses one icon element keeps the focus hand-over (focus is read before the rebuild)', () => {
+  const target = mount() // before creating the icon: mount() installs the document
   const icon = document.createElement('span')
   icon.tabIndex = -1
-  const sel = new LLSelectSingle<string>(mount(), {
+  const sel = new LLSelectSingle<string>(target, {
     clearable: true,
     ariaLabel: 'x',
     createTriggerClearButtonContentElFn: () => icon, // the same node every time: the rebuild reparents it
@@ -281,4 +283,39 @@ test('QUALITY-89: a content fn that reuses one icon element keeps the focus hand
   const rebuilt = clearBtn(sel)!
   assert.equal(rebuilt.firstElementChild, icon, 'the icon moved into the rebuilt button')
   assert.equal(document.activeElement, rebuilt, 'focus follows the rebuilt button even though building it moved the focused icon')
+})
+
+test('QUALITY-89: a createTriggerClearButtonEl override that returns the same element every time keeps it in place', () => {
+  class Memoized extends LLSelectSingle<string> {
+    // No initializer on purpose: the first build runs inside super() (the
+    // LLSelectSingle constructor's first render), and a `= null` initializer
+    // would then wipe the memo once super() returns - the very trap the
+    // extender docs describe.
+    private button?: HTMLElement
+    protected override createTriggerClearButtonEl(): HTMLElement {
+      if (this.button === undefined) { this.button = super.createTriggerClearButtonEl() }
+      return this.button
+    }
+  }
+  const sel = new Memoized(mount(), { clearable: true, ariaLabel: 'x' })
+  const first = clearBtn(sel)!
+  sel.setItems(['a'])
+  sel.setChosenItem('a')
+  assert.equal(clearBtn(sel), first, 'the same element stays in the trigger')
+  assert.equal([...sel.triggerEl.children].indexOf(first), 1)
+  sel.rerender()
+  assert.equal(clearBtn(sel), first)
+  first.click()
+  assert.equal(sel.getChosenItem(), undefined, 'and it still clears')
+})
+
+test('QUALITY-89: a direct LLSelectBase subclass gets its clear button on its first trigger render, like the rest of the trigger', () => {
+  class Bare extends LLSelectBase<string> {
+    public paint(): void { this.renderTrigger() }
+  }
+  const sel = new Bare(mount(), { clearable: true, ariaLabel: 'x' })
+  assert.equal(clearBtn(sel), null, 'no render yet, no button (the trigger content is unrendered too)')
+  sel.paint()
+  assert.ok(clearBtn(sel))
+  assert.equal([...sel.triggerEl.children].indexOf(clearBtn(sel)!), 1)
 })
