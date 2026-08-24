@@ -16,6 +16,28 @@ test('initial state: empty chosen, placeholder, no aria-selected items', () => {
   assert.equal(sel.triggerContentEl.textContent, 'Pick')
 })
 
+test('PERFORMANCE-72: isChosen is correct and its default-compareFn Set invalidates on a chosen change', () => {
+  const a = { id: 1 }, b = { id: 2 }, c = { id: 3 }
+  const sel = new LLSelectMultiple<{ id: number }>(mount(), { ariaLabel: 'x' })
+  sel.setItems([a, b, c])
+  sel.setChosenItems([a])
+  assert.equal(sel.isChosen(a), true)
+  assert.equal(sel.isChosen(b), false)
+  sel.setChosenItems([a, b]) // chosen array replaced -> the memoized Set must rebuild
+  assert.equal(sel.isChosen(b), true, 'a chosen change must invalidate the cache')
+  assert.equal(sel.isChosen(c), false)
+  sel.toggleItem(a) // replaces the array again
+  assert.equal(sel.isChosen(a), false, 'toggleItem invalidates the cache')
+})
+
+test('PERFORMANCE-72: a custom compareFn still resolves isChosen by value (linear path)', () => {
+  const sel = new LLSelectMultiple<{ id: number }>(mount(), { ariaLabel: 'x', compareFn: (x, y) => x.id === y.id })
+  sel.setItems([{ id: 1 }, { id: 2 }])
+  sel.setChosenItems([{ id: 1 }])
+  assert.equal(sel.isChosen({ id: 1 }), true, 'a custom compareFn matches a fresh equal object')
+  assert.equal(sel.isChosen({ id: 2 }), false)
+})
+
 test('data-empty attribute toggles between placeholder and chosen state (multi)', () => {
   const sel = new LLSelectMultiple<string>(mount())
   assert.equal(sel.triggerEl.getAttribute('data-empty'), 'true')

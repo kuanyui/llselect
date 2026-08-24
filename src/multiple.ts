@@ -262,7 +262,24 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * @group Selection
    */
   public isChosen(item: T): boolean {
+    // Default (identity) compareFn: O(1) Set membership instead of a linear scan,
+    // so a multi popup render is O(visible), not O(visible x chosen). The Set is
+    // memoized and invalidated by the chosenItems array reference - every mutation
+    // replaces the array, never mutates in place (mirrors visibleItemsCache). A
+    // custom compareFn cannot hash, so it stays linear.
+    if (this.settings.compareFn === defaultCompareFn) { return this.chosenSet().has(item) }
     return this.chosenItems.some(c => this.settings.compareFn(c, item))
+  }
+
+  private chosenSetCache: { chosen: readonly T[], set: Set<T> } | null = null
+
+  /** Memoized Set of `chosenItems` for the default-compareFn `isChosen` fast path. */
+  private chosenSet(): Set<T> {
+    const cache = this.chosenSetCache
+    if (cache !== null && cache.chosen === this.chosenItems) { return cache.set }
+    const set = new Set(this.chosenItems)
+    this.chosenSetCache = { chosen: this.chosenItems, set }
+    return set
   }
 
   /**
