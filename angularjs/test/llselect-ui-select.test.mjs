@@ -484,11 +484,14 @@ test('repeated toggles with remove-selected="false" do not leak row scopes', () 
     walk(a.scope.$root)
     return n
   }
+  const cacheSize = () => Object.keys(a.ng.element.cache).length // jqLite's global element-data store
   a.$('ui-llselect .llselect-trigger').click()
   a.$$('ui-llselect .llselect-item')[0].click() // first toggle creates the chip + row scopes to compare against
   const baseline = countScopes()
+  const cacheBaseline = cacheSize()
   for (let i = 0; i < 6; i++) { a.$$('ui-llselect .llselect-item')[0].click() }
   assert.equal(countScopes(), baseline, 'partial row repaints must free the replaced rows\' scopes')
+  assert.equal(cacheSize(), cacheBaseline, 'the replaced rows\' jqLite data must go too (the core removes them natively)')
 })
 
 test('no track by: a reload with equal-but-fresh objects keeps ONE selection (ui-select parity via angular.equals)', () => {
@@ -554,7 +557,7 @@ test('single without track by: aria-selected and open-focus survive an equal-obj
   assert.ok(focused && focused.textContent.includes('Bob'), 'reopen must focus the chosen row, not the first-row fallback')
 })
 
-test('QUALITY-92: on-select membership is SameValueZero, so a NaN already chosen does not re-fire', () => {
+test('QUALITY-92: choosing a second item does not re-fire on-select for a NaN already chosen', () => {
   const a = boot({
     files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
     deps: ['llselect', 'llselect.uiCompat'],
@@ -616,10 +619,13 @@ test('MEDIUM-93: reloads with chips on screen do not leak trigger scopes (setIte
   }
   a.$('ui-llselect .llselect-trigger').click()
   a.$$('ui-llselect .llselect-item')[0].click() // one chip on screen
+  const cacheSize = () => Object.keys(a.ng.element.cache).length // jqLite's global element-data store
   const reload = () => { a.scope.$apply(() => { a.scope.vm.users = a.scope.vm.users.map((u) => ({ ...u })) }) }
   reload() // equal-but-fresh objects: the chosen reference swaps, the chip rebuilds
   const baseline = countScopes()
+  const cacheBaseline = cacheSize()
   for (let i = 0; i < 6; i++) { reload() }
   assert.equal(countScopes(), baseline, 'every trigger-content rebuild must free the previous chip scopes')
+  assert.equal(cacheSize(), cacheBaseline, 'and their jqLite data (natively removed elements never reach cleanData)')
   assert.equal(a.$$('ui-llselect .llselect-tag').length, 1)
 })

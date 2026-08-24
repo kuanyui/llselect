@@ -208,14 +208,23 @@
       ;(slot === 'trigger' ? triggerScopes : rowScopes).push({ s: s, el: el })
       return el
     }
+    // Destroy the scope AND drop the element's jqLite data. The core removes
+    // template DOM natively (replaceChildren / replaceWith), which bypasses
+    // jqLite's cleanData, so the global jqLite cache entry per compiled element
+    // (it holds the scope) would outlive the element. `.remove()` deallocs the
+    // whole subtree; the element is detached, or replaced right after, either way.
+    function releaseSlot(entry) {
+      entry.s.$destroy()
+      angular.element(entry.el).remove()
+    }
     var bridge = {
       rowIndex: 0,
       releaseRowScopes: function () {
-        for (var i = 0; i < rowScopes.length; i++) { rowScopes[i].s.$destroy() }
+        for (var i = 0; i < rowScopes.length; i++) { releaseSlot(rowScopes[i]) }
         rowScopes.length = 0
       },
       releaseTriggerScopes: function () {
-        for (var i = 0; i < triggerScopes.length; i++) { triggerScopes[i].s.$destroy() }
+        for (var i = 0; i < triggerScopes.length; i++) { releaseSlot(triggerScopes[i]) }
         triggerScopes.length = 0
       },
       // After a partial row replacement (multi toggle repaints ONE row), the
@@ -224,7 +233,7 @@
       releaseDetachedRowScopes: function () {
         for (var i = rowScopes.length - 1; i >= 0; i--) {
           if (!rowScopes[i].el.isConnected) {
-            rowScopes[i].s.$destroy()
+            releaseSlot(rowScopes[i])
             rowScopes.splice(i, 1)
           }
         }
