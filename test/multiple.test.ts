@@ -276,3 +276,25 @@ test('MEDIUM-93: setItems refreshes the trigger - the count total, and custom co
   assert.equal(contentRenders, contentBefore + 2, 'exactly one content render per setItems')
   assert.equal(arrowRenders, arrowBefore, 'setItems does not re-render the arrow')
 })
+
+test('MEDIUM-93: render counts per setItems branch - swap: content only; drop: the whole trigger', () => {
+  let content = 0
+  let arrow = 0
+  const sel = new LLSelectMultiple<{ id: number }>(mount(), {
+    ariaLabel: 'x',
+    compareFn: (a, b) => a.id === b.id,
+    createTriggerContentElFn: () => { content++; return null },
+    createTriggerArrowContentElFn: () => { arrow++; return null },
+  })
+  sel.setItems([{ id: 1 }, { id: 2 }])
+  sel.setChosenItems([{ id: 1 }])
+  const c0 = content
+  const a0 = arrow
+  sel.setItems([{ id: 1 }, { id: 2 }]) // fresh equal objects: a reference swap
+  assert.equal(content, c0 + 1, 'swap: exactly one content render')
+  assert.equal(arrow, a0, 'swap: no arrow render')
+  sel.setItems([{ id: 2 }]) // drops the chosen item: a value change, so the whole trigger
+  assert.equal(content, c0 + 2, 'drop: exactly one content render')
+  assert.equal(arrow, a0 + 1, 'drop: the arrow renders with the whole trigger')
+  assert.deepEqual(sel.getChosenItems(), [])
+})

@@ -1334,7 +1334,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   built lazily on the next `open()`.
    * - Both shipped variants re-render the trigger content from `onItemsChanged`
    *   (the multiple count total, custom content that reads `items`).
-   * - In `'tags'` mode that content render is one chip per chosen item.
+   * - With the default `'tags'` renderer that content render is one chip per
+   *   chosen item.
    * - Subclasses may reconcile chosen-state via {@link onItemsChanged}
    *   (e.g. single mode drops a chosen value that is no longer in the list).
    * @group Items

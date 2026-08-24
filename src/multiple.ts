@@ -719,8 +719,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *   arrow does not.
    * - Why: the count summary shows the list total, and a custom
    *   `createTriggerContentElFn` receives `items`.
-   * - In `'tags'` mode that is one chip per chosen item per `setItems`; a bulk
-   *   call, so acceptable.
+   * - With the default `'tags'` renderer that is one chip per chosen item per
+   *   `setItems`; a bulk call, so acceptable.
    * @group Subclassing: reactions
    */
   protected override onItemsChanged(): void {
