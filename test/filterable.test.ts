@@ -159,6 +159,18 @@ test('MEDIUM-71: a still-no-match keystroke does not rewrite the no-results regi
   assert.equal(msg.firstChild, nodeAfterFirst, 'unchanged no-results text must not be rewritten (same text node)')
 })
 
+test('MEDIUM-71: reopening a persistently-empty list re-announces (close resets the cache)', () => {
+  const sel = new LLSelectSingle<string>(mount(), { ariaLabel: 'x' })
+  sel.setItems([]) // intrinsically empty: no-results is always the shown state
+  sel.open()
+  const msg = sel.popupEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListNoResultsClass}`)!
+  const nodeFirstOpen = msg.firstChild
+  assert.ok(nodeFirstOpen, 'no-results is filled on first open')
+  sel.close()
+  sel.open() // reopen, still empty -> a genuine new appearance must re-announce
+  assert.notEqual(msg.firstChild, nodeFirstOpen, 'reopening an empty list must rewrite the no-results text (re-announce)')
+})
+
 test('custom filterFn is used when provided', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     filterable: true,

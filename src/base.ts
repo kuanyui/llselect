@@ -223,7 +223,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   real text - the status region announces its TEXT content).
    * - `null` (setting default, or returned): plain text from
    *   `uiTranslationPack.popupListNoResults`.
-   * Re-evaluated every time the message is shown (the query may differ).
+   * Re-evaluated every time the message is shown (the query may differ). The DOM
+   * is refreshed only when the resolved TEXT changes - the status region is keyed
+   * on text so it announces once, not per keystroke - so rich content whose visible
+   * markup varies while its text stays constant is not re-rendered.
    * @group Filtering
    */
   createPopupListNoResultsContentElFn: ((query: string) => HTMLElement | null) | null
@@ -1103,6 +1106,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.detachOutsideClick()
     this.detachFocusOut()
     this.popupListEl.replaceChildren()
+    // The no-results region hides with the popup; reset so a reopen with a
+    // still-empty list counts as a fresh appearance and re-announces.
+    this.lastNoResultsText = null
     if (this.popoverSupported) {
       try {
         this.popupEl.hidePopover()
