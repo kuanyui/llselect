@@ -123,7 +123,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Equality predicate for item values - return `true` when `a` and `b` are the
    * same item.
-   * - Required for non-primitive `T` (the default `===` compares references).
+   * - Required for non-primitive `T`. The default compares by identity:
+   *   `===`, except that `NaN` equals `NaN` (SameValueZero, the same rule
+   *   `Set` uses), so every code path agrees on what "the same item" means.
    * - Used for selection, dedup, and matching the chosen item back to the list.
    * - Symmetric: do not depend on which argument is the candidate vs the
    *   existing item.
@@ -341,14 +343,15 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Equality for two group keys; decides whether items share a group (both
    * the `gatherGroups` gather and the contiguous-run rendering use it).
-   * - `null` (default) = strict `===` (right for string / number keys).
+   * - `null` (default) = identity, the same rule as the default `compareFn`
+   *   (`===`, plus `NaN` equals `NaN`); right for string / number keys.
    * - Supply only when `GroupKey` is an object without usable reference identity.
    * - Mirrors `compareFn`, one level up.
    * @group Grouping
    */
   groupKeyCompareFn: ((a: GroupKey, b: GroupKey) => boolean) | null
   /**
-   * Group key -> the header's display text. The i18n seam: keep keys stable,
+   * Group key -> the header's display text. The i18n customization point: keep keys stable,
    * translate here.
    * - `null` (default) = `String(groupKey)`.
    * @group Grouping
@@ -521,9 +524,13 @@ const DEFAULT_PREFIX = 'llselect'
 
 let instanceCounter = 0
 
-/** Package-internal (not re-exported): subclasses detect it to pick fast paths. */
+/**
+ * Package-internal (not re-exported): subclasses detect it to pick fast paths.
+ * SameValueZero (`===` plus `NaN` equals `NaN`), matching the `Set` those fast
+ * paths use - `===` alone let a `NaN` item be chosen twice (QUALITY-92).
+ */
 export function defaultCompareFn<T>(a: T, b: T): boolean {
-  return a === b
+  return a === b || (a !== a && b !== b)
 }
 
 /**
@@ -1327,8 +1334,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * the DEFAULT compareFn - an O(n) Set check. A custom compareFn is documented
    * only: an O(n^2) scan would tax large lists (see PERFORMANCE-31), and keeping
    * its identity unique is the caller's responsibility.
-   * - The Set is SameValueZero, so a repeated `NaN` item warns even though `===`
-   *   would not call it a duplicate - an absurd item value, not worth special-casing.
+   * - The Set is SameValueZero, and so is the default compareFn, so a repeated
+   *   `NaN` item counts as a duplicate on both sides.
    */
   private warnOnDuplicateItems(): void {
     if (warnedDuplicateItems || this.settings.compareFn !== defaultCompareFn) { return }
@@ -1593,7 +1600,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * already-contiguous list.
    */
   private computePopupSegments(list: readonly T[], els: HTMLElement[]): PopupListSegment<T, GroupKey>[] {
-    const keyEq = this.settings.groupKeyCompareFn ?? ((a: GroupKey, b: GroupKey) => a === b)
+    const keyEq = this.settings.groupKeyCompareFn ?? defaultCompareFn
     const segments: PopupListSegment<T, GroupKey>[] = []
     const closedKeys: GroupKey[] = []
     let groupIndex = 0

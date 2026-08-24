@@ -19,8 +19,9 @@
  *
  * @param items - the item list to gather
  * @param itemToGroupKeyFn - item to group key; `null` = the item is in no group
- * @param groupKeyCompareFn - key equality; `null` / omitted = strict `===`
- *   (same contract as the `groupKeyCompareFn` setting)
+ * @param groupKeyCompareFn - key equality; `null` / omitted = identity (`===`,
+ *   plus `NaN` equals `NaN` - the rule the internal `Map` uses; same contract
+ *   as the `groupKeyCompareFn` setting)
  * @group Grouping
  */
 export function gatherItemsByGroupKey<T, GroupKey = string>(
@@ -35,7 +36,7 @@ export function gatherItemsByGroupKey<T, GroupKey = string>(
   const seenMap = eq === null ? new Map<GroupKey, true>() : null
   const seenList: GroupKey[] = []
   const hasSeen = (k: GroupKey): boolean => (seenMap !== null ? seenMap.has(k) : seenList.some(s => eq!(s, k)))
-  const keyEquals = (a: GroupKey, b: GroupKey): boolean => (eq !== null ? eq(a, b) : a === b)
+  const keyEquals = (a: GroupKey, b: GroupKey): boolean => (eq !== null ? eq(a, b) : a === b || (a !== a && b !== b))
 
   // Pass 1, detect only (no per-item allocation): contiguous means every
   // non-null key either equals the previous item's key or was never seen.

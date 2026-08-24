@@ -269,9 +269,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     // so a multi popup render is O(visible), not O(visible x chosen). The Set is
     // memoized and invalidated by the chosenItems array reference - every mutation
     // replaces the array, never mutates in place (mirrors visibleItemsCache). A
-    // custom compareFn cannot hash, so it stays linear. (SameValueZero: isChosen(NaN)
-    // is true if a NaN item is chosen where === says false - an absurd item value,
-    // consistent with setChosenItems' own Set dedup.)
+    // custom compareFn cannot hash, so it stays linear. The Set is SameValueZero,
+    // and so is defaultCompareFn, so NaN behaves the same on both paths.
     if (this.settings.compareFn === defaultCompareFn) { return this.chosenSet().has(item) }
     return this.chosenItems.some(c => this.settings.compareFn(c, item))
   }

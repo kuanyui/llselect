@@ -36,6 +36,9 @@
    * llselect equivalent by design: it is the ngModel value projection, and the
    * app (not the library) declares it - exactly what ngOptions does.
    */
+  /** SameValueZero - the core default compareFn's rule (NaN equals NaN). */
+  function sameValueZero(a, b) { return a === b || (a !== a && b !== b) }
+
   function compileLlOptions($parse, expression) {
     var m = String(expression || '').match(NG_OPTIONS_REGEXP)
     if (!m) {
@@ -80,7 +83,7 @@
         for (var i = 0; i < items.length; i++) {
           var hit = selectAsFn
             ? selectAsFn(scope, locals(items[i])) === value
-            : (trackByFn ? trackByFn(scope, locals(items[i])) === valueKey : items[i] === value)
+            : (trackByFn ? trackByFn(scope, locals(items[i])) === valueKey : sameValueZero(items[i], value))
           if (hit) { return items[i] }
         }
         return undefined
