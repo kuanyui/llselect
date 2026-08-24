@@ -1460,7 +1460,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   its icon - the rebuilt BUTTON gets it.
    * - If the builder returned the same element, nothing was rebuilt, and focus
    *   goes back to the node that held it, if that node is still inside the
-   *   button; otherwise focus stays on the button.
+   *   button and can take focus; otherwise focus stays on the button.
    * - `setItems` runs `renderTriggerContent` alone, because only the content
    *   reads the list (the multiple count total, a custom
    *   `createTriggerContentElFn`'s `items`).
