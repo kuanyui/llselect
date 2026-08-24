@@ -2294,11 +2294,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - `createTriggerClearButtonContentElFn` optionally fills the icon; else the
    *   theme's CSS glyph draws it.
    * - The theme hides the button via `data-empty` while nothing is chosen.
-   * - It runs on every trigger render (`renderTrigger`). The first run is the
-   *   `LLSelectSingle` / `LLSelectMultiple` constructor's render, right after
-   *   `super()` and before a FURTHER subclass's field initializers; it builds
-   *   the button. Every later render (a value change, `setPlaceholder`,
-   *   `setUiTranslationPack`, `rerender()`) swaps it in place.
+   * - It runs on every trigger render (`renderTrigger`).
+   * - The first run builds the button. That run is the `LLSelectSingle` /
+   *   `LLSelectMultiple` constructor's render, right after `super()`.
+   * - That first run happens before a FURTHER subclass's field initializers.
+   * - Every later run (a value change, `setPlaceholder`,
+   *   `setUiTranslationPack`, `rerender()`) swaps the button in place.
    * - Like the arrow, the element is not kept across renders. Put nothing on
    *   it from outside; customize it here.
    * - An override that reads subclass fields calls `rerender()` at the end of
@@ -2341,18 +2342,21 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * overridable builder) - so `rerender()` repairs an override that reads
    * subclass fields. Keeps DOM focus on the new button when the old one held it.
    * No-op without `clearable`.
-   * - Order matters. The sequence is: read whether focus is on or inside the
-   *   old button; if so, park it on the old button itself (a content fn that
-   *   hands back the same icon element each time reparents that icon into the
-   *   new button, and the reparenting must not move the focused node); build
-   *   the new button; insert it; move focus to it; only then remove the old
-   *   one. Removing the old button first would drop DOM focus to `<body>` in
-   *   every engine, and, where the engine fires `focusout` on the removal of a
-   *   focused element, with `relatedTarget = null` - which the open popup's
-   *   focus-out guard reads as "focus left the widget". Moving focus first
-   *   makes the new button the `relatedTarget`, inside the root.
-   * - A builder override that returns the SAME element every time is allowed:
-   *   the element is kept in place and not removed.
+   * The order of the steps is load-bearing:
+   * 1. Read whether focus is on or inside the old button.
+   * 2. If so, park it on the old button itself. A content fn that hands back
+   *    the same icon element each time reparents that icon into the new
+   *    button, and the reparenting must not move the focused node.
+   * 3. Build the new button.
+   * 4. Insert it, then move focus to it.
+   * 5. Only then remove the old one.
+   * Why: removing the old button first would drop DOM focus to `<body>` in
+   * every engine, and, where the engine fires `focusout` on the removal of a
+   * focused element, with `relatedTarget = null` - which the open popup's
+   * focus-out guard reads as "focus left the widget". Moving focus first
+   * makes the new button the `relatedTarget`, inside the root.
+   * A builder override that returns the SAME element every time is allowed:
+   * the element is kept in place and not removed.
    */
   private replaceTriggerClearButtonElInDom(): void {
     if (!this.settings.clearable) { return }
