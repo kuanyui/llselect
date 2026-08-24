@@ -2347,7 +2347,23 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   private focusedElementIn(el: Element): Element | null {
     const active = (el.getRootNode() as Partial<DocumentOrShadowRoot>).activeElement ?? null
-    return active !== null && el.contains(active) ? active : null
+    if (active === null || !el.contains(active)) { return null }
+    // Descend through open shadow roots to the element that really holds
+    // focus: `activeElement` stops at a shadow host.
+    let deepest = active
+    while (deepest.shadowRoot !== null && deepest.shadowRoot.activeElement !== null) { deepest = deepest.shadowRoot.activeElement }
+    return deepest
+  }
+
+  /** Whether `node` is `el` or inside it, walking up through open shadow hosts. */
+  private containsComposed(el: Element, node: Node): boolean {
+    let cursor: Node | null = node
+    while (cursor !== null) {
+      if (el.contains(cursor)) { return true }
+      const root = cursor.getRootNode()
+      cursor = 'host' in root ? (root as ShadowRoot).host : null
+    }
+    return false
   }
 
   /** Whether DOM focus is on `el` or inside it (see `focusedElementIn`). */
@@ -2381,7 +2397,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * A builder override that returns the SAME element every time is allowed:
    * the element is kept in place, and focus goes back to the node step 1
    * found, because nothing was rebuilt - unless the override detached that
-   * node, in which case focus stays on the button.
+   * node or moved it out of the button, in which case focus stays on the
+   * button.
    */
   private replaceTriggerClearButtonElInDom(): void {
     if (!this.settings.clearable) { return }
@@ -2395,11 +2412,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       return
     }
     if (next === old) {
-      // Nothing was rebuilt: hand focus back to the node that held it. A
-      // detached node's focus() is a no-op, so a rebuilt child leaves focus
-      // on the button.
+      // Nothing was rebuilt: hand focus back to the node that held it - but
+      // only while it is still inside the button. The override may have
+      // detached it or moved it elsewhere; then focus stays on the button.
       const holder = focused as (Element & Partial<HTMLOrSVGElement>) | null
-      if (holder !== null && holder !== old && typeof holder.focus === 'function') { holder.focus({ preventScroll: true }) }
+      if (holder !== null && holder !== old && this.containsComposed(old, holder) && typeof holder.focus === 'function') {
+        holder.focus({ preventScroll: true })
+      }
       return
     }
     old.before(next)

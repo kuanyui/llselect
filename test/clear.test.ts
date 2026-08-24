@@ -375,3 +375,57 @@ test('QUALITY-89: with a builder that returns the same element but swaps its ico
   assert.equal(oldIcon.isConnected, false)
   assert.equal(document.activeElement, memo, 'a detached node cannot take focus back, so it stays on the parked button')
 })
+
+test('QUALITY-89: with a builder that returns the same element but moves its icon out of the widget, focus stays on the button', () => {
+  const target = mount()
+  let memo: HTMLElement | undefined
+  const icon = document.createElement('span')
+  icon.tabIndex = -1
+  let builds = 0
+  class Memoized extends LLSelectSingle<string> {
+    protected override createTriggerClearButtonEl(): HTMLElement {
+      builds++
+      if (memo === undefined) {
+        memo = super.createTriggerClearButtonEl()
+        memo.appendChild(icon)
+      } else if (builds > 2) {
+        document.body.appendChild(icon) // a later run parks the icon outside the widget, still connected
+      }
+      return memo
+    }
+  }
+  const sel = new Memoized(target, { clearable: true, ariaLabel: 'x' })
+  sel.setItems(['a'])
+  sel.setChosenItem('a') // build 2: icon still inside
+  icon.focus()
+  assert.equal(document.activeElement, icon)
+  sel.rerender() // build 3: the override moves the icon out
+  assert.equal(icon.isConnected, true)
+  assert.equal(memo!.contains(icon), false)
+  assert.equal(document.activeElement, memo, 'focus must not follow the icon out of the widget (that could close an open popup)')
+})
+
+test('QUALITY-89: focus inside a shadow-rooted icon is handed back to the real element after a same-element render', () => {
+  const target = mount()
+  let memo: HTMLElement | undefined
+  const host = document.createElement('span')
+  const inner = document.createElement('span')
+  inner.tabIndex = -1
+  host.attachShadow({ mode: 'open' }).appendChild(inner)
+  class Memoized extends LLSelectSingle<string> {
+    protected override createTriggerClearButtonEl(): HTMLElement {
+      if (memo === undefined) {
+        memo = super.createTriggerClearButtonEl()
+        memo.appendChild(host)
+      }
+      return memo
+    }
+  }
+  const sel = new Memoized(target, { clearable: true, ariaLabel: 'x' })
+  sel.setItems(['a'])
+  sel.setChosenItem('a')
+  inner.focus()
+  assert.equal(host.shadowRoot!.activeElement, inner, 'precondition: focus sits inside the icon shadow root')
+  sel.rerender()
+  assert.equal(host.shadowRoot!.activeElement, inner, 'handed back to the element that really held focus, not to its host')
+})
