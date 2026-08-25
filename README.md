@@ -43,7 +43,6 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 - [Capabilities overview](#capabilities-overview)
 - [API reference](#api-reference)
 - [Customization: settings or subclassing?](#customization-settings-or-subclassing)
-- [Design decisions](#design-decisions)
 - [Acknowledgments](#acknowledgments)
 - [License](#license)
 
@@ -299,21 +298,14 @@ Method names follow a strict grammar. Some notes maybe helpful if you need to cu
 
 ## Customization: settings or subclassing?
 
-Rule of thumb: **settings configure one instance; subclassing extends the library.**
+Settings can only fill content inside the elements the library builds. Subclassing changes those elements themselves, including their ARIA.
 
-Quick test: "Am I making a new, named, reusable kind of select?"
-
-- No, I just want this one dropdown to look / behave some way -> **settings**.
-- Yes -> **subclass**.
+- So no setting can break the ARIA contract.
+- Use settings first. Subclass only for a new select kind or a framework wrapper.
+- Content is what a `create*ContentElFn` fills. The element around it, e.g. the `role="option"` row, changes only by overriding `create*El`.
+- Live comparison: the "Subclassing" section of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
 
 A complete worked subclass, in TypeScript with typed subclass settings (the class's `S` generic param): the tree multiple select in demo section 14.2 (`demo/subclass/tree-select.ts`).
-
-The capability line between the two:
-
-- **Settings stop at the content layer.** A `create*ContentElFn` fills what an element shows - nothing more.
-- **The elements the library builds are subclass territory.** That is the element around your content (e.g. the `role="option"` row): its attributes, its structure, the ARIA pinned on it. Changing it means overriding `create*El`.
-- **This is deliberate**: no setting can break the ARIA contract.
-- Live comparison: the "Subclassing" section of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
 
 ### Settings (the common path - no subclass needed)
 
@@ -336,7 +328,12 @@ const sel = new LLSelectSingle(el, {
 })
 ```
 
-Event callbacks are constructor-time settings - frozen, one callback per event (only `placeholder` and `uiTranslationPack` have runtime setters). To swap the handler at runtime or fan out to several listeners, wrap it in your own reference: `onChange: (current, previous) => myHandler?.(current, previous)`.
+Settings are frozen after construction. The library re-applies nothing on its own, so a live setting would need its own re-apply code.
+
+- Data changes by method, for example `setItems`.
+- Only two texts have setters: `setPlaceholder`, `setUiTranslationPack`.
+- Event callbacks are settings too, one callback per event. To swap a handler at runtime or call several listeners, wrap it in your own function: `onChange: (current, previous) => myHandler?.(current, previous)`.
+- For anything else, build a new instance.
 
 #### Highlight what the filter matched
 
@@ -366,46 +363,6 @@ Subclass only when settings cannot express it:
 
 How the two layers coexist: every customization point is a `protected` method whose default reads its `*Fn` setting. Overriding the method replaces that default - your override wins, plain OO, no hidden precedence. Rationale: [docs/llm/DESIGN.md](docs/llm/DESIGN.md).
 
-
-## Design decisions
-
-Short answers. Full reasoning: [docs/llm/DESIGN.md](docs/llm/DESIGN.md).
-
-**Why subclass instead of passing a renderer object?**
-
-Subclassing changes the elements the library builds, including their ARIA. Settings can only fill content inside those elements.
-
-- So no setting can break the ARIA contract.
-- Use settings first. Subclass only for a new select kind or a framework wrapper.
-
-**Why are settings frozen after construction?**
-
-The library re-applies nothing on its own. A live setting would need its own re-apply code.
-
-- Data changes by method, for example `setItems`.
-- Only two texts have setters: `setPlaceholder`, `setUiTranslationPack`.
-- For anything else, build a new instance.
-
-**Why `compareFn`, and no `itemKeyFn`?**
-
-One rule for "the same item". A key function beside it would be a second rule.
-
-- `compareFn` can also compare two objects field by field. A key cannot.
-- A custom `compareFn` cannot be hashed, so keep it cheap.
-
-**Why one `onChange`, and no `subscribe()`?**
-
-A framework wrapper owns fan-out, and the wrapper is the intended layer.
-
-- To swap or fan out yourself, wrap the callback in your own function.
-- A DOM event on a plain `div` cannot be typed.
-
-**Why does the theme hide the empty clear button, not the library?**
-
-The library writes the state. The theme decides the look. Every visual state works that way.
-
-- The hook is `data-empty` on the trigger.
-- A custom theme hides the button with one CSS line.
 
 ## Acknowledgments
 

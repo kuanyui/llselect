@@ -38,6 +38,10 @@ The freeze boundary is a rule, not a per-field judgment call: **state and copy m
 - Copy is locale-owned text: the pack and `placeholder`. Language switching changes it at runtime in real apps, and swapping it touches no structure - these are the only two true freeze exceptions.
 - Everything else is a capability: it decides what DOM exists and how it is wired at construction. `clearable` gates whether the clear-button element exists; `filterable` decides which element carries `role="combobox"`; `cssClassPrefix` mints every class name. A capability setter would be a mini-rebuild (DOM, ARIA, focus) plus a permanent API surface, so the sanctioned change paths are: rebuild the instance (one build measures ~0.2 ms), or, where runtime variation is genuinely common, a function-valued setting evaluated per use - `filterable`'s predicate form re-evaluates on every open, so `filterable: () => flag` IS the runtime toggle. If a capability ever earns promotion, the filter input is the precedent: it is ALWAYS built and hidden by CSS, so the future toggle is a CSS flip, never a settings write channel.
 
+### Item identity: `compareFn`, no key function
+
+Reviewers ask for an `itemKeyFn` beside `compareFn`. REJECTED: one rule for "the same item" - a key function beside the comparator is a second rule that can disagree with it, and a comparator also expresses what a key cannot (field-by-field structural equality). Cost, documented on `compareFn`: a custom comparator cannot be hashed, so the `Set` fast paths go linear - keep it cheap. The default is SameValueZero (`a === b || (a !== a && b !== b)`), so `NaN` items and group keys compare equal to themselves.
+
 ### Customization model: settings configure, subclassing extends
 
 User-facing guide (when to pick which, with examples): README "Customization". Two layers, not two competing mechanisms:
@@ -90,6 +94,7 @@ It does **not** provide:
 - Default visual styling (themes are opt-in, shipped separately)
 - Item content beyond the configured `itemToString` (no built-in icon / description / avatar slots inside items)
 - Arbitrary trigger markup out of the box - the built-in multi-select displays are `'count'` and `'tags'` (`triggerDisplay`); `createTriggerContentElFn` takes over the trigger entirely. See "Tags (triggerDisplay)".
+- A second change channel (`subscribe()`, DOM `CustomEvent`) - REJECTED. One typed callback per event (`onChange`, `onOpen`, `onClose`); the framework wrapper is the layer that calls several listeners from it, and a `CustomEvent` dispatched on a plain `div` cannot be typed.
 
 When in doubt, the answer is "lib provides a structural slot; the user fills it". This keeps API surface tight and avoids feature creep.
 
@@ -323,7 +328,7 @@ Same trick as the arrow: clear and arrow are separate slots, so `createTriggerCo
 
 ### What the library owns vs what you fill
 
-- Library owns: the `<button>`, its click (`stopPropagation` so it never toggles the popup, then `clearSelection`), `aria-label="Clear selection"`, `tabindex="-1"`, and hide-when-empty (theme hides it under `.llselect-trigger[data-empty='true']`).
+- Library owns: the `<button>`, its click (`stopPropagation` so it never toggles the popup, then `clearSelection`), `aria-label="Clear selection"`, `tabindex="-1"`, and hide-when-empty (theme hides it under `.llselect-trigger[data-empty='true']`). A core-side hide was REJECTED: the library writes the state attribute, the theme decides the look, like every other visual state; a custom theme hides the button with one CSS rule.
 - You optionally fill the icon via `createTriggerClearButtonContentElFn: () => HTMLElement | SVGElement | null` (mirrors `createTriggerArrowContentElFn`); `null` = theme CSS glyph (`.llselect-trigger-clear-button:empty::before { content: '\00d7' }`).
 - `protected clearSelection()`: base no-op; single -> `setChosenItem(undefined)`, multiple -> `setChosenItems([])`. Both go through the normal setters, so `onChange` fires with the empty value - no separate `onClear`. Clear means "back to empty / placeholder", not "back to some default option" (do that yourself in `onChange` if wanted).
 - A configurable cleared value (`clearTo: T` and the like) was considered and REJECTED. Survey: nobody offers one - react-select and MUI clear to `null`, antd and ui-select to `undefined`, Select2 / Slim Select / native return to a placeholder `<option>` whose value is `''` (there, "empty" is itself an option). The type argument is decisive: "nothing chosen" exists at construction, before any clear, so `getChosenItem(): T | undefined` cannot lose the `| undefined` whatever clear returns - a `clearTo` buys no type safety and conflates clearing with choosing a default. The plain-`string`-model recipes live in the `clearable` docstring (a real "none" item, or coerce in `onChange`).
