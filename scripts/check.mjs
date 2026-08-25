@@ -12,6 +12,8 @@
 //      heading slug; backticked repo paths must exist on disk.
 //   3. if / else / while / for / do bodies must be wrapped in { }.
 //   4. `any` needs an explaining comment on the same or previous line.
+//   5. Release wiring: the angularjs package version and its `@llselect/core`
+//      peer range follow the root package.json version.
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import ts from 'typescript'
@@ -227,11 +229,14 @@ for (const rel of markdownFiles) {
   }
 }
 
-// --- rule 3: release wiring follows the root version -----------------------
+// --- rule 5: release wiring follows the root version -----------------------
 // `test/smoke.test.ts` pins the `version` const in src/index.ts to
 // package.json; the angularjs package's own version and its `@llselect/core`
 // peer range were the hand-maintained remainder (a `^0.0.x` range admits
 // exactly one patch version, so a stale range breaks the wrapper install).
+// The exact `^<root version>` expectation is a 0.0.x-era rule: past 1.0.0 a
+// caret range spans minors, and this check should then compare the range's
+// floor instead of the literal string.
 {
   const rootPkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
   const ngPkg = JSON.parse(readFileSync(join(root, 'angularjs/package.json'), 'utf8'))
