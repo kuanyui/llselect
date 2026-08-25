@@ -4,10 +4,10 @@ import { setupDom } from '../test-utils/dom.js'
 import {
   LLSelectAction,
   TYPEAHEAD_TIMEOUT_MS,
-  appendTypeaheadChar,
   findTypeaheadIndex,
   getActionFromKey,
   getUpdatedIndex,
+  getUpdatedTypeaheadBuffer,
 } from '../src/keyboard.js'
 import { LLSelectSingle, type LLSelectSingleSettingsInput } from '../src/single.js'
 import { LLSelectMultiple, type LLSelectMultipleSettingsInput } from '../src/multiple.js'
@@ -108,12 +108,12 @@ test('getUpdatedIndex returns -1 when maxIndex is negative (no options)', () => 
   assert.equal(getUpdatedIndex(0, -1, LLSelectAction.GotoFirst), -1)
 })
 
-// --- appendTypeaheadChar -------------------------------------------
+// --- getUpdatedTypeaheadBuffer -------------------------------------
 
-test('appendTypeaheadChar extends within the timeout, restarts past it', () => {
-  assert.equal(appendTypeaheadChar('ta', 'i', 200), 'tai')
-  assert.equal(appendTypeaheadChar('ta', 'i', TYPEAHEAD_TIMEOUT_MS), 'tai')
-  assert.equal(appendTypeaheadChar('ta', 'b', TYPEAHEAD_TIMEOUT_MS + 1), 'b')
+test('getUpdatedTypeaheadBuffer extends within the timeout, restarts past it', () => {
+  assert.equal(getUpdatedTypeaheadBuffer('ta', 'i', 200), 'tai')
+  assert.equal(getUpdatedTypeaheadBuffer('ta', 'i', TYPEAHEAD_TIMEOUT_MS), 'tai')
+  assert.equal(getUpdatedTypeaheadBuffer('ta', 'b', TYPEAHEAD_TIMEOUT_MS + 1), 'b')
 })
 
 // --- findTypeaheadIndex --------------------------------------------
@@ -155,6 +155,12 @@ test('findTypeaheadIndex: astral characters cycle whole; a mid-repeat Shift stil
   assert.equal(findTypeaheadIndex('😀', 2, 0, textsAt(['😀 grin', '😀 beam'])), 1)
   assert.equal(findTypeaheadIndex('😀😀', 2, 1, textsAt(['😀 grin', '😀 beam'])), 0)
   assert.equal(findTypeaheadIndex('aA', 3, 1, textsAt(['alpha', 'avocado', 'beta'])), 0)
+})
+
+test('findTypeaheadIndex: a buffer ending in Greek capital sigma still matches mid-word sigma', () => {
+  // Whole-string lower-casing would turn the buffer's final sigma into a
+  // final-form sigma, which the option text never carries mid-word.
+  assert.equal(findTypeaheadIndex('ΑΣ', 2, -1, textsAt(['ΒΗΤΑ', 'ΑΣΤΗΡ'])), 1)
 })
 
 test('findTypeaheadIndex: undefined text (disabled) never matches', () => {

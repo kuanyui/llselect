@@ -7,11 +7,11 @@ import { createPositioner, isAnchorHidden, type Positioner, type LLSelectWidthPo
 import { gatherItemsByGroupKey } from './grouping.js'
 import {
   LLSelectAction,
-  appendTypeaheadChar,
   ensureVisibleInScroll,
   findTypeaheadIndex,
   getActionFromKey,
   getUpdatedIndex,
+  getUpdatedTypeaheadBuffer,
 } from './keyboard.js'
 import { en as DEFAULT_UI_TRANSLATION_PACK } from './i18n/en.js'
 import type { LLSelectUiTranslationPack } from './i18n.js'
@@ -800,7 +800,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private query = ''
   private filteredItems: T[] | undefined
   // Prefix-typeahead state. Expiry is a timestamp delta checked on the next
-  // character (appendTypeaheadChar) - no timer to clean up. Reset by close()
+  // character (getUpdatedTypeaheadBuffer) - no timer to clean up. Reset by close()
   // and by any mapped action key.
   private typeaheadBuffer = ''
   private typeaheadLastTime = 0
@@ -2307,7 +2307,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (this.opened ? this.filterActive : this.computeFilterActive()) { return false }
     ev.preventDefault()
     const now = Date.now()
-    this.typeaheadBuffer = appendTypeaheadChar(this.typeaheadBuffer, ev.key, now - this.typeaheadLastTime)
+    this.typeaheadBuffer = getUpdatedTypeaheadBuffer(this.typeaheadBuffer, ev.key, now - this.typeaheadLastTime)
     this.typeaheadLastTime = now
     const openedByThisKey = !this.opened
     if (openedByThisKey) {
@@ -2332,8 +2332,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * The option the closed-state typeahead treats as current, as an index into
    * `list`, when the typed character is the keystroke that opens the popup.
-   * - A one-character buffer searches AFTER this option; a longer buffer
-   *   searches from it.
+   * - The search starts AFTER this option: the opening keystroke is always a
+   *   one-character buffer, because `close()` empties the buffer.
    * - Default `-1`: no current option, so the first match from the top wins.
    * - The focus `focusInitial` parks on open is a convenience, not a
    *   selection - it must not shift this search.

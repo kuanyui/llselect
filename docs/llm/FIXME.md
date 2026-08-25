@@ -15,7 +15,7 @@ Process: implementation of the maintainer-ratified typeahead rulings (`DESIGN.md
     - A: Native anchors on the selection - typing "b" with banana chosen reaches blueberry in one press. `-1` would land back on the chosen item and cost a second press. With nothing chosen the two agree.
 - [x] **[MEDIUM-96] - the printable-key modifier gate was wrong twice**
   - Symptom: round 1 shipped reject-all-modifiers, losing AltGraph and macOS Option characters (real text). The round-2 fix accepted all Alt chords, letting Windows plain Alt+D typeahead and swallow `accesskey` / address-bar chords.
-  - Fix: reject Meta and Ctrl-only; accept an Alt-carrying chord only when the delivered key is no longer a bare ASCII letter or digit (produced text changes the key - "@", "a-ring"; an unchanged letter is a shortcut chord).
+  - Fix: reject Meta and Ctrl-only; accept an Alt-carrying chord only when the delivered key is no longer a bare ASCII letter or digit (produced text changes the key - "@", "a-ring"; an unchanged letter is a shortcut chord). Known cost: a non-ASCII `accesskey` chord (Alt+Shift+o-umlaut) is swallowed while the trigger holds focus.
   - Verified: gate tests in `test/keyboard.test.ts` (Ctrl-only / Meta / plain-Alt pass through untouched; AltGraph "@" and Option "a-ring" type); the real-layout pass is queued in `TODO.md`.
   - Q: Why the delivered-key heuristic, not `getModifierState('AltGraph')`?
     - A: AltGraph reporting for macOS Option is uncertain on Safari, jsdom cannot construct that state for tests, and the heuristic also rejects VoiceOver's Ctrl+Option chords (they deliver bare letters). The delivered key is itself the evidence that text was produced.
@@ -33,6 +33,19 @@ Process: implementation of the maintainer-ratified typeahead rulings (`DESIGN.md
   - Symptom: "commit stays Enter" (Space also activates); "under 1 s" (code extends at exactly 1 s); the reset-key list missed Home / End / Page; the `filterable` TSDoc claimed the predicate runs only at open (closed typing consults it read-only); DESIGN said "consistent with the filter's default compare" (that compare is substring, typeahead is prefix); the README had no reader-facing behavior section, its IME bullet led with the fix instead of the reason, and "highlight" named the focused option against the naming ruling.
   - Fix: all reworded; the README gained the "Typing to jump" section and a capabilities-table row.
   - Verified: round-2 reviewers re-checked each rewording against the code.
+- [x] **[DOCUMENTATION-100] - the README typeahead section reused "focus" for the focused option**
+  - Symptom: "It only moves the focus" - everywhere else in the README "focus" means DOM focus, which typeahead never moves (it stays on the trigger); the same reserved-word slip the "highlight" rewording had just removed.
+  - Fix: "It only moves the focused option".
+- [x] **[QUALITY-101] - the multi-character needle was folded as a whole string (Greek Final_Sigma)**
+  - Symptom: buffer "ALPHA-SIGMA" (Greek capitals) lower-cased as a string turns its final sigma into the final-form sigma, while the option text folds the same sigma mid-word - the prefix never matched.
+  - Fix: the needle is the per-code-point fold joined (`chars.join('')`), the same fold the repeated-character test already used.
+  - Verified: pure test "a buffer ending in Greek capital sigma still matches mid-word sigma".
+- [x] **[DOCUMENTATION-102] - the accesskey pass-through claim was over-general**
+  - Symptom: the MEDIUM-96 fix line and TODO item (d) read as if every `accesskey` chord passes through; only bare ASCII letters / digits do - a non-ASCII accesskey (Alt+Shift+o-umlaut) is swallowed while the trigger holds focus.
+  - Fix: both records now state the cost; `A11Y.md` was already precise.
+- [x] **[DOCUMENTATION-103] - naming-conventions.md did not log the typeahead members**
+  - Symptom: the doc claims coverage of every method and logs each round's new protected members, but the feature commit added `computeTypeaheadClosedStartIndex` (protected) and the keyboard.ts helpers without an entry - while QUALITY-98 cites that doc as the rename authority.
+  - Fix: logged (method table + round prose). `appendTypeaheadChar` renamed `getUpdatedTypeaheadBuffer` on the way: `append*` is in no verb family, and the same file's `getUpdatedIndex` is the precedent for "next state from inputs".
 
 ## review (external, ChatGPT API-design review - five-model panel)
 

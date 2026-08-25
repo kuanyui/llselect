@@ -271,11 +271,11 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 
 ### Typing to jump (prefix typeahead)
 
-While the filter is off, typing letters moves the focused option to the match, like a native `<select>`.
+While the filter is off, typing characters moves the focused option to the match, like a native `<select>`.
 
 - Keystrokes one second or less apart chain into one prefix; a pause starts a new one.
 - Repeating one letter cycles through the options that start with it.
-- Typing while closed opens the list first. It only moves the focus; Enter, Space, or a click chooses.
+- Typing while closed opens the list first. It only moves the focused option; Enter, Space, or a click chooses.
 - Space always chooses, so a typed prefix ends before any space.
 - The matched text is the same string `itemToStringFn` returns.
 

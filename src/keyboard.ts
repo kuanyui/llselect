@@ -104,11 +104,11 @@ export function getUpdatedIndex(
 export const TYPEAHEAD_TIMEOUT_MS = 1000
 
 /**
- * Extend the typeahead buffer with a newly typed character.
+ * Compute the typeahead buffer after a newly typed character.
  * - If `elapsedMs` since the previous character exceeds
  *   {@link TYPEAHEAD_TIMEOUT_MS}, the character starts a fresh buffer.
  */
-export function appendTypeaheadChar(buffer: string, char: string, elapsedMs: number): string {
+export function getUpdatedTypeaheadBuffer(buffer: string, char: string, elapsedMs: number): string {
   return elapsedMs > TYPEAHEAD_TIMEOUT_MS ? char : buffer + char
 }
 
@@ -147,7 +147,10 @@ export function findTypeaheadIndex(
   if (count <= 0 || buffer === '') { return -1 }
   const chars = [...buffer].map((c) => c.toLowerCase())
   const sameChar = chars.every((c) => c === chars[0])
-  const needle = sameChar ? chars[0]! : buffer.toLowerCase()
+  // Fold per code point, not the whole string: whole-string folding applies
+  // the Greek Final_Sigma rule to a buffer ending in sigma, while the option
+  // text folds that sigma mid-word - the prefix would then never match.
+  const needle = sameChar ? chars[0]! : chars.join('')
   const start = sameChar ? currentIndex + 1 : Math.max(currentIndex, 0)
   const from = ((start % count) + count) % count
   for (let i = 0; i < count; i++) {
