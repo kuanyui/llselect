@@ -382,7 +382,7 @@ Subclassing changes the elements the library builds, including their ARIA. Setti
 
 The library re-applies nothing on its own. A live setting would need its own re-apply code.
 
-- Data changes by method: `setItems`, `setChosenItem`, `setDisabled`.
+- Data changes by method, for example `setItems`.
 - Only two texts have setters: `setPlaceholder`, `setUiTranslationPack`.
 - For anything else, build a new instance.
 
