@@ -145,10 +145,11 @@ export function findTypeaheadIndex(
   textAt: (index: number) => string | undefined,
 ): number {
   if (count <= 0 || buffer === '') { return -1 }
-  // Both operands fold through foldForTypeahead, never `toLowerCase` on a
-  // whole string: whole-string folding applies the Greek Final_Sigma rule, so
-  // a sigma would fold one way at the end of the buffer and another way
-  // mid-word in the option text.
+  // Both operands fold through foldForTypeahead. Its final-sigma map is what
+  // makes the two sides agree: whole-string `toLowerCase` applies the Greek
+  // Final_Sigma rule, folding a trailing sigma in the buffer differently from
+  // the same sigma mid-word in the option text. The per-code-point split is
+  // the backstop, in case another context-sensitive mapping ever lands.
   const chars = [...buffer].map(foldForTypeahead)
   const sameChar = chars.every((c) => c === chars[0])
   const needle = sameChar ? chars[0]! : chars.join('')

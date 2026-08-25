@@ -157,7 +157,7 @@ test('findTypeaheadIndex: astral characters cycle whole; a mid-repeat Shift stil
   assert.equal(findTypeaheadIndex('aA', 3, 1, textsAt(['alpha', 'avocado', 'beta'])), 0)
 })
 
-test('findTypeaheadIndex: a buffer ending in Greek capital sigma still matches mid-word sigma', () => {
+test('findTypeaheadIndex: Greek sigma folds the same on both sides (mid-word, trailing, final-sigma key, before a space)', () => {
   // Whole-string lower-casing would turn the buffer's final sigma into a
   // final-form sigma, which the option text never carries mid-word.
   assert.equal(findTypeaheadIndex('ΑΣ', 2, -1, textsAt(['ΒΗΤΑ', 'ΑΣΤΗΡ'])), 1)
@@ -455,6 +455,21 @@ test('typeahead: closing resets the buffer', () => {
   assert.equal(focusedLabel(sel), 'banana')
   sel.close()
   fireKey(sel.triggerEl, 'a')
+  assert.equal(focusedLabel(sel), 'apple')
+})
+
+test('typeahead: a refused open empties the buffer', () => {
+  const sel = mountSelect(['apple', 'banana', 'bandana'])
+  // Trigger parked above the viewport: open() refuses (hidden-anchor guard).
+  const rect = sel.triggerEl.getBoundingClientRect
+  sel.triggerEl.getBoundingClientRect = () =>
+    ({ top: -100, left: 50, right: 250, bottom: -70, width: 200, height: 30, x: 50, y: -100, toJSON: () => ({}) }) as DOMRect
+  fireKey(sel.triggerEl, 'b')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
+  sel.triggerEl.getBoundingClientRect = rect
+  fireKey(sel.triggerEl, 'a')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
+  // A kept "b" would have made the buffer "ba" and landed on banana.
   assert.equal(focusedLabel(sel), 'apple')
 })
 
