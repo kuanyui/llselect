@@ -2312,8 +2312,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const openedByThisKey = !this.opened
     if (openedByThisKey) {
       this.open()
-      // open() can refuse (hidden anchor); nothing to move focus in then.
-      if (!this.opened) { return true }
+      // open() can refuse (hidden anchor): nothing to move focus in, and the
+      // buffer must not survive into a later successful open.
+      if (!this.opened) { this.typeaheadBuffer = ''; return true }
     }
     const list = this.getVisibleItems()
     const current = openedByThisKey
@@ -2333,7 +2334,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * The option the closed-state typeahead treats as current, as an index into
    * `list`, when the typed character is the keystroke that opens the popup.
    * - The search starts AFTER this option: the opening keystroke is always a
-   *   one-character buffer, because `close()` empties the buffer.
+   *   one-character buffer, because `close()` and a refused `open()` both
+   *   empty the buffer.
    * - Default `-1`: no current option, so the first match from the top wins.
    * - The focus `focusInitial` parks on open is a convenience, not a
    *   selection - it must not shift this search.

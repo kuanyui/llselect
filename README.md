@@ -274,9 +274,9 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 While the filter is off, typing characters moves the focused option to the match, like a native `<select>`.
 
 - Keystrokes one second or less apart chain into one prefix; a pause starts a new one.
-- Repeating one letter cycles through the options that start with it.
+- Repeating one character cycles through the options that start with it.
 - Typing while closed opens the list first. It only moves the focused option; Enter, Space, or a click chooses.
-- Space always chooses, so a typed prefix ends before any space.
+- Space never joins the prefix, so a typed prefix ends before any space. Space keeps its usual job: open when closed, choose or toggle when open.
 - The matched text is the same string `itemToStringFn` returns.
 
 Full contracts: [docs/llm/DESIGN.md](docs/llm/DESIGN.md) (API / architecture) and [docs/llm/A11Y.md](docs/llm/A11Y.md) (keyboard / focus / ARIA). The TypeScript declarations shipped in the package document every setting inline.

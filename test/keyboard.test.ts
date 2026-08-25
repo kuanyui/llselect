@@ -161,6 +161,8 @@ test('findTypeaheadIndex: a buffer ending in Greek capital sigma still matches m
   // Whole-string lower-casing would turn the buffer's final sigma into a
   // final-form sigma, which the option text never carries mid-word.
   assert.equal(findTypeaheadIndex('ΑΣ', 2, -1, textsAt(['ΒΗΤΑ', 'ΑΣΤΗΡ'])), 1)
+  // ...and an option text ENDING in sigma folds the same way as the buffer.
+  assert.equal(findTypeaheadIndex('ΟΔΟΣ', 2, -1, textsAt(['ΒΗΤΑ', 'ΟΔΟΣ'])), 1)
 })
 
 test('findTypeaheadIndex: undefined text (disabled) never matches', () => {
@@ -295,14 +297,14 @@ test('PageDown jumps by 10 with clamp', () => {
   assert.equal(focusedLabel(sel), 'opt-24')  // clamp at maxIndex
 })
 
-test('Single mode: opening highlights chosen option', () => {
+test('Single mode: opening focuses the chosen option', () => {
   const sel = mountSelect(['a', 'b', 'c', 'd'])
   sel.setChosenItem('c')
   sel.open()
   assert.equal(focusedLabel(sel), 'c')
 })
 
-test('Single mode: opening without chosen highlights first option', () => {
+test('Single mode: opening without a chosen item focuses the first option', () => {
   const sel = mountSelect(['a', 'b', 'c'])
   sel.open()
   assert.equal(focusedLabel(sel), 'a')

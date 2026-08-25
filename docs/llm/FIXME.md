@@ -38,14 +38,25 @@ Process: implementation of the maintainer-ratified typeahead rulings (`DESIGN.md
   - Fix: "It only moves the focused option".
 - [x] **[QUALITY-101] - the multi-character needle was folded as a whole string (Greek Final_Sigma)**
   - Symptom: buffer "ALPHA-SIGMA" (Greek capitals) lower-cased as a string turns its final sigma into the final-form sigma, while the option text folds the same sigma mid-word - the prefix never matched.
-  - Fix: the needle is the per-code-point fold joined (`chars.join('')`), the same fold the repeated-character test already used.
-  - Verified: pure test "a buffer ending in Greek capital sigma still matches mid-word sigma".
+  - Fix: BOTH operands fold per code point (`foldForTypeahead`); the first fix folded only the needle, and Codex Sol's round-3 pass caught that an option text ENDING in sigma then failed the other way.
+  - Verified: pure test "a buffer ending in Greek capital sigma still matches mid-word sigma" covers both positions.
+  - Q: Why not fold both operands as whole strings and accept the Final_Sigma edge?
+    - A: Because the buffer is a PREFIX: its last character is always "final" to `toLowerCase`, while the same character sits mid-word in the option text - whole-string folding can never agree on a trailing sigma. Per-code-point folding removes the context dependence on both sides.
 - [x] **[DOCUMENTATION-102] - the accesskey pass-through claim was over-general**
   - Symptom: the MEDIUM-96 fix line and TODO item (d) read as if every `accesskey` chord passes through; only bare ASCII letters / digits do - a non-ASCII accesskey (Alt+Shift+o-umlaut) is swallowed while the trigger holds focus.
   - Fix: both records now state the cost; `A11Y.md` was already precise.
 - [x] **[DOCUMENTATION-103] - naming-conventions.md did not log the typeahead members**
   - Symptom: the doc claims coverage of every method and logs each round's new protected members, but the feature commit added `computeTypeaheadClosedStartIndex` (protected) and the keyboard.ts helpers without an entry - while QUALITY-98 cites that doc as the rename authority.
   - Fix: logged (method table + round prose). `appendTypeaheadChar` renamed `getUpdatedTypeaheadBuffer` on the way: `append*` is in no verb family, and the same file's `getUpdatedIndex` is the precedent for "next state from inputs".
+- [x] **[DOCUMENTATION-104] - README said "Space always chooses"**
+  - Symptom: closed Space OPENS the popup, and multiple-mode Space TOGGLES (it can unchoose); the sentence over-promised.
+  - Fix: "Space never joins the prefix ... Space keeps its usual job: open when closed, choose or toggle when open."
+- [x] **[DOCUMENTATION-105] - the hook docstring claimed the opening keystroke is always a one-character buffer, but a refused open kept the first character**
+  - Symptom: `open()` refuses on a hidden anchor; the buffer already held the key, so a second key within 1 s could open with a two-character buffer - the docstring's claim was false for that path.
+  - Fix: a refused open now empties the buffer (nothing opened, so nothing to prefix), which makes the claim true instead of softening it.
+- [x] **[QUALITY-106] - reserved-term and commit-subject slips**
+  - Symptom: two pre-existing test titles said "highlights" for the focused option (naming ruling: "highlight" = query-match marking only); the round-2 and round-3 commit subjects ran 149 and 143 characters, past the 140 hard limit.
+  - Fix: test titles reworded to "focuses"; the unpushed round-3 subject amended. The round-2 subject stays as is: that commit was already pushed to `github/dev`, and published history is not rewritten - recorded here instead.
 
 ## review (external, ChatGPT API-design review - five-model panel)
 

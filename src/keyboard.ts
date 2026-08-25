@@ -145,20 +145,25 @@ export function findTypeaheadIndex(
   textAt: (index: number) => string | undefined,
 ): number {
   if (count <= 0 || buffer === '') { return -1 }
+  // Both operands fold per code point, never as a whole string: whole-string
+  // folding applies the Greek Final_Sigma rule, so a sigma would fold one way
+  // at the end of the buffer and another way mid-word in the option text.
   const chars = [...buffer].map((c) => c.toLowerCase())
   const sameChar = chars.every((c) => c === chars[0])
-  // Fold per code point, not the whole string: whole-string folding applies
-  // the Greek Final_Sigma rule to a buffer ending in sigma, while the option
-  // text folds that sigma mid-word - the prefix would then never match.
   const needle = sameChar ? chars[0]! : chars.join('')
   const start = sameChar ? currentIndex + 1 : Math.max(currentIndex, 0)
   const from = ((start % count) + count) % count
   for (let i = 0; i < count; i++) {
     const idx = (from + i) % count
     const text = textAt(idx)
-    if (text !== undefined && text.toLowerCase().startsWith(needle)) { return idx }
+    if (text !== undefined && foldForTypeahead(text).startsWith(needle)) { return idx }
   }
   return -1
+}
+
+/** Lower-case per code point (see `findTypeaheadIndex` for why not `toLowerCase` on the whole string). */
+function foldForTypeahead(text: string): string {
+  return [...text].map((c) => c.toLowerCase()).join('')
 }
 
 /**
