@@ -31,8 +31,10 @@ const PAGE_SIZE = 10
 /**
  * Map a keydown event to a logical {@link LLSelectAction}, given whether the
  * popup is currently open. Returns `undefined` if the key should be left
- * alone (no preventDefault, no library reaction). Maps according to the
- * ARIA APG combobox pattern.
+ * alone (no preventDefault, no library reaction). Maps the action keys of the
+ * ARIA APG combobox pattern; the pattern's printable-character typeahead is
+ * not mapped here (it needs the character, which an action enum cannot carry)
+ * - the keydown handler runs {@link findTypeaheadIndex} before this mapping.
  *
  * @param inTextInput - true when focus is in the editable filter input. There,
  *   Space must type a space and Home/End must move the text caret, so those
@@ -90,6 +92,66 @@ export function getUpdatedIndex(
     case LLSelectAction.PageUp: return Math.max(currentIndex - PAGE_SIZE, 0)
     default: return currentIndex
   }
+}
+
+/**
+ * Pause (in ms) after which the next typed character starts a new typeahead
+ * buffer instead of extending the old one. Native `<select>` implementations
+ * use 1 s (Blink / WebKit).
+ */
+export const TYPEAHEAD_TIMEOUT_MS = 1000
+
+/**
+ * Extend the typeahead buffer with a newly typed character.
+ * - If `elapsedMs` since the previous character exceeds
+ *   {@link TYPEAHEAD_TIMEOUT_MS}, the character starts a fresh buffer.
+ */
+export function appendTypeaheadChar(buffer: string, char: string, elapsedMs: number): string {
+  return elapsedMs > TYPEAHEAD_TIMEOUT_MS ? char : buffer + char
+}
+
+/**
+ * Resolve where prefix typeahead moves the active option; `-1` = no match.
+ * Mirrors native `<select>` typeahead:
+ * - An option matches when its text starts with `buffer`, case-insensitive.
+ * - A one-character buffer searches from the option AFTER `currentIndex`, so
+ *   repeated presses of one initial cycle through the options sharing it.
+ * - A longer buffer searches from `currentIndex` itself, so extending the
+ *   buffer stays on the current option while it still matches.
+ * - A longer buffer of one repeated character (e.g. `"aa"`) falls back to
+ *   single-character cycling when no text literally starts with it.
+ * - The search wraps around the whole list - deliberately, unlike the clamped
+ *   arrow navigation (see `docs/llm/A11Y.md`): a search means "anywhere", and
+ *   cycling needs the wrap.
+ * - Indexes where `textAt` returns `undefined` (disabled options) never match.
+ * - `currentIndex` `-1` means no option is active; the search starts at 0.
+ *
+ * @param textAt - match text of the option at an index, or `undefined` when
+ *   that option must never match.
+ */
+export function findTypeaheadIndex(
+  buffer: string,
+  count: number,
+  currentIndex: number,
+  textAt: (index: number) => string | undefined,
+): number {
+  if (count <= 0 || buffer === '') { return -1 }
+  const lower = buffer.toLowerCase()
+  const scan = (needle: string, start: number): number => {
+    const from = ((start % count) + count) % count
+    for (let i = 0; i < count; i++) {
+      const idx = (from + i) % count
+      const text = textAt(idx)
+      if (text !== undefined && text.toLowerCase().startsWith(needle)) { return idx }
+    }
+    return -1
+  }
+  const found = scan(lower, lower.length > 1 ? Math.max(currentIndex, 0) : currentIndex + 1)
+  if (found >= 0) { return found }
+  if (lower.length > 1 && [...lower].every((c) => c === lower[0])) {
+    return scan(lower[0]!, currentIndex + 1)
+  }
+  return -1
 }
 
 /**

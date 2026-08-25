@@ -54,7 +54,7 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
 - Native TypeScript support.
 - Customizable HTML renderer functions.
 - Search candidates in input, friendly for Eastern-Asian languages.
-- ARIA, A11Y and keyboard support.
+- ARIA, A11Y and keyboard support, including native-style prefix typeahead.
 - I18n packages and RTL languages support.
 
 > [!WARNING]
@@ -188,7 +188,7 @@ The bare URLs `https://cdn.jsdelivr.net/npm/@llselect/core` and `https://unpkg.c
 - **No HTML sanitizer.** llselect does not do HTML sanitizing for you. Remember to sanitize untrusted input via [DOMPurify](https://github.com/cure53/DOMPurify), or [browser's native Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/Sanitizer).
 - **No asynchronous data-fetching API.** llselect is aimed to be a simple `<select>` replacement. Fetch if you really want, then call `setItems(...)`.
 - **No virtual scrolling.** llselect is aimed to be a simple `<select>` replacement, not an omnipotent library.
-- **No alphabetic prefix typeahead** (the native `<select>` behavior) - because it is unusable for East Asian languages and IME input. Use the `filterable` option instead.
+- **Prefix typeahead cannot cover IME input.** Typing letters to jump works like a native `<select>` on alphabetic lists, with no setup. IME composition needs a text field, which the trigger is not. For CJK lists, enable `filterable` and type in its search box.
 - **No auto destroy.** - You *must* call `destroy()` manually when unmounting.
 - **No official React / Vue / Angular wrapper** - llselect provides the minimal library and the CSS themes only.
   > Because:

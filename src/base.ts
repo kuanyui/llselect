@@ -7,7 +7,9 @@ import { createPositioner, isAnchorHidden, type Positioner, type LLSelectWidthPo
 import { gatherItemsByGroupKey } from './grouping.js'
 import {
   LLSelectAction,
+  appendTypeaheadChar,
   ensureVisibleInScroll,
+  findTypeaheadIndex,
   getActionFromKey,
   getUpdatedIndex,
 } from './keyboard.js'
@@ -794,6 +796,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private filterActive: boolean
   private query = ''
   private filteredItems: T[] | undefined
+  // Prefix-typeahead state. Expiry is a timestamp delta checked on the next
+  // character (appendTypeaheadChar) - no timer to clean up. Reset by close()
+  // and by any mapped action key.
+  private typeaheadBuffer = ''
+  private typeaheadLastTime = 0
   /** Memoized display order of `items` (`gatherGroups` gather); `undefined` = recompute on next need. */
   private gatheredItems: readonly T[] | undefined
   private composing = false
@@ -1169,6 +1176,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.itemEls = []
     this.focusedEl = undefined
     this.focusedIndex = -1
+    this.typeaheadBuffer = ''
     this.leadingRowEl = undefined
     this.leadingRowFocused = false
     this.comboboxEl.removeAttribute('aria-activedescendant')
@@ -2192,9 +2200,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (ev.isComposing || this.composing) { return }
     if (this.disabled) { return }
     const inText = ev.currentTarget === this.filterInputEl
+    if (!inText && this.handleTypeaheadKeydown(ev)) { return }
     const action = getActionFromKey(ev, this.opened, inText)
     if (action === undefined) { return }
     ev.preventDefault()
+    // Any action key ends the typed prefix (Enter/Space activate, Escape
+    // closes, arrows move on).
+    this.typeaheadBuffer = ''
 
     switch (action) {
       case LLSelectAction.Open:
@@ -2260,6 +2272,42 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         return
       }
     }
+  }
+
+  /**
+   * Native-`<select>`-style prefix typeahead for a printable-character
+   * keydown on the trigger. Returns `true` when the event was consumed.
+   * - Runs only while the filter is inactive: with the popup open the filter
+   *   input owns typing, and while closed a would-be-filterable open cycle
+   *   leaves the keys alone (the `filterable` predicate is evaluated fresh -
+   *   the cached `filterActive` can be stale between opens).
+   * - Space never joins the buffer; it stays the activate/open key (A11Y.md).
+   * - While closed: opens the popup first, then moves the active option. The
+   *   value still commits on Enter only - typing never fires `onChange`.
+   * - Match rule, cycling, and wrap: {@link findTypeaheadIndex}. No match
+   *   leaves the active option and the buffer as they are.
+   */
+  private handleTypeaheadKeydown(ev: KeyboardEvent): boolean {
+    if (ev.key.length !== 1 || ev.key === ' ' || ev.ctrlKey || ev.metaKey || ev.altKey) { return false }
+    if (this.opened ? this.filterActive : this.computeFilterActive()) { return false }
+    ev.preventDefault()
+    const now = Date.now()
+    this.typeaheadBuffer = appendTypeaheadChar(this.typeaheadBuffer, ev.key, now - this.typeaheadLastTime)
+    this.typeaheadLastTime = now
+    if (!this.opened) {
+      this.open()
+      // open() can refuse (hidden anchor); nothing to move focus in then.
+      if (!this.opened) { return true }
+    }
+    const list = this.getVisibleItems()
+    const found = findTypeaheadIndex(
+      this.typeaheadBuffer,
+      list.length,
+      this.leadingRowFocused ? -1 : this.focusedIndex,
+      (i) => this.isItemEffectivelyDisabled(list[i]!) ? undefined : this.itemToString(list[i]!),
+    )
+    if (found >= 0) { this.setFocusedIndex(found) }
+    return true
   }
 
   private createTriggerEl(): HTMLElement {

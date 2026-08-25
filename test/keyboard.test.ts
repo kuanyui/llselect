@@ -3,10 +3,14 @@ import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import {
   LLSelectAction,
+  TYPEAHEAD_TIMEOUT_MS,
+  appendTypeaheadChar,
+  findTypeaheadIndex,
   getActionFromKey,
   getUpdatedIndex,
 } from '../src/keyboard.js'
-import { LLSelectSingle } from '../src/single.js'
+import { LLSelectSingle, type LLSelectSingleSettingsInput } from '../src/single.js'
+import { LLSelectMultiple, type LLSelectMultipleSettingsInput } from '../src/multiple.js'
 
 function makeEvent(key: string, altKey = false): KeyboardEvent {
   setupDom()
@@ -104,12 +108,67 @@ test('getUpdatedIndex returns -1 when maxIndex is negative (no options)', () => 
   assert.equal(getUpdatedIndex(0, -1, LLSelectAction.GotoFirst), -1)
 })
 
+// --- appendTypeaheadChar -------------------------------------------
+
+test('appendTypeaheadChar extends within the timeout, restarts past it', () => {
+  assert.equal(appendTypeaheadChar('ta', 'i', 200), 'tai')
+  assert.equal(appendTypeaheadChar('ta', 'i', TYPEAHEAD_TIMEOUT_MS), 'tai')
+  assert.equal(appendTypeaheadChar('ta', 'b', TYPEAHEAD_TIMEOUT_MS + 1), 'b')
+})
+
+// --- findTypeaheadIndex --------------------------------------------
+
+function textsAt(texts: (string | undefined)[]): (i: number) => string | undefined {
+  return (i) => texts[i]
+}
+
+test('findTypeaheadIndex: one character searches from after current and wraps', () => {
+  const texts = ['alpha', 'beta', 'avocado']
+  assert.equal(findTypeaheadIndex('a', 3, 0, textsAt(texts)), 2)
+  assert.equal(findTypeaheadIndex('a', 3, 2, textsAt(texts)), 0)
+  assert.equal(findTypeaheadIndex('b', 3, 2, textsAt(texts)), 1)
+})
+
+test('findTypeaheadIndex: -1 current starts at 0; case-insensitive', () => {
+  assert.equal(findTypeaheadIndex('B', 2, -1, textsAt(['Apple', 'Banana'])), 1)
+  assert.equal(findTypeaheadIndex('м', 2, -1, textsAt(['Киев', 'Москва'])), 1)
+})
+
+test('findTypeaheadIndex: longer buffer stays on the still-matching current option', () => {
+  const texts = ['apple', 'banana', 'bandana']
+  assert.equal(findTypeaheadIndex('ba', 3, 1, textsAt(texts)), 1)
+  assert.equal(findTypeaheadIndex('band', 3, 1, textsAt(texts)), 2)
+})
+
+test('findTypeaheadIndex: repeated character prefers a literal match, else cycles', () => {
+  assert.equal(findTypeaheadIndex('aa', 2, 0, textsAt(['aruba', 'aachen'])), 1)
+  assert.equal(findTypeaheadIndex('aa', 3, 1, textsAt(['alpha', 'avocado', 'beta'])), 0)
+})
+
+test('findTypeaheadIndex: undefined text (disabled) never matches', () => {
+  assert.equal(findTypeaheadIndex('b', 3, 0, textsAt(['apple', undefined, 'berry'])), 2)
+})
+
+test('findTypeaheadIndex: no match / empty list return -1 and single-option cycle returns itself', () => {
+  assert.equal(findTypeaheadIndex('z', 2, 0, textsAt(['apple', 'banana'])), -1)
+  assert.equal(findTypeaheadIndex('a', 0, -1, textsAt([])), -1)
+  assert.equal(findTypeaheadIndex('a', 1, 0, textsAt(['apple'])), 0)
+})
+
 // --- Integration: LLSelectSingle + jsdom ---------------------------
 
-function mountSelect(options: string[]): LLSelectSingle<string> {
+function mountSelect(options: string[], settings?: LLSelectSingleSettingsInput<string>): LLSelectSingle<string> {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
   const mount = document.getElementById('mount')!
-  const sel = new LLSelectSingle<string>(mount)
+  const sel = new LLSelectSingle<string>(mount, settings)
+  sel.setItems(options)
+  return sel
+}
+
+function mountMulti(options: string[], settings?: LLSelectMultipleSettingsInput<string>): LLSelectMultiple<string> {
+  setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
+  const mount = document.getElementById('mount')!
+  const sel = new LLSelectMultiple<string>(mount, settings)
   sel.setItems(options)
   return sel
 }
@@ -119,7 +178,7 @@ function fireKey(target: HTMLElement, key: string, altKey = false): void {
   target.dispatchEvent(ev)
 }
 
-function focusedLabel(sel: LLSelectSingle<string>): string | null {
+function focusedLabel(sel: LLSelectSingle<string> | LLSelectMultiple<string>): string | null {
   const el = sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)
   return el ? el.textContent : null
 }
@@ -246,8 +305,111 @@ test('Enter on closed select opens (does not select)', () => {
   assert.equal(sel.getChosenItem(), undefined)
 })
 
-test('typing letters when closed does NOT open (phase 5: typeahead comes later)', () => {
+// --- Prefix typeahead (contract: A11Y.md keyboard tables) ----------
+
+test('typeahead: typing when closed opens and focuses the match; value unchanged', () => {
   const sel = mountSelect(['apple', 'banana'])
+  fireKey(sel.triggerEl, 'b')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
+  assert.equal(focusedLabel(sel), 'banana')
+  assert.equal(sel.getChosenItem(), undefined)
+})
+
+test('typeahead: growing buffer stays on the current option while it matches', () => {
+  const sel = mountSelect(['apple', 'banana', 'bandana'])
+  sel.open()
+  fireKey(sel.triggerEl, 'b')
+  assert.equal(focusedLabel(sel), 'banana')
+  fireKey(sel.triggerEl, 'a')
+  assert.equal(focusedLabel(sel), 'banana')
+  fireKey(sel.triggerEl, 'n')
+  fireKey(sel.triggerEl, 'd')
+  assert.equal(focusedLabel(sel), 'bandana')
+})
+
+test('typeahead: repeating one initial cycles its matches, wrapping around', () => {
+  const sel = mountSelect(['alpha', 'avocado', 'beta'])
+  sel.open()
+  fireKey(sel.triggerEl, 'a')
+  assert.equal(focusedLabel(sel), 'avocado')
+  fireKey(sel.triggerEl, 'a')
+  assert.equal(focusedLabel(sel), 'alpha')
+})
+
+test('typeahead: search wraps to a match above the current option', () => {
+  const sel = mountSelect(['cherry', 'apple'])
+  sel.open()
+  fireKey(sel.triggerEl, 'ArrowDown')
+  assert.equal(focusedLabel(sel), 'apple')
+  fireKey(sel.triggerEl, 'c')
+  assert.equal(focusedLabel(sel), 'cherry')
+})
+
+test('typeahead: disabled options are skipped', () => {
+  const sel = mountSelect(['apple', 'banana', 'berry'], { itemDisabledFn: (s) => s === 'banana' })
+  sel.open()
+  fireKey(sel.triggerEl, 'b')
+  assert.equal(focusedLabel(sel), 'berry')
+})
+
+test('typeahead: no match leaves the active option in place', () => {
+  const sel = mountSelect(['apple', 'banana'])
+  sel.open()
+  fireKey(sel.triggerEl, 'z')
+  assert.equal(focusedLabel(sel), 'apple')
+})
+
+test('typeahead: an action key resets the buffer', () => {
+  const sel = mountSelect(['apple', 'banana', 'bandana'])
+  sel.open()
+  fireKey(sel.triggerEl, 'b')
+  fireKey(sel.triggerEl, 'ArrowDown')
+  assert.equal(focusedLabel(sel), 'bandana')
+  fireKey(sel.triggerEl, 'a')
+  assert.equal(focusedLabel(sel), 'apple')
+})
+
+test('typeahead: typing digits fires no onChange; Enter commits once', () => {
+  let calls = 0
+  const sel = mountSelect(['1980', '1985', '1990'], { onChange: () => { calls++ } })
+  fireKey(sel.triggerEl, '1')
+  fireKey(sel.triggerEl, '9')
+  fireKey(sel.triggerEl, '9')
+  assert.equal(focusedLabel(sel), '1990')
+  assert.equal(calls, 0)
+  fireKey(sel.triggerEl, 'Enter')
+  assert.equal(sel.getChosenItem(), '1990')
+  assert.equal(calls, 1)
+})
+
+test('typeahead: Space right after typing still selects, never joins the buffer', () => {
+  const sel = mountSelect(['apple', 'banana'])
+  fireKey(sel.triggerEl, 'b')
+  fireKey(sel.triggerEl, ' ')
+  assert.equal(sel.getChosenItem(), 'banana')
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
+})
+
+test('typeahead: not intercepted while closed when the open would be filterable', () => {
+  const sel = mountSelect(['apple', 'banana'], { filterable: true })
   fireKey(sel.triggerEl, 'a')
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
+})
+
+test('typeahead (multiple): Space right after typing toggles the focused row', () => {
+  const sel = mountMulti(['apple', 'banana'])
+  fireKey(sel.triggerEl, 'b')
+  assert.equal(focusedLabel(sel), 'banana')
+  fireKey(sel.triggerEl, ' ')
+  assert.deepEqual([...sel.getChosenItems()], ['banana'])
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
+})
+
+test('typeahead (multiple): the choose-all row is never a match', () => {
+  // Default choose-all text starts with "Select" - typing "s" must land on
+  // the item, not the leading row.
+  const sel = mountMulti(['salt', 'pepper'], { chooseAllRow: true })
+  sel.open()
+  fireKey(sel.triggerEl, 's')
+  assert.equal(focusedLabel(sel), 'salt')
 })

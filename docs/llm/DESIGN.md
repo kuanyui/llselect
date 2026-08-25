@@ -174,6 +174,20 @@ The fix is IMPLEMENTED as a feature-detected top-layer enhancement (constructor 
 
 A body portal, by contrast, fixes only displacement - a body-appended popup still loses paint order to root-context competitors above its own `z-index`, renders UNDER an open `<dialog>` and its `::backdrop`, and forfeits the invariants above - so it stays rejected.
 
+## Prefix typeahead (Phase 7, revived)
+
+Native-`<select>`-style prefix typeahead while the filter is inactive. Phase 7 was DROPPED in `archive/roadmap-v0.0.1.md` on the ground "useless for CJK / IME input"; that drop is superseded - the argument only rules typeahead out as a REPLACEMENT for the filter box, not as an addition for scripts typed without an IME (Latin / Cyrillic / digits; the motivating case is long year / country lists). Maintainer-ratified rulings, panel-reviewed:
+
+- Closed + printable character: OPEN the popup and move the active option to the match; the value commits on Enter only. Native `<select>` mutates the value per keystroke while closed - that fires `onChange` once per transient prefix (typing "1985" = four changes) and has no multiple-mode meaning, so the APG select-only model wins for both modes.
+- Space always activates; it never joins the buffer. Native folds Space into an active buffer; rejected because multiple-mode Space is the toggle key, and an invisible timeout must not change what a key does. Multi-word prefixes are a `filterable` use case.
+- The typeahead search wraps around the list; arrow navigation stays clamped. Search and relative motion are different operations, and same-character cycling needs the wrap.
+- Match = `itemToString`, lower-cased `startsWith` - consistent with the filter's default compare. No diacritic folding, no `toLocaleLowerCase` (host-locale-dependent), and never `filterFn` (its contract is substring / user-defined; a fuzzy one would make everything match the first key).
+- Always on while the open cycle's filter is inactive; no setting. While closed, the `filterable` predicate is evaluated fresh (the cached per-open flag can be stale); a would-be-filterable open leaves printable keys alone - they belong to the filter input.
+- The choose-all row is never a typeahead target: its counting text mutates as the user selects, so it cannot be a stable match.
+- Buffer expiry is a timestamp delta checked on the next keystroke (1 s, matching native implementations) - deliberately not a `setTimeout`, so there is no timer to clean up and nothing time-dependent in tests.
+
+Behavior contract (key tables, buffer reset points): `A11Y.md`. Pure matching logic: `findTypeaheadIndex` in `src/keyboard.ts`.
+
 ## Filter box (Phase 8) architecture
 
 Locked decisions for the filterable variant. Keyboard / focus / ARIA contract is in `A11Y.md`.
