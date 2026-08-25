@@ -384,7 +384,7 @@ The library re-applies nothing on its own. A live setting would need its own re-
 
 - Data changes by method: `setItems`, `setChosenItem`, `setDisabled`.
 - Only two texts have setters: `setPlaceholder`, `setUiTranslationPack`.
-- For anything else, build a new instance. A build takes about 0.2 ms.
+- For anything else, build a new instance.
 
 **Why `compareFn`, and no `itemKeyFn`?**
 
