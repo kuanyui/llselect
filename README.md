@@ -258,7 +258,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Capability                           | Entry points                                                                                                             |
 |--------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Search box + custom matching         | `filterable` (bool or predicate), `filterFn`                                                                             |
-| Typing to jump (prefix typeahead)    | always on while the filter is off - no setting; matches the text `itemToStringFn` returns (see below)                    |
+| Typing to jump (prefix typeahead)    | always on while the filter is off - no setting; matches the text `itemToStringFn` returns; see Typing to jump            |
 | Accessible field naming (required)   | `ariaLabel` / `ariaLabelledBy` / `labelEl` (visible label element: name + label-click-to-focus)                          |
 | Disabling - whole control / per item | `setDisabled()`, `focusableWhenDisabled`, `itemDisabledFn`                                                               |
 | Grouping (optgroup)                  | `itemToGroupKeyFn`, `groupKeyToStringFn`, `groupDisabledFn`                                                               |
@@ -271,11 +271,11 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 
 ### Typing to jump (prefix typeahead)
 
-While the filter is off, typing letters moves the highlight to the matching option, like a native `<select>`.
+While the filter is off, typing letters moves the focused option to the match, like a native `<select>`.
 
 - Keystrokes one second or less apart chain into one prefix; a pause starts a new one.
 - Repeating one letter cycles through the options that start with it.
-- Typing while closed opens the list first. It only moves the highlight; Enter, Space, or a click chooses.
+- Typing while closed opens the list first. It only moves the focus; Enter, Space, or a click chooses.
 - Space always chooses, so a typed prefix ends before any space.
 - The matched text is the same string `itemToStringFn` returns.
 

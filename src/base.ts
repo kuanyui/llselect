@@ -2287,7 +2287,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   the cached `filterActive` can be stale between opens).
    * - Space never joins the buffer; it stays the activate/open key (A11Y.md).
    * - While closed: opens the popup first, then searches relative to
-   *   {@link typeaheadClosedStartIndex} - NOT to the convenience focus
+   *   {@link computeTypeaheadClosedStartIndex} - NOT to the convenience focus
    *   `focusInitial` parked, which would skip the first match.
    * - Typing itself never changes the value and never fires `onChange`;
    *   activation stays Enter / Space / click.
@@ -2296,10 +2296,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   private handleTypeaheadKeydown(ev: KeyboardEvent): boolean {
     // Printable = exactly one code point ('Dead' / 'Process' fail, astral
-    // pairs pass). Modifiers: Ctrl-only and Meta chords are commands, but
-    // Ctrl+Alt (AltGraph) and plain Alt (macOS Option) can PRODUCE ordinary
-    // characters - the produced character IS ev.key, so let those through.
+    // pairs pass). Meta and Ctrl-only chords are commands.
     if (ev.key === ' ' || [...ev.key].length !== 1 || ev.metaKey || (ev.ctrlKey && !ev.altKey)) { return false }
+    // Alt-carrying chords (AltGraph, macOS Option) PRODUCE characters and the
+    // produced character arrives as ev.key ("@", "a-ring", ...). A chord
+    // still delivering a bare ASCII letter / digit produced nothing - that is
+    // a shortcut (Windows Alt menus, accesskey, VoiceOver's Ctrl+Option), so
+    // it passes through.
+    if (ev.altKey && /^[a-zA-Z0-9]$/.test(ev.key)) { return false }
     if (this.opened ? this.filterActive : this.computeFilterActive()) { return false }
     ev.preventDefault()
     const now = Date.now()
@@ -2313,7 +2317,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     }
     const list = this.getVisibleItems()
     const current = openedByThisKey
-      ? this.typeaheadClosedStartIndex(list)
+      ? this.computeTypeaheadClosedStartIndex(list)
       : (this.leadingRowFocused ? -1 : this.focusedIndex)
     const found = findTypeaheadIndex(
       this.typeaheadBuffer,
@@ -2328,16 +2332,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * The option the closed-state typeahead treats as current, as an index into
    * `list`, when the typed character is the keystroke that opens the popup.
-   * A one-character buffer searches AFTER this option; a longer one searches
-   * from it (see `findTypeaheadIndex` in `keyboard.ts`).
+   * - A one-character buffer searches AFTER this option; a longer buffer
+   *   searches from it.
    * - Default `-1`: no current option, so the first match from the top wins.
-   *   The focus `focusInitial` parks on open is a convenience, not a
-   *   selection - it must not shift the search.
+   * - The focus `focusInitial` parks on open is a convenience, not a
+   *   selection - it must not shift this search.
    * - Single mode overrides this with the chosen item's index, so a typed
    *   initial cycles past the current selection like a native `<select>`.
+   * - Search internals: `findTypeaheadIndex` in `keyboard.ts`.
    * @group Subclassing: focus
    */
-  protected typeaheadClosedStartIndex(_list: readonly T[]): number {
+  protected computeTypeaheadClosedStartIndex(_list: readonly T[]): number {
     return -1
   }
 

@@ -2,6 +2,38 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (prefix typeahead)
+
+Process: implementation of the maintainer-ratified typeahead rulings (`DESIGN.md` "Prefix typeahead"), then two post-fix panel rounds - the other four members (Opus 5, Opus 4.8, Codex Sol at max, Codex 5.5 at xhigh) reading the repo read-only through the CLI channels in `CLAUDE.md`, commit diff inline in the brief. Round 1: three of four independently found HIGH-95. Round 2 verified the round-1 fixes and surfaced the second half of MEDIUM-96 plus QUALITY-98.
+
+- [x] **[HIGH-95] - closed-state typeahead landed on the second match**
+  - Symptom: single with nothing chosen, `['apple','avocado']`, closed, press "a" - the active option became avocado; `A11Y.md` promises the first match.
+  - Cause: the closed branch called `open()` first, `focusInitial` parked the convenience focus on item 0, and a one-character search starts AFTER the current index - so index 0 was skipped (`src/base.ts` `handleTypeaheadKeydown`).
+  - Fix: a type-opened popup anchors on `computeTypeaheadClosedStartIndex` - base `-1` (first match from the top), single overrides with the chosen item's index. Open-state typing still anchors on the visual focus.
+  - Verified: `test/keyboard.test.ts` "lands on the FIRST match" + "cycles past the chosen item"; found independently by three round-1 reviewers.
+  - Q: Why anchor single mode on the CHOSEN item instead of always `-1`?
+    - A: Native anchors on the selection - typing "b" with banana chosen reaches blueberry in one press. `-1` would land back on the chosen item and cost a second press. With nothing chosen the two agree.
+- [x] **[MEDIUM-96] - the printable-key modifier gate was wrong twice**
+  - Symptom: round 1 shipped reject-all-modifiers, losing AltGraph and macOS Option characters (real text). The round-2 fix accepted all Alt chords, letting Windows plain Alt+D typeahead and swallow `accesskey` / address-bar chords.
+  - Fix: reject Meta and Ctrl-only; accept an Alt-carrying chord only when the delivered key is no longer a bare ASCII letter or digit (produced text changes the key - "@", "a-ring"; an unchanged letter is a shortcut chord).
+  - Verified: gate tests in `test/keyboard.test.ts` (Ctrl-only / Meta / plain-Alt pass through untouched; AltGraph "@" and Option "a-ring" type); the real-layout pass is queued in `TODO.md`.
+  - Q: Why the delivered-key heuristic, not `getModifierState('AltGraph')`?
+    - A: AltGraph reporting for macOS Option is uncertain on Safari, jsdom cannot construct that state for tests, and the heuristic also rejects VoiceOver's Ctrl+Option chords (they deliver bare letters). The delivered key is itself the evidence that text was produced.
+- [x] **[MEDIUM-97] - repeated-character buffers tried a literal doubled-prefix match first**
+  - Symptom: `['alpha','avocado','aachen']` with alpha active, "a" twice landed on aachen instead of cycling to avocado. `A11Y.md` says "repeating one initial cycles", and native folds an all-same buffer to its single character.
+  - Cause: the first implementation copied the W3C APG example, which is the outlier on this rule.
+  - Fix: cycle-always. The repeated test folds code points one by one, so the Turkish dotted capital I (lower-case form expands to two units), astral characters (`buffer[0]` had been a lone surrogate), and a mid-repeat Shift ("aA") all still cycle.
+  - Verified: pure tests for all four shapes; the divergence from the APG example is recorded in `DESIGN.md`.
+  - Q: One round-1 reviewer defended literal-first - why did cycle-always win?
+    - A: Native parity, the already-written contract line, and simpler code. A text really starting "aa" is still reached by the cycle, so nothing becomes unreachable.
+- [x] **[QUALITY-98] - the closed-anchor hook shipped without a verb prefix**
+  - Symptom: `typeaheadClosedStartIndex` is protected, so it lands in the `.d.ts` and the TypeDoc reference; `naming-conventions.md` fixes the method vocabulary, and renaming after a release breaks subclassers.
+  - Fix: renamed to `computeTypeaheadClosedStartIndex` (derive-at-use-time - the `computeFilterActive` precedent) before any release carried it.
+- [x] **[DOCUMENTATION-99] - typeahead contract wording drifted from the code in six places**
+  - Symptom: "commit stays Enter" (Space also activates); "under 1 s" (code extends at exactly 1 s); the reset-key list missed Home / End / Page; the `filterable` TSDoc claimed the predicate runs only at open (closed typing consults it read-only); DESIGN said "consistent with the filter's default compare" (that compare is substring, typeahead is prefix); the README had no reader-facing behavior section, its IME bullet led with the fix instead of the reason, and "highlight" named the focused option against the naming ruling.
+  - Fix: all reworded; the README gained the "Typing to jump" section and a capabilities-table row.
+  - Verified: round-2 reviewers re-checked each rewording against the code.
+
 ## review (external, ChatGPT API-design review - five-model panel)
 
 Process: the owner fed the generated API reference (`public/api/`) plus README to ChatGPT, which returned nine "should change" items; the owner added their own questions. Convened as a design fork BEFORE any execution: Fable 5 (convener; its position written before reading the others), Opus 5 (max), Opus 4.8 (max), Codex Sol (max), Codex 5.5 (xhigh, its ceiling), each reading the repo read-only through the CLI channels recorded in `CLAUDE.md`. Every behavioral claim below was re-verified by the convener with a tsc or jsdom probe. Unanimous rejections are logged `[x]` with the reason kept. The owner then ruled on the rest: the approved fixes landed (`[x]`, with the post-fix review's findings folded in), QUALITY-89 was ruled last (part A landed, part B rejected); the round holds no open items.

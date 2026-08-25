@@ -130,9 +130,10 @@ export function appendTypeaheadChar(buffer: string, char: string, elapsedMs: num
  * - Indexes where `textAt` returns `undefined` (disabled options) never match.
  * - `currentIndex` `-1` means no option is active; the search starts at 0.
  *
- * The repeated-character test compares the RAW characters, before
- * lower-casing: one typed key whose lower-case form expands to two code units
- * (Turkish dotless-I family) must still count as "one repeated character".
+ * The repeated-character test compares CODE POINTS, each lower-cased on its
+ * own: a key whose lower-case form expands to two code units (the Turkish
+ * dotted capital I) still counts, astral-plane characters compare whole, and
+ * a mid-repeat Shift ("aA") still cycles.
  *
  * @param textAt - match text of the option at an index, or `undefined` when
  *   that option must never match.
@@ -144,8 +145,9 @@ export function findTypeaheadIndex(
   textAt: (index: number) => string | undefined,
 ): number {
   if (count <= 0 || buffer === '') { return -1 }
-  const sameChar = [...buffer].every((c) => c === buffer[0])
-  const needle = (sameChar ? buffer[0]! : buffer).toLowerCase()
+  const chars = [...buffer].map((c) => c.toLowerCase())
+  const sameChar = chars.every((c) => c === chars[0])
+  const needle = sameChar ? chars[0]! : buffer.toLowerCase()
   const start = sameChar ? currentIndex + 1 : Math.max(currentIndex, 0)
   const from = ((start % count) + count) % count
   for (let i = 0; i < count; i++) {

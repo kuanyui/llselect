@@ -146,9 +146,15 @@ test('findTypeaheadIndex: repeated character always cycles, never a literal matc
 })
 
 test('findTypeaheadIndex: a repeated character whose lower-case form expands still cycles', () => {
-  // Turkish dotless-I family: 'İ'.toLowerCase() is two code units.
+  // Turkish capital dotted I: its lower-case form is two code units.
   assert.equal(findTypeaheadIndex('İİ', 2, 0, textsAt(['İstanbul', 'İzmir'])), 1)
   assert.equal(findTypeaheadIndex('İ', 2, 1, textsAt(['İstanbul', 'İzmir'])), 0)
+})
+
+test('findTypeaheadIndex: astral characters cycle whole; a mid-repeat Shift still cycles', () => {
+  assert.equal(findTypeaheadIndex('😀', 2, 0, textsAt(['😀 grin', '😀 beam'])), 1)
+  assert.equal(findTypeaheadIndex('😀😀', 2, 1, textsAt(['😀 grin', '😀 beam'])), 0)
+  assert.equal(findTypeaheadIndex('aA', 3, 1, textsAt(['alpha', 'avocado', 'beta'])), 0)
 })
 
 test('findTypeaheadIndex: undefined text (disabled) never matches', () => {
@@ -430,10 +436,12 @@ test('typeahead: closed typing cycles past the chosen item, like a native select
 })
 
 test('typeahead: closing resets the buffer', () => {
+  // close() directly - the Escape path would already clear the buffer via
+  // the action-key reset, hiding a close() that forgot to.
   const sel = mountSelect(['apple', 'banana', 'bandana'])
   fireKey(sel.triggerEl, 'b')
   assert.equal(focusedLabel(sel), 'banana')
-  fireKey(sel.triggerEl, 'Escape')
+  sel.close()
   fireKey(sel.triggerEl, 'a')
   assert.equal(focusedLabel(sel), 'apple')
 })
@@ -449,8 +457,10 @@ test('typeahead: a no-match keystroke keeps the buffer', () => {
 })
 
 test('typeahead: matches itemToStringFn text and ignores filterFn', () => {
-  const sel = mountSelect(['a', 'b'], {
-    itemToStringFn: (s) => (s === 'a' ? 'apple' : 'banana'),
+  // Raw item values share no initial with the mapped texts, so a match
+  // proves the mapped text was used.
+  const sel = mountSelect(['x', 'y'], {
+    itemToStringFn: (s) => (s === 'x' ? 'apple' : 'banana'),
     filterFn: () => false,
   })
   sel.open()
@@ -458,16 +468,36 @@ test('typeahead: matches itemToStringFn text and ignores filterFn', () => {
   assert.equal(focusedLabel(sel), 'banana')
 })
 
-test('typeahead: Ctrl-only chords pass through; Ctrl+Alt (AltGraph) types', () => {
+test('typeahead: Ctrl-only / Meta / plain-Alt-ASCII chords pass through untouched', () => {
+  const sel = mountSelect(['apple', 'dates'])
+  sel.open()
+  for (const init of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }]) {
+    const ev = new KeyboardEvent('keydown', { key: 'd', ...init, bubbles: true, cancelable: true })
+    sel.triggerEl.dispatchEvent(ev)
+    assert.equal(focusedLabel(sel), 'apple')
+    assert.equal(ev.defaultPrevented, false)
+  }
+})
+
+test('typeahead: modifier-PRODUCED characters type (AltGraph "@", macOS Option "å")', () => {
+  const withAltGraph = mountSelect(['apple', '@handle'])
+  withAltGraph.open()
+  const altGraph = new KeyboardEvent('keydown', { key: '@', ctrlKey: true, altKey: true, bubbles: true, cancelable: true })
+  withAltGraph.triggerEl.dispatchEvent(altGraph)
+  assert.equal(focusedLabel(withAltGraph), '@handle')
+  const withOption = mountSelect(['apple', 'åland'])
+  withOption.open()
+  const option = new KeyboardEvent('keydown', { key: 'å', altKey: true, bubbles: true, cancelable: true })
+  withOption.triggerEl.dispatchEvent(option)
+  assert.equal(focusedLabel(withOption), 'åland')
+})
+
+test('typeahead: a Dead key is left alone', () => {
   const sel = mountSelect(['apple', 'banana'])
   sel.open()
-  const ctrlOnly = new KeyboardEvent('keydown', { key: 'b', ctrlKey: true, bubbles: true, cancelable: true })
-  sel.triggerEl.dispatchEvent(ctrlOnly)
+  const ev = fireKey(sel.triggerEl, 'Dead')
   assert.equal(focusedLabel(sel), 'apple')
-  assert.equal(ctrlOnly.defaultPrevented, false)
-  const altGraph = new KeyboardEvent('keydown', { key: 'b', ctrlKey: true, altKey: true, bubbles: true, cancelable: true })
-  sel.triggerEl.dispatchEvent(altGraph)
-  assert.equal(focusedLabel(sel), 'banana')
+  assert.equal(ev.defaultPrevented, false)
 })
 
 test('typeahead (multiple): Space right after typing toggles the focused row', () => {
