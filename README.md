@@ -2,9 +2,9 @@
 
 [![npm version](https://img.shields.io/npm/v/@llselect/core)](https://www.npmjs.com/package/@llselect/core)
 
-A JavaScript library aims to be a replacement of native HTML `<select>`. Focus on performance and flexibility.
+A low-level JavaScript library aims to be an alternative of `<select>`.
 
-It is a minimal but flexible implementation of `<select>` in JavaScript that you can easily wrap and integrate into your existing UI library / framework / style.
+This is a low-level `<select>`-liked component library written in TypeScript. Focus on performance and flexibility. You can easily wrap and integrate into your existing UI library / framework / style.
 
 - GitHub: [Git](https://github.com/kuanyui/llselect) | [Home](https://kuanyui.github.io/llselect/) | [Demo](https://kuanyui.github.io/llselect/demo/) | [API](https://kuanyui.github.io/llselect/api/)
 - GitLab: [Git](https://gitlab.com/kuanyui/llselect) | [Home](https://kuanyui.gitlab.io/llselect/) | [Demo](https://kuanyui.gitlab.io/llselect/demo/) | [API](https://kuanyui.gitlab.io/llselect/api/)
@@ -67,7 +67,7 @@ It is a minimal but flexible implementation of `<select>` in JavaScript that you
    - Do only one thing: *"a minimal replacement of `<select>`"*, not aimed to be an omnipotent monster.
 2. Performance
    - Create minimal elements on DOM when instantiating to optimize the page loading latency.
-   - The DOM of popup and candidates are lazy-rendering, and remove unneeded element from DOM when unneeded to minimize memory footprints.
+   - The DOM of popup and candidates are lazy-rendering, and remove unneeded element from DOM when unneeded to minimize memory usages.
    - Mutate minimal DOM if possible. Toggling a candidate in the popup list replaces only the affected candidate rows and refreshes the trigger, instead of rebuilding the whole list. (Features that change which rows are listed or add a summary row - `hideChosenRows`, `chooseAllRow` - rebuild or update those parts too.)
 3. Flexible
    - Highly customizable: HTML templates of select itself, popup, candidates list, candidate row, arrow icon, ...etc.
