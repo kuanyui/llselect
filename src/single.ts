@@ -215,6 +215,18 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   }
 
   /**
+   * Closed-state typeahead searches relative to the CHOSEN item, like a
+   * native `<select>`: typing its initial cycles to the next match. `-1`
+   * (nothing chosen, or the chosen item left the list) = search from the top.
+   * @group Subclassing: focus
+   */
+  protected override typeaheadClosedStartIndex(list: readonly T[]): number {
+    const c = this.chosenItem
+    if (c === undefined) { return -1 }
+    return list.findIndex((o) => this.settings.compareFn(o, c))
+  }
+
+  /**
    * Re-match the chosen item against the new list after `setItems`.
    * - If the list no longer holds it (by `compareFn`), it is dropped and
    *   `onChange` fires.

@@ -188,7 +188,7 @@ The bare URLs `https://cdn.jsdelivr.net/npm/@llselect/core` and `https://unpkg.c
 - **No HTML sanitizer.** llselect does not do HTML sanitizing for you. Remember to sanitize untrusted input via [DOMPurify](https://github.com/cure53/DOMPurify), or [browser's native Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/Sanitizer).
 - **No asynchronous data-fetching API.** llselect is aimed to be a simple `<select>` replacement. Fetch if you really want, then call `setItems(...)`.
 - **No virtual scrolling.** llselect is aimed to be a simple `<select>` replacement, not an omnipotent library.
-- **Prefix typeahead cannot cover IME input.** Typing letters to jump works like a native `<select>` on alphabetic lists, with no setup. IME composition needs a text field, which the trigger is not. For CJK lists, enable `filterable` and type in its search box.
+- **Prefix typeahead cannot cover IME input, because composition needs a text field and the trigger is not one.** Typing letters to jump still works like a native `<select>` on alphabetic lists. For CJK lists, enable `filterable` and type in its search box.
 - **No auto destroy.** - You *must* call `destroy()` manually when unmounting.
 - **No official React / Vue / Angular wrapper** - llselect provides the minimal library and the CSS themes only.
   > Because:
@@ -258,6 +258,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Capability                           | Entry points                                                                                                             |
 |--------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Search box + custom matching         | `filterable` (bool or predicate), `filterFn`                                                                             |
+| Typing to jump (prefix typeahead)    | always on while the filter is off - no setting; matches the text `itemToStringFn` returns (see below)                    |
 | Accessible field naming (required)   | `ariaLabel` / `ariaLabelledBy` / `labelEl` (visible label element: name + label-click-to-focus)                          |
 | Disabling - whole control / per item | `setDisabled()`, `focusableWhenDisabled`, `itemDisabledFn`                                                               |
 | Grouping (optgroup)                  | `itemToGroupKeyFn`, `groupKeyToStringFn`, `groupDisabledFn`                                                               |
@@ -267,6 +268,16 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir` |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
 | Events                               | `onChange(current, previous)`, `onOpen`, `onClose`                                                                       |
+
+### Typing to jump (prefix typeahead)
+
+While the filter is off, typing letters moves the highlight to the matching option, like a native `<select>`.
+
+- Keystrokes one second or less apart chain into one prefix; a pause starts a new one.
+- Repeating one letter cycles through the options that start with it.
+- Typing while closed opens the list first. It only moves the highlight; Enter, Space, or a click chooses.
+- Space always chooses, so a typed prefix ends before any space.
+- The matched text is the same string `itemToStringFn` returns.
 
 Full contracts: [docs/llm/DESIGN.md](docs/llm/DESIGN.md) (API / architecture) and [docs/llm/A11Y.md](docs/llm/A11Y.md) (keyboard / focus / ARIA). The TypeScript declarations shipped in the package document every setting inline.
 

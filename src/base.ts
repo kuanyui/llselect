@@ -66,7 +66,8 @@ export interface LLSelectChangeMeta {
  * - To change a fixed setting, build a new instance. One build takes about
  *   0.2 ms.
  * - If a setting must vary at runtime, use its function form where one
- *   exists. `filterable: (items) => boolean` is re-evaluated on every open.
+ *   exists. `filterable: (items) => boolean` is re-evaluated on every open
+ *   (and consulted by closed-state typeahead - see the setting).
  * @group Settings
  * @category Base
  */
@@ -199,7 +200,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - Predicate `(items) => boolean`: conditional - evaluated against the
    *   CURRENT full item list each time the popup OPENS (never mid-open; a
    *   `setItems` crossing the threshold applies on the next open). E.g.
-   *   `filterable: (items) => items.length > 10`.
+   *   `filterable: (items) => items.length > 10`. A printable key pressed
+   *   while CLOSED also calls the predicate, read-only, to decide whether
+   *   prefix typeahead may take the key - keep it cheap and side-effect free.
    * The ARIA mode follows the evaluated value per open cycle: active =
    * trigger `role="button"`, focus moves to the input; inactive = exactly
    * like `filterable: false` (trigger stays `role="combobox"`, focus stays on
@@ -2276,38 +2279,66 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Native-`<select>`-style prefix typeahead for a printable-character
-   * keydown on the trigger. Returns `true` when the event was consumed.
-   * - Runs only while the filter is inactive: with the popup open the filter
-   *   input owns typing, and while closed a would-be-filterable open cycle
+   * keydown on the trigger.
+   * - Returns `true` when the event was consumed.
+   * - Runs only while the filter is inactive. With the popup open the filter
+   *   input owns typing; while closed, a would-be-filterable open cycle
    *   leaves the keys alone (the `filterable` predicate is evaluated fresh -
    *   the cached `filterActive` can be stale between opens).
    * - Space never joins the buffer; it stays the activate/open key (A11Y.md).
-   * - While closed: opens the popup first, then moves the active option. The
-   *   value still commits on Enter only - typing never fires `onChange`.
+   * - While closed: opens the popup first, then searches relative to
+   *   {@link typeaheadClosedStartIndex} - NOT to the convenience focus
+   *   `focusInitial` parked, which would skip the first match.
+   * - Typing itself never changes the value and never fires `onChange`;
+   *   activation stays Enter / Space / click.
    * - Match rule, cycling, and wrap: {@link findTypeaheadIndex}. No match
    *   leaves the active option and the buffer as they are.
    */
   private handleTypeaheadKeydown(ev: KeyboardEvent): boolean {
-    if (ev.key.length !== 1 || ev.key === ' ' || ev.ctrlKey || ev.metaKey || ev.altKey) { return false }
+    // Printable = exactly one code point ('Dead' / 'Process' fail, astral
+    // pairs pass). Modifiers: Ctrl-only and Meta chords are commands, but
+    // Ctrl+Alt (AltGraph) and plain Alt (macOS Option) can PRODUCE ordinary
+    // characters - the produced character IS ev.key, so let those through.
+    if (ev.key === ' ' || [...ev.key].length !== 1 || ev.metaKey || (ev.ctrlKey && !ev.altKey)) { return false }
     if (this.opened ? this.filterActive : this.computeFilterActive()) { return false }
     ev.preventDefault()
     const now = Date.now()
     this.typeaheadBuffer = appendTypeaheadChar(this.typeaheadBuffer, ev.key, now - this.typeaheadLastTime)
     this.typeaheadLastTime = now
-    if (!this.opened) {
+    const openedByThisKey = !this.opened
+    if (openedByThisKey) {
       this.open()
       // open() can refuse (hidden anchor); nothing to move focus in then.
       if (!this.opened) { return true }
     }
     const list = this.getVisibleItems()
+    const current = openedByThisKey
+      ? this.typeaheadClosedStartIndex(list)
+      : (this.leadingRowFocused ? -1 : this.focusedIndex)
     const found = findTypeaheadIndex(
       this.typeaheadBuffer,
       list.length,
-      this.leadingRowFocused ? -1 : this.focusedIndex,
+      current,
       (i) => this.isItemEffectivelyDisabled(list[i]!) ? undefined : this.itemToString(list[i]!),
     )
     if (found >= 0) { this.setFocusedIndex(found) }
     return true
+  }
+
+  /**
+   * The option the closed-state typeahead treats as current, as an index into
+   * `list`, when the typed character is the keystroke that opens the popup.
+   * A one-character buffer searches AFTER this option; a longer one searches
+   * from it (see `findTypeaheadIndex` in `keyboard.ts`).
+   * - Default `-1`: no current option, so the first match from the top wins.
+   *   The focus `focusInitial` parks on open is a convenience, not a
+   *   selection - it must not shift the search.
+   * - Single mode overrides this with the chosen item's index, so a typed
+   *   initial cycles past the current selection like a native `<select>`.
+   * @group Subclassing: focus
+   */
+  protected typeaheadClosedStartIndex(_list: readonly T[]): number {
+    return -1
   }
 
   private createTriggerEl(): HTMLElement {
