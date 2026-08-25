@@ -369,55 +369,43 @@ How the two layers coexist: every customization point is a `protected` method wh
 
 ## Design decisions
 
-Short answers to the questions reviewers ask about this API. The full reasoning is in [docs/llm/DESIGN.md](docs/llm/DESIGN.md).
+Short answers. Full reasoning: [docs/llm/DESIGN.md](docs/llm/DESIGN.md).
 
-**Why extend by subclassing, not by passing a renderer object?**
+**Why subclass instead of passing a renderer object?**
 
-- Settings cover the common case. Each `create*ContentElFn` fills what one element shows.
-- Subclassing is for the rare case: a new kind of select, or a framework wrapper.
-- Those need instance state such as `isChosen()`, calls to `super`, and lifecycle hooks. A renderer object would need the instance passed in to do the same, so it would not be smaller.
-- The `protected` methods are the extension API. They follow the method-name grammar above.
+Subclassing changes the elements the library builds, including their ARIA. Settings can only fill content inside those elements.
+
+- So no setting can break the ARIA contract.
+- Use settings first. Subclass only for a new select kind or a framework wrapper.
 
 **Why are settings frozen after construction?**
 
-- Values come in three kinds. Only the first two change at runtime.
-- State: the items, the chosen value, `disabled`. These were never settings. Change them with `setItems`, `setChosenItem` / `setChosenItems`, `setDisabled`.
-- Copy: `placeholder` and `uiTranslationPack`. Switching language at runtime is normal, so they have setters: `setPlaceholder`, `setUiTranslationPack`.
-- Everything else is fixed for the life of the instance: `clearable`, `filterable`, `cssClassPrefix`, every callback. To change one, build a new instance. One build takes about 0.2 ms.
-- If a setting must vary at runtime, use its function form where one exists. `filterable: (items) => boolean` is re-evaluated on every open.
-- There is no `updateSettings()`. A native `<select>` is live for every attribute only because the browser re-applies each one. A library with no diff layer would hand-write that re-apply code per setting. Five live values are enough. The rest is a rebuild.
+The library re-applies nothing on its own. A live setting would need its own re-apply code.
 
-**Why `compareFn`, and no key function like `itemKeyFn`?**
+- Data changes by method: `setItems`, `setChosenItem`, `setDisabled`.
+- Only two texts have setters: `setPlaceholder`, `setUiTranslationPack`.
+- For anything else, build a new instance. A build takes about 0.2 ms.
 
-- `compareFn` is one explicit definition of item identity.
-- It can express what a key cannot, for example structural equality with `angular.equals`.
-- A key function beside it would be a second definition of "the same item". One definition is safer.
-- The cost is known. The default (`===`, plus `NaN` equals `NaN`) unlocks Set-based fast paths. A custom `compareFn` cannot be hashed, so those paths stay linear. Keep it cheap.
+**Why `compareFn`, and no `itemKeyFn`?**
 
-**Why one `onChange` callback, and no `subscribe()` or DOM events?**
+One rule for "the same item". A key function beside it would be a second rule.
 
-- llselect is low-level. A framework wrapper owns fan-out. Both AngularJS wrappers in this repo bind once.
-- To swap the handler later, or to fan out, wrap it: `onChange: (current, previous, meta) => myHandler?.(current, previous, meta)`.
-- `meta.source` says `'user'` or `'api'`, so a wrapper can ignore its own writes.
-- A `CustomEvent` on a plain `div` cannot be typed, and it would fire on every change of every widget, listened to or not.
+- `compareFn` can also compare two objects field by field. A key cannot.
+- A custom `compareFn` cannot be hashed, so keep it cheap.
 
-**Why does the theme hide the clear button when nothing is chosen, not the library?**
+**Why one `onChange`, and no `subscribe()`?**
 
-- The library writes the state hook: `data-empty` on the trigger. Every shipped theme hides the button on it.
-- That is how every visual state works here: the library writes the hook, the theme decides the look. The arrow slot is hidden the same way.
-- A custom theme copies one line: `.llselect-trigger[data-empty='true'] .llselect-trigger-clear-button { display: none; }`
+A framework wrapper owns fan-out, and the wrapper is the intended layer.
 
-**Why is there no `init()` step or factory?**
+- To swap or fan out yourself, wrap the callback in your own function.
+- A DOM event on a plain `div` cannot be typed.
 
-- `new` returns a finished widget. A second call for every user would pay for a problem only subclass authors have.
-- The problem: the trigger renders once during construction, before a further subclass's own fields exist.
-- The recipe: put construction-time configuration in the typed `subclassSettings` constructor argument. It is complete before any construction code runs.
-- For real instance state, call `rerender()` at the end of your constructor.
+**Why does the theme hide the empty clear button, not the library?**
 
-**Why is the accessible name not enforced by the type system?**
+The library writes the state. The theme decides the look. Every visual state works that way.
 
-- The name is a runtime contract. A type cannot reject `''`, and plain JavaScript users get nothing from it.
-- A widget with no `ariaLabel`, `ariaLabelledBy`, or `labelEl` logs one `console.warn` per page instead.
+- The hook is `data-empty` on the trigger.
+- A custom theme hides the button with one CSS line.
 
 ## Acknowledgments
 
