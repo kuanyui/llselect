@@ -4,7 +4,7 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (prefix typeahead)
 
-Process: implementation of the maintainer-ratified typeahead rulings (`DESIGN.md` "Prefix typeahead"), then five post-fix panel rounds - the other four members (Opus 5, Opus 4.8, Codex Sol at max, Codex 5.5 at xhigh) reading the repo read-only through the CLI channels in `CLAUDE.md`, commit diff inline in the brief. Round 1: three of four independently found HIGH-95. Round 2 verified the round-1 fixes and surfaced the second half of MEDIUM-96 plus QUALITY-98. Rounds 3-5: light rounds on the nit batches (DOCUMENTATION-100 onward); the Final_Sigma fold took three changes across rounds 3-5 to become symmetric.
+Process: implementation of the maintainer-ratified typeahead rulings (`DESIGN.md` "Prefix typeahead"), then seven post-fix panel rounds (commit subjects count FIX BATCHES, one behind the round that reviewed them) - the other four members (Opus 5, Opus 4.8, Codex Sol at max, Codex 5.5 at xhigh) reading the repo read-only through the CLI channels in `CLAUDE.md`, commit diff inline in the brief. Round 1: three of four independently found HIGH-95. Round 2 verified the round-1 fixes and surfaced the second half of MEDIUM-96 plus QUALITY-98. Rounds 3-7: light rounds on the nit batches (DOCUMENTATION-100 onward); the Final_Sigma fold took three changes across rounds 3-5 to become symmetric; round 6 caught the release-data row the 0.0.8 bump had missed (DOCUMENTATION-108).
 
 - [x] **[HIGH-95] - closed-state typeahead landed on the second match**
   - Symptom: single with nothing chosen, `['apple','avocado']`, closed, press "a" - the active option became avocado; `A11Y.md` promises the first match.
@@ -39,7 +39,8 @@ Process: implementation of the maintainer-ratified typeahead rulings (`DESIGN.md
 - [x] **[QUALITY-101] - the multi-character needle was folded as a whole string (Greek Final_Sigma)**
   - Symptom: buffer "ALPHA-SIGMA" (Greek capitals) lower-cased as a string turns its final sigma into the final-form sigma, while the option text folds the same sigma mid-word - the prefix never matched.
   - Fix: BOTH operands fold per code point (`foldForTypeahead`), and the fold maps the Greek final sigma to sigma so the final-sigma KEY matches upper-case text; the first fix folded only the needle, and the round-3 / round-4 passes caught that an option text ENDING in sigma (or before a space) then failed the other way.
-  - Verified: pure test "Greek sigma folds the same on both sides" covers mid-word, trailing, the final-sigma key, and sigma before a space. Cost: the text side now spreads, maps, joins and regex-scans each candidate instead of one `toLowerCase` - negligible at keydown pace on visible-item counts.
+  - Impact: the text side now spreads, maps, joins and regex-scans each candidate instead of one `toLowerCase` - negligible at keydown pace on visible-item counts.
+  - Verified: pure test "Greek sigma folds the same on both sides" covers mid-word, trailing, the final-sigma key, and sigma before a space.
   - Q: Why not fold both operands as whole strings and accept the Final_Sigma edge?
     - A: Because the buffer is a PREFIX: its last character is always "final" to `toLowerCase`, while the same character sits mid-word in the option text - whole-string folding can never agree on a trailing sigma. Once the fold also maps final sigma to sigma, whole-string and per-code-point folding agree on every input (Final_Sigma is Unicode's only non-locale conditional lower-case mapping); the per-code-point split stays as the backstop should another conditional mapping ever land.
 - [x] **[DOCUMENTATION-102] - the accesskey pass-through claim was over-general**
@@ -62,7 +63,12 @@ Process: implementation of the maintainer-ratified typeahead rulings (`DESIGN.md
     - A: A subject line is not worth a history rewrite on two remotes that other clones may already hold; the rule exists so nobody has to weigh that per case.
 - [ ] **[QUALITY-107] - the filter's default compare has the Final_Sigma asymmetry the typeahead fold just fixed**
   - Symptom: `matchesQuery` (`src/base.ts:2650`) is `itemToString(item).toLowerCase().includes(query.toLowerCase())`; a query ending in a Greek capital sigma folds to the final form while the option text folds the same letter mid-word, so the query misses until one more letter is typed. Pre-existing; found by the round-5 panel while verifying QUALITY-101; substring matching makes it self-correcting, so it does not block 0.0.8.
-  - Fix: none yet - fold both sides through the typeahead fold (it would become a shared helper; the `filterFn` contract is untouched).
+  - Fix: none yet - fold both sides through the typeahead fold (it would become a shared helper; the `filterFn` contract is untouched). Audit `src/query-highlight.ts:31` in the same change: it mirrors the whole-string lower-case rule by design, so the mark placement must keep agreeing with the match.
+- [x] **[DOCUMENTATION-108] - the 0.0.8 bump left the README bundle-size row at 0.0.7 / 40.7 KB**
+  - Symptom: the row is a matched measurement pair (version, minified UMD bytes) and README ships inside the tarball, so 0.0.8 would have published a row contradicting the bundle beside it. Three round-6 reviewers found it; the 0.0.7 bump had touched that data, the 0.0.8 bump did not.
+  - Fix: re-measured on the 0.0.8 build with the benchmark page's own formula (`dist/index.umd.js` 43,007 bytes / 1024 = 42.0 KB) and both cells updated - never a blind version-string swap. `scripts/check.mjs` now also asserts that the angularjs package version and its `@llselect/core` peer range follow the root version, the one release wiring nothing guarded.
+  - Q: Why not automate the README row too?
+    - A: The other rows are CDN measurements taken by hand at benchmark time; a script that rewrote one row would make the table half-live, half-snapshot. The check guards what is mechanical (versions); the data row stays a deliberate release step, now recorded here.
 
 ## review (external, ChatGPT API-design review - five-model panel)
 

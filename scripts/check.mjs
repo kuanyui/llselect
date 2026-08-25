@@ -227,6 +227,23 @@ for (const rel of markdownFiles) {
   }
 }
 
+// --- rule 3: release wiring follows the root version -----------------------
+// `test/smoke.test.ts` pins the `version` const in src/index.ts to
+// package.json; the angularjs package's own version and its `@llselect/core`
+// peer range were the hand-maintained remainder (a `^0.0.x` range admits
+// exactly one patch version, so a stale range breaks the wrapper install).
+{
+  const rootPkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
+  const ngPkg = JSON.parse(readFileSync(join(root, 'angularjs/package.json'), 'utf8'))
+  if (ngPkg.version !== rootPkg.version) {
+    problems.push(`angularjs/package.json: version ${ngPkg.version} does not follow the root version ${rootPkg.version}`)
+  }
+  const peer = ngPkg.peerDependencies?.['@llselect/core']
+  if (peer !== `^${rootPkg.version}`) {
+    problems.push(`angularjs/package.json: peer range for @llselect/core is ${peer}, expected ^${rootPkg.version}`)
+  }
+}
+
 // --- report ----------------------------------------------------------------
 
 if (problems.length > 0) {

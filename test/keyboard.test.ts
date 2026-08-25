@@ -459,7 +459,9 @@ test('typeahead: closing resets the buffer', () => {
 })
 
 test('typeahead: a refused open empties the buffer', () => {
-  const sel = mountSelect(['apple', 'banana', 'bandana'])
+  // zebra first: no typeahead at all would park on zebra, a kept "b" would
+  // make the buffer "ba" and land on banana, the fix lands on apple.
+  const sel = mountSelect(['zebra', 'apple', 'banana'])
   // Trigger parked above the viewport: open() refuses (hidden-anchor guard).
   const rect = sel.triggerEl.getBoundingClientRect
   sel.triggerEl.getBoundingClientRect = () =>
@@ -469,7 +471,6 @@ test('typeahead: a refused open empties the buffer', () => {
   sel.triggerEl.getBoundingClientRect = rect
   fireKey(sel.triggerEl, 'a')
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
-  // A kept "b" would have made the buffer "ba" and landed on banana.
   assert.equal(focusedLabel(sel), 'apple')
 })
 
