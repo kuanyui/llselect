@@ -139,8 +139,9 @@ By RETURN TYPE (behaviour, not input):
 | base            | protected | `focusInitial` (+2 overrides)         | focus                  |
 | base            | protected | `computeTypeaheadClosedStartIndex` (+1 override) | compute      |
 | base            | private   | `handleTypeaheadKeydown`              | handle                 |
-| keyboard        | mod-fn    | `findTypeaheadIndex`                  | find                   |
-| keyboard        | mod-fn    | `getUpdatedTypeaheadBuffer`           | get (the `getUpdatedIndex` shape) |
+| keyboard        | public    | `findTypeaheadIndex`                  | find                   |
+| keyboard        | public    | `getUpdatedTypeaheadBuffer`           | get (the `getUpdatedIndex` shape) |
+| keyboard        | mod-fn    | `foldForTypeahead`                    | fold (auxiliary, private to the module) |
 | base            | protected | `matchesQuery`                        | matches (backs `filterFn`)    |
 | base            | private   | `attachOutsideClick`                  | attach                 |
 | base            | private   | `attachFocusOut`                      | attach                 |

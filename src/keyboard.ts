@@ -145,10 +145,11 @@ export function findTypeaheadIndex(
   textAt: (index: number) => string | undefined,
 ): number {
   if (count <= 0 || buffer === '') { return -1 }
-  // Both operands fold per code point, never as a whole string: whole-string
-  // folding applies the Greek Final_Sigma rule, so a sigma would fold one way
-  // at the end of the buffer and another way mid-word in the option text.
-  const chars = [...buffer].map((c) => c.toLowerCase())
+  // Both operands fold through foldForTypeahead, never `toLowerCase` on a
+  // whole string: whole-string folding applies the Greek Final_Sigma rule, so
+  // a sigma would fold one way at the end of the buffer and another way
+  // mid-word in the option text.
+  const chars = [...buffer].map(foldForTypeahead)
   const sameChar = chars.every((c) => c === chars[0])
   const needle = sameChar ? chars[0]! : chars.join('')
   const start = sameChar ? currentIndex + 1 : Math.max(currentIndex, 0)
@@ -161,9 +162,16 @@ export function findTypeaheadIndex(
   return -1
 }
 
-/** Lower-case per code point (see `findTypeaheadIndex` for why not `toLowerCase` on the whole string). */
+/**
+ * Case-fold text for typeahead comparison, context-free per code point.
+ * - Lower-cases each code point on its own (never the whole string - see
+ *   `findTypeaheadIndex`).
+ * - Maps the Greek final sigma (U+03C2, its own key on Greek keyboards) to
+ *   sigma (U+03C3), so a typed final sigma matches upper-case text and a typed
+ *   capital sigma matches lower-case text ending in the final form.
+ */
 function foldForTypeahead(text: string): string {
-  return [...text].map((c) => c.toLowerCase()).join('')
+  return [...text].map((c) => c.toLowerCase()).join('').replace(/\u03c2/g, '\u03c3')
 }
 
 /**

@@ -4,7 +4,7 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (prefix typeahead)
 
-Process: implementation of the maintainer-ratified typeahead rulings (`DESIGN.md` "Prefix typeahead"), then two post-fix panel rounds - the other four members (Opus 5, Opus 4.8, Codex Sol at max, Codex 5.5 at xhigh) reading the repo read-only through the CLI channels in `CLAUDE.md`, commit diff inline in the brief. Round 1: three of four independently found HIGH-95. Round 2 verified the round-1 fixes and surfaced the second half of MEDIUM-96 plus QUALITY-98.
+Process: implementation of the maintainer-ratified typeahead rulings (`DESIGN.md` "Prefix typeahead"), then post-fix panel rounds until the verdicts were SHIP - the other four members (Opus 5, Opus 4.8, Codex Sol at max, Codex 5.5 at xhigh) reading the repo read-only through the CLI channels in `CLAUDE.md`, commit diff inline in the brief. Round 1: three of four independently found HIGH-95. Round 2 verified the round-1 fixes and surfaced the second half of MEDIUM-96 plus QUALITY-98. Rounds 3-5: light rounds on the nit batches (DOCUMENTATION-100 onward); the Final_Sigma fold took two rounds to become symmetric.
 
 - [x] **[HIGH-95] - closed-state typeahead landed on the second match**
   - Symptom: single with nothing chosen, `['apple','avocado']`, closed, press "a" - the active option became avocado; `A11Y.md` promises the first match.
@@ -38,7 +38,7 @@ Process: implementation of the maintainer-ratified typeahead rulings (`DESIGN.md
   - Fix: "It only moves the focused option".
 - [x] **[QUALITY-101] - the multi-character needle was folded as a whole string (Greek Final_Sigma)**
   - Symptom: buffer "ALPHA-SIGMA" (Greek capitals) lower-cased as a string turns its final sigma into the final-form sigma, while the option text folds the same sigma mid-word - the prefix never matched.
-  - Fix: BOTH operands fold per code point (`foldForTypeahead`); the first fix folded only the needle, and Codex Sol's round-3 pass caught that an option text ENDING in sigma then failed the other way.
+  - Fix: BOTH operands fold per code point (`foldForTypeahead`), and the fold maps the Greek final sigma to sigma so the final-sigma KEY matches upper-case text; the first fix folded only the needle, and the round-3 / round-4 passes caught that an option text ENDING in sigma (or before a space) then failed the other way.
   - Verified: pure test "a buffer ending in Greek capital sigma still matches mid-word sigma" covers both positions.
   - Q: Why not fold both operands as whole strings and accept the Final_Sigma edge?
     - A: Because the buffer is a PREFIX: its last character is always "final" to `toLowerCase`, while the same character sits mid-word in the option text - whole-string folding can never agree on a trailing sigma. Per-code-point folding removes the context dependence on both sides.

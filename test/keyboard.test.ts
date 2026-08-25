@@ -163,6 +163,10 @@ test('findTypeaheadIndex: a buffer ending in Greek capital sigma still matches m
   assert.equal(findTypeaheadIndex('ΑΣ', 2, -1, textsAt(['ΒΗΤΑ', 'ΑΣΤΗΡ'])), 1)
   // ...and an option text ENDING in sigma folds the same way as the buffer.
   assert.equal(findTypeaheadIndex('ΟΔΟΣ', 2, -1, textsAt(['ΒΗΤΑ', 'ΟΔΟΣ'])), 1)
+  // The final-sigma KEY (its own key on Greek keyboards) matches upper-case
+  // text, and a typed capital sigma matches lower-case text in the final form.
+  assert.equal(findTypeaheadIndex('ς', 2, -1, textsAt(['ΒΗΤΑ', 'ΣΑΜΟΣ'])), 1)
+  assert.equal(findTypeaheadIndex('ΚΩΣ', 2, -1, textsAt(['βητα', 'κως ελλαδα'])), 1)
 })
 
 test('findTypeaheadIndex: undefined text (disabled) never matches', () => {
