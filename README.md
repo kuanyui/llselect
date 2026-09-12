@@ -12,7 +12,7 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 > [!TIP]
 > #### Why not native `<select>`?
 >
-> Native `<select>` was designed in the 1990s, and the lots of limitations have caused enormous traumatic pains to OCD developers and designers for over two decades:
+> Native `<select>` was designed in the 1990s, and the lots of limitations have caused innumerous indescribable discomfort to OCD developers and designers for over two decades:
 >
 > - Unable to customize the HTML template of `<select>`, `<option>`, `<optgroup>` Behavior of dropdown are platform-dependent (popup/dropdown list are OS-native widgets, which are rendered by system instead of browser)
 > - No filter feature, especially for East-Asian languages.
