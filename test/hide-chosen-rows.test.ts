@@ -83,7 +83,7 @@ test('choose-all row acts on the listed rows and empties the list, then leaves w
   assert.equal(sel.popupListEl.querySelector(`.${sel.classIdMap.chooseAllRowClass}`), null)
 })
 
-test('a fully chosen group leaves with its header', () => {
+test('a fully chosen group leaves with its label', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     hideChosenRows: true,
     itemToGroupKeyFn: (item) => item[0] ?? null,
@@ -93,8 +93,8 @@ test('a fully chosen group leaves with its header', () => {
   sel.open()
   sel.setChosenItems(['ax', 'ay'])
   assert.deepEqual(itemTexts(sel), ['bz'])
-  const headers = Array.from(sel.popupListEl.querySelectorAll(`.${sel.classIdMap.groupLabelClass}`)).map(el => el.textContent)
-  assert.deepEqual(headers, ['group b'])
+  const labels = Array.from(sel.popupListEl.querySelectorAll(`.${sel.classIdMap.groupLabelClass}`)).map(el => el.textContent)
+  assert.deepEqual(labels, ['group b'])
 })
 
 test('custom compareFn: an equal (not identical) chosen object hides the row', () => {

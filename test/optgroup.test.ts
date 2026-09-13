@@ -77,13 +77,13 @@ test('items with a null key render ungrouped, outside any group container', () =
 
 // --- index alignment / keyboard ---------------------------------------------
 
-test('keyboard navigation ignores group headers (itemEls stays aligned to visible items)', () => {
+test('keyboard navigation ignores group labels (itemEls stays aligned to visible items)', () => {
   const sel = new LLSelectSingle<string>(mount(), { itemToGroupKeyFn: (s) => s[0]! })
   sel.setItems(['apple', 'banana', 'cherry']) // three one-item groups
   sel.open()
   assert.equal(focusedText(sel), 'apple')
   fireKey(sel.triggerEl, 'ArrowDown')
-  assert.equal(focusedText(sel), 'banana') // header skipped
+  assert.equal(focusedText(sel), 'banana') // label skipped
   fireKey(sel.triggerEl, 'ArrowDown')
   assert.equal(focusedText(sel), 'cherry')
 })
@@ -192,7 +192,7 @@ test('itemDisabledFn and groupDisabledFn layer (either one disables)', () => {
 
 // --- contiguous-run warn (strict mode) ---------------------------------------
 
-test('gatherGroups: false - a non-contiguous key reappearance warns once and renders a duplicate header', () => {
+test('gatherGroups: false - a non-contiguous key reappearance warns once and renders a duplicate label', () => {
   const warnings: unknown[][] = []
   const orig = console.warn
   console.warn = (...args: unknown[]) => { warnings.push(args) }
@@ -228,9 +228,9 @@ test('filtering regroups survivors and drops now-empty groups', () => {
   assert.equal(groupEls(sel)[0]!.getAttribute('aria-label'), 'a')
 })
 
-// --- rich header content (mirrors createItemContentElFn) ---------------------
+// --- rich label content (mirrors createItemContentElFn) ---------------------
 
-test('createGroupLabelContentElFn fills the header; container aria-label stays plain text', () => {
+test('createGroupLabelContentElFn fills the label; container aria-label stays plain text', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     itemToGroupKeyFn: (s) => s[0]!,
     groupKeyToStringFn: (k) => k.toUpperCase(),

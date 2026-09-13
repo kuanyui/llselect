@@ -111,9 +111,9 @@
 }
 
 /* --- groups (Phase 10) ----------------------------------------- */
-/* Header is static by default. The scroll math is offsetParent-independent
+/* Label is static by default. The scroll math is offsetParent-independent
    (keyboard.ts uses rect deltas), so a theme MAY make this `position: sticky;
-   top: 0` for a pinned header. */
+   top: 0` for a pinned label. */
 
 .llselect-group-label {
   padding: 0.3rem 0.7rem;

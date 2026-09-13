@@ -643,12 +643,12 @@
       <code>itemToGroupKeyFn</code> maps each item to a group key (contiguous
       same-key items form one group - pre-sort your data);
       <code>groupKeyToStringFn</code> is the display / i18n customization point. Keyboard nav
-      skips headers. Custom header content: 11.3.
+      skips labels. Custom label content: 11.3.
     </p>
 
     <article>
       <h3>10.1 Basic grouping (single)</h3>
-      <p class="hint">Foods grouped by category. Open it - each category shows a header above its items.</p>
+      <p class="hint">Foods grouped by category. Open it - each category shows a label above its items.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-group"></div>
@@ -718,9 +718,9 @@
     </article>
 
     <article>
-      <h3>11.3 Rich group header</h3>
+      <h3>11.3 Rich group label</h3>
       <p class="hint">
-        <code>createGroupLabelContentElFn</code> fills the header (icon +
+        <code>createGroupLabelContentElFn</code> fills the label (icon +
         item count); the accessible name stays the plain
         <code>groupKeyToString</code>.
       </p>

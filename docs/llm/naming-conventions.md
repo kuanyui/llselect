@@ -183,7 +183,7 @@ Methods / type:
 | private   | `computePopupSegments`     | `compute*` - derive render segments, no DOM     |
 | private   | `commitPopupSegmentsToDom` | `commit*ToDom` - write segments into popup list |
 | protected | `createGroupEl`            | `create*El` - group container build (override for full control) |
-| protected | `createGroupLabelContentEl`| `create*El` - rich header content (mirrors `createItemContentEl`) |
+| protected | `createGroupLabelContentEl`| `create*El` - rich label content (mirrors `createItemContentEl`) |
 | (type)    | `PopupListSegment`         | descriptive noun for the render-segment union   |
 
 `classIdMap` gained `groupClass` / `groupLabelClass` (mirrors the `itemClass` family). No code rename was needed - every name already obeys s1-s3.

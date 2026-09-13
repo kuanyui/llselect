@@ -129,7 +129,7 @@
 }
 
 /* --- groups (Phase 10) ---------------------------------------- */
-/* Static header by default; rect-based scroll math (keyboard.ts) is
+/* Static label by default; rect-based scroll math (keyboard.ts) is
    offsetParent-independent, so a theme MAY make this `position: sticky; top:0`. */
 
 .llselect-group-label {

@@ -790,13 +790,13 @@ selGroupDisabled.setItems(GROUPED_FOODS)
 //#endregion
 
 //#region 11.3
-// Rich group header via createGroupLabelContentElFn (mirrors createItemContentElFn):
+// Rich group label via createGroupLabelContentElFn (mirrors createItemContentElFn):
 // an icon + a live count badge. itemsInGroup gives the group's items, so the
-// count needs no external bookkeeping. The header's accessible name stays the
+// count needs no external bookkeeping. The label's accessible name stays the
 // plain groupKeyToString; the icon is aria-hidden.
 const CATEGORY_ICON = { Fruit: 'food-apple', Vegetable: 'carrot', Dairy: 'cheese', Nuts: 'peanut' }
 // Named create*El per naming-conventions.md (returns an element), like createLanguageRowEl.
-function createCategoryHeaderEl(category, items) {
+function createCategoryLabelEl(category, items) {
   const row = document.createElement('span')
   row.className = 'group-head'
   const icon = document.createElement('i')
@@ -815,7 +815,7 @@ const selGroupRich = new LLSelectSingle(
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (f) => f.name,
     itemToGroupKeyFn: (f) => f.category,
-    createGroupLabelContentElFn: createCategoryHeaderEl,
+    createGroupLabelContentElFn: createCategoryLabelEl,
   }
 )
 selGroupRich.setItems(GROUPED_FOODS)

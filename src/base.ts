@@ -331,7 +331,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   createItemContentElFn: ((item: T) => HTMLElement | null) | null
   /**
    * Item -> its group's key (identity), enabling optgroup rendering.
-   * - `null` (setting, default): grouping off - flat list, no headers.
+   * - `null` (setting, default): grouping off - flat list, no labels.
    * - fn returns `null`: this item is in no group; renders ungrouped.
    * - Contiguous items with an equal key (per `groupKeyCompareFn`) form one
    *   group. By default non-contiguous data is first gathered into display
@@ -343,14 +343,14 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Whether the library gathers non-contiguous groups before rendering
    * (`true`, default). Grouping renders contiguous runs, so scattered items
-   * sharing a key would otherwise produce a duplicate header per gap.
+   * sharing a key would otherwise produce a duplicate label per gap.
    * - `true`: the DISPLAY order is derived via {@link gatherItemsByGroupKey}:
    *   groups in first-appearance order, within-group order kept, ungrouped
    *   (`null`-key) items in place. The data itself (`items` / `getItems()`)
    *   is never reordered, and already-contiguous data is detected in one
    *   scan and used as-is.
    * - `false`: strict mode - you guarantee the data is pre-sorted by group; a
-   *   key reappearing after a gap renders a duplicate header and
+   *   key reappearing after a gap renders a duplicate label and
    *   `console.warn`s, so a broken sort is surfaced instead of silently
    *   fixed.
    * No effect while grouping is off (every key `null`).
@@ -368,7 +368,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   groupKeyCompareFn: ((a: GroupKey, b: GroupKey) => boolean) | null
   /**
-   * Group key -> the header's display text. The i18n customization point: keep keys stable,
+   * Group key -> the label's display text. The i18n customization point: keep keys stable,
    * translate here.
    * - `null` (default) = `String(groupKey)`.
    * @group Grouping
@@ -383,9 +383,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   groupDisabledFn: ((groupKey: GroupKey) => boolean) | null
   /**
-   * Group header -> its visible content ELEMENT (icon / count badge / rich
+   * Group label -> its visible content ELEMENT (icon / count badge / rich
    * markup), without subclassing. Mirrors `createItemContentElFn`.
-   * - Return an `HTMLElement` and the library inserts it as the header's visible
+   * - Return an `HTMLElement` and the library inserts it as the label's visible
    *   content; the group's accessible name stays `groupKeyToString` (on the
    *   container `aria-label`) and the label element stays `aria-hidden`.
    * - `null` (default, or returned for a group) = plain text from
@@ -487,7 +487,7 @@ export interface LLSelectClassIdMap {
   groupClass: string
   /**
    * Class on the visible group label element (`aria-hidden`), inside the group
-   * container above its items. A hook for styling / sticky headers.
+   * container above its items. A hook for styling / sticky labels.
    */
   groupLabelClass: string
   /** Class on the tag-list container in `triggerDisplay: 'tags'` mode (multi). */
@@ -612,8 +612,8 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
 
 /**
  * One run in the rendered popup list: a single ungrouped item element, or a
- * group (header + its item elements). Computed from the flat visible list;
- * group headers never enter `itemEls`, so index alignment is preserved.
+ * group (label + its item elements). Computed from the flat visible list;
+ * group labels never enter `itemEls`, so index alignment is preserved.
  */
 type PopupListSegment<T, GroupKey> =
   | { readonly group: false; readonly el: HTMLElement }
@@ -1643,11 +1643,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Split the flat visible list into render segments: ungrouped item elements
    * and contiguous same-key groups. Pure computation - resolves keys via
    * `itemToGroupKey` (the overridable method; all-`null` keys = flat list) and key
-   * equality via `groupKeyCompareFn`, touches no DOM. Group headers are NOT
+   * equality via `groupKeyCompareFn`, touches no DOM. Group labels are NOT
    * added to `itemEls`, so `itemEls[i]`
-   * stays aligned with `getVisibleItems()[i]` and keyboard nav skips headers for
+   * stays aligned with `getVisibleItems()[i]` and keyboard nav skips labels for
    * free. `console.warn`s once per non-contiguous key reappearance (unsorted
-   * data would otherwise emit a duplicate header for the same group) -
+   * data would otherwise emit a duplicate label for the same group) -
    * reachable with `gatherGroups: false`; the default gather feeds this an
    * already-contiguous list.
    */
@@ -1675,7 +1675,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         j += 1
       }
       if (closedKeys.some(k => keyEq(k, key))) {
-        console.warn('llselect: group key reappears non-contiguously; sort items by group to avoid a duplicate header.', key)
+        console.warn('llselect: group key reappears non-contiguously; sort items by group to avoid a duplicate label.', key)
       }
       closedKeys.push(key)
       segments.push({ group: true, key, index: groupIndex, items: groupItems, els: groupEls })
@@ -1743,13 +1743,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Group header -> its visible content element (icon / count badge / rich
+   * Group label -> its visible content element (icon / count badge / rich
    * markup). Mirrors `createItemContentEl`.
    * - Default reads `createGroupLabelContentElFn`, else `null` so `createGroupEl`
    *   uses plain text from `groupKeyToString`.
    * - The group's accessible name stays `groupKeyToString` (container `aria-label`);
    *   this fills only the visible, `aria-hidden` label content.
-   * - Override only when extending; for one-off rich headers pass the setting.
+   * - Override only when extending; for one-off rich labels pass the setting.
    * @group Subclassing: rendering
    */
   protected createGroupLabelContentEl(key: GroupKey, itemsInGroup: readonly T[]): HTMLElement | null {
@@ -1911,7 +1911,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Map a group key to its header display text.
+   * Map a group key to its label display text.
    * - Default reads `groupKeyToStringFn`, else `String(key)`.
    * @group Subclassing: semantics
    */

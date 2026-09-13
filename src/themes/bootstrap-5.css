@@ -125,7 +125,7 @@
 }
 
 /* --- groups (Phase 10, matches .dropdown-header look) --------- */
-/* Static header by default; rect-based scroll math (keyboard.ts) allows a
+/* Static label by default; rect-based scroll math (keyboard.ts) allows a
    theme to make it `position: sticky; top: 0`. */
 
 .llselect-group-label {

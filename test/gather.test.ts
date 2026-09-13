@@ -59,7 +59,7 @@ test('a custom groupKeyCompareFn drives both detection and bucketing', () => {
 
 // --- gatherGroups on the instance (default true) ------------------------------
 
-test('unsorted data renders ONE header per group, in first-appearance order', () => {
+test('unsorted data renders ONE label per group, in first-appearance order', () => {
   const warnings: unknown[][] = []
   const orig = console.warn
   console.warn = (...args: unknown[]) => { warnings.push(args) }
@@ -67,7 +67,7 @@ test('unsorted data renders ONE header per group, in first-appearance order', ()
     const sel = new LLSelectSingle<string>(mount(), { itemToGroupKeyFn: firstChar, ariaLabel: 'x' }) // named: keep the spy's count to the group warn
     sel.setItems(['apple', 'banana', 'avocado'])
     sel.open()
-    assert.equal(groupEls(sel).length, 2) // a, b - no duplicate 'a' header
+    assert.equal(groupEls(sel).length, 2) // a, b - no duplicate 'a' label
     assert.deepEqual(optionTexts(sel), ['apple', 'avocado', 'banana'])
   } finally {
     console.warn = orig
