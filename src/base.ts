@@ -666,6 +666,12 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
  * group (label + its item elements). Computed from the flat visible list;
  * group labels never enter `itemEls`, so index alignment is preserved.
  */
+/**
+ * A non-item entry of the arrow-key ring that can hold the active option.
+ * Today only the choose-all leading row; action rows join here.
+ */
+type FocusedRingRow = { kind: 'choose-all' }
+
 type PopupListSegment<T, GroupKey> =
   | { readonly group: false; readonly el: HTMLElement }
   | { readonly group: true; readonly key: GroupKey; readonly index: number; readonly items: T[]; readonly els: HTMLElement[] }
@@ -819,8 +825,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * render, or `undefined` when absent. Never part of `itemEls`.
    */
   private leadingRowEl: HTMLElement | undefined
-  /** Whether keyboard focus sits on the leading row (mutually exclusive with an item focus). */
-  private leadingRowFocused = false
+  /**
+   * The non-item ring entry that holds the active option (the choose-all
+   * leading row today), or `null` when an item does, or nothing does.
+   * Mutually exclusive with `focusedIndex >= 0`.
+   */
+  private focusedRow: FocusedRingRow | null = null
   private outsideHandler: ((ev: Event) => void) | undefined
   private focusOutHandler: ((ev: FocusEvent) => void) | undefined
   /**
@@ -1266,7 +1276,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.focusedIndex = -1
     this.typeaheadBuffer = ''
     this.leadingRowEl = undefined
-    this.leadingRowFocused = false
+    this.focusedRow = null
     this.comboboxEl.removeAttribute('aria-activedescendant')
     this.renderTriggerArrow()
     this.onClosed()
@@ -1699,7 +1709,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.itemEls = els
     this.focusedEl = undefined
     this.leadingRowEl = this.createPopupListLeadingRowEl() ?? undefined
-    if (!this.leadingRowEl) { this.leadingRowFocused = false }
+    if (!this.leadingRowEl) { this.focusedRow = null }
     this.commitPopupSegmentsToDom(this.computePopupSegments(list, els))
     this.syncPopupListNoResultsToDom()
     this.positioner?.reposition()
@@ -2104,8 +2114,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected setFocusedIndex(index: number): void {
     const max = this.getVisibleItems().length - 1
     const clamped = Math.max(-1, Math.min(max, index))
-    if (clamped === this.focusedIndex && !this.leadingRowFocused) { return }
-    this.leadingRowFocused = false
+    if (clamped === this.focusedIndex && this.focusedRow === null) { return }
+    this.focusedRow = null
     this.focusedIndex = clamped
     this.syncFocusedIndexToDom()
   }
@@ -2121,8 +2131,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   protected focusLeadingRow(): boolean {
     if (!this.leadingRowEl) { return false }
-    if (this.leadingRowFocused) { return true }
-    this.leadingRowFocused = true
+    if (this.focusedRow?.kind === 'choose-all') { return true }
+    this.focusedRow = { kind: 'choose-all' }
     this.focusedIndex = -1
     this.syncFocusedIndexToDom()
     return true
@@ -2166,7 +2176,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.focusedEl.classList.remove(this.classIdMap.itemFocusedClass)
       this.focusedEl = undefined
     }
-    if (this.leadingRowFocused && this.leadingRowEl) {
+    if (this.focusedRow?.kind === 'choose-all' && this.leadingRowEl) {
       this.leadingRowEl.classList.add(this.classIdMap.itemFocusedClass)
       this.comboboxEl.setAttribute('aria-activedescendant', this.leadingRowEl.id)
       this.focusedEl = this.leadingRowEl
@@ -2354,7 +2364,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         this.close()
         return
       case LLSelectKeyboardAction.Select: {
-        if (this.leadingRowFocused) {
+        if (this.focusedRow?.kind === 'choose-all') {
           this.withUserChangeSource(() => this.onLeadingRowActivated())
           return
         }
@@ -2374,7 +2384,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       case LLSelectKeyboardAction.PageUp: {
         const list = this.getVisibleItems()
         if (list.length === 0) { return }
-        if (this.leadingRowFocused) {
+        if (this.focusedRow?.kind === 'choose-all') {
           // On the leading row (ring top): only downward actions move; treat
           // the row as position -1 so Next lands on the first enabled item.
           if (action === LLSelectKeyboardAction.Next || action === LLSelectKeyboardAction.PageDown || action === LLSelectKeyboardAction.GotoLast) {
@@ -2446,7 +2456,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const list = this.getVisibleItems()
     const current = openedByThisKey
       ? this.computeTypeaheadClosedStartIndex(list)
-      : (this.leadingRowFocused ? -1 : this.focusedIndex)
+      : (this.focusedRow !== null ? -1 : this.focusedIndex)
     const found = findTypeaheadIndex(
       this.typeaheadBuffer,
       list.length,
