@@ -275,5 +275,7 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
     this.changeSource = 'api'
     this.onChosenChanged()
     this.settings.onChange?.(this.chosenItem, previousChosenItem, meta)
+    // Action rows read live state; after the handler ran, so a row's text may show what it wrote.
+    this.replacePopupListActionRowElsInDom()
   }
 }

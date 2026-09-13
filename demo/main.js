@@ -1207,6 +1207,72 @@ const selHeaderHint = new HeaderAboveFilterSelect(
 selHeaderHint.setItems(COUNTRIES)
 //#endregion
 
+//#region 16.1
+// Action rows after the items: the library builds each as a role="option" row
+// in the arrow-key ring. textFn / disabledFn run on every render and after
+// every chosen change, so both rows track the live selection. onActivate does
+// the work; the library neither chooses nor closes for it.
+const DEFAULT_COUNTRIES = ['Japan', 'Taiwan']
+const outActionRows = document.getElementById('out-action-rows')
+const isDefaultChoice = () => {
+  const chosen = selActionRows.getChosenItems()
+  return chosen.length === DEFAULT_COUNTRIES.length && DEFAULT_COUNTRIES.every((c) => chosen.includes(c))
+}
+const selActionRows = new LLSelectMultiple(
+  document.getElementById('mount-action-rows'),
+  {
+  ariaLabel: 'Pick countries (action rows)',
+    placeholder: 'Pick countries (action rows)',
+    chooseAllRow: true,
+    popupListActionRowsAfterItems: [
+      {
+        textFn: () => 'Restore defaults',
+        disabledFn: () => isDefaultChoice(),
+        onActivate: () => { selActionRows.setChosenItems(DEFAULT_COUNTRIES) },
+      },
+      {
+        textFn: () => 'Clear all (' + selActionRows.getChosenItems().length + ')',
+        disabledFn: () => selActionRows.getChosenItems().length === 0,
+        onActivate: () => { selActionRows.setChosenItems([]) },
+      },
+    ],
+    onChange: (chosen) => { outActionRows.textContent = 'chosen: ' + JSON.stringify(chosen) },
+  }
+)
+selActionRows.setItems(COUNTRIES)
+selActionRows.setChosenItems(DEFAULT_COUNTRIES)
+//#endregion
+
+//#region 16.2
+// One action row before the items on a single select. The row asks for a
+// name, adds it to the list, picks it and closes - all app code: a row never
+// closes the popup by itself.
+const outAddRow = document.getElementById('out-add-row')
+let addRowItems = COUNTRIES.slice(0, 5)
+const selAddRow = new LLSelectSingle(
+  document.getElementById('mount-add-row'),
+  {
+  ariaLabel: 'Pick a country (add row)',
+    placeholder: 'Pick a country (add row)',
+    popupListActionRowsBeforeItems: [
+      {
+        textFn: () => 'Add a country...',
+        onActivate: () => {
+          const name = window.prompt('Country name')
+          if (!name) { return }
+          addRowItems = [...addRowItems, name]
+          selAddRow.setItems(addRowItems)
+          selAddRow.setChosenItem(name)
+          selAddRow.close()
+        },
+      },
+    ],
+    onChange: (item) => { outAddRow.textContent = 'chosen: ' + (item ?? '(none)') },
+  }
+)
+selAddRow.setItems(addRowItems)
+//#endregion
+
 // Self-extraction: fetch this file's source, locate `//#region NAME` ...
 // `//#endregion` blocks, and write each into the matching <code>.
 {

@@ -170,6 +170,19 @@
   color: #6c757d;
 }
 
+/* --- action rows (before / after the items) ---------------------- */
+/* Commands rendered as role="option" rows; they carry .llselect-item too, so
+   hover / focused / disabled styling comes from there. A divider marks the
+   two boundaries with the items through sibling combinators (`:has` is above
+   the browser floor). The choose-all row already draws its own line. */
+
+.llselect-popup-list-action-row + .llselect-item:not(.llselect-popup-list-action-row),
+.llselect-popup-list-action-row + .llselect-group,
+.llselect-item:not(.llselect-popup-list-action-row) + .llselect-popup-list-action-row,
+.llselect-group + .llselect-popup-list-action-row {
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
 /* --- popup header / footer slots -------------------------------- */
 /* Pinned above / below the list, outside the scroll area. The elements exist
    only when their content settings return an element; the divider matches

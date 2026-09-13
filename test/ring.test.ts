@@ -5,9 +5,10 @@ import { LLSelectMultiple } from '../src/multiple.js'
 import { LLSelectSingle } from '../src/single.js'
 
 // Characterization tests for the arrow-key ring around the choose-all row,
-// pinned BEFORE the ring bookkeeping is refactored for action rows (TODO.md
-// P2-0 / P2-a). Every expectation here is today's behavior; the refactor must
-// keep this file green without edits.
+// pinned BEFORE the ring bookkeeping was refactored for action rows (TODO.md
+// P2-0 / P2-a). One expectation changed with the unified ring (P2-b): Page
+// keys now clamp onto the choose-all row directly instead of stopping on the
+// first item first.
 
 function mount(): HTMLElement {
   setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
@@ -36,9 +37,7 @@ test('PageDown from the choose-all row steps ten items down; PageUp past the top
   assert.equal(activeText(sel), 'Select all (0 of 20)')
   fireKey(sel.triggerEl, 'PageDown') // the row counts as position -1: lands on item09
   assert.equal(activeText(sel), 'item09')
-  fireKey(sel.triggerEl, 'PageUp') // ten up from item09 clamps at item00 first ...
-  assert.equal(activeText(sel), 'item00')
-  fireKey(sel.triggerEl, 'PageUp') // ... and an up-action that cannot move continues onto the row
+  fireKey(sel.triggerEl, 'PageUp') // ten up from item09 reaches past item00: the row is the ring's first entry (A11Y.md "Action rows": Page keys clamp across the ring)
   assert.equal(activeText(sel), 'Select all (0 of 20)')
   fireKey(sel.triggerEl, 'End')
   assert.equal(activeText(sel), 'item19')

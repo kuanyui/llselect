@@ -71,6 +71,40 @@ export interface LLSelectChangeMeta {
  * @group Settings
  * @category Base
  */
+/**
+ * One app command rendered by the library as a `role="option"` row inside the
+ * popup list: the entries of `popupListActionRowsBeforeItems` /
+ * `popupListActionRowsAfterItems`.
+ * - The library builds the row element (id, `role="option"`, classes,
+ *   `aria-label`, `aria-disabled`, click and Enter); this object supplies
+ *   only the text, the optional rich content, the disabled state and what
+ *   activation does.
+ * - `textFn` is the accessible name, and the visible text when there is no
+ *   custom content. It is re-read on every row render, so copy can follow
+ *   app state or a language switch.
+ * - `createContentElFn`: rich visible content; `null` / omitted = plain text
+ *   from `textFn`. Put no focusable control inside: the row itself is the
+ *   control.
+ * - `disabledFn`: `null` / omitted = never disabled. Re-read on every row
+ *   render and again at activation. A disabled row is skipped by the arrow
+ *   keys and cannot be activated.
+ * - `onActivate` runs on Enter, on Space while the filter is inactive, and on
+ *   click. The library changes nothing else: choosing and closing are this
+ *   callback's job (call `setChosenItems` / `close()` yourself). Synchronous
+ *   work runs with the change source `'user'`; a change made after an
+ *   `await` reports `'api'`.
+ * - Rows are rebuilt on every list render and after every chosen change, so
+ *   the three functions may read live state. They receive no parameters:
+ *   close over your instance variable.
+ * @group Action rows
+ */
+export interface LLSelectPopupListActionRow {
+  textFn: () => string
+  createContentElFn?: (() => HTMLElement | null) | null
+  disabledFn?: (() => boolean) | null
+  onActivate: () => void
+}
+
 export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Prefix used for every CSS class and DOM id the library generates
@@ -287,6 +321,35 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * @group Popup slots
    */
   createPopupFooterContentElFn: (() => HTMLElement | null) | null
+  /**
+   * Commands rendered as `role="option"` rows at the TOP of the option list,
+   * after the choose-all row when there is one, in array order.
+   * - Each entry is a {@link LLSelectPopupListActionRow}. The library builds
+   *   the row elements and wires them into the arrow-key ring: Home / End
+   *   reach the ring's ends, disabled rows are skipped, and the popup opens
+   *   with the active option on an item or the choose-all row, never on one
+   *   of these rows.
+   * - Rows scroll with the items. For content that must stay put, use
+   *   `createPopupHeaderContentElFn` / `createPopupFooterContentElFn`.
+   * - Default `[]`. The array is copied at construction; later changes to
+   *   your array do nothing.
+   * - Assistive technology announces a row as an option with its text and a
+   *   positional count; it has no selected state. If the command changes the
+   *   selection, say so in the row text or a live region.
+   * - Contract: `docs/llm/A11Y.md` "Action rows"; design: `docs/llm/DESIGN.md`.
+   * @group Action rows
+   */
+  popupListActionRowsBeforeItems: readonly LLSelectPopupListActionRow[]
+  /**
+   * Commands rendered as `role="option"` rows at the BOTTOM of the option
+   * list, after the last item, in array order. Same contract as
+   * {@link popupListActionRowsBeforeItems}.
+   * - While the filter is active, Home / End move the text caret, so a row
+   *   down here is reached only by arrowing past every match: put commands
+   *   keyboard users need often before the items.
+   * @group Action rows
+   */
+  popupListActionRowsAfterItems: readonly LLSelectPopupListActionRow[]
   /**
    * How the popup decides its width. Does NOT affect the trigger - trigger
    * width is always whatever your CSS says.
@@ -512,6 +575,12 @@ export interface LLSelectClassIdMap {
    */
   popupFooterClass: string
   /**
+   * Class on every action row (`popupListActionRowsBeforeItems` /
+   * `popupListActionRowsAfterItems`). Also carries `itemClass`, so hover /
+   * focused / disabled styling comes from there.
+   */
+  popupListActionRowClass: string
+  /**
    * Class on the choose-all leading row (`LLSelectMultiple`, `chooseAllRow`
    * setting). Also carries `itemClass` plus `data-chosen-state="none|some|all"`
    * for the tri-state visual.
@@ -640,6 +709,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     popupListNoResultsClass: `${prefix}-popup-list-no-results`,
     popupHeaderClass: `${prefix}-popup-header`,
     popupFooterClass: `${prefix}-popup-footer`,
+    popupListActionRowClass: `${prefix}-popup-list-action-row`,
     chooseAllRowClass: `${prefix}-choose-all-row`,
     itemClass: `${prefix}-item`,
     itemFocusedClass: `${prefix}-item-focused`,
@@ -667,10 +737,18 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
  * group labels never enter `itemEls`, so index alignment is preserved.
  */
 /**
- * A non-item entry of the arrow-key ring that can hold the active option.
- * Today only the choose-all leading row; action rows join here.
+ * A non-item entry of the arrow-key ring that can hold the active option: the
+ * choose-all leading row, or an action row (by position and array index).
  */
-type FocusedRingRow = { kind: 'choose-all' }
+type FocusedRingRow =
+  | { kind: 'choose-all' }
+  | { kind: 'before-items' | 'after-items'; index: number }
+
+/** One entry of the arrow-key ring, in ring order: choose-all, rows before items, items, rows after items. */
+type RingEntry =
+  | { kind: 'choose-all' }
+  | { kind: 'before-items' | 'after-items'; index: number }
+  | { kind: 'item'; index: number }
 
 type PopupListSegment<T, GroupKey> =
   | { readonly group: false; readonly el: HTMLElement }
@@ -831,6 +909,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Mutually exclusive with `focusedIndex >= 0`.
    */
   private focusedRow: FocusedRingRow | null = null
+  /** The rendered action rows of the current render, in array order; empty while closed. Never part of `itemEls`. */
+  private actionRowElsBeforeItems: HTMLElement[] = []
+  private actionRowElsAfterItems: HTMLElement[] = []
   private outsideHandler: ((ev: Event) => void) | undefined
   private focusOutHandler: ((ev: FocusEvent) => void) | undefined
   /**
@@ -916,6 +997,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // nor `ariaLabel` given, the label's id becomes the resolved
     // `ariaLabelledBy`, and every downstream consumer (trigger chain, filter
     // input, listbox) works unchanged.
+    // Copied: the settings bag is frozen, and a caller's later array edits must not leak in.
+    const actionRowsBeforeItems: readonly LLSelectPopupListActionRow[] = settings?.popupListActionRowsBeforeItems ? [...settings.popupListActionRowsBeforeItems] : []
+    const actionRowsAfterItems: readonly LLSelectPopupListActionRow[] = settings?.popupListActionRowsAfterItems ? [...settings.popupListActionRowsAfterItems] : []
     const labelEl = settings?.labelEl ?? null
     if (labelEl !== null && labelEl.id === '') {
       labelEl.id = this.classIdMap.labelId
@@ -938,6 +1022,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       createPopupListNoResultsContentElFn: settings?.createPopupListNoResultsContentElFn ?? null,
       createPopupHeaderContentElFn: settings?.createPopupHeaderContentElFn ?? null,
       createPopupFooterContentElFn: settings?.createPopupFooterContentElFn ?? null,
+      popupListActionRowsBeforeItems: actionRowsBeforeItems,
+      popupListActionRowsAfterItems: actionRowsAfterItems,
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'fit-content',
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
@@ -1276,6 +1362,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.focusedIndex = -1
     this.typeaheadBuffer = ''
     this.leadingRowEl = undefined
+    this.actionRowElsBeforeItems = []
+    this.actionRowElsAfterItems = []
     this.focusedRow = null
     this.comboboxEl.removeAttribute('aria-activedescendant')
     this.renderTriggerArrow()
@@ -1696,7 +1784,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Extend it by wrapping: override, do your work before or after, then
    *   call `super.renderPopupList()`. The ui-select bridge frees its row
    *   scopes this way. Or override one of the methods it calls through `this`:
-   *   `createItemEl`, `createPopupListLeadingRowEl`, `itemToGroupKey`,
+   *   `createItemEl`, `createPopupListLeadingRowEl`,
+   *   `createPopupListActionRowBeforeItemsEl` /
+   *   `createPopupListActionRowAfterItemsEl`, `itemToGroupKey`,
    *   `getVisibleItems`.
    * - Its other internals stay private on purpose. They re-establish the
    *   `itemEls[i] <-> getVisibleItems()[i]` alignment as one unit, so no
@@ -1709,7 +1799,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.itemEls = els
     this.focusedEl = undefined
     this.leadingRowEl = this.createPopupListLeadingRowEl() ?? undefined
-    if (!this.leadingRowEl) { this.focusedRow = null }
+    if (!this.leadingRowEl && this.focusedRow?.kind === 'choose-all') { this.focusedRow = null }
+    this.actionRowElsBeforeItems = this.settings.popupListActionRowsBeforeItems.map((row, i) => this.createPopupListActionRowBeforeItemsEl(row, i))
+    this.actionRowElsAfterItems = this.settings.popupListActionRowsAfterItems.map((row, i) => this.createPopupListActionRowAfterItemsEl(row, i))
     this.commitPopupSegmentsToDom(this.computePopupSegments(list, els))
     this.syncPopupListNoResultsToDom()
     this.positioner?.reposition()
@@ -1784,7 +1876,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const children = segments.map(seg =>
       seg.group ? this.createGroupEl(seg.key, seg.index, seg.items, seg.els) : seg.el,
     )
+    children.unshift(...this.actionRowElsBeforeItems)
     if (this.leadingRowEl) { children.unshift(this.leadingRowEl) }
+    children.push(...this.actionRowElsAfterItems)
     this.popupListEl.replaceChildren(...children)
   }
 
@@ -2034,20 +2128,105 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     return -1
   }
 
-  /**
-   * Resolve a nav target index to the nearest enabled item. Arrows / Home / End
-   * stay put when no enabled item lies in the travel direction; Page falls back
-   * to the opposite direction so it lands as far as it can.
-   */
-  private findEnabledIndexForAction(target: number, action: LLSelectKeyboardAction, list: readonly T[]): number {
+  /** Number of entries in the arrow-key ring for the current render. */
+  private ringLength(): number {
+    return (this.leadingRowEl ? 1 : 0) + this.actionRowElsBeforeItems.length + this.getVisibleItems().length + this.actionRowElsAfterItems.length
+  }
+
+  /** Ring position of the active option, or -1 when nothing holds it. */
+  private ringPosition(): number {
+    const lead = this.leadingRowEl ? 1 : 0
+    const r = this.focusedRow
+    if (r !== null) {
+      if (r.kind === 'choose-all') { return 0 }
+      if (r.kind === 'before-items') { return lead + r.index }
+      return lead + this.actionRowElsBeforeItems.length + this.getVisibleItems().length + r.index
+    }
+    return this.focusedIndex >= 0 ? lead + this.actionRowElsBeforeItems.length + this.focusedIndex : -1
+  }
+
+  /** The ring entry at a position (caller keeps `0 <= position < ringLength()`). */
+  private ringEntryAt(position: number): RingEntry {
+    let p = position
+    if (this.leadingRowEl) {
+      if (p === 0) { return { kind: 'choose-all' } }
+      p -= 1
+    }
+    const nBefore = this.actionRowElsBeforeItems.length
+    if (p < nBefore) { return { kind: 'before-items', index: p } }
+    p -= nBefore
+    const nItems = this.getVisibleItems().length
+    if (p < nItems) { return { kind: 'item', index: p } }
+    return { kind: 'after-items', index: p - nItems }
+  }
+
+  private isRingPositionEnabled(position: number): boolean {
+    const e = this.ringEntryAt(position)
+    switch (e.kind) {
+      case 'choose-all': return true
+      case 'item': return !this.isItemEffectivelyDisabled(this.getVisibleItems()[e.index]!)
+      case 'before-items': return this.actionRowElsBeforeItems[e.index]?.getAttribute('aria-disabled') !== 'true'
+      case 'after-items': return this.actionRowElsAfterItems[e.index]?.getAttribute('aria-disabled') !== 'true'
+    }
+  }
+
+  /** First enabled ring position from `start` walking in `direction`, or -1. */
+  private findNextEnabledRingPosition(start: number, direction: 1 | -1, total: number): number {
+    for (let p = start; p >= 0 && p < total; p += direction) {
+      if (this.isRingPositionEnabled(p)) { return p }
+    }
+    return -1
+  }
+
+  /** Ring twin of `findEnabledIndexForAction`: search in the travel direction, Page keys fall back the other way. */
+  private findEnabledRingPositionForAction(target: number, action: LLSelectKeyboardAction, total: number): number {
     const forward = action === LLSelectKeyboardAction.Next
       || action === LLSelectKeyboardAction.GotoFirst
       || action === LLSelectKeyboardAction.PageDown
-    const primary = this.findNextEnabledIndex(target, forward ? 1 : -1, list)
+    const primary = this.findNextEnabledRingPosition(target, forward ? 1 : -1, total)
     if (primary >= 0) { return primary }
-    if (action === LLSelectKeyboardAction.PageDown) { return this.findNextEnabledIndex(target, -1, list) }
-    if (action === LLSelectKeyboardAction.PageUp) { return this.findNextEnabledIndex(target, 1, list) }
+    if (action === LLSelectKeyboardAction.PageDown) { return this.findNextEnabledRingPosition(target, -1, total) }
+    if (action === LLSelectKeyboardAction.PageUp) { return this.findNextEnabledRingPosition(target, 1, total) }
     return -1
+  }
+
+  /** Move the active option to a ring position through the entry's own focus method. */
+  private focusRingPosition(position: number): void {
+    const e = this.ringEntryAt(position)
+    switch (e.kind) {
+      case 'choose-all': this.focusLeadingRow(); return
+      case 'item': this.setFocusedIndex(e.index); return
+      default: this.focusActionRow(e.kind, e.index)
+    }
+  }
+
+  /** Move the active option onto an action row (mirrors `focusLeadingRow`). */
+  private focusActionRow(kind: 'before-items' | 'after-items', index: number): void {
+    const r = this.focusedRow
+    if (r !== null && r.kind === kind && r.index === index) { return }
+    this.focusedRow = { kind, index }
+    this.focusedIndex = -1
+    this.syncFocusedIndexToDom()
+  }
+
+  /** The element of the action row holding the active option, if one does. */
+  private focusedActionRowEl(): HTMLElement | undefined {
+    const r = this.focusedRow
+    if (r === null || r.kind === 'choose-all') { return undefined }
+    return (r.kind === 'before-items' ? this.actionRowElsBeforeItems : this.actionRowElsAfterItems)[r.index]
+  }
+
+  /** The descriptor of the action row holding the active option, if one does. */
+  private focusedActionRow(): LLSelectPopupListActionRow | undefined {
+    const r = this.focusedRow
+    if (r === null || r.kind === 'choose-all') { return undefined }
+    return (r.kind === 'before-items' ? this.settings.popupListActionRowsBeforeItems : this.settings.popupListActionRowsAfterItems)[r.index]
+  }
+
+  /** Enter / click on an action row: re-check disabled, then run the hook as a user change. */
+  private activatePopupListActionRow(row: LLSelectPopupListActionRow): void {
+    if (this.isPopupListActionRowDisabled(row)) { return }
+    this.withUserChangeSource(() => this.onPopupListActionRowActivated(row))
   }
 
   /**
@@ -2057,6 +2236,149 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: reactions
    */
   protected onItemActivated(_item: T): void {}
+
+  /**
+   * Build the whole DOM element for one action row placed BEFORE the items.
+   * - The library calls it, once per entry of `popupListActionRowsBeforeItems`,
+   *   on every list render and after every chosen change. You never call it.
+   * - Both params come from the library. Forward them to `super` unchanged.
+   *   `row` is the entry; `index` is its position in that array, counted from
+   *   0, used to mint the id. It is not an identity.
+   * - To change only what the row shows, do not override this: give the entry
+   *   a `createContentElFn`.
+   * - To change the element itself, override it, call
+   *   `super.createPopupListActionRowBeforeItemsEl(row, index)`, and edit the
+   *   returned element. Keep the `id` and `role`; put no focusable control
+   *   inside.
+   * - Internals: a `div` with `role="option"`, the id
+   *   `<listbox id>-action-row-before-items<index>`, `itemClass` plus
+   *   `popupListActionRowClass`, the visible content from
+   *   {@link createPopupListActionRowContentEl} (else `textContent` from
+   *   `textFn`), `aria-label` = `textFn()` when the content is custom, and
+   *   either `aria-disabled` plus the disabled class
+   *   ({@link isPopupListActionRowDisabled}) or a click handler that focuses
+   *   the row, then runs {@link onPopupListActionRowActivated}. No
+   *   `aria-selected`: a command has no selected state.
+   * @param row - the entry, supplied by the library
+   * @param index - the entry's position in `popupListActionRowsBeforeItems`, supplied by the library
+   * @group Subclassing: rendering
+   */
+  protected createPopupListActionRowBeforeItemsEl(row: LLSelectPopupListActionRow, index: number): HTMLElement {
+    return this.createPopupListActionRowEl(row, 'before-items', index)
+  }
+
+  /**
+   * Build the whole DOM element for one action row placed AFTER the items.
+   * - Same contract as {@link createPopupListActionRowBeforeItemsEl}, for the
+   *   entries of `popupListActionRowsAfterItems`; the id is
+   *   `<listbox id>-action-row-after-items<index>`.
+   * @param row - the entry, supplied by the library
+   * @param index - the entry's position in `popupListActionRowsAfterItems`, supplied by the library
+   * @group Subclassing: rendering
+   */
+  protected createPopupListActionRowAfterItemsEl(row: LLSelectPopupListActionRow, index: number): HTMLElement {
+    return this.createPopupListActionRowEl(row, 'after-items', index)
+  }
+
+  /** Shared body of the two action-row builders. */
+  private createPopupListActionRowEl(row: LLSelectPopupListActionRow, position: 'before-items' | 'after-items', index: number): HTMLElement {
+    const el = document.createElement('div')
+    el.id = `${this.classIdMap.popupListId}-action-row-${position}${index}`
+    el.className = `${this.classIdMap.itemClass} ${this.classIdMap.popupListActionRowClass}`
+    el.setAttribute('role', 'option')
+    const text = row.textFn()
+    const content = this.createPopupListActionRowContentEl(row)
+    if (content === null) {
+      el.textContent = text
+    } else {
+      // Custom content fills the visuals only; the accessible name stays textFn.
+      el.setAttribute('aria-label', text)
+      el.appendChild(content)
+    }
+    if (this.isPopupListActionRowDisabled(row)) {
+      el.setAttribute('aria-disabled', 'true')
+      el.classList.add(this.classIdMap.itemDisabledClass)
+    } else {
+      el.addEventListener('click', () => {
+        // Focus-then-activate, mirroring the item click wiring.
+        this.focusActionRow(position, index)
+        this.activatePopupListActionRow(row)
+      })
+    }
+    return el
+  }
+
+  /**
+   * An action row's visible content element.
+   * - The library calls it from the row builders, once per row render. You
+   *   never call it. `row` comes from the library.
+   * - Default reads the entry's `createContentElFn`; `null` (unset, or
+   *   returned) = plain text from `textFn`.
+   * - Override only when extending; for one-off content give the entry a
+   *   `createContentElFn`.
+   * @group Subclassing: rendering
+   */
+  protected createPopupListActionRowContentEl(row: LLSelectPopupListActionRow): HTMLElement | null {
+    return row.createContentElFn ? row.createContentElFn() : null
+  }
+
+  /**
+   * Whether an action row is disabled right now.
+   * - The library calls it from the row builders (once per row render) and
+   *   again at activation. You never call it. `row` comes from the library.
+   * - Default reads the entry's `disabledFn`; `null` / omitted = never disabled.
+   * @group Subclassing: rendering
+   */
+  protected isPopupListActionRowDisabled(row: LLSelectPopupListActionRow): boolean {
+    return row.disabledFn ? row.disabledFn() : false
+  }
+
+  /**
+   * Subclass hook: an action row was activated (Enter, Space while the filter
+   * is inactive, or click), after the disabled re-check. Default calls the
+   * entry's `onActivate`; the library changes nothing else.
+   * @group Subclassing: reactions
+   */
+  protected onPopupListActionRowActivated(row: LLSelectPopupListActionRow): void {
+    row.onActivate()
+  }
+
+  /**
+   * Rebuild every rendered action row in place, so `textFn` / `disabledFn`
+   * reflect the current state; the row holding the active option keeps it.
+   * - The library calls it after every chosen change, right after `onChange`
+   *   fired (a row's text may read what the handler wrote). Subclasses may
+   *   call it after a state change of their own.
+   * - No-op while closed, or when both row arrays are empty - instances
+   *   without rows pay nothing.
+   * - O(rows) DOM work; the item rows are untouched.
+   * @group Subclassing: rendering
+   */
+  protected replacePopupListActionRowElsInDom(): void {
+    if (!this.opened) { return }
+    const before = this.settings.popupListActionRowsBeforeItems
+    const after = this.settings.popupListActionRowsAfterItems
+    if (before.length === 0 && after.length === 0) { return }
+    this.actionRowElsBeforeItems = this.replaceActionRowEls(this.actionRowElsBeforeItems, before, (row, i) => this.createPopupListActionRowBeforeItemsEl(row, i))
+    this.actionRowElsAfterItems = this.replaceActionRowEls(this.actionRowElsAfterItems, after, (row, i) => this.createPopupListActionRowAfterItemsEl(row, i))
+  }
+
+  private replaceActionRowEls(
+    olds: HTMLElement[],
+    rows: readonly LLSelectPopupListActionRow[],
+    build: (row: LLSelectPopupListActionRow, index: number) => HTMLElement,
+  ): HTMLElement[] {
+    return olds.map((old, i) => {
+      const next = build(rows[i]!, i)
+      old.replaceWith(next)
+      if (this.focusedEl === old) {
+        next.classList.add(this.classIdMap.itemFocusedClass)
+        this.comboboxEl.setAttribute('aria-activedescendant', next.id)
+        this.focusedEl = next
+      }
+      return next
+    })
+  }
 
   /**
    * Optional non-item `role="option"` row pinned at the TOP of the listbox:
@@ -2175,6 +2497,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (this.focusedEl) {
       this.focusedEl.classList.remove(this.classIdMap.itemFocusedClass)
       this.focusedEl = undefined
+    }
+    if (this.focusedRow !== null && this.focusedRow.kind !== 'choose-all') {
+      const rowEl = this.focusedActionRowEl()
+      if (rowEl !== undefined) {
+        rowEl.classList.add(this.classIdMap.itemFocusedClass)
+        this.comboboxEl.setAttribute('aria-activedescendant', rowEl.id)
+        this.focusedEl = rowEl
+        ensureVisibleInScroll(rowEl, this.popupListEl)
+        return
+      }
+      this.focusedRow = null
     }
     if (this.focusedRow?.kind === 'choose-all' && this.leadingRowEl) {
       this.leadingRowEl.classList.add(this.classIdMap.itemFocusedClass)
@@ -2368,6 +2701,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
           this.withUserChangeSource(() => this.onLeadingRowActivated())
           return
         }
+        if (this.focusedRow !== null) {
+          const row = this.focusedActionRow()
+          if (row !== undefined) { this.activatePopupListActionRow(row) }
+          return
+        }
         const list = this.getVisibleItems()
         if (this.focusedIndex >= 0 && this.focusedIndex < list.length) {
           const item = list[this.focusedIndex]!
@@ -2382,33 +2720,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       case LLSelectKeyboardAction.GotoLast:
       case LLSelectKeyboardAction.PageDown:
       case LLSelectKeyboardAction.PageUp: {
-        const list = this.getVisibleItems()
-        if (list.length === 0) { return }
-        if (this.focusedRow?.kind === 'choose-all') {
-          // On the leading row (ring top): only downward actions move; treat
-          // the row as position -1 so Next lands on the first enabled item.
-          if (action === LLSelectKeyboardAction.Next || action === LLSelectKeyboardAction.PageDown || action === LLSelectKeyboardAction.GotoLast) {
-            const target = getUpdatedIndex(-1, list.length - 1, action)
-            const found = this.findEnabledIndexForAction(target, action, list)
-            if (found >= 0) { this.setFocusedIndex(found) }
-          }
-          return
-        }
-        // Home lands on the leading row when present (topmost of the ring).
-        if (action === LLSelectKeyboardAction.GotoFirst && this.leadingRowEl) {
-          this.focusLeadingRow()
-          return
-        }
-        const target = getUpdatedIndex(this.focusedIndex, list.length - 1, action)
-        const found = this.findEnabledIndexForAction(target, action, list)
-        // An up-action that cannot move (already at the topmost enabled item)
-        // continues onto the leading row.
-        const upAction = action === LLSelectKeyboardAction.Previous || action === LLSelectKeyboardAction.PageUp
-        if (this.leadingRowEl && upAction && (found < 0 || found === this.focusedIndex)) {
-          this.focusLeadingRow()
-          return
-        }
-        if (found >= 0) { this.setFocusedIndex(found) }
+        // One walk over the whole ring: choose-all row, rows before the
+        // items, items, rows after the items. Disabled entries are skipped
+        // in the travel direction (Page keys fall back the other way).
+        const total = this.ringLength()
+        if (total === 0) { return }
+        const target = getUpdatedIndex(this.ringPosition(), total - 1, action)
+        const found = this.findEnabledRingPositionForAction(target, action, total)
+        if (found >= 0) { this.focusRingPosition(found) }
         return
       }
     }

@@ -959,6 +959,40 @@
       </div>
     </article>
   </section>
+
+  <section>
+    <h2>16. Action rows: commands inside the list</h2>
+    <p class="hint">
+      Rows the library renders as options before or after the items, so a
+      keyboard user reaches them with the arrow keys. They scroll with the
+      list. Each row is a plain object: its text, whether it is disabled, and
+      what activation does. The library never chooses or closes for it.
+    </p>
+
+    <article>
+      <h3>16.1 Restore defaults and Clear all, after the items</h3>
+      <p class="hint">Both rows read the live selection: <code>textFn</code> and <code>disabledFn</code> run again after every change. Press End to reach them.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-action-rows"></div>
+          <div class="out" id="out-action-rows">chosen: []</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="16.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>16.2 Add a country, before the items</h3>
+      <p class="hint">A single select with one row above the items. Activating it asks for a name, adds it, picks it and closes; the row itself never closes the popup.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-add-row"></div>
+          <div class="out" id="out-add-row">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="16.2"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
   </main>
   </div>
 

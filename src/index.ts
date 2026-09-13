@@ -11,6 +11,7 @@ export type {
   LLSelectChangeSource,
   LLSelectClassIdMap,
   LLSelectOutsideClickBehavior,
+  LLSelectPopupListActionRow,
   LLSelectSettingsInputOf,
 } from './base.js'
 

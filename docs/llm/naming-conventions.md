@@ -264,6 +264,28 @@ Settings on `LLSelectBaseSettings` (s3 by return type), Container-Content law (s
 
 `classIdMap` gained `popupHeaderClass` / `popupFooterClass` (`.llselect-popup-header` / `.llselect-popup-footer`): direct children of the `popup` family, so they carry the family prefix (DESIGN.md "Element family naming").
 
+### 4i. Action rows (commands inside the list)
+
+Settings on `LLSelectBaseSettings` (s3): arrays of `LLSelectPopupListActionRow` descriptors, one per slot. The exported type carries the `LLSelect` prefix (s3); its function-valued fields carry `Fn`, its event is present tense like `onOpen`.
+
+| Vis     | Name                             | Signature                                        | s3                 |
+| ------- | -------------------------------- | ------------------------------------------------ | ------------------ |
+| setting | `popupListActionRowsBeforeItems` | `readonly LLSelectPopupListActionRow[]`          | value (array)      |
+| setting | `popupListActionRowsAfterItems`  | `readonly LLSelectPopupListActionRow[]`          | value (array)      |
+| type    | `LLSelectPopupListActionRow`     | `{ textFn; createContentElFn?; disabledFn?; onActivate }` | descriptive noun |
+
+| Vis       | Name                                   | Convention                                                          |
+| --------- | -------------------------------------- | ------------------------------------------------------------------- |
+| protected | `createPopupListActionRowBeforeItemsEl` / `createPopupListActionRowAfterItemsEl` | `create*El` - whole row, one builder per slot (s7d: explicit over one builder + kind param) |
+| protected | `createPopupListActionRowContentEl`    | `create*ContentEl` - thin, reads the descriptor                     |
+| protected | `isPopupListActionRowDisabled`         | `is*` predicate, reads the descriptor; re-checked at activation     |
+| protected | `onPopupListActionRowActivated`        | subclass hook (`on*`), past tense like `onItemActivated`            |
+| protected | `replacePopupListActionRowElsInDom`    | `replace*ElInDom` - in-place rebuild of every rendered row          |
+| private   | `createPopupListActionRowEl`           | shared body of the two builders                                     |
+| private   | `ringLength` / `ringPosition` / `ringEntryAt` / `findNextEnabledRingPosition` / `findEnabledRingPositionForAction` / `focusRingPosition` / `focusActionRow` | the arrow-key ring walk over [choose-all, rows before items, items, rows after items] |
+
+`classIdMap` gained `popupListActionRowClass` (`.llselect-popup-list-action-row`, on top of `itemClass`). The private keyboard enum was renamed `LLSelectAction` -> `LLSelectKeyboardAction` so "action" names one thing.
+
 ## 5. Decisions log
 
 Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure orchestrator (DECIDED ii): DOM-free, no suffix, NOT on the exception list. `commit` confirmed; element-returning callbacks are `create*ElFn`, string-returning is `itemTo*` (`itemToString`); `build*`/`make*`/`apply*` banned. Nothing open: 4a + 4b applied to code. Review follow-up: `nextEnabledForAction` -> `findEnabledIndexForAction` (adds the missing verb prefix). Consistency-review follow-up (R3): `matchesQuery` private -> protected (the overridable method behind `filterFn`); added `protected createTriggerArrowContentEl(state)` reading `createTriggerArrowContentElFn` (mirrors the clear button's content method); `renderTriggerArrow` stays a private orchestrator and `commitTriggerArrowContentElToDom` a private primitive. (Names shown post-s7b.) R20 added private `computeFilterActive` (compute*) + `syncFilterModeToDom` (sync*ToDom). R26 added public `destroy` (domain lifecycle op, industry-standard name; joins `open`/`close`/`toggle` on the DOM-touching exception list). R29 (Phase 13) added base protected `createPopupListLeadingRowEl` (create*El), `onLeadingRowActivated` (on-hook), `focusLeadingRow` (focus*), `replaceLeadingRowElInDom` (replace*ElInDom); multi flag setting `chooseAllRow`; classIdMap `chooseAllRowClass`. RC review follow-up (F7, user ruling): `isItemDisabled` -> `isItemEffectivelyDisabled` - it composes `itemDisabledFn` OR the group layer, so its name must not mimic a 1:1 `<setting minus Fn>` reader; rule in s7a.6. Label purge (user ruling, s7a.7-8): "label" reserved to HTML-labeled concepts; `groupKeyToLabelFn` -> `groupKeyToStringFn`, pack key `selectAllRowLabel` -> `selectAllRowText`, pack param `itemLabel` -> `itemText`; angularjs `ll-label` (ui-llselect display text) -> `ll-item-text`. Choose-all unification (user ruling, s7c): the `selectAllRow` family -> `chooseAllRow` family (setting, `createChooseAllRowContentElFn`, pack key `selectAllRowText` -> `chooseAllRowText`, `.llselect-choose-all-row`, angularjs `ll-choose-all-row`) - no exception to the `choose*` vocabulary; "select all" survives only as quoted industry prose and per-language pack VALUES. Prefix typeahead (FIXME round "prefix typeahead") added base protected `computeTypeaheadClosedStartIndex` (compute*, single override; first shipped verb-less as `typeaheadClosedStartIndex`, QUALITY-98), private `handleTypeaheadKeydown` (handle*), and keyboard.ts module functions `findTypeaheadIndex` (find*) and `getUpdatedTypeaheadBuffer` (get*, the `getUpdatedIndex` shape; first named `appendTypeaheadChar` - `append*` is in no verb family), plus the module-private auxiliary `foldForTypeahead` (the case fold both typeahead operands go through).
