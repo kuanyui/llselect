@@ -171,3 +171,124 @@ test('destroy() removes the slot nodes with the rest of the root', () => {
   assert.equal(el.children.length, 0)
   assert.equal(document.querySelector(`.${sel.classIdMap.popupHeaderClass}`), null)
 })
+
+// --- keyboard / focus contract for app controls inside a slot (A11Y.md "Slot controls") ---
+
+function mountWithOutside(): { el: HTMLElement; outside: HTMLButtonElement } {
+  setupDom('<!doctype html><html><body><div id="mount"></div><button id="outside">x</button></body></html>')
+  return { el: document.getElementById('mount')!, outside: document.getElementById('outside') as HTMLButtonElement }
+}
+
+function footerButton(): HTMLButtonElement {
+  const b = document.createElement('button')
+  b.type = 'button'
+  b.textContent = 'Restore defaults'
+  return b
+}
+
+for (const filterable of [false, true]) {
+  test(`Esc on a focused slot button closes and returns focus to the trigger (filterable: ${filterable})`, () => {
+    const { el } = mountWithOutside()
+    const button = footerButton()
+    const sel = new LLSelectSingle<string>(el, { ariaLabel: 'x', filterable, createPopupFooterContentElFn: () => button })
+    sel.setItems(['a', 'b'])
+    sel.open()
+    button.focus()
+    assert.equal(document.activeElement, button)
+    const ev = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    button.dispatchEvent(ev)
+    assert.equal(ev.defaultPrevented, true) // an enclosing modal <dialog> must not also close
+    assert.equal(sel.isOpened(), false)
+    assert.equal(document.activeElement, sel.triggerEl)
+  })
+}
+
+test('an Esc the app already handled (defaultPrevented) is left alone', () => {
+  const { el } = mountWithOutside()
+  const field = document.createElement('input')
+  field.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { ev.preventDefault() } })
+  const sel = new LLSelectSingle<string>(el, { ariaLabel: 'x', createPopupFooterContentElFn: () => field })
+  sel.setItems(['a'])
+  sel.open()
+  field.focus()
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+  assert.equal(sel.isOpened(), true)
+})
+
+test('an Esc during IME composition is ignored', () => {
+  const { el } = mountWithOutside()
+  const button = footerButton()
+  const sel = new LLSelectSingle<string>(el, { ariaLabel: 'x', createPopupFooterContentElFn: () => button })
+  sel.setItems(['a'])
+  sel.open()
+  button.focus()
+  button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', isComposing: true, bubbles: true, cancelable: true }))
+  assert.equal(sel.isOpened(), true)
+})
+
+test('other keys on a slot control are not intercepted', () => {
+  const { el } = mountWithOutside()
+  const button = footerButton()
+  const sel = new LLSelectSingle<string>(el, { ariaLabel: 'x', createPopupFooterContentElFn: () => button })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  button.focus()
+  for (const key of ['ArrowDown', 'Enter', ' ', 'Home']) {
+    const ev = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+    button.dispatchEvent(ev)
+    assert.equal(ev.defaultPrevented, false, key)
+  }
+  assert.equal(sel.isOpened(), true)
+  assert.equal(sel.triggerEl.getAttribute('aria-activedescendant') ?? sel.popupEl.querySelector('input')?.getAttribute('aria-activedescendant'), sel.popupListEl.querySelector('[role="option"]')?.id) // the ring did not move
+})
+
+test('without a slot, Esc bubbling from inside the popup reaches no popup listener (no-degradation)', () => {
+  const { el } = mountWithOutside()
+  const sel = new LLSelectSingle<string>(el, { ariaLabel: 'x' })
+  sel.setItems(['a'])
+  sel.open()
+  sel.popupListEl.focus() // tabindex="-1": programmatically focusable
+  const ev = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+  sel.popupListEl.dispatchEvent(ev)
+  assert.equal(ev.defaultPrevented, false)
+  assert.equal(sel.isOpened(), true)
+})
+
+test('Tab-away from a slot control closes without reclaiming focus', () => {
+  const { el, outside } = mountWithOutside()
+  const button = footerButton()
+  const sel = new LLSelectSingle<string>(el, { ariaLabel: 'x', createPopupFooterContentElFn: () => button })
+  sel.setItems(['a'])
+  sel.open()
+  button.focus()
+  // A real focus move: focus lands outside FIRST, then focusout reports it.
+  outside.focus()
+  button.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: outside }))
+  assert.equal(sel.isOpened(), false)
+  assert.equal(document.activeElement, outside)
+})
+
+test('close() from a slot button click returns focus to the trigger', () => {
+  const { el } = mountWithOutside()
+  const button = footerButton()
+  let sel: LLSelectMultiple<string>
+  button.addEventListener('click', () => { sel.close() })
+  sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', createPopupFooterContentElFn: () => button })
+  sel.setItems(['a'])
+  sel.open()
+  button.focus() // reached by Tab; a keyboard Enter then fires click
+  button.click()
+  assert.equal(sel.isOpened(), false)
+  assert.equal(document.activeElement, sel.triggerEl)
+})
+
+test('slot content is inside the root, so focus moving onto it keeps the popup open', () => {
+  const { el } = mountWithOutside()
+  const button = footerButton()
+  const sel = new LLSelectSingle<string>(el, { ariaLabel: 'x', filterable: true, createPopupFooterContentElFn: () => button })
+  sel.setItems(['a'])
+  sel.open()
+  const input = sel.popupEl.querySelector('input')!
+  input.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: button }))
+  assert.equal(sel.isOpened(), true)
+})

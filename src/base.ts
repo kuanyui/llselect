@@ -1004,6 +1004,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (this.popupHeaderEl !== null) { this.popupListEl.before(this.popupHeaderEl) }
     this.popupFooterEl = this.createPopupFooterEl()
     if (this.popupFooterEl !== null) { this.popupEl.append(this.popupFooterEl) }
+    // Esc from a focusable control the app placed in a slot closes the popup
+    // like Esc on the combobox host. Attached only when a slot exists: without
+    // one, nothing inside the popup can hold DOM focus except the filter
+    // input, whose own handler already covers Esc (A11Y.md "Focus").
+    if (this.popupHeaderEl !== null || this.popupFooterEl !== null) {
+      this.popupEl.addEventListener('keydown', (ev) => this.handleSlotKeydown(ev))
+    }
     this.popupEl.hidden = true
     this.syncFilterModeToDom()
     // Force border-box on the popup elements so the positioner's max-height
@@ -1204,16 +1211,18 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Close the popup. Detaches positioner and outside-click listener, clears
    * the item DOM, and resets focused-item state. No-op if already closed.
    *
-   * Focus return is decided automatically: when `filterable: true` and DOM
-   * focus is still on the filter input at the moment of close (Esc on empty
-   * filter, single-select pick, click on non-focusable area outside), focus
-   * is returned to the trigger. Tab-away and outside clicks on focusable
-   * elements have already moved focus elsewhere, so we leave it alone.
+   * Focus return is decided automatically: when DOM focus is still inside
+   * the popup at the moment of close - the filter input (Esc on an empty
+   * filter, a single-select pick, an outside press on a non-focusable area)
+   * or a focusable control the app placed in a header / footer slot (Esc
+   * there, or `close()` called from its own click) - focus is returned to
+   * the trigger. Tab-away and outside clicks on focusable elements have
+   * already moved focus elsewhere, so we leave it alone.
    * @group Open & close
    */
   public close(): void {
     if (!this.opened) { return }
-    const shouldReturnFocus = this.filterActive && this.isFocused(this.filterInputEl)
+    const shouldReturnFocus = this.isFocused(this.popupEl)
     this.opened = false
     this.triggerEl.setAttribute('aria-expanded', 'false')
     this.triggerEl.setAttribute('data-state', 'closed')
@@ -2297,6 +2306,23 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (!this.focusOutHandler) { return }
     this.rootEl.removeEventListener('focusout', this.focusOutHandler)
     this.focusOutHandler = undefined
+  }
+
+  /**
+   * Esc pressed while DOM focus sits on app content inside a popup slot
+   * (`popupHeaderEl` / `popupFooterEl`): close, and `close()` returns focus to
+   * the trigger. Escape only; ignores IME composition, an event the app
+   * already handled (`defaultPrevented` - a text field that owns Esc), and
+   * the filter input's own events (its `handleKeydown` ran first and prevented
+   * the default). `preventDefault` so an enclosing modal `<dialog>` does not
+   * also close on the same key.
+   */
+  private handleSlotKeydown(ev: KeyboardEvent): void {
+    if (ev.key !== 'Escape' || ev.isComposing || this.composing || ev.defaultPrevented) { return }
+    const t = this.eventTargetNode(ev)
+    if (t instanceof Node && this.filterInputEl.contains(t)) { return }
+    ev.preventDefault()
+    this.close()
   }
 
   private handleKeydown(ev: KeyboardEvent): void {
