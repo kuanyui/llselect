@@ -5,7 +5,7 @@
  * Logical actions a keyboard interaction can map to. Numeric values are
  * implementation detail; never serialise them.
  */
-export enum LLSelectAction {
+export enum LLSelectKeyboardAction {
   /** Open the popup (no item activation). */
   Open,
   /** Close the popup (no item activation). */
@@ -29,7 +29,7 @@ export enum LLSelectAction {
 const PAGE_SIZE = 10
 
 /**
- * Map a keydown event to a logical {@link LLSelectAction}, given whether the
+ * Map a keydown event to a logical {@link LLSelectKeyboardAction}, given whether the
  * popup is currently open.
  * - Returns `undefined` if the key should be left alone (no preventDefault,
  *   no library reaction).
@@ -47,26 +47,26 @@ export function getActionFromKey(
   ev: KeyboardEvent,
   isOpened: boolean,
   inTextInput = false,
-): LLSelectAction | undefined {
+): LLSelectKeyboardAction | undefined {
   const { key, altKey } = ev
 
   if (!isOpened) {
     if (key === 'ArrowDown' || key === 'ArrowUp' || key === 'Enter' || key === ' ') {
-      return LLSelectAction.Open
+      return LLSelectKeyboardAction.Open
     }
     return undefined
   }
 
-  if (key === 'Escape') { return LLSelectAction.Close }
-  if (key === 'ArrowUp' && altKey) { return LLSelectAction.Close }
-  if (key === 'Enter') { return LLSelectAction.Select }
-  if (key === ' ' && !inTextInput) { return LLSelectAction.Select }
-  if (key === 'ArrowDown') { return LLSelectAction.Next }
-  if (key === 'ArrowUp') { return LLSelectAction.Previous }
-  if (key === 'Home' && !inTextInput) { return LLSelectAction.GotoFirst }
-  if (key === 'End' && !inTextInput) { return LLSelectAction.GotoLast }
-  if (key === 'PageDown') { return LLSelectAction.PageDown }
-  if (key === 'PageUp') { return LLSelectAction.PageUp }
+  if (key === 'Escape') { return LLSelectKeyboardAction.Close }
+  if (key === 'ArrowUp' && altKey) { return LLSelectKeyboardAction.Close }
+  if (key === 'Enter') { return LLSelectKeyboardAction.Select }
+  if (key === ' ' && !inTextInput) { return LLSelectKeyboardAction.Select }
+  if (key === 'ArrowDown') { return LLSelectKeyboardAction.Next }
+  if (key === 'ArrowUp') { return LLSelectKeyboardAction.Previous }
+  if (key === 'Home' && !inTextInput) { return LLSelectKeyboardAction.GotoFirst }
+  if (key === 'End' && !inTextInput) { return LLSelectKeyboardAction.GotoLast }
+  if (key === 'PageDown') { return LLSelectKeyboardAction.PageDown }
+  if (key === 'PageUp') { return LLSelectKeyboardAction.PageUp }
   return undefined
 }
 
@@ -82,16 +82,16 @@ export function getActionFromKey(
 export function getUpdatedIndex(
   currentIndex: number,
   maxIndex: number,
-  action: LLSelectAction,
+  action: LLSelectKeyboardAction,
 ): number {
   if (maxIndex < 0) { return -1 }
   switch (action) {
-    case LLSelectAction.GotoFirst: return 0
-    case LLSelectAction.GotoLast: return maxIndex
-    case LLSelectAction.Next: return Math.min(currentIndex + 1, maxIndex)
-    case LLSelectAction.Previous: return Math.max(currentIndex - 1, 0)
-    case LLSelectAction.PageDown: return Math.min(currentIndex + PAGE_SIZE, maxIndex)
-    case LLSelectAction.PageUp: return Math.max(currentIndex - PAGE_SIZE, 0)
+    case LLSelectKeyboardAction.GotoFirst: return 0
+    case LLSelectKeyboardAction.GotoLast: return maxIndex
+    case LLSelectKeyboardAction.Next: return Math.min(currentIndex + 1, maxIndex)
+    case LLSelectKeyboardAction.Previous: return Math.max(currentIndex - 1, 0)
+    case LLSelectKeyboardAction.PageDown: return Math.min(currentIndex + PAGE_SIZE, maxIndex)
+    case LLSelectKeyboardAction.PageUp: return Math.max(currentIndex - PAGE_SIZE, 0)
     default: return currentIndex
   }
 }

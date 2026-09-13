@@ -6,7 +6,7 @@
 import { createPositioner, isAnchorHidden, type Positioner, type LLSelectWidthPolicy } from './positioning.js'
 import { gatherItemsByGroupKey } from './grouping.js'
 import {
-  LLSelectAction,
+  LLSelectKeyboardAction,
   ensureVisibleInScroll,
   findTypeaheadIndex,
   getActionFromKey,
@@ -2029,14 +2029,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * stay put when no enabled item lies in the travel direction; Page falls back
    * to the opposite direction so it lands as far as it can.
    */
-  private findEnabledIndexForAction(target: number, action: LLSelectAction, list: readonly T[]): number {
-    const forward = action === LLSelectAction.Next
-      || action === LLSelectAction.GotoFirst
-      || action === LLSelectAction.PageDown
+  private findEnabledIndexForAction(target: number, action: LLSelectKeyboardAction, list: readonly T[]): number {
+    const forward = action === LLSelectKeyboardAction.Next
+      || action === LLSelectKeyboardAction.GotoFirst
+      || action === LLSelectKeyboardAction.PageDown
     const primary = this.findNextEnabledIndex(target, forward ? 1 : -1, list)
     if (primary >= 0) { return primary }
-    if (action === LLSelectAction.PageDown) { return this.findNextEnabledIndex(target, -1, list) }
-    if (action === LLSelectAction.PageUp) { return this.findNextEnabledIndex(target, 1, list) }
+    if (action === LLSelectKeyboardAction.PageDown) { return this.findNextEnabledIndex(target, -1, list) }
+    if (action === LLSelectKeyboardAction.PageUp) { return this.findNextEnabledIndex(target, 1, list) }
     return -1
   }
 
@@ -2339,10 +2339,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.typeaheadBuffer = ''
 
     switch (action) {
-      case LLSelectAction.Open:
+      case LLSelectKeyboardAction.Open:
         this.open()
         return
-      case LLSelectAction.Close:
+      case LLSelectKeyboardAction.Close:
         // Esc two-stage while the filter is active: clear the filter first; only
         // close when the filter is already empty. Closing returns focus to
         // the trigger.
@@ -2353,7 +2353,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         }
         this.close()
         return
-      case LLSelectAction.Select: {
+      case LLSelectKeyboardAction.Select: {
         if (this.leadingRowFocused) {
           this.withUserChangeSource(() => this.onLeadingRowActivated())
           return
@@ -2366,18 +2366,18 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         }
         return
       }
-      case LLSelectAction.Next:
-      case LLSelectAction.Previous:
-      case LLSelectAction.GotoFirst:
-      case LLSelectAction.GotoLast:
-      case LLSelectAction.PageDown:
-      case LLSelectAction.PageUp: {
+      case LLSelectKeyboardAction.Next:
+      case LLSelectKeyboardAction.Previous:
+      case LLSelectKeyboardAction.GotoFirst:
+      case LLSelectKeyboardAction.GotoLast:
+      case LLSelectKeyboardAction.PageDown:
+      case LLSelectKeyboardAction.PageUp: {
         const list = this.getVisibleItems()
         if (list.length === 0) { return }
         if (this.leadingRowFocused) {
           // On the leading row (ring top): only downward actions move; treat
           // the row as position -1 so Next lands on the first enabled item.
-          if (action === LLSelectAction.Next || action === LLSelectAction.PageDown || action === LLSelectAction.GotoLast) {
+          if (action === LLSelectKeyboardAction.Next || action === LLSelectKeyboardAction.PageDown || action === LLSelectKeyboardAction.GotoLast) {
             const target = getUpdatedIndex(-1, list.length - 1, action)
             const found = this.findEnabledIndexForAction(target, action, list)
             if (found >= 0) { this.setFocusedIndex(found) }
@@ -2385,7 +2385,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
           return
         }
         // Home lands on the leading row when present (topmost of the ring).
-        if (action === LLSelectAction.GotoFirst && this.leadingRowEl) {
+        if (action === LLSelectKeyboardAction.GotoFirst && this.leadingRowEl) {
           this.focusLeadingRow()
           return
         }
@@ -2393,7 +2393,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         const found = this.findEnabledIndexForAction(target, action, list)
         // An up-action that cannot move (already at the topmost enabled item)
         // continues onto the leading row.
-        const upAction = action === LLSelectAction.Previous || action === LLSelectAction.PageUp
+        const upAction = action === LLSelectKeyboardAction.Previous || action === LLSelectKeyboardAction.PageUp
         if (this.leadingRowEl && upAction && (found < 0 || found === this.focusedIndex)) {
           this.focusLeadingRow()
           return

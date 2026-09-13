@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import {
-  LLSelectAction,
+  LLSelectKeyboardAction,
   TYPEAHEAD_TIMEOUT_MS,
   findTypeaheadIndex,
   getActionFromKey,
@@ -21,7 +21,7 @@ function makeEvent(key: string, altKey = false): KeyboardEvent {
 
 test('closed: ArrowDown/Up/Enter/Space map to Open', () => {
   for (const key of ['ArrowDown', 'ArrowUp', 'Enter', ' ']) {
-    assert.equal(getActionFromKey(makeEvent(key), false), LLSelectAction.Open)
+    assert.equal(getActionFromKey(makeEvent(key), false), LLSelectKeyboardAction.Open)
   }
 })
 
@@ -34,78 +34,78 @@ test('closed: other keys return undefined', () => {
 // --- getActionFromKey (open) ---------------------------------------
 
 test('open: Escape -> Close; Alt+ArrowUp -> Close', () => {
-  assert.equal(getActionFromKey(makeEvent('Escape'), true), LLSelectAction.Close)
-  assert.equal(getActionFromKey(makeEvent('ArrowUp', true), true), LLSelectAction.Close)
+  assert.equal(getActionFromKey(makeEvent('Escape'), true), LLSelectKeyboardAction.Close)
+  assert.equal(getActionFromKey(makeEvent('ArrowUp', true), true), LLSelectKeyboardAction.Close)
 })
 
 test('open: Enter/Space -> Select', () => {
-  assert.equal(getActionFromKey(makeEvent('Enter'), true), LLSelectAction.Select)
-  assert.equal(getActionFromKey(makeEvent(' '), true), LLSelectAction.Select)
+  assert.equal(getActionFromKey(makeEvent('Enter'), true), LLSelectKeyboardAction.Select)
+  assert.equal(getActionFromKey(makeEvent(' '), true), LLSelectKeyboardAction.Select)
 })
 
 test('open: arrow keys -> Next/Previous', () => {
-  assert.equal(getActionFromKey(makeEvent('ArrowDown'), true), LLSelectAction.Next)
-  assert.equal(getActionFromKey(makeEvent('ArrowUp'), true), LLSelectAction.Previous)
+  assert.equal(getActionFromKey(makeEvent('ArrowDown'), true), LLSelectKeyboardAction.Next)
+  assert.equal(getActionFromKey(makeEvent('ArrowUp'), true), LLSelectKeyboardAction.Previous)
 })
 
 test('open: Home/End -> GotoFirst/GotoLast', () => {
-  assert.equal(getActionFromKey(makeEvent('Home'), true), LLSelectAction.GotoFirst)
-  assert.equal(getActionFromKey(makeEvent('End'), true), LLSelectAction.GotoLast)
+  assert.equal(getActionFromKey(makeEvent('Home'), true), LLSelectKeyboardAction.GotoFirst)
+  assert.equal(getActionFromKey(makeEvent('End'), true), LLSelectKeyboardAction.GotoLast)
 })
 
 test('open: PageUp/PageDown -> PageUp/PageDown', () => {
-  assert.equal(getActionFromKey(makeEvent('PageUp'), true), LLSelectAction.PageUp)
-  assert.equal(getActionFromKey(makeEvent('PageDown'), true), LLSelectAction.PageDown)
+  assert.equal(getActionFromKey(makeEvent('PageUp'), true), LLSelectKeyboardAction.PageUp)
+  assert.equal(getActionFromKey(makeEvent('PageDown'), true), LLSelectKeyboardAction.PageDown)
 })
 
 // --- getActionFromKey (open, focus in the filter text input) -------
 
 test('open + inTextInput: Space is left alone (types a space), Enter still selects', () => {
   assert.equal(getActionFromKey(makeEvent(' '), true, true), undefined)
-  assert.equal(getActionFromKey(makeEvent('Enter'), true, true), LLSelectAction.Select)
+  assert.equal(getActionFromKey(makeEvent('Enter'), true, true), LLSelectKeyboardAction.Select)
 })
 
 test('open + inTextInput: Home/End are left alone (caret), arrows/page still navigate', () => {
   assert.equal(getActionFromKey(makeEvent('Home'), true, true), undefined)
   assert.equal(getActionFromKey(makeEvent('End'), true, true), undefined)
-  assert.equal(getActionFromKey(makeEvent('ArrowDown'), true, true), LLSelectAction.Next)
-  assert.equal(getActionFromKey(makeEvent('ArrowUp'), true, true), LLSelectAction.Previous)
-  assert.equal(getActionFromKey(makeEvent('PageDown'), true, true), LLSelectAction.PageDown)
+  assert.equal(getActionFromKey(makeEvent('ArrowDown'), true, true), LLSelectKeyboardAction.Next)
+  assert.equal(getActionFromKey(makeEvent('ArrowUp'), true, true), LLSelectKeyboardAction.Previous)
+  assert.equal(getActionFromKey(makeEvent('PageDown'), true, true), LLSelectKeyboardAction.PageDown)
 })
 
 test('open + inTextInput: Escape still closes', () => {
-  assert.equal(getActionFromKey(makeEvent('Escape'), true, true), LLSelectAction.Close)
+  assert.equal(getActionFromKey(makeEvent('Escape'), true, true), LLSelectKeyboardAction.Close)
 })
 
 // --- getUpdatedIndex -----------------------------------------------
 
 test('getUpdatedIndex Next clamps at maxIndex', () => {
-  assert.equal(getUpdatedIndex(0, 4, LLSelectAction.Next), 1)
-  assert.equal(getUpdatedIndex(4, 4, LLSelectAction.Next), 4)
-  assert.equal(getUpdatedIndex(-1, 4, LLSelectAction.Next), 0)
+  assert.equal(getUpdatedIndex(0, 4, LLSelectKeyboardAction.Next), 1)
+  assert.equal(getUpdatedIndex(4, 4, LLSelectKeyboardAction.Next), 4)
+  assert.equal(getUpdatedIndex(-1, 4, LLSelectKeyboardAction.Next), 0)
 })
 
 test('getUpdatedIndex Previous clamps at 0', () => {
-  assert.equal(getUpdatedIndex(3, 4, LLSelectAction.Previous), 2)
-  assert.equal(getUpdatedIndex(0, 4, LLSelectAction.Previous), 0)
-  assert.equal(getUpdatedIndex(-1, 4, LLSelectAction.Previous), 0)
+  assert.equal(getUpdatedIndex(3, 4, LLSelectKeyboardAction.Previous), 2)
+  assert.equal(getUpdatedIndex(0, 4, LLSelectKeyboardAction.Previous), 0)
+  assert.equal(getUpdatedIndex(-1, 4, LLSelectKeyboardAction.Previous), 0)
 })
 
 test('getUpdatedIndex GotoFirst/Last', () => {
-  assert.equal(getUpdatedIndex(3, 9, LLSelectAction.GotoFirst), 0)
-  assert.equal(getUpdatedIndex(3, 9, LLSelectAction.GotoLast), 9)
+  assert.equal(getUpdatedIndex(3, 9, LLSelectKeyboardAction.GotoFirst), 0)
+  assert.equal(getUpdatedIndex(3, 9, LLSelectKeyboardAction.GotoLast), 9)
 })
 
 test('getUpdatedIndex Page steps by 10 and clamps', () => {
-  assert.equal(getUpdatedIndex(0, 50, LLSelectAction.PageDown), 10)
-  assert.equal(getUpdatedIndex(45, 50, LLSelectAction.PageDown), 50)
-  assert.equal(getUpdatedIndex(25, 50, LLSelectAction.PageUp), 15)
-  assert.equal(getUpdatedIndex(5, 50, LLSelectAction.PageUp), 0)
+  assert.equal(getUpdatedIndex(0, 50, LLSelectKeyboardAction.PageDown), 10)
+  assert.equal(getUpdatedIndex(45, 50, LLSelectKeyboardAction.PageDown), 50)
+  assert.equal(getUpdatedIndex(25, 50, LLSelectKeyboardAction.PageUp), 15)
+  assert.equal(getUpdatedIndex(5, 50, LLSelectKeyboardAction.PageUp), 0)
 })
 
 test('getUpdatedIndex returns -1 when maxIndex is negative (no options)', () => {
-  assert.equal(getUpdatedIndex(0, -1, LLSelectAction.Next), -1)
-  assert.equal(getUpdatedIndex(0, -1, LLSelectAction.GotoFirst), -1)
+  assert.equal(getUpdatedIndex(0, -1, LLSelectKeyboardAction.Next), -1)
+  assert.equal(getUpdatedIndex(0, -1, LLSelectKeyboardAction.GotoFirst), -1)
 })
 
 // --- getUpdatedTypeaheadBuffer -------------------------------------
