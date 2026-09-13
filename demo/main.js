@@ -1162,6 +1162,51 @@ await initTreeSelect().catch(() => {
     'subclass/tree-select.js is written by `npm run build:site` - serve public/ to see this example.'
 })
 
+//#region 15.1
+// A pinned footer: createPopupFooterContentElFn runs ONCE, in the constructor,
+// and the returned node is yours for the instance's life - the library never
+// rebuilds it. The live count is written from onChange.
+const footerCountEl = document.createElement('div')
+footerCountEl.textContent = '0 chosen'
+const selFooterCount = new LLSelectMultiple(
+  document.getElementById('mount-footer-count'),
+  {
+  ariaLabel: 'Pick countries (footer count)',
+    placeholder: 'Pick countries (footer count)',
+    createPopupFooterContentElFn: () => footerCountEl,
+    onChange: (chosen) => { footerCountEl.textContent = chosen.length + ' chosen' },
+  }
+)
+selFooterCount.setItems(COUNTRIES)
+//#endregion
+
+//#region 15.2
+// A pinned header moved ABOVE the filter input from a subclass constructor.
+// The library never rewrites the popup's child list, so the move sticks.
+// The header holds no focusable controls, so Shift+Tab from the filter input
+// still leaves the widget.
+class HeaderAboveFilterSelect extends LLSelectSingle {
+  constructor(el, settings) {
+    super(el, settings)
+    if (this.popupHeaderEl) { this.popupEl.prepend(this.popupHeaderEl) }
+  }
+}
+const selHeaderHint = new HeaderAboveFilterSelect(
+  document.getElementById('mount-header-hint'),
+  {
+  ariaLabel: 'Pick a country (header hint)',
+    placeholder: 'Pick a country (header hint)',
+    filterable: true,
+    createPopupHeaderContentElFn: () => {
+      const hint = document.createElement('small')
+      hint.textContent = 'Type to filter. Arrow keys move, Enter picks.'
+      return hint
+    },
+  }
+)
+selHeaderHint.setItems(COUNTRIES)
+//#endregion
+
 // Self-extraction: fetch this file's source, locate `//#region NAME` ...
 // `//#endregion` blocks, and write each into the matching <code>.
 {

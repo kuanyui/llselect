@@ -171,6 +171,21 @@
   color: var(--color-slate-400, #94a3b8);
 }
 
+/* --- popup header / footer slots -------------------------------- */
+/* Pinned above / below the list, outside the scroll area. The elements exist
+   only when their content settings return an element; the divider matches
+   the choose-all row. */
+
+.llselect-popup-header {
+  padding: 0.375rem 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.llselect-popup-footer {
+  padding: 0.375rem 0.75rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
 /* --- disabled (Phase 9) ---------------------------------------- */
 /* aria-disabled + data-disabled, never native `disabled`. Keep pointer
    events alive (no `pointer-events: none`) so hover/focus tooltips work. */

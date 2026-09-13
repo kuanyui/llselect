@@ -250,6 +250,44 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   createPopupListNoResultsContentElFn: ((query: string) => HTMLElement | null) | null
   /**
+   * Content for a pinned header above the option list, without subclassing.
+   * - The library calls it ONCE, inside the constructor, before `new` returns.
+   *   Handlers may close over the instance variable, but must not read it
+   *   during the call.
+   * - Return an `HTMLElement`: the library wraps it in the `popupHeaderEl`
+   *   container (class `popupHeaderClass`, no ARIA role) and keeps that node
+   *   until `destroy()`. `open()`, `rerender()` and `setUiTranslationPack()`
+   *   never rebuild it. Update it yourself, from `onChange` or `onOpen`.
+   * - `null` (setting default, or returned): no header element is built.
+   * - Where it sits: between the filter input and the listbox, outside the
+   *   scroll area, so it never scrolls with the items. To put it above the
+   *   filter input, move it from a subclass constructor:
+   *   `if (this.popupHeaderEl) { this.popupEl.prepend(this.popupHeaderEl) }`.
+   *   The library never rewrites the popup's child list. A header above the
+   *   filter input should hold no focusable controls, or Shift+Tab from the
+   *   input lands in it instead of leaving the widget.
+   * - Pointer: a click inside keeps DOM focus on the combobox host (the popup
+   *   `mousedown` rule), so a button works without stealing keyboard input. A
+   *   text field inside must call `stopPropagation` on its own `mousedown`.
+   * - Keep it compact: a long unwrapped line widens a `'fit-content'` popup,
+   *   and a tall slot squeezes the list, the only child that flexes.
+   * - Contract: `docs/llm/DESIGN.md` "Popup header / footer slots";
+   *   keyboard and focus rules: `docs/llm/A11Y.md`.
+   * @group Popup slots
+   */
+  createPopupHeaderContentElFn: (() => HTMLElement | null) | null
+  /**
+   * Content for a pinned footer below the option list, without subclassing.
+   * - Same contract as {@link createPopupHeaderContentElFn}: called once in
+   *   the constructor, wrapped in the `popupFooterEl` container (class
+   *   `popupFooterClass`, no ARIA role), never rebuilt by the library.
+   * - `null` (setting default, or returned): no footer element is built.
+   * - Where it sits: after the no-results message, at the bottom of the
+   *   popup, outside the scroll area.
+   * @group Popup slots
+   */
+  createPopupFooterContentElFn: (() => HTMLElement | null) | null
+  /**
    * How the popup decides its width. Does NOT affect the trigger - trigger
    * width is always whatever your CSS says.
    *
@@ -463,6 +501,17 @@ export interface LLSelectClassIdMap {
    */
   popupListNoResultsClass: string
   /**
+   * Class on `popupHeaderEl`, the pinned header container between the filter
+   * input and the listbox. The element exists only when header content was
+   * built (`createPopupHeaderContentElFn`, or a `createPopupHeaderEl` override).
+   */
+  popupHeaderClass: string
+  /**
+   * Class on `popupFooterEl`, the pinned footer container at the bottom of
+   * the popup. Exists only when footer content was built.
+   */
+  popupFooterClass: string
+  /**
    * Class on the choose-all leading row (`LLSelectMultiple`, `chooseAllRow`
    * setting). Also carries `itemClass` plus `data-chosen-state="none|some|all"`
    * for the tri-state visual.
@@ -589,6 +638,8 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     popupClass: `${prefix}-popup`,
     popupListClass: `${prefix}-popup-list`,
     popupListNoResultsClass: `${prefix}-popup-list-no-results`,
+    popupHeaderClass: `${prefix}-popup-header`,
+    popupFooterClass: `${prefix}-popup-footer`,
     chooseAllRowClass: `${prefix}-choose-all-row`,
     itemClass: `${prefix}-item`,
     itemFocusedClass: `${prefix}-item-focused`,
@@ -690,6 +741,21 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group DOM elements
    */
   public readonly popupListEl: HTMLElement
+  /**
+   * The pinned header container between the filter input and the listbox,
+   * or `null` when no header content was built. No ARIA role; outside the
+   * scroll area. Built once in the constructor (`createPopupHeaderEl`) and
+   * kept until `destroy()`; the library never rebuilds or moves it.
+   * @group DOM elements
+   */
+  public readonly popupHeaderEl: HTMLElement | null
+  /**
+   * The pinned footer container at the bottom of the popup, after the
+   * no-results message, or `null` when no footer content was built. Same
+   * lifecycle as {@link popupHeaderEl}.
+   * @group DOM elements
+   */
+  public readonly popupFooterEl: HTMLElement | null
   /**
    * Resolved class names and ids for this instance.
    * @group DOM elements
@@ -860,6 +926,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       uiTranslationPack,
       filterFn: settings?.filterFn ?? null,
       createPopupListNoResultsContentElFn: settings?.createPopupListNoResultsContentElFn ?? null,
+      createPopupHeaderContentElFn: settings?.createPopupHeaderContentElFn ?? null,
+      createPopupFooterContentElFn: settings?.createPopupFooterContentElFn ?? null,
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'fit-content',
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
@@ -929,6 +997,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // sit above the listbox: listbox children must be options only.
     this.popupListNoResultsEl = this.createPopupListNoResultsEl()
     this.popupEl.append(this.filterInputEl, this.popupListEl, this.popupListNoResultsEl)
+    // Pinned slots: built once, only when their content method returns an
+    // element, and never rebuilt (DESIGN.md "Popup header / footer slots").
+    // Order: [filter input, header, list, no-results, footer].
+    this.popupHeaderEl = this.createPopupHeaderEl()
+    if (this.popupHeaderEl !== null) { this.popupListEl.before(this.popupHeaderEl) }
+    this.popupFooterEl = this.createPopupFooterEl()
+    if (this.popupFooterEl !== null) { this.popupEl.append(this.popupFooterEl) }
     this.popupEl.hidden = true
     this.syncFilterModeToDom()
     // Force border-box on the popup elements so the positioner's max-height
@@ -962,8 +1037,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.triggerEl.addEventListener('click', () => this.toggle())
     this.triggerEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
     // Hold DOM focus on the combobox host: a mousedown anywhere in the popup - an
-    // option, the no-results message, popup padding, or the list element itself
-    // (tabindex="-1", so click-focusable) - would move focus off the host and
+    // option, the no-results message, a header / footer slot, popup padding, or
+    // the list element itself (tabindex="-1", so click-focusable) - would move focus off the host and
     // silently kill keyboard input (e.g. multi + filterable: mouse-toggle an item,
     // then typing goes nowhere; or a padding/no-results mousedown blurs the host and
     // focusout closes the popup). preventDefault keeps focus put; `click` still fires
@@ -2739,6 +2814,76 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     return this.settings.createPopupListNoResultsContentElFn
       ? this.settings.createPopupListNoResultsContentElFn(query)
       : null
+  }
+
+  /**
+   * Build the pinned header container between the filter input and the listbox.
+   * - The library calls it once, inside the constructor. You never call it.
+   * - It takes no params. The default asks {@link createPopupHeaderContentEl}
+   *   for content; `null` content = no container, and `popupHeaderEl` stays `null`.
+   * - To supply content without subclassing, pass `createPopupHeaderContentElFn`.
+   * - To change the container itself, override it: call
+   *   `super.createPopupHeaderEl()` and edit the returned element, or return
+   *   your own `div`. Returning non-null builds the slot even without the
+   *   setting. Keep it role-free: it is not part of the listbox.
+   * - Internals: the base builds a `div` with `classIdMap.popupHeaderClass`
+   *   and inline `flex: none` (the popup is a flex column and only the listbox
+   *   may flex), then appends the content.
+   * @group Subclassing: rendering
+   */
+  protected createPopupHeaderEl(): HTMLElement | null {
+    return this.createPopupSlotEl(this.classIdMap.popupHeaderClass, this.createPopupHeaderContentEl())
+  }
+
+  /**
+   * The pinned header's content element.
+   * - The library calls it once, from {@link createPopupHeaderEl}, inside the
+   *   constructor. You never call it.
+   * - Default reads `createPopupHeaderContentElFn`; `null` (setting unset, or
+   *   returned) = no header at all.
+   * - Override only when extending; for one-off content pass the setting.
+   * @group Subclassing: rendering
+   */
+  protected createPopupHeaderContentEl(): HTMLElement | null {
+    return this.settings.createPopupHeaderContentElFn ? this.settings.createPopupHeaderContentElFn() : null
+  }
+
+  /**
+   * Build the pinned footer container at the bottom of the popup.
+   * - Same contract as {@link createPopupHeaderEl}: called once in the
+   *   constructor; `null` content from {@link createPopupFooterContentEl} = no
+   *   container, and `popupFooterEl` stays `null`; override to change the
+   *   container, return non-null to build it without the setting.
+   * - Internals: a `div` with `classIdMap.popupFooterClass` and inline
+   *   `flex: none`, then the content.
+   * @group Subclassing: rendering
+   */
+  protected createPopupFooterEl(): HTMLElement | null {
+    return this.createPopupSlotEl(this.classIdMap.popupFooterClass, this.createPopupFooterContentEl())
+  }
+
+  /**
+   * The pinned footer's content element.
+   * - The library calls it once, from {@link createPopupFooterEl}, inside the
+   *   constructor. You never call it.
+   * - Default reads `createPopupFooterContentElFn`; `null` (setting unset, or
+   *   returned) = no footer at all.
+   * - Override only when extending; for one-off content pass the setting.
+   * @group Subclassing: rendering
+   */
+  protected createPopupFooterContentEl(): HTMLElement | null {
+    return this.settings.createPopupFooterContentElFn ? this.settings.createPopupFooterContentElFn() : null
+  }
+
+  /** Shared body of the two slot builders: `null` content = no container. */
+  private createPopupSlotEl(className: string, content: HTMLElement | null): HTMLElement | null {
+    if (content === null) { return null }
+    const el = document.createElement('div')
+    el.className = className
+    // The popup is a flex column; only the listbox may grow or shrink.
+    el.style.flex = 'none'
+    el.appendChild(content)
+    return el
   }
 
   /**

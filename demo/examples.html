@@ -928,6 +928,37 @@
       </div>
     </article>
   </section>
+
+  <section>
+    <h2>15. Popup header / footer (pinned slots)</h2>
+    <p class="hint">
+      Content that stays put while the list scrolls. Built once, in the
+      constructor; the returned node is yours to update. No ARIA role, and
+      never part of the listbox.
+    </p>
+
+    <article>
+      <h3>15.1 Footer shows the chosen count</h3>
+      <p class="hint"><code>createPopupFooterContentElFn</code> runs once; <code>onChange</code> writes the live count into the node it returned.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-footer-count"></div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="15.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>15.2 Header hint moved above the filter input</h3>
+      <p class="hint">The default place is between the filter input and the list. A subclass constructor moves it above the input with one <code>prepend</code>; the library never rewrites the popup's child list.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-header-hint"></div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="15.2"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
   </main>
   </div>
 

@@ -265,6 +265,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `chooseAllRow`, `hideChosenRows`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
 | Popup width                          | `popupWidthPolicy: 'fit-content' \| 'match-trigger'` (default `'fit-content'` - grows to content like a native select)   |
 | Rich rendering without subclassing   | `createItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
+| Popup header / footer (pinned)       | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update (see Popup header / footer) |
 | i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir` |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
 | Events                               | `onChange(current, previous)`, `onOpen`, `onClose`                                                                       |
@@ -363,6 +364,23 @@ sel = new LLSelectSingle(el, {
 - Matching mirrors the built-in filter: case-insensitive substring. If you set a custom `filterFn`, mark your own matches instead.
 - Screen readers are unaffected: the option's accessible name comes from `itemToString`, not from the rendered content.
 - A third argument replaces the default `<mark>`: `(matchedText) => HTMLElement`, inserted as-is.
+
+#### Popup header / footer
+
+A header sits between the filter input and the list. A footer sits under the list. Neither scrolls with the items.
+
+```js
+const countEl = document.createElement('div')
+const sel = new LLSelectMultiple(el, {
+  createPopupFooterContentElFn: () => countEl, // called once; the node is yours
+  onChange: (chosen) => { countEl.textContent = `${chosen.length} chosen` },
+})
+```
+
+- The library never rebuilds the node. Update it from `onChange` or `onOpen`.
+- A button in a slot works with the mouse and keeps keyboard input on the combobox. Give it `type="button"` and an accessible name.
+- A text field in a slot must stop its own `mousedown` from bubbling, or it cannot take focus.
+- To put the header above the filter input, move it from a subclass constructor: `if (this.popupHeaderEl) { this.popupEl.prepend(this.popupHeaderEl) }`.
 
 ### Subclassing (extending the library)
 
