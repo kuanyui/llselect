@@ -206,6 +206,13 @@
       vm.interfaces = INTERFACES
       vm.iface = undefined // 11, ll-filter-fn
       vm.iface2 = undefined // 8e, filter chain
+      vm.langsFooter = [] // 12, ll-popup-footer-content-fn
+
+      /** 12: a pinned popup footer. The fn runs once at link time; ng-change keeps the count current. */
+      var footerCountEl = document.createElement('div')
+      footerCountEl.textContent = '0 chosen'
+      vm.footerCountEl = function () { return footerCountEl }
+      vm.updateFooterCount = function () { footerCountEl.textContent = vm.langsFooter.length + ' chosen' }
 
       /** 11 / 8e: the derived item text - "VLAN 2", "ETH 0", ... */
       vm.ifaceText = function (i) {

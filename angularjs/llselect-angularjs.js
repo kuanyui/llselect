@@ -204,6 +204,14 @@
     if (filterFn) { settings.filterFn = filterFn }
     var triggerContentFn = evalFnAttr(scope, attrs, 'llTriggerContentFn')
     if (triggerContentFn) { settings.createTriggerContentElFn = triggerContentFn }
+    // Popup header / footer slots. The core calls each fn exactly ONCE, in its
+    // constructor - so right here at link time, inside the link digest, unlike
+    // the row / trigger content fns it calls per render outside any digest -
+    // and keeps the returned node for the instance's life.
+    var popupHeaderContentFn = evalFnAttr(scope, attrs, 'llPopupHeaderContentFn')
+    if (popupHeaderContentFn) { settings.createPopupHeaderContentElFn = popupHeaderContentFn }
+    var popupFooterContentFn = evalFnAttr(scope, attrs, 'llPopupFooterContentFn')
+    if (popupFooterContentFn) { settings.createPopupFooterContentElFn = popupFooterContentFn }
     wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler)
     wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler)
 

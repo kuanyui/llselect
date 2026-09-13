@@ -586,7 +586,23 @@
   </section>
 
   <section>
-    <h2>12. Full source</h2>
+    <h2>12. Popup footer: ll-popup-footer-content-fn</h2>
+    <p>
+      A pinned footer under the option list. The fn runs once at link time and
+      the returned node is yours; <code>ng-change</code> writes the live count
+      into it.
+    </p>
+    <div class="demo-row" data-src="12">
+      <llselect-multiple ll-aria-label="Languages (footer count)" ng-model="vm.langsFooter" ll-popup-footer-content-fn="vm.footerCountEl"
+        ng-change="vm.updateFooterCount()" ll-options="l.name for l in vm.languages track by l.name">
+      </llselect-multiple>
+    </div>
+    <div class="out">ng-model = {{ vm.langsFooter | json }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="12"><code></code></pre></details>
+  </section>
+
+  <section>
+    <h2>13. Full source</h2>
     <p>
       The whole of what this page loads. Nothing is generated and nothing is
       minified: this is the file you copy.

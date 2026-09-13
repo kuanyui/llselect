@@ -200,6 +200,32 @@ $scope.renderRow = function (fruit) {
 - `<llselect-multiple>`: receives `{ chosenItems, items }`; `null` = the count summary / tags. A returned element overrides both display modes.
 - The trigger does not mirror rich rows by itself - feeding this the same renderer as `ll-item-content-fn` is what does that (demo 7).
 
+### `ll-popup-header-content-fn`
+
+**Expression** -> `createPopupHeaderContentElFn`. Content for a pinned header between the filter input and the option list; it never scrolls with the items.
+
+- Evaluated once at link time to a function `() => HTMLElement | null`. That function runs ONCE, right then, inside the link digest; the returned node lives until the element is destroyed.
+- llselect never rebuilds the node. Update it yourself, for example from `ng-change`.
+- `null` (returned, or no attribute) = no header element at all.
+- Not `$compile`d: build plain DOM. A button inside works with the mouse and keeps keyboard input on the combobox; a text field inside must stop its own `mousedown` from bubbling.
+- Keyboard and focus rules for controls inside: core `docs/llm/A11Y.md`, "Slot controls". The contract: core `docs/llm/DESIGN.md`, "Popup header / footer slots".
+
+### `ll-popup-footer-content-fn`
+
+**Expression** -> `createPopupFooterContentElFn`. Content for a pinned footer under the option list, after the no-results message. Same rules as [`ll-popup-header-content-fn`](#ll-popup-header-content-fn).
+
+```js
+var footerEl = document.createElement('div')
+footerEl.textContent = '0 chosen'
+vm.footerCountEl = function () { return footerEl }
+vm.updateFooterCount = function () { footerEl.textContent = vm.langs.length + ' chosen' }
+```
+
+```html
+<llselect-multiple ng-model="vm.langs" ll-popup-footer-content-fn="vm.footerCountEl"
+  ng-change="vm.updateFooterCount()" ll-options="l.name for l in vm.languages"></llselect-multiple>
+```
+
 ### `ll-aria-label`
 
 **Literal** -> `ariaLabel`. The accessible name. The field's name resolves by the FIRST set rung, mirroring the W3C accessible-name computation order:

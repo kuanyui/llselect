@@ -763,3 +763,54 @@ test('QUALITY-92: NaN also resolves through `select as` and `track by` (wrapper 
   })
   assert.equal(trackBy.$('.llselect-trigger-content').textContent, 'NaN')
 })
+
+test('ll-popup-header-content-fn / ll-popup-footer-content-fn: pinned slots, each fn runs once at link, the node is kept', () => {
+  let headerCalls = 0
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm"><llselect-multiple ng-model="vm.t" ll-options="f for f in vm.fruits"
+      ll-popup-header-content-fn="vm.header" ll-popup-footer-content-fn="vm.footer" ng-change="vm.count()"></llselect-multiple></div>`,
+    controller: function ($document) {
+      const doc = $document[0]
+      const vm = this
+      vm.fruits = FRUITS.slice()
+      vm.t = []
+      const footer = doc.createElement('div')
+      footer.className = 'my-footer'
+      footer.textContent = '0 chosen'
+      vm.header = function () {
+        headerCalls += 1
+        const h = doc.createElement('small')
+        h.className = 'my-header'
+        h.textContent = 'hint'
+        return h
+      }
+      vm.footer = function () { return footer }
+      vm.count = function () { footer.textContent = vm.t.length + ' chosen' }
+    },
+  })
+  assert.deepEqual(a.errors, [])
+  assert.equal(headerCalls, 1)
+  const classes = [...a.$('.llselect-popup').children].map((c) => c.className)
+  assert.deepEqual(classes, ['llselect-filter-input', 'llselect-popup-header', 'llselect-popup-list', 'llselect-popup-list-no-results', 'llselect-popup-footer'])
+  assert.ok(a.$('.llselect-popup-header > .my-header'))
+  const footer = a.$('.llselect-popup-footer > .my-footer')
+  assert.ok(footer)
+  a.$('.llselect-trigger').click()
+  a.$$('.llselect-item')[0].click()
+  assert.equal(a.text('.my-footer'), '1 chosen') // ng-change ran inside the model digest
+  a.$$('.llselect-item')[1].click()
+  assert.equal(a.text('.my-footer'), '2 chosen')
+  assert.equal(headerCalls, 1)
+  assert.equal(a.$('.llselect-popup-footer > .my-footer'), footer) // never rebuilt
+})
+
+test('ll-popup-footer-content-fn must evaluate to a function', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm"><llselect-single ng-model="vm.f" ll-options="f for f in vm.fruits" ll-popup-footer-content-fn="vm.notAFn"></llselect-single></div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.notAFn = 'oops' },
+  })
+  assert.equal(a.errors.length, 1)
+  assert.match(String(a.errors[0]), /ll-popup-footer-content-fn must evaluate to a function/)
+})
