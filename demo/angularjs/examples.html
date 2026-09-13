@@ -602,7 +602,24 @@
   </section>
 
   <section>
-    <h2>13. Full source</h2>
+    <h2>13. Action rows: ll-popup-list-action-rows-after-items</h2>
+    <p>
+      Commands rendered as option rows after the items, reachable with the
+      arrow keys. <code>onActivate</code> runs in a digest, so writing the
+      <code>ng-model</code> value is enough; the row text and its disabled
+      state follow every change.
+    </p>
+    <div class="demo-row" data-src="13">
+      <llselect-multiple ll-aria-label="Languages (action rows)" ng-model="vm.langsRows" ll-popup-list-action-rows-after-items="vm.langRows"
+        ll-options="l.name for l in vm.languages track by l.name">
+      </llselect-multiple>
+    </div>
+    <div class="out">ng-model = {{ vm.langsRows | json }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="13"><code></code></pre></details>
+  </section>
+
+  <section>
+    <h2>14. Full source</h2>
     <p>
       The whole of what this page loads. Nothing is generated and nothing is
       minified: this is the file you copy.

@@ -814,3 +814,61 @@ test('ll-popup-footer-content-fn must evaluate to a function', () => {
   assert.equal(a.errors.length, 1)
   assert.match(String(a.errors[0]), /ll-popup-footer-content-fn must evaluate to a function/)
 })
+
+test('ll-popup-list-action-rows-after-items: rows render, onActivate runs in a digest, the app objects stay untouched', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm"><span id="n">{{ vm.n }}</span><llselect-multiple ng-model="vm.t" ll-options="f for f in vm.fruits"
+      ll-popup-list-action-rows-after-items="vm.rows"></llselect-multiple></div>`,
+    controller: function () {
+      const vm = this
+      vm.fruits = FRUITS.slice()
+      vm.t = ['Apple']
+      vm.n = 0
+      vm.rows = [{
+        textFn: function () { return 'Clear all (' + vm.t.length + ')' },
+        disabledFn: function () { return vm.t.length === 0 },
+        onActivate: function () { vm.n += 1; vm.t = [] }, // a plain scope write: the wrap must digest it
+      }]
+    },
+  })
+  assert.deepEqual(a.errors, [])
+  const original = a.scope.vm.rows[0]
+  a.$('.llselect-trigger').click()
+  const rowEl = a.$('.llselect-popup-list-action-row')
+  assert.ok(rowEl, 'action row missing')
+  assert.equal(rowEl.getAttribute('role'), 'option')
+  assert.equal(rowEl.textContent, 'Clear all (1)')
+  assert.equal(rowEl.getAttribute('aria-disabled'), null)
+  rowEl.click()
+  assert.equal(a.text('#n'), '1') // the view updated: onActivate ran inside a digest
+  assert.deepEqual(a.scope.vm.t, [])
+  const after = a.$('.llselect-popup-list-action-row')
+  assert.equal(after.textContent, 'Clear all (0)') // the model write reached the widget and the row refreshed
+  assert.equal(after.getAttribute('aria-disabled'), 'true')
+  assert.equal(a.scope.vm.rows[0], original) // the app's object was cloned, not wrapped in place
+  assert.equal(typeof original.onActivate, 'function')
+})
+
+test('ll-popup-list-action-rows-before-items: an error inside onActivate goes to $exceptionHandler; a non-array attribute is rejected', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm"><llselect-single ng-model="vm.f" ll-options="f for f in vm.fruits"
+      ll-popup-list-action-rows-before-items="vm.rows"></llselect-single></div>`,
+    controller: function () {
+      this.fruits = FRUITS.slice()
+      this.rows = [{ textFn: function () { return 'boom' }, onActivate: function () { throw new Error('row boom') } }]
+    },
+  })
+  a.$('.llselect-trigger').click()
+  a.$('.llselect-popup-list-action-row').click()
+  assert.equal(a.errors.length, 1)
+  assert.match(String(a.errors[0]), /row boom/)
+  const b = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm"><llselect-single ng-model="vm.f" ll-options="f for f in vm.fruits" ll-popup-list-action-rows-before-items="vm.rows"></llselect-single></div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.rows = 'oops' },
+  })
+  assert.equal(b.errors.length, 1)
+  assert.match(String(b.errors[0]), /ll-popup-list-action-rows-before-items must evaluate to an array/)
+})

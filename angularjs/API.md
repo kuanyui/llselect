@@ -226,6 +226,33 @@ vm.updateFooterCount = function () { footerEl.textContent = vm.langs.length + ' 
   ng-change="vm.updateFooterCount()" ll-options="l.name for l in vm.languages"></llselect-multiple>
 ```
 
+### `ll-popup-list-action-rows-before-items`
+
+**Expression** -> `popupListActionRowsBeforeItems`. Commands rendered as option rows at the top of the list, inside the arrow-key ring, before the items.
+
+- Evaluated once at link time to an array of `{ textFn, createContentElFn?, disabledFn?, onActivate }` objects, the core `LLSelectPopupListActionRow` shape. The array and its objects are copied; later edits to yours do nothing.
+- `onActivate` runs inside a digest, wrapped like [`ll-on-open`](#ll-on-open): write scope state in it (an `ng-model` value, `vm` fields) and the view follows; errors go to `$exceptionHandler`. It runs on Enter, on Space while the filter is off, and on click. llselect neither chooses nor closes for it.
+- `textFn` / `disabledFn` / `createContentElFn` run outside any digest, per render, like [`ll-item-content-fn`](#ll-item-content-fn); they run again after every chosen change, so they may read live state.
+- Keyboard and screen-reader rules: core `docs/llm/A11Y.md`, "Action rows". A row is announced as an option with its text; it has no selected state.
+
+### `ll-popup-list-action-rows-after-items`
+
+**Expression** -> `popupListActionRowsAfterItems`. Same as [`ll-popup-list-action-rows-before-items`](#ll-popup-list-action-rows-before-items), at the bottom of the list, after the last item.
+
+```js
+vm.langs = []
+vm.langRows = [{
+  textFn: function () { return 'Clear all (' + vm.langs.length + ')' },
+  disabledFn: function () { return vm.langs.length === 0 },
+  onActivate: function () { vm.langs = [] }, // a scope write: the wrap runs it in a digest
+}]
+```
+
+```html
+<llselect-multiple ng-model="vm.langs" ll-popup-list-action-rows-after-items="vm.langRows"
+  ll-options="l.name for l in vm.languages"></llselect-multiple>
+```
+
 ### `ll-aria-label`
 
 **Literal** -> `ariaLabel`. The accessible name. The field's name resolves by the FIRST set rung, mirroring the W3C accessible-name computation order:

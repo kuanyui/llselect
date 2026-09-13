@@ -212,6 +212,10 @@
     if (popupHeaderContentFn) { settings.createPopupHeaderContentElFn = popupHeaderContentFn }
     var popupFooterContentFn = evalFnAttr(scope, attrs, 'llPopupFooterContentFn')
     if (popupFooterContentFn) { settings.createPopupFooterContentElFn = popupFooterContentFn }
+    var actionRowsBefore = evalActionRowsAttr(scope, attrs, 'llPopupListActionRowsBeforeItems', exceptionHandler)
+    if (actionRowsBefore) { settings.popupListActionRowsBeforeItems = actionRowsBefore }
+    var actionRowsAfter = evalActionRowsAttr(scope, attrs, 'llPopupListActionRowsAfterItems', exceptionHandler)
+    if (actionRowsAfter) { settings.popupListActionRowsAfterItems = actionRowsAfter }
     wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler)
     wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler)
 
@@ -239,6 +243,40 @@
       if (!scope.$root.$$phase) { scope.$apply(expr); return }
       try { scope.$eval(expr) } catch (e) { exceptionHandler(e) }
     }
+  }
+
+  /**
+   * ll-popup-list-action-rows-before-items / -after-items: read once at link
+   * time to an array of the core's LLSelectPopupListActionRow descriptors.
+   * Each is cloned - the app's array and objects stay untouched, so one array
+   * can serve several widgets - and its onActivate is wrapped like an event
+   * expression: the core runs it from its own pointer / keyboard handlers,
+   * outside any digest, so scope writes inside it (an ng-model value, vm
+   * state) need $apply; errors go to $exceptionHandler. textFn / disabledFn /
+   * createContentElFn run outside any digest, per render, like
+   * ll-item-content-fn.
+   * @returns {Array | null}
+   */
+  function evalActionRowsAttr(scope, attrs, name, exceptionHandler) {
+    if (!attrs[name]) { return null }
+    var rows = scope.$eval(attrs[name])
+    if (!Array.isArray(rows)) {
+      throw new Error('llselect-angularjs: ' + attrs.$attr[name] + ' must evaluate to an array')
+    }
+    return rows.map(function (row, i) {
+      if (!row || typeof row.textFn !== 'function' || typeof row.onActivate !== 'function') {
+        throw new Error('llselect-angularjs: ' + attrs.$attr[name] + '[' + i + '] needs textFn and onActivate functions')
+      }
+      return {
+        textFn: row.textFn,
+        createContentElFn: typeof row.createContentElFn === 'function' ? row.createContentElFn : null,
+        disabledFn: typeof row.disabledFn === 'function' ? row.disabledFn : null,
+        onActivate: function () {
+          if (!scope.$root.$$phase) { scope.$apply(function () { row.onActivate() }); return }
+          try { row.onActivate() } catch (e) { exceptionHandler(e) }
+        },
+      }
+    })
   }
 
   /**

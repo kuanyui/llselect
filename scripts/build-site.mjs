@@ -738,6 +738,7 @@ const NG_KINDS = new Map(Object.entries({
   'll-clearable': 'attribute', 'll-popup-width-policy': 'attribute', 'll-arrow': 'attribute', 'll-highlight': 'attribute',
   'll-item-content-fn': 'attribute', 'll-trigger-content-fn': 'attribute',
   'll-popup-header-content-fn': 'attribute', 'll-popup-footer-content-fn': 'attribute',
+  'll-popup-list-action-rows-before-items': 'attribute', 'll-popup-list-action-rows-after-items': 'attribute',
   'll-tag-content-fn': 'attribute', 'll-tag-remove-button-content-fn': 'attribute',
   'll-aria-label': 'attribute', 'll-aria-labelledby': 'attribute', 'll-label-el': 'attribute',
   'll-trigger-display': 'attribute',
