@@ -719,8 +719,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /** Whether the popup is currently open; public reader {@link isOpened}. */
   private opened = false
   /**
-   * Index (into `items`) of the currently keyboard-focused item, or `-1`
-   * when nothing is focused (closed popup, or no items).
+   * Position in `getVisibleItems()` (the rendered list, not `items`) of the
+   * currently keyboard-focused item, or `-1` when nothing is focused (closed
+   * popup, or no items).
    * @group State (protected)
    */
   protected focusedIndex = -1
@@ -1694,17 +1695,27 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Build a detached group container: `role="group"` named by `groupKeyToString`,
-   * an `aria-hidden` visible label element, then the group's item elements. The
-   * label content comes from `createGroupLabelContentEl` (rich header) when
-   * non-null, else the plain label text. `aria-disabled` + `data-disabled` when
-   * the group is disabled. Override for full control of the group element
-   * (mirrors `createItemEl`).
+   * Build the whole DOM element for one group container.
+   * - The library calls it, once per group of the current render, on every
+   *   list render. You never call it yourself.
+   * - All four params come from the library. Forward them to `super` unchanged.
+   * - `index` is the group's position among this render's groups, counted
+   *   from 0. It only mints the group id. It is not an identity: it changes
+   *   whenever the visible list changes.
+   * - To change only the label's content, do not override this. Pass the
+   *   `createGroupLabelContentElFn` setting instead.
+   * - To change the element itself, override it, call `super.createGroupEl(...)`,
+   *   and edit the returned element. Keep the `role` and `aria-label` the base set.
+   * - Internals: the base sets the id, `role="group"` named by `groupKeyToString`
+   *   (`aria-label`), an `aria-hidden` visible label element filled from
+   *   {@link createGroupLabelContentEl} (else the plain label text), then the
+   *   group's item elements; `aria-disabled` + `data-disabled` when the group
+   *   is disabled.
    *
-   * @param key - the group's key
-   * @param index - group index in the current render; builds a stable id
-   * @param items - the group's items (for rich content / counts)
-   * @param itemEls - the group's already-built option elements
+   * @param key - the group's key, supplied by the library
+   * @param index - the group's position among this render's groups, supplied by the library
+   * @param items - the group's items, supplied by the library (for counts / rich content)
+   * @param itemEls - the group's already-built option elements, supplied by the library
    * @group Subclassing: rendering
    */
   protected createGroupEl(key: GroupKey, index: number, items: readonly T[], itemEls: HTMLElement[]): HTMLElement {
@@ -1775,18 +1786,33 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Build the DOM element for one item. The base implementation sets `id`,
-   * `role="option"`, a click handler, and fills the visible content via
-   * {@link createItemContentEl} (which reads `createItemContentElFn`), falling
-   * back to `textContent` from {@link itemToString}. When the content is
-   * custom (non-null), the option's `aria-label` is set from `itemToString`
-   * so the accessible name stays the plain `itemToString` text. For one-off rich content
-   * (icons etc.) prefer the `createItemContentElFn` setting; override this only
-   * to control the whole element (tag, extra wiring).
+   * Build the whole DOM element for one option row.
+   * - The library calls it, once per row of `getVisibleItems()`, on every
+   *   list render. You never call it yourself.
+   * - Both params come from the library. Forward them to `super` unchanged.
+   * - `item` is the row's item.
+   * - `index` is the row's position in `getVisibleItems()`, counted from 0.
+   *   That is the list as rendered: grouped, filtered, minus hidden chosen
+   *   rows. It is NOT the position in `items`.
+   * - `index` is not an identity. It changes whenever the visible list
+   *   changes. Item identity is `compareFn`. Never store it.
+   * - To change only what a row shows, do not override this. Pass the
+   *   `createItemContentElFn` setting instead.
+   * - To change the element itself, override it, call
+   *   `super.createItemEl(item, index)`, and edit the returned element: add a
+   *   class, a `title`, a wrapper. Demo sections 9.1, 14.1 and 14.2 do this.
+   * - Keep the `id` and `role` the base set. Do not put focusable controls
+   *   inside the row. The row itself is the control.
+   * - The element is rebuilt on every render. Do not keep a reference to it.
+   * - Internals: the base sets `id` (`<listbox id>-item<index>`, the target of
+   *   `aria-activedescendant`), `role="option"`, the visible content from
+   *   {@link createItemContentEl} (else `textContent` from {@link itemToString}),
+   *   `aria-label` = `itemToString` when the content is custom, `aria-disabled`
+   *   plus the disabled class when {@link isItemEffectivelyDisabled}, and a
+   *   click handler that focuses the row by `index`, then runs `onItemActivated`.
    *
-   * @param item - the item value
-   * @param index - index in `this.items`; used to build a stable id so
-   *   `aria-activedescendant` can point to this element across re-renders.
+   * @param item - the row's item, supplied by the library
+   * @param index - the row's position in `getVisibleItems()`, supplied by the library
    * @group Subclassing: rendering
    */
   protected createItemEl(item: T, index: number): HTMLElement {

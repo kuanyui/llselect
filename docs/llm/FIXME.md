@@ -2,6 +2,15 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (popup header / footer slots and action rows)
+
+Process: design research plus committee rounds recorded in `popup-slots-research.md` (nothing implemented yet); the code-facing findings the rounds surfaced are logged here.
+
+- [ ] **[DOCUMENTATION-109] - row-index docstrings named `items` instead of the rendered list, and called the ids "stable"**
+  - Symptom: `createItemEl`'s `@param index` said "index in `this.items`" and the `focusedIndex` field said "Index (into `items`)"; both values are positions in `getVisibleItems()` - the list as rendered (gathered by group, filtered, minus hidden chosen rows) - which differs from `items` whenever any of those steps applies (`src/base.ts:1788`, `src/base.ts:721`). `createGroupEl`'s param line said the index "builds a stable id" (`src/base.ts:1705`): nothing reads a group id, and whether id-text stability across an in-place row swap matters to assistive technology is unverified (committee round 3c), so "stable" claimed a benefit nobody has measured.
+  - Cause: the docstrings predate gathering, filtering and `hideChosenRows`; `renderPopupList` always mapped the visible list.
+  - Fix: all three lines now name `getVisibleItems()` and say what the index is used for (minting the row id `aria-activedescendant` points at); "stable" is gone. The owner then ruled the `createItemEl` docstring itself unfit: a dense internals paragraph that never said who calls the method, who supplies `index`, or how to override it. Both `createItemEl` and `createGroupEl` are restructured to the house shape - lead sentence, then one fact per bullet: who calls it, params supplied by the library and forwarded to `super`, what `index` means and is NOT, the super-then-edit override shape, internals last - and CLAUDE.md's docstring rule now requires that order for every overridable method. Post-fix panel review batched with the action-row implementation, which touches the same docstrings.
+
 ## review (prefix typeahead)
 
 Process: implementation of the maintainer-ratified typeahead rulings (`DESIGN.md` "Prefix typeahead"), then seven post-fix panel rounds (commit subjects count FIX BATCHES, one behind the round that reviewed them) - the other four members (Opus 5, Opus 4.8, Codex Sol at max, Codex 5.5 at xhigh) reading the repo read-only through the CLI channels in `CLAUDE.md`, commit diff inline in the brief. Round 1: three of four independently found HIGH-95. Round 2 verified the round-1 fixes and surfaced the second half of MEDIUM-96 plus QUALITY-98. Rounds 3-7: light rounds on the nit batches (DOCUMENTATION-100 onward); the Final_Sigma fold took three changes across rounds 3-5 to become symmetric; round 6 caught the release-data row the 0.0.8 bump had missed (DOCUMENTATION-108).
