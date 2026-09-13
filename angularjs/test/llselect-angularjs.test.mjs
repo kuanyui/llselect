@@ -872,3 +872,53 @@ test('ll-popup-list-action-rows-before-items: an error inside onActivate goes to
   assert.equal(b.errors.length, 1)
   assert.match(String(b.errors[0]), /ll-popup-list-action-rows-before-items must evaluate to an array/)
 })
+
+test('action rows: activation from inside a digest runs the $eval branch; errors still reach $exceptionHandler', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm"><span id="n">{{ vm.n }}</span><llselect-multiple ng-model="vm.t" ll-options="f for f in vm.fruits"
+      ll-popup-list-action-rows-before-items="vm.rows"></llselect-multiple></div>`,
+    controller: function () {
+      const vm = this
+      vm.fruits = FRUITS.slice()
+      vm.t = []
+      vm.n = 0
+      vm.rows = [
+        { textFn: function () { return 'count' }, onActivate: function () { vm.n += 1 } },
+        { textFn: function () { return 'boom' }, onActivate: function () { throw new Error('in-digest boom') } },
+      ]
+    },
+  })
+  a.$('.llselect-trigger').click()
+  const rows = a.$$('.llselect-popup-list-action-row')
+  a.scope.$apply(() => { rows[0].click() }) // like a controller method activating a row programmatically
+  assert.equal(a.text('#n'), '1')
+  a.scope.$apply(() => { rows[1].click() })
+  assert.equal(a.errors.length, 1)
+  assert.match(String(a.errors[0]), /in-digest boom/)
+})
+
+test('action rows: the caller array and its objects are copied at link; later edits do nothing', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm"><llselect-multiple ng-model="vm.t" ll-options="f for f in vm.fruits"
+      ll-popup-list-action-rows-after-items="vm.rows"></llselect-multiple></div>`,
+    controller: function () {
+      const vm = this
+      vm.fruits = FRUITS.slice()
+      vm.t = []
+      vm.hits = 0
+      vm.rows = [{ textFn: function () { return 'first' }, onActivate: function () { vm.hits += 1 } }]
+    },
+  })
+  const vm = a.scope.vm
+  vm.rows.push({ textFn: function () { return 'late' }, onActivate: function () {} }) // ignored
+  vm.rows[0].textFn = function () { return 'renamed' } // ignored
+  vm.rows[0].onActivate = function () { vm.hits += 100 } // ignored: the wrapper snapshotted the original
+  a.$('.llselect-trigger').click()
+  const rows = a.$$('.llselect-popup-list-action-row')
+  assert.equal(rows.length, 1)
+  assert.equal(rows[0].textContent, 'first')
+  rows[0].click()
+  assert.equal(vm.hits, 1)
+})

@@ -355,3 +355,53 @@ test('close() drops the rows and the active option; reopening rebuilds them', ()
   assert.deepEqual(optionTexts(sel), ['a', 'A0'])
   assert.equal(activeText(sel), 'a')
 })
+
+test('rows are rebuilt AFTER onChange ran, so textFn sees what the handler wrote', () => {
+  let note = 'initial'
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x',
+    popupListActionRowsAfterItems: [{ textFn: () => `note: ${note}`, onActivate: () => {} }],
+    onChange: (chosen) => { note = `${chosen.length} chosen` },
+  })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  const text = (): string => sel.popupListEl.querySelector(`.${sel.classIdMap.popupListActionRowClass}`)!.textContent ?? ''
+  assert.equal(text(), 'note: initial')
+  sel.toggleItem('a')
+  assert.equal(text(), 'note: 1 chosen')
+  sel.setChosenItems(['a', 'b'])
+  assert.equal(text(), 'note: 2 chosen')
+})
+
+test('setItems that swaps a chosen object for a compare-equal reload refreshes the rows (no change fires)', () => {
+  type Item = { id: number; name: string }
+  let selM: LLSelectMultiple<Item>
+  let changes = 0
+  selM = new LLSelectMultiple<Item>(mount(), {
+    ariaLabel: 'x',
+    compareFn: (a, b) => a.id === b.id,
+    popupListActionRowsAfterItems: [{ textFn: () => selM.getChosenItems().map(i => i.name).join(',') || 'none', onActivate: () => {} }],
+    onChange: () => { changes += 1 },
+  })
+  const v1 = [{ id: 1, name: 'one' }, { id: 2, name: 'two' }]
+  selM.setItems(v1)
+  selM.setChosenItems([v1[0]!])
+  selM.open()
+  const textM = (): string => selM.popupListEl.querySelector(`.${selM.classIdMap.popupListActionRowClass}`)!.textContent ?? ''
+  assert.equal(textM(), 'one')
+  changes = 0
+  selM.setItems([{ id: 1, name: 'ONE' }, { id: 2, name: 'TWO' }]) // same ids, new objects
+  assert.equal(changes, 0) // a reference swap is not a logical change
+  assert.equal(textM(), 'ONE') // but the row read the swapped object
+  let selS: LLSelectSingle<Item>
+  selS = new LLSelectSingle<Item>(mount(), {
+    ariaLabel: 'x',
+    compareFn: (a, b) => a.id === b.id,
+    popupListActionRowsBeforeItems: [{ textFn: () => selS.getChosenItem()?.name ?? 'none', onActivate: () => {} }],
+  })
+  selS.setItems(v1)
+  selS.setChosenItem(v1[1]!)
+  selS.open()
+  selS.setItems([{ id: 1, name: 'ONE' }, { id: 2, name: 'TWO' }])
+  assert.equal(selS.popupListEl.querySelector(`.${selS.classIdMap.popupListActionRowClass}`)!.textContent, 'TWO')
+})

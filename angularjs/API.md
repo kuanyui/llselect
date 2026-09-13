@@ -204,7 +204,7 @@ $scope.renderRow = function (fruit) {
 
 **Expression** -> `createPopupHeaderContentElFn`. Content for a pinned header between the filter input and the option list; it never scrolls with the items.
 
-- Evaluated once at link time to a function `() => HTMLElement | null`. That function runs ONCE, right then, inside the link digest; the returned node lives until the element is destroyed.
+- Evaluated once at link time to a function `() => HTMLElement | null`. That function runs ONCE, right then, at link time - inside whatever digest is compiling the element, if any; do not rely on one. The returned node lives until the element is destroyed.
 - llselect never rebuilds the node. Update it yourself, for example from `ng-change`.
 - `null` (returned, or no attribute) = no header element at all.
 - Not `$compile`d: build plain DOM. A button inside works with the mouse and keeps keyboard input on the combobox; a text field inside must stop its own `mousedown` from bubbling.
@@ -232,6 +232,8 @@ vm.updateFooterCount = function () { footerEl.textContent = vm.langs.length + ' 
 
 - Evaluated once at link time to an array of `{ textFn, createContentElFn?, disabledFn?, onActivate }` objects, the core `LLSelectPopupListActionRow` shape. The array and its objects are copied; later edits to yours do nothing.
 - `onActivate` runs inside a digest, wrapped like [`ll-on-open`](#ll-on-open): write scope state in it (an `ng-model` value, `vm` fields) and the view follows; errors go to `$exceptionHandler`. It runs on Enter, on Space while the filter is off, and on click. llselect neither chooses nor closes for it.
+- A model write inside `onActivate` (`vm.langs = []`) reaches the widget the way any model write does: as a programmatic change. `ng-change` does not run and the form control stays pristine. When the command must count as the user's own change, call the instance instead - `instance().setChosenItems([])` from a directive that `require`s the controller, see [`instance()`](#instance) - and the widget reports it through `ng-model` / `ng-change` like a click.
+- Like `ng-click`, `onActivate` is not awaited. After an `await`, digest yourself (`$applyAsync`, `$timeout`).
 - `textFn` / `disabledFn` / `createContentElFn` run outside any digest, per render, like [`ll-item-content-fn`](#ll-item-content-fn); they run again after every chosen change, so they may read live state.
 - Keyboard and screen-reader rules: core `docs/llm/A11Y.md`, "Action rows". A row is announced as an option with its text; it has no selected state.
 

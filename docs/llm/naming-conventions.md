@@ -276,13 +276,14 @@ Settings on `LLSelectBaseSettings` (s3): arrays of `LLSelectPopupListActionRow` 
 
 | Vis       | Name                                   | Convention                                                          |
 | --------- | -------------------------------------- | ------------------------------------------------------------------- |
-| protected | `createPopupListActionRowBeforeItemsEl` / `createPopupListActionRowAfterItemsEl` | `create*El` - whole row, one builder per slot (s7d: explicit over one builder + kind param) |
+| protected | `createPopupListActionRowBeforeItemsEl` / `createPopupListActionRowAfterItemsEl` | `create*El` - whole row, one builder per position (s7d: explicit over one builder + kind param) |
 | protected | `createPopupListActionRowContentEl`    | `create*ContentEl` - thin, reads the descriptor                     |
 | protected | `isPopupListActionRowDisabled`         | `is*` predicate, reads the descriptor; re-checked at activation     |
 | protected | `onPopupListActionRowActivated`        | subclass hook (`on*`), past tense like `onItemActivated`            |
 | protected | `replacePopupListActionRowElsInDom`    | `replace*ElInDom` - in-place rebuild of every rendered row          |
 | private   | `createPopupListActionRowEl`           | shared body of the two builders                                     |
-| private   | `ringLength` / `ringPosition` / `ringEntryAt` / `findNextEnabledRingPosition` / `findEnabledRingPositionForAction` / `focusRingPosition` / `focusActionRow` | the arrow-key ring walk over [choose-all, rows before items, items, rows after items] |
+| private   | `replaceActionRowElsInDom`             | `replace*ElInDom` - the in-place swap one array of rows            |
+| private   | `ringLength` / `ringPosition` / `ringEntryAt` / `findNextEnabledRingPosition` / `findEnabledRingPositionForKeyboardAction` / `focusRingPosition` / `focusActionRow` | the arrow-key ring walk over [choose-all, rows before items, items, rows after items] |
 
 `classIdMap` gained `popupListActionRowClass` (`.llselect-popup-list-action-row`, on top of `itemClass`). The private keyboard enum was renamed `LLSelectAction` -> `LLSelectKeyboardAction` so "action" names one thing.
 

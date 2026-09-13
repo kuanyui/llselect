@@ -265,8 +265,8 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `chooseAllRow`, `hideChosenRows`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
 | Popup width                          | `popupWidthPolicy: 'fit-content' \| 'match-trigger'` (default `'fit-content'` - grows to content like a native select)   |
 | Rich rendering without subclassing   | `createItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
-| Action rows (commands in the list)   | `popupListActionRowsBeforeItems`, `popupListActionRowsAfterItems` - `role="option"` rows in the arrow-key ring (see Action rows) |
-| Popup header / footer (pinned)       | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update (see Popup header / footer) |
+| Action rows: commands in the list    | `popupListActionRowsBeforeItems`, `popupListActionRowsAfterItems` - option rows in the arrow-key ring; see Action rows |
+| Popup header / footer, pinned        | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update; see Popup header / footer |
 | i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir` |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
 | Events                               | `onChange(current, previous)`, `onOpen`, `onClose`                                                                       |
@@ -372,6 +372,7 @@ A header sits between the filter input and the list. A footer sits under the lis
 
 ```js
 const countEl = document.createElement('div')
+countEl.textContent = '0 chosen'
 const sel = new LLSelectMultiple(el, {
   createPopupFooterContentElFn: () => countEl, // called once; the node is yours
   onChange: (chosen) => { countEl.textContent = `${chosen.length} chosen` },
@@ -389,6 +390,7 @@ A row is a command a keyboard user reaches with the arrow keys. It sits before o
 
 ```js
 const DEFAULTS = ['Japan', 'Taiwan']
+const isSameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x))
 let sel
 sel = new LLSelectMultiple(el, {
   popupListActionRowsAfterItems: [
@@ -403,9 +405,10 @@ sel = new LLSelectMultiple(el, {
 
 - The library builds the row: it is an option in the list, with your text as its name.
 - `textFn` and `disabledFn` run again after every change, so they may read live state.
-- `onActivate` runs on Enter, Space or click. The library neither chooses nor closes for it.
+- `onActivate` runs on Enter, on click, and on Space while the filter is off. The library neither chooses nor closes for it.
 - Put no button or link inside a row. The row itself is the control.
 
+### Subclassing (extending the library)
 
 Subclass only when settings cannot express it:
 

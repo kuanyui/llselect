@@ -4,7 +4,53 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (popup header / footer slots and action rows)
 
-Process: design research plus committee rounds recorded in `popup-slots-research.md` (nothing implemented yet); the code-facing findings the rounds surfaced are logged here.
+Process: design research plus four committee rounds recorded in `popup-slots-research.md`, then the implementation in eight commits (plan: `TODO.md`), then one whole-committee review of the change set (round 5) - its findings below, most severe first, fixed in one batch.
+
+- [ ] **[MEDIUM-110] - an AngularJS action row that writes the model counts as a programmatic change**
+  - Symptom: with the documented recipe `onActivate: function () { vm.langs = [] }`, "Clear all" empties the model, but the form control stays pristine and `ng-change` never runs - a footer count updated from `ng-change` goes stale.
+  - Cause: the model write reaches the core through `$render` -> `setChosenItems` inside the directive's gate, which drops the core's `onChange`; only core-originated changes flow back through `$setViewValue` (the rule `angularjs/API.md` states for every model write).
+  - Fix so far: documented in `angularjs/API.md` (a model write is programmatic; call `instance().setChosenItems()` for a user change) and in the demo copy. Open: the owner's call whether the AngularJS wrapper should hand the instance to `onActivate` (`onActivate(instance)`, a wrapper-only widening; the core deliberately passes no ctx) so the user-change path needs no `require`d controller.
+- [x] **[QUALITY-111] - double divider between the choose-all row and the first row before the items**
+  - Symptom: with `chooseAllRow: true` plus `popupListActionRowsBeforeItems`, that boundary drew two stacked 1px lines in every theme, against the rule's own comment.
+  - Cause: the choose-all row carries `itemClass`, so it matched the `.llselect-item:not(.llselect-popup-list-action-row) + .llselect-popup-list-action-row` divider while keeping its own `border-bottom`.
+  - Fix: the left operand also excludes `.llselect-choose-all-row`, in all five themes; the manual pass item (e) in `TODO.md` eyeballs the three boundaries.
+  - Q: Why exclude the choose-all row in the new rule, not drop its own border?
+    - A: Its `border-bottom` is the existing shipped look; a new rule must not restyle an old element.
+- [x] **[QUALITY-116] - `setItems` left action rows stale after a compare-equal reload**
+  - Symptom: while open, `setItems` with new objects for the same keys swapped the chosen references (no change fires), but a row whose `textFn` reads `getChosenItem()` kept the old object's fields.
+  - Cause: `renderPopupList` built the rows before the variant's `onItemsChanged` swapped the references.
+  - Fix: `setItems` calls `replacePopupListActionRowElsInDom()` after `onItemsChanged` (a no-op without rows); pinned for both variants in `test/action-rows.test.ts`.
+- [x] **[QUALITY-115] - the AngularJS descriptor clone read `onActivate` live**
+  - Symptom: reassigning `row.onActivate` on the app's object after link changed what the widget ran, while the other fields were snapshotted - against `API.md`'s "the objects are copied".
+  - Fix: the wrapper snapshots `onActivate` too; a post-link mutation test covers the array and every field.
+- [x] **[DOCUMENTATION-112] - three docblocks were detached from their declarations by insertions**
+  - Symptom: `LLSelectBaseSettings` lost its TSDoc in the generated reference (the new `LLSelectPopupListActionRow` interface landed between the docblock and the interface); the `PopupListSegment` comment sat above the new ring types; the `labelEl` comment sat above the copied row arrays.
+  - Fix: the insertions moved above the docblocks they had split.
+- [x] **[DOCUMENTATION-113] - the README lost the "Subclassing (extending the library)" heading**
+  - Symptom: the subclassing guide rendered inside the new "Action rows" recipe.
+  - Cause: the recipe replaced the heading line instead of inserting above it.
+  - Fix: heading restored.
+- [x] **[DOCUMENTATION-114] - A11Y.md ring wording ignored the rows before the items**
+  - Symptom: "ArrowUp from the topmost item continues onto the choose-all row" and "ArrowDown returns to the first enabled item" are false when rows sit before the items; the Page-key line promised "the ring's end entry" (a disabled end row is skipped); the open-focus summary said "else the first option", which could read as a row.
+  - Fix: reworded to the previous / next ring entry, the nearest enabled entry, and the chosen item / choose-all / first enabled item priority.
+- [x] **[DOCUMENTATION-117] - new overridable methods missed the docstring rule**
+  - Symptom: `onPopupListActionRowActivated` named neither its caller, the source of `row`, nor that an override must call `super` or the entry's `onActivate` stops running; `createPopupListActionRowAfterItemsEl` and `createPopupFooterEl` said "same contract as ..." instead of being self-contained; `isPopupListActionRowDisabled` sat in the rendering group beside the builders.
+  - Fix: all three rewritten in the CLAUDE.md order; the predicate moved to "Subclassing: semantics" beside `isGroupDisabled`.
+- [x] **[DOCUMENTATION-118] - README recipes did not run as written, and the new table rows broke the prose limits**
+  - Symptom: `isSameSet` was never defined; "Enter, Space or click" hid that Space types into an active filter; the footer count started blank; two capabilities rows carried parentheticals and three code names.
+  - Fix: helper defined in the snippet, Space qualified, count seeded, rows trimmed.
+- [x] **[DOCUMENTATION-121] - AngularJS docs over-claimed the slot digest and said nothing about async commands; the demo showed half the attributes**
+  - Symptom: "runs inside the link digest" is false for a manual `$compile` outside a digest; an `onActivate` that awaits leaves the view stale like `ng-click` would; the demo had only the footer slot and the after-items rows.
+  - Fix: `API.md` reworded (at link time, inside whatever digest compiles the element, if any; digest yourself after an `await`); demo sections 12 / 13 show all four attributes.
+- [x] **[QUALITY-120] - demo 16.2 could add a duplicate item**
+  - Symptom: entering an existing country appended it again, against the items-unique contract.
+  - Fix: an existing name is picked, not added.
+- [x] **[QUALITY-122] - three promised behaviors were untested**
+  - Symptom: nothing pinned that rows rebuild AFTER `onChange` (moving the call earlier would stay green), that an AngularJS row activated from inside a digest takes the `$eval` branch, or that post-link edits to the app's array do nothing.
+  - Fix: one test each (`test/action-rows.test.ts`, `angularjs/test/llselect-angularjs.test.mjs`).
+- [x] **[LINT-119] - "action" and "slot" each named a second thing; a DOM-writing helper lacked its suffix**
+  - Symptom: `findEnabledRingPositionForAction` meant the keyboard action right beside `focusActionRow`; DESIGN.md and the naming table called the row positions "slots", the header / footer word; `replaceActionRowEls` wrote the DOM without `InDom`.
+  - Fix: `findEnabledRingPositionForKeyboardAction`, "positions", `replaceActionRowElsInDom`; the ring test's stale "position -1" comment reworded.
 
 - [ ] **[DOCUMENTATION-109] - row-index docstrings named `items` instead of the rendered list, and called the ids "stable"**
   - Symptom: `createItemEl`'s `@param index` said "index in `this.items`" and the `focusedIndex` field said "Index (into `items`)"; both values are positions in `getVisibleItems()` - the list as rendered (gathered by group, filtered, minus hidden chosen rows) - which differs from `items` whenever any of those steps applies (`src/base.ts:1788`, `src/base.ts:721`). `createGroupEl`'s param line said the index "builds a stable id" (`src/base.ts:1705`): nothing reads a group id, and whether id-text stability across an in-place row swap matters to assistive technology is unverified (committee round 3c), so "stable" claimed a benefit nobody has measured.

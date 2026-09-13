@@ -586,14 +586,14 @@
   </section>
 
   <section>
-    <h2>12. Popup footer: ll-popup-footer-content-fn</h2>
+    <h2>12. Popup header / footer: ll-popup-header-content-fn / ll-popup-footer-content-fn</h2>
     <p>
-      A pinned footer under the option list. The fn runs once at link time and
-      the returned node is yours; <code>ng-change</code> writes the live count
-      into it.
+      A pinned header above the option list and a pinned footer under it.
+      Each fn runs once at link time and the returned node is yours;
+      <code>ng-change</code> writes the live count into the footer.
     </p>
     <div class="demo-row" data-src="12">
-      <llselect-multiple ll-aria-label="Languages (footer count)" ng-model="vm.langsFooter" ll-popup-footer-content-fn="vm.footerCountEl"
+      <llselect-multiple ll-aria-label="Languages (header and footer)" ng-model="vm.langsFooter" ll-popup-header-content-fn="vm.headerHintEl" ll-popup-footer-content-fn="vm.footerCountEl"
         ng-change="vm.updateFooterCount()" ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>
@@ -602,15 +602,16 @@
   </section>
 
   <section>
-    <h2>13. Action rows: ll-popup-list-action-rows-after-items</h2>
+    <h2>13. Action rows: ll-popup-list-action-rows-before-items / ll-popup-list-action-rows-after-items</h2>
     <p>
-      Commands rendered as option rows after the items, reachable with the
-      arrow keys. <code>onActivate</code> runs in a digest, so writing the
-      <code>ng-model</code> value is enough; the row text and its disabled
-      state follow every change.
+      Commands rendered as option rows before and after the items, reachable
+      with the arrow keys. <code>onActivate</code> runs in a digest, so writing
+      the <code>ng-model</code> value is enough; the row text and its disabled
+      state follow every change. A model write counts as a programmatic change,
+      so <code>ng-change</code> does not run for it.
     </p>
     <div class="demo-row" data-src="13">
-      <llselect-multiple ll-aria-label="Languages (action rows)" ng-model="vm.langsRows" ll-popup-list-action-rows-after-items="vm.langRows"
+      <llselect-multiple ll-aria-label="Languages (action rows)" ng-model="vm.langsRows" ll-popup-list-action-rows-before-items="vm.langRowsBefore" ll-popup-list-action-rows-after-items="vm.langRowsAfter"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>

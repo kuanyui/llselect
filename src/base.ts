@@ -52,26 +52,6 @@ export interface LLSelectChangeMeta {
 }
 
 /**
- * Resolved (defaults applied) settings shared by all select variants.
- * Subclasses (`LLSelectSingle`, `LLSelectMultiple`) extend this with their
- * mode-specific options such as `onChange`.
- *
- * Settings are frozen after the constructor. What still changes at runtime:
- * - State changes by method, and never was a setting: the items
- *   (`setItems`), the chosen value (`setChosenItem` / `setChosenItems`),
- *   `disabled` (`setDisabled`).
- * - Two settings have a setter, because they are text: `uiTranslationPack`
- *   (`setUiTranslationPack`) and `placeholder` (`setPlaceholder`).
- * - Every other setting is fixed for the instance's lifetime.
- * - To change a fixed setting, build a new instance. One build takes about
- *   0.2 ms.
- * - If a setting must vary at runtime, use its function form where one
- *   exists. `filterable: (items) => boolean` is re-evaluated on every open
- *   (and consulted by closed-state typeahead - see the setting).
- * @group Settings
- * @category Base
- */
-/**
  * One app command rendered by the library as a `role="option"` row inside the
  * popup list: the entries of `popupListActionRowsBeforeItems` /
  * `popupListActionRowsAfterItems`.
@@ -105,6 +85,26 @@ export interface LLSelectPopupListActionRow {
   onActivate: () => void
 }
 
+/**
+ * Resolved (defaults applied) settings shared by all select variants.
+ * Subclasses (`LLSelectSingle`, `LLSelectMultiple`) extend this with their
+ * mode-specific options such as `onChange`.
+ *
+ * Settings are frozen after the constructor. What still changes at runtime:
+ * - State changes by method, and never was a setting: the items
+ *   (`setItems`), the chosen value (`setChosenItem` / `setChosenItems`),
+ *   `disabled` (`setDisabled`).
+ * - Two settings have a setter, because they are text: `uiTranslationPack`
+ *   (`setUiTranslationPack`) and `placeholder` (`setPlaceholder`).
+ * - Every other setting is fixed for the instance's lifetime.
+ * - To change a fixed setting, build a new instance. One build takes about
+ *   0.2 ms.
+ * - If a setting must vary at runtime, use its function form where one
+ *   exists. `filterable: (items) => boolean` is re-evaluated on every open
+ *   (and consulted by closed-state typeahead - see the setting).
+ * @group Settings
+ * @category Base
+ */
 export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Prefix used for every CSS class and DOM id the library generates
@@ -732,11 +732,6 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
 }
 
 /**
- * One run in the rendered popup list: a single ungrouped item element, or a
- * group (label + its item elements). Computed from the flat visible list;
- * group labels never enter `itemEls`, so index alignment is preserved.
- */
-/**
  * A non-item entry of the arrow-key ring that can hold the active option: the
  * choose-all leading row, or an action row (by position and array index).
  */
@@ -750,6 +745,11 @@ type RingEntry =
   | { kind: 'before-items' | 'after-items'; index: number }
   | { kind: 'item'; index: number }
 
+/**
+ * One run in the rendered popup list: a single ungrouped item element, or a
+ * group (label + its item elements). Computed from the flat visible list;
+ * group labels never enter `itemEls`, so index alignment is preserved.
+ */
 type PopupListSegment<T, GroupKey> =
   | { readonly group: false; readonly el: HTMLElement }
   | { readonly group: true; readonly key: GroupKey; readonly index: number; readonly items: T[]; readonly els: HTMLElement[] }
@@ -993,13 +993,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // setUiTranslationPack can re-run this exact resolution.
     this.explicitPlaceholder = settings?.placeholder ?? null
     const uiTranslationPack: LLSelectUiTranslationPack = { ...DEFAULT_UI_TRANSLATION_PACK, ...settings?.uiTranslationPack }
+    // Copied: the settings bag is frozen, and a caller's later array edits must not leak in.
+    const actionRowsBeforeItems: readonly LLSelectPopupListActionRow[] = settings?.popupListActionRowsBeforeItems ? [...settings.popupListActionRowsBeforeItems] : []
+    const actionRowsAfterItems: readonly LLSelectPopupListActionRow[] = settings?.popupListActionRowsAfterItems ? [...settings.popupListActionRowsAfterItems] : []
     // labelEl resolves before the name ladder: with neither `ariaLabelledBy`
     // nor `ariaLabel` given, the label's id becomes the resolved
     // `ariaLabelledBy`, and every downstream consumer (trigger chain, filter
     // input, listbox) works unchanged.
-    // Copied: the settings bag is frozen, and a caller's later array edits must not leak in.
-    const actionRowsBeforeItems: readonly LLSelectPopupListActionRow[] = settings?.popupListActionRowsBeforeItems ? [...settings.popupListActionRowsBeforeItems] : []
-    const actionRowsAfterItems: readonly LLSelectPopupListActionRow[] = settings?.popupListActionRowsAfterItems ? [...settings.popupListActionRowsAfterItems] : []
     const labelEl = settings?.labelEl ?? null
     if (labelEl !== null && labelEl.id === '') {
       labelEl.id = this.classIdMap.labelId
@@ -1545,6 +1545,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (this.filterActive) { this.recomputeFilteredItems() }
     if (this.opened) { this.renderPopupList() }
     this.onItemsChanged()
+    // The rows rendered above may have read chosen objects that the variant's
+    // reconciliation just swapped for compare-equal reloads (no change fires).
+    this.replacePopupListActionRowElsInDom()
   }
 
   /**
@@ -2179,7 +2182,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /** Ring twin of `findEnabledIndexForAction`: search in the travel direction, Page keys fall back the other way. */
-  private findEnabledRingPositionForAction(target: number, action: LLSelectKeyboardAction, total: number): number {
+  private findEnabledRingPositionForKeyboardAction(target: number, action: LLSelectKeyboardAction, total: number): number {
     const forward = action === LLSelectKeyboardAction.Next
       || action === LLSelectKeyboardAction.GotoFirst
       || action === LLSelectKeyboardAction.PageDown
@@ -2269,9 +2272,19 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Build the whole DOM element for one action row placed AFTER the items.
-   * - Same contract as {@link createPopupListActionRowBeforeItemsEl}, for the
-   *   entries of `popupListActionRowsAfterItems`; the id is
-   *   `<listbox id>-action-row-after-items<index>`.
+   * - The library calls it, once per entry of `popupListActionRowsAfterItems`,
+   *   on every list render and after every chosen change. You never call it.
+   * - Both params come from the library. Forward them to `super` unchanged.
+   *   `row` is the entry; `index` is its position in that array, counted from
+   *   0, used to mint the id. It is not an identity.
+   * - To change only what the row shows, do not override this: give the entry
+   *   a `createContentElFn`.
+   * - To change the element itself, override it, call
+   *   `super.createPopupListActionRowAfterItemsEl(row, index)`, and edit the
+   *   returned element. Keep the `id` and `role`; put no focusable control
+   *   inside.
+   * - Internals: identical to {@link createPopupListActionRowBeforeItemsEl}
+   *   except the id, `<listbox id>-action-row-after-items<index>`.
    * @param row - the entry, supplied by the library
    * @param index - the entry's position in `popupListActionRowsAfterItems`, supplied by the library
    * @group Subclassing: rendering
@@ -2327,16 +2340,22 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - The library calls it from the row builders (once per row render) and
    *   again at activation. You never call it. `row` comes from the library.
    * - Default reads the entry's `disabledFn`; `null` / omitted = never disabled.
-   * @group Subclassing: rendering
+   * @group Subclassing: semantics
    */
   protected isPopupListActionRowDisabled(row: LLSelectPopupListActionRow): boolean {
     return row.disabledFn ? row.disabledFn() : false
   }
 
   /**
-   * Subclass hook: an action row was activated (Enter, Space while the filter
-   * is inactive, or click), after the disabled re-check. Default calls the
-   * entry's `onActivate`; the library changes nothing else.
+   * Subclass hook: an action row was activated.
+   * - The library calls it on Enter, on Space while the filter is inactive,
+   *   and on click, after the disabled re-check, as a user change. You never
+   *   call it. `row` comes from the library: the activated entry.
+   * - Default calls the entry's `onActivate`. The library changes nothing
+   *   else: choosing and closing are the entry's job.
+   * - Override to react before or after: do your work, then call
+   *   `super.onPopupListActionRowActivated(row)`. Without that call the
+   *   entry's `onActivate` never runs.
    * @group Subclassing: reactions
    */
   protected onPopupListActionRowActivated(row: LLSelectPopupListActionRow): void {
@@ -2359,11 +2378,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const before = this.settings.popupListActionRowsBeforeItems
     const after = this.settings.popupListActionRowsAfterItems
     if (before.length === 0 && after.length === 0) { return }
-    this.actionRowElsBeforeItems = this.replaceActionRowEls(this.actionRowElsBeforeItems, before, (row, i) => this.createPopupListActionRowBeforeItemsEl(row, i))
-    this.actionRowElsAfterItems = this.replaceActionRowEls(this.actionRowElsAfterItems, after, (row, i) => this.createPopupListActionRowAfterItemsEl(row, i))
+    this.actionRowElsBeforeItems = this.replaceActionRowElsInDom(this.actionRowElsBeforeItems, before, (row, i) => this.createPopupListActionRowBeforeItemsEl(row, i))
+    this.actionRowElsAfterItems = this.replaceActionRowElsInDom(this.actionRowElsAfterItems, after, (row, i) => this.createPopupListActionRowAfterItemsEl(row, i))
   }
 
-  private replaceActionRowEls(
+  private replaceActionRowElsInDom(
     olds: HTMLElement[],
     rows: readonly LLSelectPopupListActionRow[],
     build: (row: LLSelectPopupListActionRow, index: number) => HTMLElement,
@@ -2726,7 +2745,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         const total = this.ringLength()
         if (total === 0) { return }
         const target = getUpdatedIndex(this.ringPosition(), total - 1, action)
-        const found = this.findEnabledRingPositionForAction(target, action, total)
+        const found = this.findEnabledRingPositionForKeyboardAction(target, action, total)
         if (found >= 0) { this.focusRingPosition(found) }
         return
       }
@@ -3205,12 +3224,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Build the pinned footer container at the bottom of the popup.
-   * - Same contract as {@link createPopupHeaderEl}: called once in the
-   *   constructor; `null` content from {@link createPopupFooterContentEl} = no
-   *   container, and `popupFooterEl` stays `null`; override to change the
-   *   container, return non-null to build it without the setting.
-   * - Internals: a `div` with `classIdMap.popupFooterClass` and inline
-   *   `flex: none`, then the content.
+   * - The library calls it once, inside the constructor. You never call it.
+   * - It takes no params. The default asks {@link createPopupFooterContentEl}
+   *   for content; `null` content = no container, and `popupFooterEl` stays `null`.
+   * - To supply content without subclassing, pass `createPopupFooterContentElFn`.
+   * - To change the container itself, override it: call
+   *   `super.createPopupFooterEl()` and edit the returned element, or return
+   *   your own `div`. Returning non-null builds the slot even without the
+   *   setting. Keep it role-free: it is not part of the listbox.
+   * - Internals: the base builds a `div` with `classIdMap.popupFooterClass`
+   *   and inline `flex: none` (only the listbox may flex), then appends the
+   *   content.
    * @group Subclassing: rendering
    */
   protected createPopupFooterEl(): HTMLElement | null {

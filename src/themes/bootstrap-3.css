@@ -174,7 +174,7 @@
 
 .llselect-popup-list-action-row + .llselect-item:not(.llselect-popup-list-action-row),
 .llselect-popup-list-action-row + .llselect-group,
-.llselect-item:not(.llselect-popup-list-action-row) + .llselect-popup-list-action-row,
+.llselect-item:not(.llselect-popup-list-action-row):not(.llselect-choose-all-row) + .llselect-popup-list-action-row,
 .llselect-group + .llselect-popup-list-action-row {
   border-top: 1px solid rgba(0, 0, 0, 0.12);
 }

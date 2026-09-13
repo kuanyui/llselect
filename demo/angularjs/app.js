@@ -209,22 +209,27 @@
       vm.langsFooter = [] // 12, ll-popup-footer-content-fn
       vm.langsRows = [] // 13, ll-popup-list-action-rows-after-items
 
-      /** 12: a pinned popup footer. The fn runs once at link time; ng-change keeps the count current. */
+      /** 12: pinned popup header / footer. Each fn runs once at link time; ng-change keeps the footer count current. */
+      var headerHintEl = document.createElement('small')
+      headerHintEl.textContent = 'Pick as many as you like'
+      vm.headerHintEl = function () { return headerHintEl }
       var footerCountEl = document.createElement('div')
       footerCountEl.textContent = '0 chosen'
       vm.footerCountEl = function () { return footerCountEl }
       vm.updateFooterCount = function () { footerCountEl.textContent = vm.langsFooter.length + ' chosen' }
 
       /** 13: action rows - plain objects; onActivate is run in a digest by the directive, so a model write is enough. */
-      vm.langRows = [
+      vm.langRowsBefore = [
+        {
+          textFn: function () { return 'Pick the first two' },
+          onActivate: function () { vm.langsRows = LANGUAGES.slice(0, 2) },
+        },
+      ]
+      vm.langRowsAfter = [
         {
           textFn: function () { return 'Clear all (' + vm.langsRows.length + ')' },
           disabledFn: function () { return vm.langsRows.length === 0 },
           onActivate: function () { vm.langsRows = [] },
-        },
-        {
-          textFn: function () { return 'Pick the first two' },
-          onActivate: function () { vm.langsRows = LANGUAGES.slice(0, 2) },
         },
       ]
 

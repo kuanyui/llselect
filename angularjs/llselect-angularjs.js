@@ -267,13 +267,16 @@
       if (!row || typeof row.textFn !== 'function' || typeof row.onActivate !== 'function') {
         throw new Error('llselect-angularjs: ' + attrs.$attr[name] + '[' + i + '] needs textFn and onActivate functions')
       }
+      // Snapshot every field: a later reassignment on the app's object must
+      // not reach the widget (API.md: the descriptors are copied).
+      var activate = row.onActivate
       return {
         textFn: row.textFn,
         createContentElFn: typeof row.createContentElFn === 'function' ? row.createContentElFn : null,
         disabledFn: typeof row.disabledFn === 'function' ? row.disabledFn : null,
         onActivate: function () {
-          if (!scope.$root.$$phase) { scope.$apply(function () { row.onActivate() }); return }
-          try { row.onActivate() } catch (e) { exceptionHandler(e) }
+          if (!scope.$root.$$phase) { scope.$apply(function () { activate() }); return }
+          try { activate() } catch (e) { exceptionHandler(e) }
         },
       }
     })

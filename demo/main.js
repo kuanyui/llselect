@@ -1260,8 +1260,11 @@ const selAddRow = new LLSelectSingle(
         onActivate: () => {
           const name = window.prompt('Country name')
           if (!name) { return }
-          addRowItems = [...addRowItems, name]
-          selAddRow.setItems(addRowItems)
+          // Items must be unique: an existing name is picked, not added again.
+          if (!addRowItems.includes(name)) {
+            addRowItems = [...addRowItems, name]
+            selAddRow.setItems(addRowItems)
+          }
           selAddRow.setChosenItem(name)
           selAddRow.close()
         },

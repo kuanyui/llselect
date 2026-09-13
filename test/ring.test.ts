@@ -35,7 +35,7 @@ test('PageDown from the choose-all row steps ten items down; PageUp past the top
   sel.setItems(TWENTY)
   sel.open()
   assert.equal(activeText(sel), 'Select all (0 of 20)')
-  fireKey(sel.triggerEl, 'PageDown') // the row counts as position -1: lands on item09
+  fireKey(sel.triggerEl, 'PageDown') // the row is ring position 0; ten down is position 10 = item09
   assert.equal(activeText(sel), 'item09')
   fireKey(sel.triggerEl, 'PageUp') // ten up from item09 reaches past item00: the row is the ring's first entry (A11Y.md "Action rows": Page keys clamp across the ring)
   assert.equal(activeText(sel), 'Select all (0 of 20)')
