@@ -4,7 +4,7 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (popup header / footer slots and action rows)
 
-Process: design research plus four committee rounds recorded in `popup-slots-research.md`, then the implementation in eight commits (plan: `TODO.md`), then one whole-committee review of the change set (round 5) - its findings below, most severe first, fixed in one batch.
+Process: design research plus four committee rounds recorded in `archive/popup-slots-research.md`, then the implementation in eight commits (plan: `TODO.md`), then one whole-committee review of the change set (round 5) - its findings below, most severe first, fixed in one batch.
 
 - [ ] **[MEDIUM-110] - an AngularJS action row that writes the model counts as a programmatic change**
   - Symptom: with the documented recipe `onActivate: function () { vm.langs = [] }`, "Clear all" empties the model, but the form control stays pristine and `ng-change` never runs - a footer count updated from `ng-change` goes stale.
@@ -52,10 +52,11 @@ Process: design research plus four committee rounds recorded in `popup-slots-res
   - Symptom: `findEnabledRingPositionForAction` meant the keyboard action right beside `focusActionRow`; DESIGN.md and the naming table called the row positions "slots", the header / footer word; `replaceActionRowEls` wrote the DOM without `InDom`.
   - Fix: `findEnabledRingPositionForKeyboardAction`, "positions", `replaceActionRowElsInDom`; the ring test's stale "position -1" comment reworded.
 
-- [ ] **[DOCUMENTATION-109] - row-index docstrings named `items` instead of the rendered list, and called the ids "stable"**
-  - Symptom: `createItemEl`'s `@param index` said "index in `this.items`" and the `focusedIndex` field said "Index (into `items`)"; both values are positions in `getVisibleItems()` - the list as rendered (gathered by group, filtered, minus hidden chosen rows) - which differs from `items` whenever any of those steps applies (`src/base.ts:1788`, `src/base.ts:721`). `createGroupEl`'s param line said the index "builds a stable id" (`src/base.ts:1705`): nothing reads a group id, and whether id-text stability across an in-place row swap matters to assistive technology is unverified (committee round 3c), so "stable" claimed a benefit nobody has measured.
+- [x] **[DOCUMENTATION-109] - row-index docstrings named `items` instead of the rendered list, and called the ids "stable"**
+  - Symptom: `createItemEl`'s `@param index` said "index in `this.items`" and the `focusedIndex` field said "Index (into `items`)"; both values are positions in `getVisibleItems()` - the list as rendered (gathered by group, filtered, minus hidden chosen rows) - which differs from `items` whenever any of those steps applies (`src/base.ts` `createItemEl`, `focusedIndex`). `createGroupEl`'s param line said the index "builds a stable id" (`src/base.ts` `createGroupEl`): nothing reads a group id, and whether id-text stability across an in-place row swap matters to assistive technology is unverified (committee round 3c), so "stable" claimed a benefit nobody has measured.
   - Cause: the docstrings predate gathering, filtering and `hideChosenRows`; `renderPopupList` always mapped the visible list.
   - Fix: all three lines now name `getVisibleItems()` and say what the index is used for (minting the row id `aria-activedescendant` points at); "stable" is gone. The owner then ruled the `createItemEl` docstring itself unfit: a dense internals paragraph that never said who calls the method, who supplies `index`, or how to override it. Both `createItemEl` and `createGroupEl` are restructured to the house shape - lead sentence, then one fact per bullet: who calls it, params supplied by the library and forwarded to `super`, what `index` means and is NOT, the super-then-edit override shape, internals last - and CLAUDE.md's docstring rule now requires that order for every overridable method. Post-fix panel review batched with the action-row implementation, which touches the same docstrings.
+  - Verified: the round-5 review read every new and rewritten overridable-method docstring against the rule; its remaining gaps are DOCUMENTATION-117, fixed in the same batch.
 
 ## review (prefix typeahead)
 
