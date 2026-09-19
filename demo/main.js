@@ -1294,10 +1294,10 @@ const selHeaderCommands = new LLSelectMultiple(
   ariaLabel: 'Pick countries (header commands)',
     placeholder: 'Pick countries (header commands)',
     createPopupHeaderContentElFn: () => {
+      // Runs inside the constructor: the instance variable is not assigned
+      // yet, so read nothing from it here. The theme's item class is added
+      // right after `new` below, on these same persistent nodes.
       const header = document.createElement('div')
-      for (const row of [headerSelectAllRow, headerRestoreRow]) {
-        row.className = 'popup-row-button ' + selHeaderCommands.classIdMap.itemClass
-      }
       header.append(headerSelectAllRow, headerRestoreRow)
       return header
     },
@@ -1307,6 +1307,9 @@ const selHeaderCommands = new LLSelectMultiple(
     },
   }
 )
+for (const row of [headerSelectAllRow, headerRestoreRow]) {
+  row.className = 'popup-row-button ' + selHeaderCommands.classIdMap.itemClass
+}
 headerSelectAllRow.addEventListener('click', () => {
   if (selHeaderCommands.getChosenItems().length === selHeaderCommands.getItems().length) {
     selHeaderCommands.unchooseAll()
