@@ -65,6 +65,10 @@ Phase 2 - action rows inside the list
 
 Deferred, logged under "API design review" below: an `onActiveItemChange` event (the "show the focused option's description in the footer" case; hover needs the app's own `mouseover`), creatable rows (`visibleFn(query)`, exact-match test, Enter precedence), per-end row classes if a theme ever needs them, folding the choose-all row into action rows (round 4 voted 6:0 to keep the built-in setting: its tri-state, self-hiding, visible-enabled subset and AngularJS checkbox mode do not fit the generic descriptor, and growing it for one consumer is the flexibility nobody asked for).
 
+## Pinned rows and the filter-query event (ratified in principle; names pending)
+
+The design, the open owner decisions and the commit plan are in `handoff-popup-command-rows.md` (written before a context compaction). Start there.
+
 ## Performance (open)
 
 - [ ] **Cache the fit-content natural-width measurement.** With `popupWidthPolicy: 'fit-content'` now the default, every reposition (each captured scroll / resize tick while the popup is open) runs the `width: max-content` measure in `positioning.ts` - a second forced layout on top of the existing height read. Cache the natural width per open cycle and re-measure only when content changes (open, `renderPopupList`, filter query changes, `setItems`); needs an invalidation hook on the positioner. Negligible for typical lists, visible on the 10k stress demos (8.1 / 8.2).
