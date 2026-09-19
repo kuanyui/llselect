@@ -983,8 +983,8 @@
     </p>
 
     <article>
-      <h3>16.1 Restore defaults and Clear all, before the items</h3>
-      <p class="hint">Both rows read the live selection: <code>textFn</code> and <code>disabledFn</code> run again after every change. They follow the choose-all row, so ArrowDown reaches them before any item.</p>
+      <h3>16.1 Restore defaults, before the items</h3>
+      <p class="hint">The row reads the live selection: <code>textFn</code> and <code>disabledFn</code> run again after every change. It follows the choose-all row, so ArrowDown reaches it before any item.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-action-rows"></div>
@@ -1007,12 +1007,12 @@
     </article>
 
     <article>
-      <h3>16.3 Load ten more, after the items</h3>
-      <p class="hint">A paged list. The last row appends the next page with <code>setItems</code>; its text shows how many are left and it disables itself at the end. The active option stays on the row, so Enter again loads the next page.</p>
+      <h3>16.3 Sort the list, before the items</h3>
+      <p class="hint">The row flips the order with <code>setItems</code> and shows the current one. A filter query re-applies to the new order, and the chosen item stays chosen.</p>
       <div class="demo-split">
         <div class="demo-pane">
-          <div id="mount-load-more"></div>
-          <div class="out" id="out-load-more">chosen: (none)</div>
+          <div id="mount-sort-row"></div>
+          <div class="out" id="out-sort-row">chosen: (none)</div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="16.3"><code></code></pre></details>
       </div>

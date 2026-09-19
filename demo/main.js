@@ -1259,9 +1259,9 @@ selFooterLink.setItems(COUNTRIES)
 //#region 16.1
 // Action rows before the items: the library builds each as a role="option"
 // row in the arrow-key ring, right after the choose-all row, so the arrow
-// keys reach them before any item. textFn / disabledFn run on every render
-// and after every chosen change, so both rows track the live selection.
-// onActivate does the work; the library neither chooses nor closes for it.
+// keys reach it before any item. textFn / disabledFn run on every render and
+// after every chosen change, so the row tracks the live selection. onActivate
+// does the work; the library neither chooses nor closes for it.
 const DEFAULT_COUNTRIES = ['Japan', 'Taiwan']
 const outActionRows = document.getElementById('out-action-rows')
 const isDefaultChoice = () => {
@@ -1279,11 +1279,6 @@ const selActionRows = new LLSelectMultiple(
         textFn: () => 'Restore defaults',
         disabledFn: () => isDefaultChoice(),
         onActivate: () => { selActionRows.setChosenItems(DEFAULT_COUNTRIES) },
-      },
-      {
-        textFn: () => 'Clear all (' + selActionRows.getChosenItems().length + ')',
-        disabledFn: () => selActionRows.getChosenItems().length === 0,
-        onActivate: () => { selActionRows.setChosenItems([]) },
       },
     ],
     onChange: (chosen) => { outActionRows.textContent = 'chosen: ' + JSON.stringify(chosen) },
@@ -1327,32 +1322,31 @@ selAddRow.setItems(addRowItems)
 //#endregion
 
 //#region 16.3
-// A paged list: the row after the items appends the next page with setItems.
-// The rows are rebuilt after every setItems, so the text shows what is left
-// and the row disables itself at the end; the active option stays on it, so
-// Enter again loads the next page.
-const PAGE = 10
-const outLoadMore = document.getElementById('out-load-more')
-let loadedCountries = COUNTRIES.slice(0, PAGE)
-const selLoadMore = new LLSelectSingle(
-  document.getElementById('mount-load-more'),
+// A sort toggle as a row before the items: it flips the order with setItems
+// and its text names the current order. The chosen item survives (same
+// identity), and a filter query re-applies to the new order.
+const outSortRow = document.getElementById('out-sort-row')
+let sortDescending = false
+const sortedCountries = () => sortDescending ? [...COUNTRIES].reverse() : COUNTRIES
+const selSortRow = new LLSelectSingle(
+  document.getElementById('mount-sort-row'),
   {
-  ariaLabel: 'Pick a country (paged)',
-    placeholder: 'Pick a country (paged)',
-    popupListActionRowsAfterItems: [
+  ariaLabel: 'Pick a country (sort row)',
+    placeholder: 'Pick a country (sort row)',
+    filterable: true,
+    popupListActionRowsBeforeItems: [
       {
-        textFn: () => 'Load ' + PAGE + ' more (' + (COUNTRIES.length - loadedCountries.length) + ' left)',
-        disabledFn: () => loadedCountries.length >= COUNTRIES.length,
+        textFn: () => (sortDescending ? 'Sorted Z to A' : 'Sorted A to Z') + ' - click to flip',
         onActivate: () => {
-          loadedCountries = COUNTRIES.slice(0, loadedCountries.length + PAGE)
-          selLoadMore.setItems(loadedCountries)
+          sortDescending = !sortDescending
+          selSortRow.setItems(sortedCountries())
         },
       },
     ],
-    onChange: (item) => { outLoadMore.textContent = 'chosen: ' + (item ?? '(none)') },
+    onChange: (item) => { outSortRow.textContent = 'chosen: ' + (item ?? '(none)') },
   }
 )
-selLoadMore.setItems(loadedCountries)
+selSortRow.setItems(sortedCountries())
 //#endregion
 
 // Self-extraction: fetch this file's source, locate `//#region NAME` ...
