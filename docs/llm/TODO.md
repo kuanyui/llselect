@@ -67,7 +67,7 @@ Deferred, logged under "API design review" below: an `onActiveItemChange` event 
 
 ## Pinned rows and the filter-query event (ratified in principle; names pending)
 
-The design, the open owner decisions and the commit plan are in `handoff-popup-command-rows.md` (written before a context compaction). Start there.
+The design, the open owner decisions and the commit plan are in `handoff-popup-command-rows.md` (written before a context compaction). Start there. Committee rounds 10-12 (choose-all row as an action row; callback instance access, argued both ways) are in `archive/choose-all-and-callback-context-research.md`; the owner's decision on the callback contract is pending there and gates the "Callback context / instance access review" item below.
 
 ## Performance (open)
 

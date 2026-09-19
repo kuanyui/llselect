@@ -63,7 +63,11 @@ Demo rulings: 16.1 uses rows BEFORE the items; no "Clear all" row (the choose-al
 - Replies: context first - define every noun before any tally or label; short sentences; one fact per bullet; a reader with dyslexia and none of the earlier conversation must follow. Ask before starting work whenever a decision is the owner's; one feature per commit; verify before every commit; report failures plainly (a verify that failed once got amended, and the owner was told).
 - Pitfalls hit: a demo content fn read the instance variable inside the constructor (TDZ); AngularJS test arrays come from the page realm (`deepStrictEqual` on prototypes fails - spread first); `pgrep -f` matches the shell running it (use `^[c]laude -p` style patterns); `npm run check` rejects backticked paths that do not exist; every new AngularJS attribute must be added to `NG_KINDS` in `scripts/build-site.mjs`; commit subjects: one line, `type: [scope] summary`.
 
-## 5. What the next session should do first
+## 5. Rounds 10-12 (after this handoff was written)
+
+The owner re-opened two premises: whether the choose-all row is one of the action rows, and whether settings callbacks receive the widget instance. Rounds 10, 11 and 12 (the last a labeled one-sided round arguing AGAINST the instance, after round 11 leaned toward it) are recorded in `archive/choose-all-and-callback-context-research.md`, with the votes, the arguments and the open owner decision. Read it before touching the callback signatures or the choose-all row; the rename in section 3 and the pinned-rows plan are unaffected.
+
+## 6. What the next session should do first
 
 1. Read this file, `TODO.md` (the plan section and manual passes), `DESIGN.md` "Action rows", `A11Y.md` "Action rows" / "Slot controls".
 2. Put the four open decisions of section 3.1 to the owner in one message, with full TypeScript signatures for every name option (CLAUDE.md requires it).
