@@ -1163,48 +1163,97 @@ await initTreeSelect().catch(() => {
 })
 
 //#region 15.1
-// A pinned footer: createPopupFooterContentElFn runs ONCE, in the constructor,
-// and the returned node is yours for the instance's life - the library never
-// rebuilds it. The live count is written from onChange.
-const footerCountEl = document.createElement('div')
-footerCountEl.textContent = '0 chosen'
-const selFooterCount = new LLSelectMultiple(
-  document.getElementById('mount-footer-count'),
+// Tags in the trigger, the count in a pinned header. createPopupHeaderContentElFn
+// runs ONCE, in the constructor; the returned node is yours for the instance's
+// life. The count text is the library's own pack message, so a language
+// switch (setUiTranslationPack) localizes it too: just rewrite it from onChange.
+const headerCountEl = document.createElement('div')
+const selHeaderCount = new LLSelectMultiple(
+  document.getElementById('mount-header-count'),
   {
-  ariaLabel: 'Pick countries (footer count)',
-    placeholder: 'Pick countries (footer count)',
-    createPopupFooterContentElFn: () => footerCountEl,
-    onChange: (chosen) => { footerCountEl.textContent = chosen.length + ' chosen' },
+  ariaLabel: 'Pick countries (header count)',
+    placeholder: 'Pick countries (header count)',
+    triggerDisplay: 'tags',
+    filterable: true,
+    createPopupHeaderContentElFn: () => headerCountEl,
+    onChange: (chosen) => { writeHeaderCount(chosen.length) },
   }
 )
-selFooterCount.setItems(COUNTRIES)
+function writeHeaderCount(chosenCount) {
+  const pack = selHeaderCount.getUiTranslationPack()
+  headerCountEl.textContent = pack.triggerCountSummary(chosenCount, selHeaderCount.getItems().length)
+}
+selHeaderCount.setItems(COUNTRIES)
+selHeaderCount.setChosenItems(['Japan', 'Taiwan'])
+writeHeaderCount(2)
 //#endregion
 
 //#region 15.2
-// A pinned header moved ABOVE the filter input from a subclass constructor.
-// The library never rewrites the popup's child list, so the move sticks.
-// The header holds no focusable controls, so Shift+Tab from the filter input
-// still leaves the widget.
-class HeaderAboveFilterSelect extends LLSelectSingle {
-  constructor(el, settings) {
-    super(el, settings)
-    if (this.popupHeaderEl) { this.popupEl.prepend(this.popupHeaderEl) }
-  }
+// Column headings for two-column rows: the header repeats the row layout
+// (.user-row, name left, role right) in bold. Rows re-render per filter
+// keystroke; the header is built once and never scrolls.
+function createUserColumnsEl(user) {
+  const row = document.createElement('span')
+  row.className = 'user-row'
+  const name = document.createElement('span')
+  name.textContent = user.name
+  const role = document.createElement('small')
+  role.className = 'hint'
+  role.textContent = user.role
+  row.append(name, role)
+  return row
 }
-const selHeaderHint = new HeaderAboveFilterSelect(
-  document.getElementById('mount-header-hint'),
+const outHeaderColumns = document.getElementById('out-header-columns')
+const selHeaderColumns = new LLSelectSingle(
+  document.getElementById('mount-header-columns'),
   {
-  ariaLabel: 'Pick a country (header hint)',
-    placeholder: 'Pick a country (header hint)',
+  ariaLabel: 'Pick a user (column headings)',
+    placeholder: 'Pick a user (column headings)',
     filterable: true,
+    compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: (u) => u.name,
+    createItemContentElFn: createUserColumnsEl,
     createPopupHeaderContentElFn: () => {
-      const hint = document.createElement('small')
-      hint.textContent = 'Type to filter. Arrow keys move, Enter picks.'
-      return hint
+      const head = document.createElement('span')
+      head.className = 'user-row'
+      const name = document.createElement('strong')
+      name.textContent = 'Name'
+      const role = document.createElement('strong')
+      role.className = 'hint'
+      role.textContent = 'Role'
+      head.append(name, role)
+      return head
+    },
+    onChange: (u) => { outHeaderColumns.textContent = 'chosen: ' + (u ? u.name + ' (' + u.role + ')' : '(none)') },
+  }
+)
+selHeaderColumns.setItems(USERS)
+//#endregion
+
+//#region 15.3
+// A pinned footer link. Clicking it keeps DOM focus on the combobox (the
+// popup's mousedown rule); Tab reaches it while the popup is open; Esc on it
+// closes and returns focus to the trigger (A11Y.md "Slot controls").
+const outFooterLink = document.getElementById('out-footer-link')
+const selFooterLink = new LLSelectMultiple(
+  document.getElementById('mount-footer-link'),
+  {
+  ariaLabel: 'Pick countries (footer link)',
+    placeholder: 'Pick countries (footer link)',
+    createPopupFooterContentElFn: () => {
+      const link = document.createElement('a')
+      link.href = '#countries'
+      link.textContent = 'Manage countries...'
+      link.addEventListener('click', (ev) => {
+        ev.preventDefault() // a real app would navigate
+        selFooterLink.close()
+        outFooterLink.textContent = 'navigated to /countries (demo)'
+      })
+      return link
     },
   }
 )
-selHeaderHint.setItems(COUNTRIES)
+selFooterLink.setItems(COUNTRIES)
 //#endregion
 
 //#region 16.1
@@ -1275,6 +1324,35 @@ const selAddRow = new LLSelectSingle(
   }
 )
 selAddRow.setItems(addRowItems)
+//#endregion
+
+//#region 16.3
+// A paged list: the row after the items appends the next page with setItems.
+// The rows are rebuilt after every setItems, so the text shows what is left
+// and the row disables itself at the end; the active option stays on it, so
+// Enter again loads the next page.
+const PAGE = 10
+const outLoadMore = document.getElementById('out-load-more')
+let loadedCountries = COUNTRIES.slice(0, PAGE)
+const selLoadMore = new LLSelectSingle(
+  document.getElementById('mount-load-more'),
+  {
+  ariaLabel: 'Pick a country (paged)',
+    placeholder: 'Pick a country (paged)',
+    popupListActionRowsAfterItems: [
+      {
+        textFn: () => 'Load ' + PAGE + ' more (' + (COUNTRIES.length - loadedCountries.length) + ' left)',
+        disabledFn: () => loadedCountries.length >= COUNTRIES.length,
+        onActivate: () => {
+          loadedCountries = COUNTRIES.slice(0, loadedCountries.length + PAGE)
+          selLoadMore.setItems(loadedCountries)
+        },
+      },
+    ],
+    onChange: (item) => { outLoadMore.textContent = 'chosen: ' + (item ?? '(none)') },
+  }
+)
+selLoadMore.setItems(loadedCountries)
 //#endregion
 
 // Self-extraction: fetch this file's source, locate `//#region NAME` ...

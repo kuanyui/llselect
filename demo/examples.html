@@ -938,24 +938,37 @@
     </p>
 
     <article>
-      <h3>15.1 Footer shows the chosen count</h3>
-      <p class="hint"><code>createPopupFooterContentElFn</code> runs once; <code>onChange</code> writes the live count into the node it returned.</p>
+      <h3>15.1 Tags in the trigger, the count in the header</h3>
+      <p class="hint">The trigger shows chips, so the header takes over the count. The text is the library's own <code>triggerCountSummary</code> from <code>getUiTranslationPack()</code>: switching the language pack localizes it for free.</p>
       <div class="demo-split">
         <div class="demo-pane">
-          <div id="mount-footer-count"></div>
+          <div id="mount-header-count"></div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="15.1"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>15.2 Header hint moved above the filter input</h3>
-      <p class="hint">The default place is between the filter input and the list. A subclass constructor moves it above the input with one <code>prepend</code>; the library never rewrites the popup's child list.</p>
+      <h3>15.2 Column headings above two-column rows</h3>
+      <p class="hint">Rows show a name and a role; the header repeats the same layout in bold. It sits between the filter input and the list, so the headings stay while the rows scroll.</p>
       <div class="demo-split">
         <div class="demo-pane">
-          <div id="mount-header-hint"></div>
+          <div id="mount-header-columns"></div>
+          <div class="out" id="out-header-columns">chosen: (none)</div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="15.2"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>15.3 A footer link to a management page</h3>
+      <p class="hint">A pinned link under the list. A click keeps keyboard input on the combobox; Tab reaches the link while the popup is open, and Esc on it returns to the trigger.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-footer-link"></div>
+          <div class="out" id="out-footer-link">(nothing happened yet)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="15.3"><code></code></pre></details>
       </div>
     </article>
   </section>
@@ -990,6 +1003,18 @@
           <div class="out" id="out-add-row">chosen: (none)</div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="16.2"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>16.3 Load ten more, after the items</h3>
+      <p class="hint">A paged list. The last row appends the next page with <code>setItems</code>; its text shows how many are left and it disables itself at the end. The active option stays on the row, so Enter again loads the next page.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-load-more"></div>
+          <div class="out" id="out-load-more">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="16.3"><code></code></pre></details>
       </div>
     </article>
   </section>
