@@ -1276,6 +1276,60 @@ const selFooterLink = new LLSelectMultiple(
 selFooterLink.setItems(COUNTRIES)
 //#endregion
 
+//#region 15.4
+// The 16.1 commands as pinned header buttons, for comparison. Slot controls:
+// a click keeps DOM focus on the combobox, Tab reaches them while the popup
+// is open, Esc on them closes - but they are outside the arrow-key ring and
+// are not announced as options. onChange keeps both labels and states fresh;
+// the header node itself is built once.
+const HEADER_DEFAULTS = ['Japan', 'Taiwan']
+const outHeaderCommands = document.getElementById('out-header-commands')
+const headerSelectAllButton = document.createElement('button')
+headerSelectAllButton.type = 'button'
+const headerRestoreButton = document.createElement('button')
+headerRestoreButton.type = 'button'
+headerRestoreButton.textContent = 'Restore defaults'
+const selHeaderCommands = new LLSelectMultiple(
+  document.getElementById('mount-header-commands'),
+  {
+  ariaLabel: 'Pick countries (header commands)',
+    placeholder: 'Pick countries (header commands)',
+    createPopupHeaderContentElFn: () => {
+      const header = document.createElement('div')
+      header.style.display = 'flex'
+      header.style.gap = '0.5rem'
+      header.append(headerSelectAllButton, headerRestoreButton)
+      return header
+    },
+    onChange: (chosen) => {
+      outHeaderCommands.textContent = 'chosen: ' + JSON.stringify(chosen)
+      writeHeaderCommands()
+    },
+  }
+)
+headerSelectAllButton.addEventListener('click', () => {
+  if (selHeaderCommands.getChosenItems().length === selHeaderCommands.getItems().length) {
+    selHeaderCommands.unchooseAll()
+  } else {
+    selHeaderCommands.chooseAll() // the whole list; the built-in row acts on the visible subset instead
+  }
+})
+headerRestoreButton.addEventListener('click', () => {
+  if (headerRestoreButton.getAttribute('aria-disabled') === 'true') { return }
+  selHeaderCommands.setChosenItems(HEADER_DEFAULTS)
+})
+function writeHeaderCommands() {
+  const chosen = selHeaderCommands.getChosenItems()
+  headerSelectAllButton.textContent = chosen.length === selHeaderCommands.getItems().length ? 'Deselect all' : 'Select all'
+  const isDefault = chosen.length === HEADER_DEFAULTS.length && HEADER_DEFAULTS.every((c) => chosen.includes(c))
+  headerRestoreButton.setAttribute('aria-disabled', String(isDefault))
+  headerRestoreButton.style.opacity = isDefault ? '0.5' : ''
+}
+selHeaderCommands.setItems(COUNTRIES)
+selHeaderCommands.setChosenItems(HEADER_DEFAULTS)
+writeHeaderCommands()
+//#endregion
+
 //#region 16.1
 // Action rows before the items: the library builds each as a role="option"
 // row in the arrow-key ring, right after the choose-all row, so the arrow
