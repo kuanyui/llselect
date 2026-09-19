@@ -1208,10 +1208,11 @@ selHeaderHint.setItems(COUNTRIES)
 //#endregion
 
 //#region 16.1
-// Action rows after the items: the library builds each as a role="option" row
-// in the arrow-key ring. textFn / disabledFn run on every render and after
-// every chosen change, so both rows track the live selection. onActivate does
-// the work; the library neither chooses nor closes for it.
+// Action rows before the items: the library builds each as a role="option"
+// row in the arrow-key ring, right after the choose-all row, so the arrow
+// keys reach them before any item. textFn / disabledFn run on every render
+// and after every chosen change, so both rows track the live selection.
+// onActivate does the work; the library neither chooses nor closes for it.
 const DEFAULT_COUNTRIES = ['Japan', 'Taiwan']
 const outActionRows = document.getElementById('out-action-rows')
 const isDefaultChoice = () => {
@@ -1224,7 +1225,7 @@ const selActionRows = new LLSelectMultiple(
   ariaLabel: 'Pick countries (action rows)',
     placeholder: 'Pick countries (action rows)',
     chooseAllRow: true,
-    popupListActionRowsAfterItems: [
+    popupListActionRowsBeforeItems: [
       {
         textFn: () => 'Restore defaults',
         disabledFn: () => isDefaultChoice(),
