@@ -13,9 +13,13 @@ Process: design research plus four committee rounds recorded in `archive/popup-s
 - [x] **[QUALITY-111] - double divider between the choose-all row and the first row before the items**
   - Symptom: with `chooseAllRow: true` plus `popupListActionRowsBeforeItems`, that boundary drew two stacked 1px lines in every theme, against the rule's own comment.
   - Cause: the choose-all row carries `itemClass`, so it matched the `.llselect-item:not(.llselect-popup-list-action-row) + .llselect-popup-list-action-row` divider while keeping its own `border-bottom`.
-  - Fix: the left operand also excludes `.llselect-choose-all-row`, in all five themes; the manual pass item (e) in `TODO.md` eyeballs the three boundaries.
-  - Q: Why exclude the choose-all row in the new rule, not drop its own border?
-    - A: Its `border-bottom` is the existing shipped look; a new rule must not restyle an old element.
+  - Fix: the left operand also excludes `.llselect-choose-all-row`, in all five themes; superseded by QUALITY-123, which moved every divider to the block edges.
+  - Q: Why not keep the choose-all row's own `border-bottom` and merely exclude it from the new rule?
+    - A: Because the row's own line then sits INSIDE the command block once rows before the items exist (choose-all, line, command, line, items - two lines in three rows). A line belongs to a block edge, not to an element; drawing it as the next element's `border-top` renders identically when no command rows exist and draws one line otherwise. "Do not restyle an old element" was the wrong lesson: the old element's line was a block edge in disguise.
+- [x] **[QUALITY-123] - two lines inside the command block above the items**
+  - Symptom: with `chooseAllRow: true` plus rows before the items, the popup showed choose-all, a line, the command row, a line, the items - a line under every command row, unlike the one-line-under-the-block look of ng-select, Element Plus and Vuetify's select-all recipe (owner's eyeball on demo 16.1).
+  - Cause: the choose-all row drew its own `border-bottom` regardless of what followed it.
+  - Fix: the choose-all rule loses its border; the divider block draws one `border-top` on the first item or group after the choose-all row or after a command row, and one on the first command row after the items - identical pixels without command rows. All five themes; `TODO.md` manual pass item (e) reworded.
 - [x] **[QUALITY-116] - `setItems` left action rows stale after a compare-equal reload**
   - Symptom: while open, `setItems` with new objects for the same keys swapped the chosen references (no change fires), but a row whose `textFn` reads `getChosenItem()` kept the old object's fields.
   - Cause: `renderPopupList` built the rows before the variant's `onItemsChanged` swapped the references.

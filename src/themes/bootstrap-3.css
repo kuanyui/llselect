@@ -117,11 +117,9 @@
    tri-state); data-chosen-state is the hook if a theme wants to draw its own
    indicator, createChooseAllRowContentElFn the way to add a real one. The
    row also carries the plain item class, so hover / focused styling comes
-   from there. */
-
-.llselect-choose-all-row {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-}
+   from there. Its divider is drawn by the block-edge rules under "dividers
+   around the command rows": one line where the block above the items ends,
+   none between the row and a command row that follows it. */
 
 /* --- groups (Phase 10, matches .dropdown-header look) --------- */
 /* Static label by default; rect-based scroll math (keyboard.ts) allows a
@@ -166,12 +164,17 @@
   color: #999;
 }
 
-/* --- action rows (before / after the items) ---------------------- */
-/* Commands rendered as role="option" rows; they carry .llselect-item too, so
-   hover / focused / disabled styling comes from there. A divider marks the
-   two boundaries with the items through sibling combinators (`:has` is above
-   the browser floor). The choose-all row already draws its own line. */
+/* --- dividers around the command rows --------------------------- */
+/* The choose-all row and the action rows form one block above the items and
+   one below; they carry .llselect-item too, so hover / focused / disabled
+   styling comes from there. Exactly one line marks each block's edge with
+   the items, drawn as the next element's border-top through sibling
+   combinators (`:has` is above the browser floor). No line inside a block:
+   choose-all followed by a command row reads as one group, like the header
+   blocks of ng-select, Element Plus and Vuetify's select-all recipe. */
 
+.llselect-choose-all-row + .llselect-item:not(.llselect-popup-list-action-row),
+.llselect-choose-all-row + .llselect-group,
 .llselect-popup-list-action-row + .llselect-item:not(.llselect-popup-list-action-row),
 .llselect-popup-list-action-row + .llselect-group,
 .llselect-item:not(.llselect-popup-list-action-row):not(.llselect-choose-all-row) + .llselect-popup-list-action-row,
