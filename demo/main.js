@@ -1163,11 +1163,21 @@ await initTreeSelect().catch(() => {
 })
 
 //#region 15.1
-// Tags in the trigger, the count in a pinned header. createPopupHeaderContentElFn
-// runs ONCE, in the constructor; the returned node is yours for the instance's
-// life. The count text is the library's own pack message, so a language
-// switch (setUiTranslationPack) localizes it too: just rewrite it from onChange.
-const headerCountEl = document.createElement('div')
+// Tags in the trigger; the count and a Clear all button in a pinned header.
+// createPopupHeaderContentElFn runs ONCE, in the constructor, and the returned
+// node is yours for the instance's life: onChange rewrites the count and the
+// button state. The count text is the library's own pack message, so a
+// language switch (setUiTranslationPack) localizes it too. The button is a
+// slot control (A11Y.md "Slot controls"): a click keeps DOM focus on the
+// combobox, Tab reaches it while the popup is open, Esc on it closes.
+const headerCountEl = document.createElement('span')
+const headerClearButton = document.createElement('button')
+headerClearButton.type = 'button'
+headerClearButton.textContent = 'Clear all'
+headerClearButton.addEventListener('click', () => {
+  if (selHeaderCount.getChosenItems().length === 0) { return } // aria-disabled, not native disabled: stays perceivable
+  selHeaderCount.setChosenItems([])
+})
 const selHeaderCount = new LLSelectMultiple(
   document.getElementById('mount-header-count'),
   {
@@ -1175,17 +1185,27 @@ const selHeaderCount = new LLSelectMultiple(
     placeholder: 'Pick countries (header count)',
     triggerDisplay: 'tags',
     filterable: true,
-    createPopupHeaderContentElFn: () => headerCountEl,
-    onChange: (chosen) => { writeHeaderCount(chosen.length) },
+    createPopupHeaderContentElFn: () => {
+      const header = document.createElement('div')
+      header.style.display = 'flex'
+      header.style.alignItems = 'center'
+      header.style.gap = '0.5rem'
+      headerClearButton.style.marginLeft = 'auto'
+      header.append(headerCountEl, headerClearButton)
+      return header
+    },
+    onChange: (chosen) => { writeHeaderState(chosen.length) },
   }
 )
-function writeHeaderCount(chosenCount) {
+function writeHeaderState(chosenCount) {
   const pack = selHeaderCount.getUiTranslationPack()
   headerCountEl.textContent = pack.triggerCountSummary(chosenCount, selHeaderCount.getItems().length)
+  headerClearButton.setAttribute('aria-disabled', String(chosenCount === 0))
+  headerClearButton.style.opacity = chosenCount === 0 ? '0.5' : ''
 }
 selHeaderCount.setItems(COUNTRIES)
 selHeaderCount.setChosenItems(['Japan', 'Taiwan'])
-writeHeaderCount(2)
+writeHeaderState(2)
 //#endregion
 
 //#region 15.2
