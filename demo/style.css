@@ -714,3 +714,41 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
    only .llselect-* elements, never the app's label. (Bootstrap 3/4 CDN themes
    restyle bare <label> on their own; BS5 uses .form-label, Tailwind resets.) */
 .field-label { display: block; font-weight: 600; margin-bottom: 0.3rem; }
+
+/* --- 15. popup header / footer slots ------------------------------------- */
+/* #region 15.1 */
+/* A header holding a count and one small command: the command is a real
+   <button> (keyboard and AT semantics for free) drawn as a link, so the slot
+   reads as light text, not a toolbar. aria-disabled greys it (no native
+   disabled: it stays perceivable). */
+.popup-header-row { display: flex; align-items: center; gap: 0.5rem; }
+.popup-header-row .push-right { margin-left: auto; }
+.popup-link-button {
+  font: inherit;
+  font-size: 0.9em;
+  color: #1c4d8f;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.popup-link-button[aria-disabled='true'] { color: #999; cursor: not-allowed; text-decoration: none; }
+/* #endregion */
+/* #region 15.4 */
+/* Header commands that look exactly like the rows of 16.1, only pinned: the
+   header's own padding is zeroed and each command is a <button> wearing the
+   theme's item class (padding, hover, disabled look come from the theme, in
+   every theme), with the UA button chrome reset. */
+#mount-header-commands .llselect-popup-header { padding: 0; }
+.popup-row-button {
+  display: block;
+  width: 100%;
+  text-align: start;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+/* #endregion */

@@ -1187,10 +1187,8 @@ const selHeaderCount = new LLSelectMultiple(
     filterable: true,
     createPopupHeaderContentElFn: () => {
       const header = document.createElement('div')
-      header.style.display = 'flex'
-      header.style.alignItems = 'center'
-      header.style.gap = '0.5rem'
-      headerClearButton.style.marginLeft = 'auto'
+      header.className = 'popup-header-row'
+      headerClearButton.className = 'popup-link-button push-right'
       header.append(headerCountEl, headerClearButton)
       return header
     },
@@ -1200,8 +1198,7 @@ const selHeaderCount = new LLSelectMultiple(
 function writeHeaderState(chosenCount) {
   const pack = selHeaderCount.getUiTranslationPack()
   headerCountEl.textContent = pack.triggerCountSummary(chosenCount, selHeaderCount.getItems().length)
-  headerClearButton.setAttribute('aria-disabled', String(chosenCount === 0))
-  headerClearButton.style.opacity = chosenCount === 0 ? '0.5' : ''
+  headerClearButton.setAttribute('aria-disabled', String(chosenCount === 0)) // styled by the demo CSS
 }
 selHeaderCount.setItems(COUNTRIES)
 selHeaderCount.setChosenItems(['Japan', 'Taiwan'])
@@ -1277,18 +1274,20 @@ selFooterLink.setItems(COUNTRIES)
 //#endregion
 
 //#region 15.4
-// The 16.1 commands as pinned header buttons, for comparison. Slot controls:
-// a click keeps DOM focus on the combobox, Tab reaches them while the popup
-// is open, Esc on them closes - but they are outside the arrow-key ring and
-// are not announced as options. onChange keeps both labels and states fresh;
-// the header node itself is built once.
+// The 16.1 commands as pinned header rows, for comparison. Each command is a
+// real <button> (keyboard and AT semantics for free) wearing the theme's item
+// class, so every theme paints it like a list row; the demo CSS zeroes the
+// header padding and resets the button chrome. Slot controls: a click keeps
+// DOM focus on the combobox, Tab reaches them while the popup is open, Esc on
+// them closes - but they are outside the arrow-key ring and are not announced
+// as options. The counting text is the library's own chooseAllRowText.
 const HEADER_DEFAULTS = ['Japan', 'Taiwan']
 const outHeaderCommands = document.getElementById('out-header-commands')
-const headerSelectAllButton = document.createElement('button')
-headerSelectAllButton.type = 'button'
-const headerRestoreButton = document.createElement('button')
-headerRestoreButton.type = 'button'
-headerRestoreButton.textContent = 'Restore defaults'
+const headerSelectAllRow = document.createElement('button')
+headerSelectAllRow.type = 'button'
+const headerRestoreRow = document.createElement('button')
+headerRestoreRow.type = 'button'
+headerRestoreRow.textContent = 'Restore defaults'
 const selHeaderCommands = new LLSelectMultiple(
   document.getElementById('mount-header-commands'),
   {
@@ -1296,9 +1295,10 @@ const selHeaderCommands = new LLSelectMultiple(
     placeholder: 'Pick countries (header commands)',
     createPopupHeaderContentElFn: () => {
       const header = document.createElement('div')
-      header.style.display = 'flex'
-      header.style.gap = '0.5rem'
-      header.append(headerSelectAllButton, headerRestoreButton)
+      for (const row of [headerSelectAllRow, headerRestoreRow]) {
+        row.className = 'popup-row-button ' + selHeaderCommands.classIdMap.itemClass
+      }
+      header.append(headerSelectAllRow, headerRestoreRow)
       return header
     },
     onChange: (chosen) => {
@@ -1307,23 +1307,24 @@ const selHeaderCommands = new LLSelectMultiple(
     },
   }
 )
-headerSelectAllButton.addEventListener('click', () => {
+headerSelectAllRow.addEventListener('click', () => {
   if (selHeaderCommands.getChosenItems().length === selHeaderCommands.getItems().length) {
     selHeaderCommands.unchooseAll()
   } else {
     selHeaderCommands.chooseAll() // the whole list; the built-in row acts on the visible subset instead
   }
 })
-headerRestoreButton.addEventListener('click', () => {
-  if (headerRestoreButton.getAttribute('aria-disabled') === 'true') { return }
+headerRestoreRow.addEventListener('click', () => {
+  if (headerRestoreRow.getAttribute('aria-disabled') === 'true') { return }
   selHeaderCommands.setChosenItems(HEADER_DEFAULTS)
 })
 function writeHeaderCommands() {
   const chosen = selHeaderCommands.getChosenItems()
-  headerSelectAllButton.textContent = chosen.length === selHeaderCommands.getItems().length ? 'Deselect all' : 'Select all'
+  const total = selHeaderCommands.getItems().length
+  headerSelectAllRow.textContent = selHeaderCommands.getUiTranslationPack().chooseAllRowText(chosen.length, total)
   const isDefault = chosen.length === HEADER_DEFAULTS.length && HEADER_DEFAULTS.every((c) => chosen.includes(c))
-  headerRestoreButton.setAttribute('aria-disabled', String(isDefault))
-  headerRestoreButton.style.opacity = isDefault ? '0.5' : ''
+  headerRestoreRow.setAttribute('aria-disabled', String(isDefault))
+  headerRestoreRow.classList.toggle(selHeaderCommands.classIdMap.itemDisabledClass, isDefault) // the theme's disabled look
 }
 selHeaderCommands.setItems(COUNTRIES)
 selHeaderCommands.setChosenItems(HEADER_DEFAULTS)
