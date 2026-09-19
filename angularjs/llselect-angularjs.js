@@ -172,7 +172,7 @@
    * none on purpose - it is per-field copy, not a house style - and neither do
    * items / disabled, which are per-field state.
    */
-  function commonSettings(scope, attrs, parsed, config, exceptionHandler) {
+  function commonSettings(scope, attrs, parsed, config, exceptionHandler, getSel) {
     var settings = parsed.settings(scope)
     settings.ariaLabelledBy = attrs.llAriaLabelledby || null
     settings.ariaLabel = attrs.llAriaLabel || null
@@ -212,9 +212,9 @@
     if (popupHeaderContentFn) { settings.createPopupHeaderContentElFn = popupHeaderContentFn }
     var popupFooterContentFn = evalFnAttr(scope, attrs, 'llPopupFooterContentFn')
     if (popupFooterContentFn) { settings.createPopupFooterContentElFn = popupFooterContentFn }
-    var actionRowsBefore = evalActionRowsAttr(scope, attrs, 'llPopupListActionRowsBeforeItems', exceptionHandler)
+    var actionRowsBefore = evalActionRowsAttr(scope, attrs, 'llPopupListActionRowsBeforeItems', exceptionHandler, getSel)
     if (actionRowsBefore) { settings.popupListActionRowsBeforeItems = actionRowsBefore }
-    var actionRowsAfter = evalActionRowsAttr(scope, attrs, 'llPopupListActionRowsAfterItems', exceptionHandler)
+    var actionRowsAfter = evalActionRowsAttr(scope, attrs, 'llPopupListActionRowsAfterItems', exceptionHandler, getSel)
     if (actionRowsAfter) { settings.popupListActionRowsAfterItems = actionRowsAfter }
     wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler)
     wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler)
@@ -252,12 +252,20 @@
    * can serve several widgets - and its onActivate is wrapped like an event
    * expression: the core runs it from its own pointer / keyboard handlers,
    * outside any digest, so scope writes inside it (an ng-model value, vm
-   * state) need $apply; errors go to $exceptionHandler. textFn / disabledFn /
+   * state) need $apply; errors go to $exceptionHandler. The wrapper hands
+   * onActivate the widget instance as its first argument (MEDIUM-110): an
+   * instance call such as sel.setChosenItems([]) fires the core onChange
+   * outside the write-back gate, so it reaches ng-model through
+   * $setViewValue like a click - ng-change runs, the control turns dirty -
+   * while a plain model write stays programmatic. The core's own descriptor
+   * passes nothing; this argument is wrapper-only. textFn / disabledFn /
    * createContentElFn run outside any digest, per render, like
-   * ll-item-content-fn.
+   * ll-item-content-fn, and receive nothing.
+   * @param {() => object} getSel - late-bound: the instance exists only after
+   *   the settings are built
    * @returns {Array | null}
    */
-  function evalActionRowsAttr(scope, attrs, name, exceptionHandler) {
+  function evalActionRowsAttr(scope, attrs, name, exceptionHandler, getSel) {
     if (!attrs[name]) { return null }
     var rows = scope.$eval(attrs[name])
     if (!Array.isArray(rows)) {
@@ -275,8 +283,9 @@
         createContentElFn: typeof row.createContentElFn === 'function' ? row.createContentElFn : null,
         disabledFn: typeof row.disabledFn === 'function' ? row.disabledFn : null,
         onActivate: function () {
-          if (!scope.$root.$$phase) { scope.$apply(function () { activate() }); return }
-          try { activate() } catch (e) { exceptionHandler(e) }
+          var sel = getSel()
+          if (!scope.$root.$$phase) { scope.$apply(function () { activate(sel) }); return }
+          try { activate(sel) } catch (e) { exceptionHandler(e) }
         },
       }
     })
@@ -415,7 +424,7 @@
         link: function (scope, element, attrs, ctrls) {
           var ngModelCtrl = ctrls[0]
           var parsed = compileLlOptions($parse, attrs.llOptions)
-          var settings = commonSettings(scope, attrs, parsed, llselectConfig, $exceptionHandler)
+          var settings = commonSettings(scope, attrs, parsed, llselectConfig, $exceptionHandler, function () { return sel })
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
           if (resolveHighlight(scope, attrs, llselectConfig, settings)) {
@@ -467,7 +476,7 @@
         link: function (scope, element, attrs, ctrls) {
           var ngModelCtrl = ctrls[0]
           var parsed = compileLlOptions($parse, attrs.llOptions)
-          var settings = commonSettings(scope, attrs, parsed, llselectConfig, $exceptionHandler)
+          var settings = commonSettings(scope, attrs, parsed, llselectConfig, $exceptionHandler, function () { return sel })
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
           if (attrs.llTriggerDisplay) { settings.triggerDisplay = evalEnumAttr(scope, attrs, 'llTriggerDisplay') }

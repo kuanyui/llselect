@@ -605,17 +605,17 @@
     <h2>13. Action rows: ll-popup-list-action-rows-before-items / ll-popup-list-action-rows-after-items</h2>
     <p>
       Commands rendered as option rows before and after the items, reachable
-      with the arrow keys. <code>onActivate</code> runs in a digest, so writing
-      the <code>ng-model</code> value is enough; the row text and its disabled
-      state follow every change. A model write counts as a programmatic change,
-      so <code>ng-change</code> does not run for it.
+      with the arrow keys. <code>onActivate</code> receives the widget
+      instance; calling it counts as the user's own change, so
+      <code>ng-change</code> runs like after a click. The row text and its
+      disabled state follow every change.
     </p>
     <div class="demo-row" data-src="13">
-      <llselect-multiple ll-aria-label="Languages (action rows)" ng-model="vm.langsRows" ll-popup-list-action-rows-before-items="vm.langRowsBefore" ll-popup-list-action-rows-after-items="vm.langRowsAfter"
+      <llselect-multiple ll-aria-label="Languages (action rows)" ng-model="vm.langsRows" ng-change="vm.langsRowsChanges = vm.langsRowsChanges + 1" ll-popup-list-action-rows-before-items="vm.langRowsBefore" ll-popup-list-action-rows-after-items="vm.langRowsAfter"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>
-    <div class="out">ng-model = {{ vm.langsRows | json }}</div>
+    <div class="out">ng-model = {{ vm.langsRows | json }} &middot; ng-change ran {{ vm.langsRowsChanges }} times</div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="13"><code></code></pre></details>
   </section>
 

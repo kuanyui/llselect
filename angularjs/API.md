@@ -231,8 +231,8 @@ vm.updateFooterCount = function () { footerEl.textContent = vm.langs.length + ' 
 **Expression** -> `popupListActionRowsBeforeItems`. Commands rendered as option rows at the top of the list, inside the arrow-key ring, before the items.
 
 - Evaluated once at link time to an array of `{ textFn, createContentElFn?, disabledFn?, onActivate }` objects, the core `LLSelectPopupListActionRow` shape. The array and its objects are copied; later edits to yours do nothing.
-- `onActivate` runs inside a digest, wrapped like [`ll-on-open`](#ll-on-open): write scope state in it (an `ng-model` value, `vm` fields) and the view follows; errors go to `$exceptionHandler`. It runs on Enter, on Space while the filter is off, and on click. llselect neither chooses nor closes for it.
-- A model write inside `onActivate` (`vm.langs = []`) reaches the widget the way any model write does: as a programmatic change. `ng-change` does not run and the form control stays pristine. When the command must count as the user's own change, call the instance instead - `instance().setChosenItems([])` from a directive that `require`s the controller, see [`instance()`](#instance) - and the widget reports it through `ng-model` / `ng-change` like a click.
+- `onActivate` runs inside a digest, wrapped like [`ll-on-open`](#ll-on-open); errors go to `$exceptionHandler`. It runs on Enter, on Space while the filter is off, and on click. llselect neither chooses nor closes for it.
+- `onActivate` receives the widget instance as its first argument. Call it when the command must count as the user's own change: `onActivate: function (sel) { sel.setChosenItems([]) }` reaches `ng-model` through the same path as a click, so `ng-change` runs and the control turns dirty. A plain model write instead (`vm.langs = []`) stays a programmatic change: the view follows, but `ng-change` does not run and the control stays pristine. Pick one; doing both writes the value twice. The core's own descriptor passes no argument; this one is wrapper-only.
 - Like `ng-click`, `onActivate` is not awaited. After an `await`, digest yourself (`$applyAsync`, `$timeout`).
 - `textFn` / `disabledFn` / `createContentElFn` run outside any digest, per render, like [`ll-item-content-fn`](#ll-item-content-fn); they run again after every chosen change, so they may read live state.
 - Keyboard and screen-reader rules: core `docs/llm/A11Y.md`, "Action rows". A row is announced as an option with its text; it has no selected state.
@@ -246,7 +246,7 @@ vm.langs = []
 vm.langRows = [{
   textFn: function () { return 'Clear all (' + vm.langs.length + ')' },
   disabledFn: function () { return vm.langs.length === 0 },
-  onActivate: function () { vm.langs = [] }, // a scope write: the wrap runs it in a digest
+  onActivate: function (sel) { sel.setChosenItems([]) }, // the user-change path: ng-model + ng-change, like a click
 }]
 ```
 

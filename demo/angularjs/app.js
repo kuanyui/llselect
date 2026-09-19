@@ -218,18 +218,19 @@
       vm.footerCountEl = function () { return footerCountEl }
       vm.updateFooterCount = function () { footerCountEl.textContent = vm.langsFooter.length + ' chosen' }
 
-      /** 13: action rows - plain objects; onActivate is run in a digest by the directive, so a model write is enough. */
+      /** 13: action rows - plain objects. The directive hands onActivate the widget instance: calling it is the user-change path (ng-model + ng-change, like a click); a plain model write would stay programmatic. */
+      vm.langsRowsChanges = 0
       vm.langRowsBefore = [
         {
           textFn: function () { return 'Pick the first two' },
-          onActivate: function () { vm.langsRows = LANGUAGES.slice(0, 2) },
+          onActivate: function (sel) { sel.setChosenItems(LANGUAGES.slice(0, 2)) },
         },
       ]
       vm.langRowsAfter = [
         {
           textFn: function () { return 'Clear all (' + vm.langsRows.length + ')' },
           disabledFn: function () { return vm.langsRows.length === 0 },
-          onActivate: function () { vm.langsRows = [] },
+          onActivate: function (sel) { sel.setChosenItems([]) },
         },
       ]
 

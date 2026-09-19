@@ -922,3 +922,57 @@ test('action rows: the caller array and its objects are copied at link; later ed
   rows[0].click()
   assert.equal(vm.hits, 1)
 })
+
+test('MEDIUM-110: onActivate receives the instance; calling it is the user-change path (ng-change, $dirty); a model write stays programmatic', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm"><llselect-multiple ng-model="vm.t" ng-change="vm.changes = vm.changes + 1" ll-options="f for f in vm.fruits"
+      ll-popup-list-action-rows-before-items="vm.rows"></llselect-multiple></div>`,
+    controller: function () {
+      const vm = this
+      vm.fruits = FRUITS.slice()
+      vm.t = ['Apple', 'Banana']
+      vm.changes = 0
+      vm.seen = null
+      vm.rows = [
+        { textFn: function () { return 'clear via instance' }, onActivate: function (sel) { vm.seen = sel; sel.setChosenItems([]) } },
+        { textFn: function () { return 'set via model' }, onActivate: function () { vm.t = ['Cherry'] } },
+      ]
+    },
+  })
+  assert.deepEqual(a.errors, [])
+  const ngModel = a.ng.element(a.$('llselect-multiple')).controller('ngModel')
+  assert.equal(ngModel.$dirty, false)
+  a.$('.llselect-trigger').click()
+  const rows = a.$$('.llselect-popup-list-action-row')
+  rows[0].click()
+  assert.equal(typeof a.scope.vm.seen.setChosenItems, 'function') // the live widget instance
+  assert.deepEqual([...a.scope.vm.t], []) // the model followed through $setViewValue (spread: the array comes from the page realm)
+  assert.equal(a.scope.vm.changes, 1) // ng-change ran, like after a click
+  assert.equal(ngModel.$dirty, true)
+  rows[1].click() // the model-write idiom: the view follows, but it is programmatic
+  assert.deepEqual([...a.scope.vm.t], ['Cherry'])
+  assert.equal(a.scope.vm.changes, 1) // ng-change did not run
+  assert.deepEqual(a.$$('.llselect-item[aria-selected="true"]').map((el) => el.textContent), ['Cherry']) // the widget rendered it
+})
+
+test('MEDIUM-110: one shared descriptor array serves two widgets, each onActivate getting its own instance', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single id="s1" ng-model="vm.a" ll-options="f for f in vm.fruits" ll-popup-list-action-rows-after-items="vm.rows"></llselect-single>
+      <llselect-single id="s2" ng-model="vm.b" ll-options="f for f in vm.fruits" ll-popup-list-action-rows-after-items="vm.rows"></llselect-single></div>`,
+    controller: function () {
+      const vm = this
+      vm.fruits = FRUITS.slice()
+      vm.a = null
+      vm.b = null
+      vm.rows = [{ textFn: function () { return 'pick Banana' }, onActivate: function (sel) { sel.setChosenItem('Banana') } }]
+    },
+  })
+  a.$('#s2 .llselect-trigger').click()
+  a.$('#s2 .llselect-popup-list-action-row').click()
+  assert.equal(a.scope.vm.b, 'Banana')
+  assert.equal(a.scope.vm.a, null) // the other widget's row would have written vm.a
+  assert.equal(typeof a.scope.vm.rows[0].onActivate, 'function') // the app's descriptor is untouched
+})
