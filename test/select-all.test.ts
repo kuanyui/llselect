@@ -254,3 +254,32 @@ test('the first item becoming disabled in place hands focus back to the choose-a
   // choose-all row (A11Y.md ring order) - focus lands there, not forward on b.
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), row(sel)!.id)
 })
+
+test('getVisibleEnabledItems() is public: an app-built select-all row acts on the visible enabled subset', () => {
+  let sel: LLSelectMultiple<string>
+  sel = new LLSelectMultiple<string>(mount(), {
+    filterable: true,
+    itemDisabledFn: item => item === 'banana',
+    popupListTrailingActionRows: [{
+      textFn: () => {
+        const all = sel.getVisibleEnabledItems()
+        return `Select all (${all.filter(i => sel.isChosen(i)).length} of ${all.length})`
+      },
+      onActivate: () => { sel.toggleAllVisible() },
+    }],
+  })
+  sel.setItems(['apple', 'apricot', 'banana', 'kiwi'])
+  sel.open()
+  assert.deepEqual([...sel.getVisibleEnabledItems()], ['apple', 'apricot', 'kiwi'])
+  const input = sel.popupEl.querySelector('input')!
+  input.value = 'ap'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.deepEqual([...sel.getVisibleEnabledItems()], ['apple', 'apricot'])
+  const rowEl = sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListActionRowClass}`)!
+  assert.equal(rowEl.textContent, 'Select all (0 of 2)')
+  assert.equal(rowEl.getAttribute('aria-selected'), null, 'a command row carries no selected state')
+  rowEl.click()
+  assert.deepEqual([...sel.getChosenItems()], ['apple', 'apricot'])
+  const rebuilt = sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListActionRowClass}`)!
+  assert.equal(rebuilt.textContent, 'Select all (2 of 2)')
+})

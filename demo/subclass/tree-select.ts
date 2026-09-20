@@ -187,7 +187,7 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
    * counts wrong). This override narrows `toggleAllVisible` + the choose-all
    * row; `toggleAll` below narrows the whole-list variant.
    */
-  protected override getVisibleEnabledItems(): readonly LLTreeNode[] {
+  public override getVisibleEnabledItems(): readonly LLTreeNode[] {
     return super.getVisibleEnabledItems().filter(node => !isBranch(node))
   }
 

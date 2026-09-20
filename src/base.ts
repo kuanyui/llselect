@@ -336,6 +336,11 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - Assistive technology announces a row as an option with its text and a
    *   positional count; it has no selected state. If the command changes the
    *   selection, say so in the row text or a live region.
+   * - A "select all" placed here is a command, not the choose-all row: call
+   *   `toggleAllVisible()` from `onActivate` and count with
+   *   `getVisibleEnabledItems()` (both on `LLSelectMultiple`). It has no
+   *   selected state and is never the active option when the popup opens.
+   *   For a row with selection state, use `chooseAllRow`.
    * - Contract: `docs/llm/A11Y.md` "Action rows"; design: `docs/llm/DESIGN.md`.
    * @group Action rows
    */

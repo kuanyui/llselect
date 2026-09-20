@@ -401,17 +401,27 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Return the visible enabled subset: the items `toggleAllVisible` and the
-   * choose-all row act on.
-   * - It is `getVisibleItems()` minus the effectively disabled items
-   *   (`itemDisabledFn`, disabled groups).
-   * - Both the choose-all row (its counts, tri-state, and click) and
-   *   `toggleAllVisible` read this one method, so an override keeps them in
-   *   agreement. Example: the tree-select demo subclass narrows it to leaf
-   *   nodes.
-   * @group Subclassing: semantics
+   * Return the items a "select all" acts on: the visible, enabled ones.
+   * - Visible: the item matches the active filter query. If no query is
+   *   active, every item is visible. This is the same list as
+   *   `getVisibleItems()`.
+   * - Enabled: not disabled via `itemDisabledFn`, and not in a disabled group.
+   * - The choose-all row (its counts, its tri-state, its click) and
+   *   `toggleAllVisible()` both read this method.
+   * - Use it to build your own select-all as an action row, for example in
+   *   the trailing rows: count the chosen items with `isChosen`, write the
+   *   text with `getUiTranslationPack().chooseAllRowText(chosen, total)`, and
+   *   call `toggleAllVisible()` from `onActivate`.
+   * - Such a row is a command, not the built-in row. It has no `aria-selected`
+   *   and no `data-chosen-state`, the themes give it no tri-state look, it is
+   *   never the active option when the popup opens, and it stays rendered
+   *   when this list is empty. For those behaviors, use `chooseAllRow`.
+   * - Override it to change the subset. The tree-select demo narrows it to
+   *   leaf nodes; the choose-all row and `toggleAllVisible()` follow the
+   *   override.
+   * @group Selection
    */
-  protected getVisibleEnabledItems(): readonly T[] {
+  public getVisibleEnabledItems(): readonly T[] {
     return this.getVisibleItems().filter(i => !this.isItemEffectivelyDisabled(i))
   }
 
