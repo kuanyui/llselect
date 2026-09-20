@@ -292,3 +292,24 @@ test('slot content is inside the root, so focus moving onto it keeps the popup o
   input.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: button }))
   assert.equal(sel.isOpened(), true)
 })
+
+test('the content fns receive a construction context: the class map and the resolved pack', () => {
+  const seen: { header?: unknown; footer?: unknown } = {}
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x',
+    uiTranslationPack: ja,
+    createPopupHeaderContentElFn: (ctx) => {
+      seen.header = ctx
+      const el = contentEl('h')
+      el.className = ctx.classIdMap.itemClass
+      return el
+    },
+    createPopupFooterContentElFn: (ctx) => { seen.footer = ctx; return contentEl(ctx.uiTranslationPack.chooseAllRowText(1, 2)) },
+  })
+  const header = seen.header as { classIdMap: unknown; uiTranslationPack: unknown }
+  assert.equal(header.classIdMap, sel.classIdMap, 'the same class map the instance exposes')
+  assert.equal(header.uiTranslationPack, sel.getUiTranslationPack(), 'the resolved pack')
+  assert.equal(sel.popupHeaderEl!.firstElementChild!.className, sel.classIdMap.itemClass)
+  assert.equal(sel.popupFooterEl!.textContent, ja.chooseAllRowText(1, 2))
+  assert.deepEqual(Object.keys(header).sort(), ['classIdMap', 'uiTranslationPack'], 'nothing else is handed out')
+})

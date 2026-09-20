@@ -10,6 +10,7 @@ export type {
   LLSelectChangeMeta,
   LLSelectChangeSource,
   LLSelectClassIdMap,
+  LLSelectConstructionContext,
   LLSelectOutsideClickBehavior,
   LLSelectPopupListActionRow,
   LLSelectSettingsInputOf,

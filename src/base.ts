@@ -86,6 +86,22 @@ export interface LLSelectPopupListActionRow {
 }
 
 /**
+ * What a settings function may read while the instance is still being built.
+ * - The library passes it to the functions that the constructor calls:
+ *   `createPopupHeaderContentElFn` and `createPopupFooterContentElFn`.
+ * - `new` has not returned yet. The variable that will hold the instance is
+ *   still empty. Do not read it here.
+ * - `classIdMap`: the resolved class and id names.
+ * - `uiTranslationPack`: the resolved translation pack.
+ * - If you need the instance, do that work in an event handler on the element
+ *   you return. Handlers run after `new` returns.
+ */
+export interface LLSelectConstructionContext {
+  readonly classIdMap: Readonly<LLSelectClassIdMap>
+  readonly uiTranslationPack: Readonly<LLSelectUiTranslationPack>
+}
+
+/**
  * Resolved (defaults applied) settings shared by all select variants.
  * Subclasses (`LLSelectSingle`, `LLSelectMultiple`) extend this with their
  * mode-specific options such as `onChange`.
@@ -286,8 +302,12 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Content for a pinned header above the option list, without subclassing.
    * - The library calls it ONCE, inside the constructor, before `new` returns.
-   *   Handlers may close over the instance variable, but must not read it
-   *   during the call.
+   *   The variable that will hold the instance is still empty: do not read it
+   *   in this function. Event handlers on the returned element may read it,
+   *   because they run after `new` returns.
+   * - `ctx` is a {@link LLSelectConstructionContext}: `classIdMap` (for the
+   *   theme's classes) and `uiTranslationPack`. That is all this function can
+   *   safely read.
    * - Return an `HTMLElement`: the library wraps it in the `popupHeaderEl`
    *   container (class `popupHeaderClass`, no ARIA role) and keeps that node
    *   until `destroy()`. `open()`, `rerender()` and `setUiTranslationPack()`
@@ -309,18 +329,19 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   keyboard and focus rules: `docs/llm/A11Y.md`.
    * @group Popup slots
    */
-  createPopupHeaderContentElFn: (() => HTMLElement | null) | null
+  createPopupHeaderContentElFn: ((ctx: LLSelectConstructionContext) => HTMLElement | null) | null
   /**
    * Content for a pinned footer below the option list, without subclassing.
    * - Same contract as {@link createPopupHeaderContentElFn}: called once in
-   *   the constructor, wrapped in the `popupFooterEl` container (class
-   *   `popupFooterClass`, no ARIA role), never rebuilt by the library.
+   *   the constructor with a {@link LLSelectConstructionContext}, wrapped in
+   *   the `popupFooterEl` container (class `popupFooterClass`, no ARIA role),
+   *   never rebuilt by the library.
    * - `null` (setting default, or returned): no footer element is built.
    * - Where it sits: after the no-results message, at the bottom of the
    *   popup, outside the scroll area.
    * @group Popup slots
    */
-  createPopupFooterContentElFn: (() => HTMLElement | null) | null
+  createPopupFooterContentElFn: ((ctx: LLSelectConstructionContext) => HTMLElement | null) | null
   /**
    * Commands rendered as `role="option"` rows at the TOP of the option list,
    * after the choose-all row when there is one, in array order.
@@ -3218,13 +3239,15 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * The pinned header's content element.
    * - The library calls it once, from {@link createPopupHeaderEl}, inside the
    *   constructor. You never call it.
-   * - Default reads `createPopupHeaderContentElFn`; `null` (setting unset, or
+   * - Default calls `createPopupHeaderContentElFn` with a
+   *   {@link LLSelectConstructionContext}; `null` (setting unset, or
    *   returned) = no header at all.
    * - Override only when extending; for one-off content pass the setting.
    * @group Subclassing: rendering
    */
   protected createPopupHeaderContentEl(): HTMLElement | null {
-    return this.settings.createPopupHeaderContentElFn ? this.settings.createPopupHeaderContentElFn() : null
+    const fn = this.settings.createPopupHeaderContentElFn
+    return fn ? fn(this.createConstructionContext()) : null
   }
 
   /**
@@ -3250,13 +3273,20 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * The pinned footer's content element.
    * - The library calls it once, from {@link createPopupFooterEl}, inside the
    *   constructor. You never call it.
-   * - Default reads `createPopupFooterContentElFn`; `null` (setting unset, or
+   * - Default calls `createPopupFooterContentElFn` with a
+   *   {@link LLSelectConstructionContext}; `null` (setting unset, or
    *   returned) = no footer at all.
    * - Override only when extending; for one-off content pass the setting.
    * @group Subclassing: rendering
    */
   protected createPopupFooterContentEl(): HTMLElement | null {
-    return this.settings.createPopupFooterContentElFn ? this.settings.createPopupFooterContentElFn() : null
+    const fn = this.settings.createPopupFooterContentElFn
+    return fn ? fn(this.createConstructionContext()) : null
+  }
+
+  /** The read-only view a construction-time settings function receives. */
+  private createConstructionContext(): LLSelectConstructionContext {
+    return { classIdMap: this.classIdMap, uiTranslationPack: this.settings.uiTranslationPack }
   }
 
   /** Shared body of the two slot builders: `null` content = no container. */

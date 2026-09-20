@@ -252,8 +252,9 @@ Settings on `LLSelectBaseSettings` (s3 by return type), Container-Content law (s
 
 | Vis     | Name                           | Signature                          | s3            |
 | ------- | ------------------------------ | ---------------------------------- | ------------- |
-| setting | `createPopupHeaderContentElFn` | `() => HTMLElement \| null`        | `create*ElFn` |
-| setting | `createPopupFooterContentElFn` | `() => HTMLElement \| null`        | `create*ElFn` |
+| setting | `createPopupHeaderContentElFn` | `(ctx: LLSelectConstructionContext) => HTMLElement \| null` | `create*ElFn` |
+| setting | `createPopupFooterContentElFn` | `(ctx: LLSelectConstructionContext) => HTMLElement \| null` | `create*ElFn` |
+| type    | `LLSelectConstructionContext`  | `{ classIdMap; uiTranslationPack }`, read-only | descriptive noun: what a construction-time function may read; named for the moment, not the place, so it can serve any construction-time function (`popup-rows-and-callbacks.md` section 6) |
 
 | Vis       | Name                          | Convention                                                        |
 | --------- | ----------------------------- | ----------------------------------------------------------------- |

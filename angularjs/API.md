@@ -204,7 +204,7 @@ $scope.renderRow = function (fruit) {
 
 **Expression** -> `createPopupHeaderContentElFn`. Content for a pinned header between the filter input and the option list; it never scrolls with the items.
 
-- Evaluated once at link time to a function `() => HTMLElement | null`. That function runs ONCE, right then, at link time - inside whatever digest is compiling the element, if any; do not rely on one. The returned node lives until the element is destroyed.
+- Evaluated once at link time to a function `(ctx) => HTMLElement | null`. `ctx` is the core's `LLSelectConstructionContext`: `classIdMap` and the resolved translation pack, the two things that are safe to read while the widget is being built. A function that ignores `ctx` works too. That function runs ONCE, right then, at link time - inside whatever digest is compiling the element, if any; do not rely on one. The returned node lives until the element is destroyed.
 - llselect never rebuilds the node. Update it yourself, for example from `ng-change`.
 - `null` (returned, or no attribute) = no header element at all.
 - Not `$compile`d: build plain DOM. A button inside works with the mouse and keeps keyboard input on the combobox; a text field inside must stop its own `mousedown` from bubbling.
