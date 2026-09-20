@@ -80,4 +80,4 @@ Follow-ups the judges asked for with R1 + C1: `LLSelectPopupSlotContext` exporte
 ## Status
 
 - Rounds 10-12 answered the owner's questions but were framed; their votes are recorded above for the arguments, not for the counts.
-- Rounds 13-14 (unframed, two stages, anonymized): R1 + C1 unanimously, R1 + C2 the unanimous runner-up. The owner decides; the follow-ups above are part of R1 + C1 if it is chosen.
+- Rounds 13-14 (unframed, two stages, anonymized): R1 + C1 unanimously, R1 + C2 the unanimous runner-up. The owner chose R1 + C1; it landed in commits `937e5db` to `9581257`, followed by the review round at the top of `../FIXME.md`. The long-form reasons: `../popup-rows-and-callbacks.md`.

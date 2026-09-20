@@ -128,10 +128,11 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * Whether the popup shows a choose-all row (the industry's "select all")
    * as the first option of the listbox.
    * - Default `false`.
-   * - Activating the row (Enter / click) runs `toggleAllVisible`: it toggles
-   *   the items `getVisibleEnabledItems()` returns. That set is defined on
-   *   `toggleAllVisible`. The public `chooseAll` / `unchooseAll` / `toggleAll`
-   *   keep their whole-list semantics.
+   * - Activating the row (Enter, click, or Space while the filter is off)
+   *   runs `toggleAllVisible`: it toggles the items `getVisibleEnabledItems()`
+   *   returns; that method's docstring defines exactly which items those
+   *   are. The public `chooseAll` / `unchooseAll` / `toggleAll` keep their
+   *   whole-list semantics.
    * - The row is tri-state (none / some / all chosen), carried by the
    *   counting text's numbers and the `data-chosen-state` CSS hook.
    * - Its accessible name comes from `uiTranslationPack.chooseAllRowText`.

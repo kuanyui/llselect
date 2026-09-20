@@ -942,9 +942,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `new`.
    * - `data-edge-to-items` is set on every list render: `"true"` when that
    *   render lists items, `"false"` when it lists none; absent before the
-   *   first render. A theme-only hook: the themes draw the block's edge line
-   *   only when it is true, so two blocks that touch draw no line between
-   *   them.
+   *   first render.
+   * - It is a CSS hook for the themes: they draw the block's edge line only
+   *   when it is true, so two blocks that touch draw no line between them.
    * @group DOM elements
    */
   public readonly popupListPinnedLeadingRowsEl: HTMLElement | null
