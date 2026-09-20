@@ -5,8 +5,8 @@ import { LLSelectMultiple } from '../src/multiple.js'
 import { LLSelectSingle } from '../src/single.js'
 import type { LLSelectPopupListActionRow, LLSelectChangeMeta } from '../src/base.js'
 
-// Action rows: app commands rendered by the library as role="option" rows before
-// / after the items, inside the arrow-key ring. Contract: A11Y.md "Action rows";
+// Action rows: app commands rendered by the library as role="option" rows above or below
+// the items, inside the arrow-key ring. Contract: A11Y.md "Action rows";
 // design: DESIGN.md "Action rows".
 
 function mount(): HTMLElement {
@@ -36,19 +36,19 @@ function row(text: string, extra: Partial<LLSelectPopupListActionRow> = {}): LLS
   return r
 }
 
-test('rows render before / after the items in array order, as plain option rows', () => {
+test('rows render above / below the items in array order, as plain option rows', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     ariaLabel: 'x',
     chooseAllRow: true,
-    popupListActionRowsBeforeItems: [row('B0'), row('B1')],
-    popupListActionRowsAfterItems: [row('A0')],
+    popupListLeadingActionRows: [row('B0'), row('B1')],
+    popupListTrailingActionRows: [row('A0')],
   })
   sel.setItems(['a', 'b'])
   sel.open()
   assert.deepEqual(optionTexts(sel), ['Select all (0 of 2)', 'B0', 'B1', 'a', 'b', 'A0'])
   const m = sel.classIdMap
-  const b0 = sel.popupListEl.querySelector(`#${m.popupListId}-action-row-before-items0`) as HTMLElement
-  const a0 = sel.popupListEl.querySelector(`#${m.popupListId}-action-row-after-items0`) as HTMLElement
+  const b0 = sel.popupListEl.querySelector(`#${m.popupListId}-action-row-leading0`) as HTMLElement
+  const a0 = sel.popupListEl.querySelector(`#${m.popupListId}-action-row-trailing0`) as HTMLElement
   assert.ok(b0 && a0)
   for (const el of [b0, a0]) {
     assert.equal(el.getAttribute('role'), 'option')
@@ -63,7 +63,7 @@ test('rows render before / after the items in array order, as plain option rows'
 
 test('the arrays are copied at construction; later edits to the caller array do nothing', () => {
   const before = [row('B0')]
-  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListActionRowsBeforeItems: before })
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListLeadingActionRows: before })
   before.push(row('B1'))
   sel.setItems(['a'])
   sel.open()
@@ -73,7 +73,7 @@ test('the arrays are copied at construction; later edits to the caller array do 
 test('custom content fills the visuals; the accessible name stays textFn', () => {
   const sel = new LLSelectSingle<string>(mount(), {
     ariaLabel: 'x',
-    popupListActionRowsAfterItems: [row('Restore defaults', {
+    popupListTrailingActionRows: [row('Restore defaults', {
       createContentElFn: () => { const el = document.createElement('b'); el.textContent = 'RESET'; return el },
     })],
   })
@@ -84,12 +84,12 @@ test('custom content fills the visuals; the accessible name stays textFn', () =>
   assert.equal(el.querySelector('b')?.textContent, 'RESET')
 })
 
-test('the ring: choose-all, rows before items, items, rows after items; Home / End / Page keys clamp across it', () => {
+test('the ring: choose-all row, leading action rows, items, trailing action rows; Home / End / Page keys clamp across it', () => {
   const sel = new LLSelectMultiple<string>(mount(), {
     ariaLabel: 'x',
     chooseAllRow: true,
-    popupListActionRowsBeforeItems: [row('B0')],
-    popupListActionRowsAfterItems: [row('A0'), row('A1')],
+    popupListLeadingActionRows: [row('B0')],
+    popupListTrailingActionRows: [row('A0'), row('A1')],
   })
   sel.setItems(['a', 'b', 'c'])
   sel.open()
@@ -109,12 +109,12 @@ test('a disabled row is skipped by the arrow keys, is not clickable, and is re-c
   let a0Disabled = true
   const a0 = row('A0', { disabledFn: () => a0Disabled })
   const a1 = row('A1')
-  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListActionRowsAfterItems: [a0, a1] })
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListTrailingActionRows: [a0, a1] })
   sel.setItems(['a'])
   sel.open()
   fireKey(sel.triggerEl, 'End'); assert.equal(activeText(sel), 'A1')
   fireKey(sel.triggerEl, 'ArrowUp'); assert.equal(activeText(sel), 'a') // A0 skipped
-  const a0El = sel.popupListEl.querySelector(`#${sel.classIdMap.popupListId}-action-row-after-items0`) as HTMLElement
+  const a0El = sel.popupListEl.querySelector(`#${sel.classIdMap.popupListId}-action-row-trailing0`) as HTMLElement
   assert.equal(a0El.getAttribute('aria-disabled'), 'true')
   assert.ok(a0El.classList.contains(sel.classIdMap.itemDisabledClass))
   a0El.click()
@@ -134,7 +134,7 @@ test('Enter, Space (filter inactive) and click run onActivate as a user change; 
   const clear = row('Clear all', { onActivate: () => { sel.setChosenItems([]) } })
   sel = new LLSelectMultiple<string>(mount(), {
     ariaLabel: 'x',
-    popupListActionRowsAfterItems: [clear],
+    popupListTrailingActionRows: [clear],
     onChange: (_c, _p, m) => { metas.push(m) },
   })
   sel.setItems(['a', 'b'])
@@ -148,7 +148,7 @@ test('Enter, Space (filter inactive) and click run onActivate as a user change; 
   assert.equal(sel.isOpened(), true) // a row never closes the popup by itself
   assert.equal(activeText(sel), 'Clear all') // the rebuilt row keeps the active option
   const plain = row('noop')
-  const s2 = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListActionRowsBeforeItems: [plain] })
+  const s2 = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListLeadingActionRows: [plain] })
   s2.setItems(['a'])
   s2.open()
   fireKey(s2.triggerEl, 'ArrowUp') // from a onto the row
@@ -162,7 +162,7 @@ test('Enter, Space (filter inactive) and click run onActivate as a user change; 
 
 test('single: a row activates without closing; Enter on an item still picks and closes', () => {
   const add = row('Add new...')
-  const sel = new LLSelectSingle<string>(mount(), { ariaLabel: 'x', popupListActionRowsBeforeItems: [add] })
+  const sel = new LLSelectSingle<string>(mount(), { ariaLabel: 'x', popupListLeadingActionRows: [add] })
   sel.setItems(['a'])
   sel.open()
   assert.equal(activeText(sel), 'a') // never opens on a row
@@ -182,7 +182,7 @@ test('textFn / disabledFn are live: rebuilt after every chosen change in both va
   let selM: LLSelectMultiple<string>
   selM = new LLSelectMultiple<string>(mount(), {
     ariaLabel: 'x',
-    popupListActionRowsAfterItems: [{
+    popupListTrailingActionRows: [{
       textFn: () => { textCalls += 1; return `${selM.getChosenItems().length} chosen` },
       disabledFn: () => selM.getChosenItems().length === 0,
       onActivate: () => {},
@@ -206,7 +206,7 @@ test('textFn / disabledFn are live: rebuilt after every chosen change in both va
   let selS: LLSelectSingle<string>
   selS = new LLSelectSingle<string>(mount(), {
     ariaLabel: 'x',
-    popupListActionRowsBeforeItems: [{ textFn: () => `chosen: ${selS.getChosenItem() ?? 'none'}`, onActivate: () => {} }],
+    popupListLeadingActionRows: [{ textFn: () => `chosen: ${selS.getChosenItem() ?? 'none'}`, onActivate: () => {} }],
   })
   selS.setItems(['a', 'b'])
   selS.open()
@@ -215,7 +215,7 @@ test('textFn / disabledFn are live: rebuilt after every chosen change in both va
 })
 
 test('a focused row rebuilt in place keeps the active option on the new element', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListActionRowsAfterItems: [row('A0')] })
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListTrailingActionRows: [row('A0')] })
   sel.setItems(['a'])
   sel.open()
   fireKey(sel.triggerEl, 'End')
@@ -232,7 +232,7 @@ test('a focused row that disables itself keeps the active option; Enter then doe
   let activations = 0
   let sel: LLSelectMultiple<string>
   const restore = row('Restore', { disabledFn: () => done, onActivate: () => { activations += 1; done = true; sel.setChosenItems(['a']) } })
-  sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListActionRowsAfterItems: [restore] })
+  sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListTrailingActionRows: [restore] })
   sel.setItems(['a', 'b'])
   sel.open()
   fireKey(sel.triggerEl, 'End')
@@ -248,7 +248,7 @@ test('a focused row that disables itself keeps the active option; Enter then doe
 })
 
 test('the vanish clamp never lands on an action row (hideChosenRows)', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', hideChosenRows: true, popupListActionRowsAfterItems: [row('A0')] })
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', hideChosenRows: true, popupListTrailingActionRows: [row('A0')] })
   sel.setItems(['a', 'b'])
   sel.open()
   fireKey(sel.triggerEl, 'ArrowDown') // b
@@ -264,7 +264,7 @@ test('the vanish clamp never lands on an action row (hideChosenRows)', () => {
 
 test('rows stay rendered and reachable while a filter query matches nothing; a keystroke never lands on a row', () => {
   const clear = row('Clear all')
-  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', filterable: true, popupListActionRowsBeforeItems: [clear] })
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', filterable: true, popupListLeadingActionRows: [clear] })
   sel.setItems(['apple', 'banana'])
   sel.open()
   const input = sel.popupEl.querySelector('input')!
@@ -285,7 +285,7 @@ test('rows stay rendered and reachable while a filter query matches nothing; a k
 })
 
 test('typeahead never matches an action row', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListActionRowsBeforeItems: [row('salt')] })
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListLeadingActionRows: [row('salt')] })
   sel.setItems(['apple', 'salmon'])
   sel.open()
   fireKey(sel.triggerEl, 's')
@@ -296,8 +296,8 @@ test('rows sit outside the groups; End reaches the row after the last group', ()
   const sel = new LLSelectSingle<string>(mount(), {
     ariaLabel: 'x',
     itemToGroupKeyFn: i => i[0]!,
-    popupListActionRowsBeforeItems: [row('B0')],
-    popupListActionRowsAfterItems: [row('A0')],
+    popupListLeadingActionRows: [row('B0')],
+    popupListTrailingActionRows: [row('A0')],
   })
   sel.setItems(['a1', 'a2', 'b1'])
   sel.open()
@@ -323,8 +323,8 @@ test('without rows nothing changes: toggleItem keeps the O(1) item swap and no r
 
 test('a subclass can replace the row element or its content through the protected methods', () => {
   class Custom extends LLSelectMultiple<string> {
-    protected override createPopupListActionRowAfterItemsEl(r: LLSelectPopupListActionRow, index: number): HTMLElement {
-      const el = super.createPopupListActionRowAfterItemsEl(r, index)
+    protected override createPopupListTrailingActionRowEl(r: LLSelectPopupListActionRow, index: number): HTMLElement {
+      const el = super.createPopupListTrailingActionRowEl(r, index)
       el.dataset['custom'] = 'yes'
       return el
     }
@@ -334,7 +334,7 @@ test('a subclass can replace the row element or its content through the protecte
       return el
     }
   }
-  const sel = new Custom(mount(), { ariaLabel: 'x', popupListActionRowsAfterItems: [row('A0')] })
+  const sel = new Custom(mount(), { ariaLabel: 'x', popupListTrailingActionRows: [row('A0')] })
   sel.setItems(['a'])
   sel.open()
   const el = sel.popupListEl.querySelector(`.${sel.classIdMap.popupListActionRowClass}`) as HTMLElement
@@ -344,7 +344,7 @@ test('a subclass can replace the row element or its content through the protecte
 })
 
 test('close() drops the rows and the active option; reopening rebuilds them', () => {
-  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListActionRowsAfterItems: [row('A0')] })
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', popupListTrailingActionRows: [row('A0')] })
   sel.setItems(['a'])
   sel.open()
   fireKey(sel.triggerEl, 'End')
@@ -360,7 +360,7 @@ test('rows are rebuilt AFTER onChange ran, so textFn sees what the handler wrote
   let note = 'initial'
   const sel = new LLSelectMultiple<string>(mount(), {
     ariaLabel: 'x',
-    popupListActionRowsAfterItems: [{ textFn: () => `note: ${note}`, onActivate: () => {} }],
+    popupListTrailingActionRows: [{ textFn: () => `note: ${note}`, onActivate: () => {} }],
     onChange: (chosen) => { note = `${chosen.length} chosen` },
   })
   sel.setItems(['a', 'b'])
@@ -380,7 +380,7 @@ test('setItems that swaps a chosen object for a compare-equal reload refreshes t
   selM = new LLSelectMultiple<Item>(mount(), {
     ariaLabel: 'x',
     compareFn: (a, b) => a.id === b.id,
-    popupListActionRowsAfterItems: [{ textFn: () => selM.getChosenItems().map(i => i.name).join(',') || 'none', onActivate: () => {} }],
+    popupListTrailingActionRows: [{ textFn: () => selM.getChosenItems().map(i => i.name).join(',') || 'none', onActivate: () => {} }],
     onChange: () => { changes += 1 },
   })
   const v1 = [{ id: 1, name: 'one' }, { id: 2, name: 'two' }]
@@ -397,7 +397,7 @@ test('setItems that swaps a chosen object for a compare-equal reload refreshes t
   selS = new LLSelectSingle<Item>(mount(), {
     ariaLabel: 'x',
     compareFn: (a, b) => a.id === b.id,
-    popupListActionRowsBeforeItems: [{ textFn: () => selS.getChosenItem()?.name ?? 'none', onActivate: () => {} }],
+    popupListLeadingActionRows: [{ textFn: () => selS.getChosenItem()?.name ?? 'none', onActivate: () => {} }],
   })
   selS.setItems(v1)
   selS.setChosenItem(v1[1]!)

@@ -207,7 +207,7 @@
       vm.iface = undefined // 11, ll-filter-fn
       vm.iface2 = undefined // 8e, filter chain
       vm.langsFooter = [] // 12, ll-popup-footer-content-fn
-      vm.langsRows = [] // 13, ll-popup-list-action-rows-after-items
+      vm.langsRows = [] // 13, ll-popup-list-trailing-action-rows
 
       /** 12: pinned popup header / footer. Each fn runs once at link time; ng-change keeps the footer count current. */
       var headerHintEl = document.createElement('small')

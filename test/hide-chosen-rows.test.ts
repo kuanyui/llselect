@@ -79,7 +79,7 @@ test('choose-all row acts on the listed rows and empties the list, then leaves w
   assert.deepEqual([...sel.getChosenItems()].sort(), ['a', 'b', 'c'])
   assert.deepEqual(itemTexts(sel), [])
   // Nothing actionable is listed anymore, so the choose-all row itself is
-  // gone (the standing rule: no actionable rows -> no leading row).
+  // gone (the standing rule: no actionable rows -> no choose-all row).
   assert.equal(sel.popupListEl.querySelector(`.${sel.classIdMap.chooseAllRowClass}`), null)
 })
 

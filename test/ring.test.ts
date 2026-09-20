@@ -111,11 +111,11 @@ test('setItems while open clamps the active option into the new list', () => {
   assert.equal(activeText(sel), 'Select all (0 of 2)')
 })
 
-test('the protected focus API from a subclass: focusedIndex, setFocusedIndex, focusLeadingRow', () => {
+test('the protected focus API from a subclass: focusedIndex, setFocusedIndex, focusChooseAllRow', () => {
   class Probe extends LLSelectMultiple<string> {
     index(): number { return this.focusedIndex }
     focusItem(i: number): void { this.setFocusedIndex(i) }
-    focusRow(): boolean { return this.focusLeadingRow() }
+    focusRow(): boolean { return this.focusChooseAllRow() }
   }
   const sel = new Probe(mount(), { chooseAllRow: true })
   sel.setItems(['a', 'b', 'c'])
@@ -163,7 +163,7 @@ test('Enter on the row toggles the visible enabled subset and keeps the active o
   assert.equal(activeText(sel), 'Select all (0 of 2)')
 })
 
-test('single: no leading row exists; Home / End move between the first and last enabled items', () => {
+test('single: no choose-all row exists; Home / End move between the first and last enabled items', () => {
   const sel = new LLSelectSingle<string>(mount(), { itemDisabledFn: i => i === 'a' })
   sel.setItems(['a', 'b', 'c'])
   sel.open()

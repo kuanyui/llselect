@@ -602,16 +602,16 @@
   </section>
 
   <section>
-    <h2>13. Action rows: ll-popup-list-action-rows-before-items / ll-popup-list-action-rows-after-items</h2>
+    <h2>13. Action rows: ll-popup-list-leading-action-rows / ll-popup-list-trailing-action-rows</h2>
     <p>
-      Commands rendered as option rows before and after the items, reachable
+      Commands rendered as option rows above and below the items, reachable
       with the arrow keys. <code>onActivate</code> receives the widget
       instance; calling it counts as the user's own change, so
       <code>ng-change</code> runs like after a click. The row text and its
       disabled state follow every change.
     </p>
     <div class="demo-row" data-src="13">
-      <llselect-multiple ll-aria-label="Languages (action rows)" ng-model="vm.langsRows" ng-change="vm.langsRowsChanges = vm.langsRowsChanges + 1" ll-popup-list-action-rows-before-items="vm.langRowsBefore" ll-popup-list-action-rows-after-items="vm.langRowsAfter"
+      <llselect-multiple ll-aria-label="Languages (action rows)" ng-model="vm.langsRows" ng-change="vm.langsRowsChanges = vm.langsRowsChanges + 1" ll-popup-list-leading-action-rows="vm.langRowsBefore" ll-popup-list-trailing-action-rows="vm.langRowsAfter"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>

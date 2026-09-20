@@ -988,14 +988,14 @@
   <section>
     <h2>16. Action rows: commands inside the list</h2>
     <p class="hint">
-      Rows the library renders as options before or after the items, so a
+      Rows the library renders as options above or below the items, so a
       keyboard user reaches them with the arrow keys. They scroll with the
       list. Each row is a plain object: its text, whether it is disabled, and
       what activation does. The library never chooses or closes for it.
     </p>
 
     <article>
-      <h3>16.1 Restore defaults, before the items</h3>
+      <h3>16.1 Restore defaults, above the items</h3>
       <p class="hint">The row reads the live selection: <code>textFn</code> and <code>disabledFn</code> run again after every change. It follows the choose-all row, so ArrowDown reaches it before any item.</p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -1007,7 +1007,7 @@
     </article>
 
     <article>
-      <h3>16.2 Add a country, before the items</h3>
+      <h3>16.2 Add a country, above the items</h3>
       <p class="hint">A single select with one row above the items. Activating it asks for a name, adds it, picks it and closes; the row itself never closes the popup.</p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -1019,7 +1019,7 @@
     </article>
 
     <article>
-      <h3>16.3 Sort the list, before the items</h3>
+      <h3>16.3 Sort the list, above the items</h3>
       <p class="hint">The row flips the order with <code>setItems</code> and shows the current one. A filter query re-applies to the new order, and the chosen item stays chosen.</p>
       <div class="demo-split">
         <div class="demo-pane">

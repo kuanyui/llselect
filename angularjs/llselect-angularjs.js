@@ -212,10 +212,10 @@
     if (popupHeaderContentFn) { settings.createPopupHeaderContentElFn = popupHeaderContentFn }
     var popupFooterContentFn = evalFnAttr(scope, attrs, 'llPopupFooterContentFn')
     if (popupFooterContentFn) { settings.createPopupFooterContentElFn = popupFooterContentFn }
-    var actionRowsBefore = evalActionRowsAttr(scope, attrs, 'llPopupListActionRowsBeforeItems', exceptionHandler, getSel)
-    if (actionRowsBefore) { settings.popupListActionRowsBeforeItems = actionRowsBefore }
-    var actionRowsAfter = evalActionRowsAttr(scope, attrs, 'llPopupListActionRowsAfterItems', exceptionHandler, getSel)
-    if (actionRowsAfter) { settings.popupListActionRowsAfterItems = actionRowsAfter }
+    var actionRowsBefore = evalActionRowsAttr(scope, attrs, 'llPopupListLeadingActionRows', exceptionHandler, getSel)
+    if (actionRowsBefore) { settings.popupListLeadingActionRows = actionRowsBefore }
+    var actionRowsAfter = evalActionRowsAttr(scope, attrs, 'llPopupListTrailingActionRows', exceptionHandler, getSel)
+    if (actionRowsAfter) { settings.popupListTrailingActionRows = actionRowsAfter }
     wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler)
     wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler)
 
@@ -246,7 +246,7 @@
   }
 
   /**
-   * ll-popup-list-action-rows-before-items / -after-items: read once at link
+   * ll-popup-list-leading-action-rows / -trailing-action-rows: read once at link
    * time to an array of the core's LLSelectPopupListActionRow descriptors.
    * Each is cloned - the app's array and objects stay untouched, so one array
    * can serve several widgets - and its onActivate is wrapped like an event

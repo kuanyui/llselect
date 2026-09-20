@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 
-// Phase 13 choose-all row: opt-in tri-state leading row acting on the VISIBLE
+// Phase 13 choose-all row: opt-in tri-state row, always first, acting on the VISIBLE
 // enabled subset. Contract: docs/llm/A11Y.md "Choose-all"; design: docs/llm/TODO.md.
 
 function mount(): HTMLElement {
@@ -111,7 +111,7 @@ test('opens focused on the first chosen item (not the row) when something is cho
   assert.equal(document.getElementById(active)!.textContent, 'b')
 })
 
-test('toggleItem keeps the row fresh via the O(1) leading-row replace (items untouched)', () => {
+test('toggleItem keeps the row fresh via the O(1) choose-all-row replace (items untouched)', () => {
   const sel = new LLSelectMultiple<string>(mount(), { chooseAllRow: true })
   sel.setItems(['a', 'b'])
   sel.open()
@@ -158,7 +158,7 @@ test('default content: just the plain counting text - no indicator element', () 
   sel.open()
   assert.equal(row(sel)!.textContent, 'Select all (0 of 2)')
   assert.equal(row(sel)!.childElementCount, 0) // pure text: no glyph span, no svg
-  sel.toggleItem('a') // O(1) leading-row replace keeps the label fresh
+  sel.toggleItem('a') // O(1) choose-all-row replace keeps the label fresh
   assert.equal(row(sel)!.textContent, 'Select all (1 of 2)')
   assert.equal(row(sel)!.getAttribute('data-chosen-state'), 'some') // the CSS hook stays
 })
@@ -245,7 +245,7 @@ test('the first item becoming disabled in place hands focus back to the choose-a
   })
   sel.setItems(['a', 'b', 'c'])
   sel.open()
-  fireKey(sel.triggerEl, 'ArrowDown') // leading row -> item a
+  fireKey(sel.triggerEl, 'ArrowDown') // choose-all row -> item a
   const aRow = sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')[1]!
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), aRow.id, 'precondition: focus sits on a')
   disabled = true

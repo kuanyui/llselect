@@ -539,7 +539,7 @@ test('typeahead (multiple): Space right after typing toggles the focused row', (
 
 test('typeahead (multiple): the choose-all row is never a match', () => {
   // Default choose-all text starts with "Select" - typing "s" must land on
-  // the item, not the leading row.
+  // the item, not the choose-all row.
   const sel = mountMulti(['salt', 'pepper'], { chooseAllRow: true })
   sel.open()
   fireKey(sel.triggerEl, 's')

@@ -815,11 +815,11 @@ test('ll-popup-footer-content-fn must evaluate to a function', () => {
   assert.match(String(a.errors[0]), /ll-popup-footer-content-fn must evaluate to a function/)
 })
 
-test('ll-popup-list-action-rows-after-items: rows render, onActivate runs in a digest, the app objects stay untouched', () => {
+test('ll-popup-list-trailing-action-rows: rows render, onActivate runs in a digest, the app objects stay untouched', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm"><span id="n">{{ vm.n }}</span><llselect-multiple ng-model="vm.t" ll-options="f for f in vm.fruits"
-      ll-popup-list-action-rows-after-items="vm.rows"></llselect-multiple></div>`,
+      ll-popup-list-trailing-action-rows="vm.rows"></llselect-multiple></div>`,
     controller: function () {
       const vm = this
       vm.fruits = FRUITS.slice()
@@ -850,11 +850,11 @@ test('ll-popup-list-action-rows-after-items: rows render, onActivate runs in a d
   assert.equal(typeof original.onActivate, 'function')
 })
 
-test('ll-popup-list-action-rows-before-items: an error inside onActivate goes to $exceptionHandler; a non-array attribute is rejected', () => {
+test('ll-popup-list-leading-action-rows: an error inside onActivate goes to $exceptionHandler; a non-array attribute is rejected', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm"><llselect-single ng-model="vm.f" ll-options="f for f in vm.fruits"
-      ll-popup-list-action-rows-before-items="vm.rows"></llselect-single></div>`,
+      ll-popup-list-leading-action-rows="vm.rows"></llselect-single></div>`,
     controller: function () {
       this.fruits = FRUITS.slice()
       this.rows = [{ textFn: function () { return 'boom' }, onActivate: function () { throw new Error('row boom') } }]
@@ -866,18 +866,18 @@ test('ll-popup-list-action-rows-before-items: an error inside onActivate goes to
   assert.match(String(a.errors[0]), /row boom/)
   const b = boot({
     deps: ['llselect'],
-    html: `<div ng-controller="C as vm"><llselect-single ng-model="vm.f" ll-options="f for f in vm.fruits" ll-popup-list-action-rows-before-items="vm.rows"></llselect-single></div>`,
+    html: `<div ng-controller="C as vm"><llselect-single ng-model="vm.f" ll-options="f for f in vm.fruits" ll-popup-list-leading-action-rows="vm.rows"></llselect-single></div>`,
     controller: function () { this.fruits = FRUITS.slice(); this.rows = 'oops' },
   })
   assert.equal(b.errors.length, 1)
-  assert.match(String(b.errors[0]), /ll-popup-list-action-rows-before-items must evaluate to an array/)
+  assert.match(String(b.errors[0]), /ll-popup-list-leading-action-rows must evaluate to an array/)
 })
 
 test('action rows: activation from inside a digest runs the $eval branch; errors still reach $exceptionHandler', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm"><span id="n">{{ vm.n }}</span><llselect-multiple ng-model="vm.t" ll-options="f for f in vm.fruits"
-      ll-popup-list-action-rows-before-items="vm.rows"></llselect-multiple></div>`,
+      ll-popup-list-leading-action-rows="vm.rows"></llselect-multiple></div>`,
     controller: function () {
       const vm = this
       vm.fruits = FRUITS.slice()
@@ -902,7 +902,7 @@ test('action rows: the caller array and its objects are copied at link; later ed
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm"><llselect-multiple ng-model="vm.t" ll-options="f for f in vm.fruits"
-      ll-popup-list-action-rows-after-items="vm.rows"></llselect-multiple></div>`,
+      ll-popup-list-trailing-action-rows="vm.rows"></llselect-multiple></div>`,
     controller: function () {
       const vm = this
       vm.fruits = FRUITS.slice()
@@ -927,7 +927,7 @@ test('MEDIUM-110: onActivate receives the instance; calling it is the user-chang
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm"><llselect-multiple ng-model="vm.t" ng-change="vm.changes = vm.changes + 1" ll-options="f for f in vm.fruits"
-      ll-popup-list-action-rows-before-items="vm.rows"></llselect-multiple></div>`,
+      ll-popup-list-leading-action-rows="vm.rows"></llselect-multiple></div>`,
     controller: function () {
       const vm = this
       vm.fruits = FRUITS.slice()
@@ -960,8 +960,8 @@ test('MEDIUM-110: one shared descriptor array serves two widgets, each onActivat
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm">
-      <llselect-single id="s1" ng-model="vm.a" ll-options="f for f in vm.fruits" ll-popup-list-action-rows-after-items="vm.rows"></llselect-single>
-      <llselect-single id="s2" ng-model="vm.b" ll-options="f for f in vm.fruits" ll-popup-list-action-rows-after-items="vm.rows"></llselect-single></div>`,
+      <llselect-single id="s1" ng-model="vm.a" ll-options="f for f in vm.fruits" ll-popup-list-trailing-action-rows="vm.rows"></llselect-single>
+      <llselect-single id="s2" ng-model="vm.b" ll-options="f for f in vm.fruits" ll-popup-list-trailing-action-rows="vm.rows"></llselect-single></div>`,
     controller: function () {
       const vm = this
       vm.fruits = FRUITS.slice()

@@ -265,7 +265,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `chooseAllRow`, `hideChosenRows`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
 | Popup width                          | `popupWidthPolicy: 'fit-content' \| 'match-trigger'` (default `'fit-content'` - grows to content like a native select)   |
 | Rich rendering without subclassing   | `createItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
-| Action rows: commands in the list    | `popupListActionRowsBeforeItems`, `popupListActionRowsAfterItems` - option rows in the arrow-key ring; see Action rows |
+| Action rows: commands in the list    | `popupListLeadingActionRows`, `popupListTrailingActionRows` - option rows in the arrow-key ring; see Action rows |
 | Popup header / footer, pinned        | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update; see Popup header / footer |
 | i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir` |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
@@ -386,14 +386,14 @@ const sel = new LLSelectMultiple(el, {
 
 #### Action rows: commands inside the list
 
-A row is a command a keyboard user reaches with the arrow keys. It sits before or after the items and scrolls with them. For pinned content nobody runs, use a header or footer instead.
+A row is a command a keyboard user reaches with the arrow keys. It sits above or below the items and scrolls with them. For pinned content nobody runs, use a header or footer instead.
 
 ```js
 const DEFAULTS = ['Japan', 'Taiwan']
 const isSameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x))
 let sel
 sel = new LLSelectMultiple(el, {
-  popupListActionRowsAfterItems: [
+  popupListTrailingActionRows: [
     {
       textFn: () => 'Restore defaults',
       disabledFn: () => isSameSet(sel.getChosenItems(), DEFAULTS),

@@ -1335,7 +1335,7 @@ writeHeaderCommands()
 //#endregion
 
 //#region 16.1
-// Action rows before the items: the library builds each as a role="option"
+// Leading action rows (above the items): the library builds each as a role="option"
 // row in the arrow-key ring, right after the choose-all row, so the arrow
 // keys reach it before any item. textFn / disabledFn run on every render and
 // after every chosen change, so the row tracks the live selection. onActivate
@@ -1352,7 +1352,7 @@ const selActionRows = new LLSelectMultiple(
   ariaLabel: 'Pick countries (action rows)',
     placeholder: 'Pick countries (action rows)',
     chooseAllRow: true,
-    popupListActionRowsBeforeItems: [
+    popupListLeadingActionRows: [
       {
         textFn: () => 'Restore defaults',
         disabledFn: () => isDefaultChoice(),
@@ -1367,7 +1367,7 @@ selActionRows.setChosenItems(DEFAULT_COUNTRIES)
 //#endregion
 
 //#region 16.2
-// One action row before the items on a single select. The row asks for a
+// One leading action row (above the items) on a single select. The row asks for a
 // name, adds it to the list, picks it and closes - all app code: a row never
 // closes the popup by itself.
 const outAddRow = document.getElementById('out-add-row')
@@ -1377,7 +1377,7 @@ const selAddRow = new LLSelectSingle(
   {
   ariaLabel: 'Pick a country (add row)',
     placeholder: 'Pick a country (add row)',
-    popupListActionRowsBeforeItems: [
+    popupListLeadingActionRows: [
       {
         textFn: () => 'Add a country...',
         onActivate: () => {
@@ -1400,7 +1400,7 @@ selAddRow.setItems(addRowItems)
 //#endregion
 
 //#region 16.3
-// A sort toggle as a row before the items: it flips the order with setItems
+// A sort toggle as a leading row: it flips the order with setItems
 // and its text names the current order. The chosen item survives (same
 // identity), and a filter query re-applies to the new order.
 const outSortRow = document.getElementById('out-sort-row')
@@ -1412,7 +1412,7 @@ const selSortRow = new LLSelectSingle(
   ariaLabel: 'Pick a country (sort row)',
     placeholder: 'Pick a country (sort row)',
     filterable: true,
-    popupListActionRowsBeforeItems: [
+    popupListLeadingActionRows: [
       {
         textFn: () => (sortDescending ? 'Sorted Z to A' : 'Sorted A to Z') + ' - click to flip',
         onActivate: () => {

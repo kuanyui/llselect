@@ -323,7 +323,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       if (this.isOpened()) { this.renderPopupList() }
     } else {
       this.replacePopupListItemElInDom(item)
-      this.replaceLeadingRowElInDom()
+      this.replaceChooseAllRowElInDom()
     }
     this.fireChange(previous)
   }
@@ -635,7 +635,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * enabled subset. `null` when the setting is off or nothing is actionable.
    * @group Subclassing: rendering
    */
-  protected override createPopupListLeadingRowEl(): HTMLElement | null {
+  protected override createPopupListChooseAllRowEl(): HTMLElement | null {
     if (!this.settings.chooseAllRow) { return null }
     const actionable = this.getVisibleEnabledItems()
     if (actionable.length === 0) { return null }
@@ -664,8 +664,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     }
     el.addEventListener('click', () => {
       // Focus-then-activate, mirroring the item click wiring.
-      this.focusLeadingRow()
-      this.withUserChangeSource(() => this.onLeadingRowActivated())
+      this.focusChooseAllRow()
+      this.withUserChangeSource(() => this.onChooseAllRowActivated())
     })
     return el
   }
@@ -693,7 +693,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * Activate the choose-all row: delegates to {@link toggleAllVisible}.
    * @group Subclassing: reactions
    */
-  protected override onLeadingRowActivated(): void {
+  protected override onChooseAllRowActivated(): void {
     this.toggleAllVisible()
   }
 
@@ -771,7 +771,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
         return
       }
     }
-    if (this.focusLeadingRow()) { return }
+    if (this.focusChooseAllRow()) { return }
     const first = this.findNextEnabledIndex(0, 1, list)
     if (first >= 0) { this.setFocusedIndex(first) }
   }
