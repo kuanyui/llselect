@@ -199,6 +199,10 @@
 .llselect-popup-list-pinned-trailing-rows {
   border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
+/* Both blocks pinned with no item between them: one line, not two. */
+.llselect-popup-list-pinned-leading-rows + .llselect-popup-list-pinned-trailing-rows {
+  border-top: none;
+}
 
 /* --- popup header / footer slots -------------------------------- */
 /* Pinned above / below the list, outside the scroll area. The elements exist

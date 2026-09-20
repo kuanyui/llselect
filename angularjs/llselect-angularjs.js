@@ -212,10 +212,10 @@
     if (popupHeaderContentFn) { settings.createPopupHeaderContentElFn = popupHeaderContentFn }
     var popupFooterContentFn = evalFnAttr(scope, attrs, 'llPopupFooterContentFn')
     if (popupFooterContentFn) { settings.createPopupFooterContentElFn = popupFooterContentFn }
-    var actionRowsBefore = evalActionRowsAttr(scope, attrs, 'llPopupListLeadingActionRows', exceptionHandler, getSel)
-    if (actionRowsBefore) { settings.popupListLeadingActionRows = actionRowsBefore }
-    var actionRowsAfter = evalActionRowsAttr(scope, attrs, 'llPopupListTrailingActionRows', exceptionHandler, getSel)
-    if (actionRowsAfter) { settings.popupListTrailingActionRows = actionRowsAfter }
+    var leadingActionRows = evalActionRowsAttr(scope, attrs, 'llPopupListLeadingActionRows', exceptionHandler, getSel)
+    if (leadingActionRows) { settings.popupListLeadingActionRows = leadingActionRows }
+    var trailingActionRows = evalActionRowsAttr(scope, attrs, 'llPopupListTrailingActionRows', exceptionHandler, getSel)
+    if (trailingActionRows) { settings.popupListTrailingActionRows = trailingActionRows }
     if (attrs.llPopupListLeadingRowsPinned) { settings.popupListLeadingRowsPinned = scope.$eval(attrs.llPopupListLeadingRowsPinned) }
     if (attrs.llPopupListTrailingRowsPinned) { settings.popupListTrailingRowsPinned = scope.$eval(attrs.llPopupListTrailingRowsPinned) }
     wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler)
@@ -227,13 +227,16 @@
   }
 
   /**
-   * ll-on-open / ll-on-close: an event expression, evaluated on EACH event
+   * ll-on-open / ll-on-close / ll-on-filter-query-change: an event
+   * expression, evaluated on EACH event
    * (like ng-click), not once at link like the other ll-* attributes. llselect
    * fires onOpen / onClose from its own pointer / keyboard handlers, outside
    * any digest, so the expression runs through $apply; a programmatic open()
    * from inside a digest must not nest one, hence the phase check. Inside a
    * digest $eval has no error routing, so the catch mirrors $apply's - an
    * expression error must not abort llselect's open() / close() midway.
+   * toLocals maps the core's callback arguments to expression locals:
+   * ll-on-filter-query-change exposes the new text as $query.
    * The close that destroy() runs at scope teardown fires too (core parity:
    * the popup did close); AngularJS broadcasts $destroy before disabling the
    * scope, so writes to parent-owned state (vm.*, a service) persist - writes

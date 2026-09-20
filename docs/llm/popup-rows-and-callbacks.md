@@ -1,6 +1,6 @@
 # Popup rows and settings functions: what was decided, and why
 
-This document explains one corner of the API that took fourteen committee rounds to settle: the rows inside the popup list (the built-in "select all" row and the app's command rows), the pinned blocks, and whether a settings function receives the instance. Read it before touching any of those. It is written so that a reader with no memory of the discussion can understand each decision from this file alone. The discussion itself is recorded in `archive/popup-slots-research.md` (rounds 1-4), `handoff-popup-command-rows.md` (rounds 5-9) and `archive/choose-all-and-callback-context-research.md` (rounds 10-14, with the final two-stage review). `DESIGN.md` and `A11Y.md` stay the owning contracts; this file is the long-form "why" behind their short rulings.
+This document explains one corner of the API that took fourteen committee rounds to settle: the rows inside the popup list (the built-in "select all" row and the app's command rows), the pinned blocks, and whether a settings function receives the instance. Read it before touching any of those. It is written so that a reader with no memory of the discussion can understand each decision from this file alone. The discussion itself is recorded in `archive/popup-slots-research.md` (rounds 1-4), `archive/handoff-popup-command-rows.md` (rounds 5-9) and `archive/choose-all-and-callback-context-research.md` (rounds 10-14, with the final two-stage review). `DESIGN.md` and `A11Y.md` stay the owning contracts; this file is the long-form "why" behind their short rulings.
 
 ## 1. The words
 
@@ -108,7 +108,7 @@ Passing the instance to `onOpen`, `onClose`, `onChange` and `onActivate` only wo
 
 ### 4.10 `this`
 
-Today `this` inside a non-arrow settings function is whatever the call site happened to bind: the settings object for most, `undefined` for `filterable` and `filterFn`, the descriptor for action-row functions. The rule is now: `this` is `undefined` in every settings function. The library calls them through a local reference. Anyone who wrote `this.close()` gets an error instead of a silent settings object.
+Today `this` inside a non-arrow settings function is whatever the call site happened to bind: the settings object for most, `undefined` for `filterable` and `filterFn`, the descriptor for action-row functions. The rule is now: `this` is `undefined` in every settings function. The library calls them through a local reference. Anyone who wrote `this.close()` gets an error instead of a silent settings object. The translation pack is the one exception: its message functions are called as methods of the pack, so a pack may read its own other messages through `this`.
 
 ## 5. Why pinning is per block
 

@@ -1,6 +1,6 @@
 # Choose-all row and callback instance access: committee rounds 10-12
 
-Companion to `popup-slots-research.md` (rounds 1-4) and `../handoff-popup-command-rows.md` (rounds 5-9). Rounds 10-12 were convened after the owner questioned two things: whether the built-in choose-all row should be one of the action rows (concern: "no pile of special exceptions"), and whether settings callbacks should receive the widget instance at all. The verbatim briefs and answers lived in the session scratchpad; this file records the questions, the votes, the arguments that carried, and the corrections the members made to the briefs. Decisions are the owner's; the status of each is at the end.
+Companion to `popup-slots-research.md` (rounds 1-4) and `handoff-popup-command-rows.md` (rounds 5-9). Rounds 10-12 were convened after the owner questioned two things: whether the built-in choose-all row should be one of the action rows (concern: "no pile of special exceptions"), and whether settings callbacks should receive the widget instance at all. The verbatim briefs and answers lived in the session scratchpad; this file records the questions, the votes, the arguments that carried, and the corrections the members made to the briefs. Decisions are the owner's; the status of each is at the end.
 
 ## Round 10: is the choose-all row an action row, or its own mechanism?
 

@@ -30,6 +30,7 @@ test('multiple: every settings function and action-row function runs with `this`
     createItemContentElFn: function (this: unknown) { seen.createItemContentElFn = this; return null },
     itemToGroupKeyFn: function (this: unknown, item) { seen.itemToGroupKeyFn = this; return item[0] ?? null },
     groupKeyToStringFn: function (this: unknown, key) { seen.groupKeyToStringFn = this; return key },
+    groupKeyCompareFn: function (this: unknown, a, b) { seen.groupKeyCompareFn = this; return a === b },
     groupDisabledFn: function (this: unknown) { seen.groupDisabledFn = this; return false },
     createGroupLabelContentElFn: function (this: unknown) { seen.createGroupLabelContentElFn = this; return null },
     createTriggerContentElFn: function (this: unknown) { seen.createTriggerContentElFn = this; return null },
@@ -44,6 +45,7 @@ test('multiple: every settings function and action-row function runs with `this`
     onOpen: function (this: unknown) { seen.onOpen = this },
     onClose: function (this: unknown) { seen.onClose = this },
     onChange: function (this: unknown) { seen.onChange = this },
+    onFilterQueryChange: function (this: unknown) { seen.onFilterQueryChange = this },
     popupListLeadingActionRows: [{
       textFn: function (this: unknown) { seen.textFn = this; return 'cmd' },
       createContentElFn: function (this: unknown) { seen.createContentElFn = this; return null },
@@ -67,7 +69,8 @@ test('multiple: every settings function and action-row function runs with `this`
     'createTriggerContentElFn', 'createTriggerArrowContentElFn', 'createTriggerClearButtonContentElFn',
     'createPopupListNoResultsContentElFn', 'createPopupHeaderContentElFn', 'createPopupFooterContentElFn',
     'createChooseAllRowContentElFn', 'createTagContentElFn', 'createTagRemoveButtonContentElFn',
-    'onOpen', 'onClose', 'onChange', 'textFn', 'createContentElFn', 'disabledFn', 'onActivate',
+    'onOpen', 'onClose', 'onChange', 'onFilterQueryChange', 'groupKeyCompareFn',
+    'textFn', 'createContentElFn', 'disabledFn', 'onActivate',
   ]
   for (const name of expected) {
     assert.ok(name in seen, `${name} was called`)

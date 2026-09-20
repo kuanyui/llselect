@@ -87,14 +87,17 @@ export interface LLSelectPopupListActionRow {
 
 /**
  * What a settings function may read while the instance is still being built.
- * - The library passes it to the functions that the constructor calls:
- *   `createPopupHeaderContentElFn` and `createPopupFooterContentElFn`.
+ * - Only two settings functions receive it: `createPopupHeaderContentElFn`
+ *   and `createPopupFooterContentElFn`. The trigger content functions also
+ *   run during construction, but they get their own data instead and rerun
+ *   on every render.
  * - `new` has not returned yet. The variable that will hold the instance is
  *   still empty. Do not read it here.
  * - `classIdMap`: the resolved class and id names.
  * - `uiTranslationPack`: the resolved translation pack.
  * - If you need the instance, do that work in an event handler on the element
  *   you return. Handlers run after `new` returns.
+ * @group Popup slots
  */
 export interface LLSelectConstructionContext {
   readonly classIdMap: Readonly<LLSelectClassIdMap>
@@ -350,7 +353,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   reach the ring's ends, disabled rows are skipped, and the popup opens
    *   with the active option on an item or the choose-all row, never on one
    *   of these rows.
-   * - Rows scroll with the items. For content that must stay put, use
+   * - Rows scroll with the items unless their block is pinned
+   *   (`popupListLeadingRowsPinned`). For content that is not a command, use
    *   `createPopupHeaderContentElFn` / `createPopupFooterContentElFn`.
    * - Default `[]`. The array is copied at construction; later changes to
    *   your array do nothing.
@@ -2523,11 +2527,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   protected replacePopupListActionRowElsInDom(): void {
     if (!this.opened) { return }
-    const before = this.settings.popupListLeadingActionRows
-    const after = this.settings.popupListTrailingActionRows
-    if (before.length === 0 && after.length === 0) { return }
-    this.leadingActionRowEls = this.replaceActionRowElsInDom(this.leadingActionRowEls, before, (row, i) => this.createPopupListLeadingActionRowEl(row, i))
-    this.trailingActionRowEls = this.replaceActionRowElsInDom(this.trailingActionRowEls, after, (row, i) => this.createPopupListTrailingActionRowEl(row, i))
+    const leading = this.settings.popupListLeadingActionRows
+    const trailing = this.settings.popupListTrailingActionRows
+    if (leading.length === 0 && trailing.length === 0) { return }
+    this.leadingActionRowEls = this.replaceActionRowElsInDom(this.leadingActionRowEls, leading, (row, i) => this.createPopupListLeadingActionRowEl(row, i))
+    this.trailingActionRowEls = this.replaceActionRowElsInDom(this.trailingActionRowEls, trailing, (row, i) => this.createPopupListTrailingActionRowEl(row, i))
   }
 
   private replaceActionRowElsInDom(
@@ -2854,9 +2858,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         return
       case LLSelectKeyboardAction.Close:
         // Esc two-stage while the filter is active: clear the filter first; only
-        // close when the filter is already empty. Closing returns focus to
-        // the trigger.
-        if (this.filterActive && this.query !== '') {
+        // close when the filter is already empty. Alt+ArrowUp maps to Close
+        // too but always closes. Closing returns focus to the trigger.
+        if (ev.key === 'Escape' && this.filterActive && this.query !== '') {
           this.filterInputEl.value = ''
           this.handleSearchInputEvent()
           return
@@ -3419,12 +3423,15 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Scroll a ring entry into view. A row inside a pinned wrapper is always in
-   * view; an item scrolls under the pinned blocks, so their measured heights
-   * are handed to the scroll math as insets.
+   * view, so it is left alone. Every other entry, an item inside a group
+   * container included, scrolls under the pinned blocks, so their measured
+   * heights are handed to the scroll math as insets.
    */
   private scrollRingEntryIntoView(el: HTMLElement): void {
-    if (el.parentElement !== this.popupListEl) { return }
-    ensureVisibleInScroll(el, this.popupListEl, this.pinnedWrapperHeight(this.popupListPinnedLeadingRowsEl), this.pinnedWrapperHeight(this.popupListPinnedTrailingRowsEl))
+    const leading = this.popupListPinnedLeadingRowsEl
+    const trailing = this.popupListPinnedTrailingRowsEl
+    if ((leading !== null && leading.contains(el)) || (trailing !== null && trailing.contains(el))) { return }
+    ensureVisibleInScroll(el, this.popupListEl, this.pinnedWrapperHeight(leading), this.pinnedWrapperHeight(trailing))
   }
 
   /** The height a pinned wrapper covers at its listbox edge; 0 when it is not in the listbox. */

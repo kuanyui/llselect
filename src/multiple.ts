@@ -374,17 +374,17 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * - This is the choose-all row's action (the `chooseAllRow` setting) as a
    *   public method. The row delegates here.
    * - Acts on exactly the items that satisfy all of the following:
-   *   - Visible: the item matches the active filter query. If no query is
-   *     active, every item is visible. This is the same list as
-   *     `getVisibleItems`.
+   *   - Visible: the item is in `getVisibleItems()`. It matches the active
+   *     filter query, and with `hideChosenRows` it is not chosen. With no
+   *     query and without `hideChosenRows`, every item is visible.
    *   - Enabled: not disabled via `itemDisabledFn`, and not in a disabled
    *     group.
    * - If all of them are already chosen, it unchooses exactly those.
    * - Otherwise, it chooses the ones still missing.
    * - Choices outside that set (filtered-out or disabled) are preserved
    *   either way.
-   * - If no filter query is active, the acted-on set is every enabled item,
-   *   the same scope as `toggleAll`.
+   * - With no filter query and without `hideChosenRows`, the acted-on set is
+   *   every enabled item, the same scope as `toggleAll`.
    * - Fires `onChange` only when the chosen items actually change.
    * - The acted-on set is computed by the overridable method `getVisibleEnabledItems`,
    *   shared with the choose-all row.
@@ -406,9 +406,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
 
   /**
    * Return the items a "select all" acts on: the visible, enabled ones.
-   * - Visible: the item matches the active filter query. If no query is
-   *   active, every item is visible. This is the same list as
-   *   `getVisibleItems()`.
+   * - Visible: the item is in `getVisibleItems()`. It matches the active
+   *   filter query, and with `hideChosenRows` it is not chosen. With no
+   *   query and without `hideChosenRows`, every item is visible.
    * - Enabled: not disabled via `itemDisabledFn`, and not in a disabled group.
    * - The choose-all row (its counts, its tri-state, its click) and
    *   `toggleAllVisible()` both read this method.

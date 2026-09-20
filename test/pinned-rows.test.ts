@@ -163,3 +163,83 @@ test('ensureVisibleInScroll: insets covering the whole scrollport are ignored (b
   ensureVisibleInScroll(child(110, 20), parent, 60, 60) // below the fallback band: scroll by the overflow only
   assert.equal(parent.scrollTop, 30)
 })
+
+// The widget's own scroll path, on stubbed geometry: rows inside a pinned
+// wrapper never scroll, everything else does, grouped items included.
+function stubRect(el: Element, top: number, height: number): void {
+  Object.defineProperty(el, 'getBoundingClientRect', { value: () => ({ top, bottom: top + height, height }), configurable: true })
+}
+function stubScroller(el: HTMLElement, height: number): () => number {
+  stubRect(el, 0, height)
+  Object.defineProperty(el, 'clientTop', { value: 0, configurable: true })
+  Object.defineProperty(el, 'clientHeight', { value: height, configurable: true })
+  let scrollTop = 0
+  Object.defineProperty(el, 'scrollTop', { get: () => scrollTop, set: (v: number) => { scrollTop = v }, configurable: true })
+  return () => scrollTop
+}
+function stubOptions(list: HTMLElement, rowHeight: number, firstTop: number): void {
+  let top = firstTop
+  for (const el of list.querySelectorAll('[role="option"]')) {
+    stubRect(el, top, rowHeight)
+    top += rowHeight
+  }
+}
+
+test('scroll path: End on a flat list scrolls the last item into view', () => {
+  const sel = new LLSelectSingle<string>(mount(), {})
+  sel.setItems(['a', 'b', 'c', 'd', 'e', 'f'])
+  sel.open()
+  const scrollTop = stubScroller(sel.popupListEl, 60)
+  stubOptions(sel.popupListEl, 20, 0) // items span 0..120 in a 60px scrollport
+  fireKey(sel.triggerEl, 'End')
+  assert.equal(scrollTop(), 60, 'item f spans 100..120; the scrollport ends at 60')
+})
+
+test('scroll path: End on a GROUPED list scrolls the last item into view (items nest in group containers)', () => {
+  const sel = new LLSelectSingle<string>(mount(), { itemToGroupKeyFn: item => item[0] ?? null })
+  sel.setItems(['a1', 'a2', 'a3', 'b1', 'b2', 'b3'])
+  sel.open()
+  const scrollTop = stubScroller(sel.popupListEl, 60)
+  stubOptions(sel.popupListEl, 20, 0)
+  assert.equal(sel.popupListEl.querySelector('[role="group"] [role="option"]') !== null, true, 'items sit inside group containers')
+  fireKey(sel.triggerEl, 'End')
+  assert.equal(scrollTop(), 60)
+})
+
+test('scroll path: a pinned row never scrolls; an item under the pinned block scrolls past it (the inset)', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { chooseAllRow: true, popupListLeadingRowsPinned: true })
+  sel.setItems(['a', 'b', 'c', 'd'])
+  sel.open()
+  const scrollTop = stubScroller(sel.popupListEl, 60)
+  const wrap = sel.popupListPinnedLeadingRowsEl!
+  stubRect(wrap, 0, 20) // the pinned block covers 0..20
+  stubOptions(sel.popupListEl, 20, 0) // choose-all 0..20, a 20..40, b 40..60, c 60..80, d 80..100
+  fireKey(sel.triggerEl, 'Home') // the choose-all row, inside the wrapper
+  assert.equal(scrollTop(), 0, 'a pinned row is always in view')
+  stubRect(sel.popupListEl.querySelectorAll('[role="option"]')[1]!, 10, 20) // item a half under the block: 10..30
+  fireKey(sel.triggerEl, 'ArrowDown')
+  assert.equal(scrollTop(), -10, 'scrolled up by the part hidden under the 20px block')
+})
+
+test('trailing block: the wrapper holds its rows as the last child', () => {
+  const sel = new LLSelectSingle<string>(mount(), { popupListTrailingRowsPinned: true, popupListTrailingActionRows: [row('trail')] })
+  sel.setItems(['a'])
+  sel.open()
+  const wrap = sel.popupListPinnedTrailingRowsEl!
+  assert.equal(wrap.parentElement, sel.popupListEl)
+  assert.equal(wrap.children.length, 1)
+})
+
+test('a pinned action row rebuilt in place after a change stays inside the wrapper and keeps the active option', () => {
+  let n = 0
+  const sel = new LLSelectMultiple<string>(mount(), { popupListLeadingRowsPinned: true, popupListLeadingActionRows: [{ textFn: () => `cmd ${n}`, onActivate: () => {} }] })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  fireKey(sel.triggerEl, 'Home') // the leading action row (no choose-all row here)
+  const wrap = sel.popupListPinnedLeadingRowsEl!
+  assert.equal(wrap.firstElementChild!.textContent, 'cmd 0')
+  n = 1
+  sel.toggleItem('a') // rows are rebuilt after every chosen change
+  assert.equal(wrap.firstElementChild!.textContent, 'cmd 1', 'rebuilt in place, still inside the wrapper')
+  assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), wrap.firstElementChild!.id, 'the active option followed the rebuilt row')
+})

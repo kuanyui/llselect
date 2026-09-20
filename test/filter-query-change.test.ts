@@ -90,3 +90,15 @@ test('null (the default): nothing is called', () => {
   type(sel, 'a') // no handler: filtering still works, nothing throws
   assert.equal(sel.getVisibleItems().length, 1)
 })
+
+test('Alt+ArrowUp closes even with a query typed; the reset is silent (only Esc clears first)', () => {
+  const seen: string[] = []
+  const sel = new LLSelectSingle<string>(mount(), { filterable: true, onFilterQueryChange: query => { seen.push(query) } })
+  sel.setItems(['apple', 'kiwi'])
+  sel.open()
+  type(sel, 'k')
+  sel.popupEl.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true, cancelable: true }))
+  assert.equal(sel.isOpened(), false, 'Alt+ArrowUp closes')
+  assert.equal(sel.getFilterQuery(), '')
+  assert.deepEqual(seen, ['k'], 'the close reset fires nothing')
+})

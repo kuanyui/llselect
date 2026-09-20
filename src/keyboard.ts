@@ -176,11 +176,20 @@ function foldForTypeahead(text: string): string {
 }
 
 /**
- * Scroll `child` into the visible part of `scrollParent` with the smallest
- * scroll that does it. `topInset` / `bottomInset` are the heights of
- * anything stuck to the scroll container's edges (the pinned row blocks);
- * the child is brought into the part of the scrollport those do not cover.
- * When the insets leave no room, they are ignored (best-effort).
+ * Scroll `scrollParent` just enough so `child` is fully visible. No-op if
+ * `child` is already in view. Adjusts `scrollTop` directly rather than using
+ * `scrollIntoView`, so the page (window) does not scroll alongside.
+ * - `topInset` / `bottomInset` are the heights of anything stuck to the
+ *   scroll container's edges (the pinned row blocks); the child is brought
+ *   into the part of the scrollport those do not cover. When the insets leave
+ *   no room, they are ignored (best-effort).
+ * - Uses viewport-rect deltas, NOT `offsetTop`: `offsetTop` is relative to the
+ *   offset parent, which a theme could change by making a group container
+ *   `position: relative` (optgroup), silently breaking the math. Rect deltas
+ *   are correct regardless of nesting / theme CSS. `clientTop` /
+ *   `clientHeight` exclude the parent's border so a bordered list stays
+ *   exact. Measured to cost the same as the old `offsetTop` path (see
+ *   docs/llm/DESIGN.md "Optgroup").
  */
 export function ensureVisibleInScroll(child: HTMLElement, scrollParent: HTMLElement, topInset = 0, bottomInset = 0): void {
   const c = child.getBoundingClientRect()

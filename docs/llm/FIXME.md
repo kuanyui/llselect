@@ -2,6 +2,64 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (leading / trailing rows, construction context, this, pinned blocks, filter-query event)
+
+Process: the design settled by the unframed two-stage review (`archive/choose-all-and-callback-context-research.md`, rounds 13-14), then six commits `937e5db` to `9581257`, then one whole-committee review of the change set (six fresh sessions, Codex Sol rerun with a longer cap after a timeout), then this fix batch and its post-fix panel review.
+
+- [x] **[HIGH-124] - grouped items no longer scrolled into view**
+  - Symptom: with `itemToGroupKeyFn` on a list taller than the popup, arrowing or End moved `aria-activedescendant` onto an item outside the scrollport and the list did not scroll. Every reviewer but one found it; the two flat-list demos hide it.
+  - Cause: the new `scrollRingEntryIntoView` (`src/base.ts`) decided "this row is inside a pinned wrapper" by `el.parentElement !== popupListEl`; an item inside a `role="group"` container has the group as its parent, so it was skipped too.
+  - Fix: the guard asks the two wrappers `contains(el)`; everything else scrolls with the wrappers' measured heights as insets.
+  - Verified: `test/pinned-rows.test.ts` now drives the widget's own scroll path on stubbed geometry: End on a flat list, End on a grouped list, a pinned row that never scrolls, an item half under the pinned block scrolling past it.
+  - Q: Why did 523 green tests miss a scroll regression?
+    - A: Because jsdom has no layout: every rect is zero and `scrollTop` never moves, so a guard that returns early and a scroll that does nothing look the same. The scroll helper had pure unit tests; the path from the widget to it had none.
+- [x] **[HIGH-136] - Alt+ArrowUp cleared the filter instead of closing (pre-existing; since `9581257` it also fired the event)**
+  - Symptom: Alt+ArrowUp maps to the Close action like Esc, and the two-stage rule "clear a non-empty query first" ran for it too: with a query typed, Alt+ArrowUp emptied the query and left the popup open, and after `9581257` fired `onFilterQueryChange('')` for a close gesture.
+  - Cause: the Close branch in `handleKeydown` tested the action, never the key.
+  - Fix: the two-stage clear runs only for `ev.key === 'Escape'`; Alt+ArrowUp always closes, and the close resets the query silently.
+  - Verified: `test/filter-query-change.test.ts` pins Alt+ArrowUp with a query typed: closed, query empty, no event.
+- [x] **[MEDIUM-125] - two lines between two adjacent pinned blocks**
+  - Symptom: both blocks pinned and no item between them (a filter matching nothing, or `hideChosenRows` hiding everything): the leading wrapper's `border-bottom` and the trailing wrapper's `border-top` stacked into a 2px line, where the unpinned case draws none.
+  - Fix: every theme adds `.llselect-popup-list-pinned-leading-rows + .llselect-popup-list-pinned-trailing-rows { border-top: none }`.
+  - Verified: by reading the five themes; layout is jsdom-blind (the "Pinned rows pass" in `TODO.md` covers the eyeball).
+- [x] **[MEDIUM-126] - `LLSelectConstructionContext` overstated who receives it, and had no `@group`**
+  - Symptom: its TSDoc said "the functions that the constructor calls" receive it; four of the six construction-time functions do not (the trigger builders get their own data). Without `@group`, TypeDoc dropped the type into a trailing "Interfaces" section.
+  - Fix: the bullet names the two receivers and says the trigger functions get their own data; `@group Popup slots`.
+- [x] **[MEDIUM-127] - the `this` rule had an undocumented exception**
+  - Symptom: DESIGN.md said `this` is `undefined` in every function-typed setting, but the translation pack's three message functions are still called as methods of the pack.
+  - Fix: kept as a documented exception (DESIGN.md, README, `popup-rows-and-callbacks.md` 4.10): a pack may read its own other messages through `this`. Neutralizing it would break that legitimate pattern for pack authors.
+- [x] **[MEDIUM-128] - "visible" in the select-all docs ignored `hideChosenRows`**
+  - Symptom: `getVisibleEnabledItems()` and `toggleAllVisible()` documented "visible" as "matches the filter query; with no query, every item", but `hideChosenRows` also removes chosen items from `getVisibleItems()`.
+  - Fix: both docstrings define visible as membership in `getVisibleItems()`: matches the query, and with `hideChosenRows` not chosen.
+- [x] **[QUALITY-129] - the widget's scroll path and two pinned-block paths had no test**
+  - Fix: the four scroll-path tests of HIGH-124, a trailing-block presence test, and an in-place rebuild of a pinned action row keeping its wrapper and the active option; `test/settings-this.test.ts` now also pins `onFilterQueryChange` and `groupKeyCompareFn`; the AngularJS suite gains the inside-digest and error-routing cases for `ll-on-filter-query-change`.
+- [x] **[QUALITY-130] - the scroll helper lost its rationale**
+  - Symptom: rewriting `ensureVisibleInScroll` dropped the two non-obvious reasons (rect deltas, not `offsetTop`; `clientTop` / `clientHeight`) that DESIGN.md "Optgroup" still points at.
+  - Fix: restored at the tail of the docstring, after the inset bullets.
+- [x] **[DOCUMENTATION-131] - rename leftovers in the contracts**
+  - Symptom: A11Y.md "Choose-all" still said "Action rows before the items"; DESIGN.md "Action rows" still called the visible-enabled subset protected.
+  - Fix: both sentences updated.
+- [x] **[DOCUMENTATION-132] - the rename rewrote history, and the handoff stayed in the living docs**
+  - Symptom: the identifier sweep changed commit subjects quoted in `TODO.md` (P2-b, P2-c) and in the handoff into text no commit ever had, produced the non-name `AfterItemsEl`, and left the handoff's "open decisions" reading as still open after everything landed.
+  - Fix: the two TODO entries restored from git; the handoff moved to `archive/` with a status line, the real subjects and the decided names; the pointers in `TODO.md`, `popup-rows-and-callbacks.md` and the research archive updated.
+  - Q: Why restore the old names in ticked TODO entries instead of updating them?
+    - A: Because a quoted commit subject is a lookup key for `git log --grep`; a rewritten one finds nothing. History entries keep the names of their time; the living docs carry the new ones.
+- [x] **[LINT-133] - prose over the CLAUDE.md limits**
+  - Symptom: one README sentence of 29 words with three clauses; the demo 15.1 hint grew and said "next to it" for two different elements; two misaligned rows in the naming table.
+  - Fix: the sentence split into four; the hint shortened and the button named; the rows realigned.
+- [x] **[MEDIUM-137] - the action-row docs said rows always scroll**
+  - Symptom: the `popupListLeadingActionRows` TSDoc and the README said rows scroll with the items and sent "content that must stay put" to the slots, which the pin flags now contradict.
+  - Fix: both say "unless the block is pinned" and send content that is not a command to the slots.
+- [x] **[LINT-138] - positional locals and a stale wrapper comment**
+  - Symptom: `replacePopupListActionRowElsInDom` still named its locals `before` / `after`, the AngularJS wrapper `actionRowsBefore` / `actionRowsAfter`, and its `wireEventAttr` comment described only the open and close events.
+  - Fix: leading / trailing locals; the comment names the third event and the `toLocals` argument.
+- [x] **[QUALITY-134] - action rows rebuilt twice on one toggle (pre-existing, accepted)**
+  - Symptom: `toggleItem` on a multiple whose choose-all row disappears runs `renderPopupList` (rows rebuilt) and then `fireChange` rebuilds the rows again; the same on `setChosenItems`.
+  - Fix: none; the second rebuild is O(rows), yields the final state, and predates this change set. Recorded so the next reader does not rediscover it.
+- [x] **[QUALITY-135] - `this: void` in the callback types (deferred)**
+  - Symptom: the `this` rule holds at runtime only; a non-arrow function that reads `this` compiles.
+  - Fix: deferred; noted in `TODO.md` "API design review". Adding `this: void` to about 30 function types is a separate, mechanical change once the shape is agreed.
+
 ## review (popup header / footer slots and action rows)
 
 Process: design research plus four committee rounds recorded in `archive/popup-slots-research.md`, then the implementation in eight commits (plan: `TODO.md`), then one whole-committee review of the change set (round 5) - its findings below, most severe first, fixed in one batch.

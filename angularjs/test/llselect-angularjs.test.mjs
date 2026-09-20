@@ -333,6 +333,31 @@ test('ll-on-filter-query-change: an event expression with $query, only on a real
   assert.deepEqual([...a.scope.vm.seen], ['ap', ''], 'typed once, identical text ignored, Esc cleared')
 })
 
+test('ll-on-filter-query-change: inside a digest it runs through $eval; an expression error reaches $exceptionHandler', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm"><span id="q">{{ vm.last }}</span>
+      <llselect-single ng-model="vm.t" ll-filterable="true" ll-on-filter-query-change="vm.record($query)"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () {
+      const vm = this
+      vm.fruits = FRUITS.slice()
+      vm.t = null
+      vm.last = ''
+      vm.record = function (q) { if (q === 'boom') { throw new Error('query boom') } vm.last = q }
+    },
+  })
+  a.$('.llselect-trigger').click()
+  const input = a.$('.llselect-popup input')
+  const typeQuery = (text) => { input.value = text; input.dispatchEvent(new a.window.Event('input', { bubbles: true })) }
+  a.scope.$apply(() => { typeQuery('ap') }) // like a controller method changing the query programmatically
+  assert.equal(a.text('#q'), 'ap')
+  a.scope.$apply(() => { typeQuery('boom') })
+  assert.equal(a.errors.length, 1)
+  assert.match(String(a.errors[0]), /query boom/)
+})
+
 test('ll-hide-chosen-rows: choosing removes the row; the model still gains the item', () => {
   const a = boot({
     deps: ['llselect'],

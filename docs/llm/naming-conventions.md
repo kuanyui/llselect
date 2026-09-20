@@ -271,8 +271,8 @@ Settings on `LLSelectBaseSettings` (s3): arrays of `LLSelectPopupListActionRow` 
 
 | Vis     | Name                             | Signature                                        | s3                 |
 | ------- | -------------------------------- | ------------------------------------------------ | ------------------ |
-| setting | `popupListLeadingActionRows` | `readonly LLSelectPopupListActionRow[]`          | value (array)      |
-| setting | `popupListTrailingActionRows`  | `readonly LLSelectPopupListActionRow[]`          | value (array)      |
+| setting | `popupListLeadingActionRows`     | `readonly LLSelectPopupListActionRow[]`          | value (array)      |
+| setting | `popupListTrailingActionRows`    | `readonly LLSelectPopupListActionRow[]`          | value (array)      |
 | type    | `LLSelectPopupListActionRow`     | `{ textFn; createContentElFn?; disabledFn?; onActivate }` | descriptive noun |
 | setting | `onFilterQueryChange`            | `((query: string) => void) \| null`             | `on*` event: after the re-render, only on a real text change (A11Y.md "Filtering") |
 
@@ -287,6 +287,7 @@ Settings on `LLSelectBaseSettings` (s3): arrays of `LLSelectPopupListActionRow` 
 | setting   | `popupListLeadingRowsPinned` / `popupListTrailingRowsPinned` | `boolean`, default `false`; per block, never per row |
 | public    | `popupListPinnedLeadingRowsEl` / `popupListPinnedTrailingRowsEl` | `*El` field, `HTMLElement \| null` - the sticky wrapper, or none built |
 | private   | `createPopupListPinnedRowsEl` / `pinnedWrapperHeight` / `scrollRingEntryIntoView` | wrapper builder (pure structure, no override point, like `createPopupListEl`); the measured insets handed to `ensureVisibleInScroll` |
+| public    | `getVisibleEnabledItems` (multiple)   | was protected; the subset the choose-all row and `toggleAllVisible` act on, public so an app-built select-all row acts on the same items (`popup-rows-and-callbacks.md` section 3) |
 | private   | `replaceActionRowElsInDom`             | `replace*ElInDom` - the in-place swap one array of rows            |
 | private   | `ringLength` / `ringPosition` / `ringEntryAt` / `findNextEnabledRingPosition` / `findEnabledRingPositionForKeyboardAction` / `focusRingPosition` / `focusActionRow` | the arrow-key ring walk over [choose-all row, leading action rows, items, trailing action rows] |
 

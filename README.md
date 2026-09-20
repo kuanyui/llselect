@@ -388,7 +388,7 @@ const sel = new LLSelectMultiple(el, {
 
 #### Action rows: commands inside the list
 
-A row is a command a keyboard user reaches with the arrow keys. It sits above or below the items and scrolls with them. For pinned content nobody runs, use a header or footer instead.
+A row is a command a keyboard user reaches with the arrow keys. It sits above or below the items and scrolls with them unless its block is pinned. For content nobody runs, use a header or footer instead.
 
 ```js
 const DEFAULTS = ['Japan', 'Taiwan']
@@ -410,9 +410,9 @@ sel = new LLSelectMultiple(el, {
 - `onActivate` runs on Enter, on click, and on Space while the filter is off. The library neither chooses nor closes for it.
 - Put no button or link inside a row. The row itself is the control.
 - `popupListLeadingRowsPinned: true` keeps the choose-all row and the leading rows in view while the items scroll. `popupListTrailingRowsPinned` does the same at the bottom. Pinning is per block: all the rows at one end, or none.
-- Inside these functions, and inside every other settings function, `this` is `undefined`. Reach the instance through the variable you assigned it to.
+- Inside these functions, and inside every other settings function, `this` is `undefined`. Reach the instance through the variable you assigned it to. The translation pack is the exception: its message functions are called on the pack.
 
-To put "select all" somewhere other than first, turn `chooseAllRow` off and write it as an action row. Such a row is a command: it has no selected state, it is never the active option when the popup opens, and it stays listed when nothing is selectable.
+To put "select all" somewhere other than first, turn `chooseAllRow` off and write it as an action row. Such a row is a command. It has no selected state. It is never the active option when the popup opens. It stays listed when nothing is selectable.
 
 ```js
 let sel
