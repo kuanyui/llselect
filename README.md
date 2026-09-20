@@ -408,6 +408,7 @@ sel = new LLSelectMultiple(el, {
 - `textFn` and `disabledFn` run again after every change, so they may read live state.
 - `onActivate` runs on Enter, on click, and on Space while the filter is off. The library neither chooses nor closes for it.
 - Put no button or link inside a row. The row itself is the control.
+- Inside these functions, and inside every other settings function, `this` is `undefined`. Reach the instance through the variable you assigned it to.
 
 To put "select all" somewhere other than first, turn `chooseAllRow` off and write it as an action row. Such a row is a command: it has no selected state, it is never the active option when the popup opens, and it stays listed when nothing is selectable.
 

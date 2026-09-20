@@ -259,8 +259,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       next = [...new Set(items)]
     } else {
       next = []
+      const compareFn = this.settings.compareFn
       for (const item of items) {
-        if (!next.some(c => this.settings.compareFn(c, item))) { next.push(item) }
+        if (!next.some(c => compareFn(c, item))) { next.push(item) }
       }
     }
     if (this.arraysEqual(next, this.chosenItems)) { return }
@@ -282,7 +283,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     // custom compareFn cannot hash, so it stays linear. The Set is SameValueZero,
     // and so is defaultCompareFn, so NaN behaves the same on both paths.
     if (this.settings.compareFn === defaultCompareFn) { return this.chosenSet().has(item) }
-    return this.chosenItems.some(c => this.settings.compareFn(c, item))
+    const compareFn = this.settings.compareFn
+    return this.chosenItems.some(c => compareFn(c, item))
   }
 
   private chosenSetCache: { chosen: readonly T[], set: Set<T> } | null = null
@@ -305,7 +307,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    */
   public toggleItem(item: T): void {
     const previous = this.chosenItems
-    const idx = previous.findIndex(c => this.settings.compareFn(c, item))
+    const compareFn = this.settings.compareFn
+    const idx = previous.findIndex(c => compareFn(c, item))
     if (idx >= 0) {
       this.chosenItems = [...previous.slice(0, idx), ...previous.slice(idx + 1)]
     } else {
@@ -392,8 +395,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     if (actionable.length === 0) { return }
     const allChosen = actionable.every(i => this.isChosen(i))
     if (allChosen) {
+      const compareFn = this.settings.compareFn
       this.setChosenItems(this.chosenItems.filter(c =>
-        !actionable.some(v => this.settings.compareFn(v, c))))
+        !actionable.some(v => compareFn(v, c))))
     } else {
       const additions = actionable.filter(v => !this.isChosen(v))
       this.setChosenItems([...this.chosenItems, ...additions])
@@ -485,7 +489,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     const countValue = chosenCount === 0
       ? this.settings.placeholder
       : this.settings.uiTranslationPack.triggerCountSummary(chosenCount, this.items.length)
-    const custom = this.settings.createTriggerContentElFn?.({ chosenItems: this.getChosenItems(), items: this.getItems() }) ?? null
+    const fn = this.settings.createTriggerContentElFn
+    const custom = fn?.({ chosenItems: this.getChosenItems(), items: this.getItems() }) ?? null
     if (custom !== null) {
       this.commitTriggerContentToDom(custom, countValue)
       return
@@ -586,9 +591,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * @group Subclassing: rendering
    */
   protected createTagRemoveButtonContentEl(item: T): HTMLElement | SVGElement | null {
-    return this.settings.createTagRemoveButtonContentElFn
-      ? this.settings.createTagRemoveButtonContentElFn(item)
-      : null
+    const fn = this.settings.createTagRemoveButtonContentElFn
+    return fn ? fn(item) : null
   }
 
   /**
@@ -598,7 +602,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * @group Subclassing: rendering
    */
   protected createTagContentEl(item: T): HTMLElement | null {
-    return this.settings.createTagContentElFn ? this.settings.createTagContentElFn(item) : null
+    const fn = this.settings.createTagContentElFn
+    return fn ? fn(item) : null
   }
 
   /**
@@ -694,9 +699,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     chosenCount: number,
     totalCount: number,
   ): HTMLElement | null {
-    return this.settings.createChooseAllRowContentElFn
-      ? this.settings.createChooseAllRowContentElFn(chosenState, chosenCount, totalCount)
-      : null
+    const fn = this.settings.createChooseAllRowContentElFn
+    return fn ? fn(chosenState, chosenCount, totalCount) : null
   }
 
   /**
@@ -741,8 +745,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     const previous = this.chosenItems
     let swapped = false
     const nextChosen: T[] = []
+    const compareFn = this.settings.compareFn
     for (const c of previous) {
-      const idx = this.items.findIndex(item => this.settings.compareFn(item, c))
+      const idx = this.items.findIndex(item => compareFn(item, c))
       if (idx < 0) { continue }
       const matched = this.items[idx]!
       // SameValueZero, so a NaN item matching itself is not a swap.
@@ -775,7 +780,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     const list = this.getVisibleItems()
     const firstChosen = this.chosenItems[0]
     if (firstChosen !== undefined) {
-      const idx = list.findIndex(i => this.settings.compareFn(i, firstChosen))
+      const compareFn = this.settings.compareFn
+      const idx = list.findIndex(i => compareFn(i, firstChosen))
       if (idx >= 0 && !this.isItemEffectivelyDisabled(list[idx]!)) {
         this.setFocusedIndex(idx)
         return
@@ -802,7 +808,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     const meta: LLSelectChangeMeta = { source: this.changeSource }
     this.changeSource = 'api'
     this.onChosenChanged()
-    this.settings.onChange?.(this.chosenItems, previousChosenItems, meta)
+    const onChange = this.settings.onChange
+    onChange?.(this.chosenItems, previousChosenItems, meta)
     // Action rows read live state; after the handler ran, so a row's text may show what it wrote.
     this.replacePopupListActionRowElsInDom()
   }

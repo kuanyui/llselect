@@ -1322,7 +1322,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.attachFocusOut()
     this.focusInitial()
     this.onOpened()
-    this.settings.onOpen?.()
+    const onOpen = this.settings.onOpen
+    onOpen?.()
     if (this.filterActive) {
       this.filterInputEl.focus({ preventScroll: true })
     }
@@ -1394,7 +1395,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.comboboxEl.removeAttribute('aria-activedescendant')
     this.renderTriggerArrow()
     this.onClosed()
-    this.settings.onClose?.()
+    const onClose = this.settings.onClose
+    onClose?.()
     if (shouldReturnFocus) { this.triggerEl.focus({ preventScroll: true }) }
   }
 
@@ -1791,7 +1793,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: rendering
    */
   protected createTriggerArrowContentEl(state: { isOpened: boolean }): HTMLElement | SVGElement | null {
-    return this.settings.createTriggerArrowContentElFn ? this.settings.createTriggerArrowContentElFn(state) : null
+    const fn = this.settings.createTriggerArrowContentElFn
+    return fn ? fn(state) : null
   }
 
   /**
@@ -1970,9 +1973,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: rendering
    */
   protected createGroupLabelContentEl(key: GroupKey, itemsInGroup: readonly T[]): HTMLElement | null {
-    return this.settings.createGroupLabelContentElFn
-      ? this.settings.createGroupLabelContentElFn(key, itemsInGroup)
-      : null
+    const fn = this.settings.createGroupLabelContentElFn
+    return fn ? fn(key, itemsInGroup) : null
   }
 
   /**
@@ -1987,7 +1989,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected replacePopupListItemElInDom(item: T): void {
     if (!this.opened) { return }
     const list = this.getVisibleItems()
-    const index = list.findIndex(i => this.settings.compareFn(i, item))
+    const compareFn = this.settings.compareFn
+    const index = list.findIndex(i => compareFn(i, item))
     if (index < 0) { return }
     const oldEl = this.itemEls[index]
     if (oldEl === undefined) { return }
@@ -2082,7 +2085,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: semantics
    */
   protected itemToString(item: T): string {
-    return this.settings.itemToStringFn ? this.settings.itemToStringFn(item) : String(item)
+    const fn = this.settings.itemToStringFn
+    return fn ? fn(item) : String(item)
   }
 
   /**
@@ -2093,7 +2097,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: rendering
    */
   protected createItemContentEl(item: T): HTMLElement | null {
-    return this.settings.createItemContentElFn ? this.settings.createItemContentElFn(item) : null
+    const fn = this.settings.createItemContentElFn
+    return fn ? fn(item) : null
   }
 
   /**
@@ -2106,7 +2111,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: semantics
    */
   protected isItemEffectivelyDisabled(item: T): boolean {
-    if (this.settings.itemDisabledFn && this.settings.itemDisabledFn(item)) { return true }
+    const itemDisabledFn = this.settings.itemDisabledFn
+    if (itemDisabledFn && itemDisabledFn(item)) { return true }
     const key = this.itemToGroupKey(item)
     return key !== null && this.isGroupDisabled(key)
   }
@@ -2124,7 +2130,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: semantics
    */
   protected itemToGroupKey(item: T): GroupKey | null {
-    return this.settings.itemToGroupKeyFn ? this.settings.itemToGroupKeyFn(item) : null
+    const fn = this.settings.itemToGroupKeyFn
+    return fn ? fn(item) : null
   }
 
   /**
@@ -2133,7 +2140,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: semantics
    */
   protected groupKeyToString(key: GroupKey): string {
-    return this.settings.groupKeyToStringFn ? this.settings.groupKeyToStringFn(key) : String(key)
+    const fn = this.settings.groupKeyToStringFn
+    return fn ? fn(key) : String(key)
   }
 
   /**
@@ -2141,7 +2149,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: semantics
    */
   protected isGroupDisabled(key: GroupKey): boolean {
-    return this.settings.groupDisabledFn ? this.settings.groupDisabledFn(key) : false
+    const fn = this.settings.groupDisabledFn
+    return fn ? fn(key) : false
   }
 
   /**
@@ -2325,7 +2334,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     el.id = `${this.classIdMap.popupListId}-action-row-${position}${index}`
     el.className = `${this.classIdMap.itemClass} ${this.classIdMap.popupListActionRowClass}`
     el.setAttribute('role', 'option')
-    const text = row.textFn()
+    const textFn = row.textFn
+    const text = textFn()
     const content = this.createPopupListActionRowContentEl(row)
     if (content === null) {
       el.textContent = text
@@ -2358,7 +2368,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: rendering
    */
   protected createPopupListActionRowContentEl(row: LLSelectPopupListActionRow): HTMLElement | null {
-    return row.createContentElFn ? row.createContentElFn() : null
+    const fn = row.createContentElFn
+    return fn ? fn() : null
   }
 
   /**
@@ -2369,7 +2380,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: semantics
    */
   protected isPopupListActionRowDisabled(row: LLSelectPopupListActionRow): boolean {
-    return row.disabledFn ? row.disabledFn() : false
+    const fn = row.disabledFn
+    return fn ? fn() : false
   }
 
   /**
@@ -2385,7 +2397,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: reactions
    */
   protected onPopupListActionRowActivated(row: LLSelectPopupListActionRow): void {
-    row.onActivate()
+    const onActivate = row.onActivate
+    onActivate()
   }
 
   /**
@@ -3036,9 +3049,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: rendering
    */
   protected createTriggerClearButtonContentEl(): HTMLElement | SVGElement | null {
-    return this.settings.createTriggerClearButtonContentElFn
-      ? this.settings.createTriggerClearButtonContentElFn()
-      : null
+    const fn = this.settings.createTriggerClearButtonContentElFn
+    return fn ? fn() : null
   }
 
   /**
@@ -3211,9 +3223,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: rendering
    */
   protected createPopupListNoResultsContentEl(query: string): HTMLElement | null {
-    return this.settings.createPopupListNoResultsContentElFn
-      ? this.settings.createPopupListNoResultsContentElFn(query)
-      : null
+    const fn = this.settings.createPopupListNoResultsContentElFn
+    return fn ? fn(query) : null
   }
 
   /**

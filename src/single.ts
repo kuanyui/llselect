@@ -152,7 +152,8 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   protected override renderTriggerContent(): void {
     this.syncEmptyStateToDom()
     const plainValue = this.chosenItem === undefined ? this.settings.placeholder : this.itemToString(this.chosenItem!)
-    const custom = this.settings.createTriggerContentElFn?.({ chosenItem: this.chosenItem, items: this.getItems() }) ?? null
+    const fn = this.settings.createTriggerContentElFn
+    const custom = fn?.({ chosenItem: this.chosenItem, items: this.getItems() }) ?? null
     if (custom !== null) {
       this.commitTriggerContentToDom(custom, plainValue)
       return
@@ -204,7 +205,8 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
     const list = this.getVisibleItems()
     const c = this.chosenItem
     if (c !== undefined) {
-      const idx = list.findIndex(o => this.settings.compareFn(o, c))
+      const compareFn = this.settings.compareFn
+      const idx = list.findIndex(o => compareFn(o, c))
       if (idx >= 0 && !this.isItemEffectivelyDisabled(list[idx]!)) {
         this.setFocusedIndex(idx)
         return
@@ -224,7 +226,8 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   protected override computeTypeaheadClosedStartIndex(list: readonly T[]): number {
     const c = this.chosenItem
     if (c === undefined) { return -1 }
-    return list.findIndex((o) => this.settings.compareFn(o, c))
+    const compareFn = this.settings.compareFn
+    return list.findIndex((o) => compareFn(o, c))
   }
 
   /**
@@ -244,7 +247,8 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   protected override onItemsChanged(): void {
     const previous = this.chosenItem
     if (previous !== undefined) {
-      const idx = this.items.findIndex(o => this.settings.compareFn(o, previous))
+      const compareFn = this.settings.compareFn
+      const idx = this.items.findIndex(o => compareFn(o, previous))
       if (idx < 0) {
         this.chosenItem = undefined
         this.renderTrigger()
@@ -264,7 +268,8 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   private areEqual(a: T | undefined, b: T | undefined): boolean {
     if (a === undefined && b === undefined) { return true }
     if (a === undefined || b === undefined) { return false }
-    return this.settings.compareFn(a, b)
+    const compareFn = this.settings.compareFn
+    return compareFn(a, b)
   }
 
   private fireChange(previousChosenItem: T | undefined): void {
@@ -274,7 +279,8 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
     const meta: LLSelectChangeMeta = { source: this.changeSource }
     this.changeSource = 'api'
     this.onChosenChanged()
-    this.settings.onChange?.(this.chosenItem, previousChosenItem, meta)
+    const onChange = this.settings.onChange
+    onChange?.(this.chosenItem, previousChosenItem, meta)
     // Action rows read live state; after the handler ran, so a row's text may show what it wrote.
     this.replacePopupListActionRowElsInDom()
   }

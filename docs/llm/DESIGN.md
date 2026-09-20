@@ -21,6 +21,8 @@ Rationale:
 
 Apply this rule to all new function-typed settings.
 
+- **`this` is `undefined` inside every function-typed setting and every action-row function** (ruled in the callback-context review; reasons in `popup-rows-and-callbacks.md` section 4.10). The library calls them through a local reference, never as a method of the settings object or of the descriptor. The parameters are the only input; the instance is reached through the closure recipe (`let sel; sel = new ...`), never through `this`.
+
 ### Settings vs methods
 
 llselect splits surface area by mutability:
