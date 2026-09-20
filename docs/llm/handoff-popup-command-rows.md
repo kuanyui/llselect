@@ -65,6 +65,8 @@ Demo rulings: 16.1 uses rows BEFORE the items; no "Clear all" row (the choose-al
 
 ## 5. Rounds 10-12 (after this handoff was written)
 
+The decisions that came out of rounds 10-14 and the reasons behind them are written up for readers in `popup-rows-and-callbacks.md`; start there, then this section for the process.
+
 The owner re-opened two premises: whether the choose-all row is one of the action rows, and whether settings callbacks receive the widget instance. Rounds 10, 11 and 12 (the last a labeled one-sided round arguing AGAINST the instance, after round 11 leaned toward it) are recorded in `archive/choose-all-and-callback-context-research.md`, with the votes, the arguments and the open owner decision. Read it before touching the callback signatures or the choose-all row; the rename in section 3 and the pinned-rows plan are unaffected.
 
 ## 6. What the next session should do first
