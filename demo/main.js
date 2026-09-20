@@ -1167,10 +1167,12 @@ await initTreeSelect().catch(() => {
 // createPopupHeaderContentElFn runs ONCE, in the constructor, and the returned
 // node is yours for the instance's life: onChange rewrites the count and the
 // button state. The count text is the library's own pack message, so a
-// language switch (setUiTranslationPack) localizes it too. The button is a
+// language switch (setUiTranslationPack) localizes it too. The match count
+// is rewritten from onOpen and onFilterQueryChange. The button is a
 // slot control (A11Y.md "Slot controls"): a click keeps DOM focus on the
 // combobox, Tab reaches it while the popup is open, Esc on it closes.
 const headerCountEl = document.createElement('span')
+const headerMatchesEl = document.createElement('span')
 const headerClearButton = document.createElement('button')
 headerClearButton.type = 'button'
 headerClearButton.textContent = 'Clear all'
@@ -1189,12 +1191,19 @@ const selHeaderCount = new LLSelectMultiple(
       const header = document.createElement('div')
       header.className = 'popup-header-row'
       headerClearButton.className = 'popup-link-button push-right'
-      header.append(headerCountEl, headerClearButton)
+      header.append(headerCountEl, headerMatchesEl, headerClearButton)
       return header
     },
     onChange: (chosen) => { writeHeaderState(chosen.length) },
+    // The list is already re-rendered when these run, so getVisibleItems()
+    // is the new match set.
+    onOpen: () => { writeHeaderMatches() },
+    onFilterQueryChange: () => { writeHeaderMatches() },
   }
 )
+function writeHeaderMatches() {
+  headerMatchesEl.textContent = ', ' + selHeaderCount.getVisibleItems().length + ' of ' + selHeaderCount.getItems().length + ' shown'
+}
 function writeHeaderState(chosenCount) {
   const pack = selHeaderCount.getUiTranslationPack()
   headerCountEl.textContent = pack.triggerCountSummary(chosenCount, selHeaderCount.getItems().length)

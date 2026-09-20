@@ -270,7 +270,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Popup header / footer, pinned        | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update; see Popup header / footer |
 | i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir` |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
-| Events                               | `onChange(current, previous)`, `onOpen`, `onClose`                                                                       |
+| Events                               | `onChange(current, previous)`, `onOpen`, `onClose`, `onFilterQueryChange(query)`                                          |
 
 ### Typing to jump (prefix typeahead)
 
@@ -332,7 +332,7 @@ A complete worked subclass, in TypeScript with typed subclass settings (the clas
 | Highlight filter matches in rows | `createItemContentElFn` + the `createHighlightedTextEl` helper |
 | Equality for object items        | `compareFn`                     |
 | Dropdown arrow                   | `createTriggerArrowContentElFn` |
-| Events                           | `onChange`, `onOpen`, `onClose` |
+| Events                           | `onChange`, `onOpen`, `onClose`, `onFilterQueryChange` |
 
 ```js
 const sel = new LLSelectSingle(el, {

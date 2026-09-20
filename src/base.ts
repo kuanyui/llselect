@@ -571,6 +571,20 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * @group Events
    */
   onClose: (() => void) | null
+  /**
+   * Called after the filter text changed and the list was re-rendered.
+   * - Fires on typing, when an IME composition ends, and when Esc clears a
+   *   non-empty query. `query` is the new text.
+   * - Does not fire when the text stays the same, when `close()` clears the
+   *   query (use `onClose`), when `open()` starts with an empty query, or on
+   *   `setItems()` / `rerender()`.
+   * - Runs after the list is rebuilt, so `getVisibleItems()` already
+   *   reflects the new text. Rewrite a header count from here, from `onOpen`
+   *   and from `onChange`.
+   * - `null` (default): nothing is called.
+   * @group Events
+   */
+  onFilterQueryChange: ((query: string) => void) | null
 }
 
 /**
@@ -1131,6 +1145,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       createGroupLabelContentElFn: settings?.createGroupLabelContentElFn ?? null,
       onOpen: settings?.onOpen ?? null,
       onClose: settings?.onClose ?? null,
+      onFilterQueryChange: settings?.onFilterQueryChange ?? null,
       // Settings cast (one per constructor, see single / multiple): TS
       // cannot prove "base fields + Omit<S, base keys>" reassembles a generic
       // S. The channel itself is typed: the subclassSettings param accepts
@@ -3274,12 +3289,16 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Input event on the filter field: re-filter, re-render the list, move the
-   * active option to the first match. IME composition is guarded - we wait
-   * for `compositionend` and filter once with the composed text.
+   * active option to the first match, then fire `onFilterQueryChange` when
+   * the text actually changed. IME composition is guarded - we wait for
+   * `compositionend` and filter once with the composed text. The Esc-clear
+   * path comes through here too, so it fires the event as well.
    */
   private handleSearchInputEvent(): void {
     if (this.composing) { return }
-    this.query = this.filterInputEl.value
+    const next = this.filterInputEl.value
+    const changed = next !== this.query
+    this.query = next
     this.recomputeFilteredItems()
     this.focusedIndex = -1
     this.renderPopupList()
@@ -3287,6 +3306,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // by keyboard navigation (A11Y.md "Disabled"), and the active option a
     // keystroke lands on is keyboard state.
     this.setFocusedIndex(this.findNextEnabledIndex(0, 1, this.getVisibleItems()))
+    if (changed) {
+      const onFilterQueryChange = this.settings.onFilterQueryChange
+      onFilterQueryChange?.(next)
+    }
   }
 
   /** Outer popup wrapper. No ARIA role; structural only. */

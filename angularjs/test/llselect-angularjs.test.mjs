@@ -314,6 +314,25 @@ test('ll-popup-list-leading-rows-pinned / -trailing-rows-pinned: read once; the 
   assert.equal(list.firstElementChild.getAttribute('role'), 'presentation', 'read once at link time: a later scope change does nothing')
 })
 
+test('ll-on-filter-query-change: an event expression with $query, only on a real text change', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.t" ll-filterable="true" ll-on-filter-query-change="vm.seen.push($query)"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.t = null; this.seen = [] },
+  })
+  a.$('.llselect-trigger').click()
+  const input = a.$('.llselect-popup input')
+  input.value = 'ap'
+  input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
+  input.value = 'ap'
+  input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
+  input.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+  assert.deepEqual([...a.scope.vm.seen], ['ap', ''], 'typed once, identical text ignored, Esc cleared')
+})
+
 test('ll-hide-chosen-rows: choosing removes the row; the model still gains the item', () => {
   const a = boot({
     deps: ['llselect'],

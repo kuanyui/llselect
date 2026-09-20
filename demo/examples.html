@@ -939,7 +939,7 @@
 
     <article>
       <h3>15.1 Tags in the trigger, the count and a Clear all button in the header</h3>
-      <p class="hint">The trigger shows chips, so the header takes over the count, using the library's own <code>triggerCountSummary</code> from <code>getUiTranslationPack()</code>. The button next to it is a slot control: a click keeps keyboard input on the combobox, and Tab reaches it while the popup is open.</p>
+      <p class="hint">The trigger shows chips, so the header takes over the count, using the library's own <code>triggerCountSummary</code> from <code>getUiTranslationPack()</code>. The match count next to it is rewritten from <code>onFilterQueryChange</code>, which runs after each filter change with the list already re-rendered. The button next to it is a slot control: a click keeps keyboard input on the combobox, and Tab reaches it while the popup is open.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-header-count"></div>

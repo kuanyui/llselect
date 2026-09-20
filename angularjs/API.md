@@ -28,7 +28,7 @@ Attributes of both `<llselect-single>` and `<llselect-multiple>`. Every entry op
 - **Expression**: `$eval`'d against the scope ONCE at link time. llselect resolves its settings bag once at construction, so a later scope change does not move them; only the method-backed [`ll-disabled`](#ll-disabled) is watched (see the [Gotchas](README.md#gotchas)). String values need their own quotes: `ll-placeholder="'Pick one'"`.
 - **Literal**: plain attribute text.
 - **Flag**: acts by presence alone.
-- **Event expression**: evaluated on EACH event, inside a digest, like `ng-click`. Only [`ll-on-open`](#ll-on-open) / [`ll-on-close`](#ll-on-close).
+- **Event expression**: evaluated on EACH event, inside a digest, like `ng-click`. Only [`ll-on-open`](#ll-on-open) / [`ll-on-close`](#ll-on-close) / [`ll-on-filter-query-change`](#ll-on-filter-query-change).
 
 App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` / `uiTranslationPack` are set once via [`llselectConfigProvider`](#llselectconfigprovider); a per-element attribute always wins.
 
@@ -59,6 +59,14 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 - Same rules as [`ll-on-open`](#ll-on-open).
 - It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and AngularJS broadcasts `$destroy` before disabling the scope.
 - In that teardown case, writes to parent-owned state (`vm.*`, a service) persist; writes to the dying child scope itself are lost with it.
+
+### `ll-on-filter-query-change`
+
+**Event expression** -> `onFilterQueryChange`. Evaluated after the filter text changed and the list re-rendered, inside a digest, with the new text as `$query`.
+
+- Same rules as [`ll-on-open`](#ll-on-open).
+- Fires on typing, when an IME composition ends, and when Esc clears a non-empty query. Not when the text stays the same, not when a close clears the query (use [`ll-on-close`](#ll-on-close)), not on an open.
+- The list is already rebuilt when it runs, so `instance().getVisibleItems()` reflects `$query`.
 
 ### `ll-options`
 

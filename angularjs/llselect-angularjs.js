@@ -220,6 +220,7 @@
     if (attrs.llPopupListTrailingRowsPinned) { settings.popupListTrailingRowsPinned = scope.$eval(attrs.llPopupListTrailingRowsPinned) }
     wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler)
     wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler)
+    wireEventAttr(scope, attrs, 'llOnFilterQueryChange', settings, 'onFilterQueryChange', exceptionHandler, function (query) { return { $query: query } })
 
     settings.createTriggerArrowContentElFn = resolveArrow(arrow)
     return settings
@@ -238,12 +239,15 @@
    * scope, so writes to parent-owned state (vm.*, a service) persist - writes
    * to the dying child scope itself are lost with it.
    */
-  function wireEventAttr(scope, attrs, name, settings, key, exceptionHandler) {
+  function wireEventAttr(scope, attrs, name, settings, key, exceptionHandler, toLocals) {
     if (!attrs[name]) { return }
     var expr = attrs[name]
     settings[key] = function () {
-      if (!scope.$root.$$phase) { scope.$apply(expr); return }
-      try { scope.$eval(expr) } catch (e) { exceptionHandler(e) }
+      // toLocals maps the core's callback arguments to expression locals
+      // (ll-on-filter-query-change exposes `$query`); the others have none.
+      var locals = toLocals ? toLocals.apply(null, arguments) : undefined
+      if (!scope.$root.$$phase) { scope.$apply(function () { scope.$eval(expr, locals) }); return }
+      try { scope.$eval(expr, locals) } catch (e) { exceptionHandler(e) }
     }
   }
 

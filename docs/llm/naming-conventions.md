@@ -274,6 +274,7 @@ Settings on `LLSelectBaseSettings` (s3): arrays of `LLSelectPopupListActionRow` 
 | setting | `popupListLeadingActionRows` | `readonly LLSelectPopupListActionRow[]`          | value (array)      |
 | setting | `popupListTrailingActionRows`  | `readonly LLSelectPopupListActionRow[]`          | value (array)      |
 | type    | `LLSelectPopupListActionRow`     | `{ textFn; createContentElFn?; disabledFn?; onActivate }` | descriptive noun |
+| setting | `onFilterQueryChange`            | `((query: string) => void) \| null`             | `on*` event: after the re-render, only on a real text change (A11Y.md "Filtering") |
 
 | Vis       | Name                                   | Convention                                                          |
 | --------- | -------------------------------------- | ------------------------------------------------------------------- |
