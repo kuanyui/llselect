@@ -187,22 +187,20 @@
 /* popupListLeadingRowsPinned / popupListTrailingRowsPinned wrap a block in a
    presentational div that the library makes sticky. The theme gives it an
    opaque background (the items scroll under it) and the block's edge line,
-   because the sibling rules above cannot see through the wrapper. */
+   because the sibling rules above cannot see through the wrapper. The line
+   is drawn only toward items: the library sets data-edge-to-items on every
+   render, so two blocks that touch (nothing listed) draw no line at all. */
 
 .llselect-popup-list-pinned-leading-rows,
 .llselect-popup-list-pinned-trailing-rows {
   background: var(--bs-body-bg, #fff);
   z-index: 1;
 }
-.llselect-popup-list-pinned-leading-rows {
+.llselect-popup-list-pinned-leading-rows[data-edge-to-items="true"] {
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
-.llselect-popup-list-pinned-trailing-rows {
+.llselect-popup-list-pinned-trailing-rows[data-edge-to-items="true"] {
   border-top: 1px solid rgba(0, 0, 0, 0.12);
-}
-/* Both blocks pinned with no item between them: one line, not two. */
-.llselect-popup-list-pinned-leading-rows + .llselect-popup-list-pinned-trailing-rows {
-  border-top: none;
 }
 
 /* --- popup header / footer slots -------------------------------- */

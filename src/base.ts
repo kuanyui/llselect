@@ -938,8 +938,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `popupListPinnedLeadingRowsClass`; the library sets `position: sticky`
    *   and `top: 0` on it inline.
    * - In the listbox only while the leading rows exist. The library moves it
-   *   in and out on every list render. Its classes and attributes are yours
-   *   to change after `new`.
+   *   in and out on every list render. Its classes are yours to change after
+   *   `new`.
+   * - `data-edge-to-items="true"` while items are listed under it, `"false"`
+   *   otherwise. The themes draw the block's edge line only when it is true,
+   *   so two blocks that touch draw no line between them.
    * @group DOM elements
    */
   public readonly popupListPinnedLeadingRowsEl: HTMLElement | null
@@ -2012,14 +2015,19 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const trailing = this.trailingActionRowEls
     const leadingWrap = this.popupListPinnedLeadingRowsEl
     const trailingWrap = this.popupListPinnedTrailingRowsEl
+    // A wrapper's inner edge line belongs only where items follow / precede
+    // it; the themes read this attribute, so two adjacent blocks draw none.
+    const hasItems = children.length > 0
     if (leadingWrap) {
       leadingWrap.replaceChildren(...leading)
+      leadingWrap.setAttribute('data-edge-to-items', String(hasItems))
       if (leading.length > 0) { children.unshift(leadingWrap) }
     } else {
       children.unshift(...leading)
     }
     if (trailingWrap) {
       trailingWrap.replaceChildren(...trailing)
+      trailingWrap.setAttribute('data-edge-to-items', String(hasItems))
       if (trailing.length > 0) { children.push(trailingWrap) }
     } else {
       children.push(...trailing)

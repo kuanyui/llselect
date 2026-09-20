@@ -129,8 +129,9 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * as the first option of the listbox.
    * - Default `false`.
    * - Activating the row (Enter / click) runs `toggleAllVisible`: it toggles
-   *   the visible enabled subset (the matching subset while a filter query
-   *   is active). The public `chooseAll` / `unchooseAll` / `toggleAll` keep
+   *   the visible enabled subset, `getVisibleEnabledItems()`: the items
+   *   still listed (matching the query; with `hideChosenRows`, not chosen)
+   *   and enabled. The public `chooseAll` / `unchooseAll` / `toggleAll` keep
    *   their whole-list semantics.
    * - The row is tri-state (none / some / all chosen), carried by the
    *   counting text's numbers and the `data-chosen-state` CSS hook.
@@ -381,7 +382,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *     group.
    * - If all of them are already chosen, it unchooses exactly those.
    * - Otherwise, it chooses the ones still missing.
-   * - Choices outside that set (filtered-out or disabled) are preserved
+   * - Choices outside that set (filtered-out, hidden by `hideChosenRows`, or disabled) are preserved
    *   either way.
    * - With no filter query and without `hideChosenRows`, the acted-on set is
    *   every enabled item, the same scope as `toggleAll`.

@@ -214,11 +214,13 @@ test('scroll path: a pinned row never scrolls; an item under the pinned block sc
   const wrap = sel.popupListPinnedLeadingRowsEl!
   stubRect(wrap, 0, 20) // the pinned block covers 0..20
   stubOptions(sel.popupListEl, 20, 0) // choose-all 0..20, a 20..40, b 40..60, c 60..80, d 80..100
-  fireKey(sel.triggerEl, 'Home') // the choose-all row, inside the wrapper
+  fireKey(sel.triggerEl, 'ArrowDown') // item a: 20..40, inside the band, no scroll
+  fireKey(sel.triggerEl, 'Home') // back onto the choose-all row, inside the wrapper: the guard, not an early return
   assert.equal(scrollTop(), 0, 'a pinned row is always in view')
-  stubRect(sel.popupListEl.querySelectorAll('[role="option"]')[1]!, 10, 20) // item a half under the block: 10..30
+  sel.popupListEl.scrollTop = 30 // scrolled down earlier; item a now sits half under the 20px block
+  stubRect(sel.popupListEl.querySelectorAll('[role="option"]')[1]!, 10, 20) // item a on screen: 10..30
   fireKey(sel.triggerEl, 'ArrowDown')
-  assert.equal(scrollTop(), -10, 'scrolled up by the part hidden under the 20px block')
+  assert.equal(scrollTop(), 20, 'scrolled up by the 10px hidden under the block; without the inset it would stay at 30')
 })
 
 test('trailing block: the wrapper holds its rows as the last child', () => {
@@ -242,4 +244,44 @@ test('a pinned action row rebuilt in place after a change stays inside the wrapp
   sel.toggleItem('a') // rows are rebuilt after every chosen change
   assert.equal(wrap.firstElementChild!.textContent, 'cmd 1', 'rebuilt in place, still inside the wrapper')
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), wrap.firstElementChild!.id, 'the active option followed the rebuilt row')
+})
+
+test('scroll path: a grouped list with a pinned block scrolls the item past the block (the inset applies to grouped items)', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { chooseAllRow: true, popupListLeadingRowsPinned: true, itemToGroupKeyFn: item => item[0] ?? null })
+  sel.setItems(['a1', 'a2', 'b1', 'b2'])
+  sel.open()
+  const scrollTop = stubScroller(sel.popupListEl, 60)
+  stubRect(sel.popupListPinnedLeadingRowsEl!, 0, 20)
+  stubOptions(sel.popupListEl, 20, 0) // choose-all 0..20, then a1, a2, b1, b2 inside their groups
+  assert.ok(sel.popupListEl.querySelector('[role="group"] [role="option"]'), 'items sit inside group containers')
+  fireKey(sel.triggerEl, 'ArrowDown') // a1: 20..40, inside the band
+  fireKey(sel.triggerEl, 'Home') // back onto the pinned choose-all row
+  assert.equal(scrollTop(), 0, 'the pinned choose-all row never scrolls')
+  sel.popupListEl.scrollTop = 30
+  stubRect(sel.popupListEl.querySelectorAll('[role="option"]')[1]!, 10, 20) // a1 half under the block
+  fireKey(sel.triggerEl, 'ArrowDown')
+  assert.equal(scrollTop(), 20, 'a grouped item scrolls past the 20px block like a flat one')
+})
+
+test('data-edge-to-items: true while items are listed, false when the blocks touch', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    chooseAllRow: true, filterable: true,
+    popupListLeadingRowsPinned: true, popupListTrailingRowsPinned: true,
+    popupListLeadingActionRows: [row('lead')], popupListTrailingActionRows: [row('trail')],
+  })
+  sel.setItems(['apple', 'kiwi'])
+  sel.open()
+  const lead = sel.popupListPinnedLeadingRowsEl!
+  const trail = sel.popupListPinnedTrailingRowsEl!
+  assert.equal(lead.getAttribute('data-edge-to-items'), 'true')
+  assert.equal(trail.getAttribute('data-edge-to-items'), 'true')
+  const input = sel.popupEl.querySelector('input')!
+  input.value = 'zzz'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.equal(lead.nextElementSibling, trail, 'the two blocks touch')
+  assert.equal(lead.getAttribute('data-edge-to-items'), 'false')
+  assert.equal(trail.getAttribute('data-edge-to-items'), 'false')
+  input.value = ''
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.equal(lead.getAttribute('data-edge-to-items'), 'true')
 })

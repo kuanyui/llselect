@@ -42,6 +42,8 @@
  *   taking RESOLVED primitives (never the item type `T`), so a language pack
  *   can implement them. Keys are message ids (no `Fn` suffix); see
  *   naming-conventions.md s7a.4.
+ * - Message functions are called as methods of the pack, so inside them
+ *   `this` is the pack and a message may read its sibling messages.
  * @group Pack contract
  */
 export interface LLSelectUiTranslationPack {

@@ -17,7 +17,7 @@ Status: everything planned below has landed (commits `937e5db` to `9581257` on `
 
 Commits, oldest first (subjects abbreviated): `8e5e2ba` group-label wording sweep; `514500f` header / footer slots; `310e857` Esc from popup content closes, `close()` returns focus from inside the popup; `535e4a8` AngularJS `ll-popup-header-content-fn` / `ll-popup-footer-content-fn`; `2d05e11` ring characterization tests + `LLSelectAction` -> `LLSelectKeyboardAction`; `a7ddd6e` leading-row flag -> nullable ring tag; `ace52c0` action rows; `2822ca8` AngularJS `ll-popup-list-action-rows-before-items` / `-after-items` (renamed to `ll-popup-list-leading-action-rows` / `-trailing-action-rows` in `937e5db`); `b7f721d` final-review fix batch (FIXME 110-122); `9747406` research archived, DOCUMENTATION-109 resolved; demo commits `7b65178`, `f160177`, `c88c262`, `633a417`, `6d58848`, `8ba0b58`, `c65b1cc`; `7a7e01f` dividers moved to block edges (QUALITY-123); `189416b` AngularJS `onActivate(instance)` (MEDIUM-110 resolved); `b04e23a` CLAUDE.md context-first reply rule.
 
-Living contracts: `DESIGN.md` "Popup header / footer slots" and "Action rows"; `A11Y.md` "Slot controls" and "Action rows"; `naming-conventions.md` 4h / 4i; README "Popup header / footer" and "Action rows"; `angularjs/API.md` the four `ll-popup-*` entries; demo sections 15.1-15.4 and 16.1-16.3 (core), 12-13 (AngularJS). Findings log: `FIXME.md` "review (popup header / footer slots and action rows)", ids 109-123, all resolved. Open manual passes: `TODO.md` "Popup slot and action-row passes" (real browser + screen reader).
+Living contracts: `../DESIGN.md` "Popup header / footer slots" and "Action rows"; `../A11Y.md` "Slot controls" and "Action rows"; `../naming-conventions.md` 4h / 4i; README "Popup header / footer" and "Action rows"; `../../angularjs/API.md` the four `ll-popup-*` entries; demo sections 15.1-15.4 and 16.1-16.3 (core), 12-13 (AngularJS). Findings log: `../FIXME.md` "review (popup header / footer slots and action rows)", ids 109-123, all resolved. Open manual passes: `../TODO.md` "Popup slot and action-row passes" (real browser + screen reader).
 
 Decisions ratified along the way (do not re-open): keep `createItemEl(item, index)`; two action-row builders, one per position (`createPopupListLeadingActionRowEl` / `createPopupListTrailingActionRowEl(row, index)`); slot content called once; rows rebuilt per render and after every chosen change (right after `onChange`) and after `setItems`; the conditional tab-stop contract; multi opens with the active option on the first chosen item (status quo kept; the selection-order vs list-order nuance was left as is); the AngularJS wrapper passes the widget instance to `onActivate` only; dividers are drawn at block edges by the next element's `border-top`, the choose-all row draws none of its own.
 
@@ -45,7 +45,7 @@ Demo rulings: 16.1 uses leading rows; no "Clear all" row (the choose-all row tog
 
 ### 3.2 The filter-query event (round 9, 6:0)
 
-- `onFilterQueryChange: ((query: string) => void) | null` on `LLSelectBaseSettings`; `null` = nothing fires. No ctx param (the callback-context review in `TODO.md` stays open).
+- `onFilterQueryChange: ((query: string) => void) | null` on `LLSelectBaseSettings`; `null` = nothing fires. No ctx param (the callback-context review in `../TODO.md` stays open).
 - Fires only when the query TEXT actually changes: after each input event once IME composition ends, and on Esc clearing a non-empty query. Not on identical text, not on `open()` resetting `''` to `''`, not on `setItems` / `rerender()`.
 - Fires AFTER `recomputeFilteredItems()` + `renderPopupList()` (5 of 6), so a handler reading `getVisibleItems()` sees the new list. Recipe: a header count element built once, rewritten from `onOpen`, `onChange` and this event.
 - AngularJS: `ll-on-filter-query-change` as an event expression with a `$query` local, wrapped like `ll-on-open`.
@@ -71,6 +71,6 @@ The owner re-opened two premises: whether the choose-all row is one of the actio
 
 ## 6. What the next session should do first
 
-1. Read this file, `TODO.md` (the plan section and manual passes), `DESIGN.md` "Action rows", `A11Y.md` "Action rows" / "Slot controls".
+1. Read this file, `../TODO.md` (the plan section and manual passes), `../DESIGN.md` "Action rows", `../A11Y.md` "Action rows" / "Slot controls".
 2. Put the four open decisions of section 3.1 to the owner in one message, with full TypeScript signatures for every name option (CLAUDE.md requires it).
-3. After ratification: implement in the order of section 3.3, one commit per feature, then convene the whole committee for one review of the change set, then fix findings under a new `FIXME.md` round.
+3. After ratification: implement in the order of section 3.3, one commit per feature, then convene the whole committee for one review of the change set, then fix findings under a new `../FIXME.md` round.

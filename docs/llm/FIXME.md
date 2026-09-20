@@ -4,7 +4,7 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (leading / trailing rows, construction context, this, pinned blocks, filter-query event)
 
-Process: the design settled by the unframed two-stage review (`archive/choose-all-and-callback-context-research.md`, rounds 13-14), then six commits `937e5db` to `9581257`, then one whole-committee review of the change set (six fresh sessions, Codex Sol rerun with a longer cap after a timeout), then this fix batch and its post-fix panel review.
+Process: the design settled by the unframed two-stage review (`archive/choose-all-and-callback-context-research.md`, rounds 13-14), then six commits `937e5db` to `9581257`, then one whole-committee review of the change set (six fresh sessions, Codex Sol rerun with a longer cap after a timeout), then this fix batch and its post-fix panel review. The post-fix review (Opus 4.8, Opus 5, Codex 5.5, Codex Sol) confirmed every fix and raised the follow-ups folded into the entries: the A11Y row for Alt+ArrowUp, the archived handoff's paths, the render-time `data-edge-to-items` attribute that zeroes the line between two touching pinned blocks, an inset test starting from a scroll position a browser can hold, a grouped-plus-pinned scroll test, one comment and two prose trims, and the pinned-row scroll assertions now step onto an item first, because Home on an already-active row returned before the guard.
 
 - [x] **[HIGH-124] - grouped items no longer scrolled into view**
   - Symptom: with `itemToGroupKeyFn` on a list taller than the popup, arrowing or End moved `aria-activedescendant` onto an item outside the scrollport and the list did not scroll. Every reviewer but one found it; the two flat-list demos hide it.
@@ -16,21 +16,21 @@ Process: the design settled by the unframed two-stage review (`archive/choose-al
 - [x] **[HIGH-136] - Alt+ArrowUp cleared the filter instead of closing (pre-existing; since `9581257` it also fired the event)**
   - Symptom: Alt+ArrowUp maps to the Close action like Esc, and the two-stage rule "clear a non-empty query first" ran for it too: with a query typed, Alt+ArrowUp emptied the query and left the popup open, and after `9581257` fired `onFilterQueryChange('')` for a close gesture.
   - Cause: the Close branch in `handleKeydown` tested the action, never the key.
-  - Fix: the two-stage clear runs only for `ev.key === 'Escape'`; Alt+ArrowUp always closes, and the close resets the query silently.
+  - Fix: the two-stage clear runs only for `ev.key === 'Escape'`; Alt+ArrowUp always closes, and the close resets the query silently. A11Y.md's filter-active keyboard table gains the Alt+ArrowUp row and the Focus rule names both gestures.
   - Verified: `test/filter-query-change.test.ts` pins Alt+ArrowUp with a query typed: closed, query empty, no event.
 - [x] **[MEDIUM-125] - two lines between two adjacent pinned blocks**
   - Symptom: both blocks pinned and no item between them (a filter matching nothing, or `hideChosenRows` hiding everything): the leading wrapper's `border-bottom` and the trailing wrapper's `border-top` stacked into a 2px line, where the unpinned case draws none.
-  - Fix: every theme adds `.llselect-popup-list-pinned-leading-rows + .llselect-popup-list-pinned-trailing-rows { border-top: none }`.
-  - Verified: by reading the five themes; layout is jsdom-blind (the "Pinned rows pass" in `TODO.md` covers the eyeball).
+  - Fix: the library sets `data-edge-to-items` on each wrapper on every render (`"true"` while items are listed) and the themes draw the edge line only then. Two blocks that touch draw no line, matching the unpinned case. A first cut used a CSS adjacency rule, which still left the leading block's own line; `:has()` is below the browser floor, so the render-time attribute is the only way to zero.
+  - Verified: `test/pinned-rows.test.ts` pins the attribute flipping with the filter; layout is jsdom-blind (the "Pinned rows pass" in `TODO.md` covers the eyeball).
 - [x] **[MEDIUM-126] - `LLSelectConstructionContext` overstated who receives it, and had no `@group`**
   - Symptom: its TSDoc said "the functions that the constructor calls" receive it; four of the six construction-time functions do not (the trigger builders get their own data). Without `@group`, TypeDoc dropped the type into a trailing "Interfaces" section.
   - Fix: the bullet names the two receivers and says the trigger functions get their own data; `@group Popup slots`.
 - [x] **[MEDIUM-127] - the `this` rule had an undocumented exception**
   - Symptom: DESIGN.md said `this` is `undefined` in every function-typed setting, but the translation pack's three message functions are still called as methods of the pack.
-  - Fix: kept as a documented exception (DESIGN.md, README, `popup-rows-and-callbacks.md` 4.10): a pack may read its own other messages through `this`. Neutralizing it would break that legitimate pattern for pack authors.
+  - Fix: kept as a documented exception (DESIGN.md, README, `popup-rows-and-callbacks.md` 4.10, and the pack contract's own TSDoc in `src/i18n.ts`): a pack may read its own other messages through `this`. Neutralizing it would break that legitimate pattern for pack authors.
 - [x] **[MEDIUM-128] - "visible" in the select-all docs ignored `hideChosenRows`**
   - Symptom: `getVisibleEnabledItems()` and `toggleAllVisible()` documented "visible" as "matches the filter query; with no query, every item", but `hideChosenRows` also removes chosen items from `getVisibleItems()`.
-  - Fix: both docstrings define visible as membership in `getVisibleItems()`: matches the query, and with `hideChosenRows` not chosen.
+  - Fix: both docstrings, and the A11Y.md "Choose-all" scope sentence, define visible as membership in `getVisibleItems()`: matches the query, and with `hideChosenRows` not chosen; the `chooseAllRow` docstring and the two "preserved either way" sentences name the hidden chosen items too.
 - [x] **[QUALITY-129] - the widget's scroll path and two pinned-block paths had no test**
   - Fix: the four scroll-path tests of HIGH-124, a trailing-block presence test, and an in-place rebuild of a pinned action row keeping its wrapper and the active option; `test/settings-this.test.ts` now also pins `onFilterQueryChange` and `groupKeyCompareFn`; the AngularJS suite gains the inside-digest and error-routing cases for `ll-on-filter-query-change`.
 - [x] **[QUALITY-130] - the scroll helper lost its rationale**
@@ -38,7 +38,7 @@ Process: the design settled by the unframed two-stage review (`archive/choose-al
   - Fix: restored at the tail of the docstring, after the inset bullets.
 - [x] **[DOCUMENTATION-131] - rename leftovers in the contracts**
   - Symptom: A11Y.md "Choose-all" still said "Action rows before the items"; DESIGN.md "Action rows" still called the visible-enabled subset protected.
-  - Fix: both sentences updated.
+  - Fix: both sentences updated; the naming table gains a row for the now-public `getVisibleEnabledItems`.
 - [x] **[DOCUMENTATION-132] - the rename rewrote history, and the handoff stayed in the living docs**
   - Symptom: the identifier sweep changed commit subjects quoted in `TODO.md` (P2-b, P2-c) and in the handoff into text no commit ever had, produced the non-name `AfterItemsEl`, and left the handoff's "open decisions" reading as still open after everything landed.
   - Fix: the two TODO entries restored from git; the handoff moved to `archive/` with a status line, the real subjects and the decided names; the pointers in `TODO.md`, `popup-rows-and-callbacks.md` and the research archive updated.
