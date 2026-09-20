@@ -283,6 +283,9 @@ Settings on `LLSelectBaseSettings` (s3): arrays of `LLSelectPopupListActionRow` 
 | protected | `onPopupListActionRowActivated`        | subclass hook (`on*`), past tense like `onItemActivated`            |
 | protected | `replacePopupListActionRowElsInDom`    | `replace*ElInDom` - in-place rebuild of every rendered row          |
 | private   | `createPopupListActionRowEl`           | shared body of the two builders                                     |
+| setting   | `popupListLeadingRowsPinned` / `popupListTrailingRowsPinned` | `boolean`, default `false`; per block, never per row |
+| public    | `popupListPinnedLeadingRowsEl` / `popupListPinnedTrailingRowsEl` | `*El` field, `HTMLElement \| null` - the sticky wrapper, or none built |
+| private   | `createPopupListPinnedRowsEl` / `pinnedWrapperHeight` / `scrollRingEntryIntoView` | wrapper builder (pure structure, no override point, like `createPopupListEl`); the measured insets handed to `ensureVisibleInScroll` |
 | private   | `replaceActionRowElsInDom`             | `replace*ElInDom` - the in-place swap one array of rows            |
 | private   | `ringLength` / `ringPosition` / `ringEntryAt` / `findNextEnabledRingPosition` / `findEnabledRingPositionForKeyboardAction` / `focusRingPosition` / `focusActionRow` | the arrow-key ring walk over [choose-all row, leading action rows, items, trailing action rows] |
 

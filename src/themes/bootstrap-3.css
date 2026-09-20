@@ -182,6 +182,24 @@
   border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
 
+/* --- pinned command blocks --------------------------------------- */
+/* popupListLeadingRowsPinned / popupListTrailingRowsPinned wrap a block in a
+   presentational div that the library makes sticky. The theme gives it an
+   opaque background (the items scroll under it) and the block's edge line,
+   because the sibling rules above cannot see through the wrapper. */
+
+.llselect-popup-list-pinned-leading-rows,
+.llselect-popup-list-pinned-trailing-rows {
+  background: #fff;
+  z-index: 1;
+}
+.llselect-popup-list-pinned-leading-rows {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+.llselect-popup-list-pinned-trailing-rows {
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
 /* --- popup header / footer slots -------------------------------- */
 /* Pinned above / below the list, outside the scroll area. The elements exist
    only when their content settings return an element; the divider matches

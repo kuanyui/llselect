@@ -255,6 +255,17 @@ vm.langRows = [{
   ll-options="l.name for l in vm.languages"></llselect-multiple>
 ```
 
+### `ll-popup-list-leading-rows-pinned`
+
+**Expression** -> `popupListLeadingRowsPinned`. `true` keeps the leading rows, the choose-all row plus the leading action rows, stuck to the top of the list while the items scroll. They stay in the arrow-key ring. Default `false`.
+
+- Read once at link time, like the action-row arrays.
+- The wrapper the library builds is reachable as `instance().popupListPinnedLeadingRowsEl`.
+
+### `ll-popup-list-trailing-rows-pinned`
+
+**Expression** -> `popupListTrailingRowsPinned`. The same for the trailing action rows, stuck to the bottom of the list.
+
 ### `ll-aria-label`
 
 **Literal** -> `ariaLabel`. The accessible name. The field's name resolves by the FIRST set rung, mirroring the W3C accessible-name computation order:

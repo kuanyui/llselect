@@ -377,6 +377,40 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   popupListTrailingActionRows: readonly LLSelectPopupListActionRow[]
   /**
+   * Keep the leading rows in view while the items scroll.
+   * - The leading rows are the choose-all row (when on) plus
+   *   `popupListLeadingActionRows`. With `true`, that whole block sticks to
+   *   the top edge of the listbox and the items scroll under it.
+   * - The rows stay in the arrow-key ring, keep their roles, and are still
+   *   counted by assistive technology. Only their scrolling changes.
+   * - The library wraps the block in a `div` with `role="presentation"`
+   *   (`popupListPinnedLeadingRowsEl`, class
+   *   `popupListPinnedLeadingRowsClass`) and sets `position: sticky` and
+   *   `top: 0` on it inline, so the setting works in any theme. The shipped
+   *   themes give the wrapper an opaque background and its edge line.
+   * - When the block has no rows, for example when the choose-all row hides
+   *   because nothing is selectable and there are no leading action rows,
+   *   the wrapper is not in the listbox.
+   * - Scrolling an item into view accounts for the wrapper's height. When the
+   *   pinned blocks leave no room for the items, scrolling is best-effort.
+   * - Default `false`: the rows scroll with the items.
+   * - Pinning is per block, never per row. Why: `docs/llm/popup-rows-and-callbacks.md`
+   *   section 5. Contract: `docs/llm/A11Y.md` "Action rows".
+   * @group Action rows
+   */
+  popupListLeadingRowsPinned: boolean
+  /**
+   * Keep the trailing rows in view while the items scroll.
+   * - The trailing rows are `popupListTrailingActionRows`. With `true`, that
+   *   block sticks to the bottom edge of the listbox.
+   * - Same contract as {@link popupListLeadingRowsPinned}. The wrapper is
+   *   `popupListPinnedTrailingRowsEl`, class
+   *   `popupListPinnedTrailingRowsClass`, with `bottom: 0`.
+   * - Default `false`.
+   * @group Action rows
+   */
+  popupListTrailingRowsPinned: boolean
+  /**
    * How the popup decides its width. Does NOT affect the trigger - trigger
    * width is always whatever your CSS says.
    *
@@ -607,6 +641,16 @@ export interface LLSelectClassIdMap {
    */
   popupListActionRowClass: string
   /**
+   * Class on `popupListPinnedLeadingRowsEl`, the sticky wrapper around the
+   * leading rows when `popupListLeadingRowsPinned` is on.
+   */
+  popupListPinnedLeadingRowsClass: string
+  /**
+   * Class on `popupListPinnedTrailingRowsEl`, the sticky wrapper around the
+   * trailing rows when `popupListTrailingRowsPinned` is on.
+   */
+  popupListPinnedTrailingRowsClass: string
+  /**
    * Class on the choose-all row (`LLSelectMultiple`, `chooseAllRow`
    * setting). Also carries `itemClass` plus `data-chosen-state="none|some|all"`
    * for the tri-state visual.
@@ -736,6 +780,8 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     popupHeaderClass: `${prefix}-popup-header`,
     popupFooterClass: `${prefix}-popup-footer`,
     popupListActionRowClass: `${prefix}-popup-list-action-row`,
+    popupListPinnedLeadingRowsClass: `${prefix}-popup-list-pinned-leading-rows`,
+    popupListPinnedTrailingRowsClass: `${prefix}-popup-list-pinned-trailing-rows`,
     chooseAllRowClass: `${prefix}-choose-all-row`,
     itemClass: `${prefix}-item`,
     itemFocusedClass: `${prefix}-item-focused`,
@@ -866,6 +912,26 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group DOM elements
    */
   public readonly popupFooterEl: HTMLElement | null
+  /**
+   * The wrapper around the pinned leading rows, or `null`.
+   * - Built once in the constructor when `popupListLeadingRowsPinned` is
+   *   `true`; `null` otherwise.
+   * - A `div` with `role="presentation"` and class
+   *   `popupListPinnedLeadingRowsClass`; the library sets `position: sticky`
+   *   and `top: 0` on it inline.
+   * - In the listbox only while the leading rows exist. The library moves it
+   *   in and out on every list render. Its classes and attributes are yours
+   *   to change after `new`.
+   * @group DOM elements
+   */
+  public readonly popupListPinnedLeadingRowsEl: HTMLElement | null
+  /**
+   * The wrapper around the pinned trailing rows, or `null`.
+   * - Same contract as {@link popupListPinnedLeadingRowsEl}, for
+   *   `popupListTrailingRowsPinned`, with `bottom: 0`.
+   * @group DOM elements
+   */
+  public readonly popupListPinnedTrailingRowsEl: HTMLElement | null
   /**
    * Resolved class names and ids for this instance.
    * @group DOM elements
@@ -1050,6 +1116,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       createPopupFooterContentElFn: settings?.createPopupFooterContentElFn ?? null,
       popupListLeadingActionRows: leadingActionRows,
       popupListTrailingActionRows: trailingActionRows,
+      popupListLeadingRowsPinned: settings?.popupListLeadingRowsPinned ?? false,
+      popupListTrailingRowsPinned: settings?.popupListTrailingRowsPinned ?? false,
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'fit-content',
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
@@ -1114,6 +1182,15 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
     this.popupEl = this.createPopupEl()
     this.popupListEl = this.createPopupListEl()
+    // Pinned blocks: one presentational sticky wrapper per pinned block, built
+    // once; commitPopupSegmentsToDom puts it in the listbox only while the
+    // block has rows.
+    this.popupListPinnedLeadingRowsEl = this.settings.popupListLeadingRowsPinned
+      ? this.createPopupListPinnedRowsEl(this.classIdMap.popupListPinnedLeadingRowsClass, 'top')
+      : null
+    this.popupListPinnedTrailingRowsEl = this.settings.popupListTrailingRowsPinned
+      ? this.createPopupListPinnedRowsEl(this.classIdMap.popupListPinnedTrailingRowsClass, 'bottom')
+      : null
     this.filterInputEl = this.createFilterInputEl()
     // input always built; non-filterable keeps it `hidden`. The filter box must
     // sit above the listbox: listbox children must be options only.
@@ -1903,14 +1980,31 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     return segments
   }
 
-  /** Replace every popup-list child with the choose-all row (when present) + the rendered segments. */
+  /**
+   * Replace every popup-list child with the leading rows, the rendered
+   * segments and the trailing rows. A pinned block goes inside its sticky
+   * wrapper, and the wrapper is left out while the block has no rows.
+   */
   private commitPopupSegmentsToDom(segments: PopupListSegment<T, GroupKey>[]): void {
     const children = segments.map(seg =>
       seg.group ? this.createGroupEl(seg.key, seg.index, seg.items, seg.els) : seg.el,
     )
-    children.unshift(...this.leadingActionRowEls)
-    if (this.chooseAllRowEl) { children.unshift(this.chooseAllRowEl) }
-    children.push(...this.trailingActionRowEls)
+    const leading = this.chooseAllRowEl ? [this.chooseAllRowEl, ...this.leadingActionRowEls] : this.leadingActionRowEls
+    const trailing = this.trailingActionRowEls
+    const leadingWrap = this.popupListPinnedLeadingRowsEl
+    const trailingWrap = this.popupListPinnedTrailingRowsEl
+    if (leadingWrap) {
+      leadingWrap.replaceChildren(...leading)
+      if (leading.length > 0) { children.unshift(leadingWrap) }
+    } else {
+      children.unshift(...leading)
+    }
+    if (trailingWrap) {
+      trailingWrap.replaceChildren(...trailing)
+      if (trailing.length > 0) { children.push(trailingWrap) }
+    } else {
+      children.push(...trailing)
+    }
     this.popupListEl.replaceChildren(...children)
   }
 
@@ -2439,7 +2533,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Optional non-item `role="option"` row pinned at the TOP of the listbox:
+   * Optional non-item `role="option"` row placed first, at the TOP of the listbox:
    * inside the arrow-key ring (ArrowUp from the first item reaches it, Home
    * lands on it, up-actions clamp there) but never inside `itemEls`, so the
    * `itemEls[i] <-> getVisibleItems()[i]` alignment is untouched. Rebuilt on
@@ -2562,7 +2656,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         rowEl.classList.add(this.classIdMap.itemFocusedClass)
         this.comboboxEl.setAttribute('aria-activedescendant', rowEl.id)
         this.focusedEl = rowEl
-        ensureVisibleInScroll(rowEl, this.popupListEl)
+        this.scrollRingEntryIntoView(rowEl)
         return
       }
       this.focusedRow = null
@@ -2571,7 +2665,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.chooseAllRowEl.classList.add(this.classIdMap.itemFocusedClass)
       this.comboboxEl.setAttribute('aria-activedescendant', this.chooseAllRowEl.id)
       this.focusedEl = this.chooseAllRowEl
-      ensureVisibleInScroll(this.chooseAllRowEl, this.popupListEl)
+      this.scrollRingEntryIntoView(this.chooseAllRowEl)
       return
     }
     const i = this.focusedIndex
@@ -2580,7 +2674,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       el.classList.add(this.classIdMap.itemFocusedClass)
       this.comboboxEl.setAttribute('aria-activedescendant', el.id)
       this.focusedEl = el
-      ensureVisibleInScroll(el, this.popupListEl)
+      this.scrollRingEntryIntoView(el)
     } else {
       this.comboboxEl.removeAttribute('aria-activedescendant')
     }
@@ -3298,6 +3392,37 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /** The read-only view a construction-time settings function receives. */
   private createConstructionContext(): LLSelectConstructionContext {
     return { classIdMap: this.classIdMap, uiTranslationPack: this.settings.uiTranslationPack }
+  }
+
+  /**
+   * Scroll a ring entry into view. A row inside a pinned wrapper is always in
+   * view; an item scrolls under the pinned blocks, so their measured heights
+   * are handed to the scroll math as insets.
+   */
+  private scrollRingEntryIntoView(el: HTMLElement): void {
+    if (el.parentElement !== this.popupListEl) { return }
+    ensureVisibleInScroll(el, this.popupListEl, this.pinnedWrapperHeight(this.popupListPinnedLeadingRowsEl), this.pinnedWrapperHeight(this.popupListPinnedTrailingRowsEl))
+  }
+
+  /** The height a pinned wrapper covers at its listbox edge; 0 when it is not in the listbox. */
+  private pinnedWrapperHeight(wrapper: HTMLElement | null): number {
+    if (!wrapper || wrapper.parentElement !== this.popupListEl) { return 0 }
+    return wrapper.getBoundingClientRect().height
+  }
+
+  /**
+   * The sticky wrapper of a pinned block: presentational (the accessibility
+   * tree sees only the rows inside), stuck to one edge of the listbox by
+   * inline style so the setting works without theme support. Themes paint
+   * its background and edge line.
+   */
+  private createPopupListPinnedRowsEl(className: string, edge: 'top' | 'bottom'): HTMLElement {
+    const el = document.createElement('div')
+    el.className = className
+    el.setAttribute('role', 'presentation')
+    el.style.position = 'sticky'
+    if (edge === 'top') { el.style.top = '0' } else { el.style.bottom = '0' }
+    return el
   }
 
   /** Shared body of the two slot builders: `null` content = no container. */

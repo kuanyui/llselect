@@ -294,6 +294,26 @@ test('multiple defaults to checkbox rows, live state; ll-checkboxes="false" opts
   assert.ok(c.$('.llselect-choose-all-row svg'), 'choose-all tri-state icon missing')
 })
 
+test('ll-popup-list-leading-rows-pinned / -trailing-rows-pinned: read once; the sticky wrappers hold the rows', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-multiple ng-model="vm.t" ll-choose-all-row="true" ll-popup-list-leading-rows-pinned="vm.pinTop" ll-popup-list-trailing-rows-pinned="true"
+        ll-popup-list-trailing-action-rows="vm.rows" ll-options="f for f in vm.fruits"></llselect-multiple>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.t = []; this.pinTop = true; this.rows = [{ textFn: function () { return 'cmd' }, onActivate: function () {} }] },
+  })
+  a.$('.llselect-trigger').click()
+  const list = a.$('.llselect-popup-list')
+  assert.equal(list.firstElementChild.getAttribute('role'), 'presentation', 'leading wrapper first')
+  assert.ok(list.firstElementChild.querySelector('.llselect-choose-all-row'), 'the choose-all row sits inside the leading wrapper')
+  assert.equal(list.lastElementChild.getAttribute('role'), 'presentation', 'trailing wrapper last')
+  assert.equal(list.lastElementChild.querySelector('.llselect-popup-list-action-row').textContent, 'cmd')
+  a.scope.vm.pinTop = false
+  a.scope.$digest()
+  assert.equal(list.firstElementChild.getAttribute('role'), 'presentation', 'read once at link time: a later scope change does nothing')
+})
+
 test('ll-hide-chosen-rows: choosing removes the row; the model still gains the item', () => {
   const a = boot({
     deps: ['llselect'],

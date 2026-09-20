@@ -266,6 +266,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Popup width                          | `popupWidthPolicy: 'fit-content' \| 'match-trigger'` (default `'fit-content'` - grows to content like a native select)   |
 | Rich rendering without subclassing   | `createItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
 | Action rows: commands in the list    | `popupListLeadingActionRows`, `popupListTrailingActionRows` - option rows in the arrow-key ring; see Action rows |
+| Pinned rows                          | `popupListLeadingRowsPinned`, `popupListTrailingRowsPinned` - the choose-all row and the command rows stay in view while the items scroll |
 | Popup header / footer, pinned        | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update; see Popup header / footer |
 | i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir` |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
@@ -408,6 +409,7 @@ sel = new LLSelectMultiple(el, {
 - `textFn` and `disabledFn` run again after every change, so they may read live state.
 - `onActivate` runs on Enter, on click, and on Space while the filter is off. The library neither chooses nor closes for it.
 - Put no button or link inside a row. The row itself is the control.
+- `popupListLeadingRowsPinned: true` keeps the choose-all row and the leading rows in view while the items scroll. `popupListTrailingRowsPinned` does the same at the bottom. Pinning is per block: all the rows at one end, or none.
 - Inside these functions, and inside every other settings function, `this` is `undefined`. Reach the instance through the variable you assigned it to.
 
 To put "select all" somewhere other than first, turn `chooseAllRow` off and write it as an action row. Such a row is a command: it has no selected state, it is never the active option when the popup opens, and it stays listed when nothing is selectable.

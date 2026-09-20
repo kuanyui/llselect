@@ -1427,6 +1427,36 @@ const selSortRow = new LLSelectSingle(
 selSortRow.setItems(sortedCountries())
 //#endregion
 
+//#region 16.4
+// 16.1 with popupListLeadingRowsPinned: the choose-all row and the command
+// stay at the top while the items scroll under them, still in the arrow-key
+// ring. The library builds the sticky wrapper; the theme paints it.
+const PINNED_DEFAULTS = ['Japan', 'Taiwan']
+const outPinnedRows = document.getElementById('out-pinned-rows')
+const selPinnedRows = new LLSelectMultiple(
+  document.getElementById('mount-pinned-rows'),
+  {
+    ariaLabel: 'Pick countries (pinned rows)',
+    placeholder: 'Pick countries (pinned rows)',
+    chooseAllRow: true,
+    popupListLeadingRowsPinned: true,
+    popupListLeadingActionRows: [
+      {
+        textFn: () => 'Restore defaults',
+        disabledFn: () => {
+          const chosen = selPinnedRows.getChosenItems()
+          return chosen.length === PINNED_DEFAULTS.length && PINNED_DEFAULTS.every((c) => chosen.includes(c))
+        },
+        onActivate: () => { selPinnedRows.setChosenItems(PINNED_DEFAULTS) },
+      },
+    ],
+    onChange: (chosen) => { outPinnedRows.textContent = 'chosen: ' + JSON.stringify(chosen) },
+  }
+)
+selPinnedRows.setItems(COUNTRIES)
+selPinnedRows.setChosenItems(PINNED_DEFAULTS)
+//#endregion
+
 // Self-extraction: fetch this file's source, locate `//#region NAME` ...
 // `//#endregion` blocks, and write each into the matching <code>.
 {

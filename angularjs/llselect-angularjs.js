@@ -216,6 +216,8 @@
     if (actionRowsBefore) { settings.popupListLeadingActionRows = actionRowsBefore }
     var actionRowsAfter = evalActionRowsAttr(scope, attrs, 'llPopupListTrailingActionRows', exceptionHandler, getSel)
     if (actionRowsAfter) { settings.popupListTrailingActionRows = actionRowsAfter }
+    if (attrs.llPopupListLeadingRowsPinned) { settings.popupListLeadingRowsPinned = scope.$eval(attrs.llPopupListLeadingRowsPinned) }
+    if (attrs.llPopupListTrailingRowsPinned) { settings.popupListTrailingRowsPinned = scope.$eval(attrs.llPopupListTrailingRowsPinned) }
     wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler)
     wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler)
 
