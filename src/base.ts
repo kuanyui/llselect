@@ -940,9 +940,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - In the listbox only while the leading rows exist. The library moves it
    *   in and out on every list render. Its classes are yours to change after
    *   `new`.
-   * - `data-edge-to-items="true"` while items are listed under it, `"false"`
-   *   otherwise. The themes draw the block's edge line only when it is true,
-   *   so two blocks that touch draw no line between them.
+   * - `data-edge-to-items` is set on every list render: `"true"` when that
+   *   render lists items, `"false"` when it lists none; absent before the
+   *   first render. A theme-only hook: the themes draw the block's edge line
+   *   only when it is true, so two blocks that touch draw no line between
+   *   them.
    * @group DOM elements
    */
   public readonly popupListPinnedLeadingRowsEl: HTMLElement | null
