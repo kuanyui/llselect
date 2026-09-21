@@ -40,7 +40,7 @@ code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
 .back-to-top:hover { background: #f2f2f2; }
 .back-to-top svg { width: 1em; height: 1em; }
 
-/* angularjs 8f: minimal look for ui-bootstrap's uib-tooltip (this page loads
+/* angularjs 1f: minimal look for ui-bootstrap's uib-tooltip (this page loads
    no Bootstrap CSS; opacity: 1 also counters Bootstrap's .tooltip fade base
    if one ever loads). The arrow div is unstyled markup without Bootstrap
    CSS, so draw it here; the example pins tooltip-placement="top", so only
@@ -217,6 +217,11 @@ article { margin: 1.5rem 0 2rem 1rem; }
   font: inherit;
 }
 
+/* Bootstrap's alert look for the pages' own notes (the AngularJS page loads
+   no Bootstrap CSS). */
+.alert { padding: 0.75rem 1.25rem; margin: 0.75rem 0 1rem; border: 1px solid transparent; border-radius: 4px; }
+.alert-warning { color: #856404; background: #fff3cd; border-color: #ffeeba; }
+
 .scroll-container {
   height: 12rem;
   overflow-y: auto;
@@ -327,14 +332,14 @@ article { margin: 1.5rem 0 2rem 1rem; }
 /* #endregion */
 
 /* Icon + text rows for rich item content (core 5.4-5.6, 11.x, 16.2;
-   angularjs 7). */
+   angularjs 8). */
 .lang-row {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-/* core 11.5 / angularjs 7: primary text + faded hint pushed to the row's
+/* core 11.5 / angularjs 8: primary text + faded hint pushed to the row's
    right edge. */
 .user-row {
   display: flex;
@@ -344,13 +349,13 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 .user-row .hint { margin-left: auto; }
 
-/* ui-select's own one-line look for its `highlight` filter (angularjs 8a);
+/* ui-select's own one-line look for its `highlight` filter (angularjs 1a);
    its CSS is not bridged, so the demo carries this rule the same way app.js
    carries the filter. */
 .ui-select-highlight { font-weight: bold; }
 
 /* #region 11.6 */
-/* core 11.6 / angularjs 7e: the ONE thing the renderer's inline styles
+/* core 11.6 / angularjs 8e: the ONE thing the renderer's inline styles
    cannot reach - the option element's own padding. Zero it so the row
    (padded inline) can paint the full option; a smaller padding would leave
    an untinted ring, but negative margins on the row would overflow under
@@ -741,6 +746,7 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
    theme's item class (padding, hover, disabled look come from the theme, in
    every theme), with the UA button chrome reset. */
 #mount-header-commands .llselect-popup-header { padding: 0; }
+.popup-header-commands .llselect-popup-header { padding: 0; } /* angularjs 12d */
 .popup-row-button {
   display: block;
   width: 100%;

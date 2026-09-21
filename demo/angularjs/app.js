@@ -24,7 +24,7 @@
     { id: 7, name: 'Grace Garcia', role: 'guest', suspended: false },
   ]
 
-  // Hue (0-360) of a '#rrggbb' color; feeds example 7e's tints.
+  // Hue (0-360) of a '#rrggbb' color; feeds example 8e's tints.
   function hexToHue(hex) {
     var r = parseInt(hex.slice(1, 3), 16) / 255
     var g = parseInt(hex.slice(3, 5), 16) / 255
@@ -43,17 +43,17 @@
     return Math.round(h * 60 + 360) % 360
   }
 
-  // 7e: near-white translucent tint of a language's icon color.
+  // 8e: near-white translucent tint of a language's icon color.
   function langTint(lang) {
     return 'hsl(' + hexToHue(lang.color) + ' 85% 55% / 0.14)'
   }
 
-  // 7e: darkened same-hue counterpart - row / trigger text, trigger border.
+  // 8e: darkened same-hue counterpart - row / trigger text, trigger border.
   function langShade(lang) {
     return 'hsl(' + hexToHue(lang.color) + ' 75% 32%)'
   }
 
-  // 11 / 8e: the custom-filter case - the item text is derived, and search
+  // 11 / 1e: the custom-filter case - the item text is derived, and search
   // must match forms no raw field contains (e.g. the space-less "vlan2").
   var INTERFACES = [
     { interfaceType: 'vlan', interfaceNo: '2' },
@@ -151,7 +151,7 @@
       }
     })
 
-    // 8e, ui-select style: the repeat's filter chain is the custom filter.
+    // 1e, ui-select style: the repeat's filter chain is the custom filter.
     .filter('ifaceMatch', function () {
       return function (items, query) {
         if (!query) { return items }
@@ -162,7 +162,7 @@
     })
 
     /**
-     * 7e's whole-trigger tint: an app policy directive. ll-* attributes cover
+     * 8e's whole-trigger tint: an app policy directive. ll-* attributes cover
      * CONTENT; styling the library-built trigger element is app territory,
      * so this requires the published controller and drives the core public
      * API (API.md "Reaching
@@ -185,7 +185,7 @@
     })
 
     /**
-     * 7c: publishes the llselect directive controller into the scope slot
+     * 8c: publishes the llselect directive controller into the scope slot
      * named by the attribute value, so a plain controller fn (here an
      * ll-item-content-fn) can call instance().getFilterQuery() late. The
      * controller exists before any row renders; instance() stays late-bound.
@@ -212,7 +212,7 @@
       vm.country = undefined
       vm.country2 = 'Japan'
       vm.langs = []
-      vm.langsHidden = [] // 2d
+      vm.langsHidden = [] // 3d
       vm.langsCount = []
       vm.langsAll = []
       vm.fruit = 'Cherry'
@@ -220,13 +220,13 @@
       vm.userId = 3
       vm.person = undefined
       vm.person2 = USERS[2] // preset so allow-clear's x is visible on load
-      vm.person3 = undefined // 8d, bare text template
-      vm.person4 = undefined // 8d, no template
-      vm.person5 = undefined // 8f, ng-disabled + tooltip
-      vm.quotaLocked = true // 8f starts disabled so the tooltip point shows
+      vm.person3 = undefined // 1d, bare text template
+      vm.person4 = undefined // 1d, no template
+      vm.person5 = undefined // 1f, ng-disabled + tooltip
+      vm.quotaLocked = true // 1f starts disabled so the tooltip point shows
       vm.people = []
-      vm.peopleHide = [] // 8g
-      vm.peopleKeep = [] // 8g
+      vm.peopleHide = [] // 1g
+      vm.peopleKeep = [] // 1g
       vm.locked = false
       vm.avFruit = undefined
       vm.country3 = undefined
@@ -239,42 +239,210 @@
       vm.langsRich = []
       vm.langsTags = []
       vm.user2 = undefined
-      vm.userApi = null // 7c, set by demo-publish-api
-      vm.hlCountry = undefined // 7f
+      vm.userApi = null // 8c, set by demo-publish-api
+      vm.hlCountry = undefined // 8f
       vm.langTinted = undefined
       vm.labelFruit = undefined
       vm.interfaces = INTERFACES
       vm.iface = undefined // 11, ll-filter-fn
-      vm.iface2 = undefined // 8e, filter chain
-      vm.langsFooter = [] // 12, ll-popup-footer-content-fn
-      vm.langsRows = [] // 13, ll-popup-list-trailing-action-rows
+      vm.iface2 = undefined // 1e, filter chain
+      /**
+       * 12a: tags in the trigger; the count, the match count and a Clear all
+       * button in the header. The fn runs once at link and the node is ours:
+       * ng-change rewrites the count, ll-on-open and ll-on-filter-query-change
+       * the match count. The button reaches the widget through instance()
+       * (demo-publish-api), so its click is the user-change path.
+       */
+      vm.countriesHeader = ['Japan', 'Taiwan']
+      vm.headerCountApi = null // set by demo-publish-api
+      var headerCountEl = document.createElement('span')
+      var headerMatchesEl = document.createElement('span')
+      var headerClearButton = document.createElement('button')
+      headerClearButton.type = 'button'
+      headerClearButton.className = 'popup-link-button push-right'
+      headerClearButton.textContent = 'Clear all'
+      headerClearButton.addEventListener('click', function () {
+        if (vm.countriesHeader.length === 0) { return } // aria-disabled, not native disabled: stays perceivable
+        vm.headerCountApi.instance().setChosenItems([])
+      })
+      vm.headerCountEl = function (ctx) {
+        var header = document.createElement('div')
+        header.className = 'popup-header-row'
+        headerCountEl.textContent = ctx.uiTranslationPack.triggerCountSummary(vm.countriesHeader.length, COUNTRIES.length)
+        headerClearButton.setAttribute('aria-disabled', String(vm.countriesHeader.length === 0))
+        header.append(headerCountEl, headerMatchesEl, headerClearButton)
+        return header
+      }
+      vm.writeHeaderCount = function () {
+        var sel = vm.headerCountApi.instance()
+        headerCountEl.textContent = sel.getUiTranslationPack().triggerCountSummary(vm.countriesHeader.length, sel.getItems().length)
+        headerClearButton.setAttribute('aria-disabled', String(vm.countriesHeader.length === 0))
+      }
+      vm.writeHeaderMatches = function () {
+        var sel = vm.headerCountApi.instance()
+        headerMatchesEl.textContent = ', ' + sel.getVisibleItems().length + ' of ' + sel.getItems().length + ' shown'
+      }
 
-      /** 12: pinned popup header / footer. Each fn runs once at link time; ng-change keeps the footer count current. */
-      var headerHintEl = document.createElement('small')
-      headerHintEl.textContent = 'Pick as many as you like'
-      vm.headerHintEl = function () { return headerHintEl }
-      var footerCountEl = document.createElement('div')
-      footerCountEl.textContent = '0 chosen'
-      vm.footerCountEl = function () { return footerCountEl }
-      vm.updateFooterCount = function () { footerCountEl.textContent = vm.langsFooter.length + ' chosen' }
+      /** 12b: column headings. The header repeats the row layout (.user-row) in bold; rows re-render per keystroke, the header never does. */
+      vm.userColumns = undefined
+      vm.renderUserColumns = function (u) {
+        var row = document.createElement('span')
+        row.className = 'user-row'
+        var name = document.createElement('span')
+        name.textContent = u.name
+        var role = document.createElement('small')
+        role.className = 'hint'
+        role.textContent = u.role
+        row.append(name, role)
+        return row
+      }
+      vm.userColumnsHeaderEl = function () {
+        var head = document.createElement('span')
+        head.className = 'user-row'
+        var name = document.createElement('strong')
+        name.textContent = 'Name'
+        var role = document.createElement('strong')
+        role.className = 'hint'
+        role.textContent = 'Role'
+        head.append(name, role)
+        return head
+      }
 
-      /** 13: action rows - plain objects. The directive hands onActivate the widget instance: calling it is the user-change path (ng-model + ng-change, like a click); a plain model write would stay programmatic. */
-      vm.langsRowsChanges = 0
-      vm.langRowsBefore = [
+      /** 12c: a pinned footer link. The click keeps DOM focus on the combobox; the app closes and navigates (here: a note on the scope, applied from the native listener). */
+      vm.countriesFooterLink = []
+      vm.footerLinkApi = null // set by demo-publish-api
+      vm.footerNote = '(nothing happened yet)'
+      vm.footerLinkEl = function () {
+        var link = document.createElement('a')
+        link.href = '#countries'
+        link.textContent = 'Manage countries...'
+        link.addEventListener('click', function (ev) {
+          ev.preventDefault() // a real app would navigate
+          vm.footerLinkApi.instance().close()
+          $scope.$applyAsync(function () { vm.footerNote = 'navigated to /countries (demo)' })
+        })
+        return link
+      }
+
+      /**
+       * 12d: the 13a commands as pinned header rows. Each is a real <button>
+       * wearing the theme's item class from ctx.classIdMap, so every theme
+       * paints it like a list row; the demo CSS (.popup-header-commands)
+       * zeroes the header padding and resets the button chrome. The counting
+       * text is the pack's own chooseAllRowText.
+       */
+      var HEADER_DEFAULTS = ['Japan', 'Taiwan']
+      vm.countriesCommands = HEADER_DEFAULTS.slice()
+      vm.headerCommandsApi = null // set by demo-publish-api
+      var headerSelectAllRow = document.createElement('button')
+      headerSelectAllRow.type = 'button'
+      var headerRestoreRow = document.createElement('button')
+      headerRestoreRow.type = 'button'
+      headerRestoreRow.textContent = 'Restore defaults'
+      headerSelectAllRow.addEventListener('click', function () {
+        var sel = vm.headerCommandsApi.instance()
+        if (sel.getChosenItems().length === sel.getItems().length) {
+          sel.unchooseAll()
+        } else {
+          sel.chooseAll() // the whole list; the built-in row acts on the visible subset instead
+        }
+      })
+      headerRestoreRow.addEventListener('click', function () {
+        if (headerRestoreRow.getAttribute('aria-disabled') === 'true') { return }
+        vm.headerCommandsApi.instance().setChosenItems(HEADER_DEFAULTS)
+      })
+      function isHeaderDefault() {
+        return vm.countriesCommands.length === HEADER_DEFAULTS.length && HEADER_DEFAULTS.every(function (c) { return vm.countriesCommands.indexOf(c) !== -1 })
+      }
+      vm.headerCommandsEl = function (ctx) {
+        var rows = [headerSelectAllRow, headerRestoreRow]
+        rows.forEach(function (row) { row.className = 'popup-row-button ' + ctx.classIdMap.itemClass })
+        headerSelectAllRow.textContent = ctx.uiTranslationPack.chooseAllRowText(vm.countriesCommands.length, COUNTRIES.length)
+        headerRestoreRow.setAttribute('aria-disabled', 'true') // starts at the defaults
+        headerRestoreRow.classList.add(ctx.classIdMap.itemDisabledClass)
+        var header = document.createElement('div')
+        header.append(headerSelectAllRow, headerRestoreRow)
+        return header
+      }
+      vm.writeHeaderCommands = function () {
+        var sel = vm.headerCommandsApi.instance()
+        headerSelectAllRow.textContent = sel.getUiTranslationPack().chooseAllRowText(vm.countriesCommands.length, sel.getItems().length)
+        headerRestoreRow.setAttribute('aria-disabled', String(isHeaderDefault()))
+        headerRestoreRow.classList.toggle(sel.classIdMap.itemDisabledClass, isHeaderDefault())
+      }
+
+      /**
+       * 13: action rows are plain objects. The directive hands onActivate the
+       * widget instance: calling it is the user-change path (ng-model +
+       * ng-change, like a click); a plain model write would stay programmatic.
+       * textFn / disabledFn run again after every change and read the live model.
+       */
+      var ROW_DEFAULTS = ['Japan', 'Taiwan']
+      function isDefaultChoice(chosen) {
+        return chosen.length === ROW_DEFAULTS.length && ROW_DEFAULTS.every(function (c) { return chosen.indexOf(c) !== -1 })
+      }
+      /** 13a: Restore defaults above the items (after the choose-all row), Clear all below. */
+      vm.countriesRows = ROW_DEFAULTS.slice()
+      vm.countriesRowsChanges = 0
+      vm.countryRowsBefore = [
         {
-          textFn: function () { return 'Pick the first two' },
-          onActivate: function (sel) { sel.setChosenItems(LANGUAGES.slice(0, 2)) },
+          textFn: function () { return 'Restore defaults' },
+          disabledFn: function () { return isDefaultChoice(vm.countriesRows) },
+          onActivate: function (sel) { sel.setChosenItems(ROW_DEFAULTS) },
         },
       ]
-      vm.langRowsAfter = [
+      vm.countryRowsAfter = [
         {
-          textFn: function () { return 'Clear all (' + vm.langsRows.length + ')' },
-          disabledFn: function () { return vm.langsRows.length === 0 },
+          textFn: function () { return 'Clear all (' + vm.countriesRows.length + ')' },
+          disabledFn: function () { return vm.countriesRows.length === 0 },
           onActivate: function (sel) { sel.setChosenItems([]) },
         },
       ]
+      /**
+       * 13b: one leading row on a single. It asks for a name, adds it to the
+       * array behind ll-options ($watchCollection hands the new list to the
+       * widget), writes the model and closes. Items must be unique: an
+       * existing name is picked, not added again. The model write is
+       * programmatic, so ng-change stays quiet.
+       */
+      vm.addRowItems = COUNTRIES.slice(0, 5)
+      vm.countryAdded = undefined
+      vm.addRowsBefore = [
+        {
+          textFn: function () { return 'Add a country...' },
+          onActivate: function (sel) {
+            var name = window.prompt('Country name')
+            if (!name) { return }
+            if (vm.addRowItems.indexOf(name) === -1) { vm.addRowItems = vm.addRowItems.concat([name]) }
+            vm.countryAdded = name
+            sel.close()
+          },
+        },
+      ]
+      /** 13c: a sort toggle as a leading row. It flips the array behind ll-options; the chosen item survives (same string) and a filter query re-applies. textFn reads the flag per render. */
+      vm.sortDescending = false
+      vm.sortRowItems = COUNTRIES
+      vm.countrySorted = undefined
+      vm.sortRowsBefore = [
+        {
+          textFn: function () { return (vm.sortDescending ? 'Sorted Z to A' : 'Sorted A to Z') + ' - click to flip' },
+          onActivate: function () {
+            vm.sortDescending = !vm.sortDescending
+            vm.sortRowItems = vm.sortDescending ? COUNTRIES.slice().reverse() : COUNTRIES
+          },
+        },
+      ]
+      /** 13d: 13a's leading rows, pinned. */
+      vm.countriesPinned = ROW_DEFAULTS.slice()
+      vm.pinnedRowsBefore = [
+        {
+          textFn: function () { return 'Restore defaults' },
+          disabledFn: function () { return isDefaultChoice(vm.countriesPinned) },
+          onActivate: function (sel) { sel.setChosenItems(ROW_DEFAULTS) },
+        },
+      ]
 
-      /** 11 / 8e: the derived item text - "VLAN 2", "ETH 0", ... */
+      /** 11 / 1e: the derived item text - "VLAN 2", "ETH 0", ... */
       vm.ifaceText = function (i) {
         if (!i) { return '' }
         return i.interfaceType.toUpperCase() + ' ' + i.interfaceNo
@@ -286,7 +454,7 @@
       }
 
       /**
-       * 7a. A render-time DOM factory: called by llselect outside any digest,
+       * 8a. A render-time DOM factory: called by llselect outside any digest,
        * never $compile'd - custom rows with zero per-row scope or watcher.
        * The accessible name stays the item text from ll-options; this only changes
        * the pixels.
@@ -303,7 +471,7 @@
       }
 
       /**
-       * 7b, template flavor: the same factory with the markup authored in HTML
+       * 8b, template flavor: the same factory with the markup authored in HTML
        * (the <template id="lang-row-tpl"> in examples.html) and cloned per
        * row. Closest feel to a row template - still no scope, no $compile.
        */
@@ -317,7 +485,7 @@
       }
 
       /**
-       * 7c, second content pattern: primary text plus a faded secondary hint
+       * 8c, second content pattern: primary text plus a faded secondary hint
        * pushed to the row's right edge (.user-row), with `disable when`
        * dimming suspended users on top.
        */
@@ -334,7 +502,7 @@
       }
 
       /**
-       * 7a (7e reuses it), trigger mirror: the same row renderer feeds the
+       * 8a (8e reuses it), trigger mirror: the same row renderer feeds the
        * trigger, exactly like the core example - there is no auto-projection.
        * null with nothing chosen falls back to the placeholder.
        */
@@ -342,7 +510,7 @@
         return ctx.chosenItem ? vm.renderLangRow(ctx.chosenItem) : null
       }
 
-      /** 7d, tag remove icon; unset, the theme's CSS glyph draws the x. */
+      /** 8d, tag remove icon; unset, the theme's CSS glyph draws the x. */
       vm.renderTagRemoveIcon = function () {
         var i = document.createElement('i')
         i.className = 'mdi mdi-close-circle-outline'
@@ -351,8 +519,8 @@
       }
 
       /**
-       * 7e, per-item background, like native <option style="background-color">
-       * (a Chromium-only nicety): 7a's row plus a tint of its icon color's
+       * 8e, per-item background, like native <option style="background-color">
+       * (a Chromium-only nicety): 8a's row plus a tint of its icon color's
        * hue. hsl alpha keeps the theme's hover / keyboard-focus backgrounds
        * visible through the tint. Everything is inline on the row except
        * one demo CSS line (.lang-tinted, ../style.css) zeroing the option

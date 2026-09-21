@@ -45,23 +45,196 @@
   </p>
 
   <section>
-    <h2>1. Basic: &lt;llselect-single&gt;</h2>
+    <h2>1. ui-select migration: &lt;ui-llselect&gt;, the compatibility directive</h2>
+    <div class="alert alert-warning">
+      <strong>For ui-select migrations only.</strong> This is the compatibility
+      directive for an existing ui-select codebase. If you were not using
+      ui-select, use <code>&lt;llselect-single&gt;</code> /
+      <code>&lt;llselect-multiple&gt;</code> from section 2 on instead.
+    </div>
+    <p>
+      A separate directive (<code>llselect-ui-select.js</code>, module
+      <code>llselect.uiCompat</code>) that takes
+      <a href="https://github.com/angular-ui/ui-select">ui-select</a>'s
+      call-site markup, so an existing ui-select codebase can migrate without
+      rewriting every call site.
+    </p>
+    <p>
+      Migrating a call site: rename the elements
+      (<code>ui-select</code> family to <code>ui-llselect</code> family) and
+      add <code>ll-item-text</code> - ui-select has no item-to-string concept,
+      and llselect needs one for the option's accessible name. The template
+      content carries over untouched. CSS does not - llselect owns the DOM, so
+      this is styled by the llselect theme.
+    </p>
+    <article>
+    <h3>1a. Rich row template (highlight + ui-disable-choice)</h3>
+    <div data-src="1a">
+    <ui-llselect aria-label="Person" ng-model="vm.person" name="person" required>
+      <ui-llselect-match placeholder="Pick a person">{{$select.selected.name}}</ui-llselect-match>
+      <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"
+        ui-disable-choice="p.suspended">
+        <span ng-bind-html="p.name | highlight: $select.search"></span>
+        <small class="hint">{{p.role}}{{p.suspended ? ' - suspended' : ''}}</small>
+      </ui-llselect-choices>
+    </ui-llselect>
+    </div>
+    <div class="out">ng-model = {{ vm.person | json }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="1a"><code></code></pre></details>
+
+    </article>
+    <article>
+    <h3>1b. Multiple: chips from the match template</h3>
+    <p>
+      As in real ui-select, a chosen person leaves the dropdown:
+      <code>remove-selected</code> defaults to true (1g shows the opt-out).
+    </p>
+    <div data-src="1b">
+    <ui-llselect aria-label="People" ng-model="vm.people" multiple>
+      <ui-llselect-match>{{$item.name}}</ui-llselect-match>
+      <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
+        <span ng-bind-html="p.name | highlight: $select.search"></span>
+      </ui-llselect-choices>
+    </ui-llselect>
+    </div>
+    <div class="out">ng-model = {{ vm.people.length }} selected</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="1b"><code></code></pre></details>
+
+    </article>
+    <article>
+    <h3>1c. allow-clear</h3>
+    <div data-src="1c">
+    <ui-llselect aria-label="Person" ng-model="vm.person2">
+      <ui-llselect-match placeholder="Pick a person" allow-clear="true">{{$select.selected.name}}</ui-llselect-match>
+      <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
+        <span ng-bind-html="p.name | highlight: $select.search"></span>
+      </ui-llselect-choices>
+    </ui-llselect>
+    </div>
+    <div class="out">ng-model = {{ vm.person2.name || 'undefined' }} <span class="hint">(ui-select's own allow-clear carries over: the x clears back to undefined)</span></div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="1c"><code></code></pre></details>
+
+    </article>
+    <article>
+    <h3>1d. Template shapes: bare text / none</h3>
+    <p>
+      The template has three shapes: elements (above), a bare text node, or
+      none at all - rows then render the <code>ll-item-text</code> string
+      itself, which ui-select cannot do (its template is its only source of
+      item text).
+    </p>
+    <div data-src="1d">
+    <ui-llselect aria-label="Person" ng-model="vm.person3">
+      <ui-llselect-match placeholder="Bare text template">{{$select.selected.name}}</ui-llselect-match>
+      <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">{{p.name}} ({{p.role}})</ui-llselect-choices>
+    </ui-llselect>
+    <ui-llselect aria-label="Person" ng-model="vm.person4">
+      <ui-llselect-match placeholder="No template at all"></ui-llselect-match>
+      <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"></ui-llselect-choices>
+    </ui-llselect>
+    </div>
+    <div class="out">ng-model = {{ vm.person3.name || 'undefined' }} / {{ vm.person4.name || 'undefined' }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="1d"><code></code></pre></details>
+
+    </article>
+    <article>
+    <h3>1e. Custom filter, ui-select style</h3>
+    <p>
+      The <code>| filter:</code> chain IS the custom filter, re-evaluated once
+      per typed query. Try <code>vlan2</code> - the <code>ifaceMatch</code>
+      filter (app.js) ignores spaces.
+    </p>
+    <div class="demo-row" data-src="1e">
+    <ui-llselect aria-label="Interface" ng-model="vm.iface2">
+      <ui-llselect-match placeholder="Pick an interface">{{vm.ifaceText($select.selected)}}</ui-llselect-match>
+      <ui-llselect-choices repeat="i in vm.interfaces | ifaceMatch: $select.search" ll-item-text="vm.ifaceText(i)"></ui-llselect-choices>
+    </ui-llselect>
+    </div>
+    <div class="out">ng-model = {{ vm.iface2 | json }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="1e"><code></code></pre></details>
+
+    </article>
+    <article>
+    <h3>1f. ng-disabled + uib-tooltip (angular-ui-bootstrap)</h3>
+    <p>
+      Interop with <code>uib-tooltip</code> from
+      <a href="https://angular-ui.github.io/bootstrap/">angular-ui-bootstrap</a>
+      - the component kit most AngularJS apps already carry: both directives
+      sit on the same element, no conflict. <code>ng-disabled</code> carries
+      over here (ui-select parity, via <code>attrs.$observe</code>; the main
+      directives use <code>ll-disabled</code>). The attribute is inert on
+      this host, so hover works in BOTH states - the tooltip keeps working
+      while disabled, which a native <code>disabled</code> control forbids.
+    </p>
+    <div class="demo-row" data-src="1f">
+      <label><input type="checkbox" ng-model="vm.quotaLocked"> quota lock</label>
+      <ui-llselect aria-label="Person" ng-model="vm.person5" ng-disabled="vm.quotaLocked"
+        uib-tooltip="{{vm.quotaLocked ? 'Locked: people quota exceeded' : 'Pick anyone you like'}}"
+        tooltip-placement="top">
+        <ui-llselect-match placeholder="Pick a person">{{$select.selected.name}}</ui-llselect-match>
+        <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"></ui-llselect-choices>
+      </ui-llselect>
+    </div>
+    <div class="out">ng-model = {{ vm.person5.name || 'undefined' }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="1f"><code></code></pre></details>
+    </article>
+
+    <article>
+    <h3>1g. remove-selected: hide or keep chosen rows</h3>
+    <p>
+      Top: the default. A chosen person leaves the list, exactly like
+      ui-select (<code>remove-selected</code> defaults to true; bridged onto
+      <code>hideChosenRows</code>). Its <code>allow-clear</code> puts everyone
+      back at once - the deviation the API page documents. Bottom:
+      <code>remove-selected="false"</code> keeps chosen rows listed.
+    </p>
+    <div data-src="1g">
+      <div class="demo-row">
+        <ui-llselect aria-label="People" multiple ng-model="vm.peopleHide">
+          <ui-llselect-match placeholder="Default: chosen leave the list" allow-clear="true">{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
+            <span>{{p.name}}</span>
+          </ui-llselect-choices>
+        </ui-llselect>
+      </div>
+      <div class="demo-row">
+        <ui-llselect aria-label="People" multiple remove-selected="false" ng-model="vm.peopleKeep">
+          <ui-llselect-match placeholder="remove-selected=false: rows stay">{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
+            <span>{{p.name}}</span>
+          </ui-llselect-choices>
+        </ui-llselect>
+      </div>
+    </div>
+    <div class="out">ng-model = {{ vm.peopleHide.length }} / {{ vm.peopleKeep.length }} selected</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="1g"><code></code></pre></details>
+    </article>
+
+    <p class="hint">
+      Not bridged, by rule (llselect has no such concept, so it is ignored rather
+      than half-implemented): tagging, sortable, append-to-body, async refresh,
+      limit, themes.
+    </p>
+  </section>
+
+  <section>
+    <h2>2. Basic: &lt;llselect-single&gt;</h2>
     <p>
       <code>ll-options</code> takes an <code>ng-options</code> expression. Every
       clause maps onto an llselect setting; see the table in the README.
     </p>
-    <div class="demo-row" data-src="1a">
+    <div class="demo-row" data-src="2a">
       <llselect-single ll-aria-label="Country" ng-model="vm.country" ll-filterable="true" ll-clearable="true"
         ll-placeholder="'Pick a country'"
         ll-options="c for c in vm.countries">
       </llselect-single>
     </div>
     <div class="out">ng-model = {{ vm.country || 'undefined' }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="1a"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="2a"><code></code></pre></details>
   </section>
 
   <section>
-    <h2>2. Basic: &lt;llselect-multiple&gt; - count / tags / choose-all</h2>
+    <h2>3. Basic: &lt;llselect-multiple&gt; - count / tags / choose-all</h2>
     <p>
       The trigger has two displays: the default <code>'count'</code> summary and
       <code>ll-trigger-display="'tags'"</code> chips. Rows carry live checkbox
@@ -71,73 +244,73 @@
     </p>
 
     <article>
-    <h3>2a. Default trigger: count summary</h3>
-    <div class="demo-row" data-src="2a">
+    <h3>3a. Default trigger: count summary</h3>
+    <div class="demo-row" data-src="3a">
       <llselect-multiple ll-aria-label="Languages" ng-model="vm.langsCount" ll-filterable="true" ll-clearable="true"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>
     <div class="out">ng-model = {{ vm.langsCount | json }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="2a"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="3a"><code></code></pre></details>
 
     </article>
     <article>
-    <h3>2b. Tags trigger</h3>
-    <div class="demo-row" data-src="2b">
+    <h3>3b. Tags trigger</h3>
+    <div class="demo-row" data-src="3b">
       <llselect-multiple ll-aria-label="Languages" ng-model="vm.langs" ll-filterable="true"
         ll-trigger-display="'tags'"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>
     <div class="out">ng-model = {{ vm.langs | json }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="2b"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="3b"><code></code></pre></details>
 
     </article>
     <article>
-    <h3>2c. Choose-all row</h3>
+    <h3>3c. Choose-all row</h3>
     <p>
       <code>ll-checkboxes</code> (default true) draws SVG checkboxes on the
       rows and this row; <code>ll-checkboxes="false"</code> strips them all,
       leaving plain text - which is also the core's own default (core demo
       5.7).
     </p>
-    <div class="demo-row" data-src="2c">
+    <div class="demo-row" data-src="3c">
       <llselect-multiple ll-aria-label="Languages" ng-model="vm.langsAll" ll-filterable="true" ll-choose-all-row="true"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>
     <div class="out">ng-model = {{ vm.langsAll | json }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="2c"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="3c"><code></code></pre></details>
 
     </article>
     <article>
-    <h3>2d. Hide chosen rows: ll-hide-chosen-rows</h3>
+    <h3>3d. Hide chosen rows: ll-hide-chosen-rows</h3>
     <p>
       Chosen items leave the popup; removing a tag puts them back, and the
       clear button puts everything back at once. Pairs with the tags trigger,
       and with <code>ll-checkboxes="false"</code> - a listed row here is
       always unchecked, so checkboxes would say nothing.
     </p>
-    <div class="demo-row" data-src="2d">
+    <div class="demo-row" data-src="3d">
       <llselect-multiple ll-aria-label="Languages" ng-model="vm.langsHidden" ll-filterable="true" ll-clearable="true"
         ll-trigger-display="'tags'" ll-hide-chosen-rows="true" ll-checkboxes="false"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>
     <div class="out">ng-model = {{ vm.langsHidden | json }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="2d"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="3d"><code></code></pre></details>
     </article>
   </section>
 
   <section>
-    <h2>3. Form validation: name + required + form.$valid</h2>
+    <h2>4. Form validation: name + required + form.$valid</h2>
     <p>
       The point of this page. <code>myForm.fruit</code> resolves because
       AngularJS reads <code>name</code> off <em>this element</em> as a plain
       attribute - there is no native <code>&lt;select&gt;</code> and no hidden
       input anywhere. Clear the selection to watch the form go invalid.
     </p>
-    <form name="myForm" novalidate data-src="3">
+    <form name="myForm" novalidate data-src="4">
       <div class="demo-row">
         <llselect-single ll-aria-label="Fruit" name="fruit" ng-model="vm.fruit" required ll-clearable="true"
           ll-options="f for f in vm.fruits">
@@ -163,42 +336,42 @@
         </span>
       </div>
     </form>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="3"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="4"><code></code></pre></details>
   </section>
 
   <section>
-    <h2>4. Ids in ng-model: select as</h2>
+    <h2>5. Ids in ng-model: select as</h2>
     <p>
       <code>select as</code> is the ngModel value projection. llselect has no
       equivalent setting on purpose - the app declares it, exactly as
       <code>ng-options</code> does.
     </p>
-    <div class="demo-row" data-src="4">
+    <div class="demo-row" data-src="5">
       <llselect-single ll-aria-label="User" ng-model="vm.userId" ll-filterable="true"
         ll-options="u.id as u.name group by u.role disable when u.suspended for u in vm.users track by u.id">
       </llselect-single>
     </div>
     <div class="out">ng-model = {{ vm.userId }} <span class="hint">(a number, not the object)</span></div>
-        <details class="code-toggle"><summary>markup</summary><pre data-src-for="4"><code></code></pre></details>
+        <details class="code-toggle"><summary>markup</summary><pre data-src-for="5"><code></code></pre></details>
   </section>
 
   <section>
-    <h2>5. ll-disabled</h2>
+    <h2>6. ll-disabled</h2>
     <p>
       Setting attributes are read once at construction; <code>ll-disabled</code> gets
       a <code>$watch</code> because it maps onto the <code>setDisabled()</code> method.
     </p>
-    <div class="demo-row" data-src="5">
+    <div class="demo-row" data-src="6">
       <label><input type="checkbox" ng-model="vm.locked"> lock</label>
       <llselect-single ll-aria-label="Country" ng-model="vm.country2" ll-disabled="vm.locked"
         ll-options="c for c in vm.countries">
       </llselect-single>
     </div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="5"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="6"><code></code></pre></details>
   </section>
 
   <section>
-    <h2>6. ll-arrow, and llselectConfigProvider defaults</h2>
+    <h2>7. ll-arrow, and llselectConfigProvider defaults</h2>
     <p>
       <code>ll-arrow</code> takes llselect's two built-in arrows and nothing
       else; a custom one means editing your copy of the file. The house style
@@ -207,16 +380,16 @@
       app-wide, which is why the selects above have one without saying so. A
       per-element <code>ll-arrow</code> wins over it.
     </p>
-    <div class="demo-row" data-src="6">
+    <div class="demo-row" data-src="7">
       <llselect-single ll-aria-label="Country" ng-model="vm.country3" ll-arrow="triangle"
         ll-options="c for c in vm.countries">
       </llselect-single>
     </div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="6"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7"><code></code></pre></details>
   </section>
 
   <section>
-    <h2>7. Custom item HTML: ll-item-content-fn</h2>
+    <h2>8. Custom item HTML: ll-item-content-fn</h2>
     <p>
       An expression evaluating to a function <code>(item) =&gt; HTMLElement | null</code>,
       passed straight to llselect's <code>createItemContentElFn</code>. It runs
@@ -230,31 +403,31 @@
     </p>
 
     <article>
-    <h3>7a. Icon rows, mirrored into the trigger</h3>
+    <h3>8a. Icon rows, mirrored into the trigger</h3>
     <p>
       <code>renderLangRow</code> builds the row with <code>createElement</code>;
       feeding the SAME renderer to <code>ll-trigger-content-fn</code> is what
       makes the trigger show the chosen row - there is no auto-projection.
     </p>
-    <div class="demo-row" data-src="7a">
+    <div class="demo-row" data-src="8a">
       <llselect-single ll-aria-label="Language" ng-model="vm.lang" ll-filterable="true" ll-item-content-fn="vm.renderLangRow"
         ll-trigger-content-fn="vm.renderLangTrigger"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-single>
     </div>
     <div class="out">ng-model = {{ vm.lang || 'undefined' }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7a"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8a"><code></code></pre></details>
 
     </article>
     <article>
-    <h3>7b. Template-clone flavor, beside the checkboxes</h3>
+    <h3>8b. Template-clone flavor, beside the checkboxes</h3>
     <p>
       <code>renderLangRowFromTpl</code> clones the <code>&lt;template&gt;</code>
       and fills it - the row markup lives in HTML, still with no scope and no
       <code>$compile</code>. On a multiple the element renders beside the
       default checkbox.
     </p>
-    <div class="demo-row" data-src="7b">
+    <div class="demo-row" data-src="8b">
       <template id="lang-row-tpl">
         <span class="lang-row"><i class="mdi" aria-hidden="true"></i><span class="lang-name"></span></span>
       </template>
@@ -263,35 +436,35 @@
       </llselect-multiple>
     </div>
     <div class="out">ng-model = {{ vm.langsRich | json }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7b"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8b"><code></code></pre></details>
 
     </article>
     <article>
-    <h3>7c. Faded hint text</h3>
+    <h3>8c. Faded hint text</h3>
     <p>
       <code>renderUserRow</code>: primary text plus a faded hint pushed to the
       row's right edge (<code>.user-row</code>), with <code>disable when</code>
       dimming suspended users on top. The name highlights the filter match
-      via the core <code>createHighlightedTextEl</code> (7f's pattern).
+      via the core <code>createHighlightedTextEl</code> (8f's pattern).
     </p>
-    <div class="demo-row" data-src="7c">
+    <div class="demo-row" data-src="8c">
       <llselect-single ll-aria-label="User" ng-model="vm.user2" ll-filterable="true" demo-publish-api="vm.userApi"
         ll-item-content-fn="vm.renderUserRow"
         ll-options="u.name disable when u.suspended for u in vm.users track by u.id">
       </llselect-single>
     </div>
     <div class="out">ng-model = {{ vm.user2 || 'undefined' }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7c"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8c"><code></code></pre></details>
 
     </article>
     <article>
-    <h3>7d. Rich tag chips</h3>
+    <h3>8d. Rich tag chips</h3>
     <p>
       ONE renderer feeds rows AND chips (<code>ll-tag-content-fn</code>);
       <code>ll-tag-remove-button-content-fn</code> swaps the remove icon, else
       the theme's CSS glyph draws the x.
     </p>
-    <div class="demo-row" data-src="7d">
+    <div class="demo-row" data-src="8d">
       <llselect-multiple ll-aria-label="Languages" ng-model="vm.langsTags" ll-trigger-display="'tags'"
         ll-item-content-fn="vm.renderLangRow" ll-tag-content-fn="vm.renderLangRow"
         ll-tag-remove-button-content-fn="vm.renderTagRemoveIcon"
@@ -299,14 +472,14 @@
       </llselect-multiple>
     </div>
     <div class="out">ng-model = {{ vm.langsTags | json }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7d"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8d"><code></code></pre></details>
 
     </article>
     <article>
-    <h3>7e. Per-item background tint</h3>
+    <h3>8e. Per-item background tint</h3>
     <p>
       What <code>&lt;option style="background-color"&gt;</code> does on a
-      native select (Chromium only): <code>renderTintedLangRow</code> is 7a's
+      native select (Chromium only): <code>renderTintedLangRow</code> is 8a's
       row tinted from its icon color, with <code>createCheckmarkSvgEl</code>
       on the chosen row (rows re-render on chosen changes - never stale).
       All inline styles, plus one demo CSS line (<code>lang-tinted</code>)
@@ -315,7 +488,7 @@
       controller and paints <code>instance().triggerEl</code> (API.md
       "Reaching the instance from your own directive").
     </p>
-    <div class="demo-row" data-src="7e">
+    <div class="demo-row" data-src="8e">
       <llselect-single ll-aria-label="Language" ng-model="vm.langTinted" class="lang-tinted"
         demo-tint-trigger="vm.langTinted"
         ll-item-content-fn="vm.renderTintedLangRow"
@@ -324,195 +497,26 @@
       </llselect-single>
     </div>
     <div class="out">ng-model = {{ vm.langTinted || 'undefined' }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7e"><code></code></pre></details>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8e"><code></code></pre></details>
 
     </article>
     <article>
-    <h3>7f. Highlight the filter matches: ll-highlight</h3>
+    <h3>8f. Highlight the filter matches: ll-highlight</h3>
     <p>
       <code>ll-highlight="true"</code> wraps each query match in the default
       item text in <code>&lt;mark&gt;</code> (the core
       <code>createHighlightedTextEl</code>); the marks follow the typing.
       With a custom <code>ll-item-content-fn</code> call the helper yourself,
-      the way 7c does.
+      the way 8c does.
     </p>
-    <div class="demo-row" data-src="7f">
+    <div class="demo-row" data-src="8f">
       <llselect-single ll-aria-label="Country" ng-model="vm.hlCountry" ll-filterable="true" ll-highlight="true"
         ll-options="c for c in vm.countries">
       </llselect-single>
     </div>
     <div class="out">ng-model = {{ vm.hlCountry || 'undefined' }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="7f"><code></code></pre></details>
-    </article>
-  </section>
-
-  <section>
-    <h2>8. &lt;ui-llselect&gt;: the ui-select-compatible directive</h2>
-    <p>
-      A separate directive (<code>llselect-ui-select.js</code>, module
-      <code>llselect.uiCompat</code>) that takes
-      <a href="https://github.com/angular-ui/ui-select">ui-select</a>'s
-      call-site markup, so an existing ui-select codebase can migrate without
-      rewriting every call site. New code should use
-      <code>&lt;llselect-single&gt;</code> /
-      <code>&lt;llselect-multiple&gt;</code> above instead.
-    </p>
-    <p>
-      Migrating a call site: rename the elements
-      (<code>ui-select</code> family to <code>ui-llselect</code> family) and
-      add <code>ll-item-text</code> - ui-select has no item-to-string concept,
-      and llselect needs one for the option's accessible name. The template
-      content carries over untouched. CSS does not - llselect owns the DOM, so
-      this is styled by the llselect theme.
-    </p>
-    <article>
-    <h3>8a. Rich row template (highlight + ui-disable-choice)</h3>
-    <div data-src="8a">
-    <ui-llselect aria-label="Person" ng-model="vm.person" name="person" required>
-      <ui-llselect-match placeholder="Pick a person">{{$select.selected.name}}</ui-llselect-match>
-      <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"
-        ui-disable-choice="p.suspended">
-        <span ng-bind-html="p.name | highlight: $select.search"></span>
-        <small class="hint">{{p.role}}{{p.suspended ? ' - suspended' : ''}}</small>
-      </ui-llselect-choices>
-    </ui-llselect>
-    </div>
-    <div class="out">ng-model = {{ vm.person | json }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8a"><code></code></pre></details>
-
-    </article>
-    <article>
-    <h3>8b. Multiple: chips from the match template</h3>
-    <p>
-      As in real ui-select, a chosen person leaves the dropdown:
-      <code>remove-selected</code> defaults to true (8g shows the opt-out).
-    </p>
-    <div data-src="8b">
-    <ui-llselect aria-label="People" ng-model="vm.people" multiple>
-      <ui-llselect-match>{{$item.name}}</ui-llselect-match>
-      <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
-        <span ng-bind-html="p.name | highlight: $select.search"></span>
-      </ui-llselect-choices>
-    </ui-llselect>
-    </div>
-    <div class="out">ng-model = {{ vm.people.length }} selected</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8b"><code></code></pre></details>
-
-    </article>
-    <article>
-    <h3>8c. allow-clear</h3>
-    <div data-src="8c">
-    <ui-llselect aria-label="Person" ng-model="vm.person2">
-      <ui-llselect-match placeholder="Pick a person" allow-clear="true">{{$select.selected.name}}</ui-llselect-match>
-      <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
-        <span ng-bind-html="p.name | highlight: $select.search"></span>
-      </ui-llselect-choices>
-    </ui-llselect>
-    </div>
-    <div class="out">ng-model = {{ vm.person2.name || 'undefined' }} <span class="hint">(ui-select's own allow-clear carries over: the x clears back to undefined)</span></div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8c"><code></code></pre></details>
-
-    </article>
-    <article>
-    <h3>8d. Template shapes: bare text / none</h3>
-    <p>
-      The template has three shapes: elements (above), a bare text node, or
-      none at all - rows then render the <code>ll-item-text</code> string
-      itself, which ui-select cannot do (its template is its only source of
-      item text).
-    </p>
-    <div data-src="8d">
-    <ui-llselect aria-label="Person" ng-model="vm.person3">
-      <ui-llselect-match placeholder="Bare text template">{{$select.selected.name}}</ui-llselect-match>
-      <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">{{p.name}} ({{p.role}})</ui-llselect-choices>
-    </ui-llselect>
-    <ui-llselect aria-label="Person" ng-model="vm.person4">
-      <ui-llselect-match placeholder="No template at all"></ui-llselect-match>
-      <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"></ui-llselect-choices>
-    </ui-llselect>
-    </div>
-    <div class="out">ng-model = {{ vm.person3.name || 'undefined' }} / {{ vm.person4.name || 'undefined' }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8d"><code></code></pre></details>
-
-    </article>
-    <article>
-    <h3>8e. Custom filter, ui-select style</h3>
-    <p>
-      The <code>| filter:</code> chain IS the custom filter, re-evaluated once
-      per typed query. Try <code>vlan2</code> - the <code>ifaceMatch</code>
-      filter (app.js) ignores spaces.
-    </p>
-    <div class="demo-row" data-src="8e">
-    <ui-llselect aria-label="Interface" ng-model="vm.iface2">
-      <ui-llselect-match placeholder="Pick an interface">{{vm.ifaceText($select.selected)}}</ui-llselect-match>
-      <ui-llselect-choices repeat="i in vm.interfaces | ifaceMatch: $select.search" ll-item-text="vm.ifaceText(i)"></ui-llselect-choices>
-    </ui-llselect>
-    </div>
-    <div class="out">ng-model = {{ vm.iface2 | json }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8e"><code></code></pre></details>
-
-    </article>
-    <article>
-    <h3>8f. ng-disabled + uib-tooltip (angular-ui-bootstrap)</h3>
-    <p>
-      Interop with <code>uib-tooltip</code> from
-      <a href="https://angular-ui.github.io/bootstrap/">angular-ui-bootstrap</a>
-      - the component kit most AngularJS apps already carry: both directives
-      sit on the same element, no conflict. <code>ng-disabled</code> carries
-      over here (ui-select parity, via <code>attrs.$observe</code>; the main
-      directives use <code>ll-disabled</code>). The attribute is inert on
-      this host, so hover works in BOTH states - the tooltip keeps working
-      while disabled, which a native <code>disabled</code> control forbids.
-    </p>
-    <div class="demo-row" data-src="8f">
-      <label><input type="checkbox" ng-model="vm.quotaLocked"> quota lock</label>
-      <ui-llselect aria-label="Person" ng-model="vm.person5" ng-disabled="vm.quotaLocked"
-        uib-tooltip="{{vm.quotaLocked ? 'Locked: people quota exceeded' : 'Pick anyone you like'}}"
-        tooltip-placement="top">
-        <ui-llselect-match placeholder="Pick a person">{{$select.selected.name}}</ui-llselect-match>
-        <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"></ui-llselect-choices>
-      </ui-llselect>
-    </div>
-    <div class="out">ng-model = {{ vm.person5.name || 'undefined' }}</div>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="8f"><code></code></pre></details>
     </article>
-
-    <article>
-    <h3>8g. remove-selected: hide or keep chosen rows</h3>
-    <p>
-      Top: the default. A chosen person leaves the list, exactly like
-      ui-select (<code>remove-selected</code> defaults to true; bridged onto
-      <code>hideChosenRows</code>). Its <code>allow-clear</code> puts everyone
-      back at once - the deviation the API page documents. Bottom:
-      <code>remove-selected="false"</code> keeps chosen rows listed.
-    </p>
-    <div data-src="8g">
-      <div class="demo-row">
-        <ui-llselect aria-label="People" multiple ng-model="vm.peopleHide">
-          <ui-llselect-match placeholder="Default: chosen leave the list" allow-clear="true">{{$item.name}}</ui-llselect-match>
-          <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
-            <span>{{p.name}}</span>
-          </ui-llselect-choices>
-        </ui-llselect>
-      </div>
-      <div class="demo-row">
-        <ui-llselect aria-label="People" multiple remove-selected="false" ng-model="vm.peopleKeep">
-          <ui-llselect-match placeholder="remove-selected=false: rows stay">{{$item.name}}</ui-llselect-match>
-          <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name">
-            <span>{{p.name}}</span>
-          </ui-llselect-choices>
-        </ui-llselect>
-      </div>
-    </div>
-    <div class="out">ng-model = {{ vm.peopleHide.length }} / {{ vm.peopleKeep.length }} selected</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="8g"><code></code></pre></details>
-    </article>
-
-    <p class="hint">
-      Not bridged, by rule (llselect has no such concept, so it is ignored rather
-      than half-implemented): tagging, sortable, append-to-body, async refresh,
-      limit, themes.
-    </p>
   </section>
 
   <section>
@@ -589,36 +593,160 @@
   <section>
     <h2>12. Popup header / footer: ll-popup-header-content-fn / ll-popup-footer-content-fn</h2>
     <p>
-      A pinned header above the option list and a pinned footer under it.
-      Each fn runs once at link time and the returned node is yours;
-      <code>ng-change</code> writes the live count into the footer.
+      Content that stays put while the list scrolls: a header between the
+      filter input and the items, a footer under them. Each fn runs once at
+      link time and the returned node is yours to update, for example from
+      <code>ng-change</code>. The same four examples as the core demo's
+      section 14, done with attributes.
     </p>
-    <div class="demo-row" data-src="12">
-      <llselect-multiple ll-aria-label="Languages (header and footer)" ng-model="vm.langsFooter" ll-popup-header-content-fn="vm.headerHintEl" ll-popup-footer-content-fn="vm.footerCountEl"
-        ng-change="vm.updateFooterCount()" ll-options="l.name for l in vm.languages track by l.name">
+
+    <article>
+    <h3>12a. Tags in the trigger, the count and a Clear all button in the header</h3>
+    <p>
+      The trigger shows chips, so the header takes over the count.
+      <code>ng-change</code> rewrites it; <code>ll-on-open</code> and
+      <code>ll-on-filter-query-change</code> rewrite the match count. The
+      button reaches the widget through <code>instance()</code>.
+    </p>
+    <div class="demo-row" data-src="12a">
+      <llselect-multiple ll-aria-label="Countries (header count)" ng-model="vm.countriesHeader" ll-trigger-display="'tags'" ll-filterable="true"
+        ll-popup-header-content-fn="vm.headerCountEl" ng-change="vm.writeHeaderCount()"
+        ll-on-open="vm.writeHeaderMatches()" ll-on-filter-query-change="vm.writeHeaderMatches()"
+        demo-publish-api="vm.headerCountApi"
+        ll-options="c for c in vm.countries">
       </llselect-multiple>
     </div>
-    <div class="out">ng-model = {{ vm.langsFooter | json }}</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="12"><code></code></pre></details>
+    <div class="out">ng-model = {{ vm.countriesHeader | json }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="12a"><code></code></pre></details>
+    </article>
+
+    <article>
+    <h3>12b. Column headings above two-column rows</h3>
+    <p>
+      Rows show a name and a role; the header repeats the same layout in
+      bold. Rows re-render per keystroke, the header never does.
+    </p>
+    <div class="demo-row" data-src="12b">
+      <llselect-single ll-aria-label="User (column headings)" ng-model="vm.userColumns" ll-filterable="true"
+        ll-item-content-fn="vm.renderUserColumns" ll-popup-header-content-fn="vm.userColumnsHeaderEl"
+        ll-options="u.name for u in vm.users track by u.id">
+      </llselect-single>
+    </div>
+    <div class="out">ng-model = {{ vm.userColumns.name || 'undefined' }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="12b"><code></code></pre></details>
+    </article>
+
+    <article>
+    <h3>12c. A footer link to a management page</h3>
+    <p>
+      A pinned link under the list. Tab reaches it while the popup is open;
+      Esc on it returns to the trigger. The app closes and navigates.
+    </p>
+    <div class="demo-row" data-src="12c">
+      <llselect-multiple ll-aria-label="Countries (footer link)" ng-model="vm.countriesFooterLink"
+        ll-popup-footer-content-fn="vm.footerLinkEl" demo-publish-api="vm.footerLinkApi"
+        ll-options="c for c in vm.countries">
+      </llselect-multiple>
+    </div>
+    <div class="out">{{ vm.footerNote }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="12c"><code></code></pre></details>
+    </article>
+
+    <article>
+    <h3>12d. Select all and Restore defaults pinned in the header, for comparison with 13a</h3>
+    <p>
+      The same two commands as 13a with the same row look, only pinned. Each
+      is a real button wearing the theme's item class from
+      <code>ctx.classIdMap</code>. Tab reaches them, but they sit outside the
+      arrow-key ring.
+    </p>
+    <div class="demo-row" data-src="12d">
+      <llselect-multiple class="popup-header-commands" ll-aria-label="Countries (header commands)" ng-model="vm.countriesCommands"
+        ll-popup-header-content-fn="vm.headerCommandsEl" ng-change="vm.writeHeaderCommands()"
+        demo-publish-api="vm.headerCommandsApi"
+        ll-options="c for c in vm.countries">
+      </llselect-multiple>
+    </div>
+    <div class="out">ng-model = {{ vm.countriesCommands | json }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="12d"><code></code></pre></details>
+    </article>
   </section>
 
   <section>
     <h2>13. Action rows: ll-popup-list-leading-action-rows / ll-popup-list-trailing-action-rows / ll-popup-list-leading-rows-pinned</h2>
     <p>
-      Commands rendered as option rows above and below the items, reachable
-      with the arrow keys. <code>onActivate</code> receives the widget
-      instance; calling it counts as the user's own change, so
-      <code>ng-change</code> runs like after a click. The row text and its
-      disabled state follow every change. <code>ll-popup-list-leading-rows-pinned="true"</code>
-      keeps the leading rows in view while the items scroll.
+      Commands rendered as option rows above or below the items, so the arrow
+      keys reach them. <code>onActivate</code> receives the widget instance;
+      calling it counts as the user's own change, so <code>ng-change</code>
+      runs like after a click. <code>textFn</code> and <code>disabledFn</code>
+      run again after every change. The same four examples as the core demo's
+      section 15, done with attributes.
     </p>
-    <div class="demo-row" data-src="13">
-      <llselect-multiple ll-aria-label="Languages (action rows)" ng-model="vm.langsRows" ng-change="vm.langsRowsChanges = vm.langsRowsChanges + 1" ll-popup-list-leading-action-rows="vm.langRowsBefore" ll-popup-list-trailing-action-rows="vm.langRowsAfter" ll-popup-list-leading-rows-pinned="true"
-        ll-options="l.name for l in vm.languages track by l.name">
+
+    <article>
+    <h3>13a. Restore defaults above the items, Clear all below</h3>
+    <p>
+      The leading row follows the choose-all row; its disabled state reads the
+      live model. The trailing row sits after the last item.
+    </p>
+    <div class="demo-row" data-src="13a">
+      <llselect-multiple ll-aria-label="Countries (action rows)" ng-model="vm.countriesRows" ng-change="vm.countriesRowsChanges = vm.countriesRowsChanges + 1"
+        ll-choose-all-row="true" ll-popup-list-leading-action-rows="vm.countryRowsBefore" ll-popup-list-trailing-action-rows="vm.countryRowsAfter"
+        ll-options="c for c in vm.countries">
       </llselect-multiple>
     </div>
-    <div class="out">ng-model = {{ vm.langsRows | json }} &middot; ng-change ran {{ vm.langsRowsChanges }} times</div>
-    <details class="code-toggle"><summary>markup</summary><pre data-src-for="13"><code></code></pre></details>
+    <div class="out">ng-model = {{ vm.countriesRows | json }} &middot; ng-change ran {{ vm.countriesRowsChanges }} times</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="13a"><code></code></pre></details>
+    </article>
+
+    <article>
+    <h3>13b. Add a country, above the items</h3>
+    <p>
+      The row asks for a name, adds it to the array behind
+      <code>ll-options</code>, writes the model and closes. A row never
+      closes the popup by itself.
+    </p>
+    <div class="demo-row" data-src="13b">
+      <llselect-single ll-aria-label="Country (add row)" ng-model="vm.countryAdded" ll-popup-list-leading-action-rows="vm.addRowsBefore"
+        ll-options="c for c in vm.addRowItems">
+      </llselect-single>
+    </div>
+    <div class="out">ng-model = {{ vm.countryAdded || 'undefined' }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="13b"><code></code></pre></details>
+    </article>
+
+    <article>
+    <h3>13c. Sort the list, above the items</h3>
+    <p>
+      The row flips the array behind <code>ll-options</code>, which
+      <code>$watchCollection</code> hands to the widget. A filter query
+      re-applies to the new order, and the chosen item stays chosen.
+    </p>
+    <div class="demo-row" data-src="13c">
+      <llselect-single ll-aria-label="Country (sort row)" ng-model="vm.countrySorted" ll-filterable="true" ll-popup-list-leading-action-rows="vm.sortRowsBefore"
+        ll-options="c for c in vm.sortRowItems">
+      </llselect-single>
+    </div>
+    <div class="out">ng-model = {{ vm.countrySorted || 'undefined' }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="13c"><code></code></pre></details>
+    </article>
+
+    <article>
+    <h3>13d. Select all and Restore defaults pinned at the top of the list</h3>
+    <p>
+      13a's leading rows with <code>ll-popup-list-leading-rows-pinned="true"</code>:
+      the choose-all row and the command stay in view while the items scroll
+      under them, and keep their place in the arrow-key ring.
+    </p>
+    <div class="demo-row" data-src="13d">
+      <llselect-multiple ll-aria-label="Countries (pinned rows)" ng-model="vm.countriesPinned"
+        ll-choose-all-row="true" ll-popup-list-leading-rows-pinned="true" ll-popup-list-leading-action-rows="vm.pinnedRowsBefore"
+        ll-options="c for c in vm.countries">
+      </llselect-multiple>
+    </div>
+    <div class="out">ng-model = {{ vm.countriesPinned | json }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="13d"><code></code></pre></details>
+    </article>
   </section>
 
   <section>
@@ -632,7 +760,7 @@
       Widgets already on screen are the app's job. This page runs the recipe
       from <a href="../../angularjs/api.html">API.md</a>, "Switching the UI
       language at runtime", verbatim in <code>app.js</code>. Pick a language:
-      every widget on this page follows, chosen values survive, and 1a keeps
+      every widget on this page follows, chosen values survive, and 2a keeps
       its explicit <code>ll-placeholder</code>. The page's own copy stays
       English. RTL lives in the core demo, section 16.
     </p>
@@ -674,7 +802,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/angular@1.8.3/angular.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/angular-sanitize@1.8.3/angular-sanitize.min.js"></script>
-  <!-- ui-bootstrap: only for 8f's uib-tooltip. -->
+  <!-- ui-bootstrap: only for 1f's uib-tooltip. -->
   <script src="https://cdn.jsdelivr.net/npm/angular-ui-bootstrap@2.5.6/dist/ui-bootstrap-tpls.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/angular-translate@2.19.1/dist/angular-translate.min.js"></script>
   <!-- useStaticFilesLoader is NOT in angular-translate core; it is its own
