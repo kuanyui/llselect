@@ -621,7 +621,45 @@
   </section>
 
   <section>
-    <h2>14. Full source</h2>
+    <h2>14. UI language switch: instance().setUiTranslationPack follows $translate</h2>
+    <p>
+      llselect's own strings come from a language pack. That covers the
+      placeholder, the search box, the clear and remove buttons, the count
+      summary, the choose-all row and the no-results status. An app picks one
+      once, in <code>.config()</code>:
+      <code>llselectConfigProvider.defaults({ uiTranslationPack: llselectI18n.zhTW })</code>.
+      Widgets already on screen are the app's job. This page runs the recipe
+      from <a href="../../angularjs/api.html">API.md</a>, "Switching the UI
+      language at runtime", verbatim in <code>app.js</code>. Pick a language:
+      every widget on this page follows, chosen values survive, and 1a keeps
+      its explicit <code>ll-placeholder</code>. The page's own copy stays
+      English. RTL lives in the core demo, section 16.
+    </p>
+    <div class="demo-row" data-src="14">
+      <label for="ui-lang">UI language:</label>
+      <select id="ui-lang" ng-model="vm.uiLang" ng-change="vm.setUiLang()">
+        <option value="en">en</option>
+        <option value="ja">ja</option>
+        <option value="zh-TW">zh-TW</option>
+      </select>
+      <llselect-single ll-aria-label="Country (UI language)" ng-model="vm.countryI18n" ll-filterable="true" ll-clearable="true"
+        ll-options="c for c in vm.countries">
+      </llselect-single>
+      <llselect-multiple ll-aria-label="Languages (UI language)" ng-model="vm.langsI18n" ll-filterable="true" ll-clearable="true"
+        ll-trigger-display="'tags'"
+        ll-options="l.name for l in vm.languages track by l.name">
+      </llselect-multiple>
+      <ui-llselect ng-model="vm.personI18n" aria-label="Person (UI language)">
+        <ui-llselect-match>{{$select.selected.name}}</ui-llselect-match>
+        <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+      </ui-llselect>
+    </div>
+    <div class="out">ng-model = {{ vm.countryI18n || 'undefined' }} &middot; {{ vm.langsI18n | json }} &middot; {{ vm.personI18n.name || 'undefined' }}</div>
+    <details class="code-toggle"><summary>markup</summary><pre data-src-for="14"><code></code></pre></details>
+  </section>
+
+  <section>
+    <h2>15. Full source</h2>
     <p>
       The whole of what this page loads. Nothing is generated and nothing is
       minified: this is the file you copy.
@@ -645,6 +683,7 @@
   <script src="https://cdn.jsdelivr.net/npm/angular-validation-ghiscoding@1.5.28/dist/angular-validation.min.js"></script>
   <script src="../../dist/index.umd.js"></script>
   <script src="../../angularjs/llselect-angularjs.js"></script>
+  <script src="../../dist/i18n.umd.js"></script>
   <script src="../../angularjs/llselect-ui-select.js"></script>
   <script src="app.js"></script>
   <!-- Source display only. A module script so it can share the demo's

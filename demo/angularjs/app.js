@@ -80,12 +80,40 @@
     { name: 'Java', icon: 'language-java', color: '#e76f00' },
   ]
 
+  /**
+   * 14: the runtime language switch from API.md ("Switching the UI language
+   * at runtime"), verbatim. Registered under each existing directive name, so
+   * it decorates every <llselect-single> / <llselect-multiple> / <ui-llselect>
+   * on the page: the $watch re-packs the live widget through instance() on
+   * every language change, and an unmapped key ('en') restores the English
+   * defaults with {}.
+   */
+  function i18nPackSync(ctrlName) {
+    return ['$translate', 'LLSELECT_I18N_PACKS', function ($translate, PACKS) {
+      return {
+        restrict: 'E',
+        require: ctrlName,
+        link: function (scope, element, attrs, ctrl) {
+          scope.$watch(function () { return $translate.use() }, function (langKey) {
+            if (langKey) { ctrl.instance().setUiTranslationPack(PACKS[langKey] || {}) }
+          })
+        },
+      }
+    }]
+  }
+
   angular.module('demo', ['llselect', 'llselect.uiCompat', 'ngSanitize', 'ui.bootstrap', 'ghiscoding.validation'])
 
     // The house style, set once. Per-element ll-* attributes still win.
     .config(['llselectConfigProvider', function (llselectConfigProvider) {
       llselectConfigProvider.defaults({ arrow: 'chevron' })
     }])
+
+    // 14: the packs come from dist/i18n.umd.js (the llselectI18n global).
+    .constant('LLSELECT_I18N_PACKS', { 'zh-TW': window.llselectI18n.zhTW, ja: window.llselectI18n.ja })
+    .directive('llselectSingle', i18nPackSync('llselectSingle'))
+    .directive('llselectMultiple', i18nPackSync('llselectMultiple'))
+    .directive('uiLlselect', i18nPackSync('uiLlselect'))
 
     // ghiscoding/angular-validation hard-depends on angular-translate and reads
     // its messages through it; without this its validators still run but every
@@ -97,6 +125,13 @@
       })
       $translateProvider.preferredLanguage('en')
       $translateProvider.useSanitizeValueStrategy(null)
+      // 14: the loader above only has angular-validation's locales (no ja /
+      // zh-TW), and a failed load never switches the language. An empty table
+      // per demo language makes $translate.use() switch at once; the fallback
+      // keeps 9's validation messages resolving from en.
+      $translateProvider.translations('ja', {})
+      $translateProvider.translations('zh-TW', {})
+      $translateProvider.fallbackLanguage('en')
     }])
 
     /**
@@ -165,7 +200,7 @@
       }
     }])
 
-    .controller('DemoCtrl', ['$scope', function ($scope) {
+    .controller('DemoCtrl', ['$scope', '$translate', function ($scope, $translate) {
       var vm = this
 
       vm.countries = COUNTRIES
@@ -196,6 +231,11 @@
       vm.avFruit = undefined
       vm.country3 = undefined
       vm.lang = undefined
+      vm.uiLang = 'en' // 14: $translate.use() is what the recipe watches; this is only the <select>'s model
+      vm.setUiLang = function () { $translate.use(vm.uiLang) }
+      vm.countryI18n = undefined // 14
+      vm.langsI18n = [] // 14
+      vm.personI18n = undefined // 14
       vm.langsRich = []
       vm.langsTags = []
       vm.user2 = undefined
