@@ -5,7 +5,7 @@
 // tests run against what the sibling package actually ships; if it is missing,
 // fail loudly rather than skip, because a skipped test reads as a passing one.
 
-import { JSDOM } from 'jsdom'
+import { JSDOM, VirtualConsole } from 'jsdom'
 import { readFileSync, existsSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
@@ -27,6 +27,21 @@ if (!existsSync(LLSELECT_UMD)) {
   )
 }
 
+// The core warns once per page when a widget has no accessible name. Every
+// boot() is a new page and fixtures are unnamed on purpose, so the warn would
+// print once per test. Drop it; every other console call still forwards.
+const UNNAMED_WARN_PREFIX = 'llselect: this widget has no accessible name'
+function quietConsole() {
+  const vc = new VirtualConsole()
+  vc.sendTo(console)
+  vc.removeAllListeners('warn')
+  vc.on('warn', (...args) => {
+    if (typeof args[0] === 'string' && args[0].startsWith(UNNAMED_WARN_PREFIX)) { return }
+    console.warn(...args)
+  })
+  return vc
+}
+
 /**
  * Boot a jsdom page with angular + llselect + this package's directives.
  * `files` names which of the package's own files to load.
@@ -36,6 +51,7 @@ export function boot({ html, deps, controller, config, files = ['llselect-angula
     runScripts: 'dangerously',
     url: 'http://localhost/',
     pretendToBeVisual: true,
+    virtualConsole: quietConsole(),
   })
   const { window } = dom
 
