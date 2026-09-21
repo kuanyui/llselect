@@ -71,7 +71,7 @@ export const LONG_NAMES = [
   'Trinidad and Tobago',
 ]
 
-// Object items for the rich item-content demos (section 10): each carries an
+// Object items for the rich item-content demos (section 11): each carries an
 // mdi icon name, a display name, and a brand color for the icon.
 export const PROGRAMMING_LANGUAGES = [
   { name: 'JavaScript', icon: 'language-javascript', color: '#f7df1e' },
@@ -88,7 +88,7 @@ export const PROGRAMMING_LANGUAGES = [
   { name: 'Kotlin', icon: 'language-kotlin', color: '#7f52ff' },
 ]
 
-// i18n / RTL demo (section 12): mixed-direction labels. The Unicode Bidi
+// i18n / RTL demo (section 16): mixed-direction labels. The Unicode Bidi
 // Algorithm reorders runs inside each label automatically; the parenthesised
 // and numbered entries show how weak characters follow the item's base
 // direction (see DESIGN.md "RTL").
@@ -105,7 +105,7 @@ export const MIXED_DIRECTION_COUNTRIES = [
   'Germany',
 ]
 
-// Grouped items for the optgroup demos (section 12). Pre-sorted by category:
+// Grouped items for the optgroup demos (sections 10 and 11.3). Pre-sorted by category:
 // contiguous-run grouping needs items sharing a group to be adjacent.
 export const GROUPED_FOODS = [
   { name: 'Apple', category: 'Fruit' },

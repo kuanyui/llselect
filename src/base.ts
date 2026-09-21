@@ -2143,7 +2143,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `createItemContentElFn` setting instead.
    * - To change the element itself, override it, call
    *   `super.createItemEl(item, index)`, and edit the returned element: add a
-   *   class, a `title`, a wrapper. Demo sections 9.1, 14.1 and 14.2 do this.
+   *   class, a `title`, a wrapper. Demo sections 9.1, 13.1 and 13.2 do this.
    * - Keep the `id` and `role` the base set. Do not put focusable controls
    *   inside the row. The row itself is the control.
    * - The element is rebuilt on every render. Do not keep a reference to it.

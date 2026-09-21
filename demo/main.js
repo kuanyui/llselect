@@ -276,7 +276,7 @@ selMulti.setItems(COUNTRIES)
 //#region 5.4
 // Settings path: createItemContentElFn renders checkbox + item text; the public
 // isChosen() supplies the state. The fn only runs on render (after
-// construction), so the self-reference is safe. Subclass equivalent: 14.1.
+// construction), so the self-reference is safe. Subclass equivalent: 13.1.
 const outMultiCheckbox = document.getElementById('out-multi-checkbox')
 let selMultiCheckbox
 selMultiCheckbox = new LLSelectMultiple(
@@ -980,128 +980,8 @@ const labelDemoSel = new LLSelectSingle(document.getElementById('mount-label-dem
 labelDemoSel.setItems(['Apple', 'Banana', 'Cherry', 'Durian'])
 //#endregion
 
-//#region 13.1
-// Language packs (imported at the top: `import { en, ja, zhTW } from
-// '@llselect/core/i18n'`) fill the `uiTranslationPack` setting whole; per-key
-// overrides spread on top (`uiTranslationPack: { ...zhTW, ... }`). The three
-// instances are built ONCE; the switcher calls setUiTranslationPack (one of
-// the two settings with a runtime setter) so chosen state survives the
-// language switch. Deliberately NO `placeholder` (so the pack's
-// localized `triggerPlaceholder` default shows; an explicit `placeholder` is
-// app copy and would win) and nothing preselected at load, so every visible
-// change comes from the pack alone. Three instances: a single (localized
-// placeholder + chosen text in the trigger), and two multis because their
-// displays are exclusive - 'tags' shows the translated remove buttons,
-// default 'count' the translated count summary.
-const I18N_PACKS = { en, ja, zhTW, ar, he }
-const RTL_PACKS = new Set(['ar', 'he'])
-const outI18n = document.getElementById('out-i18n')
-const i18nPackSelect = document.getElementById('i18n-pack-select')
-const i18nMounts = ['mount-i18n-single', 'mount-i18n-tags', 'mount-i18n-count'].map((id) => document.getElementById(id))
-const i18nSelects = [
-  new LLSelectSingle(i18nMounts[0], {
-    ariaLabel: 'Country (single)',
-    filterable: true,
-    clearable: true,
-    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
-  }),
-  new LLSelectMultiple(i18nMounts[1], {
-    ariaLabel: 'Countries (tags)',
-    filterable: true,
-    clearable: true,
-    triggerDisplay: 'tags',
-    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
-    onChange: (chosen) => { outI18n.textContent = 'chosen: ' + chosen.join(', ') },
-  }),
-  new LLSelectMultiple(i18nMounts[2], {
-    ariaLabel: 'Countries (count)',
-    filterable: true,
-    clearable: true,
-    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
-  }),
-]
-// Mixed-direction item texts: bidi reorders runs inside each item on its own; the
-// weak-character entries (parens / digits) show the base-direction caveat
-// that per-item dir="auto" / <bdi> would solve (DESIGN.md "RTL").
-for (const sel of i18nSelects) { sel.setItems(MIXED_DIRECTION_COUNTRIES) }
-function applyI18nPack(packName) {
-  // RTL packs set `dir` on the mounts: the component inherits the
-  // environment's direction like a native element (there is NO rtl setting).
-  // Flex mirrors the trigger slots (arrow lands LEFT, like native <select>),
-  // logical padding mirrors the chips, fit-content popups would grow leftward.
-  const dir = RTL_PACKS.has(packName) ? 'rtl' : 'ltr'
-  for (const mountEl of i18nMounts) { mountEl.dir = dir }
-  for (const sel of i18nSelects) { sel.setUiTranslationPack(I18N_PACKS[packName]) }
-}
-i18nPackSelect.addEventListener('change', () => applyI18nPack(i18nPackSelect.value))
-applyI18nPack(i18nPackSelect.value)
-//#endregion
-
-//#region 13.3
-// Every pack, straight out of `uiTranslationPackByLocale` (BCP 47 keys), so new packs
-// appear here without demo edits. One single per pack: closed it shows the
-// pack's `triggerPlaceholder`, open it the search placeholder / clear x /
-// no-results status. RTL tags put `dir="rtl"` on their mount; the card label
-// uses `Intl.DisplayNames` where available (Firefox < 86 gets the bare tag).
-const RTL_TAGS = new Set(['ar', 'fa', 'he', 'ur'])
-const i18nAllGrid = document.getElementById('i18n-all-grid')
-const displayNames = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['en'], { type: 'language' }) : null
-function languageLabel(tag) {
-  if (!displayNames) { return tag }
-  try { return `${tag} - ${displayNames.of(tag)}` } catch { return tag }
-}
-for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
-  const card = document.createElement('div')
-  const cardLabel = document.createElement('div')
-  cardLabel.className = 'out'
-  cardLabel.textContent = languageLabel(tag)
-  const mount = document.createElement('div')
-  if (RTL_TAGS.has(tag)) { mount.dir = 'rtl' }
-  card.append(cardLabel, mount)
-  i18nAllGrid.append(card)
-  const allSel = new LLSelectSingle(mount, {
-    labelEl: cardLabel, // the visible per-language card label doubles as the accessible name
-    filterable: true,
-    clearable: true,
-    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
-    uiTranslationPack: pack,
-  })
-  allSel.setItems(MIXED_DIRECTION_COUNTRIES)
-}
-//#endregion
-
-//#region 13.2
-// RTL needs no API: the mount's dir="rtl" is inherited like on a native
-// element, and flex rows / logical margins mirror on their own. Same
-// checkbox pattern as 5.5, with the ar pack.
-const outRtlCheckboxes = document.getElementById('out-rtl-checkboxes')
-let selRtlCheckboxes
-selRtlCheckboxes = new LLSelectMultiple(
-  document.getElementById('mount-rtl-checkboxes'),
-  {
-  ariaLabel: 'RTL checkboxes',
-    chooseAllRow: true,
-    uiTranslationPack: ar,
-    createItemContentElFn: (item) => {
-      const row = document.createElement('span')
-      row.className = 'lang-row'
-      row.append(createOutlinedCheckboxSvgEl({ state: selRtlCheckboxes.isChosen(item) ? 'checked' : 'unchecked' }), item)
-      return row
-    },
-    createChooseAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
-      const row = document.createElement('span')
-      row.className = 'lang-row'
-      row.append(createOutlinedCheckboxSvgEl({ state: chosenState }), ar.chooseAllRowText(chosenCount, totalCount))
-      return row
-    },
-    onChange: (chosen) => { outRtlCheckboxes.textContent = 'chosen: ' + chosen.length + ' items' },
-  }
-)
-selRtlCheckboxes.setItems(MIXED_DIRECTION_COUNTRIES)
-//#endregion
-
 // --- Inject demo snippets into <pre data-demo="X"><code></code></pre> -----
-//#region 14.1
+//#region 13.1
 // Subclass equivalent of 5.4: override createItemEl and prepend the checkbox
 // to the option element itself. Not required (5.4 reaches the same result
 // with a setting) and not faster - subclass when you need the option element
@@ -1127,7 +1007,7 @@ const selSubclassCheckbox = new CheckboxMultiSelect(
 selSubclassCheckbox.setItems(COUNTRIES)
 //#endregion
 
-//#region 14.2
+//#region 13.2
 // Usage: import the subclass, configure it like any llselect (its own
 // defaultExpandDepth included), then hand it nested nodes. The page loads
 // the transpiled copy dynamically so a missing build degrades to a note; a
@@ -1162,7 +1042,7 @@ await initTreeSelect().catch(() => {
     'subclass/tree-select.js is written by `npm run build:site` - serve public/ to see this example.'
 })
 
-//#region 15.1
+//#region 14.1
 // Tags in the trigger; the count and a Clear all button in a pinned header.
 // createPopupHeaderContentElFn runs ONCE, in the constructor, and the returned
 // node is yours for the instance's life: onChange rewrites the count and the
@@ -1214,7 +1094,7 @@ selHeaderCount.setChosenItems(['Japan', 'Taiwan'])
 writeHeaderState(2)
 //#endregion
 
-//#region 15.2
+//#region 14.2
 // Column headings for two-column rows: the header repeats the row layout
 // (.user-row, name left, role right) in bold. Rows re-render per filter
 // keystroke; the header is built once and never scrolls.
@@ -1256,7 +1136,7 @@ const selHeaderColumns = new LLSelectSingle(
 selHeaderColumns.setItems(USERS)
 //#endregion
 
-//#region 15.3
+//#region 14.3
 // A pinned footer link. Clicking it keeps DOM focus on the combobox (the
 // popup's mousedown rule); Tab reaches it while the popup is open; Esc on it
 // closes and returns focus to the trigger (A11Y.md "Slot controls").
@@ -1282,8 +1162,8 @@ const selFooterLink = new LLSelectMultiple(
 selFooterLink.setItems(COUNTRIES)
 //#endregion
 
-//#region 15.4
-// The 16.1 commands as pinned header rows, for comparison. Each command is a
+//#region 14.4
+// The 15.1 commands as pinned header rows, for comparison. Each command is a
 // real <button> (keyboard and AT semantics for free) wearing the theme's item
 // class, so every theme paints it like a list row; the demo CSS zeroes the
 // header padding and resets the button chrome. Slot controls: a click keeps
@@ -1343,7 +1223,7 @@ selHeaderCommands.setChosenItems(HEADER_DEFAULTS)
 writeHeaderCommands()
 //#endregion
 
-//#region 16.1
+//#region 15.1
 // Leading action rows (above the items): the library builds each as a role="option"
 // row in the arrow-key ring, right after the choose-all row, so the arrow
 // keys reach it before any item. textFn / disabledFn run on every render and
@@ -1375,7 +1255,7 @@ selActionRows.setItems(COUNTRIES)
 selActionRows.setChosenItems(DEFAULT_COUNTRIES)
 //#endregion
 
-//#region 16.2
+//#region 15.2
 // One leading action row (above the items) on a single select. The row asks for a
 // name, adds it to the list, picks it and closes - all app code: a row never
 // closes the popup by itself.
@@ -1408,7 +1288,7 @@ const selAddRow = new LLSelectSingle(
 selAddRow.setItems(addRowItems)
 //#endregion
 
-//#region 16.3
+//#region 15.3
 // A sort toggle as a leading row: it flips the order with setItems
 // and its text names the current order. The chosen item survives (same
 // identity), and a filter query re-applies to the new order.
@@ -1436,8 +1316,8 @@ const selSortRow = new LLSelectSingle(
 selSortRow.setItems(sortedCountries())
 //#endregion
 
-//#region 16.4
-// 16.1 with popupListLeadingRowsPinned: the choose-all row and the command
+//#region 15.4
+// 15.1 with popupListLeadingRowsPinned: the choose-all row and the command
 // stay at the top while the items scroll under them, still in the arrow-key
 // ring. The library builds the sticky wrapper; the theme paints it.
 const PINNED_DEFAULTS = ['Japan', 'Taiwan']
@@ -1466,6 +1346,126 @@ selPinnedRows.setItems(COUNTRIES)
 selPinnedRows.setChosenItems(PINNED_DEFAULTS)
 //#endregion
 
+//#region 16.1
+// Language packs (imported at the top: `import { en, ja, zhTW } from
+// '@llselect/core/i18n'`) fill the `uiTranslationPack` setting whole; per-key
+// overrides spread on top (`uiTranslationPack: { ...zhTW, ... }`). The three
+// instances are built ONCE; the switcher calls setUiTranslationPack (one of
+// the two settings with a runtime setter) so chosen state survives the
+// language switch. Deliberately NO `placeholder` (so the pack's
+// localized `triggerPlaceholder` default shows; an explicit `placeholder` is
+// app copy and would win) and nothing preselected at load, so every visible
+// change comes from the pack alone. Three instances: a single (localized
+// placeholder + chosen text in the trigger), and two multis because their
+// displays are exclusive - 'tags' shows the translated remove buttons,
+// default 'count' the translated count summary.
+const I18N_PACKS = { en, ja, zhTW, ar, he }
+const RTL_PACKS = new Set(['ar', 'he'])
+const outI18n = document.getElementById('out-i18n')
+const i18nPackSelect = document.getElementById('i18n-pack-select')
+const i18nMounts = ['mount-i18n-single', 'mount-i18n-tags', 'mount-i18n-count'].map((id) => document.getElementById(id))
+const i18nSelects = [
+  new LLSelectSingle(i18nMounts[0], {
+    ariaLabel: 'Country (single)',
+    filterable: true,
+    clearable: true,
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+  }),
+  new LLSelectMultiple(i18nMounts[1], {
+    ariaLabel: 'Countries (tags)',
+    filterable: true,
+    clearable: true,
+    triggerDisplay: 'tags',
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+    onChange: (chosen) => { outI18n.textContent = 'chosen: ' + chosen.join(', ') },
+  }),
+  new LLSelectMultiple(i18nMounts[2], {
+    ariaLabel: 'Countries (count)',
+    filterable: true,
+    clearable: true,
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+  }),
+]
+// Mixed-direction item texts: bidi reorders runs inside each item on its own; the
+// weak-character entries (parens / digits) show the base-direction caveat
+// that per-item dir="auto" / <bdi> would solve (DESIGN.md "RTL").
+for (const sel of i18nSelects) { sel.setItems(MIXED_DIRECTION_COUNTRIES) }
+function applyI18nPack(packName) {
+  // RTL packs set `dir` on the mounts: the component inherits the
+  // environment's direction like a native element (there is NO rtl setting).
+  // Flex mirrors the trigger slots (arrow lands LEFT, like native <select>),
+  // logical padding mirrors the chips, fit-content popups would grow leftward.
+  const dir = RTL_PACKS.has(packName) ? 'rtl' : 'ltr'
+  for (const mountEl of i18nMounts) { mountEl.dir = dir }
+  for (const sel of i18nSelects) { sel.setUiTranslationPack(I18N_PACKS[packName]) }
+}
+i18nPackSelect.addEventListener('change', () => applyI18nPack(i18nPackSelect.value))
+applyI18nPack(i18nPackSelect.value)
+//#endregion
+
+//#region 16.3
+// Every pack, straight out of `uiTranslationPackByLocale` (BCP 47 keys), so new packs
+// appear here without demo edits. One single per pack: closed it shows the
+// pack's `triggerPlaceholder`, open it the search placeholder / clear x /
+// no-results status. RTL tags put `dir="rtl"` on their mount; the card label
+// uses `Intl.DisplayNames` where available (Firefox < 86 gets the bare tag).
+const RTL_TAGS = new Set(['ar', 'fa', 'he', 'ur'])
+const i18nAllGrid = document.getElementById('i18n-all-grid')
+const displayNames = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['en'], { type: 'language' }) : null
+function languageLabel(tag) {
+  if (!displayNames) { return tag }
+  try { return `${tag} - ${displayNames.of(tag)}` } catch { return tag }
+}
+for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
+  const card = document.createElement('div')
+  const cardLabel = document.createElement('div')
+  cardLabel.className = 'out'
+  cardLabel.textContent = languageLabel(tag)
+  const mount = document.createElement('div')
+  if (RTL_TAGS.has(tag)) { mount.dir = 'rtl' }
+  card.append(cardLabel, mount)
+  i18nAllGrid.append(card)
+  const allSel = new LLSelectSingle(mount, {
+    labelEl: cardLabel, // the visible per-language card label doubles as the accessible name
+    filterable: true,
+    clearable: true,
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+    uiTranslationPack: pack,
+  })
+  allSel.setItems(MIXED_DIRECTION_COUNTRIES)
+}
+//#endregion
+
+//#region 16.2
+// RTL needs no API: the mount's dir="rtl" is inherited like on a native
+// element, and flex rows / logical margins mirror on their own. Same
+// checkbox pattern as 5.5, with the ar pack.
+const outRtlCheckboxes = document.getElementById('out-rtl-checkboxes')
+let selRtlCheckboxes
+selRtlCheckboxes = new LLSelectMultiple(
+  document.getElementById('mount-rtl-checkboxes'),
+  {
+  ariaLabel: 'RTL checkboxes',
+    chooseAllRow: true,
+    uiTranslationPack: ar,
+    createItemContentElFn: (item) => {
+      const row = document.createElement('span')
+      row.className = 'lang-row'
+      row.append(createOutlinedCheckboxSvgEl({ state: selRtlCheckboxes.isChosen(item) ? 'checked' : 'unchecked' }), item)
+      return row
+    },
+    createChooseAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
+      const row = document.createElement('span')
+      row.className = 'lang-row'
+      row.append(createOutlinedCheckboxSvgEl({ state: chosenState }), ar.chooseAllRowText(chosenCount, totalCount))
+      return row
+    },
+    onChange: (chosen) => { outRtlCheckboxes.textContent = 'chosen: ' + chosen.length + ' items' },
+  }
+)
+selRtlCheckboxes.setItems(MIXED_DIRECTION_COUNTRIES)
+//#endregion
+
 // Self-extraction: fetch this file's source, locate `//#region NAME` ...
 // `//#endregion` blocks, and write each into the matching <code>.
 {
@@ -1479,7 +1479,7 @@ selPinnedRows.setChosenItems(PINNED_DEFAULTS)
 }
 
 // Whole-file sources: <pre data-src-file="path"><code> shows a file verbatim
-// (14.2 uses it for the TypeScript source of the tree subclass).
+// (13.2 uses it for the TypeScript source of the tree subclass).
 for (const pre of document.querySelectorAll('pre[data-src-file]')) {
   const target = pre.querySelector('code')
   try {

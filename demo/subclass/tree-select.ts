@@ -18,7 +18,7 @@
  *   leaf descendants. The caret / folder are MDI font icons
  *   (`<i class="mdi mdi-...">`, loaded by the examples page) - swap for
  *   your own icon system when copying. The caret's hit-area and hover
- *   styling live in the demo's style.css (region 14.2); copy that rule too.
+ *   styling live in the demo's style.css (region 13.2); copy that rule too.
  * - `onItemActivated` override: activating a branch toggles its whole leaf
  *   subtree; leaves keep the normal toggle (`super`).
  * - Leaves-only model contract: `setChosenItems` drops branches (the one

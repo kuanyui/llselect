@@ -66,7 +66,7 @@ The constructor calls six settings functions, in this order:
 - `createPopupHeaderContentElFn` and `createPopupFooterContentElFn`, inside the base constructor, before the variant's fields are initialized. `LLSelectMultiple.chosenItems` is still `undefined` here.
 - `createTriggerClearButtonContentElFn`, `createTriggerContentElFn`, `createTriggerArrowContentElFn`, from the initial trigger render at the end of the variant constructor. The variant's fields exist; a further subclass's fields do not yet.
 
-If these functions received the instance, they would receive a half-built object with a full type. `getChosenItems()` is typed `readonly T[]` and would return `undefined`. In single mode that even looks correct, because `undefined` also means "nothing chosen". In multiple mode `.length` throws. `hideChosenRows` changes which one you get. A parameter whose contract is "do not use it yet" is a trap. The closure recipe fails loudly instead: reading the empty variable throws at once, which is exactly what happened in demo 15.4 (commit `c65b1cc`).
+If these functions received the instance, they would receive a half-built object with a full type. `getChosenItems()` is typed `readonly T[]` and would return `undefined`. In single mode that even looks correct, because `undefined` also means "nothing chosen". In multiple mode `.length` throws. `hideChosenRows` changes which one you get. A parameter whose contract is "do not use it yet" is a trap. The closure recipe fails loudly instead: reading the empty variable throws at once, which is exactly what happened in demo 14.4 (commit `c65b1cc`).
 
 ### 4.2 A function's parameters are its rerun condition
 

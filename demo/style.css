@@ -317,7 +317,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
   z-index: 2000;
 }
 
-/* #region 14.1 */
+/* #region 13.1 */
 /* align the subclass-prepended checkbox with the label */
 #mount-subclass-checkbox .llselect-item {
   display: flex;
@@ -326,7 +326,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 /* #endregion */
 
-/* Icon + text rows for rich item content (core 5.4-5.6, 11.x, 13.2;
+/* Icon + text rows for rich item content (core 5.4-5.6, 11.x, 16.2;
    angularjs 7). */
 .lang-row {
   display: inline-flex;
@@ -399,7 +399,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 /* #endregion */
 
-/* #region 14.2 */
+/* #region 13.2 */
 /* Tree caret: a real hit target, not a bare glyph - a centered 1.6em box
    with hover feedback; negative vertical margin keeps the row height as if
    the box were glyph-sized. The hover tint is accent-colored, because a
@@ -715,8 +715,8 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
    restyle bare <label> on their own; BS5 uses .form-label, Tailwind resets.) */
 .field-label { display: block; font-weight: 600; margin-bottom: 0.3rem; }
 
-/* --- 15. popup header / footer slots ------------------------------------- */
-/* #region 15.1 */
+/* --- 14. popup header / footer slots ------------------------------------- */
+/* #region 14.1 */
 /* A header holding a count and one small command: the command is a real
    <button> (keyboard and AT semantics for free) drawn as a link, so the slot
    reads as light text, not a toolbar. aria-disabled greys it (no native
@@ -735,8 +735,8 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 }
 .popup-link-button[aria-disabled='true'] { color: #999; cursor: not-allowed; text-decoration: none; }
 /* #endregion */
-/* #region 15.4 */
-/* Header commands that look exactly like the rows of 16.1, only pinned: the
+/* #region 14.4 */
+/* Header commands that look exactly like the rows of 15.1, only pinned: the
    header's own padding is zeroed and each command is a <button> wearing the
    theme's item class (padding, hover, disabled look come from the theme, in
    every theme), with the UA button chrome reset. */

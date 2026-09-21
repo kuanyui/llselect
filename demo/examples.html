@@ -310,7 +310,7 @@
         <code>createItemContentElFn</code> renders checkbox + item text; the
         public <code>isChosen()</code> supplies the state (the fn runs per
         render, so the self-reference in the code is safe); the single-item
-        rerender keeps it in sync. Subclass equivalent: 14.1.
+        rerender keeps it in sync. Subclass equivalent: 13.1.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -683,7 +683,7 @@
       content only; the element itself and its ARIA stay library-built (an
       option's <code>aria-label</code> stays the plain
       <code>itemToString</code>). When the library-built element itself must
-      change, subclass instead: section 14.
+      change, subclass instead: section 13.
     </p>
 
     <article>
@@ -809,7 +809,170 @@
   </section>
 
   <section>
-    <h2>13. i18n (language packs) + RTL</h2>
+    <h2>13. Subclassing</h2>
+    <p class="hint">
+      Settings customize CONTENT; subclassing customizes the library-built
+      elements (e.g. the <code>role="option"</code> element itself) and can
+      read protected state. Performance is identical (one shared prototype method vs one
+      closure per instance is noise) - pick by capability. The
+      required-subclass cases live with their features: 6.4 (title on the
+      whole row), 9.1 (protected <code>isItemEffectivelyDisabled()</code>).
+    </p>
+
+    <article>
+      <h3>13.1 Checkbox items, subclass-style (= 5.4)</h3>
+      <p class="hint">
+        The same result as 5.4 via a <code>createItemEl</code> override - not
+        required, kept as the reference example of the subclass surface.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-subclass-checkbox"></div>
+          <div class="out" id="out-subclass-checkbox">chosen: []</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="13.1"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="13.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>13.2 Tree multiple select: a whole variant in TypeScript</h3>
+      <p class="hint">
+        Branch rows expand / collapse via the caret, wear a folder icon that
+        follows the state, and show a tri-state checkbox derived from their
+        leaves; activating a branch toggles its whole subtree. The model value is the chosen leaves. Built on the
+        extension points: typed subclass settings
+        (<code>defaultExpandDepth</code>), a cached
+        <code>getVisibleItems</code> override, <code>createItemEl</code> /
+        <code>createItemContentEl</code>, <code>onItemActivated</code>. The
+        toggle shows the usage, the TypeScript subclass
+        (<code>subclass/tree-select.ts</code>), and its demo CSS.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-tree"></div>
+          <div class="out" id="out-tree">chosen: []</div>
+        </div>
+        <details class="code-toggle"><summary>code (TypeScript)</summary><div class="code-caption">usage (main.js)</div><pre data-demo="13.2"><code></code></pre><div class="code-caption">the subclass (subclass/tree-select.ts)</div><pre data-src-file="subclass/tree-select.ts"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="13.2"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h2>14. Popup header / footer (pinned slots)</h2>
+    <p class="hint">
+      Content that stays put while the list scrolls. Built once, in the
+      constructor; the returned node is yours to update. No ARIA role, and
+      never part of the listbox.
+    </p>
+
+    <article>
+      <h3>14.1 Tags in the trigger, the count and a Clear all button in the header</h3>
+      <p class="hint">The trigger shows chips, so the header takes over the count with <code>triggerCountSummary</code>. The match count is rewritten from <code>onFilterQueryChange</code>. The Clear all button is a slot control. A click keeps keyboard input on the combobox. Tab reaches it while the popup is open.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-header-count"></div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="14.1"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="14.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>14.2 Column headings above two-column rows</h3>
+      <p class="hint">Rows show a name and a role; the header repeats the same layout in bold. It sits between the filter input and the list, so the headings stay while the rows scroll.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-header-columns"></div>
+          <div class="out" id="out-header-columns">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="14.2"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>14.3 A footer link to a management page</h3>
+      <p class="hint">A pinned link under the list. A click keeps keyboard input on the combobox; Tab reaches the link while the popup is open, and Esc on it returns to the trigger.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-footer-link"></div>
+          <div class="out" id="out-footer-link">(nothing happened yet)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="14.3"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>14.4 Select all and Restore defaults pinned in the header, for comparison with 15.1</h3>
+      <p class="hint">The same two commands as 15.1 with the same row look, only pinned: they never scroll away. Each is a real button wearing the theme's item class. Tab reaches them, but they sit outside the arrow-key ring and are not announced as options; the rows in 15.1 are the keyboard-native form.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-header-commands"></div>
+          <div class="out" id="out-header-commands">chosen: []</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="14.4"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="14.4"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h2>15. Action rows: commands inside the list</h2>
+    <p class="hint">
+      Rows the library renders as options above or below the items, so a
+      keyboard user reaches them with the arrow keys. They scroll with the
+      list. Each row is a plain object: its text, whether it is disabled, and
+      what activation does. The library never chooses or closes for it.
+    </p>
+
+    <article>
+      <h3>15.1 Restore defaults, above the items</h3>
+      <p class="hint">The row reads the live selection: <code>textFn</code> and <code>disabledFn</code> run again after every change. It follows the choose-all row, so ArrowDown reaches it before any item.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-action-rows"></div>
+          <div class="out" id="out-action-rows">chosen: []</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="15.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>15.2 Add a country, above the items</h3>
+      <p class="hint">A single select with one row above the items. Activating it asks for a name, adds it, picks it and closes; the row itself never closes the popup.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-add-row"></div>
+          <div class="out" id="out-add-row">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="15.2"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>15.3 Sort the list, above the items</h3>
+      <p class="hint">The row flips the order with <code>setItems</code> and shows the current one. A filter query re-applies to the new order, and the chosen item stays chosen.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-sort-row"></div>
+          <div class="out" id="out-sort-row">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="15.3"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>15.4 Select all and Restore defaults pinned at the top of the list</h3>
+      <p class="hint">The rows of 15.1 with <code>popupListLeadingRowsPinned: true</code>: the choose-all row and the command stay in view while the items scroll under them, and keep their place in the arrow-key ring.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-pinned-rows"></div>
+          <div class="out" id="out-pinned-rows">chosen: []</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="15.4"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h2>16. i18n (language packs) + RTL</h2>
     <p class="hint">
       All chrome strings live in the <code>uiTranslationPack</code> setting;
       packs from <code>@llselect/core/i18n</code> fill it whole, per-key
@@ -818,7 +981,7 @@
     </p>
 
     <article>
-      <h3>13.1 Pack switcher (incl. RTL)</h3>
+      <h3>16.1 Pack switcher (incl. RTL)</h3>
       <p class="hint">
         Switch the pack - <code>setUiTranslationPack</code> re-renders in
         place, chosen values survive. Placeholders, filter input, clear x,
@@ -847,12 +1010,12 @@
           <div class="out">^ multi, default <code>'count'</code> - translated count summary</div>
           <div class="out" id="out-i18n">chosen: </div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="13.1"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="16.1"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>13.2 RTL + checkbox rows (auto-mirroring)</h3>
+      <h3>16.2 RTL + checkbox rows (auto-mirroring)</h3>
       <p class="hint">
         <code>dir="rtl"</code> on the mount is ALL the wiring - there is no
         RTL API. Flex rows and logical margins mirror by themselves: the
@@ -864,182 +1027,19 @@
           <div id="mount-rtl-checkboxes" dir="rtl"></div>
           <div class="out" id="out-rtl-checkboxes">chosen: 0 items</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="13.2"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="16.2"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>13.3 Every language pack</h3>
+      <h3>16.3 Every language pack</h3>
       <p class="hint">
         One instance per entry in <code>uiTranslationPackByLocale</code> - the
         grid grows with the library. Each trigger shows its pack's own
         placeholder; RTL packs set <code>dir="rtl"</code>.
       </p>
       <div id="i18n-all-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0.8rem"></div>
-      <details class="code-toggle"><summary>code</summary><pre data-demo="13.3"><code></code></pre></details>
-    </article>
-  </section>
-
-  <section>
-    <h2>14. Subclassing</h2>
-    <p class="hint">
-      Settings customize CONTENT; subclassing customizes the library-built
-      elements (e.g. the <code>role="option"</code> element itself) and can
-      read protected state. Performance is identical (one shared prototype method vs one
-      closure per instance is noise) - pick by capability. The
-      required-subclass cases live with their features: 6.4 (title on the
-      whole row), 9.1 (protected <code>isItemEffectivelyDisabled()</code>).
-    </p>
-
-    <article>
-      <h3>14.1 Checkbox items, subclass-style (= 5.4)</h3>
-      <p class="hint">
-        The same result as 5.4 via a <code>createItemEl</code> override - not
-        required, kept as the reference example of the subclass surface.
-      </p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-subclass-checkbox"></div>
-          <div class="out" id="out-subclass-checkbox">chosen: []</div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="14.1"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="14.1"><code></code></pre></details>
-      </div>
-    </article>
-
-    <article>
-      <h3>14.2 Tree multiple select: a whole variant in TypeScript</h3>
-      <p class="hint">
-        Branch rows expand / collapse via the caret, wear a folder icon that
-        follows the state, and show a tri-state checkbox derived from their
-        leaves; activating a branch toggles its whole subtree. The model value is the chosen leaves. Built on the
-        extension points: typed subclass settings
-        (<code>defaultExpandDepth</code>), a cached
-        <code>getVisibleItems</code> override, <code>createItemEl</code> /
-        <code>createItemContentEl</code>, <code>onItemActivated</code>. The
-        toggle shows the usage, the TypeScript subclass
-        (<code>subclass/tree-select.ts</code>), and its demo CSS.
-      </p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-tree"></div>
-          <div class="out" id="out-tree">chosen: []</div>
-        </div>
-        <details class="code-toggle"><summary>code (TypeScript)</summary><div class="code-caption">usage (main.js)</div><pre data-demo="14.2"><code></code></pre><div class="code-caption">the subclass (subclass/tree-select.ts)</div><pre data-src-file="subclass/tree-select.ts"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="14.2"><code></code></pre></details>
-      </div>
-    </article>
-  </section>
-
-  <section>
-    <h2>15. Popup header / footer (pinned slots)</h2>
-    <p class="hint">
-      Content that stays put while the list scrolls. Built once, in the
-      constructor; the returned node is yours to update. No ARIA role, and
-      never part of the listbox.
-    </p>
-
-    <article>
-      <h3>15.1 Tags in the trigger, the count and a Clear all button in the header</h3>
-      <p class="hint">The trigger shows chips, so the header takes over the count with <code>triggerCountSummary</code>. The match count is rewritten from <code>onFilterQueryChange</code>. The Clear all button is a slot control. A click keeps keyboard input on the combobox. Tab reaches it while the popup is open.</p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-header-count"></div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="15.1"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="15.1"><code></code></pre></details>
-      </div>
-    </article>
-
-    <article>
-      <h3>15.2 Column headings above two-column rows</h3>
-      <p class="hint">Rows show a name and a role; the header repeats the same layout in bold. It sits between the filter input and the list, so the headings stay while the rows scroll.</p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-header-columns"></div>
-          <div class="out" id="out-header-columns">chosen: (none)</div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="15.2"><code></code></pre></details>
-      </div>
-    </article>
-
-    <article>
-      <h3>15.3 A footer link to a management page</h3>
-      <p class="hint">A pinned link under the list. A click keeps keyboard input on the combobox; Tab reaches the link while the popup is open, and Esc on it returns to the trigger.</p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-footer-link"></div>
-          <div class="out" id="out-footer-link">(nothing happened yet)</div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="15.3"><code></code></pre></details>
-      </div>
-    </article>
-
-    <article>
-      <h3>15.4 Select all and Restore defaults pinned in the header, for comparison with 16.1</h3>
-      <p class="hint">The same two commands as 16.1 with the same row look, only pinned: they never scroll away. Each is a real button wearing the theme's item class. Tab reaches them, but they sit outside the arrow-key ring and are not announced as options; the rows in 16.1 are the keyboard-native form.</p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-header-commands"></div>
-          <div class="out" id="out-header-commands">chosen: []</div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="15.4"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="15.4"><code></code></pre></details>
-      </div>
-    </article>
-  </section>
-
-  <section>
-    <h2>16. Action rows: commands inside the list</h2>
-    <p class="hint">
-      Rows the library renders as options above or below the items, so a
-      keyboard user reaches them with the arrow keys. They scroll with the
-      list. Each row is a plain object: its text, whether it is disabled, and
-      what activation does. The library never chooses or closes for it.
-    </p>
-
-    <article>
-      <h3>16.1 Restore defaults, above the items</h3>
-      <p class="hint">The row reads the live selection: <code>textFn</code> and <code>disabledFn</code> run again after every change. It follows the choose-all row, so ArrowDown reaches it before any item.</p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-action-rows"></div>
-          <div class="out" id="out-action-rows">chosen: []</div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="16.1"><code></code></pre></details>
-      </div>
-    </article>
-
-    <article>
-      <h3>16.2 Add a country, above the items</h3>
-      <p class="hint">A single select with one row above the items. Activating it asks for a name, adds it, picks it and closes; the row itself never closes the popup.</p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-add-row"></div>
-          <div class="out" id="out-add-row">chosen: (none)</div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="16.2"><code></code></pre></details>
-      </div>
-    </article>
-
-    <article>
-      <h3>16.3 Sort the list, above the items</h3>
-      <p class="hint">The row flips the order with <code>setItems</code> and shows the current one. A filter query re-applies to the new order, and the chosen item stays chosen.</p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-sort-row"></div>
-          <div class="out" id="out-sort-row">chosen: (none)</div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="16.3"><code></code></pre></details>
-      </div>
-    </article>
-
-    <article>
-      <h3>16.4 Select all and Restore defaults pinned at the top of the list</h3>
-      <p class="hint">The rows of 16.1 with <code>popupListLeadingRowsPinned: true</code>: the choose-all row and the command stay in view while the items scroll under them, and keep their place in the arrow-key ring.</p>
-      <div class="demo-split">
-        <div class="demo-pane">
-          <div id="mount-pinned-rows"></div>
-          <div class="out" id="out-pinned-rows">chosen: []</div>
-        </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="16.4"><code></code></pre></details>
-      </div>
+      <details class="code-toggle"><summary>code</summary><pre data-demo="16.3"><code></code></pre></details>
     </article>
   </section>
   </main>

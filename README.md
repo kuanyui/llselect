@@ -319,7 +319,7 @@ Settings can only fill content inside the elements the library builds. Subclassi
 - Content is what a `create*ContentElFn` fills. The element around it, e.g. the `role="option"` row, changes only by overriding `create*El`.
 - Live comparison: the "Subclassing" section of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
 
-A complete worked subclass, in TypeScript with typed subclass settings (the class's `S` generic param): the tree multiple select in demo section 14.2 (`demo/subclass/tree-select.ts`).
+A complete worked subclass, in TypeScript with typed subclass settings (the class's `S` generic param): the tree multiple select in demo section 13.2 (`demo/subclass/tree-select.ts`).
 
 ### Settings (the common path - no subclass needed)
 
