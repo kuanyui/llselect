@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@llselect/angularjs)](https://www.npmjs.com/package/@llselect/angularjs)
 
-AngularJS 1.x directives for [llselect](../README.md), published as `@llselect/angularjs`. Two independent files: pick the one you need, or use both while migrating.
+AngularJS 1.x directives for [llselect](../README.md), published as `@llselect/angularjs`. Two files: `llselect-angularjs.js` on its own, or both while migrating (the ui-select bridge depends on it).
 
 - GitHub: [Git](https://github.com/kuanyui/llselect/tree/master/angularjs) | [Docs](https://kuanyui.github.io/llselect/angularjs/) | [Demo](https://kuanyui.github.io/llselect/demo/angularjs/examples.html)
 - GitLab: [Git](https://gitlab.com/kuanyui/llselect/-/tree/master/angularjs) | [Docs](https://kuanyui.gitlab.io/llselect/angularjs/) | [Demo](https://kuanyui.gitlab.io/llselect/demo/angularjs/examples.html)
@@ -51,7 +51,7 @@ React and Vue fail the last two (no standard expression grammar, no standard sta
 | file | module | what |
 |---|---|---|
 | `llselect-angularjs.js` | `llselect` | `<llselect-single>` / `<llselect-multiple>`, driven by an `ng-options`-style `ll-options` expression. Start here. |
-| `llselect-ui-select.js` | `llselect.uiCompat` | `<ui-llselect>`, which accepts ui-select's call-site markup. For migrating an existing ui-select codebase; needs `llselect-angularjs.js` loaded too. |
+| `llselect-ui-select.js` | `llselect.uiCompat` | `<ui-llselect>`, which accepts ui-select's call-site markup. For migrating an existing ui-select codebase; its module depends on `llselect`, so an app that lists `llselect.uiCompat` gets `llselect` too; both files just need to be loaded before AngularJS bootstraps, in either order. |
 
 Each ships a `.min.js` beside it (built by `npm run build`, terser only - there is no bundler). The live [examples](../demo/angularjs/examples.html) and [benchmark](../demo/angularjs/benchmark.html) load these files directly, so what the demo shows is what the package ships.
 
@@ -133,6 +133,9 @@ Four `protected` methods plus `close()` are overridden by subclassing, which DES
 - `close()` - detaches every row, so the same element-connectivity release runs there too.
 
 The bridge hangs off a `WeakMap` rather than an instance field because it cannot exist before `super()` runs.
+
+- It publishes a controller under `uiLlselect` with `instance()`, the same door as the two llselect directives; see [`API.md`](API.md#ui-llselect).
+- It reads the app-wide defaults that ui-select's markup has no word for off `llselectConfig`; which keys, and why the others follow ui-select, is in [`API.md`](API.md#ui-llselect).
 
 ### Why it is not a full ui-select reimplementation
 

@@ -2,7 +2,7 @@
 
 The complete attribute surface of the `@llselect/angularjs` directives, one entry per attribute. Install and loading, the two `name` attributes, integration gotchas and the design rationale live in the [README](README.md); this page is only the reference.
 
-Two independent files (see [Files](README.md#files)):
+Two files (see [Files](README.md#files)), the second depending on the first:
 
 - `llselect-angularjs.js` - module `llselect`: `<llselect-single>` / `<llselect-multiple>`, driven by an `ng-options`-style [`ll-options`](#ll-options) expression.
 - `llselect-ui-select.js` - module `llselect.uiCompat`: [`<ui-llselect>`](#ui-llselect), which takes ui-select's call-site markup instead. Needs `llselect-angularjs.js` loaded too.
@@ -377,11 +377,11 @@ Boolean. The app-wide default behind [`ll-highlight`](#ll-highlight): wrap each 
 
 #### `uiTranslationPack`
 
-An llselect language pack (e.g. `llselectI18n.zhTW`). The clearest app-wide-by-nature case: an app picks its language once, and llselect's chrome strings are not per-field copy. Applied when a widget is built; to switch the language of live widgets, see [Switching the UI language at runtime](#switching-the-ui-language-at-runtime).
+An llselect language pack (e.g. `llselectI18n.zhTW`). The clearest app-wide-by-nature case: an app picks its language once, and llselect's chrome strings are not per-field copy. Applied when a widget is built, in all three directives; to switch the language of live widgets, see [Switching the UI language at runtime](#switching-the-ui-language-at-runtime).
 
 ## Reaching the instance from your own directive
 
-Both directives publish a controller under their directive names (`llselectSingle` / `llselectMultiple`). An app-owned attribute directive on the same element can `require` it and drive the full llselect public API - the door for app-wide policies (a permission-driven disable, forced `focusableWhenDisabled` tooltips, ...).
+All three directives publish a controller under their directive names (`llselectSingle` / `llselectMultiple` / `uiLlselect`). An app-owned attribute directive on the same element can `require` it and drive the full llselect public API - the door for app-wide policies (a permission-driven disable, forced `focusableWhenDisabled` tooltips, ...).
 
 - `require` takes the array form or, since AngularJS 1.5, the named object form.
 - With `?` the entry is `null` on elements that are not llselect - what keeps a generic directive safe on native form controls.
@@ -390,15 +390,15 @@ Both directives publish a controller under their directive names (`llselectSingl
 
 Returns the live `LLSelectSingle` / `LLSelectMultiple`. Late-bound: the widget is constructed at link time, AFTER controllers instantiate - call it from a `$watch` or event handler, never from a controller constructor. Before link it throws; it never returns `null`.
 
-A generic permission-driven disable that works on llselect AND native form controls (this exact shape is pinned by a test):
+A generic permission-driven disable that works on all three directives AND native form controls (this exact shape is pinned by a test):
 
 ```js
 angular.module('app').directive('ownDisabled', ['permissions', function (permissions) {
   return {
     restrict: 'A',
-    require: { single: '?llselectSingle', multiple: '?llselectMultiple' },
+    require: { single: '?llselectSingle', multiple: '?llselectMultiple', ui: '?uiLlselect' },
     link: function (scope, element, attrs, ctrls) {
-      var api = ctrls.single || ctrls.multiple // null on non-llselect elements
+      var api = ctrls.single || ctrls.multiple || ctrls.ui // null on non-llselect elements
       scope.$watch(function () { return permissions.canEdit() }, function (ok) {
         if (api) {
           api.instance().setDisabled(!ok) // llselect: state lives on the trigger; see ll-disabled
@@ -427,6 +427,7 @@ angular.module('app')
   .constant('LLSELECT_I18N_PACKS', { 'zh-TW': llselectI18n.zhTW, ja: llselectI18n.ja })
   .directive('llselectSingle', i18nPackSync('llselectSingle'))
   .directive('llselectMultiple', i18nPackSync('llselectMultiple'))
+  .directive('uiLlselect', i18nPackSync('uiLlselect')) // only if you use the bridge
 
 function i18nPackSync(ctrlName) {
   return ['$translate', 'LLSELECT_I18N_PACKS', function ($translate, PACKS) {
@@ -452,7 +453,7 @@ function i18nPackSync(ctrlName) {
 
 ## `<ui-llselect>`
 
-The migration bridge for an existing ui-select codebase (`llselect-ui-select.js`, module `llselect.uiCompat`; needs `llselect-angularjs.js` loaded too).
+The migration bridge for an existing ui-select codebase (`llselect-ui-select.js`, module `llselect.uiCompat`, which depends on the `llselect` module: load both files before AngularJS bootstraps, in either order).
 
 Migrating a call site, at a glance:
 
@@ -465,6 +466,8 @@ Migrating a call site, at a glance:
 
 - Scoping rule: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible.
 - It always renders the chevron - every ui-select theme has a caret, so a bare trigger would read as broken.
+- From [`llselectConfigProvider`](#llselectconfigprovider) it takes the two keys ui-select's markup has no word for: `uiTranslationPack` and `popupWidthPolicy`. The other three follow ui-select: the caret is always rendered (`arrow`), `search-enabled` is ui-select's word for `filterable`, and `highlight` is the row template's own `| highlight:` filter.
+- It publishes a controller under `uiLlselect` with `instance()`, the same door as the two llselect directives, so [Reaching the instance from your own directive](#reaching-the-instance-from-your-own-directive) and [Switching the UI language at runtime](#switching-the-ui-language-at-runtime) cover it.
 - How the bridge is built, and why it is not a full ui-select reimplementation: [the README](README.md#the-ui-select-bridge), [`DESIGN.md`](DESIGN.md#the-ui-select-bridge) and [`SPEC.md`](SPEC.md).
 
 ### What carries over

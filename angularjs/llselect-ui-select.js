@@ -17,6 +17,12 @@
  * llselect theme. Anything llselect has no concept of (tagging, sortable,
  * append-to-body, async refresh, limit) is NOT bridged: those attributes are
  * ignored, never half-implemented. See README.md.
+ *
+ * The module depends on `llselect`: the app-wide defaults ui-select's markup
+ * has no word for (`uiTranslationPack`, `popupWidthPolicy`; API.md says which
+ * keys and why) reach this element, and a controller under `uiLlselect`
+ * publishes instance(), the door the two llselect directives have, so the
+ * API.md language-switch recipe covers it.
  */
 ;(function (angular, llselect) {
   'use strict'
@@ -145,7 +151,28 @@
     return out
   }
 
-  function link(scope, element, attrs, ngModelCtrl, slots, $parse, $compile, $rootScope, isMultiple) {
+  /**
+   * The controller other directives on the same element `require` (by the
+   * directive name `uiLlselect`) to reach the live widget - the same door
+   * llselect-angularjs.js publishes. instance() is late-bound: the widget is
+   * constructed in the post-link, AFTER controllers instantiate, so call it
+   * from a $watch / event handler, never from a controller constructor.
+   */
+  function UiLlselectApiController() {
+    /** @type {any} */ // CompatSingle / CompatMultiple extend the untyped UMD global
+    var sel = null
+    /** Wired by the directive's link; not part of the public surface. */
+    this.$$setInstance = function (s) { sel = s }
+    /** The live widget (a CompatSingle / CompatMultiple). Throws before link; never returns null. */
+    this.instance = function () {
+      if (!sel) {
+        throw new Error('ui-llselect: instance() is not available yet - the widget is created at link time; call it from a $watch or event handler')
+      }
+      return sel
+    }
+  }
+
+  function link(scope, element, attrs, ngModelCtrl, apiCtrl, slots, $parse, $compile, $rootScope, isMultiple, llselectConfig) {
     var repeat = parseRepeat($parse, slots.choicesAttrs.repeat)
     var itemName = repeat.itemName
     var choicesAttrs = slots.choicesAttrs
@@ -317,6 +344,10 @@
       },
     }
 
+    // App-wide defaults: only the keys ui-select's markup has no word for
+    // (API.md, <ui-llselect>). A slot placeholder still wins over the pack.
+    if (llselectConfig.uiTranslationPack) { settings.uiTranslationPack = llselectConfig.uiTranslationPack }
+    if (llselectConfig.popupWidthPolicy) { settings.popupWidthPolicy = llselectConfig.popupWidthPolicy }
     if (slots.matchAttrs.placeholder) { settings.placeholder = slots.matchAttrs.placeholder }
     // ui-select defaults searchEnabled to true (uiSelectConfig.searchEnabled);
     // llselect defaults filterable to false. Follow ui-select here - this is its
@@ -423,6 +454,7 @@
     }
 
     BRIDGES.set(sel, bridge)
+    apiCtrl.$$setInstance(sel)
 
     ngModelCtrl.$render = function () {
       var value = ngModelCtrl.$viewValue
@@ -481,17 +513,20 @@
     })
   }
 
-  angular.module('llselect.uiCompat', [])
-    .directive('uiLlselect', ['$parse', '$compile', '$rootScope', function ($parse, $compile, $rootScope) {
+  // Depends on the `llselect` module for llselectConfig; AngularJS resolves
+  // it at bootstrap, so the two files may load in either order.
+  angular.module('llselect.uiCompat', ['llselect'])
+    .directive('uiLlselect', ['$parse', '$compile', '$rootScope', 'llselectConfig', function ($parse, $compile, $rootScope, llselectConfig) {
       return {
         restrict: 'E',
-        require: 'ngModel',
+        require: ['ngModel', 'uiLlselect'],
+        controller: UiLlselectApiController,
         compile: function (tElement, tAttrs) {
           var slots = extractSlots(tElement)
           // Same test ui-select uses: presence, not value.
           var isMultiple = angular.isDefined(tAttrs.multiple)
-          return function (scope, element, attrs, ngModelCtrl) {
-            link(scope, element, attrs, ngModelCtrl, slots, $parse, $compile, $rootScope, isMultiple)
+          return function (scope, element, attrs, ctrls) {
+            link(scope, element, attrs, ctrls[0], ctrls[1], slots, $parse, $compile, $rootScope, isMultiple, llselectConfig)
           }
         },
       }

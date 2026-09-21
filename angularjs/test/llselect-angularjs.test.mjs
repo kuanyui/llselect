@@ -508,20 +508,25 @@ test('an app policy directive reaches the instance via require and stays safe on
   // (angular.js getControllers, isObject branch), the ?-optional guard for
   // non-llselect elements, and instance().setDisabled() on the real widget.
   const a = boot({
-    deps: ['llselect'],
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
     html: `<div ng-controller="C as vm">
       <llselect-single own-disabled ng-model="vm.fruit" ll-options="f for f in vm.fruits"></llselect-single>
       <llselect-multiple own-disabled ng-model="vm.t" ll-options="f for f in vm.fruits"></llselect-multiple>
+      <ui-llselect own-disabled ng-model="vm.u" aria-label="U">
+        <ui-llselect-match>{{$select.selected}}</ui-llselect-match>
+        <ui-llselect-choices repeat="f in vm.fruits"></ui-llselect-choices>
+      </ui-llselect>
       <input own-disabled type="text">
     </div>`,
-    controller: function () { this.fruits = FRUITS.slice(); this.fruit = null; this.t = []; this.canEdit = true },
+    controller: function () { this.fruits = FRUITS.slice(); this.fruit = null; this.t = []; this.u = undefined; this.canEdit = true },
     config: ['$compileProvider', function ($compileProvider) {
       $compileProvider.directive('ownDisabled', [function () {
         return {
           restrict: 'A',
-          require: { single: '?llselectSingle', multiple: '?llselectMultiple' },
+          require: { single: '?llselectSingle', multiple: '?llselectMultiple', ui: '?uiLlselect' },
           link: function (scope, element, attrs, ctrls) {
-            const api = ctrls.single || ctrls.multiple
+            const api = ctrls.single || ctrls.multiple || ctrls.ui
             scope.$watch('vm.canEdit', function (ok) {
               if (api) { api.instance().setDisabled(!ok) } else { element.prop('disabled', !ok) }
             })
@@ -535,6 +540,7 @@ test('an app policy directive reaches the instance via require and stays safe on
   const triggers = a.$$('.llselect-trigger')
   assert.equal(triggers[0].getAttribute('data-disabled'), 'true', 'single not disabled through instance()')
   assert.equal(triggers[1].getAttribute('data-disabled'), 'true', 'multiple not disabled through instance()')
+  assert.equal(triggers[2].getAttribute('data-disabled'), 'true', 'ui-llselect not disabled through instance()')
   assert.equal(a.$('input[own-disabled]').disabled, true, 'native input branch broken')
   a.scope.$apply(() => { a.scope.vm.canEdit = true })
   assert.equal(a.$$('.llselect-trigger')[0].getAttribute('data-disabled'), 'false', 'must re-enable')

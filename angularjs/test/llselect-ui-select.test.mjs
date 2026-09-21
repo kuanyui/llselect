@@ -629,3 +629,144 @@ test('MEDIUM-93: reloads with chips on screen do not leak trigger scopes (setIte
   assert.equal(cacheSize(), cacheBaseline, 'and their jqLite data (natively removed elements never reach cleanData)')
   assert.equal(a.$$('ui-llselect .llselect-tag').length, 1)
 })
+
+test('config uiTranslationPack reaches <ui-llselect> too (an app-wide default is app-wide)', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person" aria-label="P">
+          <ui-llselect-match>{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+        <ui-llselect ng-model="vm.person2" aria-label="P2">
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.person = undefined; this.person2 = undefined },
+    config: ['llselectConfigProvider', function (llselectConfigProvider) {
+      llselectConfigProvider.defaults({ uiTranslationPack: { triggerPlaceholder: 'Bitte auswaehlen' } })
+    }],
+  })
+  assert.deepEqual(a.errors, [])
+  const texts = a.$$('ui-llselect .llselect-trigger-content').map((el) => el.textContent.trim())
+  assert.equal(texts[0], 'Bitte auswaehlen', 'the pack must seed the bridge widget')
+  assert.equal(texts[1], 'Pick', 'a slot placeholder must still win over the pack')
+})
+
+test('the i18n recipe covers <ui-llselect>: a same-name directive re-packs it from $translate through instance()', () => {
+  // The API.md recipe, one more line: .directive('uiLlselect', i18nPackSync('uiLlselect')).
+  let lang
+  function i18nPackSync(ctrlName) {
+    return ['$translate', 'LLSELECT_I18N_PACKS', function ($translate, PACKS) {
+      return {
+        restrict: 'E',
+        require: ctrlName,
+        link: function (scope, element, attrs, ctrl) {
+          scope.$watch(function () { return $translate.use() }, function (langKey) {
+            if (langKey) { ctrl.instance().setUiTranslationPack(PACKS[langKey] || {}) }
+          })
+        },
+      }
+    }]
+  }
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person" aria-label="P">
+          <ui-llselect-match>{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.person = undefined },
+    config: ['$provide', '$compileProvider', function ($provide, $compileProvider) {
+      $provide.value('$translate', { use: function () { return lang } })
+      $provide.constant('LLSELECT_I18N_PACKS', { de: { triggerPlaceholder: 'Bitte auswaehlen' } })
+      $compileProvider.directive('uiLlselect', i18nPackSync('uiLlselect'))
+    }],
+  })
+  assert.deepEqual(a.errors, [])
+  const text = () => a.$('ui-llselect .llselect-trigger-content').textContent.trim()
+  assert.equal(text(), 'Please select', 'undefined language must leave the default pack')
+  a.scope.$apply(() => { lang = 'de' })
+  assert.equal(text(), 'Bitte auswaehlen', 'the bridge widget must re-pack through instance()')
+  a.scope.$apply(() => { lang = 'fr' })
+  assert.equal(text(), 'Please select', 'an unmapped key must restore the English defaults')
+})
+
+test('config: <ui-llselect> takes popupWidthPolicy, and NOT arrow / filterable / highlight (ui-select owns those)', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person" aria-label="P">
+          <ui-llselect-match>{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.person = undefined },
+    config: ['llselectConfigProvider', function (llselectConfigProvider) {
+      llselectConfigProvider.defaults({ arrow: 'triangle', filterable: false, highlight: true, popupWidthPolicy: 'match-trigger' })
+    }],
+  })
+  assert.deepEqual(a.errors, [])
+  const sel = a.ng.element(a.$('ui-llselect')).controller('uiLlselect').instance()
+  assert.equal(sel.settings.popupWidthPolicy, 'match-trigger', 'popupWidthPolicy is house style: the bridge must take it')
+  const chevron = a.window.llselect.createChevronDownSvgEl().querySelector('path').getAttribute('d')
+  assert.equal(a.$('ui-llselect .llselect-trigger-arrow path').getAttribute('d'), chevron, 'every ui-select theme has a caret: config arrow must not change it')
+  a.$('ui-llselect .llselect-trigger').click()
+  const input = a.$('ui-llselect .llselect-filter-input')
+  assert.ok(input && !input.hasAttribute('hidden'), 'search-enabled defaults to true in ui-select: config filterable must not switch it off')
+  input.value = 'bob' // Angular's filter matches every property, so 'al' would also hit `bad: false`
+  input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
+  assert.equal(a.$$('ui-llselect .llselect-item mark').length, 0, 'highlight is the row template\'s own filter: config highlight must not mark rows')
+  assert.equal(a.$$('ui-llselect .llselect-item').length, 1, 'the ui-select filter chain must still run')
+})
+
+test('config uiTranslationPack reaches <ui-llselect multiple>: the tag remove button speaks the pack', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect multiple ng-model="vm.people" aria-label="P">
+          <ui-llselect-match>{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.people = [] },
+    config: ['llselectConfigProvider', function (llselectConfigProvider) {
+      llselectConfigProvider.defaults({ uiTranslationPack: { triggerPlaceholder: 'Bitte auswaehlen', tagRemoveButtonAriaLabel: function (text) { return text + ' entfernen' } } })
+    }],
+  })
+  assert.deepEqual(a.errors, [])
+  assert.equal(a.$('ui-llselect .llselect-trigger-content').textContent.trim(), 'Bitte auswaehlen')
+  a.$('ui-llselect .llselect-trigger').click()
+  a.$$('ui-llselect .llselect-item')[0].click()
+  assert.equal(a.$('ui-llselect .llselect-tag-remove-button').getAttribute('aria-label'), 'Alice entfernen', 'the multiple-only strings must come from the pack too')
+})
+
+test('the bridge module pulls llselect in transitively, whatever the script order', () => {
+  const a = boot({
+    files: ['llselect-ui-select.js', 'llselect-angularjs.js'], // reversed on purpose: modules resolve at bootstrap
+    deps: ['llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person" aria-label="P">
+          <ui-llselect-match>{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.person = undefined },
+    config: ['llselectConfigProvider', function (llselectConfigProvider) {
+      llselectConfigProvider.defaults({ uiTranslationPack: { triggerPlaceholder: 'Bitte auswaehlen' } })
+    }],
+  })
+  assert.deepEqual(a.errors, [])
+  assert.equal(a.$('ui-llselect .llselect-trigger-content').textContent.trim(), 'Bitte auswaehlen', 'llselectConfig must be reachable through the transitive dependency alone')
+})

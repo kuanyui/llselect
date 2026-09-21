@@ -85,7 +85,7 @@ Bugs found while reading it, listed so nobody reproduces them in the name of com
 | `llselect-angularjs.js` | `llselect` | `<llselect-single>`, `<llselect-multiple>` |
 | `llselect-ui-select.js` | `llselect.uiCompat` | `<ui-llselect>` |
 
-`llselect-ui-select.js` needs `llselect-angularjs.js` loaded first only for load order tidiness; the modules are independent. Both are plain IIFEs reading `window.angular` and `window.llselect`, and both throw at load time if either global is missing.
+`llselect.uiCompat` depends on the `llselect` module (it injects `llselectConfig` for the app-wide defaults); AngularJS resolves module dependencies at bootstrap, so both files just have to be loaded before it, in either order. Both are plain IIFEs reading `window.angular` and `window.llselect`, and both throw at load time if either global is missing.
 
 ### Invariants a change must not break
 
@@ -100,7 +100,7 @@ Bugs found while reading it, listed so nobody reproduces them in the name of com
 
 ### App-wide defaults
 
-`llselectConfigProvider.defaults({...})` holds only settings that are app-wide by nature: `arrow`, `filterable`, `popupWidthPolicy`, `uiTranslationPack`. The test for admission is whether an app would plausibly set it once as a house style - `uiTranslationPack` obviously would (i18n is definitionally app-wide), `placeholder` obviously would not (it is per-field copy). Unknown keys throw, so a typo cannot silently do nothing. Precedence is defaults, then this element's `ll-*` attributes.
+`llselectConfigProvider.defaults({...})` holds only settings that are app-wide by nature: `arrow`, `filterable`, `highlight`, `popupWidthPolicy`, `uiTranslationPack`. The test for admission is whether an app would plausibly set it once as a house style - `uiTranslationPack` obviously would (i18n is definitionally app-wide), `placeholder` obviously would not (it is per-field copy). Unknown keys throw, so a typo cannot silently do nothing. Precedence is defaults, then this element's `ll-*` attributes. `<ui-llselect>` takes `uiTranslationPack` and `popupWidthPolicy` from it and nothing else; `API.md` (`<ui-llselect>`) gives the reason per key.
 
 `ARROWS` maps `'chevron'` / `'triangle'` onto llselect's `createChevronDownSvgEl` / `createTriangleDownSvgEl`. `createTriggerArrowContentElFn` is called per render, so the wrapper must build a fresh element on each call - one SVG cannot be in two triggers at once.
 

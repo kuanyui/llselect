@@ -2,6 +2,51 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (demo renumbering, AngularJS i18n demo, the ui-select bridge's language-pack door)
+
+Process: post-fix review of three change sets in one working tree: the core demo's i18n section moved to the end (16) with every cross reference renumbered, the AngularJS demo's new section 14 (the API.md "Switching the UI language at runtime" recipe, verbatim, driving every widget on the page from `$translate`), and `<ui-llselect>` gaining the app-wide defaults plus an `instance()` controller. All four members reviewed (fresh sessions, max effort, read-only): Opus 5 and Opus 4.8 first, then Codex 5.5 and Codex Sol on the fixed tree. The harness stopped every `codex exec` started as a tracked background task within two minutes for "running low on memory" while `free -m` showed about 2.1 GB available; run detached from that tracking (`setsid nohup`, one at a time) both finished in 5 and 10 minutes, with total used memory peaking at about 1.0 GB of 2.9 GB and never less than 1.86 GB available, so the trigger was the harness's background-task guard, not exhaustion. No member found a correctness defect. Verified after the fixes: `npm run verify` green (531 core tests, 89 AngularJS tests), and the AngularJS page driven end to end in jsdom against the real CDN libraries (angular-translate with its static-files loader, angular-validation, ui-bootstrap): ja / zh-TW / en re-pack every widget without an explicit placeholder, explicit placeholders stay, chosen values survive, and `INVALID_REQUIRED` keeps resolving to the English message through `fallbackLanguage`.
+
+- [x] **[MEDIUM-139] - three lead sentences still called the two AngularJS files independent**
+  - Symptom: `angularjs/README.md` line 5, `angularjs/API.md` line 5 and the `demo/angularjs/examples.html` intro said "two independent files" / "copy one or the other" after `llselect.uiCompat` gained a dependency on the `llselect` module; SPEC.md had already been updated.
+  - Impact: an app that loads only the bridge file now fails at bootstrap with `$injector:modulerr`, and the documents contradicted themselves within one page.
+  - Fix: all three state the dependency.
+  - Q: Why a hard module dependency, not an optional `$injector.has('llselectConfig')` lookup that keeps the modules independent?
+    - A: Because README and API.md already required `llselect-angularjs.js` to be loaded, and an app can only set an app-wide default by having the `llselect` module in its graph, so independence was a promise nobody could use; the optional lookup would fail silently when it misses.
+- [x] **[MEDIUM-140] - the bridge's config rule admitted `popupWidthPolicy` on paper and refused it in code**
+  - Symptom: the first cut took only `uiTranslationPack` from `llselectConfig` and justified it as "the house-style setting ui-select's markup has no word for"; `popupWidthPolicy` fits that description too, so an app setting it once got a different popup width on `<ui-llselect>` than everywhere else, the same mixed-look symptom the pack fix removed.
+  - Fix: the bridge takes both keys. API.md states the discriminator once: `arrow` (the caret is always rendered), `filterable` (`search-enabled` is ui-select's word) and `highlight` (the row template's own `| highlight:` filter) follow ui-select. SPEC.md carries the contract sentence; the code comments point at API.md.
+  - Q: Why not take the other three as well, for symmetry?
+    - A: Because on ui-select's own markup they would override ui-select's own conventions, which is what a migrating call site expects to hold; the two taken keys have no ui-select convention to defer to.
+- [x] **[DOCUMENTATION-141] - stale section numbers the renumbering sweep missed**
+  - Symptom: `demo/examples.html` (the 11.6 hint) still said "subclass instead: section 14"; the `demo/style.css` banner still read "15. popup header / footer slots"; `demo/data.js` labelled the rich item-content data "(section 10)", a pre-existing error, since its users are the section 11 renderers.
+  - Fix: 13, 14 and 11; the grouped data names "sections 10 and 11.3".
+- [x] **[QUALITY-142] - the AngularJS section 14 hint was over every hint limit**
+  - Symptom: about 95 words, sentences up to 28 words, two parentheses, eight code names; and it never said that the page's own copy stays English or where RTL is shown.
+  - Fix: shortened to sentences under 20 words with no parentheses; two closing sentences say the page copy stays English and that RTL lives in the core demo, section 16.
+- [x] **[QUALITY-143] - the negative half of the bridge's config contract and the multiple-mode pack were untested**
+  - Fix: `angularjs/test/llselect-ui-select.test.mjs` pins that `arrow` / `filterable` / `highlight` from config leave the bridge alone while `popupWidthPolicy` reaches it, and that a config pack reaches `<ui-llselect multiple>` (the tag remove button's aria-label).
+  - Q: Why did the first cut of the filter assertion fail on the query "al"?
+    - A: Because Angular's `filter` filter matches every property of an object, and `String(false)` contains "al"; the query is "bob".
+- [x] **[DOCUMENTATION-144] - the pack rationale was written out four times; SPEC's defaults list lacked `highlight`; the README bridge section said nothing about the new door**
+  - Fix: the reason lives in API.md only; SPEC.md carries the contract sentence and the full five-key list; the file header and the assignment comment point at API.md; README "Implementation notes" gained two bullets, each pointing at API.md.
+- [x] **[DOCUMENTATION-145] - the instance-access example still required only two directives**
+  - Symptom: `angularjs/API.md` "Reaching the instance from your own directive" said all three directives publish a controller, but the copied `ownDisabled` example required only `llselectSingle` / `llselectMultiple`, so on a `<ui-llselect>` it fell into the native branch and toggled a `disabled` attribute nothing honors.
+  - Fix: the example and its pinned test (`angularjs/test/llselect-angularjs.test.mjs`) require `ui: '?uiLlselect'` as well and pick `ctrls.single || ctrls.multiple || ctrls.ui`; the test asserts the bridge trigger is disabled too.
+- [x] **[QUALITY-146] - the bridge's module dependency was not pinned**
+  - Symptom: every bridge test booted with both modules listed, so reverting `llselect.uiCompat` to `[]` would have kept the suite green while breaking apps that list only the bridge module.
+  - Fix: a test boots with `deps: ['llselect.uiCompat']` alone, the two files loaded in reverse order, and asserts a config pack still reaches the widget.
+- [x] **[DOCUMENTATION-147] - a module dependency was described as a script load order**
+  - Symptom: README, API.md, SPEC.md and the bridge's own comment said `llselect-angularjs.js` "must load first"; AngularJS records module definitions at load and resolves their dependencies at bootstrap, so either order works when both files are loaded before it.
+  - Fix: all four say both files load before bootstrap, in either order, and that listing `llselect.uiCompat` brings `llselect` in transitively.
+- [x] **[QUALITY-148] - the AngularJS section 14 title named a path the example does not run**
+  - Symptom: the title said the pack comes "from llselectConfigProvider", but the page's config sets only `arrow`; the packs arrive through `setUiTranslationPack` from the `$translate` watch.
+  - Fix: "UI language switch: instance().setUiTranslationPack follows $translate"; the provider seeding stays in the hint as the way an app picks its language once.
+- [x] **[LINT-149] - markdown links with heading anchors reported as rule violations (rejected)**
+  - Symptom: the `README.md#files` and `API.md#ui-llselect` links in the AngularJS docs were flagged under the "never hardcode a runtime-generated anchor" rule.
+  - Fix: none.
+  - Q: Why keep markdown-to-markdown `#anchors` when the rule bans hardcoded anchors?
+    - A: Because the rule targets runtime-generated slugs nothing checks (the demo pages' section ids); markdown heading anchors are verified by `npm run check` (dead anchors fail the build) and are the house practice throughout the docs.
+
 ## review (leading / trailing rows, construction context, this, pinned blocks, filter-query event)
 
 Process: the design settled by the unframed two-stage review (`archive/choose-all-and-callback-context-research.md`, rounds 13-14), then six commits `937e5db` to `9581257`, then one whole-committee review of the change set (six fresh sessions, Codex Sol rerun with a longer cap after a timeout), then this fix batch and its post-fix panel review. The post-fix review (Opus 4.8, Opus 5, Codex 5.5, Codex Sol) confirmed every fix and raised the follow-ups folded into the entries: the A11Y row for Alt+ArrowUp, the archived handoff's paths, the render-time `data-edge-to-items` attribute that zeroes the line between two touching pinned blocks, an inset test starting from a scroll position a browser can hold, a grouped-plus-pinned scroll test, one comment and two prose trims, and the pinned-row scroll assertions now step onto an item first, because Home on an already-active row returned before the guard. A second post-fix pass over those follow-ups found wording and one style item. Examples: an archived path one level short; "below" for "above the browser floor"; a wrapper docstring that said "under it" for both edges; an "only attribute" claim; a compressed `chooseAllRow` sentence; the arrow-function half of the pack's `this` note; the missing eyeball check for two touching pinned blocks; double-quoted attribute selectors in the themes. Two docs commits close the round.
