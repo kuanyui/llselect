@@ -187,7 +187,7 @@
     /**
      * 8c: publishes the llselect directive controller into the scope slot
      * named by the attribute value, so a plain controller fn (here an
-     * ll-item-content-fn) can call instance().getFilterQuery() late. The
+     * ll-popup-list-item-content-fn) can call instance().getFilterQuery() late. The
      * controller exists before any row renders; instance() stays late-bound.
      */
     .directive('demoPublishApi', ['$parse', function ($parse) {
@@ -356,10 +356,10 @@
       }
       vm.headerCommandsEl = function (ctx) {
         var rows = [headerSelectAllRow, headerRestoreRow]
-        rows.forEach(function (row) { row.className = 'popup-row-button ' + ctx.classIdMap.itemClass })
+        rows.forEach(function (row) { row.className = 'popup-row-button ' + ctx.classIdMap.popupListRowClass })
         headerSelectAllRow.textContent = ctx.uiTranslationPack.chooseAllRowText(vm.countriesCommands.length, COUNTRIES.length)
         headerRestoreRow.setAttribute('aria-disabled', 'true') // starts at the defaults
-        headerRestoreRow.classList.add(ctx.classIdMap.itemDisabledClass)
+        headerRestoreRow.classList.add(ctx.classIdMap.popupListRowDisabledClass)
         var header = document.createElement('div')
         header.append(headerSelectAllRow, headerRestoreRow)
         return header
@@ -368,7 +368,7 @@
         var sel = vm.headerCommandsApi.instance()
         headerSelectAllRow.textContent = sel.getUiTranslationPack().chooseAllRowText(vm.countriesCommands.length, sel.getItems().length)
         headerRestoreRow.setAttribute('aria-disabled', String(isHeaderDefault()))
-        headerRestoreRow.classList.toggle(sel.classIdMap.itemDisabledClass, isHeaderDefault())
+        headerRestoreRow.classList.toggle(sel.classIdMap.popupListRowDisabledClass, isHeaderDefault())
       }
 
       /**

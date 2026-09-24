@@ -287,7 +287,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   filterFn: ((item: T, query: string) => boolean) | null
   /**
    * The no-results message's visible content ELEMENT, without subclassing.
-   * Mirrors `createItemContentElFn`: the library owns the message container
+   * Mirrors `createPopupListItemContentElFn`: the library owns the message container
    * (`role="status"`, class, show/hide), this fills its content only.
    * - `query` is the current filter query (`''` when the filter is inactive or
    *   the list is simply empty), so "Nothing matches <query>" is possible.
@@ -454,7 +454,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - Read by the `itemToString` method's default; used for list text, the
    *   single trigger text, the option's accessible name, and the default
    *   filter. Inserted as `textContent` (plain text, NOT parsed as HTML).
-   * - For rich content (icons etc.), pass `createItemContentElFn`.
+   * - For rich content (icons etc.), pass `createPopupListItemContentElFn`.
    * @group Items
    */
   itemToStringFn: ((item: T) => string) | null
@@ -471,9 +471,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   `itemToString` no matter what you render (icon-only, reordered, ...).
    *   To make the spoken/matched text differ from the visible content, set the
    *   two independently: `itemToStringFn` for the name/matching,
-   *   `createItemContentElFn` for the look.
+   *   `createPopupListItemContentElFn` for the look.
    * - For full control of the option element (tag / wiring), subclass
-   *   `createItemEl` instead.
+   *   `createPopupListItemEl` instead.
    * - Runs per rendered row per render, and re-runs whenever a row is
    *   rebuilt: open, filter, `setItems`, AND chosen-state changes (both modes
    *   replace the affected rows in place while the popup is open). Content
@@ -483,7 +483,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * @example
    *   // List shows an icon + the item text; screen readers announce just that text.
    *   itemToStringFn: (lang) => lang.name,
-   *   createItemContentElFn: (lang) => {
+   *   createPopupListItemContentElFn: (lang) => {
    *     const row = document.createElement('span')
    *     const icon = document.createElement('i')
    *     icon.className = `mdi mdi-${lang.icon}`
@@ -493,7 +493,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   }
    * @group Items
    */
-  createItemContentElFn: ((item: T) => HTMLElement | null) | null
+  createPopupListItemContentElFn: ((item: T) => HTMLElement | null) | null
   /**
    * Item -> its group's key (identity), enabling optgroup rendering.
    * - `null` (setting, default): grouping off - flat list, no labels.
@@ -549,7 +549,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   groupDisabledFn: ((groupKey: GroupKey) => boolean) | null
   /**
    * Group label -> its visible content ELEMENT (icon / count badge / rich
-   * markup), without subclassing. Mirrors `createItemContentElFn`.
+   * markup), without subclassing. Mirrors `createPopupListItemContentElFn`.
    * - Return an `HTMLElement` and the library inserts it as the label's visible
    *   content; the group's accessible name stays `groupKeyToString` (on the
    *   container `aria-label`) and the label element stays `aria-hidden`.
@@ -654,7 +654,7 @@ export interface LLSelectClassIdMap {
   popupFooterClass: string
   /**
    * Class on every action row (`popupListLeadingActionRows` /
-   * `popupListTrailingActionRows`). Also carries `itemClass`, so hover /
+   * `popupListTrailingActionRows`). Also carries `popupListRowClass`, so hover /
    * focused / disabled styling comes from there.
    */
   popupListActionRowClass: string
@@ -670,22 +670,16 @@ export interface LLSelectClassIdMap {
   popupListPinnedTrailingRowsClass: string
   /**
    * Class on the choose-all row (`LLSelectMultiple`, `chooseAllRow`
-   * setting). Also carries `itemClass` plus `data-chosen-state="none|some|all"`
+   * setting). Also carries `popupListRowClass` plus `data-chosen-state="none|some|all"`
    * for the tri-state visual.
    */
   chooseAllRowClass: string
-  /** Class on every item element (`role="option"`) inside the popup list. */
-  itemClass: string
-  /**
-   * Extra class added to the currently keyboard-focused item element.
-   * Use this to style the focused item.
-   */
-  itemFocusedClass: string
-  /**
-   * Class added to a disabled item element (which also carries
-   * `aria-disabled="true"`). A stable hook for styling / tooltip targeting.
-   */
-  itemDisabledClass: string
+  /** Class on every row of the popup list (`role="option"`): item rows, the choose-all row, and action rows. */
+  popupListRowClass: string
+  /** Extra class on the row that currently has keyboard focus. Style the focused row with it. */
+  popupListRowFocusedClass: string
+  /** Class on a disabled row, which also carries `aria-disabled="true"`. A stable hook for styling and tooltip targeting. */
+  popupListRowDisabledClass: string
   /**
    * Class on a group container (`role="group"`). A disabled group's container
    * also carries `aria-disabled="true"` + `data-disabled="true"`.
@@ -705,7 +699,7 @@ export interface LLSelectClassIdMap {
   /**
    * Class on a tag chip whose item is effectively disabled (which also carries
    * `aria-disabled="true"`, and whose x button no longer removes it). Mirrors
-   * `itemDisabledClass`; a stable hook for greying the inert chip.
+   * `popupListRowDisabledClass`; a stable hook for greying the inert chip.
    */
   tagDisabledClass: string
   /**
@@ -801,9 +795,9 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     popupListPinnedLeadingRowsClass: `${prefix}-popup-list-pinned-leading-rows`,
     popupListPinnedTrailingRowsClass: `${prefix}-popup-list-pinned-trailing-rows`,
     chooseAllRowClass: `${prefix}-choose-all-row`,
-    itemClass: `${prefix}-item`,
-    itemFocusedClass: `${prefix}-item-focused`,
-    itemDisabledClass: `${prefix}-item-disabled`,
+    popupListRowClass: `${prefix}-popup-list-row`,
+    popupListRowFocusedClass: `${prefix}-popup-list-row-focused`,
+    popupListRowDisabledClass: `${prefix}-popup-list-row-disabled`,
     groupClass: `${prefix}-group`,
     groupLabelClass: `${prefix}-group-label`,
     tagsClass: `${prefix}-tags`,
@@ -1145,7 +1139,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
       itemToStringFn: settings?.itemToStringFn ?? null,
-      createItemContentElFn: settings?.createItemContentElFn ?? null,
+      createPopupListItemContentElFn: settings?.createPopupListItemContentElFn ?? null,
       itemToGroupKeyFn: settings?.itemToGroupKeyFn ?? null,
       gatherGroups: settings?.gatherGroups ?? true,
       groupKeyCompareFn: settings?.groupKeyCompareFn ?? null,
@@ -1890,7 +1884,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Default reads `createTriggerArrowContentElFn`; `null` (setting unset, or returned for
    *   a state) = no arrow for that state.
    * - Override only when extending; for one-off arrows pass the setting.
-   *   Mirrors `createTriggerClearButtonEl` / `createItemContentEl`.
+   *   Mirrors `createTriggerClearButtonEl` / `createPopupListItemContentEl`.
    * @group Subclassing: rendering
    */
   protected createTriggerArrowContentEl(state: { isOpened: boolean }): HTMLElement | SVGElement | null {
@@ -1909,7 +1903,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Orchestrator: composes `createItemEl` (build) + `computePopupSegments` +
+   * Orchestrator: composes `createPopupListItemEl` (build) + `computePopupSegments` +
    * `commitPopupSegmentsToDom` (write) to rebuild the popup list from
    * `getVisibleItems()`; touches no DOM directly. Called by `open()` and by
    * `setItems()` while open. Also clamps `focusedIndex` if the list shrank and
@@ -1917,7 +1911,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Extend it by wrapping: override, do your work before or after, then
    *   call `super.renderPopupList()`. The ui-select bridge frees its row
    *   scopes this way. Or override one of the methods it calls through `this`:
-   *   `createItemEl`, `createPopupListChooseAllRowEl`,
+   *   `createPopupListItemEl`, `createPopupListChooseAllRowEl`,
    *   `createPopupListLeadingActionRowEl` /
    *   `createPopupListTrailingActionRowEl`, `itemToGroupKey`,
    *   `getVisibleItems`.
@@ -1928,7 +1922,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   protected renderPopupList(): void {
     const list = this.getVisibleItems()
-    const els = list.map((item, i) => this.createItemEl(item, i))
+    const els = list.map((item, i) => this.createPopupListItemEl(item, i))
     this.itemEls = els
     this.focusedEl = undefined
     this.chooseAllRowEl = this.createPopupListChooseAllRowEl() ?? undefined
@@ -2087,7 +2081,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Group label -> its visible content element (icon / count badge / rich
-   * markup). Mirrors `createItemContentEl`.
+   * markup). Mirrors `createPopupListItemContentEl`.
    * - Default reads `createGroupLabelContentElFn`, else `null` so `createGroupEl`
    *   uses plain text from `groupKeyToString`.
    * - The group's accessible name stays `groupKeyToString` (container `aria-label`);
@@ -2117,12 +2111,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (index < 0) { return }
     const oldEl = this.itemEls[index]
     if (oldEl === undefined) { return }
-    const newEl = this.createItemEl(list[index]!, index)
+    const newEl = this.createPopupListItemEl(list[index]!, index)
     oldEl.replaceWith(newEl)
     this.itemEls[index] = newEl
     // Preserve focus visuals if the replaced element was the focused one.
     if (this.focusedEl === oldEl) {
-      newEl.classList.add(this.classIdMap.itemFocusedClass)
+      newEl.classList.add(this.classIdMap.popupListRowFocusedClass)
       this.comboboxEl.setAttribute('aria-activedescendant', newEl.id)
       this.focusedEl = newEl
     }
@@ -2140,31 +2134,31 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - `index` is not an identity. It changes whenever the visible list
    *   changes. Item identity is `compareFn`. Never store it.
    * - To change only what a row shows, do not override this. Pass the
-   *   `createItemContentElFn` setting instead.
+   *   `createPopupListItemContentElFn` setting instead.
    * - To change the element itself, override it, call
-   *   `super.createItemEl(item, index)`, and edit the returned element: add a
+   *   `super.createPopupListItemEl(item, index)`, and edit the returned element: add a
    *   class, a `title`, a wrapper. Demo sections 9.1, 13.1 and 13.2 do this.
    * - Keep the `id` and `role` the base set. Do not put focusable controls
    *   inside the row. The row itself is the control.
    * - The element is rebuilt on every render. Do not keep a reference to it.
    * - Internals: the base sets `id` (`<listbox id>-item<index>`, the target of
    *   `aria-activedescendant`), `role="option"`, the visible content from
-   *   {@link createItemContentEl} (else `textContent` from {@link itemToString}),
+   *   {@link createPopupListItemContentEl} (else `textContent` from {@link itemToString}),
    *   `aria-label` = `itemToString` when the content is custom, `aria-disabled`
    *   plus the disabled class when {@link isItemEffectivelyDisabled}, and a
-   *   click handler that focuses the row by `index`, then runs `onItemActivated`.
+   *   click handler that focuses the row by `index`, then runs `onPopupListItemActivated`.
    *
    * @param item - the row's item, supplied by the library
    * @param index - the row's position in `getVisibleItems()`, supplied by the library
    * @group Subclassing: rendering
    */
-  protected createItemEl(item: T, index: number): HTMLElement {
+  protected createPopupListItemEl(item: T, index: number): HTMLElement {
     const el = document.createElement('div')
     // Ids hang off the listbox id: options belong to the listbox, not the trigger.
     el.id = `${this.classIdMap.popupListId}-item${index}`
-    el.className = this.classIdMap.itemClass
+    el.className = this.classIdMap.popupListRowClass
     el.setAttribute('role', 'option')
-    const content = this.createItemContentEl(item)
+    const content = this.createPopupListItemContentEl(item)
     if (content === null) {
       el.textContent = this.itemToString(item)
     } else {
@@ -2184,7 +2178,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // hoverable for a "why disabled" tooltip. No click handler -> not
       // selectable; keyboard nav skips it too.
       el.setAttribute('aria-disabled', 'true')
-      el.classList.add(this.classIdMap.itemDisabledClass)
+      el.classList.add(this.classIdMap.popupListRowDisabledClass)
     } else {
       el.addEventListener('click', () => {
         // Move focus to the clicked item before activating it. Without this,
@@ -2192,7 +2186,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         // on the previous keyboard-focused item while a different one was
         // just clicked.
         this.setFocusedIndex(index)
-        this.withUserChangeSource(() => this.onItemActivated(item))
+        this.withUserChangeSource(() => this.onPopupListItemActivated(item))
       })
     }
     return el
@@ -2204,7 +2198,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Default reads the `itemToStringFn` setting, else `String(item)`.
    * - Configure via `itemToStringFn` (no subclass needed).
    * - Override only when extending (a new select type); your override replaces
-   *   the default. For HTML content, subclass `createItemEl`.
+   *   the default. For HTML content, subclass `createPopupListItemEl`.
    * @group Subclassing: semantics
    */
   protected itemToString(item: T): string {
@@ -2214,13 +2208,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Item -> the visible content of its list row (icon + text etc.).
-   * - Default reads `createItemContentElFn`, else `null` so `createItemEl` uses
+   * - Default reads `createPopupListItemContentElFn`, else `null` so `createPopupListItemEl` uses
    *   the plain-text default from `itemToString`.
    * - Override only when extending; for one-off rich content pass the setting.
    * @group Subclassing: rendering
    */
-  protected createItemContentEl(item: T): HTMLElement | null {
-    const fn = this.settings.createItemContentElFn
+  protected createPopupListItemContentEl(item: T): HTMLElement | null {
+    const fn = this.settings.createPopupListItemContentElFn
     return fn ? fn(item) : null
   }
 
@@ -2396,7 +2390,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * and closes, multiple mode toggles and keeps the popup open).
    * @group Subclassing: reactions
    */
-  protected onItemActivated(_item: T): void {}
+  protected onPopupListItemActivated(_item: T): void {}
 
   /**
    * Build the whole DOM element for one leading action row (above the items).
@@ -2412,7 +2406,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   returned element. Keep the `id` and `role`; put no focusable control
    *   inside.
    * - Internals: a `div` with `role="option"`, the id
-   *   `<listbox id>-action-row-leading<index>`, `itemClass` plus
+   *   `<listbox id>-action-row-leading<index>`, `popupListRowClass` plus
    *   `popupListActionRowClass`, the visible content from
    *   {@link createPopupListActionRowContentEl} (else `textContent` from
    *   `textFn`), `aria-label` = `textFn()` when the content is custom, and
@@ -2455,7 +2449,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private createPopupListActionRowEl(row: LLSelectPopupListActionRow, position: 'leading' | 'trailing', index: number): HTMLElement {
     const el = document.createElement('div')
     el.id = `${this.classIdMap.popupListId}-action-row-${position}${index}`
-    el.className = `${this.classIdMap.itemClass} ${this.classIdMap.popupListActionRowClass}`
+    el.className = `${this.classIdMap.popupListRowClass} ${this.classIdMap.popupListActionRowClass}`
     el.setAttribute('role', 'option')
     const textFn = row.textFn
     const text = textFn()
@@ -2469,7 +2463,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     }
     if (this.isPopupListActionRowDisabled(row)) {
       el.setAttribute('aria-disabled', 'true')
-      el.classList.add(this.classIdMap.itemDisabledClass)
+      el.classList.add(this.classIdMap.popupListRowDisabledClass)
     } else {
       el.addEventListener('click', () => {
         // Focus-then-activate, mirroring the item click wiring.
@@ -2553,7 +2547,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       const next = build(rows[i]!, i)
       old.replaceWith(next)
       if (this.focusedEl === old) {
-        next.classList.add(this.classIdMap.itemFocusedClass)
+        next.classList.add(this.classIdMap.popupListRowFocusedClass)
         this.comboboxEl.setAttribute('aria-activedescendant', next.id)
         this.focusedEl = next
       }
@@ -2628,7 +2622,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * focused (`false` = none is rendered, nothing changed). The item focus is
    * cleared (`focusedIndex` becomes -1). Protected so a subclass can wire its
    * choose-all row's click to focus-then-activate (mirroring how item clicks
-   * call `setFocusedIndex` before `onItemActivated`) and use it in
+   * call `setFocusedIndex` before `onPopupListItemActivated`) and use it in
    * `focusInitial` (the choose-all row is the listbox's FIRST option).
    * @group Subclassing: focus
    */
@@ -2660,7 +2654,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     old.replaceWith(next)
     this.chooseAllRowEl = next
     if (this.focusedEl === old) {
-      next.classList.add(this.classIdMap.itemFocusedClass)
+      next.classList.add(this.classIdMap.popupListRowFocusedClass)
       this.comboboxEl.setAttribute('aria-activedescendant', next.id)
       this.focusedEl = next
     }
@@ -2676,13 +2670,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   private syncFocusedIndexToDom(): void {
     if (this.focusedEl) {
-      this.focusedEl.classList.remove(this.classIdMap.itemFocusedClass)
+      this.focusedEl.classList.remove(this.classIdMap.popupListRowFocusedClass)
       this.focusedEl = undefined
     }
     if (this.focusedRow !== null && this.focusedRow.kind !== 'choose-all') {
       const rowEl = this.focusedActionRowEl()
       if (rowEl !== undefined) {
-        rowEl.classList.add(this.classIdMap.itemFocusedClass)
+        rowEl.classList.add(this.classIdMap.popupListRowFocusedClass)
         this.comboboxEl.setAttribute('aria-activedescendant', rowEl.id)
         this.focusedEl = rowEl
         this.scrollRingEntryIntoView(rowEl)
@@ -2691,7 +2685,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.focusedRow = null
     }
     if (this.focusedRow?.kind === 'choose-all' && this.chooseAllRowEl) {
-      this.chooseAllRowEl.classList.add(this.classIdMap.itemFocusedClass)
+      this.chooseAllRowEl.classList.add(this.classIdMap.popupListRowFocusedClass)
       this.comboboxEl.setAttribute('aria-activedescendant', this.chooseAllRowEl.id)
       this.focusedEl = this.chooseAllRowEl
       this.scrollRingEntryIntoView(this.chooseAllRowEl)
@@ -2700,7 +2694,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const i = this.focusedIndex
     if (i >= 0 && i < this.itemEls.length) {
       const el = this.itemEls[i]!
-      el.classList.add(this.classIdMap.itemFocusedClass)
+      el.classList.add(this.classIdMap.popupListRowFocusedClass)
       this.comboboxEl.setAttribute('aria-activedescendant', el.id)
       this.focusedEl = el
       this.scrollRingEntryIntoView(el)
@@ -2891,7 +2885,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         if (this.focusedIndex >= 0 && this.focusedIndex < list.length) {
           const item = list[this.focusedIndex]!
           // Defensive: nav never lands on a disabled item, but guard anyway.
-          if (!this.isItemEffectivelyDisabled(item)) { this.withUserChangeSource(() => this.onItemActivated(item)) }
+          if (!this.isItemEffectivelyDisabled(item)) { this.withUserChangeSource(() => this.onPopupListItemActivated(item)) }
         }
         return
       }
@@ -3481,7 +3475,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * `hidden` while there is at least one visible item; when shown, fill its
    * content - `createPopupListNoResultsContentEl(query)` first, else the plain
    * text from `uiTranslationPack.popupListNoResults`. Same null-branch shape as
-   * `createItemEl` / `createGroupEl`.
+   * `createPopupListItemEl` / `createGroupEl`.
    * - The write is SKIPPED when the resolved text matches what is already shown,
    *   so a still-empty next keystroke does not re-announce (see `lastNoResultsText`).
    */

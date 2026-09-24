@@ -131,7 +131,7 @@ test('onChange meta.source (multiple): every built-in interaction reports user, 
   })
   sel.setItems(['a', 'b', 'c'])
   sel.open()
-  const itemRow = () => sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.itemClass}:not(.${sel.classIdMap.chooseAllRowClass})`)!
+  const itemRow = () => sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListRowClass}:not(.${sel.classIdMap.chooseAllRowClass})`)!
   itemRow().click() // toggle 'a' on
   sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click() // tag x removes 'a'
   sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.chooseAllRowClass}`)!.click() // choose-all

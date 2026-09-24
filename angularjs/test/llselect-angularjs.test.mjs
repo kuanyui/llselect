@@ -65,7 +65,7 @@ test('group by and disable when reach llselect', () => {
   const a = app()
   a.$('[name=user] .llselect-trigger').click()
   assert.equal(a.$$('[name=user] .llselect-group').length, 2, 'expected admin + user groups')
-  assert.equal(a.$$('[name=user] .llselect-item-disabled').length, 1, 'expected Bob disabled')
+  assert.equal(a.$$('[name=user] .llselect-popup-list-row-disabled').length, 1, 'expected Bob disabled')
 })
 
 // QUALITY-69: an enum literal that drops its inner quotes must warn (never throw).
@@ -127,7 +127,7 @@ test('write-back gate does not suppress real interaction', () => {
   const a = app()
   a.scope.f.$setPristine()
   a.$('[name=fruit] .llselect-trigger').click()
-  const item = a.$('[name=fruit] .llselect-item')
+  const item = a.$('[name=fruit] .llselect-popup-list-row')
   assert.ok(item, 'no item rendered after open')
   item.click()
   assert.equal(a.scope.f.$dirty, true, 'a real click must mark the form dirty')
@@ -263,11 +263,11 @@ test('arrow defaults to the chevron; ll-arrow="none" leaves the slot empty', () 
 test('multiple defaults to checkbox rows, live state; ll-checkboxes="false" opts out; choose-all matches', () => {
   const a = app()
   a.$('[name=tops] .llselect-trigger').click()
-  const items = a.$$('[name=tops] .llselect-item')
+  const items = a.$$('[name=tops] .llselect-popup-list-row')
   assert.ok(items.length > 0 && items[0].querySelector('svg'), 'default checkbox missing')
   const before = items[0].innerHTML
   items[0].click()
-  const after = a.$$('[name=tops] .llselect-item')[0].innerHTML
+  const after = a.$$('[name=tops] .llselect-popup-list-row')[0].innerHTML
   assert.notEqual(after, before, 'checkbox did not re-render as checked')
 
   const b = boot({
@@ -279,7 +279,7 @@ test('multiple defaults to checkbox rows, live state; ll-checkboxes="false" opts
     controller: function () { this.fruits = FRUITS.slice(); this.t = [] },
   })
   b.$('.llselect-trigger').click()
-  assert.equal(b.$('.llselect-item svg'), null, 'opt-out still rendered checkboxes')
+  assert.equal(b.$('.llselect-popup-list-row svg'), null, 'opt-out still rendered checkboxes')
   assert.equal(b.$('.llselect-choose-all-row svg'), null, 'opt-out must also strip the choose-all icon')
 
   const c = boot({
@@ -369,10 +369,10 @@ test('ll-hide-chosen-rows: choosing removes the row; the model still gains the i
   })
   assert.deepEqual(a.errors, [])
   a.$('.llselect-trigger').click()
-  assert.equal(a.$$('.llselect-item').length, 3)
-  a.$('.llselect-item').click() // chooses 'Apple'
+  assert.equal(a.$$('.llselect-popup-list-row').length, 3)
+  a.$('.llselect-popup-list-row').click() // chooses 'Apple'
   assert.deepEqual([...a.scope.vm.t], ['Apple']) // copy: the jsdom-realm Array prototype fails deepEqual
-  assert.deepEqual(a.$$('.llselect-item').map((el) => el.textContent), ['Banana', 'Cherry'])
+  assert.deepEqual(a.$$('.llselect-popup-list-row').map((el) => el.textContent), ['Banana', 'Cherry'])
 })
 
 function customRowApp(markup) {
@@ -396,11 +396,11 @@ function customRowApp(markup) {
   })
 }
 
-test('ll-item-content-fn renders custom row content; aria-label stays the label clause', () => {
-  const a = customRowApp(`<llselect-single ng-model="vm.fruit" ll-item-content-fn="vm.renderRow"
+test('ll-popup-list-item-content-fn renders custom row content; aria-label stays the label clause', () => {
+  const a = customRowApp(`<llselect-single ng-model="vm.fruit" ll-popup-list-item-content-fn="vm.renderRow"
     ll-options="f for f in vm.fruits"></llselect-single>`)
   a.$('.llselect-trigger').click()
-  const items = a.$$('.llselect-item')
+  const items = a.$$('.llselect-popup-list-row')
   assert.ok(items[0].querySelector('em.custom-row'), 'custom element missing from the row')
   // The accessible name must stay owned by the ll-options label clause, not the DOM.
   assert.equal(items[0].getAttribute('aria-label'), 'Apple')
@@ -408,19 +408,19 @@ test('ll-item-content-fn renders custom row content; aria-label stays the label 
   assert.equal(items[1].textContent, 'Banana')
 })
 
-test('multiple: ll-item-content-fn composes with default checkboxes; ll-checkboxes="false" hands it the whole row', () => {
-  const a = customRowApp(`<llselect-multiple ng-model="vm.t" ll-item-content-fn="vm.renderRow"
+test('multiple: ll-popup-list-item-content-fn composes with default checkboxes; ll-checkboxes="false" hands it the whole row', () => {
+  const a = customRowApp(`<llselect-multiple ng-model="vm.t" ll-popup-list-item-content-fn="vm.renderRow"
     ll-options="f for f in vm.fruits"></llselect-multiple>`)
   a.$('.llselect-trigger').click()
-  const item = a.$('.llselect-item')
+  const item = a.$('.llselect-popup-list-row')
   assert.ok(item.querySelector('svg'), 'checkbox missing beside custom content')
   assert.ok(item.querySelector('em.custom-row'), 'custom content missing beside checkbox')
 
-  const b = customRowApp(`<llselect-multiple ng-model="vm.t" ll-checkboxes="false" ll-item-content-fn="vm.renderRow"
+  const b = customRowApp(`<llselect-multiple ng-model="vm.t" ll-checkboxes="false" ll-popup-list-item-content-fn="vm.renderRow"
     ll-options="f for f in vm.fruits"></llselect-multiple>`)
   b.$('.llselect-trigger').click()
-  assert.equal(b.$('.llselect-item svg'), null, 'opted-out checkbox still rendered')
-  assert.ok(b.$('.llselect-item em.custom-row'), 'custom content missing after checkbox opt-out')
+  assert.equal(b.$('.llselect-popup-list-row svg'), null, 'opted-out checkbox still rendered')
+  assert.ok(b.$('.llselect-popup-list-row em.custom-row'), 'custom content missing after checkbox opt-out')
 })
 
 test('ng-change rides the standard ngModel pipeline: real interaction only', () => {
@@ -441,7 +441,7 @@ test('ng-change rides the standard ngModel pipeline: real interaction only', () 
   })
   assert.equal(a.scope.vm.changed, 0, 'must not fire on boot')
   a.$('.llselect-trigger').click()
-  a.$$('.llselect-item')[0].click()
+  a.$$('.llselect-popup-list-row')[0].click()
   assert.equal(a.scope.vm.changed, 1, 'must fire once on a real choice')
   a.scope.$apply(() => { a.scope.vm.fruit = 'Banana' })
   assert.equal(a.scope.vm.changed, 1, 'must not fire on a programmatic model write')
@@ -589,11 +589,11 @@ test('the i18n recipe: same-name directives re-pack live widgets from $translate
   assert.deepEqual(triggerTexts(), ['Please select', 'Please select'], 'an unmapped key must restore the English defaults')
 })
 
-test('a non-function ll-item-content-fn is reported and no widget is left behind', () => {
+test('a non-function ll-popup-list-item-content-fn is reported and no widget is left behind', () => {
   const a = app()
-  const el = a.compile('<llselect-single ng-model="x" ll-item-content-fn="\'nope\'" ll-options="f for f in vm.fruits"></llselect-single>')
+  const el = a.compile('<llselect-single ng-model="x" ll-popup-list-item-content-fn="\'nope\'" ll-options="f for f in vm.fruits"></llselect-single>')
   assert.equal(a.errors.length, 1)
-  assert.match(a.errors[0].message, /ll-item-content-fn must evaluate to a function/)
+  assert.match(a.errors[0].message, /ll-popup-list-item-content-fn must evaluate to a function/)
   assert.equal(el[0].querySelector('.llselect-trigger'), null)
 })
 
@@ -650,7 +650,7 @@ test('ll-filter-fn drives the search box beyond the label-text default', () => {
   // (which strips spaces) can match it, so one row proves the wiring.
   input.value = 'vlan2'
   input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
-  const rows = a.$$('.llselect-item')
+  const rows = a.$$('.llselect-popup-list-row')
   assert.equal(rows.length, 1)
   assert.equal(rows[0].textContent, 'vlan 2')
 })
@@ -672,21 +672,21 @@ test('ll-highlight wraps filter matches in <mark>, and the marks clear with the 
   const input = a.$('.llselect-filter-input')
   input.value = 'an'
   input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
-  const rows = a.$$('.llselect-item')
+  const rows = a.$$('.llselect-popup-list-row')
   assert.equal(rows.length, 1) // Banana
   assert.deepEqual([...rows[0].querySelectorAll('mark')].map((m) => m.textContent), ['an', 'an'])
   assert.equal(rows[0].textContent, 'Banana') // marks style the text, never change it
   input.value = ''
   input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
-  assert.equal(a.$('.llselect-item mark'), null)
+  assert.equal(a.$('.llselect-popup-list-row mark'), null)
 })
 
-test('ll-highlight + ll-item-content-fn is a conflict and throws at link', () => {
+test('ll-highlight + ll-popup-list-item-content-fn is a conflict and throws at link', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm">
       <llselect-single ng-model="vm.fruit" ll-filterable="true" ll-highlight="true"
-        ll-item-content-fn="vm.render"
+        ll-popup-list-item-content-fn="vm.render"
         ll-options="f for f in vm.fruits"></llselect-single>
     </div>`,
     controller: function () {
@@ -719,7 +719,7 @@ test('config highlight default reaches a multiple; the checkbox row text carries
   const input = a.$('.llselect-filter-input')
   input.value = 'ap'
   input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
-  const rows = a.$$('.llselect-item')
+  const rows = a.$$('.llselect-popup-list-row')
   assert.equal(rows.length, 1) // Apple
   assert.ok(rows[0].querySelector('svg'), 'the default checkbox icon is gone')
   assert.equal(rows[0].querySelector('mark').textContent, 'Ap')
@@ -867,9 +867,9 @@ test('ll-popup-header-content-fn / ll-popup-footer-content-fn: pinned slots, eac
   const footer = a.$('.llselect-popup-footer > .my-footer')
   assert.ok(footer)
   a.$('.llselect-trigger').click()
-  a.$$('.llselect-item')[0].click()
+  a.$$('.llselect-popup-list-row')[0].click()
   assert.equal(a.text('.my-footer'), '1 chosen') // ng-change ran inside the model digest
-  a.$$('.llselect-item')[1].click()
+  a.$$('.llselect-popup-list-row')[1].click()
   assert.equal(a.text('.my-footer'), '2 chosen')
   assert.equal(headerCalls, 1)
   assert.equal(a.$('.llselect-popup-footer > .my-footer'), footer) // never rebuilt
@@ -1023,7 +1023,7 @@ test('MEDIUM-110: onActivate receives the instance; calling it is the user-chang
   rows[1].click() // the model-write idiom: the view follows, but it is programmatic
   assert.deepEqual([...a.scope.vm.t], ['Cherry'])
   assert.equal(a.scope.vm.changes, 1) // ng-change did not run
-  assert.deepEqual(a.$$('.llselect-item[aria-selected="true"]').map((el) => el.textContent), ['Cherry']) // the widget rendered it
+  assert.deepEqual(a.$$('.llselect-popup-list-row[aria-selected="true"]').map((el) => el.textContent), ['Cherry']) // the widget rendered it
 })
 
 test('MEDIUM-110: one shared descriptor array serves two widgets, each onActivate getting its own instance', () => {

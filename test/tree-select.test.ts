@@ -26,7 +26,7 @@ function fixture() {
 
 /** Rendered row texts (the caret / folder are font icons, no text). */
 function rowTexts(sel: LLTreeMultipleSelect): string[] {
-  return Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.itemClass}`))
+  return Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.popupListRowClass}`))
     .map(el => el.textContent ?? '')
 }
 
@@ -51,12 +51,12 @@ test('caret click expands and collapses without touching the chosen set', () => 
   const sel = new LLTreeMultipleSelect(mount())
   sel.setTreeItems(f.roots)
   sel.open()
-  const citrusRow = Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.itemClass}`))
+  const citrusRow = Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.popupListRowClass}`))
     .find(el => el.textContent?.includes('Citrus'))!
   citrusRow.querySelector<HTMLElement>('.tree-caret')!.click()
   assert.deepEqual(rowTexts(sel), ['Fruits', 'Citrus', 'Orange', 'Lemon', 'Strawberry', 'Vegetables', 'Carrot'])
   assert.deepEqual(sel.getChosenItems(), [])
-  Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.itemClass}`))
+  Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.popupListRowClass}`))
     .find(el => el.textContent?.includes('Citrus'))!
     .querySelector<HTMLElement>('.tree-caret')!.click()
   assert.deepEqual(rowTexts(sel), ['Fruits', 'Citrus', 'Strawberry', 'Vegetables', 'Carrot'])
@@ -67,7 +67,7 @@ test('branch activation toggles its leaf subtree; the model holds leaves only', 
   const sel = new LLTreeMultipleSelect(mount())
   sel.setTreeItems(f.roots)
   sel.open()
-  const fruitsRow = () => Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.itemClass}`))
+  const fruitsRow = () => Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.popupListRowClass}`))
     .find(el => el.textContent?.includes('Fruits'))!
   fruitsRow().click()
   assert.deepEqual(sel.getChosenItems().map(n => n.text).sort(), ['Lemon', 'Orange', 'Strawberry'])
@@ -82,9 +82,9 @@ test('a leaf toggle refreshes the ancestor tri-state to indeterminate', () => {
   const sel = new LLTreeMultipleSelect(mount())
   sel.setTreeItems(f.roots)
   sel.open()
-  Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.itemClass}`))
+  Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.popupListRowClass}`))
     .find(el => el.textContent?.includes('Strawberry'))!.click()
-  const fruitsRow = Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.itemClass}`))
+  const fruitsRow = Array.from(sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.popupListRowClass}`))
     .find(el => el.textContent?.includes('Fruits'))!
   assert.equal(fruitsRow.getAttribute('data-tree-chosen'), 'indeterminate')
 })

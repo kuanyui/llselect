@@ -8,7 +8,7 @@
 
 A name carries a Dom/El suffix that says, without guessing, what it touches:
 
-- `*El` = the name's object is a single DOM element: build+return (`createItemEl`) or operate on an existing one (`replacePopupListItemElInDom`).
+- `*El` = the name's object is a single DOM element: build+return (`createPopupListItemEl`) or operate on an existing one (`replacePopupListItemElInDom`).
 - `*ToDom` = writes content/state INTO an existing container (object = content/state): `commitTriggerContentToDom`, `syncFocusedIndexToDom`.
 - `*ElInDom` = operate on (replace/move/remove) an existing element IN the DOM.
 - `create*El` (no Dom suffix) = builds a DETACHED element; does not touch the document.
@@ -46,7 +46,7 @@ Bulk-selection scope (user ruling): the `choose*` / `unchoose*` / `toggle*` bulk
 By RETURN TYPE (behaviour, not input):
 - returns `boolean` -> predicate `*Fn`: `compareFn`, `filterFn`, `itemDisabledFn`, `groupKeyCompareFn`, `groupDisabledFn`.
 - maps one input to a value -> `<source>To<target>Fn`: `itemToStringFn` (item->string), `itemToGroupKeyFn` (item->key), `groupKeyToStringFn` (key->string). `itemTo*Fn` is the common case; name the actual source when it is not the item, and the target is the return type (`*Key`, `*Label`, `*String`), not necessarily `string`.
-- returns an element -> `create*ElFn`: `createItemContentElFn`, `createTriggerArrowContentElFn`, `createTriggerContentElFn`.
+- returns an element -> `create*ElFn`: `createPopupListItemContentElFn`, `createTriggerArrowContentElFn`, `createTriggerContentElFn`.
 - fires an event -> `on*`: `onChange`, `onOpen`, `onClose`.
 - EXCEPTION: a capability FLAG may widen to `boolean | predicate` and keep its flag name (no `*Fn`): the name describes the capability, the TS union already declares the function form, and `searchableFn: boolean | fn` would be worse. Example: `filterable: boolean | ((items) => boolean)`.
 - NAMED TYPE ALIASES are for enum-ish VALUE types only (`LLSelectOutsideClickBehavior`, `LLSelectTriggerDisplay`, `LLSelectChosenState`, `LLSelectWidthPolicy`, `LLSelectPlacement`) - callers declare variables of those. Callback types stay INLINE on the settings field: inside a settings literal, contextual typing infers them, so an alias buys nothing (the one historical callback alias was removed in the RC review).
@@ -61,8 +61,8 @@ By RETURN TYPE (behaviour, not input):
 
 | Vis          | Before                                   | After                                                                 |
 | ------------ | ---------------------------------------- | --------------------------------------------------------------------- |
-| protected    | `renderItemContent`                      | `createItemContentEl`                                                 |
-| setting      | `renderItemContentFn`                    | `createItemContentElFn` (narrowed to `(item) => HTMLElement \| null`) |
+| protected    | `renderItemContent`                      | `createPopupListItemContentEl`                                                 |
+| setting      | `renderItemContentFn`                    | `createPopupListItemContentElFn` (narrowed to `(item) => HTMLElement \| null`) |
 | private      | `buildTriggerEl`                         | `createTriggerEl`                                                     |
 | private      | `buildFilterInputEl`                     | `createFilterInputEl`                                                 |
 | private      | `buildPopupEl`                           | `createPopupEl`                                                       |
@@ -96,7 +96,7 @@ By RETURN TYPE (behaviour, not input):
 
 ### 4b. DONE - per-callback `null` docstrings
 
-- Each `null`-typed callback now documents its `null`: `createItemContentElFn` -> `null` = plain text from `itemToString`; `createTriggerContentElFn` -> `null` = default label; `createArrowElFn` -> `null` = no arrow this state. `filterFn` / `itemDisabledFn` / `itemToStringFn` / `onOpen` / `onClose` already stated theirs.
+- Each `null`-typed callback now documents its `null`: `createPopupListItemContentElFn` -> `null` = plain text from `itemToString`; `createTriggerContentElFn` -> `null` = default label; `createArrowElFn` -> `null` = no arrow this state. `filterFn` / `itemDisabledFn` / `itemToStringFn` / `onOpen` / `onClose` already stated theirs.
 
 ### 4c. Keep (names unchanged)
 
@@ -109,7 +109,7 @@ By RETURN TYPE (behaviour, not input):
 | base            | private   | `renderTriggerArrow`                  | render-orch (body->ii) |
 | base            | protected | `renderPopupList`                     | render-orch (body->ii) |
 | base            | public    | `rerender`                            | render-orch            |
-| base            | protected | `createItemEl` (+2 overrides)         | create*El              |
+| base            | protected | `createPopupListItemEl` (+2 overrides)         | create*El              |
 | positioning     | public    | `createPositioner`                    | create (non-DOM)       |
 | base            | private   | `syncFocusedIndexToDom`               | sync                   |
 | base            | private   | `recomputeFilteredItems`              | recompute              |
@@ -152,7 +152,7 @@ By RETURN TYPE (behaviour, not input):
 | base            | protected | `onOpened`                            | on (hook)              |
 | base            | protected | `onClosed`                            | on (hook)              |
 | base            | protected | `onChosenChanged`                     | on (hook)              |
-| base            | protected | `onItemActivated` (+2 overrides)          | on (hook)              |
+| base            | protected | `onPopupListItemActivated` (+2 overrides)          | on (hook)              |
 | base            | public    | `open`                                | domain                 |
 | base            | public    | `close`                               | domain                 |
 | base            | public    | `toggle`                              | domain                 |
@@ -183,10 +183,10 @@ Methods / type:
 | private   | `computePopupSegments`     | `compute*` - derive render segments, no DOM     |
 | private   | `commitPopupSegmentsToDom` | `commit*ToDom` - write segments into popup list |
 | protected | `createGroupEl`            | `create*El` - group container build (override for full control) |
-| protected | `createGroupLabelContentEl`| `create*El` - rich label content (mirrors `createItemContentEl`) |
+| protected | `createGroupLabelContentEl`| `create*El` - rich label content (mirrors `createPopupListItemContentEl`) |
 | (type)    | `PopupListSegment`         | descriptive noun for the render-segment union   |
 
-`classIdMap` gained `groupClass` / `groupLabelClass` (mirrors the `itemClass` family). No code rename was needed - every name already obeys s1-s3.
+`classIdMap` gained `groupClass` / `groupLabelClass` (mirrors the `popupListRowClass` family). No code rename was needed - every name already obeys s1-s3.
 
 ### 4e. Tags (triggerDisplay) additions
 
@@ -281,7 +281,7 @@ Settings on `LLSelectBaseSettings` (s3): arrays of `LLSelectPopupListActionRow` 
 | protected | `createPopupListLeadingActionRowEl` / `createPopupListTrailingActionRowEl` | `create*El` - whole row, one builder per position (s7d: explicit over one builder + kind param) |
 | protected | `createPopupListActionRowContentEl`    | `create*ContentEl` - thin, reads the descriptor                     |
 | protected | `isPopupListActionRowDisabled`         | `is*` predicate, reads the descriptor; re-checked at activation     |
-| protected | `onPopupListActionRowActivated`        | subclass hook (`on*`), past tense like `onItemActivated`            |
+| protected | `onPopupListActionRowActivated`        | subclass hook (`on*`), past tense like `onPopupListItemActivated`            |
 | protected | `replacePopupListActionRowElsInDom`    | `replace*ElInDom` - in-place rebuild of every rendered row          |
 | private   | `createPopupListActionRowEl`           | shared body of the two builders                                     |
 | setting   | `popupListLeadingRowsPinned` / `popupListTrailingRowsPinned` | `boolean`, default `false`; per block, never per row |
@@ -291,7 +291,7 @@ Settings on `LLSelectBaseSettings` (s3): arrays of `LLSelectPopupListActionRow` 
 | private   | `replaceActionRowElsInDom`             | `replace*ElInDom` - the in-place swap one array of rows            |
 | private   | `ringLength` / `ringPosition` / `ringEntryAt` / `findNextEnabledRingPosition` / `findEnabledRingPositionForKeyboardAction` / `focusRingPosition` / `focusActionRow` | the arrow-key ring walk over [choose-all row, leading action rows, items, trailing action rows] |
 
-`classIdMap` gained `popupListActionRowClass` (`.llselect-popup-list-action-row`, on top of `itemClass`). The private keyboard enum was renamed `LLSelectAction` -> `LLSelectKeyboardAction` so "action" names one thing.
+`classIdMap` gained `popupListActionRowClass` (`.llselect-popup-list-action-row`, on top of `popupListRowClass`). The private keyboard enum was renamed `LLSelectAction` -> `LLSelectKeyboardAction` so "action" names one thing.
 
 ## 5. Decisions log
 
@@ -299,15 +299,15 @@ Suffixes `*El`/`*ToDom`/`*ElInDom`; `create*El` = detached build. render* = pure
 
 API-surface review round (user rulings): added public `isOpened(): boolean` (state reader pairing `isDisabled()`; private field `opened`; named per s7a.9, with the `createTriggerArrowContentElFn` ctx renamed `{ isOpen }` -> `{ isOpened }` and keyboard.ts's internal param following), public `setPlaceholder` (the second frozen-settings exception, beside `setUiTranslationPack`), setting `gatherGroups` + exported `gatherItemsByGroupKey` ("gather" = stable-bucket groups by first appearance; NOT `sort` - there is no comparator ordering). Bulk-op scope ruling recorded in s2 (`all` = the eligible enabled set); the `chooseAll` / `unchooseAll` / `toggleAll` names kept. Round close added public `getVisibleItems` (widened from protected, name unchanged), `getFilterQuery` (reader named after the `filter*` family's "filter query", not the private `query` field), and `toggleAllVisible` (the choose-all row's subset action; `Visible` = the `getVisibleItems` concept). Findings log: FIXME.md "review (public API surface)".
 
-Highlight ruling (user): "highlight" names exactly ONE concept - query-match marking, the exported `createHighlightedTextEl(text, query, createMatchElFn?)` (create*El family; wraps each occurrence in `<mark>` inside a detached span, query-highlight.ts). The keyboard-focused option is "focused" wording everywhere ("style the focused item" at `itemFocusedClass`, "focus the chosen item" at single's `focusInitial`, the base.ts click-handler comment - all reworded off "highlight"). Tolerated other senses, both outside the library API: ui-select's own `| highlight:` filter / `on-highlight` attribute quoted as external vocabulary in the angularjs docs (that filter IS query-match marking, so it agrees); the demo site's code syntax-highlighting tooling (`demo/highlight.js`), a different bounded context that never renders inside the library.
+Highlight ruling (user): "highlight" names exactly ONE concept - query-match marking, the exported `createHighlightedTextEl(text, query, createMatchElFn?)` (create*El family; wraps each occurrence in `<mark>` inside a detached span, query-highlight.ts). The keyboard-focused option is "focused" wording everywhere ("style the focused item" at `popupListRowFocusedClass`, "focus the chosen item" at single's `focusInitial`, the base.ts click-handler comment - all reworded off "highlight"). Tolerated other senses, both outside the library API: ui-select's own `| highlight:` filter / `on-highlight` attribute quoted as external vocabulary in the angularjs docs (that filter IS query-match marking, so it agrees); the demo site's code syntax-highlighting tooling (`demo/highlight.js`), a different bounded context that never renders inside the library.
 
 ## 6. Phasing
 
 DONE - all three phases applied (npm test passes; npm run build green).
 
 1. private renames (zero API impact) + private (ii) primitive (`commitArrowElToDom`).
-2. protected: `createItemContentEl`, `create*El` family, `getVisibleItems`, `replacePopupListItemElInDom`, `findNextEnabledIndex`, `onItemsChanged`, the protected (ii) primitives, render* body refactor.
-3. public / settings: `create*SvgEl` factories, `createItemContentElFn`, 4b once decided.
+2. protected: `createPopupListItemContentEl`, `create*El` family, `getVisibleItems`, `replacePopupListItemElInDom`, `findNextEnabledIndex`, `onItemsChanged`, the protected (ii) primitives, render* body refactor.
+3. public / settings: `create*SvgEl` factories, `createPopupListItemContentElFn`, 4b once decided.
 
 ## 7. Precision audit - element nouns, Container-Content law, pack keys
 

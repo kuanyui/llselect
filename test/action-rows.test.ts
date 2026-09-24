@@ -52,7 +52,7 @@ test('rows render above / below the items in array order, as plain option rows',
   assert.ok(b0 && a0)
   for (const el of [b0, a0]) {
     assert.equal(el.getAttribute('role'), 'option')
-    assert.ok(el.classList.contains(m.itemClass))
+    assert.ok(el.classList.contains(m.popupListRowClass))
     assert.ok(el.classList.contains(m.popupListActionRowClass))
     assert.equal(el.getAttribute('aria-selected'), null) // a command has no selected state
     assert.equal(el.getAttribute('aria-label'), null) // plain text: no aria-label needed
@@ -116,7 +116,7 @@ test('a disabled row is skipped by the arrow keys, is not clickable, and is re-c
   fireKey(sel.triggerEl, 'ArrowUp'); assert.equal(activeText(sel), 'a') // A0 skipped
   const a0El = sel.popupListEl.querySelector(`#${sel.classIdMap.popupListId}-action-row-trailing0`) as HTMLElement
   assert.equal(a0El.getAttribute('aria-disabled'), 'true')
-  assert.ok(a0El.classList.contains(sel.classIdMap.itemDisabledClass))
+  assert.ok(a0El.classList.contains(sel.classIdMap.popupListRowDisabledClass))
   a0El.click()
   assert.equal(a0.calls, 0)
   // Enabled at render, disabled by the time Enter arrives: the re-check wins.
@@ -224,7 +224,7 @@ test('a focused row rebuilt in place keeps the active option on the new element'
   const after = sel.popupListEl.querySelector(`.${sel.classIdMap.popupListActionRowClass}`)!
   assert.notEqual(after, before)
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), after.id)
-  assert.ok(after.classList.contains(sel.classIdMap.itemFocusedClass))
+  assert.ok(after.classList.contains(sel.classIdMap.popupListRowFocusedClass))
 })
 
 test('a focused row that disables itself keeps the active option; Enter then does nothing', () => {

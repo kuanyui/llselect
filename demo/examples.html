@@ -305,9 +305,9 @@
     </article>
 
     <article>
-      <h3>5.4 Checkbox items (createItemContentElFn)</h3>
+      <h3>5.4 Checkbox items (createPopupListItemContentElFn)</h3>
       <p class="hint">
-        <code>createItemContentElFn</code> renders checkbox + item text; the
+        <code>createPopupListItemContentElFn</code> renders checkbox + item text; the
         public <code>isChosen()</code> supplies the state (the fn runs per
         render, so the self-reference in the code is safe); the single-item
         rerender keeps it in sync. Subclass equivalent: 13.1.
@@ -451,7 +451,7 @@
       <p class="hint">
         Demo CSS adds <code>text-overflow: ellipsis</code> on the items
         (needs <code>'match-trigger'</code> - a fit-content popup never
-        truncates); a <code>createItemEl</code> subclass sets
+        truncates); a <code>createPopupListItemEl</code> subclass sets
         <code>el.title</code>. The subclass IS required for this exact
         effect: no setting reaches the option element itself, so a content fn
         could only tooltip the inner text, not the whole row. (The library never
@@ -524,7 +524,7 @@
       <h3>7.4 Highlight the matches (<code>createHighlightedTextEl</code>)</h3>
       <p class="hint">
         The exported helper wraps each query match in <code>&lt;mark&gt;</code>.
-        <code>createItemContentElFn</code> re-runs on every keystroke, so the
+        <code>createPopupListItemContentElFn</code> re-runs on every keystroke, so the
         marks follow the query; the option's <code>aria-label</code> stays the
         plain text.
       </p>
@@ -582,10 +582,10 @@
     </p>
 
     <article>
-      <h3>9.1 <code>itemDisabledFn</code> + why-tooltip (createItemEl subclass)</h3>
+      <h3>9.1 <code>itemDisabledFn</code> + why-tooltip (createPopupListItemEl subclass)</h3>
       <p class="hint">
         Out-of-stock drinks: unselectable, skipped by arrows, still hoverable
-        - hover one for the tooltip a <code>createItemEl</code> subclass
+        - hover one for the tooltip a <code>createPopupListItemEl</code> subclass
         attached. The subclass IS required here: the <code>title</code> sits
         on the option element itself (whole-row hover), and
         <code>isItemEffectivelyDisabled()</code> is protected - neither is
@@ -689,7 +689,7 @@
     <article>
       <h3>11.1 Single icon rows</h3>
       <p class="hint">
-        Icon + text rows via <code>createItemContentElFn</code>. The trigger
+        Icon + text rows via <code>createPopupListItemContentElFn</code>. The trigger
         mirrors the chosen row only because the same renderer feeds
         <code>createTriggerContentElFn</code> - there is no auto-projection.
       </p>
@@ -822,7 +822,7 @@
     <article>
       <h3>13.1 Checkbox items, subclass-style (= 5.4)</h3>
       <p class="hint">
-        The same result as 5.4 via a <code>createItemEl</code> override - not
+        The same result as 5.4 via a <code>createPopupListItemEl</code> override - not
         required, kept as the reference example of the subclass surface.
       </p>
       <div class="demo-split">
@@ -842,8 +842,8 @@
         leaves; activating a branch toggles its whole subtree. The model value is the chosen leaves. Built on the
         extension points: typed subclass settings
         (<code>defaultExpandDepth</code>), a cached
-        <code>getVisibleItems</code> override, <code>createItemEl</code> /
-        <code>createItemContentEl</code>, <code>onItemActivated</code>. The
+        <code>getVisibleItems</code> override, <code>createPopupListItemEl</code> /
+        <code>createPopupListItemContentEl</code>, <code>onPopupListItemActivated</code>. The
         toggle shows the usage, the TypeScript subclass
         (<code>subclass/tree-select.ts</code>), and its demo CSS.
       </p>

@@ -162,9 +162,9 @@ $scope.ifaceMatch = function (i, query) {
 - `none` opts out and leaves the slot to the theme.
 - A custom arrow means editing your copy of `llselect-angularjs.js` - which is what a copy-paste package is for.
 
-### `ll-item-content-fn`
+### `ll-popup-list-item-content-fn`
 
-**Expression** -> `createItemContentElFn`. Custom visible content for each option row.
+**Expression** -> `createPopupListItemContentElFn`. Custom visible content for each option row.
 
 - Evaluated once at link time to a function `(item) => HTMLElement | null`.
 - `null` (for one item, or no attribute at all) = the plain item text from `ll-options`.
@@ -186,7 +186,7 @@ $scope.renderRow = function (fruit) {
 ```
 
 ```html
-<llselect-single ng-model="picked" ll-item-content-fn="renderRow"
+<llselect-single ng-model="picked" ll-popup-list-item-content-fn="renderRow"
   ll-options="f.name for f in fruits"></llselect-single>
 ```
 
@@ -195,18 +195,18 @@ $scope.renderRow = function (fruit) {
 **Expression** -> boolean. Wraps each filter-query match in the default item text in a `<mark>` element (the core `createHighlightedTextEl` helper).
 
 - The marks re-render per keystroke and clear with the query.
-- Only the DEFAULT item text: combined with [`ll-item-content-fn`](#ll-item-content-fn) it throws - a custom content fn owns its whole content, so call `llselect.createHighlightedTextEl` inside it instead.
+- Only the DEFAULT item text: combined with [`ll-popup-list-item-content-fn`](#ll-popup-list-item-content-fn) it throws - a custom content fn owns its whole content, so call `llselect.createHighlightedTextEl` inside it instead.
 - On `<llselect-multiple>` the text beside the default checkbox gets the marks.
 - App-wide default: the `highlight` key of [`llselectConfigProvider`](#llselectconfigprovider).
 - The option's accessible name stays the plain `ll-options` text (core contract).
 
 ### `ll-trigger-content-fn`
 
-**Expression** -> `createTriggerContentElFn`. Custom visible content for the trigger, under the same rules as [`ll-item-content-fn`](#ll-item-content-fn) (outside any digest, never `$compile`'d).
+**Expression** -> `createTriggerContentElFn`. Custom visible content for the trigger, under the same rules as [`ll-popup-list-item-content-fn`](#ll-popup-list-item-content-fn) (outside any digest, never `$compile`'d).
 
 - `<llselect-single>`: the function receives `{ chosenItem, items }`; `null` = the default rendering (the chosen item's text, or the placeholder).
 - `<llselect-multiple>`: receives `{ chosenItems, items }`; `null` = the count summary / tags. A returned element overrides both display modes.
-- The trigger does not mirror rich rows by itself - feeding this the same renderer as `ll-item-content-fn` is what does that (demo 7).
+- The trigger does not mirror rich rows by itself - feeding this the same renderer as `ll-popup-list-item-content-fn` is what does that (demo 7).
 
 ### `ll-popup-header-content-fn`
 
@@ -242,7 +242,7 @@ vm.updateFooterCount = function () { footerEl.textContent = vm.langs.length + ' 
 - `onActivate` runs inside a digest, wrapped like [`ll-on-open`](#ll-on-open); errors go to `$exceptionHandler`. It runs on Enter, on Space while the filter is off, and on click. llselect neither chooses nor closes for it.
 - `onActivate` receives the widget instance as its first argument. Call it when the command must count as the user's own change: `onActivate: function (sel) { sel.setChosenItems([]) }` reaches `ng-model` through the same path as a click, so `ng-change` runs and the control turns dirty. A plain model write instead (`vm.langs = []`) stays a programmatic change: the view follows, but `ng-change` does not run and the control stays pristine. Pick one; doing both writes the value twice. The core's own descriptor passes no argument; this one is wrapper-only.
 - Like `ng-click`, `onActivate` is not awaited. After an `await`, digest yourself (`$applyAsync`, `$timeout`).
-- `textFn` / `disabledFn` / `createContentElFn` run outside any digest, per render, like [`ll-item-content-fn`](#ll-item-content-fn); they run again after every chosen change, so they may read live state.
+- `textFn` / `disabledFn` / `createContentElFn` run outside any digest, per render, like [`ll-popup-list-item-content-fn`](#ll-popup-list-item-content-fn); they run again after every chosen change, so they may read live state.
 - Keyboard and screen-reader rules: core `docs/llm/A11Y.md`, "Action rows". A row is announced as an option with its text; it has no selected state.
 
 ### `ll-popup-list-trailing-action-rows`
@@ -476,7 +476,7 @@ Migrating a call site, at a glance:
 |---|---|
 | `<ui-select-match>` template (single) | `<ui-llselect-match>` -> `createTriggerContentElFn` |
 | `<ui-select-match>` template (multiple) | `<ui-llselect-match>` -> `createTagContentElFn` - ui-select ng-repeats this slot over `$select.selected`, so it is per chip, not per trigger |
-| `<ui-select-choices>` template | `<ui-llselect-choices>` -> `createItemContentElFn`, `$compile`d against a per-row child scope |
+| `<ui-select-choices>` template | `<ui-llselect-choices>` -> `createPopupListItemContentElFn`, `$compile`d against a per-row child scope |
 | `repeat="p in people"` | `setItems` via `$watchCollection` |
 | `alias as item in source` | the ngModel projection, same role as `ng-options`' `select as` |
 | `track by` | `compareFn` |
@@ -491,7 +491,7 @@ Migrating a call site, at a glance:
 | `ng-disabled` / the `disabled` attribute | `setDisabled()`, via `attrs.$observe('disabled')` - the exact mechanism ui-select itself uses, its string quirks included (a truthy string like interpolated `"false"` disables). The observed attribute stays inert on the host, so hover - and a why-tooltip - keep working while disabled |
 | `aria-labelledby` / `aria-label` / `title` (on `<ui-llselect>`) | `ariaLabelledBy` / `ariaLabel` - the field's accessible name. Precedence follows ARIA: `aria-labelledby` (forwarded verbatim, names the field by reference) wins over `aria-label`, which wins over `title`; `title` keeps ui-select parity (its templates feed their aria labels from it) |
 | `$select.selected`, `$select.search`, `$select.multiple` | published on each template's scope |
-| `$index` | from `createItemEl(item, index)` |
+| `$index` | from `createPopupListItemEl(item, index)` |
 
 ### Filtering
 

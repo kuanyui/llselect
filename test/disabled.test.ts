@@ -19,8 +19,8 @@ function fireKey(target: HTMLElement, key: string): void {
   target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
 }
 
-function focusedText(sel: { popupListEl: HTMLElement; classIdMap: { itemFocusedClass: string } }): string | null | undefined {
-  return sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)?.textContent
+function focusedText(sel: { popupListEl: HTMLElement; classIdMap: { popupListRowFocusedClass: string } }): string | null | undefined {
+  return sel.popupListEl.querySelector(`.${sel.classIdMap.popupListRowFocusedClass}`)?.textContent
 }
 
 // --- control-level disabled --------------------------------------------------
@@ -91,7 +91,7 @@ test('itemDisabledFn marks the option aria-disabled + item-disabled class', () =
   sel.open()
   const [a, b, c] = options(sel)
   assert.equal(b!.getAttribute('aria-disabled'), 'true')
-  assert.ok(b!.classList.contains(sel.classIdMap.itemDisabledClass))
+  assert.ok(b!.classList.contains(sel.classIdMap.popupListRowDisabledClass))
   assert.equal(a!.hasAttribute('aria-disabled'), false)
   assert.equal(c!.hasAttribute('aria-disabled'), false)
 })
@@ -215,7 +215,7 @@ test('a rerender moves focus off a row that BECAME disabled in place', () => {
   sel.setItems(['a', 'b', 'c'])
   sel.open()
   fireKey(sel.triggerEl, 'ArrowDown') // a -> b? initial focus is 'a'; move to 'b'
-  const focusedText = () => sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)?.textContent
+  const focusedText = () => sel.popupListEl.querySelector(`.${sel.classIdMap.popupListRowFocusedClass}`)?.textContent
   assert.equal(focusedText(), 'b', 'precondition: focus sits on b')
   disabled = true
   sel.rerender()

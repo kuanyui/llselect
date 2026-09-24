@@ -12,8 +12,8 @@ function mount(): HTMLElement {
 }
 
 function itemTexts(sel: LLSelectMultiple<never> | LLSelectMultiple<string> | LLSelectMultiple<{ id: number }>): (string | null)[] {
-  // The choose-all row carries itemClass too; exclude it - these tests count item rows.
-  return Array.from(sel.popupListEl.querySelectorAll(`.${sel.classIdMap.itemClass}:not(.${sel.classIdMap.chooseAllRowClass})`)).map(el => el.textContent)
+  // The choose-all row carries popupListRowClass too; exclude it - these tests count item rows.
+  return Array.from(sel.popupListEl.querySelectorAll(`.${sel.classIdMap.popupListRowClass}:not(.${sel.classIdMap.chooseAllRowClass})`)).map(el => el.textContent)
 }
 
 function fireKey(target: HTMLElement, key: string): void {
@@ -40,7 +40,7 @@ test('clicking a row removes it at once; unchoosing puts it back in display orde
   const sel = new LLSelectMultiple<string>(mount(), { hideChosenRows: true })
   sel.setItems(['a', 'b', 'c'])
   sel.open()
-  sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.itemClass}`)!.click()
+  sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListRowClass}`)!.click()
   assert.deepEqual(sel.getChosenItems(), ['a'])
   assert.deepEqual(itemTexts(sel), ['b', 'c'])
   sel.toggleItem('a') // unchoose through the API (the row is gone; tags would do this)
@@ -128,6 +128,6 @@ test('choosing the focused last row clamps focus to the new last row', () => {
   fireKey(sel.triggerEl, 'End')
   fireKey(sel.triggerEl, 'Enter') // chooses 'c'; its row leaves the list
   assert.deepEqual(itemTexts(sel), ['a', 'b'])
-  const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)
+  const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.popupListRowFocusedClass}`)
   assert.equal(focused?.textContent, 'b')
 })

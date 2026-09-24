@@ -59,7 +59,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
   /**
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen items
-   * + items (same convention as `createItemContentElFn`):
+   * + items (same convention as `createPopupListItemContentElFn`):
    * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this for
    *   real markup such as tag chips.
    * - fn returns `null` - use the default for this render (count summary / tags).
@@ -80,7 +80,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
   triggerDisplay: LLSelectTriggerDisplay
   /**
    * Item -> the visible content ELEMENT of its tag chip in `'tags'` mode,
-   * without subclassing. Mirrors `createItemContentElFn` (the chip is to the
+   * without subclassing. Mirrors `createPopupListItemContentElFn` (the chip is to the
    * trigger what the option content is to the row):
    * - Return an `HTMLElement` and the library inserts it as the chip's content;
    *   the library still owns the chip container + the remove (x) button + aria.
@@ -143,7 +143,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
   /**
    * The choose-all row's visible content ELEMENT, without subclassing - e.g.
    * a tri-state SVG checkbox (`createOutlinedCheckboxSvgEl`) + the counting text. Mirrors
-   * `createItemContentElFn`. Only used with `chooseAllRow: true`.
+   * `createPopupListItemContentElFn`. Only used with `chooseAllRow: true`.
    * - Receives the tri-state and the counts of the visible enabled subset.
    * - Return an `HTMLElement`: inserted as the row's content; the accessible
    *   name stays pinned to `uiTranslationPack.chooseAllRowText` via `aria-label`, so
@@ -508,7 +508,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   /**
    * Build the tag-list element for `'tags'` mode: one chip per chosen item.
    * Override for full control of the chip strip (the trigger-level equivalent
-   * of overriding `createItemEl`).
+   * of overriding `createPopupListItemEl`).
    * @group Subclassing: rendering
    */
   protected createTagsEl(): HTMLElement {
@@ -532,7 +532,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   protected createTagEl(item: T): HTMLElement {
     const tag = document.createElement('span')
     tag.className = this.classIdMap.tagClass
-    // Same null-branch shape as createItemEl / createGroupEl: null = plain-text
+    // Same null-branch shape as createPopupListItemEl / createGroupEl: null = plain-text
     // default. Text must be set before the remove button (textContent wipes children).
     const content = this.createTagContentEl(item)
     if (content === null) {
@@ -541,7 +541,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       tag.appendChild(content)
     }
     if (this.isItemEffectivelyDisabled(item)) {
-      // Mirror createItemEl's disabled marking: aria-disabled + the class grey the
+      // Mirror createPopupListItemEl's disabled marking: aria-disabled + the class grey the
       // chip so its inert x reads as disabled, not broken (A11Y.md Tags).
       tag.setAttribute('aria-disabled', 'true')
       tag.classList.add(this.classIdMap.tagDisabledClass)
@@ -597,7 +597,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Per-chip visible content in `'tags'` mode. Mirrors `createItemContentEl`.
+   * Per-chip visible content in `'tags'` mode. Mirrors `createPopupListItemContentEl`.
    * Default reads `createTagContentElFn`, else `null` so `createTagEl` falls
    * back to plain text from `itemToString`.
    * @group Subclassing: rendering
@@ -630,7 +630,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * Toggle on click. Multi mode keeps the popup open.
    * @group Subclassing: reactions
    */
-  protected override onItemActivated(item: T): void {
+  protected override onPopupListItemActivated(item: T): void {
     this.toggleItem(item)
   }
 
@@ -659,7 +659,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     const state: LLSelectChosenState = chosenCount === 0 ? 'none' : chosenCount === actionable.length ? 'all' : 'some'
     const el = document.createElement('div')
     el.id = `${this.classIdMap.popupListId}-choose-all`
-    el.className = `${this.classIdMap.itemClass} ${this.classIdMap.chooseAllRowClass}`
+    el.className = `${this.classIdMap.popupListRowClass} ${this.classIdMap.chooseAllRowClass}`
     el.setAttribute('role', 'option')
     el.setAttribute('data-chosen-state', state)
     // ARIA option has no `mixed`: the indeterminate state is conveyed by the
@@ -674,7 +674,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       el.textContent = text
     } else {
       // Custom content fills the visuals only; the accessible name stays the
-      // counting text (same pinning as createItemEl's custom content).
+      // counting text (same pinning as createPopupListItemEl's custom content).
       el.setAttribute('aria-label', text)
       el.appendChild(content)
     }
@@ -688,7 +688,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
 
   /**
    * The choose-all row's visible content (rich tri-state). Mirrors
-   * `createItemContentEl`.
+   * `createPopupListItemContentEl`.
    * - Default reads `createChooseAllRowContentElFn`; `null` (setting unset,
    *   or returned) = the default content: plain text from
    *   `uiTranslationPack.chooseAllRowText`.
@@ -716,8 +716,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * Mark each item with `aria-selected` reflecting its chosen state.
    * @group Subclassing: rendering
    */
-  protected override createItemEl(item: T, index: number): HTMLElement {
-    const el = super.createItemEl(item, index)
+  protected override createPopupListItemEl(item: T, index: number): HTMLElement {
+    const el = super.createPopupListItemEl(item, index)
     el.setAttribute('aria-selected', String(this.isChosen(item)))
     return el
   }

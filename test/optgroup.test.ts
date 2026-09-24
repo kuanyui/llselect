@@ -24,8 +24,8 @@ function fireKey(target: HTMLElement, key: string): void {
   target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
 }
 
-function focusedText(sel: { popupListEl: HTMLElement; classIdMap: { itemFocusedClass: string } }): string | null | undefined {
-  return sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)?.textContent
+function focusedText(sel: { popupListEl: HTMLElement; classIdMap: { popupListRowFocusedClass: string } }): string | null | undefined {
+  return sel.popupListEl.querySelector(`.${sel.classIdMap.popupListRowFocusedClass}`)?.textContent
 }
 
 // --- structure ---------------------------------------------------------------
@@ -136,7 +136,7 @@ test('groupDisabledFn disables every item in the group and marks the container',
   const byText = (t: string) => options(sel).find((o) => o.textContent === t)!
   assert.equal(byText('banana').getAttribute('aria-disabled'), 'true')
   assert.equal(byText('berry').getAttribute('aria-disabled'), 'true')
-  assert.ok(byText('banana').classList.contains(sel.classIdMap.itemDisabledClass))
+  assert.ok(byText('banana').classList.contains(sel.classIdMap.popupListRowDisabledClass))
   assert.equal(byText('apple').hasAttribute('aria-disabled'), false)
   const bGroup = groupEls(sel).find((g) => g.getAttribute('aria-label') === 'b')!
   assert.equal(bGroup.getAttribute('aria-disabled'), 'true')
@@ -228,7 +228,7 @@ test('filtering regroups survivors and drops now-empty groups', () => {
   assert.equal(groupEls(sel)[0]!.getAttribute('aria-label'), 'a')
 })
 
-// --- rich label content (mirrors createItemContentElFn) ---------------------
+// --- rich label content (mirrors createPopupListItemContentElFn) ---------------------
 
 test('createGroupLabelContentElFn fills the label; container aria-label stays plain text', () => {
   const sel = new LLSelectSingle<string>(mount(), {

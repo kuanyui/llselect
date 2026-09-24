@@ -85,34 +85,34 @@
 
 /* --- items (matches BS4 .dropdown-item look) ----------------- */
 
-.llselect-item {
+.llselect-popup-list-row {
   padding: 0.25rem 1.5rem;
   cursor: pointer;
   color: #212529;
   background-color: transparent;
 }
 
-.llselect-item:hover {
+.llselect-popup-list-row:hover {
   background-color: #e9ecef;
   color: #16181b;
 }
 
-.llselect-item-focused {
+.llselect-popup-list-row-focused {
   background-color: #007bff;
   color: #fff;
 }
 
-.llselect-item-focused:hover {
+.llselect-popup-list-row-focused:hover {
   background-color: #0069d9;
   color: #fff;
 }
 
-.llselect-item[aria-selected='true'] {
+.llselect-popup-list-row[aria-selected='true'] {
   font-weight: 600;
   color: #007bff;
 }
 
-.llselect-item-focused[aria-selected='true'] {
+.llselect-popup-list-row-focused[aria-selected='true'] {
   color: #fff;
 }
 
@@ -170,18 +170,18 @@
 
 /* --- dividers around the command rows --------------------------- */
 /* The choose-all row and the action rows form one block above the items and
-   one below; they carry .llselect-item too, so hover / focused / disabled
+   one below; they carry .llselect-popup-list-row too, so hover / focused / disabled
    styling comes from there. Exactly one line marks each block's edge with
    the items, drawn as the next element's border-top through sibling
    combinators (`:has` is above the browser floor). No line inside a block:
    choose-all followed by a command row reads as one group, like the header
    blocks of ng-select, Element Plus and Vuetify's select-all recipe. */
 
-.llselect-choose-all-row + .llselect-item:not(.llselect-popup-list-action-row),
+.llselect-choose-all-row + .llselect-popup-list-row:not(.llselect-popup-list-action-row),
 .llselect-choose-all-row + .llselect-group,
-.llselect-popup-list-action-row + .llselect-item:not(.llselect-popup-list-action-row),
+.llselect-popup-list-action-row + .llselect-popup-list-row:not(.llselect-popup-list-action-row),
 .llselect-popup-list-action-row + .llselect-group,
-.llselect-item:not(.llselect-popup-list-action-row):not(.llselect-choose-all-row) + .llselect-popup-list-action-row,
+.llselect-popup-list-row:not(.llselect-popup-list-action-row):not(.llselect-choose-all-row) + .llselect-popup-list-action-row,
 .llselect-group + .llselect-popup-list-action-row {
   border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
@@ -236,12 +236,12 @@
   cursor: not-allowed;
 }
 
-.llselect-item-disabled {
+.llselect-popup-list-row-disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
-.llselect-item-disabled:hover {
+.llselect-popup-list-row-disabled:hover {
   background: none;
 }
 

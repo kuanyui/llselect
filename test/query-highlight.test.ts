@@ -68,13 +68,13 @@ test('length-changing lower-case mapping (U+0130) degrades to unmarked text', ()
   assert.deepEqual(markTexts(el), [])
 })
 
-// --- inside createItemContentElFn (the intended customization point) ------------------------
+// --- inside createPopupListItemContentElFn (the intended customization point) ------------------------
 
 test('marks follow each filter keystroke; clearing the query clears them', () => {
   let sel!: LLSelectSingle<string>
   sel = new LLSelectSingle<string>(mount(), {
     filterable: true,
-    createItemContentElFn: (item) => createHighlightedTextEl(item, sel.getFilterQuery()),
+    createPopupListItemContentElFn: (item) => createHighlightedTextEl(item, sel.getFilterQuery()),
   })
   sel.setItems(['Apple', 'Banana', 'Pineapple'])
   sel.triggerEl.focus()

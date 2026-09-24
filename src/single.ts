@@ -39,7 +39,7 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
   /**
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen item
-   * + items (same convention as `createItemContentElFn`):
+   * + items (same convention as `createPopupListItemContentElFn`):
    * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this for
    *   real markup (icon + text, etc.).
    * - fn returns `null` - use the default for this render: the chosen item's
@@ -173,8 +173,8 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
    * Mark the chosen option `aria-selected="true"`, the rest `"false"` (APG select-only).
    * @group Subclassing: rendering
    */
-  protected override createItemEl(item: T, index: number): HTMLElement {
-    const el = super.createItemEl(item, index)
+  protected override createPopupListItemEl(item: T, index: number): HTMLElement {
+    const el = super.createPopupListItemEl(item, index)
     el.setAttribute('aria-selected', String(this.areEqual(item, this.chosenItem)))
     return el
   }
@@ -183,7 +183,7 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
    * Pick this item as the chosen item and close the popup.
    * @group Subclassing: reactions
    */
-  protected override onItemActivated(item: T): void {
+  protected override onPopupListItemActivated(item: T): void {
     this.setChosenItem(item)
     this.close()
   }

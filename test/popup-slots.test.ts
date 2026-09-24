@@ -301,7 +301,7 @@ test('the content fns receive a construction context: the class map and the reso
     createPopupHeaderContentElFn: (ctx) => {
       seen.header = ctx
       const el = contentEl('h')
-      el.className = ctx.classIdMap.itemClass
+      el.className = ctx.classIdMap.popupListRowClass
       return el
     },
     createPopupFooterContentElFn: (ctx) => { seen.footer = ctx; return contentEl(ctx.uiTranslationPack.chooseAllRowText(1, 2)) },
@@ -309,7 +309,7 @@ test('the content fns receive a construction context: the class map and the reso
   const header = seen.header as { classIdMap: unknown; uiTranslationPack: unknown }
   assert.equal(header.classIdMap, sel.classIdMap, 'the same class map the instance exposes')
   assert.equal(header.uiTranslationPack, sel.getUiTranslationPack(), 'the resolved pack')
-  assert.equal(sel.popupHeaderEl!.firstElementChild!.className, sel.classIdMap.itemClass)
+  assert.equal(sel.popupHeaderEl!.firstElementChild!.className, sel.classIdMap.popupListRowClass)
   assert.equal(sel.popupFooterEl!.textContent, ja.chooseAllRowText(1, 2))
   assert.deepEqual(Object.keys(header).sort(), ['classIdMap', 'uiTranslationPack'], 'nothing else is handed out')
 })

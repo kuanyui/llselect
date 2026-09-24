@@ -89,7 +89,7 @@
 
 /* --- items ---------------------------------------------------- */
 
-.llselect-item {
+.llselect-popup-list-row {
   padding: 0.375rem 0.75rem;      /* py-1.5 px-3 */
   cursor: pointer;
   color: var(--color-slate-700, #334155);
@@ -97,22 +97,22 @@
   transition: background-color 100ms;
 }
 
-.llselect-item:hover {
+.llselect-popup-list-row:hover {
   background-color: var(--color-slate-100, #f1f5f9);
   color: var(--color-slate-900, #0f172a);
 }
 
-.llselect-item-focused {
+.llselect-popup-list-row-focused {
   background-color: var(--color-blue-50, #eff6ff);
   color: var(--color-blue-700, #1d4ed8);
 }
 
-.llselect-item-focused:hover {
+.llselect-popup-list-row-focused:hover {
   background-color: var(--color-blue-100, #dbeafe);
   color: var(--color-blue-700, #1d4ed8);
 }
 
-.llselect-item[aria-selected='true'] {
+.llselect-popup-list-row[aria-selected='true'] {
   font-weight: 600;
   color: var(--color-blue-600, #2563eb);
 }
@@ -171,18 +171,18 @@
 
 /* --- dividers around the command rows --------------------------- */
 /* The choose-all row and the action rows form one block above the items and
-   one below; they carry .llselect-item too, so hover / focused / disabled
+   one below; they carry .llselect-popup-list-row too, so hover / focused / disabled
    styling comes from there. Exactly one line marks each block's edge with
    the items, drawn as the next element's border-top through sibling
    combinators (`:has` is above the browser floor). No line inside a block:
    choose-all followed by a command row reads as one group, like the header
    blocks of ng-select, Element Plus and Vuetify's select-all recipe. */
 
-.llselect-choose-all-row + .llselect-item:not(.llselect-popup-list-action-row),
+.llselect-choose-all-row + .llselect-popup-list-row:not(.llselect-popup-list-action-row),
 .llselect-choose-all-row + .llselect-group,
-.llselect-popup-list-action-row + .llselect-item:not(.llselect-popup-list-action-row),
+.llselect-popup-list-action-row + .llselect-popup-list-row:not(.llselect-popup-list-action-row),
 .llselect-popup-list-action-row + .llselect-group,
-.llselect-item:not(.llselect-popup-list-action-row):not(.llselect-choose-all-row) + .llselect-popup-list-action-row,
+.llselect-popup-list-row:not(.llselect-popup-list-action-row):not(.llselect-choose-all-row) + .llselect-popup-list-action-row,
 .llselect-group + .llselect-popup-list-action-row {
   border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
@@ -237,12 +237,12 @@
   cursor: not-allowed;
 }
 
-.llselect-item-disabled {
+.llselect-popup-list-row-disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
-.llselect-item-disabled:hover {
+.llselect-popup-list-row-disabled:hover {
   background: none;
 }
 

@@ -87,7 +87,7 @@ selClearable.setChosenItem('Japan')
 //#endregion
 
 //#region 11.1
-// createItemContentElFn fills each option's VISIBLE content (colored icon +
+// createPopupListItemContentElFn fills each option's VISIBLE content (colored icon +
 // label), no subclass. The library owns the option element + aria: it pins each
 // option's aria-label to itemToString (the icon never reaches a screen reader),
 // so you write zero aria-*. There is no auto-projection - the trigger mirrors
@@ -111,7 +111,7 @@ const selRichSingle = new LLSelectSingle(
     placeholder: 'Pick a language',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (lang) => lang.name,      // accessible name + search text
-    createItemContentElFn: createLanguageRowEl,         // visible content in the list
+    createPopupListItemContentElFn: createLanguageRowEl,         // visible content in the list
     createTriggerContentElFn: (ctx) => ctx.chosenItem ? createLanguageRowEl(ctx.chosenItem) : null,
     onChange: (v) => { outRichSingle.textContent = 'chosen: ' + (v ? v.name : '(none)') },
   }
@@ -274,7 +274,7 @@ selMulti.setItems(COUNTRIES)
 //#endregion
 
 //#region 5.4
-// Settings path: createItemContentElFn renders checkbox + item text; the public
+// Settings path: createPopupListItemContentElFn renders checkbox + item text; the public
 // isChosen() supplies the state. The fn only runs on render (after
 // construction), so the self-reference is safe. Subclass equivalent: 13.1.
 const outMultiCheckbox = document.getElementById('out-multi-checkbox')
@@ -284,7 +284,7 @@ selMultiCheckbox = new LLSelectMultiple(
   {
   ariaLabel: 'Pick countries (checkboxes)',
     placeholder: 'Pick countries (checkboxes)',
-    createItemContentElFn: (item) => {
+    createPopupListItemContentElFn: (item) => {
       const row = document.createElement('span')
       row.className = 'lang-row' // inline-flex + gap (demo CSS)
       row.append(createOutlinedCheckboxSvgEl({ state: selMultiCheckbox.isChosen(item) ? 'checked' : 'unchecked' }), item)
@@ -299,7 +299,7 @@ selMultiCheckbox.setItems(COUNTRIES)
 //#endregion
 
 //#region 11.2
-// Same createItemContentElFn, now on a multiple. The library adds aria-selected
+// Same createPopupListItemContentElFn, now on a multiple. The library adds aria-selected
 // to each option element on top of the auto aria-label, so AT announces e.g.
 // "Python, selected" while the row shows the mdi icon. Reuses createLanguageRowEl (11.1).
 const outRichMulti = document.getElementById('out-rich-multi')
@@ -310,7 +310,7 @@ const selRichMulti = new LLSelectMultiple(
     placeholder: 'Pick languages',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (lang) => lang.name,
-    createItemContentElFn: createLanguageRowEl,
+    createPopupListItemContentElFn: createLanguageRowEl,
     onChange: (chosen) => {
       outRichMulti.textContent = 'chosen: ' + chosen.map((l) => l.name).join(', ')
     },
@@ -344,8 +344,8 @@ selLongWrap.setChosenItem(LONG_NAMES[0])  // preselect the longest entry so trig
 //    deliberately does NOT add `title` automatically, so users can plug in
 //    Tippy / Floating UI / their own tooltip lib without conflict.)
 class EllipsisSingle extends LLSelectSingle {
-  createItemEl(item, index) {
-    const el = super.createItemEl(item, index)
+  createPopupListItemEl(item, index) {
+    const el = super.createPopupListItemEl(item, index)
     el.title = this.itemToString(item)
     return el
   }
@@ -425,7 +425,7 @@ selSearchMulti = new LLSelectMultiple(
   ariaLabel: 'Pick countries',
     placeholder: 'Pick countries',
     filterable: true,
-    createItemContentElFn: (item) => {
+    createPopupListItemContentElFn: (item) => {
       const row = document.createElement('span')
       row.className = 'lang-row'
       row.append(createOutlinedCheckboxSvgEl({ state: selSearchMulti.isChosen(item) ? 'checked' : 'unchecked' }), item)
@@ -473,7 +473,7 @@ selSearchHighlight = new LLSelectSingle(
   ariaLabel: 'Pick a country',
     placeholder: 'Pick a country',
     filterable: true,
-    createItemContentElFn: (item) => createHighlightedTextEl(item, selSearchHighlight.getFilterQuery()),
+    createPopupListItemContentElFn: (item) => createHighlightedTextEl(item, selSearchHighlight.getFilterQuery()),
     onChange: (v) => { outSearchHighlight.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
@@ -533,7 +533,7 @@ document.getElementById('btn-toggle-all')
 // triggerDisplay: 'tags' shows each chosen item as a removable chip. The x
 // button removes it (toggleItem); the library owns the chip + x + aria +
 // tabindex. Composes with filterable. createTagContentElFn (unused here) would
-// fill each chip's content, mirroring createItemContentElFn; createTagRemoveButtonContentElFn
+// fill each chip's content, mirroring createPopupListItemContentElFn; createTagRemoveButtonContentElFn
 // likewise swaps the remove-button icon, mirroring createTriggerClearButtonContentElFn.
 const outTags = document.getElementById('out-tags')
 const selTags = new LLSelectMultiple(
@@ -569,7 +569,7 @@ selChooseAll = new LLSelectMultiple(
     placeholder: 'Pick countries',
     filterable: true,
     chooseAllRow: true,
-    createItemContentElFn: (item) => {
+    createPopupListItemContentElFn: (item) => {
       const row = document.createElement('span')
       row.className = 'lang-row'
       row.append(createOutlinedCheckboxSvgEl({ state: selChooseAll.isChosen(item) ? 'checked' : 'unchecked' }), item)
@@ -605,7 +605,7 @@ selFilledCheckbox = new LLSelectMultiple(
     placeholder: 'Pick countries',
     filterable: true,
     chooseAllRow: true,
-    createItemContentElFn: (item) => {
+    createPopupListItemContentElFn: (item) => {
       const row = document.createElement('span')
       row.className = 'lang-row'
       row.append(createFilledCheckboxSvgEl({ state: selFilledCheckbox.isChosen(item) ? 'checked' : 'unchecked' }), item)
@@ -667,11 +667,11 @@ const PRODUCTS = [
   { name: 'Mocha', stock: 5 },
 ]
 const outDisItems = document.getElementById('out-disabled-items')
-// Text via itemToStringFn (no subclass). The createItemEl subclass is the
+// Text via itemToStringFn (no subclass). The createPopupListItemEl subclass is the
 // "escape hatch" - full element control - just to attach a why-disabled title.
 class ProductSelect extends LLSelectSingle {
-  createItemEl(p, i) {
-    const el = super.createItemEl(p, i)
+  createPopupListItemEl(p, i) {
+    const el = super.createPopupListItemEl(p, i)
     if (this.isItemEffectivelyDisabled(p)) { el.setAttribute('title', `${p.name} is out of stock`) }
     return el
   }
@@ -790,7 +790,7 @@ selGroupDisabled.setItems(GROUPED_FOODS)
 //#endregion
 
 //#region 11.3
-// Rich group label via createGroupLabelContentElFn (mirrors createItemContentElFn):
+// Rich group label via createGroupLabelContentElFn (mirrors createPopupListItemContentElFn):
 // an icon + a live count badge. itemsInGroup gives the group's items, so the
 // count needs no external bookkeeping. The label's accessible name stays the
 // plain groupKeyToString; the icon is aria-hidden.
@@ -837,7 +837,7 @@ const selTagIcons = new LLSelectMultiple(
     triggerDisplay: 'tags',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (lang) => lang.name,
-    createItemContentElFn: createLanguageRowEl,
+    createPopupListItemContentElFn: createLanguageRowEl,
     createTagContentElFn: createLanguageRowEl,
     createTagRemoveButtonContentElFn: () => {
       const i = document.createElement('i')
@@ -877,7 +877,7 @@ const selUserHints = new LLSelectSingle(
     filterable: true,
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: (u) => u.name,
-    createItemContentElFn: createUserRowEl,
+    createPopupListItemContentElFn: createUserRowEl,
     onChange: (v) => { outUserHints.textContent = 'chosen: ' + (v ? v.name : '(none)') },
   }
 )
@@ -895,7 +895,7 @@ selUserHints.setItems(USERS)
 // chosen row gets the library's own createCheckmarkSvgEl at its right
 // edge - reading state here is safe because rows re-render on chosen
 // changes, even while the popup is open (setChosenItem replaces the
-// affected rows; see createItemContentElFn's docstring). The chosen tint
+// affected rows; see createPopupListItemContentElFn's docstring). The chosen tint
 // covers the WHOLE trigger, like the native control: onChange paints the
 // public triggerEl - background from the tint, text + border from the
 // darkened same-hue shade. The mirrored trigger row itself stays untinted
@@ -951,7 +951,7 @@ const selLangTinted = new LLSelectSingle(
     placeholder: 'Pick a language',
     compareFn: (a, b) => a.name === b.name,
     itemToStringFn: (lang) => lang.name,
-    createItemContentElFn: createTintedLanguageRowEl,
+    createPopupListItemContentElFn: createTintedLanguageRowEl,
     createTriggerContentElFn: (ctx) => ctx.chosenItem ? createLanguageRowEl(ctx.chosenItem) : null,
     onChange: (v) => {
       const t = selLangTinted.triggerEl
@@ -982,13 +982,13 @@ labelDemoSel.setItems(['Apple', 'Banana', 'Cherry', 'Durian'])
 
 // --- Inject demo snippets into <pre data-demo="X"><code></code></pre> -----
 //#region 13.1
-// Subclass equivalent of 5.4: override createItemEl and prepend the checkbox
+// Subclass equivalent of 5.4: override createPopupListItemEl and prepend the checkbox
 // to the option element itself. Not required (5.4 reaches the same result
 // with a setting) and not faster - subclass when you need the option element
 // itself or protected state (see 6.4 / 9.1).
 class CheckboxMultiSelect extends LLSelectMultiple {
-  createItemEl(item, index) {
-    const el = super.createItemEl(item, index)  // sets text + role + aria-selected
+  createPopupListItemEl(item, index) {
+    const el = super.createPopupListItemEl(item, index)  // sets text + role + aria-selected
     el.prepend(createOutlinedCheckboxSvgEl({ state: this.isChosen(item) ? 'checked' : 'unchecked' }))
     return el
   }
@@ -1118,7 +1118,7 @@ const selHeaderColumns = new LLSelectSingle(
     filterable: true,
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: (u) => u.name,
-    createItemContentElFn: createUserColumnsEl,
+    createPopupListItemContentElFn: createUserColumnsEl,
     createPopupHeaderContentElFn: () => {
       const head = document.createElement('span')
       head.className = 'user-row'
@@ -1187,7 +1187,7 @@ const selHeaderCommands = new LLSelectMultiple(
       // ctx carries the two things that are safe to read here: the theme's
       // class names and the translation pack.
       for (const row of [headerSelectAllRow, headerRestoreRow]) {
-        row.className = 'popup-row-button ' + ctx.classIdMap.itemClass
+        row.className = 'popup-row-button ' + ctx.classIdMap.popupListRowClass
       }
       const header = document.createElement('div')
       header.append(headerSelectAllRow, headerRestoreRow)
@@ -1216,7 +1216,7 @@ function writeHeaderCommands() {
   headerSelectAllRow.textContent = selHeaderCommands.getUiTranslationPack().chooseAllRowText(chosen.length, total)
   const isDefault = chosen.length === HEADER_DEFAULTS.length && HEADER_DEFAULTS.every((c) => chosen.includes(c))
   headerRestoreRow.setAttribute('aria-disabled', String(isDefault))
-  headerRestoreRow.classList.toggle(selHeaderCommands.classIdMap.itemDisabledClass, isDefault) // the theme's disabled look
+  headerRestoreRow.classList.toggle(selHeaderCommands.classIdMap.popupListRowDisabledClass, isDefault) // the theme's disabled look
 }
 selHeaderCommands.setItems(COUNTRIES)
 selHeaderCommands.setChosenItems(HEADER_DEFAULTS)
@@ -1448,7 +1448,7 @@ selRtlCheckboxes = new LLSelectMultiple(
   ariaLabel: 'RTL checkboxes',
     chooseAllRow: true,
     uiTranslationPack: ar,
-    createItemContentElFn: (item) => {
+    createPopupListItemContentElFn: (item) => {
       const row = document.createElement('span')
       row.className = 'lang-row'
       row.append(createOutlinedCheckboxSvgEl({ state: selRtlCheckboxes.isChosen(item) ? 'checked' : 'unchecked' }), item)

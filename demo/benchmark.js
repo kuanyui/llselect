@@ -156,7 +156,7 @@ const ADAPTERS = {
       // otherwise it would be doing less per-selection work than they do.
       if (opts.multi) { o.triggerDisplay = 'tags' }
       if (opts.custom) {
-        o.createItemContentElFn = (it) => iconSpan(it)
+        o.createPopupListItemContentElFn = (it) => iconSpan(it)
         // If list items carry an icon, the chosen display must carry it too:
         // the tags in multi, the trigger content in single.
         if (opts.multi) { o.createTagContentElFn = (it) => iconSpan(it) } else { o.createTriggerContentElFn = (ctx) => (ctx.chosenItem == null ? null : iconSpan(ctx.chosenItem)) }
@@ -286,8 +286,8 @@ const DRIVER = {
   llselect: {
     open: (h) => h.inst.open(), close: (h) => h.inst.close(),
     searchInput: (h) => h.mount.querySelector('input'),
-    optionUnselected: (h) => h.mount.querySelector('.llselect-item[aria-selected="false"]:not([data-chosen-state])'),
-    optionSelected: (h) => h.mount.querySelector('.llselect-item[aria-selected="true"]:not([data-chosen-state])'),
+    optionUnselected: (h) => h.mount.querySelector('.llselect-popup-list-row[aria-selected="false"]:not([data-chosen-state])'),
+    optionSelected: (h) => h.mount.querySelector('.llselect-popup-list-row[aria-selected="true"]:not([data-chosen-state])'),
     tagRemove: (h) => h.mount.querySelector('.llselect-tag-remove-button'),
     count: (h) => h.inst.getChosenItems().length,
   },

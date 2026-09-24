@@ -198,8 +198,8 @@
     if (attrs.llFilterable) { settings.filterable = scope.$eval(attrs.llFilterable) }
     if (attrs.llPopupWidthPolicy) { settings.popupWidthPolicy = evalEnumAttr(scope, attrs, 'llPopupWidthPolicy') }
     if (attrs.llArrow) { arrow = attrs.llArrow }
-    var itemContentFn = evalFnAttr(scope, attrs, 'llItemContentFn')
-    if (itemContentFn) { settings.createItemContentElFn = itemContentFn }
+    var itemContentFn = evalFnAttr(scope, attrs, 'llPopupListItemContentFn')
+    if (itemContentFn) { settings.createPopupListItemContentElFn = itemContentFn }
     var filterFn = evalFnAttr(scope, attrs, 'llFilterFn')
     if (filterFn) { settings.filterFn = filterFn }
     var triggerContentFn = evalFnAttr(scope, attrs, 'llTriggerContentFn')
@@ -267,7 +267,7 @@
    * while a plain model write stays programmatic. The core's own descriptor
    * passes nothing; this argument is wrapper-only. textFn / disabledFn /
    * createContentElFn run outside any digest, per render, like
-   * ll-item-content-fn, and receive nothing.
+   * ll-popup-list-item-content-fn, and receive nothing.
    * @param {() => object} getSel - late-bound: the instance exists only after
    *   the settings are built
    * @returns {Array | null}
@@ -301,14 +301,14 @@
   /**
    * ll-highlight resolves the config default then the attribute, like
    * filterable. Only the DEFAULT item text can be wrapped - a custom
-   * ll-item-content-fn owns its whole content, so combining the two is a
+   * ll-popup-list-item-content-fn owns its whole content, so combining the two is a
    * conflict, not a merge.
    */
   function resolveHighlight(scope, attrs, config, settings) {
     var highlight = !!config.highlight
     if (attrs.llHighlight) { highlight = !!scope.$eval(attrs.llHighlight) }
-    if (highlight && settings.createItemContentElFn) {
-      throw new Error('llselect-angularjs: ll-highlight wraps the default item text; with ll-item-content-fn call llselect.createHighlightedTextEl in your own fn instead')
+    if (highlight && settings.createPopupListItemContentElFn) {
+      throw new Error('llselect-angularjs: ll-highlight wraps the default item text; with ll-popup-list-item-content-fn call llselect.createHighlightedTextEl in your own fn instead')
     }
     return highlight
   }
@@ -435,7 +435,7 @@
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
           if (resolveHighlight(scope, attrs, llselectConfig, settings)) {
-            settings.createItemContentElFn = highlightedTextFn(settings, function () { return sel })
+            settings.createPopupListItemContentElFn = highlightedTextFn(settings, function () { return sel })
           }
 
           var gate = makeWriteBackGate()
@@ -505,12 +505,12 @@
           // Core ships no icons; per item its answer is the subclass recipe
           // (demo 5.4 / 5.5), and this package's answer is a default. Rows
           // render only after construction, so reading `sel` here is safe.
-          // An ll-item-content-fn composes: its element renders beside the
+          // An ll-popup-list-item-content-fn composes: its element renders beside the
           // checkbox (null falls back to the label text); opting out of
           // checkboxes hands it the whole row.
           var checkboxes = attrs.llCheckboxes ? scope.$eval(attrs.llCheckboxes) : true
           if (checkboxes) {
-            var userContentFn = settings.createItemContentElFn || null
+            var userContentFn = settings.createPopupListItemContentElFn || null
             var checkboxRowEl = function (state, contentNode) {
               var row = document.createElement('span')
               row.style.display = 'inline-flex'
@@ -520,7 +520,7 @@
               row.appendChild(contentNode)
               return row
             }
-            settings.createItemContentElFn = function (item) {
+            settings.createPopupListItemContentElFn = function (item) {
               var content = userContentFn && userContentFn(item)
               return checkboxRowEl(sel && sel.isChosen(item) ? 'checked' : 'unchecked',
                 content || (highlightFn ? highlightFn(item) : document.createTextNode(settings.itemToStringFn(item))))
@@ -529,7 +529,7 @@
               return checkboxRowEl(chosenState, document.createTextNode(sel.getUiTranslationPack().chooseAllRowText(chosenCount, totalCount)))
             }
           } else if (highlightFn) {
-            settings.createItemContentElFn = highlightFn
+            settings.createPopupListItemContentElFn = highlightFn
           }
 
           var gate = makeWriteBackGate()

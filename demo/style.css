@@ -324,7 +324,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 
 /* #region 13.1 */
 /* align the subclass-prepended checkbox with the label */
-#mount-subclass-checkbox .llselect-item {
+#mount-subclass-checkbox .llselect-popup-list-row {
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -360,7 +360,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
    (padded inline) can paint the full option; a smaller padding would leave
    an untinted ring, but negative margins on the row would overflow under
    themes with smaller item padding. */
-.lang-tinted .llselect-item { padding: 0; }
+.lang-tinted .llselect-popup-list-row { padding: 0; }
 /* #endregion */
 
 /* #region 6.2 6.3 6.4 */
@@ -376,7 +376,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 
 /* #region 6.4 */
 /* ellipsis opt-in for long items - the library never applies this */
-#mount-long-ellipsis .llselect-item {
+#mount-long-ellipsis .llselect-popup-list-row {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -427,7 +427,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .tree-caret:hover { background: rgba(36, 86, 166, 0.18); color: #2456a6; }
 /* The single chevron points right (collapsed); rotate it down when the
    branch row says expanded. */
-.llselect-item[data-tree-state='expanded'] .tree-caret { transform: rotate(90deg); }
+.llselect-popup-list-row[data-tree-state='expanded'] .tree-caret { transform: rotate(90deg); }
 .tree-caret-spacer { display: inline-block; width: 1.6em; }
 /* The classic file-manager palette, so branches read at a glance. */
 .tree-folder { color: #fbc02d; }

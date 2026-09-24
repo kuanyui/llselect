@@ -14,7 +14,7 @@
  *   it as-is and does not put the text inside for you.
  * - If a custom `filterFn` drives your matching, the helper cannot know its
  *   match ranges: it always marks plain substring occurrences.
- * - Intended for `createItemContentElFn` / `createItemContentEl`: they re-run
+ * - Intended for `createPopupListItemContentElFn` / `createPopupListItemContentEl`: they re-run
  *   on every filter keystroke, so the marks stay in sync with the query. The
  *   option's accessible name is unaffected (it comes from `itemToString`).
  * - Rare edge: if lower-casing changes the string's length (a Unicode

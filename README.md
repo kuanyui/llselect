@@ -264,7 +264,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Grouping (optgroup)                  | `itemToGroupKeyFn`, `groupKeyToStringFn`, `groupDisabledFn`                                                               |
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `chooseAllRow`, `hideChosenRows`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
 | Popup width                          | `popupWidthPolicy: 'fit-content' \| 'match-trigger'` (default `'fit-content'` - grows to content like a native select)   |
-| Rich rendering without subclassing   | `createItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
+| Rich rendering without subclassing   | `createPopupListItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
 | Action rows: commands in the list    | `popupListLeadingActionRows`, `popupListTrailingActionRows` - option rows in the arrow-key ring; see Action rows |
 | Pinned rows                          | `popupListLeadingRowsPinned`, `popupListTrailingRowsPinned` - the choose-all row and the command rows stay in view while the items scroll |
 | Popup header / footer, pinned        | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update; see Popup header / footer |
@@ -329,7 +329,7 @@ A complete worked subclass, in TypeScript with typed subclass settings (the clas
 | Trigger content (e.g. tag chips) | `createTriggerContentElFn`      |
 | Disable individual items         | `itemDisabledFn`                |
 | Search matching                  | `filterFn`                      |
-| Highlight filter matches in rows | `createItemContentElFn` + the `createHighlightedTextEl` helper |
+| Highlight filter matches in rows | `createPopupListItemContentElFn` + the `createHighlightedTextEl` helper |
 | Equality for object items        | `compareFn`                     |
 | Dropdown arrow                   | `createTriggerArrowContentElFn` |
 | Events                           | `onChange`, `onOpen`, `onClose`, `onFilterQueryChange` |
@@ -351,7 +351,7 @@ Settings are frozen after construction. The library re-applies nothing on its ow
 
 #### Highlight what the filter matched
 
-The exported helper `createHighlightedTextEl(text, query)` wraps every match of `query` in a `<mark>` element. Pair it with `createItemContentElFn`, which re-runs on every filter keystroke:
+The exported helper `createHighlightedTextEl(text, query)` wraps every match of `query` in a `<mark>` element. Pair it with `createPopupListItemContentElFn`, which re-runs on every filter keystroke:
 
 ```js
 import { LLSelectSingle, createHighlightedTextEl } from '@llselect/core'
@@ -359,7 +359,7 @@ import { LLSelectSingle, createHighlightedTextEl } from '@llselect/core'
 let sel
 sel = new LLSelectSingle(el, {
   filterable: true,
-  createItemContentElFn: (item) => createHighlightedTextEl(item, sel.getFilterQuery()),
+  createPopupListItemContentElFn: (item) => createHighlightedTextEl(item, sel.getFilterQuery()),
 })
 ```
 
@@ -437,7 +437,7 @@ Subclass only when settings cannot express it:
 
 1. **A new select kind** - new public API / state / interaction (e.g. a TreeSelect).
 2. **A framework wrapper** - e.g. `class VueLLSelect extends LLSelectSingle` for lifecycle glue (call `destroy()` on unmount). This is the main reason llselect is "low-level".
-3. **Core behavior with no setting** - e.g. replace `onItemActivated` semantics, or take full control of the item element via `createItemEl` (rich HTML, icons).
+3. **Core behavior with no setting** - e.g. replace `onPopupListItemActivated` semantics, or take full control of the item element via `createPopupListItemEl` (rich HTML, icons).
 
 How the two layers coexist: every customization point is a `protected` method whose default reads its `*Fn` setting. Overriding the method replaces that default - your override wins, plain OO, no hidden precedence. Rationale: [docs/llm/DESIGN.md](docs/llm/DESIGN.md).
 

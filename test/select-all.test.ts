@@ -88,7 +88,7 @@ test('keyboard ring: opens ON the row when nothing is chosen; ArrowDown/Up + Hom
   const r = row(sel)!
   // Nothing chosen -> the choose-all row IS the first option -> initial focus.
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), r.id)
-  assert.ok(r.classList.contains(sel.classIdMap.itemFocusedClass))
+  assert.ok(r.classList.contains(sel.classIdMap.popupListRowFocusedClass))
   fireKey(sel.triggerEl, 'ArrowDown') // down to the first item
   assert.notEqual(sel.triggerEl.getAttribute('aria-activedescendant'), r.id)
   fireKey(sel.triggerEl, 'ArrowUp') // back up to the row

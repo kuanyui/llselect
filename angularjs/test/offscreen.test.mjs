@@ -30,7 +30,7 @@ test('an on-screen trigger opens and renders rows', () => {
   const trigger = a.$('.llselect-trigger')
   withRect(trigger, { top: 10, left: 10, bottom: 40, right: 210 })
   trigger.click()
-  assert.equal(a.$$('.llselect-item').length, 2)
+  assert.equal(a.$$('.llselect-popup-list-row').length, 2)
 })
 
 test('an off-screen trigger does NOT open - the trap the benchmark stage fell into', () => {
@@ -39,6 +39,6 @@ test('an off-screen trigger does NOT open - the trap the benchmark stage fell in
   // What `position: absolute; left: -9999px` actually produces.
   withRect(trigger, { top: 0, left: -9999, bottom: 30, right: -9699 })
   trigger.click()
-  assert.equal(a.$$('.llselect-item').length, 0,
+  assert.equal(a.$$('.llselect-popup-list-row').length, 0,
     'llselect opened an off-screen trigger; if this changed, the benchmark stage rules can relax')
 })

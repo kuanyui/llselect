@@ -167,7 +167,7 @@ test('focusInitial on open focuses first chosen item if any', () => {
   sel.setItems(['a', 'b', 'c'])
   sel.toggleItem('b')
   sel.open()
-  const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)
+  const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.popupListRowFocusedClass}`)
   assert.equal(focused?.textContent, 'b')
 })
 
@@ -175,7 +175,7 @@ test('focusInitial on open with empty chosen focuses first item', () => {
   const sel = new LLSelectMultiple<string>(mount())
   sel.setItems(['x', 'y'])
   sel.open()
-  const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)
+  const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.popupListRowFocusedClass}`)
   assert.equal(focused?.textContent, 'x')
 })
 

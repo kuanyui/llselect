@@ -56,7 +56,7 @@ test('name + required work here too', () => {
 test('the transcluded template renders per row', () => {
   const a = app()
   a.$('ui-llselect .llselect-trigger').click()
-  const rows = a.$$('ui-llselect .llselect-item')
+  const rows = a.$$('ui-llselect .llselect-popup-list-row')
   assert.equal(rows.length, 3)
   assert.ok(rows[0].textContent.includes('Alice'), `first row was "${rows[0].textContent}"`)
 })
@@ -69,7 +69,7 @@ test('rows are interpolated BEFORE llselect measures them (no {{ }} flicker)', (
   // check placed after any digest passes even with the fix removed.
   const a = app()
   a.$('ui-llselect .llselect-trigger').click()
-  const texts = a.$$('ui-llselect .llselect-item').map((r) => r.textContent)
+  const texts = a.$$('ui-llselect .llselect-popup-list-row').map((r) => r.textContent)
   assert.ok(texts.length > 0, 'no rows rendered')
   const raw = texts.filter((t) => t.includes('{{'))
   assert.deepEqual(raw, [], 'rows were still uninterpolated when llselect measured them')
@@ -78,7 +78,7 @@ test('rows are interpolated BEFORE llselect measures them (no {{ }} flicker)', (
 test('ui-disable-choice reaches llselect', () => {
   const a = app()
   a.$('ui-llselect .llselect-trigger').click()
-  assert.equal(a.$$('ui-llselect .llselect-item-disabled').length, 1, 'expected Bob disabled')
+  assert.equal(a.$$('ui-llselect .llselect-popup-list-row-disabled').length, 1, 'expected Bob disabled')
 })
 
 test('ll-item-text becomes the option accessible name', () => {
@@ -87,13 +87,13 @@ test('ll-item-text becomes the option accessible name', () => {
   // announce as [object Object].
   const a = app()
   a.$('ui-llselect .llselect-trigger').click()
-  assert.equal(a.$('ui-llselect .llselect-item').getAttribute('aria-label'), 'Alice')
+  assert.equal(a.$('ui-llselect .llselect-popup-list-row').getAttribute('aria-label'), 'Alice')
 })
 
 test('choosing a row writes the model and renders the match template', () => {
   const a = app()
   a.$('ui-llselect .llselect-trigger').click()
-  a.$$('ui-llselect .llselect-item')[0].click()
+  a.$$('ui-llselect .llselect-popup-list-row')[0].click()
   assert.equal(a.scope.vm.person.name, 'Alice')
   assert.equal(a.text('ui-llselect .llselect-trigger-content'), 'Alice')
 })
@@ -114,7 +114,7 @@ test('ng-model keeps the parent scope (no scope: true shadowing)', () => {
     controller: function () { this.users = USERS },
   })
   a.$('ui-llselect .llselect-trigger').click()
-  a.$$('ui-llselect .llselect-item')[0].click()
+  a.$$('ui-llselect .llselect-popup-list-row')[0].click()
   assert.equal(a.scope.plain?.name, 'Alice', 'a non-dotted ng-model was shadowed onto a child scope')
 })
 
@@ -132,7 +132,7 @@ test('a repeat expression without ll-item-text still names the option, via Strin
     controller: function () { this.strings = ['a', 'b'] },
   })
   a.$('ui-llselect .llselect-trigger').click()
-  assert.equal(a.$('ui-llselect .llselect-item').getAttribute('aria-label'), 'a')
+  assert.equal(a.$('ui-llselect .llselect-popup-list-row').getAttribute('aria-label'), 'a')
 })
 
 test('a missing <ui-llselect-choices> is reported, and no widget is left behind', () => {
@@ -157,7 +157,7 @@ test('disabled aligns with ui-select: ng-disabled, static literal, and interpola
   a.scope.$apply(() => { a.scope.vm.locked = true })
   assert.equal(a.$('.llselect-trigger').getAttribute('data-disabled'), 'true', 'ng-disabled did not reach setDisabled')
   a.$('.llselect-trigger').click()
-  assert.equal(a.$$('.llselect-item').length, 0, 'a disabled bridge widget must not open')
+  assert.equal(a.$$('.llselect-popup-list-row').length, 0, 'a disabled bridge widget must not open')
   a.scope.$apply(() => { a.scope.vm.locked = false })
   assert.equal(a.$('.llselect-trigger').getAttribute('data-disabled'), 'false', 'must re-enable')
 
@@ -230,7 +230,7 @@ test('an empty <ui-llselect-choices> renders rows as plain ll-item-text text', (
   })
   assert.deepEqual(a.errors, [])
   a.$('.llselect-trigger').click()
-  const rows = a.$$('.llselect-item')
+  const rows = a.$$('.llselect-popup-list-row')
   assert.equal(rows.length, USERS.length)
   assert.equal(rows[0].textContent, 'Alice') // the ll-item-text string, no template needed
 })
@@ -253,8 +253,8 @@ test('a bare text-node template (no element) works, as in ui-select', () => {
   })
   assert.deepEqual(a.errors, [])
   a.$('.llselect-trigger').click()
-  assert.equal(a.$$('.llselect-item')[0].textContent, 'Alice (admin)')
-  assert.equal(a.$$('.llselect-item')[0].getAttribute('aria-label'), 'Alice') // the string channel stays ll-item-text
+  assert.equal(a.$$('.llselect-popup-list-row')[0].textContent, 'Alice (admin)')
+  assert.equal(a.$$('.llselect-popup-list-row')[0].getAttribute('aria-label'), 'Alice') // the string channel stays ll-item-text
 })
 
 function multiApp(extraAttrs = '') {
@@ -284,18 +284,18 @@ test('multiple follows remove-selected: chosen rows leave the dropdown by defaul
   const a = multiApp()
   assert.deepEqual(a.errors, [])
   a.$('ui-llselect .llselect-trigger').click()
-  assert.equal(a.$$('ui-llselect .llselect-item').length, 3)
-  a.$$('ui-llselect .llselect-item')[0].click() // chooses Alice
+  assert.equal(a.$$('ui-llselect .llselect-popup-list-row').length, 3)
+  a.$$('ui-llselect .llselect-popup-list-row')[0].click() // chooses Alice
   assert.equal(a.scope.vm.people[0].name, 'Alice')
-  assert.deepEqual(a.$$('ui-llselect .llselect-item').map((el) => el.textContent), ['Bob', 'Carol'])
+  assert.deepEqual(a.$$('ui-llselect .llselect-popup-list-row').map((el) => el.textContent), ['Bob', 'Carol'])
 })
 
 test('remove-selected="false" keeps chosen rows listed', () => {
   const a = multiApp('remove-selected="false"')
   a.$('ui-llselect .llselect-trigger').click()
-  a.$$('ui-llselect .llselect-item')[0].click()
+  a.$$('ui-llselect .llselect-popup-list-row')[0].click()
   assert.equal(a.scope.vm.people.length, 1)
-  assert.equal(a.$$('ui-llselect .llselect-item').length, 3)
+  assert.equal(a.$$('ui-llselect .llselect-popup-list-row').length, 3)
 })
 
 test('allow-clear on a multiple renders a working clear button - the documented deviation', () => {
@@ -318,13 +318,13 @@ test('allow-clear on a multiple renders a working clear button - the documented 
   })
   assert.deepEqual(a.errors, [])
   a.$('ui-llselect .llselect-trigger').click()
-  a.$$('ui-llselect .llselect-item')[0].click()
+  a.$$('ui-llselect .llselect-popup-list-row')[0].click()
   assert.equal(a.scope.vm.people.length, 1)
   const clearBtn = a.$('ui-llselect .llselect-trigger-clear-button')
   assert.ok(clearBtn, 'clear button missing')
   clearBtn.click()
   assert.equal(a.scope.vm.people.length, 0)
-  assert.equal(a.$$('ui-llselect .llselect-item').length, 3, 'clearing must relist every row (remove-selected default)')
+  assert.equal(a.$$('ui-llselect .llselect-popup-list-row').length, 3, 'clearing must relist every row (remove-selected default)')
 })
 
 test('aria-label on the host names the field; it wins over title', () => {
@@ -367,12 +367,12 @@ test('$select.search resets when the query is cleared, so rows stop highlighting
   const input = a.$('.llselect-filter-input')
   input.value = 'ali'
   input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
-  assert.equal(a.$('.llselect-item').textContent, 'Alice|ali')
+  assert.equal(a.$('.llselect-popup-list-row').textContent, 'Alice|ali')
   input.value = ''
   input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
   // filterFn is never called for an empty query; only the render-time sync
   // can reset $select.search here. Before it, this still said "Alice|ali".
-  assert.equal(a.$('.llselect-item').textContent, 'Alice|')
+  assert.equal(a.$('.llselect-popup-list-row').textContent, 'Alice|')
 })
 
 test('allow-clear="false" disables and a bare allow-clear enables, like ui-select', () => {
@@ -486,10 +486,10 @@ test('repeated toggles with remove-selected="false" do not leak row scopes', () 
   }
   const cacheSize = () => Object.keys(a.ng.element.cache).length // jqLite's global element-data store
   a.$('ui-llselect .llselect-trigger').click()
-  a.$$('ui-llselect .llselect-item')[0].click() // first toggle creates the chip + row scopes to compare against
+  a.$$('ui-llselect .llselect-popup-list-row')[0].click() // first toggle creates the chip + row scopes to compare against
   const baseline = countScopes()
   const cacheBaseline = cacheSize()
-  for (let i = 0; i < 6; i++) { a.$$('ui-llselect .llselect-item')[0].click() }
+  for (let i = 0; i < 6; i++) { a.$$('ui-llselect .llselect-popup-list-row')[0].click() }
   assert.equal(countScopes(), baseline, 'partial row repaints must free the replaced rows\' scopes')
   assert.equal(cacheSize(), cacheBaseline, 'the replaced rows\' jqLite data must go too (the core removes them natively)')
 })
@@ -513,7 +513,7 @@ test('no track by: a reload with equal-but-fresh objects keeps ONE selection (ui
     controller: function () { this.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }]; this.people = [] },
   })
   a.$('ui-llselect .llselect-trigger').click()
-  a.$$('ui-llselect .llselect-item')[0].click() // choose Alice
+  a.$$('ui-llselect .llselect-popup-list-row')[0].click() // choose Alice
   assert.equal(a.scope.vm.people.length, 1)
   const chosenBefore = a.scope.vm.people[0]
   a.scope.$apply(() => { a.scope.vm.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] })
@@ -524,7 +524,7 @@ test('no track by: a reload with equal-but-fresh objects keeps ONE selection (ui
   // The popup is still open: the equals-equal fresh Alice is the chosen item,
   // so remove-selected keeps her row hidden - only Bob is listed, and no
   // second Alice entry can be added.
-  const texts = a.$$('ui-llselect .llselect-item').map(r => r.textContent.trim())
+  const texts = a.$$('ui-llselect .llselect-popup-list-row').map(r => r.textContent.trim())
   assert.deepEqual(texts, ['Bob'], 'the fresh equal object must stay hidden as the chosen item')
 })
 
@@ -548,12 +548,12 @@ test('single without track by: aria-selected and open-focus survive an equal-obj
   // Choose Bob, NOT the first row: the first row is also focusInitial's
   // fallback, so an identity regression would focus it anyway and the focus
   // assertion would pin nothing.
-  a.$$('ui-llselect .llselect-item')[1].click() // choose Bob; single closes
+  a.$$('ui-llselect .llselect-popup-list-row')[1].click() // choose Bob; single closes
   a.scope.$apply(() => { a.scope.vm.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] })
   a.$('ui-llselect .llselect-trigger').click() // reopen
-  const selected = a.$$('ui-llselect .llselect-item').map(r => r.getAttribute('aria-selected'))
+  const selected = a.$$('ui-llselect .llselect-popup-list-row').map(r => r.getAttribute('aria-selected'))
   assert.deepEqual(selected, ['false', 'true'], 'the equal fresh row must stay marked selected')
-  const focused = a.$('ui-llselect .llselect-item-focused')
+  const focused = a.$('ui-llselect .llselect-popup-list-row-focused')
   assert.ok(focused && focused.textContent.includes('Bob'), 'reopen must focus the chosen row, not the first-row fallback')
 })
 
@@ -574,7 +574,7 @@ test('QUALITY-92: choosing a second item does not re-fire on-select for a NaN al
   })
   assert.deepEqual(a.errors, [])
   a.$('ui-llselect .llselect-trigger').click()
-  a.$$('ui-llselect .llselect-item')[0].click() // chooses 1 (the chosen NaN row is hidden by remove-selected)
+  a.$$('ui-llselect .llselect-popup-list-row')[0].click() // chooses 1 (the chosen NaN row is hidden by remove-selected)
   assert.equal(a.scope.vm.n.length, 2)
   assert.deepEqual(a.scope.vm.picked, [1], 'only the newly chosen item fires on-select; an indexOf diff would also re-fire the NaN')
 })
@@ -618,7 +618,7 @@ test('MEDIUM-93: reloads with chips on screen do not leak trigger scopes (setIte
     return n
   }
   a.$('ui-llselect .llselect-trigger').click()
-  a.$$('ui-llselect .llselect-item')[0].click() // one chip on screen
+  a.$$('ui-llselect .llselect-popup-list-row')[0].click() // one chip on screen
   const cacheSize = () => Object.keys(a.ng.element.cache).length // jqLite's global element-data store
   const reload = () => { a.scope.$apply(() => { a.scope.vm.users = a.scope.vm.users.map((u) => ({ ...u })) }) }
   reload() // equal-but-fresh objects: the chosen reference swaps, the chip rebuilds
@@ -724,8 +724,8 @@ test('config: <ui-llselect> takes popupWidthPolicy, and NOT arrow / filterable /
   assert.ok(input && !input.hasAttribute('hidden'), 'search-enabled defaults to true in ui-select: config filterable must not switch it off')
   input.value = 'bob' // Angular's filter matches every property, so 'al' would also hit `bad: false`
   input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
-  assert.equal(a.$$('ui-llselect .llselect-item mark').length, 0, 'highlight is the row template\'s own filter: config highlight must not mark rows')
-  assert.equal(a.$$('ui-llselect .llselect-item').length, 1, 'the ui-select filter chain must still run')
+  assert.equal(a.$$('ui-llselect .llselect-popup-list-row mark').length, 0, 'highlight is the row template\'s own filter: config highlight must not mark rows')
+  assert.equal(a.$$('ui-llselect .llselect-popup-list-row').length, 1, 'the ui-select filter chain must still run')
 })
 
 test('config uiTranslationPack reaches <ui-llselect multiple>: the tag remove button speaks the pack', () => {
@@ -747,7 +747,7 @@ test('config uiTranslationPack reaches <ui-llselect multiple>: the tag remove bu
   assert.deepEqual(a.errors, [])
   assert.equal(a.$('ui-llselect .llselect-trigger-content').textContent.trim(), 'Bitte auswaehlen')
   a.$('ui-llselect .llselect-trigger').click()
-  a.$$('ui-llselect .llselect-item')[0].click()
+  a.$$('ui-llselect .llselect-popup-list-row')[0].click()
   assert.equal(a.$('ui-llselect .llselect-tag-remove-button').getAttribute('aria-label'), 'Alice entfernen', 'the multiple-only strings must come from the pack too')
 })
 

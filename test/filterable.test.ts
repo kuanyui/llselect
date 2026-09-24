@@ -486,7 +486,7 @@ test('a filter keystroke focuses the first ENABLED match, skipping disabled rows
   const input = filterInput(sel)
   input.value = 'ap'
   input.dispatchEvent(new Event('input', { bubbles: true }))
-  const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)
+  const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.popupListRowFocusedClass}`)
   assert.equal(focused?.textContent, 'apricot', 'the disabled first match must be skipped')
 })
 
@@ -503,11 +503,11 @@ test('the shrink clamp also skips a disabled last row', () => {
   sel.open()
   sel.triggerEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }))
   assert.equal(
-    sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)?.textContent,
+    sel.popupListEl.querySelector(`.${sel.classIdMap.popupListRowFocusedClass}`)?.textContent,
     'banana', 'precondition: End must land on the last row',
   )
   sel.setItems(['ant', 'apple', 'apricot'])
-  const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)
+  const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.popupListRowFocusedClass}`)
   assert.equal(focused?.textContent, 'apple', 'the clamp must seek backward past the disabled new-last row')
 })
 

@@ -73,13 +73,13 @@
         if (bridge) { bridge.releaseTriggerScopes() }
         super.renderTriggerContent()
       }
-      createItemEl(item, index) {
-        // createItemEl calls createItemContentEl synchronously, so the index is
-        // still current when our createItemContentElFn reads it. That is what
+      createPopupListItemEl(item, index) {
+        // createPopupListItemEl calls createPopupListItemContentEl synchronously, so the index is
+        // still current when our createPopupListItemContentElFn reads it. That is what
         // makes $index available to transcluded templates.
         var bridge = BRIDGES.get(this)
         if (bridge) { bridge.rowIndex = index }
-        return super.createItemEl(item, index)
+        return super.createPopupListItemEl(item, index)
       }
       replacePopupListItemElInDom(item) {
         // The single-row repaint path (multi toggle) bypasses renderPopupList,
@@ -332,7 +332,7 @@
         // while the trigger kept showing the choice. Same per-compare cost
         // as ui-select pays; track by avoids it.
         : function (a, b) { return angular.equals(a, b) },
-      createItemContentElFn: function (item) {
+      createPopupListItemContentElFn: function (item) {
         if (!slots.choicesHtml) { return null }
         // Row templates read $select.search (`| highlight:`). filterFn alone
         // cannot keep it current: the library never calls it for an EMPTY

@@ -9,7 +9,7 @@ Each heading is one library. It lists what the benchmark (`demo/benchmark.js` + 
 Tuned only to match the competitors, so it is not doing less work than they do.
 
 - `triggerDisplay: 'tags'` in multi - draws one tag per chosen item, like the competitors, not its lighter count summary.
-- Custom-renderer variant wires the icon into list items AND the chosen display (`createItemContentElFn`, `createTagContentElFn`, `createTriggerContentElFn`).
+- Custom-renderer variant wires the icon into list items AND the chosen display (`createPopupListItemContentElFn`, `createTagContentElFn`, `createTriggerContentElFn`).
 - Filters synchronously (no debounce), so its Filter number is pure work.
 - In-popup unchoose is native: a chosen list item carries `aria-selected="true"` and a click toggles it off. Its popup lives in the mount (not portaled), so selectors are mount-scoped.
 

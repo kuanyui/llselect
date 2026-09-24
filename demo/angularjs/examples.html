@@ -389,10 +389,10 @@
   </section>
 
   <section>
-    <h2>8. Custom item HTML: ll-item-content-fn</h2>
+    <h2>8. Custom item HTML: ll-popup-list-item-content-fn</h2>
     <p>
       An expression evaluating to a function <code>(item) =&gt; HTMLElement | null</code>,
-      passed straight to llselect's <code>createItemContentElFn</code>. It runs
+      passed straight to llselect's <code>createPopupListItemContentElFn</code>. It runs
       per rendered row per render, outside any digest, and the element is never
       <code>$compile</code>d - custom rows with zero per-row scope or watcher.
       The accessible name and filter text stay the item text from
@@ -410,7 +410,7 @@
       makes the trigger show the chosen row - there is no auto-projection.
     </p>
     <div class="demo-row" data-src="8a">
-      <llselect-single ll-aria-label="Language" ng-model="vm.lang" ll-filterable="true" ll-item-content-fn="vm.renderLangRow"
+      <llselect-single ll-aria-label="Language" ng-model="vm.lang" ll-filterable="true" ll-popup-list-item-content-fn="vm.renderLangRow"
         ll-trigger-content-fn="vm.renderLangTrigger"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-single>
@@ -431,7 +431,7 @@
       <template id="lang-row-tpl">
         <span class="lang-row"><i class="mdi" aria-hidden="true"></i><span class="lang-name"></span></span>
       </template>
-      <llselect-multiple ll-aria-label="Languages" ng-model="vm.langsRich" ll-item-content-fn="vm.renderLangRowFromTpl"
+      <llselect-multiple ll-aria-label="Languages" ng-model="vm.langsRich" ll-popup-list-item-content-fn="vm.renderLangRowFromTpl"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
     </div>
@@ -449,7 +449,7 @@
     </p>
     <div class="demo-row" data-src="8c">
       <llselect-single ll-aria-label="User" ng-model="vm.user2" ll-filterable="true" demo-publish-api="vm.userApi"
-        ll-item-content-fn="vm.renderUserRow"
+        ll-popup-list-item-content-fn="vm.renderUserRow"
         ll-options="u.name disable when u.suspended for u in vm.users track by u.id">
       </llselect-single>
     </div>
@@ -466,7 +466,7 @@
     </p>
     <div class="demo-row" data-src="8d">
       <llselect-multiple ll-aria-label="Languages" ng-model="vm.langsTags" ll-trigger-display="'tags'"
-        ll-item-content-fn="vm.renderLangRow" ll-tag-content-fn="vm.renderLangRow"
+        ll-popup-list-item-content-fn="vm.renderLangRow" ll-tag-content-fn="vm.renderLangRow"
         ll-tag-remove-button-content-fn="vm.renderTagRemoveIcon"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-multiple>
@@ -491,7 +491,7 @@
     <div class="demo-row" data-src="8e">
       <llselect-single ll-aria-label="Language" ng-model="vm.langTinted" class="lang-tinted"
         demo-tint-trigger="vm.langTinted"
-        ll-item-content-fn="vm.renderTintedLangRow"
+        ll-popup-list-item-content-fn="vm.renderTintedLangRow"
         ll-trigger-content-fn="vm.renderLangTrigger"
         ll-options="l.name for l in vm.languages track by l.name">
       </llselect-single>
@@ -506,7 +506,7 @@
       <code>ll-highlight="true"</code> wraps each query match in the default
       item text in <code>&lt;mark&gt;</code> (the core
       <code>createHighlightedTextEl</code>); the marks follow the typing.
-      With a custom <code>ll-item-content-fn</code> call the helper yourself,
+      With a custom <code>ll-popup-list-item-content-fn</code> call the helper yourself,
       the way 8c does.
     </p>
     <div class="demo-row" data-src="8f">
@@ -628,7 +628,7 @@
     </p>
     <div class="demo-row" data-src="12b">
       <llselect-single ll-aria-label="User (column headings)" ng-model="vm.userColumns" ll-filterable="true"
-        ll-item-content-fn="vm.renderUserColumns" ll-popup-header-content-fn="vm.userColumnsHeaderEl"
+        ll-popup-list-item-content-fn="vm.renderUserColumns" ll-popup-header-content-fn="vm.userColumnsHeaderEl"
         ll-options="u.name for u in vm.users track by u.id">
       </llselect-single>
     </div>

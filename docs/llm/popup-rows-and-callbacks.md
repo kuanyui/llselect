@@ -5,7 +5,7 @@ This document explains one corner of the API that took fourteen committee rounds
 ## 1. The words
 
 - Instance: the object `new LLSelectSingle(...)` or `new LLSelectMultiple(...)` returns.
-- Settings function: a field of the settings object whose value is a function. Examples: `filterFn`, `createItemContentElFn`, `onOpen`, and the four functions of an action row.
+- Settings function: a field of the settings object whose value is a function. Examples: `filterFn`, `createPopupListItemContentElFn`, `onOpen`, and the four functions of an action row.
 - The closure recipe: `let sel; sel = new LLSelectMultiple(el, { ...functions that read sel... })`. A settings function reaches the instance by reading the outer variable. This is the documented way. It works in every function that runs after `new` returns.
 - Popup: the panel that opens under the trigger.
 - Listbox: the scrolling area inside the popup. The only scroll container. `role="listbox"`.
@@ -104,7 +104,7 @@ Passing the instance to `onOpen`, `onClose`, `onChange` and `onActivate` only wo
 
 ### 4.9 What the header and footer functions get instead
 
-`createPopupHeaderContentElFn` and `createPopupFooterContentElFn` receive `LLSelectConstructionContext`, a read-only object with `classIdMap` and `uiTranslationPack`. Those are the two things that are complete during construction and the two things the one real bug needed (`c65b1cc` wanted `classIdMap.itemClass`). They are the only settings functions the closure can never serve, because the library calls them once and never again. The trigger content functions also run during construction, but they rerun on every render and already receive their own data, so they get nothing new. The name says the one fact a reader must know: this function runs while the instance is under construction.
+`createPopupHeaderContentElFn` and `createPopupFooterContentElFn` receive `LLSelectConstructionContext`, a read-only object with `classIdMap` and `uiTranslationPack`. Those are the two things that are complete during construction and the two things the one real bug needed (`c65b1cc` wanted `classIdMap.popupListRowClass`). They are the only settings functions the closure can never serve, because the library calls them once and never again. The trigger content functions also run during construction, but they rerun on every render and already receive their own data, so they get nothing new. The name says the one fact a reader must know: this function runs while the instance is under construction.
 
 ### 4.10 `this`
 

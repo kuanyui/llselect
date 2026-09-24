@@ -12,14 +12,14 @@
  *   branches. The result is CACHED and invalidated by a version counter -
  *   the same pattern as the core's `hideChosenRows` cache. Deriving a list
  *   per call without a cache is how a subclass ruins performance.
- * - `createItemEl` / `createItemContentEl` overrides: indent by depth, a
+ * - `createPopupListItemEl` / `createPopupListItemContentEl` overrides: indent by depth, a
  *   caret on branch rows (click = expand / collapse), a folder icon that
  *   follows the expand state, and a tri-state checkbox derived from the
  *   leaf descendants. The caret / folder are MDI font icons
  *   (`<i class="mdi mdi-...">`, loaded by the examples page) - swap for
  *   your own icon system when copying. The caret's hit-area and hover
  *   styling live in the demo's style.css (region 13.2); copy that rule too.
- * - `onItemActivated` override: activating a branch toggles its whole leaf
+ * - `onPopupListItemActivated` override: activating a branch toggles its whole leaf
  *   subtree; leaves keep the normal toggle (`super`).
  * - Leaves-only model contract: `setChosenItems` drops branches (the one
  *   entry point every raw array passes through), and `getVisibleEnabledItems` +
@@ -146,9 +146,9 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
   }
 
   /** Branch activation toggles its leaf subtree; a leaf keeps the normal toggle. */
-  protected override onItemActivated(node: LLTreeNode): void {
+  protected override onPopupListItemActivated(node: LLTreeNode): void {
     if (!isBranch(node)) {
-      super.onItemActivated(node)
+      super.onPopupListItemActivated(node)
       // The base repaints only the toggled row, but every ancestor branch
       // derives its tri-state from the leaves - repaint the whole list so
       // those checkboxes stay fresh.
@@ -211,8 +211,8 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
    * Indent by depth; branches get `data-tree-state` (expanded / collapsed)
    * and `data-tree-chosen` (the derived tri-state) hooks for CSS and tests.
    */
-  protected override createItemEl(node: LLTreeNode, index: number): HTMLElement {
-    const el = super.createItemEl(node, index)
+  protected override createPopupListItemEl(node: LLTreeNode, index: number): HTMLElement {
+    const el = super.createPopupListItemEl(node, index)
     // 0.75rem base mirrors the vanilla theme's row padding; the override
     // replaces the theme's padding-inline-start.
     el.style.paddingInlineStart = `${0.75 + (this.depths.get(node) ?? 0) * 1.25}rem`
@@ -229,7 +229,7 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
    * file are MDI font icons (the examples page loads the font; colors in
    * the demo CSS); the checkboxes are the library's inline SVGs.
    */
-  protected override createItemContentEl(node: LLTreeNode): HTMLElement {
+  protected override createPopupListItemContentEl(node: LLTreeNode): HTMLElement {
     const wrap = document.createElement('span')
     wrap.style.display = 'inline-flex'
     wrap.style.alignItems = 'center'

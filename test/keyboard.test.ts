@@ -204,7 +204,7 @@ function fireKey(target: HTMLElement, key: string, altKey = false): KeyboardEven
 }
 
 function focusedLabel(sel: LLSelectSingle<string> | LLSelectMultiple<string>): string | null {
-  const el = sel.popupListEl.querySelector(`.${sel.classIdMap.itemFocusedClass}`)
+  const el = sel.popupListEl.querySelector(`.${sel.classIdMap.popupListRowFocusedClass}`)
   return el ? el.textContent : null
 }
 

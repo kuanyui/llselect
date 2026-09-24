@@ -48,7 +48,7 @@
       markup: '<llselect-single ng-model="picked" ll-filterable="true"' +
         ' ll-options="i.name for i in items track by i.id"></llselect-single>',
       triggerSel: '.llselect-trigger',
-      rowSel: '.llselect-item',
+      rowSel: '.llselect-popup-list-row',
       searchSel: 'input',
     },
     {
@@ -61,7 +61,7 @@
         '<span ng-bind-html="i.name | highlight: $select.search"></span>' +
         '</ui-llselect-choices></ui-llselect>',
       triggerSel: '.llselect-trigger',
-      rowSel: '.llselect-item',
+      rowSel: '.llselect-popup-list-row',
       searchSel: 'input',
     },
     {
@@ -305,7 +305,7 @@
       markup: '<form name="f2"><llselect-single name="v2" ng-model="picked" validation="required"' +
         ' ll-options="i.name for i in items track by i.id"></llselect-single></form>',
       triggerSel: '.llselect-trigger',
-      rowSel: '.llselect-item',
+      rowSel: '.llselect-popup-list-row',
       skipInteraction: true, // this pair is about validation cost, not open latency
     },
   ]

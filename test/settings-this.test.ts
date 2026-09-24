@@ -27,7 +27,7 @@ test('multiple: every settings function and action-row function runs with `this`
     filterFn: function (this: unknown, item, query) { seen.filterFn = this; return item.includes(query) },
     itemToStringFn: function (this: unknown, item) { seen.itemToStringFn = this; return item },
     itemDisabledFn: function (this: unknown) { seen.itemDisabledFn = this; return false },
-    createItemContentElFn: function (this: unknown) { seen.createItemContentElFn = this; return null },
+    createPopupListItemContentElFn: function (this: unknown) { seen.createPopupListItemContentElFn = this; return null },
     itemToGroupKeyFn: function (this: unknown, item) { seen.itemToGroupKeyFn = this; return item[0] ?? null },
     groupKeyToStringFn: function (this: unknown, key) { seen.groupKeyToStringFn = this; return key },
     groupKeyCompareFn: function (this: unknown, a, b) { seen.groupKeyCompareFn = this; return a === b },
@@ -64,7 +64,7 @@ test('multiple: every settings function and action-row function runs with `this`
   sel.toggleItem('apple') // onChange, compareFn, the tag content fns
   sel.close()
   const expected = [
-    'filterable', 'compareFn', 'filterFn', 'itemToStringFn', 'itemDisabledFn', 'createItemContentElFn',
+    'filterable', 'compareFn', 'filterFn', 'itemToStringFn', 'itemDisabledFn', 'createPopupListItemContentElFn',
     'itemToGroupKeyFn', 'groupKeyToStringFn', 'groupDisabledFn', 'createGroupLabelContentElFn',
     'createTriggerContentElFn', 'createTriggerArrowContentElFn', 'createTriggerClearButtonContentElFn',
     'createPopupListNoResultsContentElFn', 'createPopupHeaderContentElFn', 'createPopupFooterContentElFn',

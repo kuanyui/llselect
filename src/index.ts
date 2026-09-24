@@ -44,7 +44,7 @@ export type {
 export { gatherItemsByGroupKey } from './grouping.js'
 
 // Query-match highlighting for item content (wraps filter matches in <mark>),
-// for use inside createItemContentElFn / createItemContentEl.
+// for use inside createPopupListItemContentElFn / createPopupListItemContentEl.
 export { createHighlightedTextEl } from './query-highlight.js'
 
 // Types observable through public settings / DOM attributes: importable,

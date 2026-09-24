@@ -14,7 +14,7 @@
 | ------------------------------------------- | -------------------------------------------- | -------------------------------------------------------------- |
 | `renderTriggerContent` (base + 2 overrides) | `textContent` + `setAttribute('data-empty')` | `commitTriggerContentToDom(content)` + `syncEmptyStateToDom()` |
 | `renderTriggerArrow`                        | `replaceChildren()` + `appendChild(el)`      | `commitArrowElToDom(el)`                                       |
-| `renderPopupList`                           | `replaceChildren()` + `append` loop          | `createItemEl()` xN + `commitItemElsToDom(els)` (Phase 10: -> `computePopupSegments` + `commitPopupSegmentsToDom`) |
+| `renderPopupList`                           | `replaceChildren()` + `append` loop          | `createPopupListItemEl()` xN + `commitItemElsToDom(els)` (Phase 10: -> `computePopupSegments` + `commitPopupSegmentsToDom`) |
 | `renderTrigger`, `rerender`                 | already pure orchestrators                   | unchanged                                                      |
 
 New primitives this adds: `commitArrowElToDom`, `commitItemElsToDom` (superseded in Phase 10 by `commitPopupSegmentsToDom`), `syncEmptyStateToDom`, `isEmpty` (signatures live in naming-conventions.md).
@@ -45,7 +45,7 @@ private commitArrowElToDom(el: HTMLElement | SVGElement | null): void {
 // renderPopupList - AFTER
 protected renderPopupList(): void {
   const list = this.getVisibleItems()
-  const els = list.map((item, i) => this.createItemEl(item, i))
+  const els = list.map((item, i) => this.createPopupListItemEl(item, i))
   this.itemEls = els
   this.focusedEl = undefined
   this.commitItemElsToDom(els)

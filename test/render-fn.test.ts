@@ -170,13 +170,13 @@ test('a subclass renderTriggerContent override replaces the setting (override wi
   assert.equal(sel.triggerContentEl.textContent, 'DERIVED') // override wins
 })
 
-// --- createItemContentElFn -----------------------------------------------------
+// --- createPopupListItemContentElFn -----------------------------------------------------
 
-test('createItemContentElFn (element) fills the option; aria-label comes from itemToString', () => {
+test('createPopupListItemContentElFn (element) fills the option; aria-label comes from itemToString', () => {
   const sel = new LLSelectSingle<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: u => u.name,
-    createItemContentElFn: u => {
+    createPopupListItemContentElFn: u => {
       const span = document.createElement('span')
       span.className = 'rich'
       span.textContent = `[${u.name}]`
@@ -190,11 +190,11 @@ test('createItemContentElFn (element) fills the option; aria-label comes from it
   assert.equal(opt.getAttribute('aria-label'), 'Ann') // accessible name pinned to itemToString
 })
 
-test('createItemContentElFn returning null falls back to plain text, no aria-label', () => {
+test('createPopupListItemContentElFn returning null falls back to plain text, no aria-label', () => {
   const sel = new LLSelectSingle<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: u => u.name,
-    createItemContentElFn: () => null,
+    createPopupListItemContentElFn: () => null,
   })
   sel.setItems([{ id: 1, name: 'Ann' }])
   sel.open()
@@ -203,7 +203,7 @@ test('createItemContentElFn returning null falls back to plain text, no aria-lab
   assert.equal(opt.getAttribute('aria-label'), null) // plain text is its own accessible name
 })
 
-test('without createItemContentElFn, options are plain text with no aria-label (back-compat)', () => {
+test('without createPopupListItemContentElFn, options are plain text with no aria-label (back-compat)', () => {
   const sel = new LLSelectSingle<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: u => u.name,
@@ -219,7 +219,7 @@ test('multiple: the option element keeps aria-selected alongside the custom cont
   const sel = new LLSelectMultiple<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: u => u.name,
-    createItemContentElFn: u => {
+    createPopupListItemContentElFn: u => {
       const span = document.createElement('span')
       span.className = 'rich'
       span.textContent = u.name
@@ -231,15 +231,15 @@ test('multiple: the option element keeps aria-selected alongside the custom cont
   sel.open()
   const opt = options(sel)[0]!
   assert.ok(opt.querySelector('.rich')) // custom content present
-  assert.equal(opt.getAttribute('aria-label'), 'Ann') // set by the base createItemEl
-  assert.equal(opt.getAttribute('aria-selected'), 'true') // multiple's createItemEl, on top
+  assert.equal(opt.getAttribute('aria-label'), 'Ann') // set by the base createPopupListItemEl
+  assert.equal(opt.getAttribute('aria-selected'), 'true') // multiple's createPopupListItemEl, on top
 })
 
-test('replacePopupListItemElInDom re-runs createItemContentElFn (single-item update keeps rich content)', () => {
+test('replacePopupListItemElInDom re-runs createPopupListItemContentElFn (single-item update keeps rich content)', () => {
   const sel = new LLSelectMultiple<User>(mount(), {
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: u => u.name,
-    createItemContentElFn: u => {
+    createPopupListItemContentElFn: u => {
       const span = document.createElement('span')
       span.className = 'rich'
       span.textContent = u.name
