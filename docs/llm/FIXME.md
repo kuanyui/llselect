@@ -2,6 +2,36 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (item vocabulary, the popupListItem rename, chosenItemsOrder)
+
+Process: post-fix review of the item-row rename (`8cb3658`), the item vocabulary docs (`30e1f95`) and the `chosenItemsOrder` setting (`f62d332`) by the other four panel members (Opus 5, Opus 4.8, Codex Sol at max, Codex 5.5 at xhigh), two rounds. Round 1 found no correctness defect and asked for the fixes in `13019d6`; round 2 reviewed that commit and produced the entries below. The rename itself followed a seven-model committee that rejected a `candidateItems` vocabulary unanimously; the ruling is naming-conventions rule 10.
+
+- [x] **[MEDIUM-150] - setItems rendered an open popup before the multiple variant reconciled the chosen list**
+  - Symptom: under `chosenItemsOrder: 'as-listed'`, a row whose content read the chosen order was stale after a `setItems` that reordered the list.
+  - Cause: base `setItems` renders the open popup, then calls `onItemsChanged`, where `LLSelectMultiple` drops or reorders chosen items.
+  - Fix: `LLSelectMultiple.onItemsChanged` renders an open popup once more after a drop or reorder; the `setItems` docstring says so.
+  - Verified: test/chosen-items-order.test.ts, the open-popup re-render test.
+  - Q: Why a second render, not reconciliation before the first?
+    - A: The base sequence (render, `onItemsChanged`, replace action rows) is shared with single mode and fires `onChange` after the DOM shows the new list; moving reconciliation first changes that order for every consumer. The extra render runs only when the chosen items actually changed.
+- [ ] **[NEEDS-VERIFICATION-151] - the compareFn-equal reload path still renders rows before the chosen references are swapped; a chosen-changing setItems renders an open popup twice**
+  - Symptom: after a `setItems` whose items are compareFn-equal fresh objects, rows rendered before the swap may hold the old chosen objects (only action rows are replaced, `src/base.ts` `setItems`); a drop or reorder now costs two full list renders while open.
+  - Cause: the render-before-reconcile sequence in base `setItems`.
+  - Fix: open. A single final render needs reconciliation split from notification in both variants. Two round-2 reviewers asked for it; one judged the double render acceptable for a batch call.
+- [x] **[QUALITY-152] - toggleItem replaces only the toggled row, so row content that reads the chosen ORDER goes stale under 'as-listed'**
+  - Symptom: adding an earlier-listed item moves the existing chosen items' positions, but their rows are not rebuilt.
+  - Fix: contract, not code. `createPopupListItemContentElFn` now says: read chosen state through `isChosen`, never derive content from the chosen order.
+  - Q: Why document the limit instead of rebuilding the list on every add?
+    - A: The O(1) toggle is a recorded design property (DESIGN.md "hideChosenRows"); order-dependent row content is exotic; the panel split two to two. Ruled here: keep the cheap toggle, let the docstring carry the limit.
+- [x] **[PERFORMANCE-153] - 'as-listed' rebuilt the item position table on every add**
+  - Cause: `orderChosen` built a `Map` over the whole item list per call.
+  - Fix: `itemPositionCache`, keyed by the items array reference and cleared in `onItemsChanged`; the setting's docstring lists the costs.
+  - Verified: the as-listed tests pass; the cache is invalidated on every list replacement.
+- [x] **[DOCUMENTATION-154] - docstrings, the README row and the API.md entry lagged the new setting and the row-class rename**
+  - Symptom: `chosenItems`, `getChosenItems`, `setChosenItems`, `onChange` and `toggleItem` still described only the chosen order; README's multiple-selection row lacked `chosenItemsOrder`; `angularjs/API.md` packed the attribute's facts into one paragraph and missed the list-reorder case; `angularjs/DESIGN.md`, `docs/llm/A11Y.md`, the theme comments and one test title kept the old row class spelling; `createGroupEl`'s `itemsInGroup` rename stopped at the base signature.
+  - Fix: every place named above follows the setting and the rename; `setChosenItems(chosenItems)` so that bare `items` means the full list; naming-conventions rule 10 states that direct children of a family always carry its prefix.
+  - Q: Why does README's introduction still say "candidates"?
+    - A: Maintainer ruling: the introduction prose is not touched by agents. Rule 10 governs API names; the prose is the maintainer's own wording.
+
 ## review (demo renumbering, AngularJS i18n demo, the ui-select bridge's language-pack door)
 
 Process: post-fix review of three change sets in one working tree: the core demo's i18n section moved to the end (16) with every cross reference renumbered, the AngularJS demo's new section 14 (the API.md "Switching the UI language at runtime" recipe, verbatim, driving every widget on the page from `$translate`), and `<ui-llselect>` gaining the app-wide defaults plus an `instance()` controller. All four members reviewed (fresh sessions, max effort, read-only): Opus 5 and Opus 4.8 first, then Codex 5.5 and Codex Sol on the fixed tree. The harness stopped every `codex exec` started as a tracked background task within two minutes for "running low on memory" while `free -m` showed about 2.1 GB available; run detached from that tracking (`setsid nohup`, one at a time) both finished in 5 and 10 minutes, with total used memory peaking at about 1.0 GB of 2.9 GB and never less than 1.86 GB available, so the trigger was the harness's background-task guard, not exhaustion. No member found a correctness defect. Verified after the fixes: `npm run verify` green (531 core tests, 89 AngularJS tests), and the AngularJS page driven end to end in jsdom against the real CDN libraries (angular-translate with its static-files loader, angular-validation, ui-bootstrap): ja / zh-TW / en re-pack every widget without an explicit placeholder, explicit placeholders stay, chosen values survive, and `INVALID_REQUIRED` keeps resolving to the English message through `fallbackLanguage`.

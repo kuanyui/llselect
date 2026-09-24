@@ -171,7 +171,7 @@ Settings (s3 by return type). All are `| null` and document their `null` (s4b: g
 | setting | `groupKeyCompareFn` | `(a: GroupKey, b: GroupKey) => boolean` | predicate       |
 | setting | `groupKeyToStringFn` | `(key: GroupKey) => string`       | map key->string |
 | setting | `groupDisabledFn`   | `(key: GroupKey) => boolean`      | predicate       |
-| setting | `createGroupLabelContentElFn` | `(key: GroupKey, items: readonly T[]) => HTMLElement \| null` | `create*ElFn` |
+| setting | `createGroupLabelContentElFn` | `(key: GroupKey, itemsInGroup: readonly T[]) => HTMLElement \| null` | `create*ElFn` |
 
 Methods / type:
 

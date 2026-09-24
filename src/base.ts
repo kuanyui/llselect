@@ -460,6 +460,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Item -> the visible content ELEMENT of its popup list row, without subclassing.
    * - The trigger never calls it: single mode has `createTriggerContentElFn`, tags have `createTagContentElFn`.
+   * - Read chosen state through `isChosen`. Do not derive content from the
+   *   chosen ORDER: `toggleItem` rebuilds only the toggled row, so sibling
+   *   rows would keep an old position.
    * - Return an `HTMLElement` and the library inserts it as-is (you own the
    *   node); it becomes the row's visible content.
    * - `null` = plain `textContent` from `itemToString`. This is the default,
@@ -1653,6 +1656,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   responsibility (not scanned, to keep large lists cheap).
    * - If the popup is open, it re-renders now. While closed, the DOM is
    *   built lazily on the next `open()`.
+   * - `LLSelectMultiple` renders an open popup once more when this call
+   *   drops or reorders chosen items, so rows see the final chosen list.
    * - Both shipped variants re-render the trigger content from `onItemsChanged`
    *   (the multiple count total, custom content that reads `items`).
    * - `LLSelectMultiple`'s `triggerDisplay: 'tags'` mode is opt-in; `'count'` is

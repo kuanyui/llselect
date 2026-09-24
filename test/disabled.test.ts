@@ -85,7 +85,7 @@ test('re-enabling restores opening', () => {
 
 // --- item-level disabled -----------------------------------------------------
 
-test('itemDisabledFn marks the option aria-disabled + item-disabled class', () => {
+test('itemDisabledFn marks the option aria-disabled + popup-list-row-disabled class', () => {
   const sel = new LLSelectSingle<string>(mount(), { itemDisabledFn: i => i === 'b' })
   sel.setItems(['a', 'b', 'c'])
   sel.open()

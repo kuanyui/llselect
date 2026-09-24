@@ -55,10 +55,12 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * and the PREVIOUS one (the snapshot from before this change) - diff them
    * with `compareFn` to compute added / removed. Does NOT fire on
    * construction nor on a setter call that yields an equivalent set
-   * (element-wise compared via `compareFn`, order-sensitive; under
-   * `chosenItemsOrder: 'as-listed'` the order is normalized first, so a
-   * same-set write in another order is no change).
+   * (element-wise compared via `compareFn`, order-sensitive).
    * `null` (default) = no listener.
+   * - Under `chosenItemsOrder: 'as-listed'` the order is normalized first, so
+   *   a same-set write in another order is no change for items the list
+   *   holds. Unlisted items keep the caller's order, so reordering them is a
+   *   change.
    * - `meta.source` says who initiated the change: `'user'` for a pointer or
    *   keyboard interaction inside the widget (an option toggle, a tag's
    *   remove button, the clear button, the choose-all row), `'api'` for any
@@ -143,11 +145,14 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    *   stored as `[a, b]`. When `setItems` reorders the list, the chosen
    *   items follow and `onChange` fires. A chosen item the list does not
    *   hold goes last, in chosen order, until the next `setItems` drops it.
-   * - Cost of `'as-listed'`: every add or replace sorts the chosen items by
-   *   list position. The position table is built once per item list, so
-   *   `toggleItem` is O(chosen log chosen) plus one O(list) build after each
-   *   `setItems`. A custom `compareFn` skips the table: each add is
-   *   O(chosen x list).
+   * - Cost of `'as-listed'`, per add or replace: a sort of the chosen items,
+   *   O(chosen log chosen).
+   * - The list positions come from a table built once per item list, O(list)
+   *   after each `setItems`.
+   * - A custom `compareFn` skips the table: each add or replace is
+   *   O(chosen x list + chosen log chosen).
+   * - A `setItems` that drops or reorders chosen items rebuilds an open popup
+   *   a second time (see `setItems`).
    * @group Selection
    */
   chosenItemsOrder: LLSelectChosenItemsOrder
@@ -274,7 +279,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *   The comparison is order-sensitive: chosen order is visible state
    *   (tags render in it).
    * - Under `chosenItemsOrder: 'as-listed'` the input is first put in list
-   *   order, so a write of the same set in another order is no change.
+   *   order, so a write of the same set in another order is no change for
+   *   items the list holds. Unlisted items keep the caller's order.
    * - It ignores disabled state: it can add and drop disabled items, unlike
    *   the `choose*` bulk ops. Assigning to a native `<select>` behaves the
    *   same.
@@ -776,6 +782,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * @group Subclassing: reactions
    */
   protected override onItemsChanged(): void {
+    this.itemPositionCache = null
     const previous = this.chosenItems
     let swapped = false
     const nextChosen: T[] = []
@@ -832,11 +839,6 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     if (first >= 0) { this.setFocusedIndex(first) }
   }
 
-  /**
-   * Apply `chosenItemsOrder`. `'as-chosen'` returns the array as is;
-   * `'as-listed'` sorts by position in the item list, unlisted entries last
-   * in their given order.
-   */
   /** Position of each item in the current list; built once per item list (default `compareFn` only). */
   private itemPositionCache: { items: readonly T[], positions: Map<T, number> } | null = null
 
@@ -849,6 +851,11 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     return positions
   }
 
+  /**
+   * Apply `chosenItemsOrder`. `'as-chosen'` returns the array as is;
+   * `'as-listed'` sorts by position in the item list, unlisted entries last
+   * in their given order.
+   */
   private orderChosen(chosen: T[]): T[] {
     if (this.settings.chosenItemsOrder !== 'as-listed' || chosen.length < 2) { return chosen }
     const items = this.items

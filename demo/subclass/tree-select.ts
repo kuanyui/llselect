@@ -176,8 +176,8 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
    * The model holds LEAVES only. Every raw array passes through this one
    * entry point, so branch nodes are dropped here.
    */
-  public override setChosenItems(items: readonly LLTreeNode[]): void {
-    super.setChosenItems(items.filter(node => !isBranch(node)))
+  public override setChosenItems(chosenItems: readonly LLTreeNode[]): void {
+    super.setChosenItems(chosenItems.filter(node => !isBranch(node)))
   }
 
   /**
