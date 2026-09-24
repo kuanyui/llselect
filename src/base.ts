@@ -460,11 +460,14 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Item -> the visible content ELEMENT of its popup list row, without subclassing.
    * - The trigger never calls it: single mode has `createTriggerContentElFn`, tags have `createTagContentElFn`.
-   * - In multiple mode, read chosen state through `isChosen`; in single mode,
-   *   compare with `getChosenItem()`.
-   * - Never derive content from the chosen ORDER. In multiple mode `toggleItem`
-   *   rebuilds only the toggled row, so sibling rows would keep an old
-   *   position. With `hideChosenRows` the whole list is rebuilt instead.
+   * - When the select is an `LLSelectMultiple`, read chosen state through
+   *   `isChosen`.
+   * - When the select is an `LLSelectSingle`, compare with `getChosenItem()`.
+   * - Never derive content from the chosen ORDER.
+   * - When `toggleItem` changes one item, only that row is rebuilt, so
+   *   sibling rows would keep an old position.
+   * - While `hideChosenRows` is on, `toggleItem` rebuilds the whole list
+   *   instead.
    * - Return an `HTMLElement` and the library inserts it as-is (you own the
    *   node); it becomes the row's visible content.
    * - `null` = plain `textContent` from `itemToString`. This is the default,

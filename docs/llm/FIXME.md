@@ -14,7 +14,7 @@ Process: post-fix review of the item-row rename (`8cb3658`), the item vocabulary
   - Q: Why a second render, not reconciliation before the first?
     - A: Because the base sequence (render, `onItemsChanged`, replace action rows) is shared with single mode and fires `onChange` after the DOM shows the new list; moving reconciliation first changes that order for every consumer. The extra render runs only when the chosen items actually changed.
 - [ ] **[NEEDS-VERIFICATION-151] - the compareFn-equal reload path still renders rows before the chosen references are swapped; a chosen-changing setItems renders an open popup twice**
-  - Symptom: after a `setItems` whose items are compareFn-equal fresh objects, rows rendered before the swap may hold the old chosen objects (only action rows are replaced: `src/base.ts:1676` renders, `src/base.ts:1677` reconciles); a drop or reorder now costs two full list renders while open.
+  - Symptom: after a `setItems` whose items are compareFn-equal fresh objects, rows rendered before the swap may hold the old chosen objects (only action rows are replaced: `src/base.ts:1681` renders, `src/base.ts:1682` reconciles); a drop or reorder now costs two full list renders while open.
   - Cause: the render-before-reconcile sequence in base `setItems`.
   - Fix: open. A single final render needs reconciliation split from notification in both variants. Two round-2 reviewers asked for it; one judged the double render acceptable for a batch call.
 - [x] **[QUALITY-152] - toggleItem replaces only the toggled row, so row content that reads the chosen ORDER goes stale under 'as-listed'**

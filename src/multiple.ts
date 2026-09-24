@@ -60,8 +60,9 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * - When `chosenItemsOrder` is `'as-listed'`, the order is normalized first,
    *   so a same-set write in another order is no change for items the list
    *   holds.
-   * - Unlisted items go last, keeping their order relative to each other, so
-   *   reordering them is a change.
+   * - When `chosenItemsOrder` is `'as-listed'`, unlisted items go last,
+   *   keeping their order relative to each other, so reordering them is a
+   *   change.
    * - `meta.source` says who initiated the change: `'user'` for a pointer or
    *   keyboard interaction inside the widget (an option toggle, a tag's
    *   remove button, the clear button, the choose-all row), `'api'` for any
@@ -282,7 +283,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * - When `chosenItemsOrder` is `'as-listed'`, the input is first put in list
    *   order, so a write of the same set in another order is no change for
    *   items the list holds.
-   * - Unlisted items go last, keeping their order relative to each other.
+   * - When `chosenItemsOrder` is `'as-listed'`, unlisted items go last,
+   *   keeping their order relative to each other.
    * - It ignores disabled state: it can add and drop disabled items, unlike
    *   the `choose*` bulk ops. Assigning to a native `<select>` behaves the
    *   same.
@@ -340,8 +342,10 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
 
   /**
    * Toggle the membership of `item` in the chosen-items set. Fires `onChange`.
-   * - Not present: added at the end, or at its list position when
-   *   `chosenItemsOrder` is `'as-listed'`. Present: removed.
+   * - If the item is not chosen, it is added at the end.
+   * - When `chosenItemsOrder` is `'as-listed'`, it is added at its list
+   *   position instead.
+   * - If the item is chosen, it is removed.
    * - While `hideChosenRows` is on, the popup list is rebuilt so the row
    *   leaves or re-enters it.
    * @group Selection
