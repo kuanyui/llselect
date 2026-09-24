@@ -377,6 +377,15 @@ The choose-all row's default content is JUST the counting text (`uiTranslationPa
 - Why permissive here, unlike the AngularJS ll-highlight + ll-popup-list-item-content-fn throw: that conflict has no coherent behavior (two owners of one content slot), while this combination has exactly one well-defined behavior that falls out of the standing visible-subset semantics. Core stays low level and does not forbid an unusual-but-coherent UI choice.
 - When every item is chosen, the popup shows the regular no-results element. No new translation key.
 
+## chosenItemsOrder: chosen order follows the choice or the list (multiple)
+
+`chosenItemsOrder` (LLSelectMultiple, default `'as-chosen'`) sets the order of `chosenItems`, which tags, `getChosenItems`, `onChange` and framework models all read. RULED:
+
+- `'as-chosen'` stays the default and the stored state: it is the richer information. From it the app can derive list order by sorting; from list order the choice order is gone.
+- `'as-listed'` normalizes in the places chosen arrays enter (`setChosenItems`, the `toggleItem` add path, the `setItems` reconciliation), so every reader agrees. A reorder counts as a change: `onChange` fires, matching the order-sensitive equality of `setChosenItems`.
+- Chosen items the list does not hold go last, in chosen order; the next `setItems` drops them anyway.
+- Prior art: Slim Select `keepOrder` (default list order, opt into choice order) and Choices.js `shouldSortItems` (default choice order, opt into a sorter). Both camps exist. A custom sort function is not offered: the item list itself carries the app's preferred order.
+
 ## Popup header / footer slots
 
 Two pinned slots around the option list: `popupHeaderEl` between the filter input and the listbox, `popupFooterEl` after the no-results message. Filled by `createPopupHeaderContentElFn` / `createPopupFooterContentElFn` under the Container-Content law (the library owns the `div`, its class and its place; the app owns the content). RULED after the survey and committee rounds in `archive/popup-slots-research.md`:

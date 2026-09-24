@@ -32,6 +32,7 @@ export type {
 
 export { LLSelectMultiple } from './multiple.js'
 export type {
+  LLSelectChosenItemsOrder,
   LLSelectChosenState,
   LLSelectMultipleSettings,
   LLSelectMultipleSettingsInput,

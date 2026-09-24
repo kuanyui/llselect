@@ -329,6 +329,10 @@ vm.langRows = [{
 - With `ll-choose-all-row`, the row acts as "choose everything still listed" and disappears with the last listed row.
 - When every item is chosen, the popup shows the no-results message.
 
+### `ll-chosen-items-order`
+
+**Expression** -> `chosenItemsOrder`. `'as-chosen'` (default) / `'as-listed'` - quoted: `ll-chosen-items-order="'as-listed'"`. With `'as-listed'` the widget stores and shows the chosen items in item list order, and every user change writes the model in that order. A model write in another order is not rewritten: the directive never writes programmatic changes back (the form would turn `$dirty`), so the model keeps its order until the next user change.
+
 ### `ll-checkboxes`
 
 **Expression**, default `true`. Whether `<llselect-multiple>` rows get this package's live checkbox icons.

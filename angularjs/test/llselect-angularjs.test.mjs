@@ -1046,3 +1046,21 @@ test('MEDIUM-110: one shared descriptor array serves two widgets, each onActivat
   assert.equal(a.scope.vm.a, null) // the other widget's row would have written vm.a
   assert.equal(typeof a.scope.vm.rows[0].onActivate, 'function') // the app's descriptor is untouched
 })
+
+test("ll-chosen-items-order=\"'as-listed'\": the widget keeps list order; a model write in another order is not rewritten until the user changes the selection", () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm"><llselect-multiple ng-model="vm.t" ng-change="vm.changes = vm.changes + 1" ll-aria-label="F"
+      ll-options="f for f in vm.fruits" ll-chosen-items-order="'as-listed'" ll-trigger-display="'tags'"></llselect-multiple></div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.t = []; this.changes = 0 },
+  })
+  assert.deepEqual(a.errors, [])
+  a.scope.$apply(() => { a.scope.vm.t = [FRUITS[2], FRUITS[0]] })
+  assert.deepEqual(a.$$('.llselect-tag').map((el) => el.textContent.trim()), [FRUITS[0], FRUITS[2]]) // the widget shows list order
+  assert.deepEqual([...a.scope.vm.t], [FRUITS[2], FRUITS[0]]) // programmatic: the model is not rewritten
+  assert.equal(a.scope.vm.changes, 0)
+  a.$('.llselect-trigger').click()
+  a.$$('.llselect-popup-list-row').find((el) => el.textContent.trim() === FRUITS[1]).click()
+  assert.deepEqual([...a.scope.vm.t], [FRUITS[0], FRUITS[1], FRUITS[2]]) // the user change writes list order
+  assert.equal(a.scope.vm.changes, 1)
+})

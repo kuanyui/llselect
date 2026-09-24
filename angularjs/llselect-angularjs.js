@@ -489,6 +489,7 @@
           if (attrs.llTriggerDisplay) { settings.triggerDisplay = evalEnumAttr(scope, attrs, 'llTriggerDisplay') }
           if (attrs.llChooseAllRow) { settings.chooseAllRow = scope.$eval(attrs.llChooseAllRow) }
           if (attrs.llHideChosenRows) { settings.hideChosenRows = scope.$eval(attrs.llHideChosenRows) }
+          if (attrs.llChosenItemsOrder) { settings.chosenItemsOrder = evalEnumAttr(scope, attrs, 'llChosenItemsOrder') }
           var tagContentFn = evalFnAttr(scope, attrs, 'llTagContentFn')
           if (tagContentFn) { settings.createTagContentElFn = tagContentFn }
           var tagRemoveIconFn = evalFnAttr(scope, attrs, 'llTagRemoveButtonContentFn')

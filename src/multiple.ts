@@ -25,6 +25,14 @@ export type LLSelectTriggerDisplay = 'count' | 'tags'
 export type LLSelectChosenState = 'none' | 'some' | 'all'
 
 /**
+ * Order of the chosen items, as tags, `getChosenItems`, `onChange` and a
+ * framework model see them. See `LLSelectMultipleSettings.chosenItemsOrder`.
+ * @group Settings
+ * @category Multiple
+ */
+export type LLSelectChosenItemsOrder = 'as-chosen' | 'as-listed'
+
+/**
  * Context passed to {@link LLSelectMultipleSettings.createTriggerContentElFn}.
  * @group Settings
  * @category Multiple
@@ -125,6 +133,18 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    */
   hideChosenRows: boolean
   /**
+   * Order of the chosen items. Tags, `getChosenItems`, `onChange` and a
+   * framework model all see this order.
+   * - `'as-chosen'` (default): the order the items were chosen in.
+   *   `setChosenItems` keeps the caller's order.
+   * - `'as-listed'`: the order of the item list. `setChosenItems([b, a])` is
+   *   stored as `[a, b]`. When `setItems` reorders the list, the chosen
+   *   items follow and `onChange` fires. A chosen item the list does not
+   *   hold goes last, in chosen order, until the next `setItems` drops it.
+   * @group Selection
+   */
+  chosenItemsOrder: LLSelectChosenItemsOrder
+  /**
    * Whether the popup shows a choose-all row (the industry's "select all")
    * as the first option of the listbox.
    * - Default `false`.
@@ -219,6 +239,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       createTagContentElFn: settings?.createTagContentElFn ?? null,
       createTagRemoveButtonContentElFn: settings?.createTagRemoveButtonContentElFn ?? null,
       hideChosenRows: settings?.hideChosenRows ?? false,
+      chosenItemsOrder: settings?.chosenItemsOrder ?? 'as-chosen',
       chooseAllRow: settings?.chooseAllRow ?? false,
       createChooseAllRowContentElFn: settings?.createChooseAllRowContentElFn ?? null,
     } satisfies Omit<LLSelectMultipleSettings<T, GroupKey>, keyof LLSelectBaseSettings<T, GroupKey>>
@@ -265,6 +286,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
         if (!next.some(c => compareFn(c, item))) { next.push(item) }
       }
     }
+    next = this.orderChosen(next)
     if (this.arraysEqual(next, this.chosenItems)) { return }
     const previous = this.chosenItems
     this.chosenItems = next
@@ -313,7 +335,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     if (idx >= 0) {
       this.chosenItems = [...previous.slice(0, idx), ...previous.slice(idx + 1)]
     } else {
-      this.chosenItems = [...previous, item]
+      this.chosenItems = this.orderChosen([...previous, item])
     }
     // Only one item's selection changed, so the popup list replaces just that
     // one row (plus the choose-all tri-state) instead of rebuilding every row -
@@ -755,13 +777,16 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       if (!defaultCompareFn(matched, c)) { swapped = true }
       nextChosen.push(matched)
     }
-    if (nextChosen.length !== previous.length) {
-      this.chosenItems = nextChosen
+    const ordered = this.orderChosen(nextChosen)
+    // A dropped entry or a new order is visible state: the trigger re-renders
+    // and onChange fires, like the order-sensitive setChosenItems.
+    if (!this.arraysEqual(ordered, previous)) {
+      this.chosenItems = ordered
       this.renderTrigger()
       this.fireChange(previous)
       return
     }
-    if (swapped) { this.chosenItems = nextChosen }
+    if (swapped) { this.chosenItems = ordered }
     // The count summary reads the list total and a custom trigger receives
     // `items`, so every list change refreshes the content; the arrow does not
     // depend on the list.
@@ -791,6 +816,29 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     if (this.focusChooseAllRow()) { return }
     const first = this.findNextEnabledIndex(0, 1, list)
     if (first >= 0) { this.setFocusedIndex(first) }
+  }
+
+  /**
+   * Apply `chosenItemsOrder`. `'as-chosen'` returns the array as is;
+   * `'as-listed'` sorts by position in the item list, unlisted entries last
+   * in their given order.
+   */
+  private orderChosen(chosen: T[]): T[] {
+    if (this.settings.chosenItemsOrder !== 'as-listed' || chosen.length < 2) { return chosen }
+    const items = this.items
+    const compareFn = this.settings.compareFn
+    let positionOf: (c: T) => number
+    if (compareFn === defaultCompareFn) {
+      const positions = new Map<T, number>()
+      items.forEach((item, i) => { if (!positions.has(item)) { positions.set(item, i) } })
+      positionOf = (c) => positions.get(c) ?? items.length
+    } else {
+      positionOf = (c) => { const i = items.findIndex(item => compareFn(item, c)); return i < 0 ? items.length : i }
+    }
+    return chosen
+      .map((c, i) => ({ c, pos: positionOf(c), i }))
+      .sort((a, b) => a.pos - b.pos || a.i - b.i)
+      .map(e => e.c)
   }
 
   private arraysEqual(a: readonly T[], b: readonly T[]): boolean {

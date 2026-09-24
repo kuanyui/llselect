@@ -743,6 +743,7 @@ const NG_KINDS = new Map(Object.entries({
   'll-tag-content-fn': 'attribute', 'll-tag-remove-button-content-fn': 'attribute',
   'll-aria-label': 'attribute', 'll-aria-labelledby': 'attribute', 'll-label-el': 'attribute',
   'll-trigger-display': 'attribute',
+  'll-chosen-items-order': 'attribute',
   'll-choose-all-row': 'attribute', 'll-hide-chosen-rows': 'attribute', 'll-checkboxes': 'attribute', 'll-item-text': 'attribute',
   defaults: 'method', instance: 'method',
   arrow: 'property', filterable: 'property', highlight: 'property', popupWidthPolicy: 'property', uiTranslationPack: 'property',
