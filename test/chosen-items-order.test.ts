@@ -77,3 +77,61 @@ test('as-listed: chooseAll yields list order; a custom compareFn sorts by identi
   sel.chooseAll()
   assert.deepEqual(sel.getChosenItems().map((r) => r.id), [1, 2, 3])
 })
+
+test('as-chosen (default): a setItems reorder keeps the chosen order and stays silent', () => {
+  const seen: (readonly string[])[] = []
+  const sel = new LLSelectMultiple<string>(mount(), { onChange: (chosen) => { seen.push(chosen) } })
+  sel.setItems(['a', 'b', 'c'])
+  sel.setChosenItems(['c', 'a'])
+  sel.setItems(['b', 'a', 'c'])
+  assert.deepEqual(sel.getChosenItems(), ['c', 'a'])
+  assert.equal(seen.length, 1)
+})
+
+test('as-listed: a reorder-triggered onChange reports source api; the next setItems drops the unlisted item', () => {
+  const sources: string[] = []
+  const sel = new LLSelectMultiple<string>(mount(), { chosenItemsOrder: 'as-listed', onChange: (_chosen, _previous, meta) => { sources.push(meta.source) } })
+  sel.setItems(['a', 'b', 'c'])
+  sel.setChosenItems(['z', 'c', 'a'])
+  assert.deepEqual(sel.getChosenItems(), ['a', 'c', 'z'])
+  sel.setItems(['c', 'b', 'a'])
+  assert.deepEqual(sel.getChosenItems(), ['c', 'a'])
+  assert.deepEqual(sources, ['api', 'api'])
+})
+
+test('as-listed with hideChosenRows: rows hide by membership; the chosen order follows the list', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { chosenItemsOrder: 'as-listed', hideChosenRows: true })
+  sel.setItems(['a', 'b', 'c', 'd'])
+  sel.toggleItem('d')
+  sel.toggleItem('b')
+  assert.deepEqual(sel.getChosenItems(), ['b', 'd'])
+  sel.open()
+  const rows = Array.from(sel.popupListEl.querySelectorAll(`.${sel.classIdMap.popupListRowClass}`)).map((el) => el.textContent)
+  assert.deepEqual(rows, ['a', 'c'])
+})
+
+test('as-listed with a custom compareFn: a setItems reorder re-sorts the chosen items', () => {
+  type Row = { id: number }
+  const sel = new LLSelectMultiple<Row>(mount(), { chosenItemsOrder: 'as-listed', compareFn: (a, b) => a.id === b.id })
+  sel.setItems([{ id: 1 }, { id: 2 }, { id: 3 }])
+  sel.setChosenItems([{ id: 3 }, { id: 1 }])
+  sel.setItems([{ id: 3 }, { id: 2 }, { id: 1 }])
+  assert.deepEqual(sel.getChosenItems().map((r) => r.id), [3, 1])
+})
+
+test('as-listed: the rows of an open popup re-render after a setItems reorder, so content that reads the chosen order is fresh', () => {
+  const sel: LLSelectMultiple<string> = new LLSelectMultiple<string>(mount(), {
+    chosenItemsOrder: 'as-listed',
+    createPopupListItemContentElFn: (item) => {
+      const el = document.createElement('span')
+      el.textContent = `${item}:${sel.getChosenItems().indexOf(item)}`
+      return el
+    },
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a', 'b'])
+  sel.open()
+  sel.setItems(['b', 'a'])
+  const texts = Array.from(sel.popupListEl.querySelectorAll(`.${sel.classIdMap.popupListRowClass}`)).map((el) => el.textContent)
+  assert.deepEqual(texts, ['b:0', 'a:1'])
+})

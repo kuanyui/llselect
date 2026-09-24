@@ -331,7 +331,11 @@ vm.langRows = [{
 
 ### `ll-chosen-items-order`
 
-**Expression** -> `chosenItemsOrder`. `'as-chosen'` (default) / `'as-listed'` - quoted: `ll-chosen-items-order="'as-listed'"`. With `'as-listed'` the widget stores and shows the chosen items in item list order, and every user change writes the model in that order. A model write in another order is not rewritten: the directive never writes programmatic changes back (the form would turn `$dirty`), so the model keeps its order until the next user change.
+**Expression** -> `chosenItemsOrder`. `'as-chosen'` (default) / `'as-listed'` - quoted: `ll-chosen-items-order="'as-listed'"`.
+
+- With `'as-listed'` the widget keeps the chosen items in item list order, and every user change writes the model in that order.
+- A model write in another order is not rewritten. The directive never writes a programmatic change back, or the form would turn `$dirty`. The model keeps its order until the next user change.
+- The same holds when the item list itself is reordered: the widget follows the new order, the model keeps the old one until the next user change.
 
 ### `ll-checkboxes`
 

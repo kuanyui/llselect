@@ -55,7 +55,9 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * and the PREVIOUS one (the snapshot from before this change) - diff them
    * with `compareFn` to compute added / removed. Does NOT fire on
    * construction nor on a setter call that yields an equivalent set
-   * (element-wise compared via `compareFn`, order-sensitive).
+   * (element-wise compared via `compareFn`, order-sensitive; under
+   * `chosenItemsOrder: 'as-listed'` the order is normalized first, so a
+   * same-set write in another order is no change).
    * `null` (default) = no listener.
    * - `meta.source` says who initiated the change: `'user'` for a pointer or
    *   keyboard interaction inside the widget (an option toggle, a tag's
@@ -141,6 +143,11 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    *   stored as `[a, b]`. When `setItems` reorders the list, the chosen
    *   items follow and `onChange` fires. A chosen item the list does not
    *   hold goes last, in chosen order, until the next `setItems` drops it.
+   * - Cost of `'as-listed'`: every add or replace sorts the chosen items by
+   *   list position. The position table is built once per item list, so
+   *   `toggleItem` is O(chosen log chosen) plus one O(list) build after each
+   *   `setItems`. A custom `compareFn` skips the table: each add is
+   *   O(chosen x list).
    * @group Selection
    */
   chosenItemsOrder: LLSelectChosenItemsOrder
@@ -206,7 +213,7 @@ export type LLSelectMultipleSettingsInput<T, GroupKey = string> = LLSelectSettin
  */
 export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelectMultipleSettings<T, GroupKey> = LLSelectMultipleSettings<T, GroupKey>> extends LLSelectBase<T, GroupKey, S> {
   /**
-   * Currently chosen items, in insertion order.
+   * Currently chosen items, in `chosenItemsOrder` order (chosen order by default).
    * @group State (protected)
    */
   // `readonly` so a subclass cannot `push`/`splice` it: every mutation must
@@ -252,7 +259,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Return the currently chosen items (insertion order).
+   * Return the currently chosen items, in `chosenItemsOrder` order (chosen order by default).
    * @group Selection
    */
   public getChosenItems(): readonly T[] {
@@ -266,23 +273,25 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * - Fires `onChange` only when the new list differs from the current one.
    *   The comparison is order-sensitive: chosen order is visible state
    *   (tags render in it).
+   * - Under `chosenItemsOrder: 'as-listed'` the input is first put in list
+   *   order, so a write of the same set in another order is no change.
    * - It ignores disabled state: it can add and drop disabled items, unlike
    *   the `choose*` bulk ops. Assigning to a native `<select>` behaves the
    *   same.
    * @group Selection
    */
-  public setChosenItems(items: readonly T[]): void {
+  public setChosenItems(chosenItems: readonly T[]): void {
     // Set semantics, as compareFn's contract promises. The choose* bulk ops
     // filter through isChosen and never produce duplicates; this setter is
     // the one door raw arrays (framework model write-back included) come in
     // through, so the dedup lives here.
     let next: T[]
     if (this.settings.compareFn === defaultCompareFn) {
-      next = [...new Set(items)]
+      next = [...new Set(chosenItems)]
     } else {
       next = []
       const compareFn = this.settings.compareFn
-      for (const item of items) {
+      for (const item of chosenItems) {
         if (!next.some(c => compareFn(c, item))) { next.push(item) }
       }
     }
@@ -322,8 +331,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Toggle the membership of `item` in the chosen-items set. Adds at the end
-   * if not present; removes if present. Fires `onChange`.
+   * Toggle the membership of `item` in the chosen-items set. Fires `onChange`.
+   * - Not present: added at the end, or at its list position under
+   *   `chosenItemsOrder: 'as-listed'`. Present: removed.
    * - While `hideChosenRows` is on, the popup list is rebuilt so the row
    *   leaves or re-enters it.
    * @group Selection
@@ -339,8 +349,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     }
     // Only one item's selection changed, so the popup list replaces just that
     // one row (plus the choose-all tri-state) instead of rebuilding every row -
-    // O(1) in list size. Exception: hideChosenRows moves the row in or out of
-    // the list and shifts the indexes, so it rebuilds the list instead. The
+    // O(1) in list size. Exceptions: hideChosenRows moves the row in or out of
+    // the list and shifts the indexes, so it rebuilds the list instead;
+    // chosenItemsOrder 'as-listed' sorts the chosen items on every add. The
     // trigger is refreshed too; its cost depends on triggerDisplay (count =
     // constant, tags = one chip per chosen item, custom = caller-defined), so
     // the whole update is not unconditionally O(1).
@@ -783,6 +794,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     if (!this.arraysEqual(ordered, previous)) {
       this.chosenItems = ordered
       this.renderTrigger()
+      // setItems rendered the open popup before this reconciliation, so rows
+      // whose content read the chosen list must be rebuilt from the final one.
+      if (this.isOpened()) { this.renderPopupList() }
       this.fireChange(previous)
       return
     }
@@ -823,14 +837,25 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * `'as-listed'` sorts by position in the item list, unlisted entries last
    * in their given order.
    */
+  /** Position of each item in the current list; built once per item list (default `compareFn` only). */
+  private itemPositionCache: { items: readonly T[], positions: Map<T, number> } | null = null
+
+  private itemPositions(): Map<T, number> {
+    const cache = this.itemPositionCache
+    if (cache !== null && cache.items === this.items) { return cache.positions }
+    const positions = new Map<T, number>()
+    this.items.forEach((item, i) => { if (!positions.has(item)) { positions.set(item, i) } })
+    this.itemPositionCache = { items: this.items, positions }
+    return positions
+  }
+
   private orderChosen(chosen: T[]): T[] {
     if (this.settings.chosenItemsOrder !== 'as-listed' || chosen.length < 2) { return chosen }
     const items = this.items
     const compareFn = this.settings.compareFn
     let positionOf: (c: T) => number
     if (compareFn === defaultCompareFn) {
-      const positions = new Map<T, number>()
-      items.forEach((item, i) => { if (!positions.has(item)) { positions.set(item, i) } })
+      const positions = this.itemPositions()
       positionOf = (c) => positions.get(c) ?? items.length
     } else {
       positionOf = (c) => { const i = items.findIndex(item => compareFn(item, c)); return i < 0 ? items.length : i }

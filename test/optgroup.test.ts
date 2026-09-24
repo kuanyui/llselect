@@ -266,9 +266,9 @@ test('createGroupLabelContentElFn returning null falls back to the plain label',
 
 test('createGroupEl can be overridden for full control of the group element', () => {
   class CustomGroup extends LLSelectSingle<string> {
-    protected override createGroupEl(key: string, index: number, items: readonly string[], itemEls: HTMLElement[]): HTMLElement {
-      const el = super.createGroupEl(key, index, items, itemEls)
-      el.setAttribute('data-count', String(items.length))
+    protected override createGroupEl(key: string, index: number, itemsInGroup: readonly string[], itemEls: HTMLElement[]): HTMLElement {
+      const el = super.createGroupEl(key, index, itemsInGroup, itemEls)
+      el.setAttribute('data-count', String(itemsInGroup.length))
       return el
     }
   }

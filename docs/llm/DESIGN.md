@@ -75,6 +75,7 @@ popupEl             .llselect-popup
   popupListEl       .llselect-popup-list
                     .llselect-popup-list-row
                     .llselect-popup-list-row-focused
+                    .llselect-popup-list-row-disabled
                     .llselect-group        (phase 10)
                     .llselect-group-label  (phase 10)
 ```
@@ -286,7 +287,7 @@ All live on `LLSelectBaseSettings<T, GroupKey>` (single + multiple; `GroupKey = 
 - `groupDisabledFn: ((groupKey: GroupKey) => boolean) | null` (default `null` = no group disabled). `true` = every item in that group is treated as disabled. Backed by `protected isGroupDisabled(key)`.
 - `createGroupLabelContentElFn: ((groupKey: GroupKey, itemsInGroup: readonly T[]) => HTMLElement | null) | null` (default `null`). The rich-label customization point, mirroring `createPopupListItemContentElFn`: fills the label's visible content (icon, count badge; cf. react-select `formatGroupLabel`, MUI `renderGroup`). `null` (setting or returned) = plain text from `groupKeyToString`. The accessible name stays `groupKeyToString` (container `aria-label`); the label element stays `aria-hidden`. `itemsInGroup` (the group's items) is what makes counts / summaries possible without recomputing the grouping. Backed by `protected createGroupLabelContentEl(key, itemsInGroup)`.
 
-The full-control escape hatch mirrors `createPopupListItemEl`: `protected createGroupEl(key, index, items, itemEls)` builds the whole group container (id, `role="group"`, `aria-label`, label element, items) and is overridable for a custom group element.
+The full-control escape hatch mirrors `createPopupListItemEl`: `protected createGroupEl(key, index, itemsInGroup, itemEls)` builds the whole group container (id, `role="group"`, `aria-label`, label element, items) and is overridable for a custom group element.
 
 ### Grouping semantic (gather + contiguous-run)
 

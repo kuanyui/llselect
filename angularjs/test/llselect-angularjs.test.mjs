@@ -1064,3 +1064,17 @@ test("ll-chosen-items-order=\"'as-listed'\": the widget keeps list order; a mode
   assert.deepEqual([...a.scope.vm.t], [FRUITS[0], FRUITS[1], FRUITS[2]]) // the user change writes list order
   assert.equal(a.scope.vm.changes, 1)
 })
+
+test("ll-chosen-items-order=\"'as-listed'\": reordering the item list reorders the widget; the model keeps its order until the next user change", () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm"><llselect-multiple ng-model="vm.t" ng-change="vm.changes = vm.changes + 1" ll-aria-label="F"
+      ll-options="f for f in vm.fruits" ll-chosen-items-order="'as-listed'" ll-trigger-display="'tags'"></llselect-multiple></div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.t = [FRUITS[0], FRUITS[2]]; this.changes = 0 },
+  })
+  assert.deepEqual(a.errors, [])
+  a.scope.$apply(() => { a.scope.vm.fruits = [FRUITS[2], FRUITS[1], FRUITS[0]] })
+  assert.deepEqual(a.$$('.llselect-tag').map((el) => el.textContent.trim()), [FRUITS[2], FRUITS[0]]) // the widget follows the new list order
+  assert.deepEqual([...a.scope.vm.t], [FRUITS[0], FRUITS[2]]) // the model is not rewritten
+  assert.equal(a.scope.vm.changes, 0)
+})

@@ -458,7 +458,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   itemToStringFn: ((item: T) => string) | null
   /**
-   * Item -> the visible content ELEMENT of its popup list row, without subclassing. The trigger never calls it: single mode has `createTriggerContentElFn`, tags have `createTagContentElFn`.
+   * Item -> the visible content ELEMENT of its popup list row, without subclassing.
+   * - The trigger never calls it: single mode has `createTriggerContentElFn`, tags have `createTagContentElFn`.
    * - Return an `HTMLElement` and the library inserts it as-is (you own the
    *   node); it becomes the row's visible content.
    * - `null` = plain `textContent` from `itemToString`. This is the default,
@@ -1563,7 +1564,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Return the full list the user chooses from, in data order (as passed to `setItems`). The chosen items are a subset of it.
+   * Return the full list the user chooses from, in data order (as passed to `setItems`).
+   * - The chosen items are a subset of it.
    * - The rendered list may differ in order and content: see `getVisibleItems`.
    * - Returns the LIVE internal array, typed read-only. Do not mutate it
    *   (TS blocks it; plain-JS callers must treat it as frozen).
@@ -1641,7 +1643,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Replace the full list the user chooses from. A chosen item the new list does not hold is dropped.
+   * Replace the full list the user chooses from.
+   * - A chosen item the new list does not hold is dropped.
    * - The input is shallow-copied; later external mutation does not affect
    *   the select.
    * - Items MUST be unique under `compareFn` (it defines item identity, and the

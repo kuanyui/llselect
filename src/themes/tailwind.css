@@ -121,7 +121,7 @@
 /* The default row content is just the counting text (its numbers carry the
    tri-state); data-chosen-state is the hook if a theme wants to draw its own
    indicator, createChooseAllRowContentElFn the way to add a real one. The
-   row also carries the plain item class, so hover / focused styling comes
+   row also carries the popup-list-row class, so hover / focused styling comes
    from there. Its divider is drawn by the block-edge rules under "dividers
    around the command rows": one line where the block above the items ends,
    none between the row and a command row that follows it. */
