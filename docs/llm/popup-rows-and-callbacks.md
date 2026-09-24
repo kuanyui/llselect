@@ -9,7 +9,7 @@ This document explains one corner of the API that took fourteen committee rounds
 - The closure recipe: `let sel; sel = new LLSelectMultiple(el, { ...functions that read sel... })`. A settings function reaches the instance by reading the outer variable. This is the documented way. It works in every function that runs after `new` returns.
 - Popup: the panel that opens under the trigger.
 - Listbox: the scrolling area inside the popup. The only scroll container. `role="listbox"`.
-- Item: a selectable option inside the listbox. `role="option"`.
+- Item: one entry of the data list. Its row in the listbox is the `role="option"` element that `createPopupListItemEl` builds.
 - Choose-all row: the built-in "select all" row of `LLSelectMultiple`. Turned on by `chooseAllRow: true`. Always the first row in the listbox.
 - Action row: a command row the app defines, such as "Restore defaults" or "Add a country". Built by the library from a descriptor `{ textFn, createContentElFn?, disabledFn?, onActivate }`.
 - Leading rows: the rows at the start of the listbox, above the items: the choose-all row plus the leading action rows. One block.

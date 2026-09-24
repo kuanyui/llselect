@@ -195,8 +195,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   `===`, except that `NaN` equals `NaN` (SameValueZero, the same rule
    *   `Set` uses), so every code path agrees on what "the same item" means.
    * - Used for selection, dedup, and matching the chosen item back to the list.
-   * - Symmetric: do not depend on which argument is the candidate vs the
-   *   existing item.
+   * - Symmetric: the result must not depend on argument order.
    * @group Items
    */
   compareFn: (a: T, b: T) => boolean
@@ -459,7 +458,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   itemToStringFn: ((item: T) => string) | null
   /**
-   * Item -> the visible content ELEMENT of its list row, without subclassing.
+   * Item -> the visible content ELEMENT of its popup list row, without subclassing. The trigger never calls it: single mode has `createTriggerContentElFn`, tags have `createTagContentElFn`.
    * - Return an `HTMLElement` and the library inserts it as-is (you own the
    *   node); it becomes the row's visible content.
    * - `null` = plain `textContent` from `itemToString`. This is the default,
@@ -491,7 +490,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *     row.append(icon, lang.name)
    *     return row
    *   }
-   * @group Items
+   * @group Popup
    */
   createPopupListItemContentElFn: ((item: T) => HTMLElement | null) | null
   /**
@@ -1564,7 +1563,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Return the current item list, in data order (as passed to `setItems`).
+   * Return the full list the user chooses from, in data order (as passed to `setItems`). The chosen items are a subset of it.
    * - The rendered list may differ in order and content: see `getVisibleItems`.
    * - Returns the LIVE internal array, typed read-only. Do not mutate it
    *   (TS blocks it; plain-JS callers must treat it as frozen).
@@ -1642,7 +1641,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Replace the item list.
+   * Replace the full list the user chooses from. A chosen item the new list does not hold is dropped.
    * - The input is shallow-copied; later external mutation does not affect
    *   the select.
    * - Items MUST be unique under `compareFn` (it defines item identity, and the
@@ -2032,7 +2031,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Build the whole DOM element for one group container.
+   * Build the whole group container of the popup list: the label element followed by the group's item rows.
    * - The library calls it, once per group of the current render, on every
    *   list render. You never call it yourself.
    * - All four params come from the library. Forward them to `super` unchanged.
@@ -2051,11 +2050,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *
    * @param key - the group's key, supplied by the library
    * @param index - the group's position among this render's groups, supplied by the library
-   * @param items - the group's items, supplied by the library (for counts / rich content)
+   * @param itemsInGroup - the group's items, supplied by the library (for counts / rich content)
    * @param itemEls - the group's already-built option elements, supplied by the library
    * @group Subclassing: rendering
    */
-  protected createGroupEl(key: GroupKey, index: number, items: readonly T[], itemEls: HTMLElement[]): HTMLElement {
+  protected createGroupEl(key: GroupKey, index: number, itemsInGroup: readonly T[], itemEls: HTMLElement[]): HTMLElement {
     const text = this.groupKeyToString(key)
     const group = document.createElement('div')
     group.id = `${this.classIdMap.popupListId}-group${index}`
@@ -2069,7 +2068,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const labelEl = document.createElement('div')
     labelEl.className = this.classIdMap.groupLabelClass
     labelEl.setAttribute('aria-hidden', 'true')
-    const content = this.createGroupLabelContentEl(key, items)
+    const content = this.createGroupLabelContentEl(key, itemsInGroup)
     if (content === null) {
       labelEl.textContent = text
     } else {
@@ -2123,7 +2122,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Build the whole DOM element for one option row.
+   * Build the whole DOM element for one item row of the popup list.
    * - The library calls it, once per row of `getVisibleItems()`, on every
    *   list render. You never call it yourself.
    * - Both params come from the library. Forward them to `super` unchanged.
@@ -2207,7 +2206,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Item -> the visible content of its list row (icon + text etc.).
+   * Item -> the visible content of its popup list row (icon + text etc.).
    * - Default reads `createPopupListItemContentElFn`, else `null` so `createPopupListItemEl` uses
    *   the plain-text default from `itemToString`.
    * - Override only when extending; for one-off rich content pass the setting.

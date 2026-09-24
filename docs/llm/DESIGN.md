@@ -4,6 +4,10 @@ Architecture and API conventions for llselect. Code-style rules (braces, languag
 
 ## API naming conventions
 
+### Item vocabulary
+
+`item` is one entry of the data list, the type parameter `T`. Unqualified `items` is the full list the user chooses from; every qualified form (`chosenItems`, `getVisibleItems`) is a subset of it. A row is the `role="option"` element the popup list builds for an item. Which names carry a side prefix is ruled under "Element family naming" below; the full ruling is `naming-conventions.md` s7a rule 10.
+
 ### Function-typed settings
 
 Different categories of callbacks use different markers so callers can tell at a glance how the library will use the function. The marker is part of the **field name**, not the type alias.

@@ -121,7 +121,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    *   Either cost is paid once per change of the list or the chosen set -
    *   the result is cached between changes. `toggleItem` swaps its O(1) row
    *   replace for a full rebuild.
-   * @group Items
+   * @group Popup
    */
   hideChosenRows: boolean
   /**
