@@ -369,8 +369,8 @@
    * includes changes WE caused while pushing the model into the view, and the
    * chosen item llselect drops when setItems no longer contains it, or
    * reorders under chosenItemsOrder 'as-listed'. Writing those back through
-   * $setViewValue would mark the form $dirty for something
-   * the user never did. So view -> model is armed only around real interaction.
+   * $setViewValue would mark the form $dirty for something the user never
+   * did. So view -> model is armed only around real interaction.
    */
   function makeWriteBackGate() {
     var suppressed = false

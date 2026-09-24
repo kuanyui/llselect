@@ -12,16 +12,16 @@ Process: post-fix review of the item-row rename (`8cb3658`), the item vocabulary
   - Fix: `LLSelectMultiple.onItemsChanged` renders an open popup once more after a drop or reorder; the `setItems` docstring says so.
   - Verified: test/chosen-items-order.test.ts, the open-popup re-render test.
   - Q: Why a second render, not reconciliation before the first?
-    - A: The base sequence (render, `onItemsChanged`, replace action rows) is shared with single mode and fires `onChange` after the DOM shows the new list; moving reconciliation first changes that order for every consumer. The extra render runs only when the chosen items actually changed.
+    - A: Because the base sequence (render, `onItemsChanged`, replace action rows) is shared with single mode and fires `onChange` after the DOM shows the new list; moving reconciliation first changes that order for every consumer. The extra render runs only when the chosen items actually changed.
 - [ ] **[NEEDS-VERIFICATION-151] - the compareFn-equal reload path still renders rows before the chosen references are swapped; a chosen-changing setItems renders an open popup twice**
-  - Symptom: after a `setItems` whose items are compareFn-equal fresh objects, rows rendered before the swap may hold the old chosen objects (only action rows are replaced, `src/base.ts` `setItems`); a drop or reorder now costs two full list renders while open.
+  - Symptom: after a `setItems` whose items are compareFn-equal fresh objects, rows rendered before the swap may hold the old chosen objects (only action rows are replaced: `src/base.ts:1676` renders, `src/base.ts:1677` reconciles); a drop or reorder now costs two full list renders while open.
   - Cause: the render-before-reconcile sequence in base `setItems`.
   - Fix: open. A single final render needs reconciliation split from notification in both variants. Two round-2 reviewers asked for it; one judged the double render acceptable for a batch call.
 - [x] **[QUALITY-152] - toggleItem replaces only the toggled row, so row content that reads the chosen ORDER goes stale under 'as-listed'**
   - Symptom: adding an earlier-listed item moves the existing chosen items' positions, but their rows are not rebuilt.
   - Fix: contract, not code. `createPopupListItemContentElFn` now says: read chosen state through `isChosen`, never derive content from the chosen order.
-  - Q: Why document the limit instead of rebuilding the list on every add?
-    - A: The O(1) toggle is a recorded design property (DESIGN.md "hideChosenRows"); order-dependent row content is exotic; the panel split two to two. Ruled here: keep the cheap toggle, let the docstring carry the limit.
+  - Q: Why document the limit, not rebuild the list on every add?
+    - A: Because the O(1) single-row DOM swap of `toggleItem` is a recorded design property (DESIGN.md "hideChosenRows"); order-dependent row content is exotic; the panel split two to two. Ruled here: keep the cheap toggle, let the docstring carry the limit.
 - [x] **[PERFORMANCE-153] - 'as-listed' rebuilt the item position table on every add**
   - Cause: `orderChosen` built a `Map` over the whole item list per call.
   - Fix: `itemPositionCache`, keyed by the items array reference and cleared in `onItemsChanged`; the setting's docstring lists the costs.
@@ -29,8 +29,8 @@ Process: post-fix review of the item-row rename (`8cb3658`), the item vocabulary
 - [x] **[DOCUMENTATION-154] - docstrings, the README row and the API.md entry lagged the new setting and the row-class rename**
   - Symptom: `chosenItems`, `getChosenItems`, `setChosenItems`, `onChange` and `toggleItem` still described only the chosen order; README's multiple-selection row lacked `chosenItemsOrder`; `angularjs/API.md` packed the attribute's facts into one paragraph and missed the list-reorder case; `angularjs/DESIGN.md`, `docs/llm/A11Y.md`, the theme comments and one test title kept the old row class spelling; `createGroupEl`'s `itemsInGroup` rename stopped at the base signature.
   - Fix: every place named above follows the setting and the rename; `setChosenItems(chosenItems)` so that bare `items` means the full list; naming-conventions rule 10 states that direct children of a family always carry its prefix.
-  - Q: Why does README's introduction still say "candidates"?
-    - A: Maintainer ruling: the introduction prose is not touched by agents. Rule 10 governs API names; the prose is the maintainer's own wording.
+  - Q: Why leave "candidates" in README's introduction, not align it with rule 10?
+    - A: Because the introduction prose is the maintainer's own wording and, by ruling, agents do not touch it; rule 10 governs API names.
 
 ## review (demo renumbering, AngularJS i18n demo, the ui-select bridge's language-pack door)
 

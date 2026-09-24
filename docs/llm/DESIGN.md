@@ -257,7 +257,7 @@ Rejected: a nested shape (`(T | { label, items: T[] })[]` or a second `setGroups
 | identity | `T`                      | `GroupKey` (grouping key; class `<T, GroupKey = string>`) |
 | equality | `compareFn(a, b)`        | `groupKeyCompareFn(a, b)`               |
 | display (text) | `itemToStringFn(item)` | `groupKeyToStringFn(key)`             |
-| display (rich) | `createPopupListItemContentElFn(item)` | `createGroupLabelContentElFn(key, items)` |
+| display (rich) | `createPopupListItemContentElFn(item)` | `createGroupLabelContentElFn(key, itemsInGroup)` |
 | full control (subclass) | `createPopupListItemEl` (protected) | `createGroupEl` (protected) |
 | disabled | `itemDisabledFn(item)`   | `groupDisabledFn(key)`                  |
 
