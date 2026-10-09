@@ -2,6 +2,51 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (site color-scheme switch)
+
+Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time; round 1 was Opus 5 (max) on the shipped commit, its findings fixed in one batch below; rounds 2-3 are Opus 4.8, Codex 5.5 and Codex Sol on the fixed state (entries follow).
+
+- [x] **[MEDIUM-155] - the vanilla filter input was painted dark by the UA under a dark page scheme**
+  - Symptom: with `color-scheme: dark` on the page root, the vanilla theme's filter input rendered as a dark field with white text inside the white popup (measured: rgb(59, 59, 59)); every other theme sets both colors.
+  - Cause: `src/themes/vanilla.css` `.llselect-filter-input` declared no `background-color` / `color`, so the UA's dark form-control colors applied.
+  - Fix: explicit `background-color` / `color` on the rule, matching the other four themes; the benchmark stages pin `color-scheme: light` for the competitors' widgets (Select2 leaves its search field to the UA).
+  - Verified: headless Chromium, dark OS, the open popup of a filterable example shows a white field.
+- [x] **[MEDIUM-156] - benchmark charts kept Chart.js's light defaults under the dark scheme**
+  - Symptom: tick, legend and title text stayed #666 and the grid rgba(0,0,0,0.1), unreadable on the dark page; a scheme change did not repaint.
+  - Fix: `demo/benchmark.js` reads the scheme (attribute, else `matchMedia`) into `Chart.defaults.color` / `borderColor` before each build, and a `MutationObserver` on `data-color-scheme` plus the media-query listener repaint live charts.
+  - Verified: headless Chromium, dark OS, a chart built from a one-library run shows light text.
+- [x] **[MEDIUM-157] - the generated pages lost their no-JavaScript dark fallback**
+  - Symptom: before the switch, a dark-OS visitor with scripts off saw the site pages dark; the first version keyed every dark value on the attribute the script writes.
+  - Fix: the dark token set is printed twice, under `@media (prefers-color-scheme: dark) { :root:not([data-color-scheme]) }` and under `:root[data-color-scheme="dark"]`; the script writes the attribute only for a stored override. Same shape in `demo/style.css`.
+  - Q: Why two copies, not one block?
+    - A: Because `light-dark()` and style queries sit above the browser floor; a media query and an attribute selector cannot share one rule, so the set is a constant printed twice in the generator and a commented pair in the demo stylesheet.
+- [x] **[MEDIUM-158] - the attribute always carried a resolved value, so a theme could not tell an explicit choice from "follow the OS"**
+  - Symptom: the TODO contract for the theme work asked themes to honor "the page's own signal", but every page stated light or dark even when nobody had chosen.
+  - Fix: attribute present = explicit override, absent = follow the OS; the TODO entry states this contract and that a theme consults `prefers-color-scheme` only under `:root:not([data-color-scheme])`.
+- [x] **[QUALITY-159] - inline code text had no token, so Bootstrap's pink won under the dark scheme**
+  - Fix: `code { color: var(--fg) }` in `demo/style.css`.
+- [x] **[QUALITY-160] - role="switch" on a control that looks like a checkbox**
+  - Fix: dropped; a native checkbox labelled "Dark" announces its own checked state.
+- [x] **[QUALITY-161] - once stored, a choice could never return to following the OS**
+  - Fix: the switch stores only an override that differs from the OS preference; setting it to what the OS says clears the stored value and the attribute.
+- [x] **[QUALITY-162] - the inlined script was not escaped**
+  - Fix: the generator escapes `</script` and `<!--` when inlining `demo/color-scheme.js`.
+- [x] **[QUALITY-163] - two token vocabularies for one palette (site `--nav-link` / `--nav-hover` vs demo `--accent` / `--accent-soft`)**
+  - Fix: the site template renamed to `--accent` / `--accent-soft`; both files say the light values differ on purpose and the dark values match.
+- [x] **[QUALITY-164] - "private mode" in a comment gave "mode" a third meaning**
+  - Fix: "private browsing".
+- [x] **[QUALITY-168] - two copied demo files carry no switch**
+  - Fix: none. `demo/index.html` is a redirect stub; `demo/bench-reflow.html` is an unlinked measurement harness with its own light styles. Every page reachable from the nav has the switch.
+- [x] **[DOCUMENTATION-165] - the body-rule comment claimed "same colors in light"**
+  - Symptom: Bootstrap 3's body text is #333, the token is #222, and the comment named no page.
+  - Fix: the comment names `demo/angularjs/benchmark.html` and states what each scheme shows.
+- [x] **[DOCUMENTATION-166] - rule 7a.11 was separated from rule 10 by a blank line, turning the ordered list loose**
+  - Fix: blank line removed.
+- [ ] **[QUALITY-167] - demo/angularjs/benchmark.html loads Bootstrap 3 after demo/style.css, so the html font-size pin loses**
+  - Symptom: measured in headless Chromium: `html` 10px, nav links 14px with 8px padding, against 16px / 12.8px on the other demo pages. Pre-existing; surfaced while the review compared the two Bootstrap-order comments in `demo/style.css` (`html { font-size: 16px }` and the dark body rule).
+  - Cause: Bootstrap 3's `html { font-size: 10px }` is loaded after the pin (`demo/angularjs/benchmark.html` lines 7-8 vs 10).
+  - Fix: open. Swapping the link order lets `demo/style.css` win every tie on that page (body text, code chips), so it needs an eyeball pass; alternatively pin `html` again in the page's own style block.
+
 ## review (item vocabulary, the popupListItem rename, chosenItemsOrder)
 
 Process: post-fix review of the item-row rename (`8cb3658`), the item vocabulary docs (`30e1f95`) and the `chosenItemsOrder` setting (`f62d332`) by the other four panel members (Opus 5, Opus 4.8, Codex Sol at max, Codex 5.5 at xhigh), two rounds. Round 1 found no correctness defect and asked for the fixes in `13019d6`; round 2 reviewed that commit and produced the entries below. The rename itself followed a seven-model committee that rejected a `candidateItems` vocabulary unanimously; the ruling is naming-conventions rule 10.

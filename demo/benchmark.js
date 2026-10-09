@@ -628,6 +628,29 @@ const METRICS = [
 
 let chartInstance = null
 
+// Chart.js paints text and grid lines from Chart.defaults (gray text, faint
+// black lines), which the page's dark scheme cannot reach: re-read them before
+// each build and repaint live charts when the scheme changes (color-scheme.js
+// writes data-color-scheme for an override; the OS case comes from matchMedia).
+const darkSchemeMq = window.matchMedia('(prefers-color-scheme: dark)')
+function isDarkScheme() {
+  const attr = document.documentElement.getAttribute('data-color-scheme')
+  return attr ? attr === 'dark' : darkSchemeMq.matches
+}
+function syncChartDefaults() {
+  if (!window.Chart) { return }
+  const dark = isDarkScheme()
+  window.Chart.defaults.color = dark ? '#c4c4c4' : '#666'
+  window.Chart.defaults.borderColor = dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)'
+}
+function repaintCharts() {
+  syncChartDefaults()
+  if (!window.Chart) { return }
+  for (const chart of Object.values(window.Chart.instances)) { chart.update('none') }
+}
+new MutationObserver(repaintCharts).observe(document.documentElement, { attributes: true, attributeFilter: ['data-color-scheme'] })
+darkSchemeMq.addEventListener('change', repaintCharts)
+
 function renderChart() {
   const canvas = document.getElementById('chart')
   const empty = document.getElementById('chart-empty')
@@ -679,6 +702,7 @@ function renderChart() {
     },
   }
   if (chartInstance) { chartInstance.destroy() }
+  syncChartDefaults()
   chartInstance = new window.Chart(canvas, cfg)
 }
 
@@ -1000,6 +1024,7 @@ function renderIxChart(mode) {
     },
   }
   if (mode.chart) { mode.chart.destroy() }
+  syncChartDefaults()
   mode.chart = new window.Chart(canvas, cfg)
 }
 

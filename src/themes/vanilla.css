@@ -134,6 +134,8 @@
   padding: 0.3rem 0.5rem;
   border: 1px solid #ccc;
   border-radius: 3px;
+  background-color: #fff; /* explicit: a host page's dark color-scheme would paint the UA field dark */
+  color: #222;
   font: inherit;
   outline: none;
 }

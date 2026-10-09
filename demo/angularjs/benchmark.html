@@ -21,8 +21,7 @@
     .bench-controls { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin: 1rem 0; }
     .bench-controls label { display: block; font-size: 0.85rem; color: var(--fg-muted); }
     .bench-controls input { width: 7rem; padding: 0.3rem; font: inherit; }
-    .bench-best { background: #e6f6e6; font-weight: bold; }
-    :root[data-color-scheme="dark"] .bench-best { background: rgba(46, 160, 67, 0.25); }
+    .bench-best { background: var(--ok-bg); font-weight: bold; }
     /* The stage MUST be on-screen and laid out, and MUST NOT be a scroll
        container. llselect refuses to open a trigger that is outside the layout
        viewport OR clipped by a scroll ancestor (positioning.ts isAnchorHidden),

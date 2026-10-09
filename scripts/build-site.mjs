@@ -306,8 +306,11 @@ ${items.map(([label, href]) => `<a href="${href}"${label === current ? ' class="
 
 // Inlined into every generated page's <head> (the demo pages load the same
 // file with <script src>): resolves the color scheme before first paint and
-// mounts the nav switch.
-const COLOR_SCHEME_JS = readFileSync('demo/color-scheme.js', 'utf8')
+// mounts the nav switch. Escaped so a future "</script" or "<!--" in the file
+// cannot end the inline block early.
+const COLOR_SCHEME_JS = readFileSync('demo/color-scheme.js', 'utf8').replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--')
+// The dark token set, printed twice (see the comment in the template CSS).
+const SITE_DARK_VARS = 'color-scheme: dark; --fg: #d8d8d8; --fg-muted: #9a9a9a; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --accent: #7fb1f5; --accent-soft: #263344; --mark: rgba(187, 128, 9, 0.45); --alert-note: #4493f8; --alert-tip: #3fb950; --alert-important: #ab7df8; --alert-warning: #d29922; --alert-caution: #f85149;'
 
 function renderPage({ title, description, nav, body, toc, subnav = null }) {
   return `<!doctype html>
@@ -320,11 +323,14 @@ function renderPage({ title, description, nav, body, toc, subnav = null }) {
 <script>
 ${COLOR_SCHEME_JS}</script>
 <style>
-:root { color-scheme: light; --fg: #1a1a1a; --fg-muted: #656565; --bg: #ffffff; --muted: #f4f4f4; --line: #d0d0d0; --link: #0550ae; --nav-link: #2456a6; --nav-hover: #eef3fb; --mark: #ffe066; }
-/* Dark values key on the attribute demo/color-scheme.js resolves (stored
-   choice, else the OS preference) - never on prefers-color-scheme, so the
-   nav switch can override the OS. */
-:root[data-color-scheme="dark"] { color-scheme: dark; --fg: #d8d8d8; --fg-muted: #9a9a9a; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --nav-link: #7fb1f5; --nav-hover: #263344; --mark: rgba(187, 128, 9, 0.45); }
+:root { color-scheme: light; --fg: #1a1a1a; --fg-muted: #656565; --bg: #ffffff; --muted: #f4f4f4; --line: #d0d0d0; --link: #0550ae; --accent: #2456a6; --accent-soft: #eef3fb; --mark: #ffe066; --alert-note: #0969da; --alert-tip: #1a7f37; --alert-important: #8250df; --alert-warning: #9a6700; --alert-caution: #cf222e; }
+/* The dark set twice on purpose: the OS preference applies only while no
+   data-color-scheme attribute is set (demo/color-scheme.js writes one when the
+   stored choice differs from the OS); light-dark() and style queries sit above
+   the browser floor, so one block cannot serve both. demo/style.css uses the
+   same token names with its own light values; the dark values match. */
+@media (prefers-color-scheme: dark) { :root:not([data-color-scheme]) { ${SITE_DARK_VARS} } }
+:root[data-color-scheme="dark"] { ${SITE_DARK_VARS} }
 /* overflow-wrap lets long identifiers (LLSelectMultipleSettings.createTriggerContentElFn,
    in prose / links / bold / inline code) break instead of widening the page body - a
    body horizontal overflow throws off the visual viewport on real phones and trims the
@@ -343,28 +349,28 @@ h6 { font-size: 1em; margin: 1.4em 0 0.5em; }
    labels are a closed set, recognizable by their slug ids */
 .with-toc h6[id^="parameters"], .with-toc h6[id^="returns"], .with-toc h6[id^="inherited-from"], .with-toc h6[id^="overrides"], .with-toc h6[id^="example"] { font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--fg-muted); }
 /* Jump-target highlight: the content side answers the sidebar's highlight */
-main :target { background: var(--nav-hover); box-shadow: 0 0 0 6px var(--nav-hover); border-radius: 2px; scroll-margin-top: 0.6rem; }
+main :target { background: var(--accent-soft); box-shadow: 0 0 0 6px var(--accent-soft); border-radius: 2px; scroll-margin-top: 0.6rem; }
 /* Scroll-following block highlight: the section owning the scrollspy's
    current heading. Constant padding (class-independent) so toggling the
    class never shifts layout mid-scroll. */
 main section { padding: 0 0.6rem; margin: 0 -0.6rem; border-radius: 4px; transition: background-color 0.15s; }
-main section.current-block { background: var(--nav-hover); box-shadow: inset 3px 0 0 var(--nav-link); }
+main section.current-block { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
 /* same look as demo/style.css .demo-nav so the site reads as one family */
 nav { display: flex; flex-wrap: wrap; gap: 0.25rem; padding: 0.8rem 0 0.5rem; border-bottom: 1px solid var(--line); margin-bottom: 1.5rem; }
-nav a { padding: 0.35rem 0.8rem; color: var(--nav-link); text-decoration: none; border-radius: 4px; font-weight: 600; }
-nav a:hover { background: var(--nav-hover); }
-nav a.current { background: var(--nav-link); color: var(--bg); }
+nav a { padding: 0.35rem 0.8rem; color: var(--accent); text-decoration: none; border-radius: 4px; font-weight: 600; }
+nav a:hover { background: var(--accent-soft); }
+nav a.current { background: var(--accent); color: var(--bg); }
 nav a.repo { margin-left: auto; }
 /* "Dark" switch, mounted by demo/color-scheme.js after the repo link */
-nav .color-scheme-switch { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.5rem; font-weight: 600; color: var(--nav-link); cursor: pointer; user-select: none; }
+nav .color-scheme-switch { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.5rem; font-weight: 600; color: var(--accent); cursor: pointer; user-select: none; }
 nav .color-scheme-switch input { margin: 0; cursor: pointer; }
 /* Second nav tier (AngularJS section): identity label + in-section items */
 .subnav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; margin: -1rem 0 1.5rem; padding: 0.4rem 0.5rem; font-size: 0.92em; background: var(--muted); border-radius: 6px; }
 .subnav-label { display: flex; align-items: center; gap: 0.3rem; margin-right: 0.5rem; font-weight: 600; }
 .subnav-label svg { width: 1.15em; height: 1.15em; color: #dd1b16; }
-.subnav a { padding: 0.25rem 0.7rem; color: var(--nav-link); text-decoration: none; border-radius: 4px; font-weight: 600; }
-.subnav a:hover { background: var(--nav-hover); }
-.subnav a.current { background: var(--nav-link); color: var(--bg); }
+.subnav a { padding: 0.25rem 0.7rem; color: var(--accent); text-decoration: none; border-radius: 4px; font-weight: 600; }
+.subnav a:hover { background: var(--accent-soft); }
+.subnav a.current { background: var(--accent); color: var(--bg); }
 a { color: var(--link); }
 /* Fenced blocks: the demo pages' dark One Monokai look, same in both themes */
 pre { padding: 0.8rem 1rem; background: #282c34; color: #abb2bf; border-radius: 4px; overflow-x: auto; font-size: 0.9em; line-height: 1.5; }
@@ -393,11 +399,11 @@ body.with-toc { max-width: 78rem; }
 .toc ul { list-style: none; margin: 0; padding-left: 0.85rem; }
 .toc ul.toc-tree { padding-left: 0; }
 .toc a { display: block; padding: 0.1rem 0.35rem; color: var(--fg); text-decoration: none; border-radius: 3px; overflow-wrap: anywhere; }
-.toc a:hover { background: var(--nav-hover); }
-.toc a.active { background: var(--nav-hover); color: var(--nav-link); font-weight: 600; }
+.toc a:hover { background: var(--accent-soft); }
+.toc a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .toc .toc-section > a { font-weight: 600; margin-top: 0.5rem; }
 .toc-fold { display: flex; align-items: center; gap: 0.35rem; width: 100%; margin-bottom: 0.6rem; padding: 0.25rem 0.5rem; font: inherit; color: var(--fg); background: var(--muted); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
-.toc-fold:hover { background: var(--nav-hover); }
+.toc-fold:hover { background: var(--accent-soft); }
 .toc-fold svg { width: 1rem; height: 1rem; flex: none; color: var(--fg-muted); }
 /* Kind badges (API pages), stamped as data-kind. One color per kind (fixed,
    white text - fine in both schemes); the sidebar draws compact letter
@@ -460,7 +466,7 @@ main [data-binding]::before { content: attr(data-binding); float: right; margin-
   .toc { position: fixed; top: 0; bottom: 0; left: 0; z-index: 3000; width: min(19rem, 85vw); max-height: none; margin: 0; padding: 1rem 1rem 0; background: var(--bg); border-right: 1px solid var(--line); box-shadow: 0 0 24px rgba(0, 0, 0, 0.35); transform: translateX(-100%); visibility: hidden; transition: transform 0.2s ease, visibility 0.2s; }
   body.toc-open .toc { transform: none; visibility: visible; }
   body.toc-open { overflow: hidden; } /* page stays put while the drawer scrolls */
-  .toc-toggle { display: flex; align-items: center; gap: 0.4rem; position: fixed; left: 1rem; bottom: 1rem; z-index: 1500; padding: 0.45rem 0.9rem; font: inherit; font-weight: 600; color: var(--nav-link); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+  .toc-toggle { display: flex; align-items: center; gap: 0.4rem; position: fixed; left: 1rem; bottom: 1rem; z-index: 1500; padding: 0.45rem 0.9rem; font: inherit; font-weight: 600; color: var(--accent); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
   .toc-toggle svg { width: 1.1em; height: 1.1em; }
   .toc-backdrop { display: block; position: fixed; inset: 0; z-index: 2900; background: rgba(0, 0, 0, 0.4); }
   .toc-backdrop[hidden] { display: none; }
@@ -469,19 +475,14 @@ main [data-binding]::before { content: attr(data-binding); float: right; margin-
 .md-alert { margin: 1rem 0; padding: 0.1rem 1rem; border-left: 0.25rem solid var(--alert, var(--line)); }
 .md-alert-title { display: flex; align-items: center; gap: 0.4em; font-weight: 600; color: var(--alert); }
 .md-alert-title svg { width: 1.125em; height: 1.125em; flex: none; }
-.md-alert-note { --alert: #0969da; }
-.md-alert-tip { --alert: #1a7f37; }
-.md-alert-important { --alert: #8250df; }
-.md-alert-warning { --alert: #9a6700; }
-.md-alert-caution { --alert: #cf222e; }
-:root[data-color-scheme="dark"] .md-alert-note { --alert: #4493f8; }
-:root[data-color-scheme="dark"] .md-alert-tip { --alert: #3fb950; }
-:root[data-color-scheme="dark"] .md-alert-important { --alert: #ab7df8; }
-:root[data-color-scheme="dark"] .md-alert-warning { --alert: #d29922; }
-:root[data-color-scheme="dark"] .md-alert-caution { --alert: #f85149; }
+.md-alert-note { --alert: var(--alert-note); }
+.md-alert-tip { --alert: var(--alert-tip); }
+.md-alert-important { --alert: var(--alert-important); }
+.md-alert-warning { --alert: var(--alert-warning); }
+.md-alert-caution { --alert: var(--alert-caution); }
 /* Back-to-top: fixed bottom-right, hidden until scrolled (script toggles). */
-.back-to-top { position: fixed; right: 1rem; bottom: 1rem; z-index: 10; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.45rem 0.9rem; font: inherit; font-weight: 600; color: var(--nav-link); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
-.back-to-top:hover { background: var(--nav-hover); }
+.back-to-top { position: fixed; right: 1rem; bottom: 1rem; z-index: 10; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.45rem 0.9rem; font: inherit; font-weight: 600; color: var(--accent); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+.back-to-top:hover { background: var(--accent-soft); }
 .back-to-top svg { width: 1em; height: 1em; }
 </style>
 </head>

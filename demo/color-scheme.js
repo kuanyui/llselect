@@ -1,11 +1,13 @@
 // Page color scheme (light / dark) for the site pages and the demo pages.
-// - Resolves the scheme before first paint: the stored choice (localStorage
-//   "llselect-color-scheme"), otherwise the OS preference.
-// - Writes it to <html data-color-scheme="light|dark">. The stylesheets key
-//   their dark values on that attribute, never on prefers-color-scheme, so the
-//   switch can override the OS.
-// - Mounts a "Dark" switch at the end of the page's main nav (the first
-//   `body > nav`); it stores the choice and re-applies.
+// - The stylesheets follow the OS preference on their own (prefers-color-scheme
+//   under `:root:not([data-color-scheme])`), so a page without JavaScript still
+//   renders dark on a dark OS.
+// - A stored override (localStorage "llselect-color-scheme", light / dark) is
+//   written to <html data-color-scheme="..."> before first paint; the
+//   stylesheets key their explicit values on that attribute.
+// - The "Dark" switch at the end of the page's main nav (the first `body > nav`)
+//   shows the effective scheme. Setting it to what the OS already says clears
+//   the override, so the page follows the OS again; the other value stores one.
 // Classic script on purpose: the demo pages load it with <script src> in
 // <head>; scripts/build-site.mjs inlines it into the generated pages' <head>.
 // Vocabulary: "theme" is the library's visual theme (dist/themes/*.css);
@@ -13,35 +15,35 @@
 (() => {
   const STORAGE_KEY = 'llselect-color-scheme'
   const darkMq = window.matchMedia('(prefers-color-scheme: dark)')
-  const readStoredScheme = () => {
+  const osScheme = () => (darkMq.matches ? 'dark' : 'light')
+  const readOverride = () => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       return stored === 'light' || stored === 'dark' ? stored : null
     } catch {
-      return null // storage blocked (private mode, site data disabled)
+      return null // storage blocked (private browsing, site data disabled)
     }
   }
-  let chosenScheme = readStoredScheme() // null = follow the OS
+  let override = readOverride() // null = follow the OS
   let switchInput = null
-  const resolveScheme = () => chosenScheme ?? (darkMq.matches ? 'dark' : 'light')
   const apply = () => {
-    const scheme = resolveScheme()
-    document.documentElement.setAttribute('data-color-scheme', scheme)
-    if (switchInput) { switchInput.checked = scheme === 'dark' }
+    const root = document.documentElement
+    if (override) { root.setAttribute('data-color-scheme', override) } else { root.removeAttribute('data-color-scheme') }
+    if (switchInput) { switchInput.checked = (override ?? osScheme()) === 'dark' }
   }
   apply()
-  darkMq.addEventListener('change', apply) // no effect once a choice is stored
+  darkMq.addEventListener('change', apply) // keeps the switch in step while no override is stored
   document.addEventListener('DOMContentLoaded', () => {
     const nav = document.querySelector('body > nav')
     if (!nav) { return }
     switchInput = document.createElement('input')
     switchInput.type = 'checkbox'
-    switchInput.setAttribute('role', 'switch')
-    switchInput.checked = resolveScheme() === 'dark'
+    switchInput.checked = (override ?? osScheme()) === 'dark'
     switchInput.addEventListener('change', () => {
-      chosenScheme = switchInput.checked ? 'dark' : 'light'
+      const chosen = switchInput.checked ? 'dark' : 'light'
+      override = chosen === osScheme() ? null : chosen
       try {
-        localStorage.setItem(STORAGE_KEY, chosenScheme)
+        if (override) { localStorage.setItem(STORAGE_KEY, override) } else { localStorage.removeItem(STORAGE_KEY) }
       } catch {
         // storage blocked: the choice lasts for this page only
       }
