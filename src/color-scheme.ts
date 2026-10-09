@@ -165,7 +165,9 @@ function wireDocument(doc: Document): void {
       if (doc.body === observedBody) { return }
       observedBody = doc.body
       observer.disconnect()
-      observer.observe(doc.documentElement, { attributes: true, childList: true })
+      // typed non-null, but null while <html> itself is detached
+      const html: HTMLElement | null = doc.documentElement
+      if (html !== null) { observer.observe(html, { attributes: true, childList: true }) }
       if (observedBody !== null) { observer.observe(observedBody, { attributes: true }) }
     }
     observer.observe(doc.documentElement, { attributes: true, childList: true })
