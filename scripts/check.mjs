@@ -18,7 +18,7 @@
 //      (light / dark) in the themes"): no `color-scheme` and no
 //      `--llselect-color-scheme` declared on the widget root, no
 //      `prefers-color-scheme` media query, no literal color outside the
-//      `--llselect-*` variable declarations.
+//      `--llselect-*` variable declarations (hex, color functions, named colors).
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import ts from 'typescript'
@@ -258,34 +258,49 @@ for (const rel of markdownFiles) {
 // The resolver reads the computed `color-scheme` and `--llselect-color-scheme`
 // of the widget root; a theme declaring either there would feed it its own
 // output or hide an ancestor's mark. A `prefers-color-scheme` query cannot
-// tell a light-only page from an OS-following one.
+// tell a light-only page from an OS-following one. Every color outside the
+// `--llselect-*` declarations must come from a variable (DESIGN.md "The color
+// variables"); `transparent` and `currentColor` are not colors here.
 {
+  const NAMED_COLORS = 'aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightslategrey|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|rebeccapurple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen'
+  const COLOR_LITERAL = new RegExp(`#[0-9a-f]{3,8}\\b|\\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\\(|\\b(?:${NAMED_COLORS})\\b`, 'i')
+  // Masks the contents of parentheses and brackets (innermost first, repeated)
+  // so a comma or a combinator inside them cannot split a selector.
+  const maskSelector = (s) => { let prev; do { prev = s; s = s.replace(/\([^()]*\)|\[[^[\]]*\]/g, (x) => 'x'.repeat(x.length)) } while (s !== prev); return s }
+  const splitSelectorList = (list) => {
+    const masked = maskSelector(list), out = []
+    let start = 0
+    for (let i = 0; i <= masked.length; i += 1) {
+      if (i === masked.length || masked[i] === ',') { out.push(list.slice(start, i).trim()); start = i + 1 }
+    }
+    return out
+  }
+  // The subject is the last compound selector, taken unmasked so that
+  // `:is(.llselect-root)` counts.
+  const subjectOf = (s) => { const m = /[\s>+~]+(?=[^\s>+~]*$)/.exec(maskSelector(s)); return m === null ? s : s.slice(m.index + m[0].length) }
+  const lineOf = (text, index) => text.slice(0, index).split('\n').length
   for (const f of walk('src/themes', '.css')) {
-    const css = readFileSync(join(root, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
+    // Comments become blanks of the same length: indexes and line numbers stay those of the file.
+    const css = readFileSync(join(root, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '))
     for (const m of css.matchAll(/@media([^{]*)\{/g)) {
       if (/prefers-color-scheme/.test(m[1])) { problems.push(`${f}: @media${m[1].trimEnd()} - a theme file must not query prefers-color-scheme`) }
     }
     for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-      const selectors = m[1].split(',').map((s) => s.trim()).filter((s) => s !== '' && !s.startsWith('@'))
-      const onRoot = selectors.some((s) => {
-        // The subject is the last compound selector; parentheses and brackets
-        // are masked first so their contents cannot split it or carry the
-        // class name; the class may sit anywhere in the compound.
-        const masked = s.replace(/\([^()]*\)/g, (x) => 'x'.repeat(x.length)).replace(/\[[^\]]*\]/g, (x) => 'x'.repeat(x.length))
-        const parts = masked.split(/\s+|>|\+|~/).filter(Boolean)
-        const subject = parts.pop()
-        return subject !== undefined && /(^|[^\w-])\.llselect-root(?![\w-])/.test(subject)
-      })
-      if (!onRoot) { continue }
+      const selectors = splitSelectorList(m[1]).filter((s) => s !== '' && !s.startsWith('@'))
       const body = m[2]
-      if (/(^|[\s;])color-scheme\s*:/.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares color-scheme on the widget root; the resolver reads it there`) }
-      if (/--llselect-color-scheme\s*:/.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares --llselect-color-scheme on the widget root; it would hide an ancestor's value`) }
-    }
-    // Every color outside the variable declarations must come from a variable
-    // (DESIGN.md "The color variables"); keywords such as transparent stay.
-    for (const [index, line] of css.split('\n').entries()) {
-      if (/^\s*--llselect-[a-z-]+\s*:/.test(line)) { continue }
-      if (/#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/.test(line)) { problems.push(`${f}:${index + 1}: literal color outside the variable declarations: ${line.trim()}`) }
+      if (selectors.some((s) => /\.llselect-root(?![\w-])/.test(subjectOf(s)))) {
+        if (/(^|[\s;])color-scheme\s*:/.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares color-scheme on the widget root; the resolver reads it there`) }
+        if (/--llselect-color-scheme\s*:/.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares --llselect-color-scheme on the widget root; it would hide an ancestor's value`) }
+      }
+      let offset = m.index + m[1].length + 1
+      for (const declaration of body.split(';')) {
+        const colon = declaration.indexOf(':')
+        const property = colon === -1 ? '' : declaration.slice(0, colon).trim()
+        if (!property.startsWith('--llselect-') && COLOR_LITERAL.test(declaration.slice(colon + 1))) {
+          problems.push(`${f}:${lineOf(css, offset)}: literal color outside the --llselect-* declarations: ${declaration.trim()}`)
+        }
+        offset += declaration.length + 1
+      }
     }
   }
 }
