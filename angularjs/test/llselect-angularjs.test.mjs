@@ -1081,7 +1081,7 @@ test("ll-chosen-items-order=\"'as-listed'\": reordering the item list reorders t
 
 // ll-color-scheme reaches the core colorScheme setting; the core writes its
 // decision to the root as data-llselect-color-scheme (the themes key on it).
-test("ll-color-scheme=\"'dark'\" forces the dark scheme on that element", () => {
+test("ll-color-scheme=\"'dark'\" forces the dark scheme on that element", async () => {
   const a = boot({
     deps: ['llselect'],
     html: `
@@ -1093,8 +1093,10 @@ test("ll-color-scheme=\"'dark'\" forces the dark scheme on that element", () => 
       </div>`,
     controller: function () { this.fruits = FRUITS.slice(); this.fruit = 'Apple' },
   })
-  assert.equal(a.$('[name=forced]').getAttribute('data-llselect-color-scheme'), 'dark')
-  // jsdom declares no color-scheme and has no matchMedia, so 'auto' resolves light
+  assert.equal(a.$('[name=forced]').getAttribute('data-llselect-color-scheme'), 'dark', 'a forced scheme is written at construction')
+  // An 'auto' instance decides in a microtask (one style flush per batch of
+  // widgets); jsdom declares no color-scheme and has no matchMedia, so light.
+  await new Promise((resolve) => setTimeout(resolve, 0))
   assert.equal(a.$('[name=auto]').getAttribute('data-llselect-color-scheme'), 'light')
 })
 

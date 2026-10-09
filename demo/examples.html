@@ -1044,6 +1044,110 @@
       <details class="code-toggle"><summary>code</summary><pre data-demo="16.3"><code></code></pre></details>
     </article>
   </section>
+
+  <section>
+    <h2>17. Color scheme (light / dark)</h2>
+    <p class="hint">
+      Every theme has a dark palette. These examples show a widget that
+      follows the page, a custom CSS class, a light card inside a dark region,
+      a forced dark scheme, and custom colors. Each widget's root element
+      receives <code>data-llselect-color-scheme="light"</code> or
+      <code>"dark"</code>; the "resolved" line shows that value.
+    </p>
+
+    <article>
+      <h3>17.1 Follows this page's Dark switch</h3>
+      <p class="hint">
+        The Dark switch in the navigation sets <code>data-color-scheme</code>
+        on <code>&lt;html&gt;</code> to <code>dark</code> or <code>light</code>,
+        and removes it when the page follows the OS. The themes recognize that
+        attribute. This widget uses the default <code>colorScheme: 'auto'</code>.
+        Toggle the switch and watch the widget and its "resolved" value change.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-scheme-page"></div>
+          <div class="out" id="out-scheme-page">resolved: </div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="17.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>17.2 A page that switches with its own class</h3>
+      <p class="hint">
+        The widget's wrapper has the custom class <code>acme-dark</code>, which
+        the themes do not recognize. The rule
+        <code>.acme-dark { --llselect-color-scheme: dark; }</code> makes the
+        widget inside the wrapper use dark colors.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div class="acme-dark">
+            <div id="mount-scheme-class"></div>
+          </div>
+          <div class="out" id="out-scheme-class">resolved: </div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="17.2"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="17.2"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>17.3 A light card inside a dark region</h3>
+      <p class="hint">
+        This card has <code>data-color-scheme="light"</code> inside another
+        wrapper with the <code>acme-dark</code> class from 17.2. The theme sets
+        <code>--llselect-color-scheme: light</code> on the card, which
+        overrides the dark value inherited from the wrapper.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div class="acme-dark">
+            <div class="demo-card" data-color-scheme="light">
+              <div id="mount-scheme-card"></div>
+            </div>
+          </div>
+          <div class="out" id="out-scheme-card">resolved: </div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="17.3"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="17.3"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>17.4 Forced per instance: colorScheme: 'dark'</h3>
+      <p class="hint">
+        <code>colorScheme: 'dark'</code> overrides both CSS sources and the
+        operating system's color preference. This widget is dark on the light
+        page and stays dark when the page goes dark.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-scheme-forced"></div>
+          <div class="out" id="out-scheme-forced">resolved: </div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="17.4"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>17.5 Your own colors: the --llselect-* variables</h3>
+      <p class="hint">
+        The selector <code>.acme-brand .llselect-root</code> gives the widget
+        inside the wrapper its own <code>--llselect-*</code> values, purple
+        here, in both schemes. Expand "code" to see them; every theme file
+        lists the names.
+      </p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div class="acme-brand">
+            <div id="mount-scheme-brand"></div>
+          </div>
+          <div class="out" id="out-scheme-brand">chosen: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="17.5"><code></code></pre><div class="code-caption">demo CSS (style.css)</div><pre data-demo-css="17.5"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
   </main>
   </div>
 

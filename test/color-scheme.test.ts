@@ -44,8 +44,9 @@ test('resolveColorScheme: any other variable text falls through to the declared 
 
 // --- the widget --------------------------------------------------------------
 
-test("'auto' writes the attribute on the root; with nothing declared the result is light", () => {
+test("'auto' writes the attribute on the root; with nothing declared the result is light", async () => {
   const sel = new LLSelectSingle<string>(mount())
+  await Promise.resolve()
   assert.equal(sel.getColorScheme(), 'light')
   assert.equal(sel.rootEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
 })
@@ -81,9 +82,36 @@ test("the variable on the root drives 'auto'; refreshColorScheme() and open() de
   assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
 })
 
-test('destroy() removes the attribute from the root', () => {
+test("an 'auto' instance decides in a microtask; getColorScheme() decides at once when asked earlier", async () => {
+  const el = mount()
+  el.style.setProperty('--llselect-color-scheme', 'dark')
+  const sel = new LLSelectSingle<string>(el)
+  assert.equal(el.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false, 'not yet: the first decision is batched')
+  await Promise.resolve()
+  assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+  assert.equal(sel.getColorScheme(), 'dark')
+  const el2 = mount()
+  el2.style.setProperty('--llselect-color-scheme', 'dark')
+  const eager = new LLSelectSingle<string>(el2)
+  assert.equal(eager.getColorScheme(), 'dark', 'asked before the microtask: decides now')
+  assert.equal(el2.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+  await Promise.resolve()
+  assert.equal(el2.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', 'the batch does not decide it twice to a different value')
+})
+
+test('a forced setting is written at construction, with no microtask', () => {
+  const sel = new LLSelectSingle<string>(mount(), { colorScheme: 'dark' })
+  assert.equal(sel.rootEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+})
+
+test('destroy() removes the attribute from the root and cancels a pending first decision', async () => {
   const sel = new LLSelectSingle<string>(mount())
+  await Promise.resolve()
   assert.equal(sel.rootEl.hasAttribute(COLOR_SCHEME_ATTRIBUTE), true)
   sel.destroy()
   assert.equal(sel.rootEl.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false)
+  const early = new LLSelectSingle<string>(mount())
+  early.destroy()
+  await Promise.resolve()
+  assert.equal(early.rootEl.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false, 'destroyed before the batch ran: nothing written')
 })

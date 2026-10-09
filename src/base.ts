@@ -17,6 +17,8 @@ import { en as DEFAULT_UI_TRANSLATION_PACK } from './i18n/en.js'
 import type { LLSelectUiTranslationPack } from './i18n.js'
 import {
   COLOR_SCHEME_ATTRIBUTE,
+  cancelFirstDecision,
+  queueFirstDecision,
   readColorSchemeInputs,
   resolveColorScheme,
   subscribeColorScheme,
@@ -214,15 +216,16 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   outsideClickBehavior: LLSelectOutsideClickBehavior
   /**
    * Which color scheme the widget shows: light or dark.
-   * - `'auto'` (default): the library decides from the page, and decides again while the page changes.
-   * - `'light'` / `'dark'`: that scheme, whatever the page says.
-   * - For `'auto'`, the decision runs in this order and stops at the first hit:
-   *   1. The CSS variable `--llselect-color-scheme`, read from the widget root's computed style. Any ancestor element may set it; the nearest one wins. `light` or `dark` is the answer. `auto` means: dark when the OS prefers dark, otherwise light.
-   *   2. The CSS property `color-scheme`, read from the widget root's computed style. Dark when its value lists `dark` and either omits `light` or the OS prefers dark. This is what the browser does for a native `<select>` at that spot.
-   *   3. Otherwise light. A page that declares nothing stays light, even on a dark OS.
-   * - The themes ship rules that set the variable for common marks on any ancestor: `class="dark"`, `class="theme-dark"`, `class="dark-mode"`, `data-theme="dark"`, `data-bs-theme="dark"`, `data-color-scheme="dark"`, and their light counterparts. Any other mark needs one rule: `.night { --llselect-color-scheme: dark; }`.
-   * - The result is written to the widget root as `data-llselect-color-scheme="light"` or `"dark"`. The themes key their dark colors on it. Do not write that attribute yourself.
-   * - The decision runs at construction, on every `open()`, when the OS preference changes, when an attribute of `<html>` or `<body>` changes, and on `refreshColorScheme()`.
+   * - `'auto'` (default): the library chooses the scheme from the two CSS sources below. The update triggers are listed last.
+   * - `'light'` or `'dark'`: always that scheme, regardless of the CSS sources and of the operating system's color preference.
+   * - For `'auto'`, the library checks two sources in order. The widget root is the element the widget is mounted on, class `llselect-root`.
+   *   1. The CSS variable `--llselect-color-scheme`, from the widget root's computed style. Any ancestor element may set it; the nearest one wins. The value `light` or `dark` is the answer. The value `auto` follows the operating system's color preference: dark when dark is preferred, otherwise light. Any other value, or none, means: check the next source.
+   *   2. The CSS property `color-scheme`, from the widget root's computed style. The answer is dark when its value lists `dark` and either omits `light` or the operating system prefers dark. This is the property that also drives native form controls.
+   *   3. When neither source selects dark, the widget uses light. This holds on a dark operating system too.
+   * - The themes set `--llselect-color-scheme` for these ancestor classes: `dark`, `theme-dark`, `dark-mode`, `theme-light`, `light-mode`. They also recognize the ancestor attributes `data-theme`, `data-bs-theme` and `data-color-scheme` with the values `light` or `dark`. Any other class or attribute needs one rule, for example `.night { --llselect-color-scheme: dark; }`.
+   * - The result is written to the widget root as `data-llselect-color-scheme="light"` or `data-llselect-color-scheme="dark"`. The themes apply their dark colors when the value is `dark`. Do not write that attribute yourself.
+   * - The library checks the scheme right after the widget is created, before the page paints again, and whenever `open()` or `refreshColorScheme()` runs. It also checks after the operating system's color preference changes, and after an attribute of `<html>` or `<body>` changes.
+   * - `getColorScheme()` returns the result. Reading the attribute in the same script run as the construction may still find it missing; `getColorScheme()` never does.
    * @group Color scheme
    */
   colorScheme: LLSelectColorScheme
@@ -1018,6 +1021,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private disabled = false
   /** The latest decision; see `getColorScheme()`. */
   private resolvedColorScheme: 'light' | 'dark' = 'light'
+  /** True from construction until the first decision ran (batched into a microtask, see color-scheme.ts). */
+  private colorSchemeDecisionPending = false
+  private readonly colorSchemeDecision = { decideNow: (): void => { this.syncColorScheme() } }
   /**
    * Who the change being applied right now is attributed to; the variants'
    * `onChange` firing reads it. Set to `'user'` by `withUserChangeSource`
@@ -1216,11 +1222,15 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // being eligible anchor nodes.
     this.rootEl.style.overflowAnchor = 'none'
     this.rootEl.replaceChildren()
-    // The color scheme decides before the first paint of the widget; an
-    // 'auto' instance also re-decides on the shared page listeners.
-    this.syncColorScheme()
+    // A forced scheme is written now; an 'auto' instance decides in a
+    // microtask (before the first paint, one style flush per batch of
+    // widgets) and re-decides on the shared page listeners.
     if (this.settings.colorScheme === 'auto') {
+      this.colorSchemeDecisionPending = true
+      queueFirstDecision(this.colorSchemeDecision)
       subscribeColorScheme(this.rootEl, { refresh: () => { this.syncColorScheme() } })
+    } else {
+      this.syncColorScheme()
     }
 
     this.triggerEl = this.createTriggerEl()
@@ -1577,6 +1587,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.rootEl.classList.remove(this.classIdMap.rootClass, this.classIdMap.openClass)
     this.rootEl.style.overflowAnchor = ''
     unsubscribeColorScheme(this.rootEl)
+    cancelFirstDecision(this.colorSchemeDecision)
+    this.colorSchemeDecisionPending = false
     this.rootEl.removeAttribute(COLOR_SCHEME_ATTRIBUTE)
     this.rootEl.replaceChildren()
   }
@@ -1765,13 +1777,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Color scheme
    */
   public getColorScheme(): 'light' | 'dark' {
+    if (this.colorSchemeDecisionPending) { this.syncColorScheme() }
     return this.resolvedColorScheme
   }
 
   /**
    * Decide the color scheme again, now.
-   * - Needed only after a change the library cannot see: a replaced stylesheet, or a mark toggled on a wrapper element below `<body>`.
-   * - Not needed when the OS preference changes, when an attribute of `<html>` or `<body>` changes, or when the popup opens: the library decides again on those by itself.
+   * - Call it after replacing a stylesheet that affects the scheme. Also call it after changing a scheme-related class, attribute or CSS variable on an ancestor element inside `<body>`.
+   * - The library refreshes by itself when the operating system's color preference changes, when the popup opens, and when an attribute of `<html>` or `<body>` changes.
    * - Changes nothing when the `colorScheme` setting is `'light'` or `'dark'`.
    * @group Color scheme
    */
@@ -1781,6 +1794,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /** Run the decision and reflect it on the root attribute (only when it changed: the root may itself be an observed element). */
   private syncColorScheme(): void {
+    if (this.colorSchemeDecisionPending) {
+      this.colorSchemeDecisionPending = false
+      cancelFirstDecision(this.colorSchemeDecision)
+    }
     const scheme = resolveColorScheme(readColorSchemeInputs(this.rootEl, this.settings.colorScheme))
     this.resolvedColorScheme = scheme
     if (this.rootEl.getAttribute(COLOR_SCHEME_ATTRIBUTE) !== scheme) { this.rootEl.setAttribute(COLOR_SCHEME_ATTRIBUTE, scheme) }

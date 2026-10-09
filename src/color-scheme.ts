@@ -6,7 +6,7 @@
  * The `colorScheme` setting's values.
  * - `'auto'` (default): the library decides from the page. The setting's
  *   docstring on {@link LLSelectBaseSettings.colorScheme} explains the order.
- * - `'light'` / `'dark'`: that scheme, whatever the page says.
+ * - `'light'` or `'dark'`: always that scheme, regardless of the CSS sources and of the operating system's color preference.
  * @group Settings
  * @category Base
  */
@@ -59,6 +59,33 @@ export function readColorSchemeInputs(rootEl: HTMLElement, setting: LLSelectColo
     declared: style.getPropertyValue('color-scheme'),
     osPrefersDark: prefersDark(view),
   }
+}
+
+// --- the first decision, batched -----------------------------------------------
+// getComputedStyle right after the widget's own DOM edits flushes a style
+// recalculation; a page that builds many widgets in one loop would pay one per
+// widget (the 1000-widget benchmark measured 2.5x). So the first decision of
+// every 'auto' instance waits for a microtask: it still lands before the first
+// paint, and all widgets built in one task share one flush. getColorScheme()
+// and open() decide at once when the decision is still pending.
+interface PendingDecision { decideNow(): void }
+const pendingDecisions = new Set<PendingDecision>()
+let flushScheduled = false
+
+export function queueFirstDecision(decision: PendingDecision): void {
+  pendingDecisions.add(decision)
+  if (flushScheduled) { return }
+  flushScheduled = true
+  void Promise.resolve().then(() => {
+    flushScheduled = false
+    const batch = [...pendingDecisions]
+    pendingDecisions.clear()
+    for (const d of batch) { d.decideNow() }
+  })
+}
+
+export function cancelFirstDecision(decision: PendingDecision): void {
+  pendingDecisions.delete(decision)
 }
 
 // --- shared page listeners --------------------------------------------------

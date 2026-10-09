@@ -431,6 +431,19 @@ sel = new LLSelectMultiple(el, {
 })
 ```
 
+#### Dark color scheme
+
+Every theme ships a dark palette. With the default setting `colorScheme: 'auto'`, the widget checks the CSS variable `--llselect-color-scheme` first, then the CSS property `color-scheme`.
+
+- Standard: declare `color-scheme: light dark` on `<html>`. The widget then follows the operating system's color preference, like a native `<select>`.
+- Your own toggle: set `--llselect-color-scheme` to `dark` or `light` on an ancestor element of the widget. One rule does it: `.night { --llselect-color-scheme: dark; }`.
+- Built in: the themes set that variable for the ancestor classes `dark`, `theme-dark` and `dark-mode`, and for the ancestor attributes `data-theme`, `data-bs-theme` and `data-color-scheme` with the values `dark` or `light`.
+- Nested regions: the widget inherits the variable from the nearest ancestor that sets it. Put `data-color-scheme="light"` on a card to keep its widgets light inside a dark page.
+- Per instance: the setting `colorScheme: 'dark'` or `'light'` overrides both CSS sources and the operating system's preference.
+- When neither CSS source selects dark, the widget stays light, on a dark operating system too.
+- Your own colors: redefine the `--llselect-*` variables in a rule that targets `.llselect-root`. The names and roles are listed at the top of every theme file.
+- Live comparison: section 17 of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
+
 ### Subclassing (extending the library)
 
 Subclass only when settings cannot express it:
