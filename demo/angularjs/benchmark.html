@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Page color scheme: resolves it before first paint and mounts the nav switch. -->
+  <script src="../color-scheme.js"></script>
   <title>llselect + AngularJS - benchmark</title>
   <link rel="stylesheet" href="../style.css">
   <link rel="stylesheet" href="../../dist/themes/vanilla.css">
@@ -11,15 +13,16 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ui-select@0.19.8/dist/select.min.css">
   <style>
     .bench-table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
-    .bench-table th, .bench-table td { border: 1px solid #d5dae2; padding: 0.4rem 0.6rem; text-align: right; }
+    .bench-table th, .bench-table td { border: 1px solid var(--line); padding: 0.4rem 0.6rem; text-align: right; }
     .bench-table th:first-child, .bench-table td:first-child { text-align: left; }
-    .bench-table small { color: #666; font-weight: normal; display: block; margin-top: 0.2rem; }
-    .bench-name { background: #eef3fb; font-weight: bold; white-space: nowrap; }
+    .bench-table small { color: var(--fg-muted); font-weight: normal; display: block; margin-top: 0.2rem; }
+    .bench-name { background: var(--accent-soft); font-weight: bold; white-space: nowrap; }
     .bench-table td:first-child { max-width: 22rem; }
     .bench-controls { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin: 1rem 0; }
-    .bench-controls label { display: block; font-size: 0.85rem; color: #555; }
+    .bench-controls label { display: block; font-size: 0.85rem; color: var(--fg-muted); }
     .bench-controls input { width: 7rem; padding: 0.3rem; font: inherit; }
     .bench-best { background: #e6f6e6; font-weight: bold; }
+    :root[data-color-scheme="dark"] .bench-best { background: rgba(46, 160, 67, 0.25); }
     /* The stage MUST be on-screen and laid out, and MUST NOT be a scroll
        container. llselect refuses to open a trigger that is outside the layout
        viewport OR clipped by a scroll ancestor (positioning.ts isAnchorHidden),
@@ -32,12 +35,12 @@
     #playground { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1.5rem; margin: 1rem 0 2rem; }
     #playground:empty { display: none; }
     .try-box h4 { margin: 0 0 0.2rem; font-size: 1rem; }
-    .try-box small { color: #666; display: block; margin-bottom: 0.6rem; min-height: 2.4em; }
+    .try-box small { color: var(--fg-muted); display: block; margin-bottom: 0.6rem; min-height: 2.4em; }
     /* Each widget needs room below it for its own popup. */
     .try-mount { min-height: 3rem; }
-    .model-panel { border-top: 2px solid #2456a6; padding-top: 0.8rem; margin-bottom: 2rem; }
+    .model-panel { border-top: 2px solid var(--accent); padding-top: 0.8rem; margin-bottom: 2rem; }
     .model-panel .out b { font-size: 1.1rem; }
-    .model-panel small { color: #888; }
+    .model-panel small { color: var(--fg-muted); }
   </style>
 </head>
 <body>

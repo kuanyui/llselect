@@ -1,6 +1,43 @@
 /* Demo-only layout. All llselect-* visual rules live in dist/themes/*.css
    (loaded via <link> and swapped by the theme picker). */
 
+/* Page chrome colors, light by default. The dark values key on the
+   <html data-color-scheme> attribute color-scheme.js resolves (stored choice,
+   else the OS preference). Widget colors are the theme's business
+   (dist/themes/*.css), never these tokens. */
+:root {
+  color-scheme: light;
+  --fg: #222;              /* body text */
+  --fg-soft: #444;         /* h3, outputs, summaries */
+  --fg-muted: #555;        /* labels, hints, captions, status lines */
+  --bg: #fff;              /* page, panels, inputs */
+  --muted: #f4f4f4;        /* code chips, subnav, table heads, button faces */
+  --line: #ccc;            /* borders */
+  --line-strong: #888;     /* button borders */
+  --accent: #2456a6;       /* nav links, primary buttons, active rows */
+  --accent-hover: #1d4788; /* primary button hover */
+  --accent-soft: #eef3fb;  /* hover / active backgrounds */
+  --accent-fg: #fff;       /* text on --accent */
+  --link: #1c4d8f;         /* link-styled buttons */
+  --mark: #ffe066;         /* filter-match highlight */
+}
+:root[data-color-scheme="dark"] {
+  color-scheme: dark;
+  --fg: #d8d8d8;
+  --fg-soft: #c4c4c4;
+  --fg-muted: #9a9a9a;
+  --bg: #1b1b1b;
+  --muted: #262626;
+  --line: #444;
+  --line-strong: #666;
+  --accent: #7fb1f5;
+  --accent-hover: #a3c7f8;
+  --accent-soft: #263344;
+  --accent-fg: #1b1b1b;
+  --link: #6cb2ff;
+  --mark: rgba(187, 128, 9, 0.45);
+}
+
 /* Bootstrap 3's reset sets html{font-size:10px}, which shrinks this demo's
    rem-based text (that theme only). Pin html to the 16px browser default so rem
    is consistent across every theme; the demo loads Bootstrap first, so this
@@ -12,10 +49,14 @@ body {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
-  color: #222;
+  color: var(--fg);
+  background: var(--bg);
 }
+/* Bootstrap's own body rule wins the cascade on the pages that load Bootstrap
+   after this file (same colors in light); the dark values need the weight. */
+:root[data-color-scheme="dark"] body { color: var(--fg); background: var(--bg); }
 
-code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
+code { background: var(--muted); padding: 0.1em 0.3em; border-radius: 3px; }
 
 /* Back-to-top (both examples pages; injected by ../toc.js). Mirrors the site
    pages' button in scripts/build-site.mjs. */
@@ -30,14 +71,14 @@ code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
   padding: 0.45rem 0.9rem;
   font: inherit;
   font-weight: 600;
-  color: #333;
-  background: #fff;
-  border: 1px solid #ccc;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
   border-radius: 999px;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
-.back-to-top:hover { background: #f2f2f2; }
+.back-to-top:hover { background: var(--muted); }
 .back-to-top svg { width: 1em; height: 1em; }
 
 /* angularjs 1f: minimal look for ui-bootstrap's uib-tooltip (this page loads
@@ -72,7 +113,7 @@ code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px; }
 h1 {
   font-size: 2rem;
   margin: 0 0 0.5rem;
-  border-bottom: 2px solid #222;
+  border-bottom: 2px solid var(--fg);
   padding-bottom: 0.4rem;
 }
 
@@ -86,7 +127,7 @@ h2 {
 h3 {
   margin-top: 1.5rem;
   font-size: 1.05rem;
-  color: #444;
+  color: var(--fg-soft);
 }
 
 section { margin: 2rem 0 3rem; }
@@ -115,10 +156,10 @@ article { margin: 1.5rem 0 2rem 1rem; }
   width: fit-content;
   margin-left: auto;             /* push right without affecting siblings */
   padding: 0.4rem 0.9rem;
-  border: 1px solid #888;
+  border: 1px solid var(--line-strong);
   border-radius: 4px;
-  background: #fafafa;
-  color: #444;
+  background: var(--muted);
+  color: var(--fg-soft);
   font-size: 0.9rem;
   font-family: ui-monospace, monospace;
   list-style: none;
@@ -169,7 +210,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
   margin: 0.5rem 0 0.2rem;
   font-family: ui-monospace, monospace;
   font-size: 0.75rem;
-  color: #777;
+  color: var(--fg-muted);
 }
 
 /* Minimal JS syntax highlight (One Monokai). */
@@ -179,12 +220,12 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .hl-number  { color: #ae81ff; }
 .hl-func    { color: #a6e22e; }
 
-.hint { color: #666; font-size: 0.9rem; margin: 0.3rem 0; }
+.hint { color: var(--fg-muted); font-size: 0.9rem; margin: 0.3rem 0; }
 
 .out {
   margin-top: 0.5rem;
   font-family: ui-monospace, monospace;
-  color: #444;
+  color: var(--fg-soft);
 }
 
 .demo-row {
@@ -202,7 +243,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .arrow-label {
   display: block;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--fg-muted);
   margin-bottom: 0.25rem;
 }
 
@@ -210,9 +251,10 @@ article { margin: 1.5rem 0 2rem 1rem; }
    builds inside its own trigger (the clear x), which the widget's theme owns. */
 .demo-row > button {
   padding: 0.4rem 0.8rem;
-  border: 1px solid #888;
+  border: 1px solid var(--line-strong);
   border-radius: 4px;
-  background: #fafafa;
+  background: var(--muted);
+  color: var(--fg);
   cursor: pointer;
   font: inherit;
 }
@@ -225,8 +267,8 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .scroll-container {
   height: 12rem;
   overflow-y: auto;
-  border: 1px solid #ccc;
-  background: #fafafa;
+  border: 1px solid var(--line);
+  background: var(--muted);
   padding: 1rem;
   border-radius: 4px;
 }
@@ -251,9 +293,9 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .theme-picker {
   position: sticky;
   top: 0;
-  background: #fff;
+  background: var(--bg);
   padding: 0.5rem 0;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--line);
   margin-bottom: 1rem;
   z-index: 100;
   display: flex;
@@ -263,7 +305,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 
 .theme-picker label {
   font-size: 0.9rem;
-  color: #555;
+  color: var(--fg-muted);
   align-self: center;
 }
 
@@ -277,10 +319,10 @@ article { margin: 1.5rem 0 2rem 1rem; }
   cursor: pointer;
   user-select: none;
   padding: 0.3rem 0.7rem;
-  border: 1px solid #888;
+  border: 1px solid var(--line-strong);
   border-radius: 4px;
-  background: #fafafa;
-  color: #333;
+  background: var(--muted);
+  color: var(--fg);
   list-style: none;             /* hide default disclosure triangle */
 }
 
@@ -395,7 +437,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
   border-right: 5px solid transparent;
   border-top: 5px solid currentColor;
   transition: transform 0.15s;
-  color: #666;
+  color: var(--fg-muted);
   margin-inline-start: 0.4rem;
 }
 
@@ -419,12 +461,12 @@ article { margin: 1.5rem 0 2rem 1rem; }
   margin-block: -0.3em;
   border-radius: 4px;
   cursor: pointer;
-  color: #555;
+  color: var(--fg-muted);
 }
 /* Scale the GLYPH (the mdi ::before), not the box - the box and the leaf
    spacer share the row's em, so they stay aligned. */
 .tree-caret::before { font-size: 1.5em; }
-.tree-caret:hover { background: rgba(36, 86, 166, 0.18); color: #2456a6; }
+.tree-caret:hover { background: rgba(36, 86, 166, 0.18); color: var(--accent); }
 /* The single chevron points right (collapsed); rotate it down when the
    branch row says expanded. */
 .llselect-popup-list-row[data-tree-state='expanded'] .tree-caret { transform: rotate(90deg); }
@@ -472,9 +514,9 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
   margin-bottom: 0.6rem;
   padding: 0.3rem 0.5rem;
   font: inherit;
-  color: #222;
-  background: #fff;
-  border: 1px solid #ccc;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
   border-radius: 4px;
 }
 .toc ul { list-style: none; margin: 0; padding-left: 0.85rem; }
@@ -482,18 +524,18 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .toc a {
   display: block;
   padding: 0.15rem 0.4rem;
-  color: #333;
+  color: var(--fg);
   text-decoration: none;
   border-radius: 3px;
   overflow-wrap: anywhere;
 }
-.toc a:hover { background: #eef3fb; }
-.toc a.active { background: #eef3fb; color: #2456a6; font-weight: 600; }
-.toc .toc-section > a { font-weight: 600; color: #222; margin-top: 0.4rem; }
-.toc .toc-section > a.active { color: #2456a6; }
+.toc a:hover { background: var(--accent-soft); }
+.toc a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.toc .toc-section > a { font-weight: 600; color: var(--fg); margin-top: 0.4rem; }
+.toc .toc-section > a.active { color: var(--accent); }
 /* filter-match highlight; explicit padding/background so Bootstrap's global
    mark rule (0.2em padding) cannot bloat the rows when a BS theme is active */
-.toc mark { padding: 0; background: #ffe066; color: inherit; border-radius: 2px; }
+.toc mark { padding: 0; background: var(--mark); color: inherit; border-radius: 2px; }
 
 /* Scroll-following block highlight: the content answers the sidebar's active
    row, same look as the site API pages (build-site.mjs .current-block).
@@ -503,7 +545,7 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
    .has-toc: without the injected TOC nothing paints and nothing changes. */
 .has-toc main section { padding: 0 0.6rem; margin: 2rem -0.6rem 3rem; border-radius: 4px; transition: background-color 0.15s; }
 .has-toc main article { padding: 0 0.6rem; margin: 1.5rem -0.6rem 2rem 0.4rem; border-radius: 4px; transition: background-color 0.15s; }
-.has-toc main .current-block { background: #eef3fb; box-shadow: inset 3px 0 0 #2456a6; }
+.has-toc main .current-block { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
 
 /* drawer chrome exists only below the breakpoint */
 .toc-toggle { display: none; }
@@ -520,8 +562,8 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
     width: min(17rem, 85vw);
     max-height: none;
     padding: 1rem 1rem 0;
-    background: #fff;
-    border-right: 1px solid #ccc;
+    background: var(--bg);
+    border-right: 1px solid var(--line);
     box-shadow: 0 0 24px rgba(0, 0, 0, 0.25);
     transform: translateX(-100%);
     visibility: hidden; /* unreachable by Tab / AT while closed */
@@ -541,9 +583,9 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
     font: inherit;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #2456a6;
-    background: #fff;
-    border: 1px solid #ccc;
+    color: var(--accent);
+    background: var(--bg);
+    border: 1px solid var(--line);
     border-radius: 999px;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -569,17 +611,30 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
   flex-wrap: wrap;
   margin: 0 0 1.5rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--line);
 }
 .demo-nav a {
   padding: 0.35rem 0.8rem;
-  color: #2456a6;
+  color: var(--accent);
   text-decoration: none;
   border-radius: 4px;
   font-weight: 600;
 }
-.demo-nav a:hover { background: #eef3fb; }
-.demo-nav a.current { background: #2456a6; color: #fff; }
+.demo-nav a:hover { background: var(--accent-soft); }
+.demo-nav a.current { background: var(--accent); color: var(--accent-fg); }
+/* "Dark" switch, mounted by color-scheme.js at the nav's right end */
+.demo-nav .color-scheme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0 auto;
+  padding: 0.35rem 0.5rem;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  user-select: none;
+}
+.demo-nav .color-scheme-switch input { margin: 0; cursor: pointer; }
 
 /* second nav tier (AngularJS section): identity label + in-section items */
 .demo-subnav {
@@ -590,20 +645,20 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
   margin: -1rem 0 1.5rem;
   padding: 0.4rem 0.5rem;
   font-size: 0.92em;
-  background: #f4f4f4;
+  background: var(--muted);
   border-radius: 6px;
 }
 .demo-subnav .subnav-label { display: flex; align-items: center; gap: 0.3rem; margin-right: 0.5rem; font-weight: 600; }
 .demo-subnav .subnav-label svg { width: 1.15em; height: 1.15em; color: #dd1b16; }
 .demo-subnav a {
   padding: 0.25rem 0.7rem;
-  color: #2456a6;
+  color: var(--accent);
   text-decoration: none;
   border-radius: 4px;
   font-weight: 600;
 }
-.demo-subnav a:hover { background: #eef3fb; }
-.demo-subnav a.current { background: #2456a6; color: #fff; }
+.demo-subnav a:hover { background: var(--accent-soft); }
+.demo-subnav a.current { background: var(--accent); color: var(--accent-fg); }
 
 
 /* --- benchmark (benchmark.html) ----------------------------------------- */
@@ -612,24 +667,24 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .bench-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .bench-toolbar { display: flex; flex-direction: column; gap: 0.6rem; margin: 1.25rem 0; }
 .bench-row select { padding: 0.25rem; }
-.bench-row button { font: inherit; padding: 0.35rem 1rem; cursor: pointer; border: 1px solid #2456a6; background: #2456a6; color: #fff; border-radius: 4px; }
-.bench-row button:hover { background: #1d4788; }
+.bench-row button { font: inherit; padding: 0.35rem 1rem; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-fg); border-radius: 4px; }
+.bench-row button:hover { background: var(--accent-hover); }
 .bench-row button:disabled { opacity: 0.45; cursor: not-allowed; }
 /* Collapsed column reference under a results table. */
 .bench-cols { margin: 0.25rem 0 1rem; font-size: 0.9rem; }
-.bench-cols > summary { cursor: pointer; user-select: none; color: #2456a6; }
+.bench-cols > summary { cursor: pointer; user-select: none; color: var(--accent); }
 .bench-cols[open] > summary { margin-bottom: 0.3rem; }
-#status { color: #555; font-size: 0.9rem; }
+#status { color: var(--fg-muted); font-size: 0.9rem; }
 /* Table captions spell out what one number means (per-widget vs total, median vs sum). */
-#results caption, .ix-table caption { caption-side: top; text-align: left; font-size: 0.85rem; color: #555; padding: 0 0 0.4rem; }
+#results caption, .ix-table caption { caption-side: top; text-align: left; font-size: 0.85rem; color: var(--fg-muted); padding: 0 0 0.4rem; }
 /* Star on a tuned library's name: hover shows the tuning applied (title attribute). */
 .tune-star { color: #c9821a; cursor: help; font-weight: 700; margin-right: 0.2em; }
 #results, #sizes { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
-#results th, #results td, #sizes th, #sizes td { border: 1px solid #ccc; padding: 5px 10px; text-align: right; }
+#results th, #results td, #sizes th, #sizes td { border: 1px solid var(--line); padding: 5px 10px; text-align: right; }
 #results th:first-child, #results td:first-child, #sizes th:first-child, #sizes td:first-child { text-align: left; }
-#results thead th, #sizes thead th { background: #f6f8fa; }
+#results thead th, #sizes thead th { background: var(--muted); }
 #results td.best { background: #e6f4ea; color: #1a7f37; font-weight: 700; }
-.bench-legend, .bench-caveats, .bench-fair { font-size: 0.9rem; color: #333; }
+.bench-legend, .bench-caveats, .bench-fair { font-size: 0.9rem; color: var(--fg); }
 .bench-legend li, .bench-caveats li, .bench-fair li { margin: 0.35rem 0; }
 .bench-warn { font-size: 0.9rem; color: #8a5a00; background: #fff6e5; border-left: 4px solid #e0a100; padding: 0.5rem 0.85rem; border-radius: 4px; }
 /* Fairness caveat at the top of the interaction section - light red. */
@@ -638,20 +693,20 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .bench-fairness-note ul { margin: 0.4rem 0; padding-inline-start: 1.4rem; }
 .bench-fairness-note li { margin: 0.15rem 0; }
 .bench-libbuttons { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin: 0 0 1rem; font-size: 0.9rem; }
-.bench-libbuttons button { font: inherit; font-size: 0.85rem; padding: 0.25rem 0.7rem; cursor: pointer; border: 1px solid #bbb; background: #fff; color: #222; border-radius: 4px; }
-.bench-libbuttons button:hover { border-color: #2456a6; color: #2456a6; }
+.bench-libbuttons button { font: inherit; font-size: 0.85rem; padding: 0.25rem 0.7rem; cursor: pointer; border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 4px; }
+.bench-libbuttons button:hover { border-color: var(--accent); color: var(--accent); }
 /* Interaction: the per-mode "Build + measure" primary button, blue among the secondary per-lib ones. */
-.bench-libbuttons button.ix-run-all { font-size: inherit; padding: 0.35rem 1rem; border-color: #2456a6; background: #2456a6; color: #fff; }
-.bench-libbuttons button.ix-run-all:hover { background: #1d4788; color: #fff; }
+.bench-libbuttons button.ix-run-all { font-size: inherit; padding: 0.35rem 1rem; border-color: var(--accent); background: var(--accent); color: var(--accent-fg); }
+.bench-libbuttons button.ix-run-all:hover { background: var(--accent-hover); color: var(--accent-fg); }
 /* Scroll area where a run's widgets actually render. Fixed height so 10k
    widgets stay scrollable rather than growing the page. */
 .bench-stage {
   height: 420px;
   overflow: auto;
-  border: 1px dashed #ccc;
+  border: 1px dashed var(--line);
   border-radius: 6px;
   padding: 0.5rem;
-  background: #fafafa;
+  background: var(--muted);
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
@@ -666,21 +721,21 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 
 /* --- interaction latency: one dedicated widget per library, side by side -- */
 .ix-stage { display: flex; flex-wrap: wrap; gap: 12px; margin: 0.5rem 0 1rem; }
-.ix-cell { width: 220px; border: 1px solid #e2e2e2; border-radius: 6px; padding: 8px; background: #fff; }
-.ix-lab { font-size: 0.8rem; color: #555; font-weight: 600; margin-bottom: 6px; }
+.ix-cell { width: 220px; border: 1px solid var(--line); border-radius: 6px; padding: 8px; background: var(--bg); }
+.ix-lab { font-size: 0.8rem; color: var(--fg-muted); font-weight: 600; margin-bottom: 6px; }
 .ix-mount { min-height: 34px; }
 .ix-table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
-.ix-table th, .ix-table td { border: 1px solid #ccc; padding: 5px 10px; text-align: right; }
+.ix-table th, .ix-table td { border: 1px solid var(--line); padding: 5px 10px; text-align: right; }
 .ix-table th:first-child, .ix-table td:first-child { text-align: left; }
-.ix-table thead th { background: #f6f8fa; }
+.ix-table thead th { background: var(--muted); }
 .ix-table td.best { background: #e6f4ea; color: #1a7f37; font-weight: 700; }
 
 /* --- benchmark table of contents (not collapsible) ---------------------- */
-.bench-toc { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; margin: 0.5rem 0 1.5rem; padding: 0.6rem 0.9rem; background: #f6f8fa; border: 1px solid #e2e2e2; border-radius: 6px; font-size: 0.9rem; }
-.bench-toc span { color: #555; font-weight: 600; }
-.bench-toc a { color: #2456a6; text-decoration: none; border-radius: 3px; }
+.bench-toc { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; margin: 0.5rem 0 1.5rem; padding: 0.6rem 0.9rem; background: var(--muted); border: 1px solid var(--line); border-radius: 6px; font-size: 0.9rem; }
+.bench-toc span { color: var(--fg-muted); font-weight: 600; }
+.bench-toc a { color: var(--accent); text-decoration: none; border-radius: 3px; }
 .bench-toc a:hover { text-decoration: underline; }
-.bench-toc a.active { background: #eef3fb; font-weight: 600; }
+.bench-toc a.active { background: var(--accent-soft); font-weight: 600; }
 /* On a large desktop the quick-jump list docks to the LEFT GUTTER of the
    centered 1200px body as a small fixed panel - deliberately NOT
    full-height, it is only a jump list. 100rem keeps it out of the gutter
@@ -701,12 +756,12 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
   }
   .bench-toc span { margin-bottom: 0.25rem; }
   .bench-toc a { padding: 0.15rem 0.4rem; }
-  .bench-toc a:hover { text-decoration: none; background: #eef3fb; }
+  .bench-toc a:hover { text-decoration: none; background: var(--accent-soft); }
 }
 
 /* --- benchmark scroll-block overlay during a run ------------------------- */
 #bench-overlay { position: fixed; inset: 0; z-index: 9999; display: none; align-items: flex-start; justify-content: center; background: rgba(20, 30, 50, 0.06); cursor: progress; }
-.bench-overlay-box { margin-top: 1.5rem; max-width: 32rem; background: #2456a6; color: #fff; padding: 0.7rem 1.1rem; border-radius: 6px; font-size: 0.95rem; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+.bench-overlay-box { margin-top: 1.5rem; max-width: 32rem; background: var(--accent); color: var(--accent-fg); padding: 0.7rem 1.1rem; border-radius: 6px; font-size: 0.95rem; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
 .bench-overlay-box small { display: block; margin-top: 0.35rem; font-size: 0.8rem; font-weight: normal; opacity: 0.9; }
 
 /* Stop button on the run overlay (the page's own Stop would be behind it). */
@@ -731,14 +786,14 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .popup-link-button {
   font: inherit;
   font-size: 0.9em;
-  color: #1c4d8f;
+  color: var(--link);
   background: none;
   border: 0;
   padding: 0;
   cursor: pointer;
   text-decoration: underline;
 }
-.popup-link-button[aria-disabled='true'] { color: #999; cursor: not-allowed; text-decoration: none; }
+.popup-link-button[aria-disabled='true'] { color: var(--fg-muted); cursor: not-allowed; text-decoration: none; }
 /* #endregion */
 /* #region 14.4 */
 /* Header commands that look exactly like the rows of 15.1, only pinned: the
@@ -758,3 +813,13 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
   cursor: pointer;
 }
 /* #endregion */
+
+/* --- dark counterparts of the status boxes ------------------------------- */
+/* The light palettes stay on the rules above; these override them under the
+   dark scheme. GitHub's dark alert tints, like the site pages' alerts. */
+:root[data-color-scheme="dark"] .alert-warning { color: #e3b341; background: rgba(187, 128, 9, 0.15); border-color: rgba(187, 128, 9, 0.4); }
+:root[data-color-scheme="dark"] .transform-container { background: rgba(187, 128, 9, 0.1); }
+:root[data-color-scheme="dark"] .bench-warn { color: #e3b341; background: rgba(187, 128, 9, 0.15); }
+:root[data-color-scheme="dark"] .bench-fairness-note { color: #ff9b94; background: rgba(248, 81, 73, 0.12); }
+:root[data-color-scheme="dark"] .bench-fairness-note code { background: rgba(248, 81, 73, 0.2); }
+:root[data-color-scheme="dark"] #results td.best, :root[data-color-scheme="dark"] .ix-table td.best { color: #3fb950; background: rgba(46, 160, 67, 0.15); }

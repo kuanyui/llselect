@@ -304,6 +304,11 @@ ${items.map(([label, href]) => `<a href="${href}"${label === current ? ' class="
 </nav>`
 }
 
+// Inlined into every generated page's <head> (the demo pages load the same
+// file with <script src>): resolves the color scheme before first paint and
+// mounts the nav switch.
+const COLOR_SCHEME_JS = readFileSync('demo/color-scheme.js', 'utf8')
+
 function renderPage({ title, description, nav, body, toc, subnav = null }) {
   return `<!doctype html>
 <html lang="en">
@@ -312,9 +317,14 @@ function renderPage({ title, description, nav, body, toc, subnav = null }) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="${description}">
 <title>${title}</title>
+<script>
+${COLOR_SCHEME_JS}</script>
 <style>
-:root { color-scheme: light dark; --fg: #1a1a1a; --fg-muted: #656565; --bg: #ffffff; --muted: #f4f4f4; --line: #d0d0d0; --link: #0550ae; --nav-link: #2456a6; --nav-hover: #eef3fb; --mark: #ffe066; }
-@media (prefers-color-scheme: dark) { :root { --fg: #d8d8d8; --fg-muted: #9a9a9a; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --nav-link: #7fb1f5; --nav-hover: #263344; --mark: rgba(187, 128, 9, 0.45); } }
+:root { color-scheme: light; --fg: #1a1a1a; --fg-muted: #656565; --bg: #ffffff; --muted: #f4f4f4; --line: #d0d0d0; --link: #0550ae; --nav-link: #2456a6; --nav-hover: #eef3fb; --mark: #ffe066; }
+/* Dark values key on the attribute demo/color-scheme.js resolves (stored
+   choice, else the OS preference) - never on prefers-color-scheme, so the
+   nav switch can override the OS. */
+:root[data-color-scheme="dark"] { color-scheme: dark; --fg: #d8d8d8; --fg-muted: #9a9a9a; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --nav-link: #7fb1f5; --nav-hover: #263344; --mark: rgba(187, 128, 9, 0.45); }
 /* overflow-wrap lets long identifiers (LLSelectMultipleSettings.createTriggerContentElFn,
    in prose / links / bold / inline code) break instead of widening the page body - a
    body horizontal overflow throws off the visual viewport on real phones and trims the
@@ -345,6 +355,9 @@ nav a { padding: 0.35rem 0.8rem; color: var(--nav-link); text-decoration: none; 
 nav a:hover { background: var(--nav-hover); }
 nav a.current { background: var(--nav-link); color: var(--bg); }
 nav a.repo { margin-left: auto; }
+/* "Dark" switch, mounted by demo/color-scheme.js after the repo link */
+nav .color-scheme-switch { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.5rem; font-weight: 600; color: var(--nav-link); cursor: pointer; user-select: none; }
+nav .color-scheme-switch input { margin: 0; cursor: pointer; }
 /* Second nav tier (AngularJS section): identity label + in-section items */
 .subnav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; margin: -1rem 0 1.5rem; padding: 0.4rem 0.5rem; font-size: 0.92em; background: var(--muted); border-radius: 6px; }
 .subnav-label { display: flex; align-items: center; gap: 0.3rem; margin-right: 0.5rem; font-weight: 600; }
@@ -461,13 +474,11 @@ main [data-binding]::before { content: attr(data-binding); float: right; margin-
 .md-alert-important { --alert: #8250df; }
 .md-alert-warning { --alert: #9a6700; }
 .md-alert-caution { --alert: #cf222e; }
-@media (prefers-color-scheme: dark) {
-  .md-alert-note { --alert: #4493f8; }
-  .md-alert-tip { --alert: #3fb950; }
-  .md-alert-important { --alert: #ab7df8; }
-  .md-alert-warning { --alert: #d29922; }
-  .md-alert-caution { --alert: #f85149; }
-}
+:root[data-color-scheme="dark"] .md-alert-note { --alert: #4493f8; }
+:root[data-color-scheme="dark"] .md-alert-tip { --alert: #3fb950; }
+:root[data-color-scheme="dark"] .md-alert-important { --alert: #ab7df8; }
+:root[data-color-scheme="dark"] .md-alert-warning { --alert: #d29922; }
+:root[data-color-scheme="dark"] .md-alert-caution { --alert: #f85149; }
 /* Back-to-top: fixed bottom-right, hidden until scrolled (script toggles). */
 .back-to-top { position: fixed; right: 1rem; bottom: 1rem; z-index: 10; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.45rem 0.9rem; font: inherit; font-weight: 600; color: var(--nav-link); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
 .back-to-top:hover { background: var(--nav-hover); }
