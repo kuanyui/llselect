@@ -260,17 +260,21 @@ for (const rel of markdownFiles) {
 // output or hide an ancestor's mark. A `prefers-color-scheme` query cannot
 // tell a light-only page from an OS-following one. Every color outside the
 // `--llselect-*` declarations must come from a variable (DESIGN.md "The color
-// variables"); `transparent` and `currentColor` are not colors here. CSS
-// property names, at-rules and media features match case-insensitively; the
-// custom property `--llselect-color-scheme` is case-sensitive, as CSS defines.
+// variables"): a hex or color-function literal counts in any declaration; a
+// named or system color keyword counts only in a property that takes a color
+// (elsewhere `menu` or `background` is an ordinary value). `transparent` and
+// `currentColor` are not colors here. CSS property names, at-rules and media
+// features match case-insensitively; the custom property
+// `--llselect-color-scheme` is case-sensitive, as CSS defines.
 {
   const NAMED_COLORS = 'aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightslategrey|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|rebeccapurple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen'
   const SYSTEM_COLORS = 'accentcolor|accentcolortext|activetext|buttonborder|buttonface|buttontext|canvas|canvastext|field|fieldtext|graytext|highlight|highlighttext|linktext|mark|marktext|selecteditem|selecteditemtext|visitedtext|activeborder|activecaption|appworkspace|background|buttonhighlight|buttonshadow|captiontext|inactiveborder|inactivecaption|inactivecaptiontext|infobackground|infotext|menu|menutext|scrollbar|threeddarkshadow|threedface|threedhighlight|threedlightshadow|threedshadow|window|windowframe|windowtext'
-  // Only properties that accept a color are scanned (elsewhere a keyword such
-  // as `menu` is an ordinary value), plus custom properties other than ours.
-  const COLOR_PROPERTY = /^(?:-webkit-)?(?:color|background(?:-[a-z]+)*|border(?:-[a-z]+)*|outline(?:-[a-z]+)*|box-shadow|text-shadow|text-decoration(?:-[a-z]+)*|text-emphasis(?:-[a-z]+)*|caret-color|accent-color|fill|stroke|stop-color|flood-color|lighting-color|column-rule(?:-[a-z]+)*|scrollbar-color|filter|backdrop-filter|mask(?:-[a-z]+)*|list-style(?:-[a-z]+)*|content|text-fill-color|text-stroke(?:-[a-z]+)*|--[\w-]+)$/i
+  // The properties whose value can carry a color keyword, each also with a
+  // -webkit- prefix, plus custom properties other than ours.
+  const COLOR_PROPERTY = /^(?:-webkit-)?(?:color|background(?:-[a-z]+)*|border(?:-[a-z]+)*|outline(?:-[a-z]+)*|box-shadow|text-shadow|text-decoration(?:-[a-z]+)*|text-emphasis(?:-[a-z]+)*|caret-color|accent-color|fill|stroke|stop-color|flood-color|lighting-color|column-rule(?:-[a-z]+)*|scrollbar-color|filter|backdrop-filter|mask(?:-[a-z]+)*|list-style(?:-image)?|content|text-fill-color|text-stroke(?:-[a-z]+)*|--[\w-]+)$/i
+  const COLOR_LITERAL = /#[0-9a-f]{3,8}\b|(?<![\w-])(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\(/i
   // Keyword boundaries exclude the hyphen, so `context-menu` does not match `menu`.
-  const COLOR_LITERAL = new RegExp(`#[0-9a-f]{3,8}\\b|(?<![\\w-])(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\\(|(?<![\\w-])(?:${NAMED_COLORS}|${SYSTEM_COLORS})(?![\\w-])`, 'i')
+  const COLOR_KEYWORD = new RegExp(`(?<![\\w-])(?:${NAMED_COLORS}|${SYSTEM_COLORS})(?![\\w-])`, 'i')
   // Masks the contents of parentheses and brackets (innermost first, repeated)
   // so a comma or a combinator inside them cannot split a selector.
   const maskSelector = (s) => { let prev; do { prev = s; s = s.replace(/\([^()]*\)|\[[^[\]]*\]/g, (x) => 'x'.repeat(x.length)) } while (s !== prev); return s }
@@ -286,9 +290,15 @@ for (const rel of markdownFiles) {
   // `:is(.llselect-root)` counts.
   const subjectOf = (s) => { const m = /[\s>+~]+(?=[^\s>+~]*$)/.exec(maskSelector(s)); return m === null ? s : s.slice(m.index + m[0].length) }
   const lineOf = (text, index) => text.slice(0, index).split('\n').length
+  // Comments, strings and url() become blanks of the same length, in that
+  // order (a string may hold "}" or ";", a quoted url() may hold ")"), so the
+  // rule and declaration boundaries below are real ones, and every index and
+  // line number still points into the file. An escaped character stays inside
+  // its string or url().
+  const blank = (x) => x.replace(/[^\n]/g, ' ')
   for (const f of walk('src/themes', '.css')) {
-    // Comments become blanks of the same length: indexes and line numbers stay those of the file.
-    const css = readFileSync(join(root, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '))
+    const source = readFileSync(join(root, f), 'utf8')
+    const css = source.replace(/\/\*[\s\S]*?\*\//g, blank).replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g, blank).replace(/url\((?:[^)\\]|\\.)*\)/gi, blank)
     for (const m of css.matchAll(/@media([^{]*)\{/gi)) {
       if (/prefers-color-scheme/i.test(m[1])) { problems.push(`${f}: @media${m[1].trimEnd()} - a theme file must not query prefers-color-scheme`) }
     }
@@ -299,21 +309,17 @@ for (const rel of markdownFiles) {
         if (/(^|[\s;])color-scheme\s*:/i.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares color-scheme on the widget root; the resolver reads it there`) }
         if (/--llselect-color-scheme\s*:/.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares --llselect-color-scheme on the widget root; it would hide an ancestor's value`) }
       }
-      // Strings and url() become blanks of the same length BEFORE the split on
-      // ";", so a ";" or ")" inside them cannot split or end anything, and the
-      // offsets still point into the file. Strings go first, so a ")" inside a
-      // quoted url() cannot end the url() early.
-      const blank = (x) => ' '.repeat(x.length)
-      const masked = body.replace(/"[^"]*"|'[^']*'/g, blank).replace(/url\([^)]*\)/gi, blank)
       const bodyStart = m.index + m[1].length + 1
       let start = 0
-      for (const declaration of masked.split(';')) {
+      for (const declaration of body.split(';')) {
         const colon = declaration.indexOf(':')
         const property = colon === -1 ? '' : declaration.slice(0, colon).trim()
-        if (!property.startsWith('--llselect-') && COLOR_PROPERTY.test(property) && COLOR_LITERAL.test(declaration.slice(colon + 1))) {
+        const value = declaration.slice(colon + 1)
+        const literal = !property.startsWith('--llselect-') && (COLOR_LITERAL.test(value) || (COLOR_PROPERTY.test(property) && COLOR_KEYWORD.test(value)))
+        if (literal) {
           // the chunk starts with the newline left by the previous ";": count at its first non-blank character
           const lead = declaration.length - declaration.trimStart().length
-          problems.push(`${f}:${lineOf(css, bodyStart + start + lead)}: literal color outside the --llselect-* declarations: ${body.slice(start, start + declaration.length).trim()}`)
+          problems.push(`${f}:${lineOf(css, bodyStart + start + lead)}: literal color outside the --llselect-* declarations: ${source.slice(bodyStart + start, bodyStart + start + declaration.length).trim()}`)
         }
         start += declaration.length + 1
       }

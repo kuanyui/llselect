@@ -2,6 +2,18 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (theme dark color schemes, post-fix round 6)
+
+Process: the sixth fix batch (commit `a98db89`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY. Opus 4.8: ship, one QUALITY. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, three QUALITY. All four found the registration path correct. The entries below merge the overlapping findings.
+
+- [x] **[QUALITY-262] - the callback half of the no-`<html>` test could not fail, and the "nothing registered yet" start value had no test**
+  - Fix: the callback half asserts that no window `error` event fired (jsdom reports a callback exception that way, not as a thrown error); a new test wires a document whose `<body>` is missing and asserts the `<body>` that arrives later is observed.
+  - Verified: with the file from two batches back swapped in (its callback path unguarded), the callback assertion fails with the `observe` TypeError; with the start value changed back to `null`, the new test fails.
+- [x] **[QUALITY-263] - a hex or color-function literal in a property outside the list went unscanned, while a keyword list could never be complete**
+  - Fix: a hex or color-function literal counts in every declaration other than `--llselect-*`; only the named and system color keywords are limited to the color-bearing properties, where they cannot be ordinary values.
+- [x] **[QUALITY-264] - a `}` inside a string hid a declaration, escaped quotes were not understood, and `list-style-type: red` was a false positive**
+  - Fix: comments, strings and `url()` are masked over the whole file before the rules are split, escape-aware; the message quotes the original text; the list-style scan covers `list-style` and `list-style-image` only.
+
 ## review (theme dark color schemes, post-fix round 5)
 
 Process: the fifth fix batch (commit `6ec3799`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, two QUALITY. Opus 4.8: ship, one DOCUMENTATION. Codex 5.5: fix first, two QUALITY. Codex Sol: fix first, three QUALITY, one DOCUMENTATION. All four found the strengthened body test sound. The entries below merge the overlapping findings.
