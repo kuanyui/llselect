@@ -2,6 +2,15 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (theme dark color schemes, post-fix round 10)
+
+Process: the tenth fix batch (commit `dec7c8d`) went to the other four panel members, one at a time, read-only. Opus 5: ship, one QUALITY. Opus 4.8: ship, one QUALITY. Codex 5.5: fix first, two QUALITY. Codex Sol: fix first, three QUALITY. All four found the identifier boundary, the blank walk and the three outputs sound (one member fuzzed 100,000 inputs). The entries below merge the overlapping findings.
+
+- [x] **[QUALITY-275] - a comment inside a url() stayed in the declaration message; a backslash-newline continuation inside a quoted url() ended the string; an escaped identifier such as `not\url(` counted as a url()**
+  - Fix: the url() branch blanks the comments its blank walk skipped (a comment-like text inside the quoted argument stays); a string continues across a backslash followed by a newline (CRLF included) and ends at any unescaped newline character; a backslash before `url(` is an identifier character.
+  - Q: Why is a comment inside an unquoted url(), with a `)` or `;` in it, not handled?
+    - A: Because that is invalid CSS (an unquoted url token holds no comment), and the check lints the project's own theme files. The same holds for other inputs that would need a full CSS tokenizer: a theme written that way is rewritten, not accommodated.
+
 ## review (theme dark color schemes, post-fix round 9)
 
 Process: the ninth fix batch (commit `8bc62b2`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, two QUALITY, two DOCUMENTATION. Opus 4.8: ship, one QUALITY. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, two QUALITY. All four found the scanner's three outputs length-safe (one member fuzzed 20,000 inputs). The entries below merge the overlapping findings.
