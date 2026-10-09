@@ -274,11 +274,11 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .hint { color: var(--fg-muted); font-size: 0.9rem; margin: 0.3rem 0; }
 /* Inside a widget the theme's light palette rules until the themes get dark
    values (TODO.md "Themes - dark color scheme"): fixed light colors there, not
-   the page tokens. Same for the widget-only rules below (CSS arrow, tree
-   caret, popup link button). */
+   the page tokens. Same for the link rule next and the widget-only rules
+   further down (CSS arrow, tree caret, popup link button). */
 .llselect-root .hint { color: #666; }
-/* Links inside a widget (the 14.x footer link): the UA's dark-scheme link
-   color would land on the white popup otherwise. */
+/* Links inside a widget (the footer link of core 14.x and AngularJS 12c): the
+   UA's dark-scheme link color would land on the white popup otherwise. */
 .llselect-root a { color: #1c4d8f; }
 
 .out {

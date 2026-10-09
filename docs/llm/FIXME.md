@@ -4,7 +4,7 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (site color-scheme switch)
 
-Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`739aeaf`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Round 3: Codex 5.5 (xhigh): ship, one QUALITY and two DOCUMENTATION findings (170-172), fixed. Round 4: Codex Sol (max): fix first, three MEDIUM, four QUALITY, three DOCUMENTATION findings (173-182), fixed. Round 5 (post-fix review of round 4 by the other four members, one at a time): Opus 5: fix first, two MEDIUM, four QUALITY, five DOCUMENTATION (183-193; two were the pre-change baseline, kept). Opus 4.8: ship, one QUALITY, two DOCUMENTATION (194-196). Codex 5.5: fix first, one MEDIUM, three DOCUMENTATION (197-200). Codex Sol: fix first, one MEDIUM, one QUALITY, three DOCUMENTATION (201-205). Entries follow the round-4 ones.
+Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`739aeaf`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Round 3: Codex 5.5 (xhigh): ship, one QUALITY and two DOCUMENTATION findings (170-172), fixed. Round 4: Codex Sol (max): fix first, three MEDIUM, four QUALITY, three DOCUMENTATION findings (173-182), fixed. Round 5 (post-fix review of round 4 by the other four members, one at a time): Opus 5: fix first, two MEDIUM, four QUALITY, five DOCUMENTATION (183-193; two were the pre-change baseline, kept). Opus 4.8: ship, one QUALITY, two DOCUMENTATION (194-196). Codex 5.5: fix first, one MEDIUM, three DOCUMENTATION (197-200). Codex Sol: fix first, one MEDIUM, one QUALITY, three DOCUMENTATION (201-205). Round 6 (confirmation of `6ceeccd` by Opus 5): ship, two QUALITY, three DOCUMENTATION (206-210), comment and doc level plus one pin, applied without a further review round. Entries follow the round-4 ones.
 
 - [x] **[MEDIUM-155] - the vanilla filter input was painted dark by the UA under a dark page scheme**
   - Symptom: with `color-scheme: dark` on the page root, the vanilla theme's filter input rendered as a dark field with white text inside the white popup (measured: rgb(59, 59, 59)); every other theme sets both colors.
@@ -121,7 +121,7 @@ Process: post-change review of the site's light / dark switch (`88f698a`: `demo/
 - [x] **[MEDIUM-183] - the competitors' option rows inherited the page's dark text onto their white dropdowns**
   - Symptom: measured in headless Chromium, dark OS: Select2 and Choices options computed to the dark-scheme `--fg` (#d8d8d8) on white; Tom Select and Slim Select declare their own row color and were fine.
   - Cause: `color-scheme: light` only reaches UA-painted parts; the inherited `color` property still comes from the page root.
-  - Fix: the competitors' containers (`.choices`, `.select2-container`, `.ts-wrapper`, `.ts-dropdown`, `.ss-main`, `.ss-content`) get `color-scheme: light; color: #222`; the stages keep only the control part, since they also hold page text; the AngularJS page pins only the inherited text color for ui-select (`.ui-select-container, .ui-select-choices { color: #333 }`), since that page's root scheme already reaches its controls through Bootstrap's own form styles.
+  - Fix: the competitors' containers (`.choices`, `.select2-container`, `.ts-wrapper`, `.ts-dropdown`, `.ss-main`, `.ss-content`) get `color-scheme: light; color: #222`; the stages keep only the control part, since they also hold page text; the AngularJS page pins ui-select the same way (`.ui-select-container, .ui-select-choices { color-scheme: light; color: #333 }`): its theme colors the rows itself and Bootstrap colors the controls, so the pin covers what inherits and what the UA paints (the dropdown's scrollbar).
   - Verified: headless Chromium, dark OS: Select2 and Choices options compute to #222 on white; ui-select likewise after a benchmark run builds its widgets.
 - [x] **[MEDIUM-184] - the Bootstrap 3 page's link rule covered the rest state only**
   - Symptom: Bootstrap 3's `a:hover, a:focus` (0,1,1) outranked the new `a` rule, and tied with `.demo-nav a:hover` while loading later: hovered links fell to about 2.1:1 on the dark page, nav links to about 1.6:1 on the active tint.
@@ -156,7 +156,7 @@ Process: post-change review of the site's light / dark switch (`88f698a`: `demo/
   - Fix: "the page states that scheme explicitly (on this site: a stored override)".
 - [x] **[DOCUMENTATION-192] - the TODO did not point back at the demo rules frozen to light values**
   - Symptom: six rules carried a comment pointing at the TODO, and the TODO named none of them, so the theme work would have had to grep for them.
-  - Fix: the entry names the six `demo/style.css` rules to reconnect once the themes have dark values.
+  - Fix: the entry names the `demo/style.css` rules to reconnect once the themes have dark values.
 - [x] **[DOCUMENTATION-193] - the generator's token comment overstated the overlap with demo/style.css**
   - Symptom: the demo defines tokens the site lacks and the site defines `--alert-*`.
   - Fix: both comments say the tokens they share use the same names.
@@ -193,14 +193,27 @@ Process: post-change review of the site's light / dark switch (`88f698a`: `demo/
   - Symptom: Bootstrap 3 loads after `demo/style.css` there, so its `code` rule beat the tokenized one in both schemes: light pink chips on the dark page.
   - Fix: the page's style block adds dark-only `code` rules (media query and attribute, like the token set) with the demo's chip colors; light keeps Bootstrap's chips.
   - Verified: headless Chromium: dark computes to the demo's chip colors, light to Bootstrap's.
-- [x] **[DOCUMENTATION-203] - MEDIUM-183 said ui-select got "the same treatment" as the pinned containers**
-  - Symptom: its rule pins only the inherited text color, not `color-scheme`.
-  - Fix: the entry says so.
+- [x] **[DOCUMENTATION-203] - MEDIUM-183's ui-select sentence gave a reversed reason and a wrong claim**
+  - Symptom: it said the page's root scheme "already reaches" ui-select's controls as a reason NOT to pin them, and the page comment said ui-select's rows declare no text color; its theme does (`.ui-select-choices-row > span { color: #333 }`).
+  - Fix: the rule now pins `color-scheme: light` too (QUALITY-207), and the entry and the comment state the real reason: the theme has no dark values, so what inherits and what the UA paints stay light.
 - [x] **[DOCUMENTATION-204] - QUALITY-186 lacked the Q&A for a non-obvious baseline call**
+  - Symptom: the round summary claimed two baseline Q&As; only QUALITY-185 had one.
   - Fix: Q&A added (the pre-change commit is the baseline, not the tokenized intermediate).
 - [x] **[DOCUMENTATION-205] - entries 198-200 carried only Fix lines**
   - Symptom: the shape corrected three times already in this round.
   - Fix: Symptom lines added.
+- [x] **[QUALITY-206] - the umbrella comment on the frozen light rules did not list the new link rule, and the link comment named one of its two examples**
+  - Fix: the comment lists it; the link comment names core 14.x and AngularJS 12c.
+- [ ] **[NEEDS-VERIFICATION-207] - the ui-select pin lacked `color-scheme: light`, so its scrollable dropdown would get a dark UA scrollbar on a dark page**
+  - Symptom: the core benchmark page pins its competitors with `color-scheme: light`; the AngularJS page pinned ui-select's text color only, and its 400-row dropdown scrolls.
+  - Fix: `color-scheme: light` added to the rule. Headless Chromium hides scrollbars (`--hide-scrollbars`), so the scrollbar itself needs a headed browser: open a ui-select dropdown on `demo/angularjs/benchmark.html` under the dark scheme and confirm a light scrollbar (TODO.md "manual verification").
+- [x] **[DOCUMENTATION-208] - MEDIUM-183's ui-select sentence and the page comment gave a wrong reason**
+  - Symptom: see DOCUMENTATION-203, corrected in the same batch.
+  - Fix: both reworded.
+- [x] **[DOCUMENTATION-209] - DOCUMENTATION-204 carried only a Fix line**
+  - Fix: Symptom added.
+- [x] **[DOCUMENTATION-210] - DOCUMENTATION-192 said "six" rules after the TODO list grew to seven**
+  - Fix: the number lives in the TODO entry only.
 - [ ] **[QUALITY-167] - demo/angularjs/benchmark.html loads Bootstrap 3 after demo/style.css, so the html font-size pin loses**
   - Symptom: measured in headless Chromium: `html` 10px, nav links 14px with 8px padding, against 16px / 12.8px on the other demo pages. Pre-existing; surfaced while the review compared the two Bootstrap-order comments in `demo/style.css` (`html { font-size: 16px }` and the dark body rule).
   - Cause: Bootstrap 3's `html { font-size: 10px }` is loaded after the pin (`demo/angularjs/benchmark.html` line 9 vs 12).
