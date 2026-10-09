@@ -42,7 +42,9 @@
 .llselect-trigger[data-state='open'] {
   outline: 0;
   border-color: var(--color-blue-500, #3b82f6);
-  /* ring-2 ring-blue-500/30 -- Tailwind's focus-ring style */
+  /* ring-2 ring-blue-500/30 -- Tailwind's focus-ring style. The rgba line is
+     the fallback for browsers without color-mix() (CLAUDE.md browser floor). */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--color-blue-500, #3b82f6) 30%, transparent);
 }
