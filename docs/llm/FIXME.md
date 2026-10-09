@@ -4,7 +4,7 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (site color-scheme switch)
 
-Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`739aeaf`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Rounds 3-4: Codex 5.5 and Codex Sol (entries follow).
+Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`739aeaf`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Round 3: Codex 5.5 (xhigh): ship, one QUALITY and two DOCUMENTATION findings (170-172), fixed. Round 4: Codex Sol (entries follow).
 
 - [x] **[MEDIUM-155] - the vanilla filter input was painted dark by the UA under a dark page scheme**
   - Symptom: with `color-scheme: dark` on the page root, the vanilla theme's filter input rendered as a dark field with white text inside the white popup (measured: rgb(59, 59, 59)); every other theme sets both colors.
@@ -26,23 +26,39 @@ Process: post-change review of the site's light / dark switch (`88f698a`: `demo/
   - Symptom: the TODO contract for the theme work asked themes to honor "the page's own signal", but every page stated light or dark even when nobody had chosen.
   - Fix: attribute present = explicit override, absent = follow the OS; the TODO entry states this contract and that a theme consults `prefers-color-scheme` only under `:root:not([data-color-scheme])`.
 - [x] **[QUALITY-159] - inline code text had no token, so Bootstrap's pink won under the dark scheme**
+  - Symptom: with a Bootstrap theme picked, inline code read in Bootstrap's pink on the dark `--muted` chip, about 3:1.
   - Fix: `code { color: var(--fg) }` in `demo/style.css`.
 - [x] **[QUALITY-160] - role="switch" on a control that looks like a checkbox**
+  - Symptom: sighted users saw a checkbox, assistive technology announced a switch.
   - Fix: dropped; a native checkbox labelled "Dark" announces its own checked state.
 - [x] **[QUALITY-161] - once stored, a choice could never return to following the OS**
+  - Symptom: the first version stored every toggle; only clearing site data brought the OS preference back.
   - Fix: the switch stores only an override that differs from the OS preference; setting it to what the OS says clears the stored value and the attribute.
 - [x] **[QUALITY-162] - the inlined script was not escaped**
+  - Symptom: a future `</script` or `<!--` in `demo/color-scheme.js` would have ended the inline block early on every generated page.
   - Fix: the generator escapes `</script` and `<!--` when inlining `demo/color-scheme.js`.
 - [x] **[QUALITY-163] - two token vocabularies for one palette (site `--nav-link` / `--nav-hover` vs demo `--accent` / `--accent-soft`)**
+  - Symptom: the same color concept had two names across the two stylesheets, and nothing said whether the differing light values were deliberate.
   - Fix: the site template renamed to `--accent` / `--accent-soft`; both files say the light values differ on purpose and the dark values match.
 - [x] **[QUALITY-164] - "private mode" in a comment gave "mode" a third meaning**
+  - Symptom: a `demo/color-scheme.js` comment, in the commit that reserved "mode" for single vs multiple.
   - Fix: "private browsing".
 - [x] **[QUALITY-168] - two copied demo files carry no switch**
+  - Symptom: `cpSync('demo', 'public/demo')` copies `demo/index.html` and `demo/bench-reflow.html`, which load no `color-scheme.js`.
   - Fix: none. `demo/index.html` is a redirect stub; `demo/bench-reflow.html` is an unlinked measurement harness with its own light styles. Every page reachable from the nav has the switch.
 - [x] **[QUALITY-169] - the charts' live repaint path was unverified, and once measured it recolored the legend only**
   - Symptom: round 2 noted the recorded verification covered the build-time path only; measured, `chart.update('none')` after changing `Chart.defaults` recolored the legend but left ticks, grid and title light.
   - Fix: a scheme change rebuilds live charts from state (MEDIUM-156).
   - Verified: the live-path probe under MEDIUM-156.
+- [x] **[QUALITY-170] - a scheme change reset the legend's dataset visibility and replayed the entry animation**
+  - Symptom: rebuilding a chart from state discards legend clicks (visibility lives on the chart instance) and animates the bars from zero.
+  - Fix: `rebuildChart` snapshots per-dataset visibility, rebuilds with `animation: false`, restores it and updates without animation; `rebuildCharts` skips when the effective scheme is unchanged.
+  - Verified: headless Chromium: a dataset shown through the legend stays shown after the switch, and the rebuilt chart carries the dark values.
+- [x] **[DOCUMENTATION-171] - two comments said "theme" for the light / dark axis**
+  - Symptom: `scripts/build-site.mjs` ("same in both themes") and `src/icons.ts` ("light/dark themes"), against rule 7a.11.
+  - Fix: "color schemes" in both; the benchmark-stage comment no longer says "light-themed".
+- [x] **[DOCUMENTATION-172] - several resolved entries of this round carried only a Fix line**
+  - Fix: every entry states its Symptom.
 - [x] **[DOCUMENTATION-165] - the body-rule comment claimed "same colors in light"**
   - Symptom: Bootstrap 3's body text is #333, the token is #222, and the comment named no page.
   - Fix: the comment names `demo/angularjs/benchmark.html` and states what each scheme shows.

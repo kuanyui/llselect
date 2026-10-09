@@ -372,7 +372,7 @@ nav .color-scheme-switch input { margin: 0; cursor: pointer; }
 .subnav a:hover { background: var(--accent-soft); }
 .subnav a.current { background: var(--accent); color: var(--bg); }
 a { color: var(--link); }
-/* Fenced blocks: the demo pages' dark One Monokai look, same in both themes */
+/* Fenced blocks: the demo pages' dark One Monokai look, same in both color schemes */
 pre { padding: 0.8rem 1rem; background: #282c34; color: #abb2bf; border-radius: 4px; overflow-x: auto; font-size: 0.9em; line-height: 1.5; }
 code { background: var(--muted); padding: 0.1em 0.3em; font-size: 0.92em; }
 pre code { padding: 0; background: transparent; color: inherit; }

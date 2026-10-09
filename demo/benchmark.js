@@ -639,15 +639,36 @@ function isDarkScheme() {
   const attr = document.documentElement.getAttribute('data-color-scheme')
   return attr ? attr === 'dark' : darkSchemeMq.matches
 }
+let chartsBuiltDark = null // the scheme the charts were last built for
+let schemeRebuild = false // the builders skip the entry animation while set
 function syncChartDefaults() {
   if (!window.Chart) { return }
   const dark = isDarkScheme()
+  chartsBuiltDark = dark
   window.Chart.defaults.color = dark ? '#c4c4c4' : '#666'
   window.Chart.defaults.borderColor = dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)'
 }
+// Rebuild one live chart, keeping the legend's per-dataset visibility (a
+// legend click lives on the chart instance, not in the config).
+function rebuildChart(getChart, render) {
+  const before = getChart()
+  if (!before) { return }
+  const visible = before.data.datasets.map((d, i) => before.isDatasetVisible(i))
+  render()
+  const after = getChart()
+  if (!after) { return }
+  visible.forEach((v, i) => { if (i < after.data.datasets.length) { after.setDatasetVisibility(i, v) } })
+  after.update('none')
+}
 function rebuildCharts() {
-  if (chartInstance) { renderChart() }
-  for (const mode of IX_MODES) { if (mode.chart) { renderIxChart(mode) } }
+  if (isDarkScheme() === chartsBuiltDark) { return } // the attribute moved, the effective scheme did not
+  schemeRebuild = true
+  try {
+    rebuildChart(() => chartInstance, renderChart)
+    for (const mode of IX_MODES) { rebuildChart(() => mode.chart, () => renderIxChart(mode)) }
+  } finally {
+    schemeRebuild = false
+  }
 }
 new MutationObserver(rebuildCharts).observe(document.documentElement, { attributes: true, attributeFilter: ['data-color-scheme'] })
 darkSchemeMq.addEventListener('change', rebuildCharts)
@@ -685,7 +706,7 @@ function renderChart() {
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: 300 },
+      animation: schemeRebuild ? false : { duration: 300 },
       plugins: {
         legend: { position: 'top' }, // click to show / hide a metric (Chart.js native)
         tooltip: {
@@ -1013,7 +1034,7 @@ function renderIxChart(mode) {
     type: 'bar',
     data: { labels, datasets },
     options: {
-      indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: { duration: 300 },
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: schemeRebuild ? false : { duration: 300 },
       plugins: {
         legend: { position: 'top' },
         tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${fmt(ctx.parsed.x)} ms` } },

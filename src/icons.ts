@@ -3,7 +3,7 @@
 // ones inside a custom item renderer (override `createPopupListItemEl` / `itemToString`)
 // so people who do not want to pull in mdi / FontAwesome still get sensible
 // built-ins. All paths use fill="currentColor" so they inherit the
-// surrounding text color (light/dark themes "just work"). Paths are from
+// surrounding text color (light / dark color schemes "just work"). Paths are from
 // Material Design Icons (MIT).
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
