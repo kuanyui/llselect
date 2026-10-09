@@ -2,6 +2,21 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (theme dark color schemes, post-fix round 7)
+
+Process: the seventh fix batch (commit `a820acd`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY, one DOCUMENTATION. Opus 4.8: fix first, one DOCUMENTATION. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, three QUALITY, one DOCUMENTATION. All four found the two observer tests sound. The entries below merge the overlapping findings.
+
+- [x] **[QUALITY-265] - rule 6's messages quoted a preceding comment with the declaration, and the widget-root messages printed masked selectors**
+  - Fix: the quote starts at the declaration's first non-blank character; the root messages and the `@media` message quote the unmasked source.
+- [x] **[QUALITY-266] - a comment opener inside a string masked real declarations, because comments were masked before strings**
+  - Fix: one left-to-right pass masks comments, strings and unquoted `url()` in context; a quoted `url()` argument is masked by the string branch, so a `)` inside it ends nothing.
+- [x] **[QUALITY-267] - a color inside a `url()` was never scanned, and `tap-highlight-color` was missing from the keyword properties**
+  - Fix: a `#hex` or `%23hex` inside a `url()` of a declaration other than `--llselect-*` is rejected (an embedded image color follows no scheme); `tap-highlight-color` joins the list.
+  - Q: Why reject `list-style: red` although `red` may name a custom counter style?
+    - A: Because a counter style named like a color misleads the reader as much as the check; the theme renames it. The check cannot tell the two apart without a CSS parser.
+- [x] **[DOCUMENTATION-268] - DESIGN's check.mjs bullet repeated the `transparent` clause; the header summary of `scripts/check.mjs` lagged; the no-`<html>` test did not pin that its callback runs**
+  - Fix: the duplicate clause is gone and the url() rule is stated; the header names the two scopes (literals anywhere, keywords in color-bearing properties); the test first proves the `<body>` is registered (a re-decision), then runs the negative half.
+
 ## review (theme dark color schemes, post-fix round 6)
 
 Process: the sixth fix batch (commit `a98db89`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY. Opus 4.8: ship, one QUALITY. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, three QUALITY. All four found the registration path correct. The entries below merge the overlapping findings.

@@ -18,7 +18,9 @@
 //      (light / dark) in the themes"): no `color-scheme` and no
 //      `--llselect-color-scheme` declared on the widget root, no
 //      `prefers-color-scheme` media query, no literal color outside the
-//      `--llselect-*` variable declarations (hex, color functions, named colors).
+//      `--llselect-*` variable declarations (hex and color functions in any
+//      declaration, also inside a url(); named and system colors in the
+//      properties that take a color).
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import ts from 'typescript'
@@ -260,8 +262,9 @@ for (const rel of markdownFiles) {
 // output or hide an ancestor's mark. A `prefers-color-scheme` query cannot
 // tell a light-only page from an OS-following one. Every color outside the
 // `--llselect-*` declarations must come from a variable (DESIGN.md "The color
-// variables"): a hex or color-function literal counts in any declaration; a
-// named or system color keyword counts only in a property that takes a color
+// variables"): a hex or color-function literal counts in any declaration, a
+// hex inside a url() too (an embedded image color follows no scheme); a named
+// or system color keyword counts only in a property that takes a color
 // (elsewhere `menu` or `background` is an ordinary value). `transparent` and
 // `currentColor` are not colors here. CSS property names, at-rules and media
 // features match case-insensitively; the custom property
@@ -271,8 +274,9 @@ for (const rel of markdownFiles) {
   const SYSTEM_COLORS = 'accentcolor|accentcolortext|activetext|buttonborder|buttonface|buttontext|canvas|canvastext|field|fieldtext|graytext|highlight|highlighttext|linktext|mark|marktext|selecteditem|selecteditemtext|visitedtext|activeborder|activecaption|appworkspace|background|buttonhighlight|buttonshadow|captiontext|inactiveborder|inactivecaption|inactivecaptiontext|infobackground|infotext|menu|menutext|scrollbar|threeddarkshadow|threedface|threedhighlight|threedlightshadow|threedshadow|window|windowframe|windowtext'
   // The properties whose value can carry a color keyword, each also with a
   // -webkit- prefix, plus custom properties other than ours.
-  const COLOR_PROPERTY = /^(?:-webkit-)?(?:color|background(?:-[a-z]+)*|border(?:-[a-z]+)*|outline(?:-[a-z]+)*|box-shadow|text-shadow|text-decoration(?:-[a-z]+)*|text-emphasis(?:-[a-z]+)*|caret-color|accent-color|fill|stroke|stop-color|flood-color|lighting-color|column-rule(?:-[a-z]+)*|scrollbar-color|filter|backdrop-filter|mask(?:-[a-z]+)*|list-style(?:-image)?|content|text-fill-color|text-stroke(?:-[a-z]+)*|--[\w-]+)$/i
+  const COLOR_PROPERTY = /^(?:-webkit-)?(?:color|background(?:-[a-z]+)*|border(?:-[a-z]+)*|outline(?:-[a-z]+)*|box-shadow|text-shadow|text-decoration(?:-[a-z]+)*|text-emphasis(?:-[a-z]+)*|caret-color|accent-color|fill|stroke|stop-color|flood-color|lighting-color|column-rule(?:-[a-z]+)*|scrollbar-color|filter|backdrop-filter|mask(?:-[a-z]+)*|list-style(?:-image)?|content|text-fill-color|text-stroke(?:-[a-z]+)*|tap-highlight-color|--[\w-]+)$/i
   const COLOR_LITERAL = /#[0-9a-f]{3,8}\b|(?<![\w-])(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\(/i
+  const URL_COLOR = /#[0-9a-f]{3,8}\b|%23[0-9a-f]{3,8}\b/i
   // Keyword boundaries exclude the hyphen, so `context-menu` does not match `menu`.
   const COLOR_KEYWORD = new RegExp(`(?<![\\w-])(?:${NAMED_COLORS}|${SYSTEM_COLORS})(?![\\w-])`, 'i')
   // Masks the contents of parentheses and brackets (innermost first, repeated)
@@ -290,24 +294,56 @@ for (const rel of markdownFiles) {
   // `:is(.llselect-root)` counts.
   const subjectOf = (s) => { const m = /[\s>+~]+(?=[^\s>+~]*$)/.exec(maskSelector(s)); return m === null ? s : s.slice(m.index + m[0].length) }
   const lineOf = (text, index) => text.slice(0, index).split('\n').length
-  // Comments, strings and url() become blanks of the same length, in that
-  // order (a string may hold "}" or ";", a quoted url() may hold ")"), so the
-  // rule and declaration boundaries below are real ones, and every index and
-  // line number still points into the file. An escaped character stays inside
-  // its string or url().
   const blank = (x) => x.replace(/[^\n]/g, ' ')
+  // One left-to-right pass turns comments, strings and unquoted url() into
+  // blanks of the same length: a comment opener inside a string is text, a
+  // "}" or ";" inside a string splits nothing, a ")" inside a quoted url()
+  // ends nothing (the string branch masks the quoted argument), and every
+  // index and line number still points into the file. An escaped character
+  // stays inside its string or url(); a string ends at a newline at the latest.
+  const maskCss = (text) => {
+    let out = '', i = 0
+    while (i < text.length) {
+      const c = text[i]
+      if (c === '/' && text[i + 1] === '*') {
+        const close = text.indexOf('*/', i + 2)
+        const stop = close === -1 ? text.length : close + 2
+        out += blank(text.slice(i, stop)); i = stop; continue
+      }
+      if (c === '"' || c === "'") {
+        let j = i + 1
+        while (j < text.length && text[j] !== c && text[j] !== '\n') { j += text[j] === '\\' ? 2 : 1 }
+        const stop = Math.min(j + 1, text.length)
+        out += blank(text.slice(i, stop)); i = stop; continue
+      }
+      if (/^url\(/i.test(text.slice(i, i + 4))) {
+        if (/^url\(\s*["']/i.test(text.slice(i, i + 16))) { out += blank('url('); i += 4; continue }
+        let j = i + 4
+        while (j < text.length && text[j] !== ')') { j += text[j] === '\\' ? 2 : 1 }
+        const stop = Math.min(j + 1, text.length)
+        out += blank(text.slice(i, stop)); i = stop; continue
+      }
+      out += c; i += 1
+    }
+    return out
+  }
   for (const f of walk('src/themes', '.css')) {
     const source = readFileSync(join(root, f), 'utf8')
-    const css = source.replace(/\/\*[\s\S]*?\*\//g, blank).replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g, blank).replace(/url\((?:[^)\\]|\\.)*\)/gi, blank)
+    const css = maskCss(source)
+    // the source text for a message: a prelude also holds the comments before
+    // it, which the masked text has already blanked
+    const unmasked = (index, length) => source.slice(index, index + length).replace(/\/\*[\s\S]*?\*\//g, blank)
     for (const m of css.matchAll(/@media([^{]*)\{/gi)) {
-      if (/prefers-color-scheme/i.test(m[1])) { problems.push(`${f}: @media${m[1].trimEnd()} - a theme file must not query prefers-color-scheme`) }
+      if (/prefers-color-scheme/i.test(m[1])) { problems.push(`${f}: @media${unmasked(m.index + 6, m[1].length).trimEnd()} - a theme file must not query prefers-color-scheme`) }
     }
     for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       const selectors = splitSelectorList(m[1]).filter((s) => s !== '' && !s.startsWith('@'))
       const body = m[2]
       if (selectors.some((s) => /\.llselect-root(?![\w-])/.test(subjectOf(s)))) {
-        if (/(^|[\s;])color-scheme\s*:/i.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares color-scheme on the widget root; the resolver reads it there`) }
-        if (/--llselect-color-scheme\s*:/.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares --llselect-color-scheme on the widget root; it would hide an ancestor's value`) }
+        // the message quotes the unmasked selectors (a masked one has blanks for its attribute values)
+        const quoted = splitSelectorList(unmasked(m.index, m[1].length)).filter((s) => s !== '' && !s.startsWith('@')).join(', ')
+        if (/(^|[\s;])color-scheme\s*:/i.test(body)) { problems.push(`${f}: "${quoted}" declares color-scheme on the widget root; the resolver reads it there`) }
+        if (/--llselect-color-scheme\s*:/.test(body)) { problems.push(`${f}: "${quoted}" declares --llselect-color-scheme on the widget root; it would hide an ancestor's value`) }
       }
       const bodyStart = m.index + m[1].length + 1
       let start = 0
@@ -315,12 +351,12 @@ for (const rel of markdownFiles) {
         const colon = declaration.indexOf(':')
         const property = colon === -1 ? '' : declaration.slice(0, colon).trim()
         const value = declaration.slice(colon + 1)
-        const literal = !property.startsWith('--llselect-') && (COLOR_LITERAL.test(value) || (COLOR_PROPERTY.test(property) && COLOR_KEYWORD.test(value)))
-        if (literal) {
-          // the chunk starts with the newline left by the previous ";": count at its first non-blank character
-          const lead = declaration.length - declaration.trimStart().length
-          problems.push(`${f}:${lineOf(css, bodyStart + start + lead)}: literal color outside the --llselect-* declarations: ${source.slice(bodyStart + start, bodyStart + start + declaration.length).trim()}`)
-        }
+        // the chunk starts with the newline left by the previous ";": the declaration begins at its first non-blank character
+        const lead = declaration.length - declaration.trimStart().length
+        const original = source.slice(bodyStart + start + lead, bodyStart + start + declaration.length)
+        const urls = [...original.matchAll(/url\((?:[^)\\]|\\.)*\)/gi)].map((u) => u[0])
+        const flagged = !property.startsWith('--llselect-') && (COLOR_LITERAL.test(value) || (COLOR_PROPERTY.test(property) && COLOR_KEYWORD.test(value)) || urls.some((u) => URL_COLOR.test(u)))
+        if (flagged) { problems.push(`${f}:${lineOf(css, bodyStart + start + lead)}: literal color outside the --llselect-* declarations: ${original.trim()}`) }
         start += declaration.length + 1
       }
     }

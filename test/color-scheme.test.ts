@@ -176,6 +176,10 @@ test('a document without <html> throws neither in the observer callback nor at w
   const errors: string[] = []
   window.addEventListener('error', (e) => { errors.push(e.message); e.preventDefault() })
   const body = document.body
+  el.style.setProperty('--llselect-color-scheme', 'dark')
+  body.setAttribute('data-color-scheme', 'dark')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', 'the <body> is registered, so the callback below does run')
   document.removeChild(document.documentElement)
   body.setAttribute('data-color-scheme', 'dark') // the old <body> is still registered: the callback runs with no <html>
   await new Promise((resolve) => setTimeout(resolve, 0))
