@@ -1580,17 +1580,18 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Removes the library's class, its inline styles and the
    *   `data-llselect-color-scheme` attribute from the mount element, ends the
    *   automatic color-scheme checks, and empties the element.
-   * - After `destroy()`, call no method except `destroy()` itself. If no
-   *   second instance has replaced this one, a further `destroy()` does
-   *   nothing. Otherwise that call empties the element under the second
-   *   instance.
+   * - After `destroy()`, call no method except `destroy()` itself. Each
+   *   `destroy()` call repeats the cleanup and empties the mount element. Do
+   *   not call it again once the mount element has been reused, for other
+   *   content or for a second instance.
    * - REQUIRED before discarding an instance whose popup might be open; a
    *   framework wrapper calls it on unmount. Skipping it there leaks the
    *   outside-click, focusout, scroll and resize listeners.
    * - Discarding a CLOSED instance without `destroy()` leaks nothing: only
    *   its mount element and `labelEl` retain it, through its own DOM
-   *   listeners. Once those elements leave the document, the instance is
-   *   collectable. The root class, the `overflow-anchor` style and the
+   *   listeners. Once those elements leave the document and the application
+   *   holds no reference to them, the instance is collectable. The root
+   *   class, the `overflow-anchor` style and the
    *   `data-llselect-color-scheme` attribute stay on the mount. If the mount
    *   stays in the document outside a shadow root, the automatic checks
    *   continue for an `'auto'` instance: it decides again when the operating

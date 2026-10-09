@@ -149,6 +149,17 @@ test('a replaced <body> is observed too', async () => {
   await new Promise((resolve) => setTimeout(resolve, 0))
   assert.equal(sel.getColorScheme(), 'dark')
   assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+  // a <body> removed without replacement, then a new one: observed again
+  document.documentElement.removeChild(body)
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  const body2 = document.createElement('body')
+  body2.appendChild(el)
+  document.documentElement.appendChild(body2)
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  el.style.setProperty('--llselect-color-scheme', 'light')
+  body2.setAttribute('data-color-scheme', 'light')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.equal(sel.getColorScheme(), 'light')
 })
 
 test('several widgets built in one task have all decided after one microtask, none before', async () => {

@@ -159,11 +159,14 @@ function wireDocument(doc: Document): void {
       if (records.every((r) => r.attributeName === COLOR_SCHEME_ATTRIBUTE)) { return }
       refreshAll()
     })
+    // On a <body> identity change the observer re-registers from scratch, so
+    // a removed <body> is neither observed nor referenced any longer.
     const observeBody = (): void => {
-      if (doc.body !== null && doc.body !== observedBody) {
-        observedBody = doc.body
-        observer.observe(observedBody, { attributes: true })
-      }
+      if (doc.body === observedBody) { return }
+      observedBody = doc.body
+      observer.disconnect()
+      observer.observe(doc.documentElement, { attributes: true, childList: true })
+      if (observedBody !== null) { observer.observe(observedBody, { attributes: true }) }
     }
     observer.observe(doc.documentElement, { attributes: true, childList: true })
     observeBody()

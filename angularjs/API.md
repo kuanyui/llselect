@@ -158,7 +158,10 @@ $scope.ifaceMatch = function (i, query) {
 
 **Expression** -> `colorScheme`. `'auto'` (llselect's default) / `'light'` / `'dark'` - quoted: `ll-color-scheme="'dark'"`.
 
-- `'auto'`: the widget reads `--llselect-color-scheme` from its root element's computed style, inherited values included. If the variable is `light` or `dark`, the widget uses that scheme. If it is `auto`, the widget follows the operating system's color preference. If that value is not `light`, `dark` or `auto`, the widget checks the root's computed `color-scheme` property. If the property omits `dark`, the widget selects light. If it lists `dark` without `light`, the widget selects dark. If it lists both, the widget follows the operating system's color preference. The core setting `colorScheme` (`LLSelectBaseSettings`, in the API reference) states the precedence rules.
+- `'auto'`: the widget decides from its root element's computed style, inherited values included, in this order:
+  - The CSS variable `--llselect-color-scheme`. If it is `light` or `dark`, the widget uses that scheme. If it is `auto`, the widget follows the operating system's color preference.
+  - If the variable is missing or has another value, the widget checks the computed `color-scheme` property. If it omits `dark`, the widget selects light. If it lists `dark` without `light`, the widget selects dark. If it lists both, the widget follows the operating system's color preference.
+- For the full rules, see the core setting `colorScheme` under `LLSelectBaseSettings` in the API reference.
 - `'light'` or `'dark'`: the widget shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables; see the core README section "Dark color scheme".
 - The widget's root element receives `data-llselect-color-scheme="light"` or `data-llselect-color-scheme="dark"`. The themes apply their dark colors when the value is `dark`.
 

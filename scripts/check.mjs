@@ -266,6 +266,9 @@ for (const rel of markdownFiles) {
 {
   const NAMED_COLORS = 'aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightslategrey|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|rebeccapurple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen'
   const SYSTEM_COLORS = 'accentcolor|accentcolortext|activetext|buttonborder|buttonface|buttontext|canvas|canvastext|field|fieldtext|graytext|highlight|highlighttext|linktext|mark|marktext|selecteditem|selecteditemtext|visitedtext|activeborder|activecaption|appworkspace|background|buttonhighlight|buttonshadow|captiontext|inactiveborder|inactivecaption|inactivecaptiontext|infobackground|infotext|menu|menutext|scrollbar|threeddarkshadow|threedface|threedhighlight|threedlightshadow|threedshadow|window|windowframe|windowtext'
+  // Only properties that accept a color are scanned (elsewhere a keyword such
+  // as `menu` is an ordinary value), plus custom properties other than ours.
+  const COLOR_PROPERTY = /^(?:color|background|background-color|border(?:-[a-z]+)*|outline(?:-[a-z]+)*|box-shadow|text-shadow|text-decoration|text-decoration-color|text-emphasis|text-emphasis-color|caret-color|accent-color|fill|stroke|column-rule|column-rule-color|scrollbar-color|filter|--[\w-]+)$/i
   // Keyword boundaries exclude the hyphen, so `context-menu` does not match `menu`.
   const COLOR_LITERAL = new RegExp(`#[0-9a-f]{3,8}\\b|(?<![\\w-])(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\\(|(?<![\\w-])(?:${NAMED_COLORS}|${SYSTEM_COLORS})(?![\\w-])`, 'i')
   // Masks the contents of parentheses and brackets (innermost first, repeated)
@@ -300,7 +303,8 @@ for (const rel of markdownFiles) {
       for (const declaration of body.split(';')) {
         const colon = declaration.indexOf(':')
         const property = colon === -1 ? '' : declaration.slice(0, colon).trim()
-        if (!property.startsWith('--llselect-') && COLOR_LITERAL.test(declaration.slice(colon + 1))) {
+        const value = declaration.slice(colon + 1).replace(/url\([^)]*\)|"[^"]*"|'[^']*'/g, '')
+        if (!property.startsWith('--llselect-') && COLOR_PROPERTY.test(property) && COLOR_LITERAL.test(value)) {
           // the chunk starts with the newline left by the previous ";": count at its first non-blank character
           problems.push(`${f}:${lineOf(css, offset + declaration.length - declaration.trimStart().length)}: literal color outside the --llselect-* declarations: ${declaration.trim()}`)
         }
