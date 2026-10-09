@@ -1,13 +1,52 @@
 /* llselect - Bootstrap 3 theme. BS3 has no CSS custom properties, so all
    values are hard-coded to match BS3 defaults (.form-control etc.). */
 
+/* Color variables: the light values. Every color below reads one of these,
+   so a host page restyles the widget by redefining them in a rule that
+   targets .llselect-root (README "Customization"). The dark values are in the
+   block at the end of this file. Roles, one per line. */
+.llselect-root {
+  --llselect-fg: #333; /* text inside the popup: header and footer slot content */
+  --llselect-control-fg: #555; /* text of the trigger and of the filter input */
+  --llselect-fg-soft: #777; /* the arrow and the group labels */
+  --llselect-fg-muted: #999; /* the placeholder, the no-results text, the clear button at rest */
+  --llselect-bg: #fff; /* surface of the trigger, the popup, the filter input, the pinned rows */
+  --llselect-bg-muted: #f5f5f5; /* surface of the group labels */
+  --llselect-trigger-line: #ccc; /* border of the trigger */
+  --llselect-trigger-hover-line: var(--llselect-trigger-line); /* border of the hovered trigger */
+  --llselect-popup-line: rgba(0, 0, 0, 0.15); /* border of the popup */
+  --llselect-filter-line: #ccc; /* border of the filter input */
+  --llselect-divider: rgba(0, 0, 0, 0.12); /* dividers before and after action rows and the choose-all row; header, footer and pinned-row edges */
+  --llselect-focus-line: #66afe9; /* border (vanilla: outline) of the focused or open trigger */
+  --llselect-filter-focus-line: #66afe9; /* border of the focused filter input */
+  --llselect-focus-ring: rgba(102, 175, 233, 0.6); /* ring shadow of the focused or open trigger */
+  --llselect-filter-focus-ring: rgba(102, 175, 233, 0.6); /* ring shadow of the focused filter input */
+  --llselect-shadow: rgba(0, 0, 0, 0.175); /* color of the popup shadow */
+  --llselect-control-shadow: rgba(0, 0, 0, 0.075); /* color of the inset shadow of the trigger */
+  --llselect-row-fg: var(--llselect-fg); /* text of a row */
+  --llselect-row-hover-bg: #f5f5f5; /* surface of a hovered row */
+  --llselect-row-hover-fg: #262626; /* text of a hovered row */
+  --llselect-row-focused-bg: #337ab7; /* surface of the row that keyboard focus is on */
+  --llselect-row-focused-fg: #fff; /* text of that row */
+  --llselect-row-focused-hover-bg: #2e6da4; /* surface of that row while hovered */
+  --llselect-row-chosen-fg: #337ab7; /* text of a chosen row */
+  --llselect-tag-bg: #d9edf7; /* surface of a tag */
+  --llselect-tag-fg: #31708f; /* text of a tag */
+  --llselect-tag-line: transparent; /* border of a tag */
+  --llselect-tag-remove-fg: var(--llselect-tag-fg); /* the x button of a tag */
+  --llselect-tag-remove-hover-bg: transparent; /* surface of the hovered x button */
+  --llselect-tag-remove-hover-fg: var(--llselect-tag-fg); /* the hovered x button */
+  --llselect-clear-hover-fg: #333; /* the hovered clear button */
+  --llselect-clear-hover-bg: #f5f5f5; /* surface of the hovered clear button */
+}
+
 .llselect-root {
   position: relative;
   display: inline-block;
   min-width: 14rem;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 14px;
-  color: #555;
+  color: var(--llselect-control-fg);
   line-height: 1.42857143;
 }
 
@@ -19,13 +58,13 @@
   justify-content: space-between;
   gap: 0.5rem;
   padding: 6px 12px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--llselect-trigger-line);
   border-radius: 4px;
-  background-color: #fff;
-  color: #555;
+  background-color: var(--llselect-bg);
+  color: var(--llselect-control-fg);
   cursor: pointer;
   user-select: none;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  box-shadow: inset 0 1px 1px var(--llselect-control-shadow);
   transition:
     border-color ease-in-out 0.15s,
     box-shadow ease-in-out 0.15s;
@@ -35,10 +74,9 @@
 .llselect-trigger:focus-visible,
 .llselect-trigger[data-state='open'] {
   outline: 0;
-  border-color: #66afe9;
-  box-shadow:
-    inset 0 1px 1px rgba(0, 0, 0, 0.075),
-    0 0 8px rgba(102, 175, 233, 0.6);
+  border-color: var(--llselect-focus-line);
+  box-shadow: inset 0 1px 1px var(--llselect-control-shadow),
+    0 0 8px var(--llselect-focus-ring);
 }
 
 .llselect-trigger-content {
@@ -50,13 +88,13 @@
 }
 
 .llselect-trigger[data-empty='true'] .llselect-trigger-content {
-  color: #999;
+  color: var(--llselect-fg-muted);
 }
 
 .llselect-trigger-arrow {
   display: inline-flex;
   align-items: center;
-  color: #777;
+  color: var(--llselect-fg-soft);
   transition: transform 0.15s;
 }
 
@@ -69,11 +107,11 @@
 /* --- popup (matches BS3 .dropdown-menu look) ----------------- */
 
 .llselect-popup {
-  background-color: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  background-color: var(--llselect-bg);
+  border: 1px solid var(--llselect-popup-line);
   border-radius: 4px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
-  color: #333;
+  box-shadow: 0 6px 12px var(--llselect-shadow);
+  color: var(--llselect-fg);
   z-index: 1000;
   padding: 5px 0;
 }
@@ -83,33 +121,33 @@
 .llselect-popup-list-row {
   padding: 3px 20px;
   cursor: pointer;
-  color: #333;
+  color: var(--llselect-row-fg);
   background-color: transparent;
   line-height: 1.42857143;
 }
 
 .llselect-popup-list-row:hover {
-  background-color: #f5f5f5;
-  color: #262626;
+  background-color: var(--llselect-row-hover-bg);
+  color: var(--llselect-row-hover-fg);
 }
 
 .llselect-popup-list-row-focused {
-  background-color: #337ab7;
-  color: #fff;
+  background-color: var(--llselect-row-focused-bg);
+  color: var(--llselect-row-focused-fg);
 }
 
 .llselect-popup-list-row-focused:hover {
-  background-color: #2e6da4;
-  color: #fff;
+  background-color: var(--llselect-row-focused-hover-bg);
+  color: var(--llselect-row-focused-fg);
 }
 
 .llselect-popup-list-row[aria-selected='true'] {
   font-weight: 600;
-  color: #337ab7;
+  color: var(--llselect-row-chosen-fg);
 }
 
 .llselect-popup-list-row-focused[aria-selected='true'] {
-  color: #fff;
+  color: var(--llselect-row-focused-fg);
 }
 
 /* --- choose-all row (multi, opt-in) ----------------------------- */
@@ -129,8 +167,8 @@
   padding: 3px 20px;
   font-size: 12px;
   font-weight: 600;
-  color: #777;
-  background-color: #f5f5f5;
+  color: var(--llselect-fg-soft);
+  background-color: var(--llselect-bg-muted);
 }
 
 .llselect-group[data-disabled='true'] .llselect-group-label {
@@ -144,24 +182,24 @@
   flex: none;
   margin: 0.5rem;
   padding: 0.375rem 0.75rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--llselect-filter-line);
   border-radius: 4px;
   font: inherit;
   outline: none;
-  background-color: #fff;
-  color: #555;
+  background-color: var(--llselect-bg);
+  color: var(--llselect-control-fg);
 }
 
 .llselect-filter-input:focus {
-  border-color: #66afe9;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
+  border-color: var(--llselect-filter-focus-line);
+  box-shadow: inset 0 1px 1px var(--llselect-control-shadow), 0 0 8px var(--llselect-filter-focus-ring);
 }
 
 /* --- no-results message ----------------------------------------- */
 
 .llselect-popup-list-no-results {
   padding: 3px 20px;
-  color: #999;
+  color: var(--llselect-fg-muted);
 }
 
 /* --- dividers around the command rows --------------------------- */
@@ -179,7 +217,7 @@
 .llselect-popup-list-action-row + .llselect-group,
 .llselect-popup-list-row:not(.llselect-popup-list-action-row):not(.llselect-choose-all-row) + .llselect-popup-list-action-row,
 .llselect-group + .llselect-popup-list-action-row {
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  border-top: 1px solid var(--llselect-divider);
 }
 
 /* --- pinned command blocks --------------------------------------- */
@@ -192,14 +230,14 @@
 
 .llselect-popup-list-pinned-leading-rows,
 .llselect-popup-list-pinned-trailing-rows {
-  background: #fff;
+  background: var(--llselect-bg);
   z-index: 1;
 }
 .llselect-popup-list-pinned-leading-rows[data-edge-to-items='true'] {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid var(--llselect-divider);
 }
 .llselect-popup-list-pinned-trailing-rows[data-edge-to-items='true'] {
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  border-top: 1px solid var(--llselect-divider);
 }
 
 /* --- popup header / footer slots -------------------------------- */
@@ -209,12 +247,12 @@
 
 .llselect-popup-header {
   padding: 3px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid var(--llselect-divider);
 }
 
 .llselect-popup-footer {
   padding: 3px 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  border-top: 1px solid var(--llselect-divider);
 }
 
 /* --- disabled (Phase 9) ---------------------------------------- */
@@ -265,8 +303,8 @@
   /* BS3 ships no tag/chip component; solid .label-primary read too heavy
      inside a form control. These are BS3's own .alert-info pair (BS3 has
      no primary-tinted surface). */
-  background-color: #d9edf7;
-  color: #31708f;
+  background-color: var(--llselect-tag-bg);
+  color: var(--llselect-tag-fg);
   border-radius: 3px;
   font-size: 12px;
   line-height: 1.5;
@@ -316,7 +354,7 @@
   border: none;
   border-radius: 2px;
   background: transparent;
-  color: #999;
+  color: var(--llselect-fg-muted);
   cursor: pointer;
   font: inherit;
   line-height: 1;
@@ -324,6 +362,70 @@
 
 .llselect-trigger-clear-button:empty::before { content: '\00d7'; font-size: 16px; }
 
-.llselect-trigger-clear-button:hover { color: #333; background-color: #f5f5f5; }
+.llselect-trigger-clear-button:hover { color: var(--llselect-clear-hover-fg); background-color: var(--llselect-clear-hover-bg); }
 
 .llselect-trigger[data-empty='true'] .llselect-trigger-clear-button { display: none; }
+
+/* --- dark color scheme ----------------------------------------------------- */
+/* The library resolves the scheme and writes data-llselect-color-scheme on the
+   root (DESIGN.md "Color scheme (light / dark) in the themes"); hosts never
+   write that attribute. Variables not listed here keep their light value or
+   their alias. */
+.llselect-root[data-llselect-color-scheme='dark'] {
+  --llselect-fg: #ddd;
+  --llselect-control-fg: #ccc;
+  --llselect-fg-soft: #a6a6a6;
+  --llselect-fg-muted: #9a9a9a;
+  --llselect-bg: #2b2b2b;
+  --llselect-bg-muted: #353535;
+  --llselect-trigger-line: #777;
+  --llselect-popup-line: rgba(255, 255, 255, 0.4);
+  --llselect-filter-line: #777;
+  --llselect-divider: rgba(255, 255, 255, 0.12);
+  --llselect-shadow: rgba(0, 0, 0, 0.5);
+  --llselect-control-shadow: rgba(0, 0, 0, 0.3);
+  --llselect-row-hover-bg: #3a3a3a;
+  --llselect-row-hover-fg: #f5f5f5;
+  --llselect-row-chosen-fg: #7fb3e3;
+  --llselect-tag-bg: #1f4d63;
+  --llselect-tag-fg: #bee5f5;
+  --llselect-clear-hover-fg: #f5f5f5;
+  --llselect-clear-hover-bg: #3a3a3a;
+}
+
+/* Browser-painted parts (the popup scrollbar, the filter input's caret) follow
+   the resolved scheme. Never on .llselect-root: the resolver reads the
+   computed color-scheme there. */
+.llselect-root[data-llselect-color-scheme='light'] .llselect-trigger,
+.llselect-root[data-llselect-color-scheme='light'] .llselect-popup {
+  color-scheme: light;
+}
+.llselect-root[data-llselect-color-scheme='dark'] .llselect-trigger,
+.llselect-root[data-llselect-color-scheme='dark'] .llselect-popup {
+  color-scheme: dark;
+}
+
+/* --- built-in dark marks ---------------------------------------------------- */
+/* Each rule sets the CSS variable the resolver reads on the element that
+   carries the mark; the nearest ancestor wins by inheritance. Rule order
+   settles two marks on one element: an attribute beats a class name, and
+   data-color-scheme beats everything. Origins: .dark Tailwind CSS and
+   VitePress; .theme-dark Bulma 1; .dark-mode the Nuxt color-mode module;
+   data-theme daisyUI, Pico CSS 2 and Bulma 1; data-bs-theme Bootstrap 5.3;
+   data-color-scheme this project's pages, and any element a host marks. */
+.dark,
+.theme-dark,
+.dark-mode {
+  --llselect-color-scheme: dark;
+}
+.theme-light,
+.light-mode {
+  --llselect-color-scheme: light;
+}
+[data-theme='dark'] { --llselect-color-scheme: dark; }
+[data-theme='light'] { --llselect-color-scheme: light; }
+[data-bs-theme='dark'] { --llselect-color-scheme: dark; }
+[data-bs-theme='light'] { --llselect-color-scheme: light; }
+[data-color-scheme='dark'] { --llselect-color-scheme: dark; }
+[data-color-scheme='light'] { --llselect-color-scheme: light; }
+[data-color-scheme='auto'] { --llselect-color-scheme: auto; }
