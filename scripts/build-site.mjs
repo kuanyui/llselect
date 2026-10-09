@@ -327,8 +327,9 @@ ${COLOR_SCHEME_JS}</script>
 /* The dark set twice on purpose: the OS preference applies only while no
    data-color-scheme attribute is set (demo/color-scheme.js writes one when the
    stored choice differs from the OS); light-dark() and style queries sit above
-   the browser floor, so one block cannot serve both. demo/style.css uses the
-   same token names with its own light values; the dark values match. */
+   the browser floor, so one block cannot serve both. The tokens shared with
+   demo/style.css use the same names; its light values differ on purpose, the
+   dark values match. */
 @media (prefers-color-scheme: dark) { :root:not([data-color-scheme]) { ${SITE_DARK_VARS} } }
 :root[data-color-scheme="dark"] { ${SITE_DARK_VARS} }
 /* overflow-wrap lets long identifiers (LLSelectMultipleSettings.createTriggerContentElFn,

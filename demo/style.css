@@ -2,9 +2,9 @@
    (loaded via <link> and swapped by the theme picker). */
 
 /* Page chrome colors, light by default. Widget colors are the theme's
-   business (dist/themes/*.css), never these tokens. The site template in
-   scripts/build-site.mjs uses the same token names with its own light values;
-   the dark values match. */
+   business (dist/themes/*.css), never these tokens. The tokens shared with
+   the site template in scripts/build-site.mjs use the same names; the light
+   values differ on purpose, the dark values match. */
 :root {
   color-scheme: light;
   --fg: #222;              /* body text */

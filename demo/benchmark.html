@@ -31,11 +31,15 @@
       color: #0b3d66 !important;
       font-weight: 600;
     }
-    /* The stages hold the competitors' widgets, whose themes have no dark
-       values: keep the UA's light form controls there under the page's dark
-       scheme (Select2 leaves its search field to the UA). Select2 and Slim
-       Select attach their dropdowns to body, hence their own selectors. */
-    .bench-stage, .ix-stage, #pg-grid, .select2-container, .ss-content { color-scheme: light; }
+    /* The competitors' themes have no dark values. Their containers keep the
+       UA's light form controls (Select2 leaves its search field to the UA) and
+       a light text color (Select2's and Choices' option rows declare none, so
+       they would inherit the page's dark-scheme text onto their white
+       dropdowns). Select2 and Slim Select attach their dropdowns to body,
+       hence their own selectors. The stages get only the control part: they
+       also hold page text. */
+    .bench-stage, .ix-stage, #pg-grid { color-scheme: light; }
+    .choices, .select2-container, .ts-wrapper, .ts-dropdown, .ss-main, .ss-content { color-scheme: light; color: #222; }
     .pg-row { display: grid; grid-template-columns: 9rem 1fr 1fr; gap: 1rem; align-items: start; margin: 0.8rem 0; }
     .pg-name { font-weight: 600; padding-top: 0.4rem; }
     .pg-cell .hint { display: block; margin-bottom: 0.2rem; }

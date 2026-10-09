@@ -8,6 +8,8 @@
 // - The "Dark" switch at the end of the page's main nav (the first `body > nav`)
 //   shows the effective scheme. Setting it to what the OS already says clears
 //   the override, so the page follows the OS again; the other value stores one.
+//   A stored override outlives later OS changes, even one that makes the OS
+//   agree with it: only the switch clears it.
 // Classic script on purpose: the demo pages load it with <script src> in
 // <head>; scripts/build-site.mjs inlines it into the generated pages' <head>.
 // Vocabulary: "theme" is the library's visual theme (dist/themes/*.css);
@@ -54,10 +56,12 @@
   }
   // Mount as soon as the nav is parsed to its end (a node follows it), not at
   // DOMContentLoaded, which waits for every classic script at the page's end.
-  const tryMount = (navMayBeOpen) => {
+  // parsingDone: the document is fully parsed, so the nav is complete even
+  // when nothing follows it.
+  const tryMount = (parsingDone) => {
     if (switchInput) { return true }
     const nav = document.querySelector('body > nav')
-    if (!nav || (!navMayBeOpen && !nav.nextSibling)) { return false }
+    if (!nav || (!parsingDone && !nav.nextSibling)) { return false }
     mount(nav)
     return true
   }

@@ -4,7 +4,7 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (site color-scheme switch)
 
-Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`739aeaf`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Round 3: Codex 5.5 (xhigh): ship, one QUALITY and two DOCUMENTATION findings (170-172), fixed. Round 4: Codex Sol (max): fix first, three MEDIUM, four QUALITY, three DOCUMENTATION findings (173-182), fixed.
+Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`739aeaf`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Round 3: Codex 5.5 (xhigh): ship, one QUALITY and two DOCUMENTATION findings (170-172), fixed. Round 4: Codex Sol (max): fix first, three MEDIUM, four QUALITY, three DOCUMENTATION findings (173-182), fixed. Round 5 (post-fix review of round 4, all four members): Opus 5: fix first, three MEDIUM, three QUALITY, five DOCUMENTATION (183-193; two were the pre-change baseline, kept) - entries follow the round-4 ones.
 
 - [x] **[MEDIUM-155] - the vanilla filter input was painted dark by the UA under a dark page scheme**
   - Symptom: with `color-scheme: dark` on the page root, the vanilla theme's filter input rendered as a dark field with white text inside the white popup (measured: rgb(59, 59, 59)); every other theme sets both colors.
@@ -94,11 +94,12 @@ Process: post-change review of the site's light / dark switch (`88f698a`: `demo/
 - [x] **[QUALITY-176] - links on the Bootstrap 3 page stayed Bootstrap blue on the dark background**
   - Symptom: `#337ab7` on #1b1b1b is about 3.8:1, darker on hover.
   - Cause: the demo stylesheet has no link rule, and Bootstrap 3 loads after it on that page.
-  - Fix: the page's own style block sets `a { color: var(--link) }`.
-  - Verified: headless Chromium, dark OS: a body link on that page computes to the `--link` dark value.
+  - Fix: the page's own style block sets `a { color: var(--link) }`; hover and focus followed in MEDIUM-184.
+  - Verified: headless Chromium, dark OS: a body link on that page computes to the `--link` dark value, the light value in a light context.
 - [x] **[QUALITY-177] - a filter match in the active sidebar row inherited the active blue over the amber mark**
   - Symptom: about 3.2:1 in the dark scheme, in both the site sidebar and the examples TOC.
   - Fix: `.toc mark { color: var(--fg) }` in both stylesheets.
+  - Verified: headless Chromium, dark OS: a mark in the examples TOC computes to the `--fg` dark value on the amber mark.
 - [x] **[QUALITY-178] - a scheme rebuild left `animation: false` on the replacement chart**
   - Symptom: legend clicks after a scheme change no longer animated.
   - Fix: the rebuild restores the 300 ms animation option after its animation-free update.
@@ -109,12 +110,53 @@ Process: post-change review of the site's light / dark switch (`88f698a`: `demo/
   - Fix: a MutationObserver mounts the switch as soon as the nav is parsed to its end (a node follows it); DOMContentLoaded stays as the fallback.
   - Verified: headless Chromium: the switch exists while `document.readyState` is still "loading".
 - [x] **[DOCUMENTATION-180] - resolved entries lacked Cause and Verified lines where the fact existed**
+  - Symptom: round 4 counted entries whose cause or verification was known but unwritten.
   - Fix: added across the round.
 - [x] **[DOCUMENTATION-181] - the open QUALITY-167 entry kept line numbers from before the head script insertion**
+  - Symptom: the entry cited lines 7-8 vs 10; the script tag in the head had shifted them to 9 vs 12.
   - Fix: renumbered.
 - [x] **[DOCUMENTATION-182] - the TODO contract said "absent means follow the OS" and then listed following the OS as undecided**
   - Symptom: the page contract and the theme question were written as one sentence.
   - Fix: the page contract is marked settled; precedence is stated (explicit hooks beat the OS, a page that states light stays light); the open question is narrowed to a theme with no hook at all.
+- [x] **[MEDIUM-183] - the competitors' option rows inherited the page's dark text onto their white dropdowns**
+  - Symptom: measured in headless Chromium, dark OS: Select2 and Choices options computed to the dark-scheme `--fg` (#d8d8d8) on white; Tom Select and Slim Select declare their own row color and were fine.
+  - Cause: `color-scheme: light` only reaches UA-painted parts; the inherited `color` property still comes from the page root.
+  - Fix: the competitors' containers (`.choices`, `.select2-container`, `.ts-wrapper`, `.ts-dropdown`, `.ss-main`, `.ss-content`) get `color-scheme: light; color: #222`; the stages keep only the control part, since they also hold page text; the AngularJS page gives `.ui-select-container` / `.ui-select-choices` the same treatment.
+  - Verified: headless Chromium, dark OS: Select2 and Choices options compute to #222 on white; ui-select likewise after a benchmark run builds its widgets.
+- [x] **[MEDIUM-184] - the Bootstrap 3 page's link rule covered the rest state only**
+  - Symptom: Bootstrap 3's `a:hover, a:focus` (0,1,1) outranked the new `a` rule, and tied with `.demo-nav a:hover` while loading later: hovered links fell to about 2.1:1 on the dark page, nav links to about 1.6:1 on the active tint.
+  - Fix: the page's style block adds `a:hover, a:focus { color: var(--accent-hover) }` and the nav / subnav hover and focus colors.
+  - Verified: headless Chromium, dark OS: a hovered body link and a hovered nav link on that page compute to the dark-scheme values.
+- [x] **[QUALITY-185] - the disabled popup link button's fixed color was read as a change from #555 to #999**
+  - Symptom: the reviewer compared with the tokenized intermediate (`--fg-muted`, #555 in light); the pre-change baseline (`87aa254`) is #999.
+  - Fix: none; #999 is the shipped light value, and a disabled control is exempt from the text-contrast minimum.
+  - Q: Why keep #999, not the darker #555 the tokens had briefly given it?
+    - A: Because the demo's shipped look is the baseline for "surgical" changes, the tokens had changed it unasked, and a disabled control carries no contrast requirement.
+- [x] **[QUALITY-186] - two widget-internal fixed colors were read as drifting from #555 to #666**
+  - Symptom: `.llselect-root .hint` and the `#mount-ind-css` CSS arrow were compared with the tokenized intermediate; the baseline for both is #666, the restored value.
+  - Fix: none for those two. The one deliberate light-mode change stays and is recorded here: page-level `.hint` and the caption / label grays (#666, #777) unified onto `--fg-muted` (#555).
+- [x] **[QUALITY-187] - the mount helper's parameter named a state it does not describe**
+  - Symptom: `tryMount(navMayBeOpen)` was called with `true` from DOMContentLoaded, where the nav is certainly closed.
+  - Fix: `tryMount(parsingDone)`, with the comment saying what it skips.
+- [x] **[QUALITY-188] - an override that the OS later agrees with stays stored, and nothing said so**
+  - Symptom: OS light, Dark chosen, OS turns dark: the stored override now equals the OS and still outlives the OS turning light again.
+  - Fix: documented in the script header as the intended meaning: only the switch clears an override.
+  - Q: Why keep the override, not clear it when the OS catches up?
+    - A: Because the user asked for that scheme explicitly; silently dropping the choice when the OS passes through the same value would make the next OS change surprising.
+- [x] **[DOCUMENTATION-189] - two round-4 entries carried only a Fix line, and QUALITY-177 had no Verified line**
+  - Symptom: DOCUMENTATION-180 and 181 repeated the shape DOCUMENTATION-172 had just closed.
+  - Fix: Symptom lines added; QUALITY-177 cites the TOC mark measurement.
+- [x] **[DOCUMENTATION-190] - the TODO contract asked for "outside every legacy hook", a selector the browser floor cannot express**
+  - Symptom: excluding "any ancestor with a hook" needs `:has()`, which sits above the floor.
+  - Fix: the contract states the mechanism, rule order: the OS block first under `:root:not([data-color-scheme])`, every hook block after it, each redeclaring the full token set.
+- [x] **[DOCUMENTATION-191] - the contract described the attribute in this site's implementation terms**
+  - Symptom: "(a stored override)" read as part of the contract a host page must follow.
+  - Fix: "the page states that scheme explicitly (on this site: a stored override)".
+- [x] **[DOCUMENTATION-192] - the TODO did not point back at the demo rules frozen to light values**
+  - Fix: the entry names the six `demo/style.css` rules to reconnect once the themes have dark values.
+- [x] **[DOCUMENTATION-193] - the generator's token comment overstated the overlap with demo/style.css**
+  - Symptom: the demo defines tokens the site lacks and the site defines `--alert-*`.
+  - Fix: both comments say the tokens they share use the same names.
 - [ ] **[QUALITY-167] - demo/angularjs/benchmark.html loads Bootstrap 3 after demo/style.css, so the html font-size pin loses**
   - Symptom: measured in headless Chromium: `html` 10px, nav links 14px with 8px padding, against 16px / 12.8px on the other demo pages. Pre-existing; surfaced while the review compared the two Bootstrap-order comments in `demo/style.css` (`html { font-size: 16px }` and the dark body rule).
   - Cause: Bootstrap 3's `html { font-size: 10px }` is loaded after the pin (`demo/angularjs/benchmark.html` line 9 vs 12).
