@@ -4,7 +4,7 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (site color-scheme switch)
 
-Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`739aeaf`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Round 3: Codex 5.5 (xhigh): ship, one QUALITY and two DOCUMENTATION findings (170-172), fixed. Round 4: Codex Sol (max): fix first, three MEDIUM, four QUALITY, three DOCUMENTATION findings (173-182), fixed. Round 5 (post-fix review of round 4, all four members): Opus 5: fix first, three MEDIUM, three QUALITY, five DOCUMENTATION (183-193; two were the pre-change baseline, kept) - entries follow the round-4 ones.
+Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`739aeaf`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Round 3: Codex 5.5 (xhigh): ship, one QUALITY and two DOCUMENTATION findings (170-172), fixed. Round 4: Codex Sol (max): fix first, three MEDIUM, four QUALITY, three DOCUMENTATION findings (173-182), fixed. Round 5 (post-fix review of round 4, all four members): Opus 5: fix first, two MEDIUM, four QUALITY, five DOCUMENTATION (183-193; two were the pre-change baseline, kept). Opus 4.8: ship, one QUALITY, two DOCUMENTATION (194-196). Entries follow the round-4 ones.
 
 - [x] **[MEDIUM-155] - the vanilla filter input was painted dark by the UA under a dark page scheme**
   - Symptom: with `color-scheme: dark` on the page root, the vanilla theme's filter input rendered as a dark field with white text inside the white popup (measured: rgb(59, 59, 59)); every other theme sets both colors.
@@ -157,6 +157,16 @@ Process: post-change review of the site's light / dark switch (`88f698a`: `demo/
 - [x] **[DOCUMENTATION-193] - the generator's token comment overstated the overlap with demo/style.css**
   - Symptom: the demo defines tokens the site lacks and the site defines `--alert-*`.
   - Fix: both comments say the tokens they share use the same names.
+- [x] **[QUALITY-194] - the animation restore after a scheme rebuild was verified on the option only**
+  - Symptom: Chart.js resolves animation settings through a cached resolver, so `options.animation = { duration: 300 }` was not proof that a later legend click animates.
+  - Fix: none needed; measured instead.
+  - Verified: headless Chromium: right after a scheme rebuild the chart reports animations disabled; a legend toggle then repaints over 500 ms (canvas differs between the two samples) and the chart reports animations enabled again, as before the switch.
+- [x] **[DOCUMENTATION-195] - the round-5 severity count in the process line was wrong**
+  - Symptom: "three MEDIUM, three QUALITY" for entries 183-193, which hold two MEDIUM and four QUALITY.
+  - Fix: counts corrected.
+- [x] **[DOCUMENTATION-196] - the TODO contract called precedence "rule order, not a selector"**
+  - Symptom: the site's own attribute override works by the selector `:root:not([data-color-scheme])`, and a legacy hook on an ancestor would win by specificity or by nearest-ancestor inheritance of the custom properties; order decides only ties.
+  - Fix: the contract states the mechanism in those terms and keeps the `:has()` limit.
 - [ ] **[QUALITY-167] - demo/angularjs/benchmark.html loads Bootstrap 3 after demo/style.css, so the html font-size pin loses**
   - Symptom: measured in headless Chromium: `html` 10px, nav links 14px with 8px padding, against 16px / 12.8px on the other demo pages. Pre-existing; surfaced while the review compared the two Bootstrap-order comments in `demo/style.css` (`html { font-size: 16px }` and the dark body rule).
   - Cause: Bootstrap 3's `html { font-size: 10px }` is loaded after the pin (`demo/angularjs/benchmark.html` line 9 vs 12).
