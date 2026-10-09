@@ -450,71 +450,80 @@ The trigger ellipsizes its chosen-text by default in every shipped theme (`.llse
 
 ## Color scheme (light / dark) in the themes
 
-Status: specification ratified by the owner after the committee round recorded in `color-scheme-committee.md`; one item still open (the browser-floor wording, decision 7 there); no code yet. Vocabulary (naming-conventions.md 7a.11): "theme" is one of the five stylesheets under `src/themes/`; light vs dark is the "color scheme"; a "dark mark" is the class name, HTML attribute or CSS variable a host page uses to say "dark here".
+Status: the specification is approved by the owner (committee round and decisions in `color-scheme-committee.md`) but not implemented. One decision remains open, decision 7 of that record: revise the browser-support statement in `CLAUDE.md`, or add `@supports` guards and fallbacks for the `:has()` and `color-mix()` uses already in the themes.
+
+Vocabulary (naming-conventions.md 7a.11): a "theme" is one of the five stylesheets under `src/themes/`. A "color scheme" is either light or dark. A "mark" is a class name or an HTML attribute on an ancestor element that selects a color scheme through a built-in CSS rule (list below). The CSS variable `--llselect-color-scheme` is the value a mark sets; a host page may also set it directly. "The widget root" is the element the library mounts on, class `.llselect-root`. "The resolver" is the shared JavaScript that decides the widget's color scheme.
 
 ### What a host page can do (the integration contract)
 
-- Nothing. The widget then follows what the browser does for a native `<select>` at that spot. A page that declares nothing stays light, even when the OS prefers dark.
-- The standard way: declare the CSS property `color-scheme` on the page root or on a subtree (`color-scheme: light dark` or `color-scheme: dark`), which a page should already do for its native controls. The widget mirrors it.
-- The one-line way, for any other mechanism: set the CSS variable `--llselect-color-scheme` to `dark`, `light` or `auto` on any ancestor element, from a stylesheet (`.night { --llselect-color-scheme: dark }`) or from JavaScript (`el.style.setProperty(...)`). `auto` means "follow the OS preference here". The nearest ancestor that sets it wins, by inheritance.
-- A built-in dark mark: six marks are recognized by every theme file (next section). They work with no extra rule.
-- Full control: override the `--llselect-*` color variables under the host's own selector. The selector must include `.llselect-root` (`.night .llselect-root { --llselect-bg: #222; ... }`): a rule on an ancestor alone loses to the root's own light declarations, because a direct declaration beats an inherited value.
-- Per instance: the `colorScheme` setting (`'light'` or `'dark'` forces; `'auto'` is the default and means everything above).
+- Nothing. With no llselect setting, no mark, no `--llselect-color-scheme` and no page `color-scheme` declaration, the widget uses its light colors, whatever the OS preference is. This matches a native `<select>` on such a page.
+- The standard way: declare the CSS property `color-scheme` on the page root or on a subtree, `color-scheme: light dark` or `color-scheme: dark`, as a page should already do for its native controls. The resolver reads the computed `color-scheme` of the widget root and applies the rule under "How the resolver decides".
+- The one-line way, for any other mechanism: set `--llselect-color-scheme` to `dark`, `light` or `auto` on any ancestor of the widget root. In CSS: `.night { --llselect-color-scheme: dark; }`. In JavaScript: `ancestorEl.style.setProperty('--llselect-color-scheme', 'dark')`. `auto` means "follow the OS preference here". When several ancestors set it, the nearest one wins, by CSS inheritance.
+- A built-in mark: the marks listed below set `--llselect-color-scheme` through rules shipped in every theme file, so they need no extra rule.
+- Full control over the colors: declare the `--llselect-*` color variables (table below) in a rule whose selector includes `.llselect-root`, for example `.night .llselect-root { --llselect-bg: #222; }`. A rule on an ancestor alone (`.night { --llselect-bg: #222; }`) does not work: the theme's own declaration on `.llselect-root` beats an inherited value.
+- Per instance: the setting `colorScheme`. `'light'` or `'dark'` forces that scheme for the instance. The default `'auto'` uses the three sources above, in the order under "How the resolver decides". Note the two different `auto` values: the setting's `'auto'` means "use the page's signals"; the CSS variable's `auto` means "follow the OS preference".
 
-### Built-in dark marks and their origins
+### Built-in marks and their origins
 
-- `.dark`: Tailwind CSS's class-mode dark variant (its documentation); VitePress's default theme uses it (its CSS).
-- `.theme-dark`: Bulma 1 (its CSS).
-- `.dark-mode`: the Nuxt color-mode module's default class on `<html>` (its documentation; not verified against a CSS file).
-- `[data-theme="dark"]`: daisyUI, Pico CSS 2 and Bulma 1 (their CSS files). daisyUI allows arbitrary theme names, so only the literal `dark` is recognized.
-- `[data-bs-theme="dark"]`: Bootstrap 5.3's official color modes; Halfmoon 2 reuses it.
-- `[data-color-scheme="dark"]`: this project's own page contract (`demo/color-scheme.js`), and the attribute hosts may put on any element.
-- Light counterparts: `.theme-light`, `.light-mode`, `[data-theme="light"]`, `[data-bs-theme="light"]`, `[data-color-scheme="light"]`; and `[data-color-scheme="auto"]` for "follow the OS here".
-- Each mark is a rule on the mark element itself, setting the CSS variable: `.dark, .theme-dark, .dark-mode, [data-theme="dark"], [data-bs-theme="dark"], [data-color-scheme="dark"] { --llselect-color-scheme: dark; }`. Nested marks resolve by inheritance (nearest wins). Two marks on ONE element resolve by rule order; the theme files order the rules so an attribute beats a class name: class rules first, then `[data-theme]`, `[data-bs-theme]`, `[data-color-scheme]` last.
+- Dark marks: `.dark` (Tailwind CSS class-mode dark variant, per its documentation; VitePress's default theme uses it, per its CSS), `.theme-dark` (Bulma 1, per its CSS), `.dark-mode` (the Nuxt color-mode module's default class, per its documentation; not verified against a CSS file), `[data-theme="dark"]` (daisyUI, Pico CSS 2 and Bulma 1, per their CSS; daisyUI allows arbitrary theme names, only the literal `dark` is recognized), `[data-bs-theme="dark"]` (Bootstrap 5.3 color modes, official; Halfmoon 2 reuses it), `[data-color-scheme="dark"]` (this project's page contract, `demo/color-scheme.js`; also the attribute a host may put on any element).
+- Light marks: `.theme-light`, `.light-mode`, `[data-theme="light"]`, `[data-bs-theme="light"]`, `[data-color-scheme="light"]`.
+- The OS mark: `[data-color-scheme="auto"]` sets `--llselect-color-scheme: auto`.
+- Each mark is a rule on the mark element itself. Dark example: `.dark, .theme-dark, .dark-mode, [data-theme="dark"], [data-bs-theme="dark"], [data-color-scheme="dark"] { --llselect-color-scheme: dark; }`.
+- Marks on different ancestors resolve by inheritance: the nearest ancestor wins. Marks on one element resolve by rule order: the last matching rule supplies the value. Every theme file writes the mark rules in this order: dark class rules, light class rules, `[data-theme]` dark then light, `[data-bs-theme]` dark then light, `[data-color-scheme]` dark, light, then auto. So an attribute beats a class name, and `[data-color-scheme]` beats everything.
 
-### How the library resolves the scheme (shared JavaScript)
+### How the resolver decides (shared JavaScript)
 
-- Order: (1) the instance setting `colorScheme` when it is `'light'` or `'dark'`; (2) the CSS variable `--llselect-color-scheme` read from the root element's computed style, `getComputedStyle(rootEl).getPropertyValue('--llselect-color-scheme')`, where `auto` means the OS preference from `matchMedia('(prefers-color-scheme: dark)')`; (3) the computed CSS property `color-scheme` of the root element: dark when the value contains `dark` and either lacks `light` or the OS prefers dark; `normal`, an empty value (Firefox 78-95 has no `color-scheme` property) or an unsupported value means light; (4) otherwise light.
-- The result is written to the root element as `data-llselect-color-scheme="light|dark"`. This attribute is library output; the theme keys its dark values on it; hosts never write it. Hosts write `data-color-scheme` or the CSS variable instead.
-- The shared JavaScript knows no framework. It reads only the CSS variable and the CSS property above. Everything framework-specific (Bootstrap's `--bs-*` variables, Tailwind's palette, the mark names) lives in the theme CSS files.
-- Re-evaluation: at construction; on `open()`; when the OS preference changes (one shared `matchMedia` change listener per document); when an attribute of `<html>` or `<body>` changes (one shared, batched `MutationObserver` per document, `attributes` only, no subtree); on `refreshColorScheme()`. The shared listeners hold instances weakly, so a discarded closed instance leaks nothing (the existing lifecycle promise holds). Cost: one computed-style read per construction; measure on the benchmark pages and cache per parent element if it shows.
+- Inputs, four: the instance setting `colorScheme`; the CSS variable `--llselect-color-scheme`, read as `getComputedStyle(rootEl).getPropertyValue('--llselect-color-scheme').trim()`; the computed CSS property `color-scheme` of the widget root; the OS preference, `matchMedia('(prefers-color-scheme: dark)').matches`.
+- Order: (1) if the setting is `'light'` or `'dark'`, use it. (2) Otherwise, if the variable is `light` or `dark`, use it; if it is `auto`, use dark when the OS prefers dark, else light. (3) Otherwise (the variable is empty or holds any other text), read the computed `color-scheme` as a list of whole keywords: dark when the list contains `dark` and either lacks `light` or the OS prefers dark. The value `normal`, an empty value (Firefox 78-95 has no `color-scheme` property) or a value without `dark` means light. (4) Otherwise light.
+- Output: the resolver sets the attribute `data-llselect-color-scheme` on the widget root to `light` or `dark`. The theme keys its dark colors on this attribute. Hosts never write it; hosts write a mark or `--llselect-color-scheme`.
+- The resolver knows no framework. It reads the four inputs above and nothing else. Everything framework-specific (Bootstrap's `--bs-*` variables, Tailwind's palette variables, the mark names) lives in the theme files.
+- When the resolver runs again: at construction; on `open()`; when the OS preference changes (one shared `matchMedia` change listener per document); when an attribute of `<html>` or `<body>` changes (one shared, batched `MutationObserver` per document, `attributes` only, no subtree); on `refreshColorScheme()`. The shared listener and observer hold instances weakly, so a discarded closed instance leaks nothing; the existing lifecycle promise holds.
+- Cost: one computed-style read at construction when the setting is `'auto'`. Measure the 1000-widget and the 10k-item benchmark pages before and after. If the 1000-widget build time grows by more than 5 percent, cache the two computed values per parent element and invalidate the cache whenever the resolver runs again.
+
+### The color variables
+
+- Every color in every theme becomes one of these variables, declared on `.llselect-root` with the theme's light value: `--llselect-fg` (text), `--llselect-fg-muted` (placeholder, group label, hint, disabled text), `--llselect-bg` (trigger and popup surface), `--llselect-bg-muted` (group label and header / footer surface), `--llselect-line` (trigger and popup border), `--llselect-divider` (command-row dividers, header / footer borders; today hard-coded `rgba(0, 0, 0, 0.12)` in every theme), `--llselect-accent` (focus border, chosen text, links in slots), `--llselect-accent-fg` (text on the accent color), `--llselect-row-hover-bg`, `--llselect-row-focused-bg`, `--llselect-row-focused-fg`, `--llselect-tag-bg`, `--llselect-tag-fg`, `--llselect-focus-ring` (the focus ring color), `--llselect-shadow` (the popup shadow). This is the planned set; the audit of every color declaration in the five themes (implementation step 1) may add a variable for a role not covered here, and the final list replaces this one.
+- Every color rule reads a variable. No theme file keeps a literal color outside the variable declarations.
 
 ### Rules for every theme file
 
-- Every color is a `--llselect-*` CSS variable declared on `.llselect-root` with the light value; every color rule reads a variable. The command-row dividers and the header / footer borders, today hard-coded `rgba(0, 0, 0, 0.12)`, join the set.
-- The dark block is `.llselect-root[data-llselect-color-scheme="dark"] { ... }` and redefines every variable. It also sets `color-scheme: dark` on the trigger and on the popup, so UA-painted parts (the popup scrollbar, the filter input's caret) follow.
-- Never declare the CSS property `color-scheme` on `.llselect-root`: the resolver reads it there and would read its own output.
-- Never declare `--llselect-color-scheme` on `.llselect-root`: it would hide the ancestor's value.
-- No `@media (prefers-color-scheme: dark)` block anywhere in a theme file: pure CSS cannot tell a light-only page from an OS-following page.
-- bootstrap-5 keeps Bootstrap's own variables as its light source (`var(--bs-body-bg, #fff)`), so a page with Bootstrap 5.3 and `data-bs-theme="dark"` turns the widget dark through Bootstrap's variables; its dark block supplies dark fallback values for pages without Bootstrap.
-- tailwind maps the variables to Tailwind palette variables: light slate shades in the light set, dark slate shades in the dark set.
-- `scripts/check.mjs` gets a rule for the three "never" items above (a theme file declaring `color-scheme` or `--llselect-color-scheme` on `.llselect-root`, or containing `prefers-color-scheme`).
+- The dark block: `.llselect-root[data-llselect-color-scheme="dark"] { ... }` redefines every color variable above with the theme's dark value. It does not touch `--llselect-color-scheme`.
+- UA-painted parts follow the resolved scheme through two descendant rules: `.llselect-root[data-llselect-color-scheme="dark"] .llselect-trigger, .llselect-root[data-llselect-color-scheme="dark"] .llselect-popup { color-scheme: dark; }` and the same pair with `light`. This covers the popup scrollbar and the filter input's caret.
+- Never declare the CSS property `color-scheme` in a rule whose selector targets `.llselect-root` itself: the resolver reads the computed `color-scheme` there and would read its own output.
+- Never declare `--llselect-color-scheme` in a rule whose selector targets `.llselect-root` itself: it would hide the value an ancestor set. A host may set the variable on the widget root element through its own rule or inline style; that is the host's choice.
+- No `@media (prefers-color-scheme: dark)` rule anywhere in a theme file: pure CSS cannot tell a light-only page from an OS-following page.
+- `bootstrap-5.css` keeps Bootstrap's variable references in both schemes: light fallbacks in the `.llselect-root` declarations (`--llselect-bg: var(--bs-body-bg, #fff)`), dark fallbacks in the dark block (`--llselect-bg: var(--bs-body-bg, #212529)`). A page with Bootstrap 5.3 and `data-bs-theme="dark"` then turns the widget dark through Bootstrap's own variables, and a page without Bootstrap gets the fallbacks.
+- `tailwind.css` maps each variable to a Tailwind palette variable with a fallback, light and dark separately: for example `--llselect-bg: var(--color-white, #fff)` in the light set and `--llselect-bg: var(--color-slate-900, #0f172a)` in the dark set. The full mapping table lands with implementation step 1.
+- `scripts/check.mjs` gets three checks on the theme files: a rule with selector `.llselect-root` declaring `color-scheme`; a rule with selector `.llselect-root` declaring `--llselect-color-scheme`; an `@media` rule whose condition contains `prefers-color-scheme`.
 
 ### Public API
 
-- Setting `colorScheme?: LLSelectColorScheme` with `type LLSelectColorScheme = 'auto' | 'light' | 'dark'`, default `'auto'`. The docstring explains the resolution order above and names its two inputs, the CSS variable and the CSS property. The AngularJS directives expose it as `ll-color-scheme`.
+- Setting `colorScheme?: LLSelectColorScheme` with `type LLSelectColorScheme = 'auto' | 'light' | 'dark'`, default `'auto'`. The docstring explains the resolver order and names its four inputs: the setting, the CSS variable `--llselect-color-scheme`, the computed CSS property `color-scheme`, the OS preference. The AngularJS directives expose the setting as the attribute `ll-color-scheme`.
 - `getColorScheme(): 'light' | 'dark'` returns the resolved value, never `'auto'`.
-- `refreshColorScheme(): void` runs the resolution again; for changes nothing observes, such as a stylesheet swap or a mark toggled on a wrapper below `<body>`.
-- No `setColorScheme`: the runtime channel is the host's own mark or variable, and a second write channel would cut against "Settings vs methods". No change event: a scheme change is presentation, and the attribute is observable.
-- Precedence, in one line: instance setting > nearest `--llselect-color-scheme` (from a built-in mark, a host rule or an inline style) > computed `color-scheme` with the OS preference > light. A host's variable override under a selector that includes `.llselect-root` beats the theme's dark block at equal specificity because the host's stylesheet loads later; that is intended.
-- Wording review (owner instruction): every docstring, README recipe and demo hint of this feature goes to Codex Luna 6 at medium reasoning effort for ambiguous or unclear wording before it ships.
+- `refreshColorScheme(): void` runs the resolver again. Call it after a change nothing observes: a stylesheet swap, or a mark toggled on a wrapper element below `<body>`.
+- No `setColorScheme`. With `colorScheme: 'auto'`, a host changes the scheme through a mark or through `--llselect-color-scheme`; a forced setting keeps precedence over both. A second write channel would cut against "Settings vs methods". No change event: the scheme is presentation, and the output attribute is observable.
+- Precedence, restated: a forced setting first; otherwise a valid `--llselect-color-scheme` value from the nearest ancestor; otherwise the computed `color-scheme` with the OS preference; otherwise light.
+- A host that overrides a color variable in a rule whose selector includes `.llselect-root` beats the theme's dark block when the rule has equal or higher specificity and, at equal specificity, comes later in the cascade (the host's stylesheet is loaded after the theme's). That is intended.
+- Wording review (owner instruction): every docstring, README recipe and demo hint of this feature goes to Codex Luna 6 at medium reasoning effort for ambiguous or unclear wording before it ships. If that model is not available on the account, Codex Astra at medium effort substitutes and the substitution is reported.
 
 ### Packaging, demo and docs
 
-- One file per theme; no `*-dark.css` companions. A stylesheet-swapping page sets the variable in its dark stylesheet.
-- The examples page already drives the standard path: its switch writes `data-color-scheme` on `<html>` (a built-in mark) and `color-scheme: dark` on `:root`. The site CSS adds `html:not([data-color-scheme]) { --llselect-color-scheme: auto }` so Firefox 78-95 follows the OS there too. New examples: a legacy region with a class outside the built-in list (`.acme-dark`) and its one-line rule; a light card inside a dark region (`data-color-scheme="light"` on the card); a full variable override; `colorScheme: 'dark'` on one instance. The seven `demo/style.css` rules frozen to light values reconnect to the variables.
-- README "Customization" gets the integration contract as a recipe within the README limits; the generated API reference carries the docstrings; `angularjs/API.md` documents `ll-color-scheme`.
+- One file per theme; no `*-dark.css` companions. A page that swaps stylesheets declares `--llselect-color-scheme: dark` on an ancestor of the widget in its dark stylesheet, and calls `refreshColorScheme()` on each instance after the swap.
+- The examples page already exercises the standard path. Its switch sets `data-color-scheme` on `<html>` to `light` or `dark` for an explicit choice and removes the attribute when the page follows the OS; `demo/style.css` declares `color-scheme` to match. Add `html:not([data-color-scheme]) { --llselect-color-scheme: auto; }` to `demo/style.css`, so widgets on the demo pages follow the OS in Firefox 78-95 when no explicit choice is stored.
+- New examples on the examples page: a region with a class outside the built-in list (`.acme-dark`) and its one-line rule; a light card inside a dark region (`data-color-scheme="light"` on the card); a full color-variable override; one instance with `colorScheme: 'dark'`.
+- `demo/style.css` reconnects its seven widget-internal rules to the variables: `.llselect-root .hint`, the `#mount-ind-css` CSS arrow, `.tree-caret`, and `.popup-link-button[aria-disabled='true']` to `--llselect-fg-muted`; `.llselect-root a`, `.tree-caret:hover` and `.popup-link-button` to `--llselect-accent`.
+- README "Customization" gets the integration contract as a recipe, within the reader-facing limits in `CLAUDE.md`. The generated API reference carries the docstrings. `angularjs/API.md` documents `ll-color-scheme`.
 
 ### Known limits
 
-- A page that only changes its own CSS variables, or only has media-query rules and never declares `color-scheme` nor a mark, cannot be detected; it needs the one-line variable.
-- Firefox 78-95: the `color-scheme` property path resolves light; the variable path and the marks work.
-- Shadow DOM: the CSS variable and `color-scheme` inherit across the shadow boundary; the theme stylesheet must be inside the shadow root.
+- The resolver cannot infer the scheme from a page that only changes its own, unrelated CSS variables, or that only has media-query rules without a `color-scheme` declaration or a mark. Such a page sets `--llselect-color-scheme` to `light`, `dark` or `auto` on an ancestor of the widget.
+- Firefox 78-95: the `color-scheme` property path resolves light. The variable path and the marks work.
+- Shadow DOM: `--llselect-color-scheme` and `color-scheme` inherit across a shadow boundary; the theme stylesheet must be inside the shadow root.
 - Iframes: nothing inherits across documents; the page sets a mark inside the iframe document.
-- Forced colors (Windows high contrast) and print are separate axes and stay untouched.
+- Forced colors (Windows high contrast) and print: preserve the widget's existing behavior in both; verify both after the theme changes.
 
 ### Verification before shipping
 
-- A native `<select>` beside the widget on Chrome, Firefox and Safari, floor and current, for every combination of declared `color-scheme` and OS preference: both must render the same scheme; Firefox 78-95 stays light and throws nothing.
-- Every host mechanism in `color-scheme-committee.md`, both nesting directions, two marks on one element, a shadow root, an iframe; live changes while closed and open; `destroy()` leaves no registration; the benchmark pages before and after.
-- Headed browser: popup scrollbar, filter caret, Popover top layer, every visual state; contrast of all five dark palettes (4.5:1 text, 3:1 borders and focus rings).
+- Native comparison: a native `<select>` beside a widget that has no setting, no mark and no variable, for `color-scheme` values `normal`, `light`, `dark`, `light dark` and both OS preferences, on Chrome 87, Firefox 78, Safari 14.1 and each browser's current release. Both must show the same scheme. On Firefox 78-95 this test resolves light and throws nothing.
+- Each host mechanism listed in `color-scheme-committee.md`; a light region inside a dark region and the reverse; conflicting marks on one element; a shadow root; an iframe; scheme changes while the popup is open and while it is closed; `refreshColorScheme()` after a stylesheet swap; `destroy()` removes the instance from the shared listener and observer; the 1000-widget and 10k-item benchmark pages before and after.
+- In a browser with a visible window: the popup scrollbar and the filter caret use the resolved scheme; the Popover top layer keeps the theme's chrome; every visual state listed in the committee record's verification section. Contrast of all five dark palettes: text at least 4.5:1 against its surface; borders and focus rings at least 3:1 against the surface they sit on.
