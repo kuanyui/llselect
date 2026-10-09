@@ -17,6 +17,8 @@ Process: the tenth fix batch (commit `dec7c8d`) went to the other four panel mem
   - Fix: the url() branch blanks the comments its blank walk skipped (a comment-like text inside the quoted argument stays); a string continues across a backslash followed by a newline (CRLF included) and ends at any unescaped newline character; a backslash before `url(` is an identifier character.
   - Q: Why is a comment inside an unquoted url(), with a `)` or `;` in it, not handled?
     - A: Because that is invalid CSS (an unquoted url token holds no comment), and the check lints the project's own theme files. The same holds for other inputs that would need a full CSS tokenizer: a theme written that way is rewritten, not accommodated.
+  - Q: Why are CSS escapes other than a backslash-newline continuation (`\64 ata:` for `data:`, `\25 23` for `%23`) not decoded inside a quoted url() argument?
+    - A: Because a theme author does not reach a color by writing it as a numeric escape by accident, the five theme files hold no url() at all, and decoding every escape form is the tokenizer the entry above declines. The panel's twelfth round (Opus 5) recommended recording this limit over code; the owner ratifies it.
 
 ## review (theme dark color schemes, post-fix round 9)
 
