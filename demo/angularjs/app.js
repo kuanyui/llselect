@@ -558,4 +558,47 @@
         vm.fruits = FRUITS.filter(function (f) { return f !== vm.fruit })
       }
     }])
+  // --- theme picker ----------------------------------------------------------
+  // A theme is one CSS file; the directives add nothing. The picker swaps the
+  // stylesheet, and a Bootstrap theme also loads the matching Bootstrap CSS
+  // from the CDN, inserted before style.css so the page's own rules keep
+  // winning the cascade (same as demo/main.js). The bootstrap-5 theme takes
+  // its colors from Bootstrap's own variables, so while it is picked the page
+  // mirrors its own scheme (the Dark switch, else the OS) into data-bs-theme.
+  var themeLink = document.getElementById('theme-link')
+  var themeSelect = document.getElementById('theme-select')
+  var BS_CDN = {
+    'bootstrap-3': 'https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css',
+    'bootstrap-4': 'https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css',
+    'bootstrap-5': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
+  }
+  var bsLink = null
+  var darkMq = window.matchMedia('(prefers-color-scheme: dark)')
+  function pageScheme() {
+    return document.documentElement.getAttribute('data-color-scheme') || (darkMq.matches ? 'dark' : 'light')
+  }
+  function syncBsTheme() {
+    if (themeSelect.value === 'bootstrap-5') {
+      document.documentElement.setAttribute('data-bs-theme', pageScheme())
+    } else {
+      document.documentElement.removeAttribute('data-bs-theme')
+    }
+  }
+  function applyTheme(name) {
+    themeLink.href = '../../dist/themes/' + name + '.css'
+    if (bsLink) { bsLink.remove(); bsLink = null }
+    if (BS_CDN[name]) {
+      bsLink = document.createElement('link')
+      bsLink.rel = 'stylesheet'
+      bsLink.href = BS_CDN[name]
+      document.head.insertBefore(bsLink, document.querySelector('link[rel="stylesheet"]'))
+    }
+    syncBsTheme()
+  }
+  if (themeLink && themeSelect) {
+    themeSelect.addEventListener('change', function () { applyTheme(themeSelect.value) })
+    new MutationObserver(syncBsTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-color-scheme'] })
+    darkMq.addEventListener('change', syncBsTheme)
+    applyTheme(themeSelect.value)
+  }
 })(window.angular)

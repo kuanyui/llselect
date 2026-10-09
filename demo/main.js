@@ -17,6 +17,22 @@ const BS_CDN = {
 }
 let bsLink = null
 
+// The bootstrap-5 theme takes its colors from Bootstrap's own variables, so a
+// page that uses Bootstrap 5.3 sets data-bs-theme as Bootstrap documents. While
+// that theme is picked, this page mirrors its own scheme (the Dark switch, else
+// the OS) into data-bs-theme; the other themes carry their own dark values.
+const darkMq = window.matchMedia('(prefers-color-scheme: dark)')
+const pageScheme = () => document.documentElement.getAttribute('data-color-scheme') ?? (darkMq.matches ? 'dark' : 'light')
+function syncBsTheme() {
+  if (themeSelect.value === 'bootstrap-5') {
+    document.documentElement.setAttribute('data-bs-theme', pageScheme())
+  } else {
+    document.documentElement.removeAttribute('data-bs-theme')
+  }
+}
+new MutationObserver(syncBsTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-color-scheme'] })
+darkMq.addEventListener('change', syncBsTheme)
+
 function applyTheme(name) {
   themeLink.href = `../dist/themes/${name}.css`
   if (bsLink) {
@@ -33,6 +49,7 @@ function applyTheme(name) {
     // page went left-aligned.
     document.head.insertBefore(bsLink, document.querySelector('link[rel="stylesheet"]'))
   }
+  syncBsTheme()
 }
 
 themeSelect.addEventListener('change', () => applyTheme(themeSelect.value))
