@@ -166,6 +166,22 @@ test('a replaced <body> is observed too', async () => {
   assert.equal(sel.getColorScheme(), 'light', 'the new <body> is observed')
 })
 
+test('a document without <html> throws neither in the observer callback nor at wiring', async () => {
+  // the callback: wired with an <html> that is removed later
+  const el = mount()
+  new LLSelectSingle<string>(el)
+  await Promise.resolve()
+  const body = document.body
+  document.removeChild(document.documentElement)
+  body.setAttribute('data-color-scheme', 'dark') // the old <body> is still registered: the callback runs with no <html>
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  // the wiring: a fresh document whose <html> is gone before its first widget
+  setupDom()
+  document.removeChild(document.documentElement)
+  const sel = new LLSelectSingle<string>(document.createElement('div'))
+  assert.equal(sel.getColorScheme(), 'light')
+})
+
 test('several widgets built in one task have all decided after one microtask, none before', async () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b" style="--llselect-color-scheme: dark"></div></body></html>')
   const a = document.getElementById('a'), b = document.getElementById('b')

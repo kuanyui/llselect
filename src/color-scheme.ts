@@ -153,14 +153,16 @@ function wireDocument(doc: Document): void {
     // observed element; those records must not start another pass. The child
     // list of <html> is watched too, so a <body> that appears later (a widget
     // built from a script in <head>) or gets replaced is observed as well.
-    let observedBody: HTMLElement | null = null
+    // undefined until the first registration (<body> is an element or null)
+    let observedBody: HTMLElement | null | undefined
     const observer = new view.MutationObserver((records) => {
       observeBody()
       if (records.every((r) => r.attributeName === COLOR_SCHEME_ATTRIBUTE)) { return }
       refreshAll()
     })
-    // On a <body> identity change the observer re-registers from scratch, so
-    // a removed <body> is neither observed nor referenced any longer.
+    // The only registration path. On a <body> identity change the observer
+    // re-registers from scratch, so a removed <body> is neither observed nor
+    // referenced any longer.
     const observeBody = (): void => {
       if (doc.body === observedBody) { return }
       observedBody = doc.body
@@ -170,7 +172,6 @@ function wireDocument(doc: Document): void {
       if (html !== null) { observer.observe(html, { attributes: true, childList: true }) }
       if (observedBody !== null) { observer.observe(observedBody, { attributes: true }) }
     }
-    observer.observe(doc.documentElement, { attributes: true, childList: true })
     observeBody()
   }
 }

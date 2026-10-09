@@ -2,6 +2,16 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (theme dark color schemes, post-fix round 5)
+
+Process: the fifth fix batch (commit `6ec3799`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, two QUALITY. Opus 4.8: ship, one DOCUMENTATION. Codex 5.5: fix first, two QUALITY. Codex Sol: fix first, three QUALITY, one DOCUMENTATION. All four found the strengthened body test sound. The entries below merge the overlapping findings.
+
+- [x] **[QUALITY-260] - the initial observer registration at wiring time passed `documentElement` unguarded, and the new guard had no test**
+  - Fix: `observeBody()` is the only registration path (its "nothing registered yet" start value makes the first call register), so the guard covers wiring too; a test runs the callback after `<html>` is removed and wires a fresh document whose `<html>` is gone.
+  - Verified: with the previous file swapped in, the suite fails at the wiring step with the TypeError.
+- [x] **[QUALITY-261] - rule 6: the `list-style` shorthand was unscanned, the `-webkit-` prefix counted for two properties only, and a `;` inside a string or a data URI split a declaration**
+  - Fix: `list-style*` joins the list; the optional `-webkit-` prefix applies to every listed property; strings and `url()` (any case) become blanks over the whole block before the split on `;`, so offsets and line numbers stay exact; DESIGN says so.
+
 ## review (theme dark color schemes, post-fix round 4)
 
 Process: the fourth fix batch (commit `270ca7a`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY, two DOCUMENTATION. Opus 4.8: ship, two QUALITY. Codex 5.5: fix first, two QUALITY. Codex Sol: fix first, three QUALITY. All four found the observer re-registration and the copy correct. The entries below merge the overlapping findings.
