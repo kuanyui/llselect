@@ -154,6 +154,14 @@ $scope.ifaceMatch = function (i, query) {
 
 **Expression** -> `popupWidthPolicy`. `'fit-content'` (llselect's default) / `'match-trigger'`.
 
+### `ll-color-scheme`
+
+**Expression** -> `colorScheme`. `'auto'` (llselect's default) / `'light'` / `'dark'` - quoted: `ll-color-scheme="'dark'"`.
+
+- `'auto'`: llselect decides from the page. It reads the CSS variable `--llselect-color-scheme` on any ancestor element, then the page's CSS property `color-scheme` together with the OS preference. The core setting's docstring lists the exact order.
+- `'light'` / `'dark'`: that scheme, whatever the page says.
+- The result lands on the widget root as `data-llselect-color-scheme="light|dark"`; the themes key their dark colors on it.
+
 ### `ll-arrow`
 
 **Literal**. The trigger arrow icon: `chevron` (default) / `triangle` / `none`.
@@ -358,6 +366,7 @@ angular.module('app', ['llselect'])
       filterable: true,          // boolean, or a predicate (items) => boolean
       highlight: true,           // wrap filter matches in the default item text in <mark>
       popupWidthPolicy: 'match-trigger',  // llselect's own default is 'fit-content'
+      colorScheme: 'auto',       // 'auto' | 'light' | 'dark'; llselect's own default is 'auto'
       uiTranslationPack: llselectI18n.zhTW,  // an llselect language pack
     })
   }])
@@ -382,6 +391,10 @@ Boolean. The app-wide default behind [`ll-highlight`](#ll-highlight): wrap each 
 #### `popupWidthPolicy`
 
 `'fit-content'` (llselect's own default) / `'match-trigger'`. The app-wide default behind [`ll-popup-width-policy`](#ll-popup-width-policy).
+
+#### `colorScheme`
+
+`'auto' | 'light' | 'dark' | null` - `null` (the default) resolves to llselect's own `'auto'`. The app-wide default behind [`ll-color-scheme`](#ll-color-scheme); the `<ui-llselect>` bridge reads it too, since ui-select's markup has no word for it.
 
 #### `uiTranslationPack`
 

@@ -19,7 +19,7 @@
   "groupOrder": [
     "Select classes", "Settings", "Pack contract", "Language packs", "Icons", "Positioning", "CSS & DOM",
     "Selection", "Items", "Open & close",
-    "Accessible name", "Events", "Trigger", "Filtering", "Grouping", "Choose-all", "Popup", "Disabling", "i18n", "CSS",
+    "Accessible name", "Events", "Trigger", "Filtering", "Grouping", "Choose-all", "Popup", "Disabling", "Color scheme", "i18n", "CSS",
     "Lifecycle", "DOM elements",
     "Subclassing: reactions", "Subclassing: rendering", "Subclassing: semantics", "Subclassing: focus",
     "State (protected)", "Metadata", "*"

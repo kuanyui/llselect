@@ -15,6 +15,14 @@ import {
 } from './keyboard.js'
 import { en as DEFAULT_UI_TRANSLATION_PACK } from './i18n/en.js'
 import type { LLSelectUiTranslationPack } from './i18n.js'
+import {
+  COLOR_SCHEME_ATTRIBUTE,
+  readColorSchemeInputs,
+  resolveColorScheme,
+  subscribeColorScheme,
+  unsubscribeColorScheme,
+  type LLSelectColorScheme,
+} from './color-scheme.js'
 
 /**
  * What happens when the user clicks outside an open popup.
@@ -204,6 +212,20 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * @group Popup
    */
   outsideClickBehavior: LLSelectOutsideClickBehavior
+  /**
+   * Which color scheme the widget shows: light or dark.
+   * - `'auto'` (default): the library decides from the page, and decides again while the page changes.
+   * - `'light'` / `'dark'`: that scheme, whatever the page says.
+   * - For `'auto'`, the decision runs in this order and stops at the first hit:
+   *   1. The CSS variable `--llselect-color-scheme`, read from the widget root's computed style. Any ancestor element may set it; the nearest one wins. `light` or `dark` is the answer. `auto` means: dark when the OS prefers dark, otherwise light.
+   *   2. The CSS property `color-scheme`, read from the widget root's computed style. Dark when its value lists `dark` and either omits `light` or the OS prefers dark. This is what the browser does for a native `<select>` at that spot.
+   *   3. Otherwise light. A page that declares nothing stays light, even on a dark OS.
+   * - The themes ship rules that set the variable for common marks on any ancestor: `class="dark"`, `class="theme-dark"`, `class="dark-mode"`, `data-theme="dark"`, `data-bs-theme="dark"`, `data-color-scheme="dark"`, and their light counterparts. Any other mark needs one rule: `.night { --llselect-color-scheme: dark; }`.
+   * - The result is written to the widget root as `data-llselect-color-scheme="light"` or `"dark"`. The themes key their dark colors on it. Do not write that attribute yourself.
+   * - The decision runs at construction, on every `open()`, when the OS preference changes, when an attribute of `<html>` or `<body>` changes, and on `refreshColorScheme()`.
+   * @group Color scheme
+   */
+  colorScheme: LLSelectColorScheme
   /**
    * The trigger arrow slot's content ELEMENT (typically a dropdown chevron or
    * triangle). Called whenever the arrow may need to change - including on
@@ -994,6 +1016,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected focusedIndex = -1
   /** Control-level disabled state (whole select); toggled via `setDisabled`. */
   private disabled = false
+  /** The latest decision; see `getColorScheme()`. */
+  private resolvedColorScheme: 'light' | 'dark' = 'light'
   /**
    * Who the change being applied right now is attributed to; the variants'
    * `onChange` firing reads it. Set to `'user'` by `withUserChangeSource`
@@ -1130,6 +1154,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       labelEl,
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
+      colorScheme: settings?.colorScheme ?? 'auto',
       createTriggerArrowContentElFn: settings?.createTriggerArrowContentElFn ?? null,
       clearable: settings?.clearable ?? false,
       createTriggerClearButtonContentElFn: settings?.createTriggerClearButtonContentElFn ?? null,
@@ -1191,6 +1216,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // being eligible anchor nodes.
     this.rootEl.style.overflowAnchor = 'none'
     this.rootEl.replaceChildren()
+    // The color scheme decides before the first paint of the widget; an
+    // 'auto' instance also re-decides on the shared page listeners.
+    this.syncColorScheme()
+    if (this.settings.colorScheme === 'auto') {
+      subscribeColorScheme(this.rootEl, { refresh: () => { this.syncColorScheme() } })
+    }
 
     this.triggerEl = this.createTriggerEl()
     this.triggerContentEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerContentClass}`) as HTMLElement
@@ -1373,6 +1404,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // control already reporting itself closed (destroy() -> close() then early-
     // returns and cannot recover them).
     if (isAnchorHidden(this.triggerEl)) { return }
+    this.syncColorScheme()
     const restoreWindowScroll = this.captureWindowScroll()
     this.opened = true
     // Filter mode is (re)evaluated once per open cycle, before anything that
@@ -1544,6 +1576,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     }
     this.rootEl.classList.remove(this.classIdMap.rootClass, this.classIdMap.openClass)
     this.rootEl.style.overflowAnchor = ''
+    unsubscribeColorScheme(this.rootEl)
+    this.rootEl.removeAttribute(COLOR_SCHEME_ATTRIBUTE)
     this.rootEl.replaceChildren()
   }
 
@@ -1722,6 +1756,34 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   public isDisabled(): boolean {
     return this.disabled
+  }
+
+  /**
+   * The color scheme the widget currently shows.
+   * - Returns the result of the latest decision, `'light'` or `'dark'`, without deciding again.
+   * - Never `'auto'`. The `colorScheme` setting explains how `'auto'` resolves.
+   * @group Color scheme
+   */
+  public getColorScheme(): 'light' | 'dark' {
+    return this.resolvedColorScheme
+  }
+
+  /**
+   * Decide the color scheme again, now.
+   * - Needed only after a change the library cannot see: a replaced stylesheet, or a mark toggled on a wrapper element below `<body>`.
+   * - Not needed when the OS preference changes, when an attribute of `<html>` or `<body>` changes, or when the popup opens: the library decides again on those by itself.
+   * - Changes nothing when the `colorScheme` setting is `'light'` or `'dark'`.
+   * @group Color scheme
+   */
+  public refreshColorScheme(): void {
+    this.syncColorScheme()
+  }
+
+  /** Run the decision and reflect it on the root attribute (only when it changed: the root may itself be an observed element). */
+  private syncColorScheme(): void {
+    const scheme = resolveColorScheme(readColorSchemeInputs(this.rootEl, this.settings.colorScheme))
+    this.resolvedColorScheme = scheme
+    if (this.rootEl.getAttribute(COLOR_SCHEME_ATTRIBUTE) !== scheme) { this.rootEl.setAttribute(COLOR_SCHEME_ATTRIBUTE, scheme) }
   }
 
   /** Reflect `this.disabled` onto the trigger's ARIA / data / tabindex. */

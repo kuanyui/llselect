@@ -17,6 +17,12 @@ export type {
 } from './base.js'
 
 /**
+ * The `colorScheme` setting's values (`'auto' | 'light' | 'dark'`).
+ * @group Settings
+ */
+export type { LLSelectColorScheme } from './color-scheme.js'
+
+/**
  * The pack contract (the `uiTranslationPack` setting / language-pack shape).
  * The packs themselves live under the `@llselect/core/i18n` subpath.
  * @group Pack contract

@@ -189,6 +189,7 @@
     if (config.uiTranslationPack) { settings.uiTranslationPack = config.uiTranslationPack }
     if (config.filterable !== null) { settings.filterable = config.filterable }
     if (config.popupWidthPolicy) { settings.popupWidthPolicy = config.popupWidthPolicy }
+    if (config.colorScheme) { settings.colorScheme = config.colorScheme }
     var arrow = config.arrow
 
     // Read once at link time; only ll-disabled gets a watcher, because it
@@ -197,6 +198,7 @@
     if (attrs.llPlaceholder) { settings.placeholder = scope.$eval(attrs.llPlaceholder) }
     if (attrs.llFilterable) { settings.filterable = scope.$eval(attrs.llFilterable) }
     if (attrs.llPopupWidthPolicy) { settings.popupWidthPolicy = evalEnumAttr(scope, attrs, 'llPopupWidthPolicy') }
+    if (attrs.llColorScheme) { settings.colorScheme = evalEnumAttr(scope, attrs, 'llColorScheme') }
     if (attrs.llArrow) { arrow = attrs.llArrow }
     var itemContentFn = evalFnAttr(scope, attrs, 'llPopupListItemContentFn')
     if (itemContentFn) { settings.createPopupListItemContentElFn = itemContentFn }
@@ -409,6 +411,8 @@
         highlight: null,
         /** 'match-trigger' | 'fit-content' | null. null = llselect's own default. */
         popupWidthPolicy: null,
+        /** 'auto' | 'light' | 'dark' | null. null = llselect's own default ('auto': decided from the page). */
+        colorScheme: null,
         /** A UI-translation pack (@llselect/core/i18n), or null for the English defaults. */
         uiTranslationPack: null,
       }

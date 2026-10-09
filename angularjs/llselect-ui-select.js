@@ -348,6 +348,7 @@
     // (API.md, <ui-llselect>). A slot placeholder still wins over the pack.
     if (llselectConfig.uiTranslationPack) { settings.uiTranslationPack = llselectConfig.uiTranslationPack }
     if (llselectConfig.popupWidthPolicy) { settings.popupWidthPolicy = llselectConfig.popupWidthPolicy }
+    if (llselectConfig.colorScheme) { settings.colorScheme = llselectConfig.colorScheme }
     if (slots.matchAttrs.placeholder) { settings.placeholder = slots.matchAttrs.placeholder }
     // ui-select defaults searchEnabled to true (uiSelectConfig.searchEnabled);
     // llselect defaults filterable to false. Follow ui-select here - this is its

@@ -1078,3 +1078,39 @@ test("ll-chosen-items-order=\"'as-listed'\": reordering the item list reorders t
   assert.deepEqual([...a.scope.vm.t], [FRUITS[0], FRUITS[2]]) // the model is not rewritten
   assert.equal(a.scope.vm.changes, 0)
 })
+
+// ll-color-scheme reaches the core colorScheme setting; the core writes its
+// decision to the root as data-llselect-color-scheme (the themes key on it).
+test("ll-color-scheme=\"'dark'\" forces the dark scheme on that element", () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `
+      <div ng-controller="C as vm">
+        <llselect-single name="forced" ng-model="vm.fruit" ll-aria-label="Fruit" ll-color-scheme="'dark'"
+          ll-options="f for f in vm.fruits"></llselect-single>
+        <llselect-single name="auto" ng-model="vm.fruit" ll-aria-label="Fruit"
+          ll-options="f for f in vm.fruits"></llselect-single>
+      </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.fruit = 'Apple' },
+  })
+  assert.equal(a.$('[name=forced]').getAttribute('data-llselect-color-scheme'), 'dark')
+  // jsdom declares no color-scheme and has no matchMedia, so 'auto' resolves light
+  assert.equal(a.$('[name=auto]').getAttribute('data-llselect-color-scheme'), 'light')
+})
+
+test('llselectConfigProvider.defaults({ colorScheme }) is the app-wide default; the attribute wins', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `
+      <div ng-controller="C as vm">
+        <llselect-single name="fromConfig" ng-model="vm.fruit" ll-aria-label="Fruit"
+          ll-options="f for f in vm.fruits"></llselect-single>
+        <llselect-single name="fromAttr" ng-model="vm.fruit" ll-aria-label="Fruit" ll-color-scheme="'light'"
+          ll-options="f for f in vm.fruits"></llselect-single>
+      </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.fruit = 'Apple' },
+    config: ['llselectConfigProvider', function (llselectConfigProvider) { llselectConfigProvider.defaults({ colorScheme: 'dark' }) }],
+  })
+  assert.equal(a.$('[name=fromConfig]').getAttribute('data-llselect-color-scheme'), 'dark')
+  assert.equal(a.$('[name=fromAttr]').getAttribute('data-llselect-color-scheme'), 'light')
+})
