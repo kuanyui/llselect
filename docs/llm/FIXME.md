@@ -2,13 +2,29 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (theme dark color schemes, post-fix round 4)
+
+Process: the fourth fix batch (commit `270ca7a`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY, two DOCUMENTATION. Opus 4.8: ship, two QUALITY. Codex 5.5: fix first, two QUALITY. Codex Sol: fix first, three QUALITY. All four found the observer re-registration and the copy correct. The entries below merge the overlapping findings.
+
+- [x] **[QUALITY-256] - the extended body test passed with the previous observer too, so it did not prove the removed-body fix**
+  - Fix: after the new `<body>` is active, the test changes an attribute on the removed `<body>` and asserts no re-decision, then changes one on the new `<body>` and asserts the re-decision.
+  - Verified: with the previous observer swapped in, the suite fails at exactly that assertion ("the removed <body> is not observed any longer", actual light); with the current one it passes.
+  - Q: Why did a Verified line get written for a test that could not fail?
+    - A: Because the test was written for the symptom (a new body is observed) and not for the change (the old body is not). A test that guards a fix is run against the previous code, by reasoning or by reverting, before its Verified line is written.
+- [x] **[QUALITY-257] - the color-bearing property list missed `background-image` and other image or SVG color properties; a `)` inside a quoted `url()` broke the masking**
+  - Fix: `background*`, `mask*`, `backdrop-filter`, `stop-color`, `flood-color`, `lighting-color`, `list-style-image`, `content`, `text-fill-color` and `text-stroke*` join the list; strings are stripped before `url()`; DESIGN names the list.
+- [x] **[QUALITY-258] - `observeBody()` re-registered `documentElement` without a null guard**
+  - Fix: guarded like `<body>`; a detached `<html>` leaves the observer registered on nothing, and a new `<html>` is the known limit below.
+- [x] **[DOCUMENTATION-259] - the replaced-`<html>` limit read as a one-time repair**
+  - Fix: it says the attribute-driven re-decision does not resume for that document, the OS listener and `open()` still work, and `refreshColorScheme()` is needed after each later change.
+
 ## review (theme dark color schemes, post-fix round 3)
 
 Process: the third fix batch (commit `e2440e2`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, two QUALITY, five DOCUMENTATION. Opus 4.8: fix first, two DOCUMENTATION. Codex 5.5: fix first, one QUALITY, one DOCUMENTATION. Codex Sol: fix first, two QUALITY, three DOCUMENTATION. All four found the observer and the theme value correct; the contract text lagged. The entries below merge the overlapping findings.
 
 - [x] **[QUALITY-250] - the observer kept a removed `<body>` referenced and kept old bodies observed**
   - Fix: on a `<body>` identity change the observer disconnects and re-registers `<html>` and the current `<body>` (none while it is missing), so a removed `<body>` is neither observed nor referenced.
-  - Verified: the replaced-body test also removes the `<body>` without replacement and adds a new one.
+  - Verified: the replaced-body test, strengthened under QUALITY-256, changes an attribute on the removed `<body>` and asserts no re-decision.
 - [x] **[QUALITY-251] - the system-color keywords matched ordinary values (`transition: background .2s`, `font: menu`, `url(menu.svg)`)**
   - Fix: the literal-color scan covers only properties that accept a color (`color`, `background*`, `border*`, `outline*`, the shadows, `fill`, `stroke`, `filter`, ...) and custom properties other than `--llselect-*`, after stripping strings and `url()`.
 - [x] **[DOCUMENTATION-252] - DESIGN described the observer as attributes only, its trigger list missed a replaced or late `<body>`, and a replaced `<html>` element was not a listed limit**
@@ -97,7 +113,7 @@ Process: post-implementation review of the themes' dark color schemes (commits `
 
 - [x] **[MEDIUM-211] - bootstrap-5's dark dividers were a fixed white tint while its surfaces follow Bootstrap's variables**
   - Symptom: on a page whose Bootstrap variables stay light while the widget resolves dark (OS dark, `color-scheme: light dark`, no `data-bs-theme`), the header, footer and command-row dividers painted white on white.
-  - Fix: both blocks read `rgba(var(--bs-body-color-rgb, ...), 0.12)`, (the light shadow reads the same variable; the dark shadow stays black); the light fallback is the near-black Bootstrap text color, a hue change from pure black that the eye cannot tell at 12 percent.
+  - Fix: both blocks read `rgba(var(--bs-body-color-rgb, ...), 0.12)` (the light shadow reads the same variable; the dark shadow stays black); the light fallback is the near-black Bootstrap text color, a hue change from pure black that the eye cannot tell at 12 percent.
 - [x] **[MEDIUM-212] - three dark border values sat below the 3:1 floor the specification states**
   - Symptom: vanilla's filter-input border #555 on #1e1e1e (2.2:1), bootstrap-4's trigger and filter borders #6c757d on #343a40 (2.5:1), tailwind's hover border darker than its rest border; the docs claimed every palette passed, and bootstrap-5's exception was written as 2.1:1, the value on the demo page's background; on Bootstrap's own dark body background it is 1.9:1, and the popup border (Bootstrap's translucent border) is 1.6:1.
   - Fix: vanilla #6b6b6b, bootstrap-4 #868e96 (Bootstrap 4.0's gray-600), tailwind hover slate-400; the contrast probe now measures the filter border and the hover border too; the bootstrap-5 note corrected.

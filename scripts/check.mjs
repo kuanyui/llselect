@@ -268,7 +268,7 @@ for (const rel of markdownFiles) {
   const SYSTEM_COLORS = 'accentcolor|accentcolortext|activetext|buttonborder|buttonface|buttontext|canvas|canvastext|field|fieldtext|graytext|highlight|highlighttext|linktext|mark|marktext|selecteditem|selecteditemtext|visitedtext|activeborder|activecaption|appworkspace|background|buttonhighlight|buttonshadow|captiontext|inactiveborder|inactivecaption|inactivecaptiontext|infobackground|infotext|menu|menutext|scrollbar|threeddarkshadow|threedface|threedhighlight|threedlightshadow|threedshadow|window|windowframe|windowtext'
   // Only properties that accept a color are scanned (elsewhere a keyword such
   // as `menu` is an ordinary value), plus custom properties other than ours.
-  const COLOR_PROPERTY = /^(?:color|background|background-color|border(?:-[a-z]+)*|outline(?:-[a-z]+)*|box-shadow|text-shadow|text-decoration|text-decoration-color|text-emphasis|text-emphasis-color|caret-color|accent-color|fill|stroke|column-rule|column-rule-color|scrollbar-color|filter|--[\w-]+)$/i
+  const COLOR_PROPERTY = /^(?:color|background(?:-[a-z]+)*|border(?:-[a-z]+)*|outline(?:-[a-z]+)*|box-shadow|text-shadow|text-decoration(?:-[a-z]+)*|text-emphasis(?:-[a-z]+)*|caret-color|accent-color|fill|stroke|stop-color|flood-color|lighting-color|column-rule(?:-[a-z]+)*|scrollbar-color|filter|backdrop-filter|mask(?:-[a-z]+)*|list-style-image|content|(?:-webkit-)?text-fill-color|(?:-webkit-)?text-stroke(?:-[a-z]+)*|--[\w-]+)$/i
   // Keyword boundaries exclude the hyphen, so `context-menu` does not match `menu`.
   const COLOR_LITERAL = new RegExp(`#[0-9a-f]{3,8}\\b|(?<![\\w-])(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\\(|(?<![\\w-])(?:${NAMED_COLORS}|${SYSTEM_COLORS})(?![\\w-])`, 'i')
   // Masks the contents of parentheses and brackets (innermost first, repeated)
@@ -303,7 +303,8 @@ for (const rel of markdownFiles) {
       for (const declaration of body.split(';')) {
         const colon = declaration.indexOf(':')
         const property = colon === -1 ? '' : declaration.slice(0, colon).trim()
-        const value = declaration.slice(colon + 1).replace(/url\([^)]*\)|"[^"]*"|'[^']*'/g, '')
+        // strings first, so a ")" inside a quoted url() cannot end the url() early
+        const value = declaration.slice(colon + 1).replace(/"[^"]*"|'[^']*'/g, '').replace(/url\([^)]*\)/g, '')
         if (!property.startsWith('--llselect-') && COLOR_PROPERTY.test(property) && COLOR_LITERAL.test(value)) {
           // the chunk starts with the newline left by the previous ";": count at its first non-blank character
           problems.push(`${f}:${lineOf(css, offset + declaration.length - declaration.trimStart().length)}: literal color outside the --llselect-* declarations: ${declaration.trim()}`)
