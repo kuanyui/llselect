@@ -450,7 +450,7 @@ The trigger ellipsizes its chosen-text by default in every shipped theme (`.llse
 
 ## Color scheme (light / dark) in the themes
 
-Status: the specification is approved by the owner (committee round and decisions in `color-scheme-committee.md`) and not yet implemented; the TODO.md entry "Dark values for every shipped theme" holds the implementation order.
+Status: approved by the owner (committee round and decisions in `color-scheme-committee.md`) and implemented: the five themes carry the variables, the dark blocks and the built-in marks; `src/color-scheme.ts` holds the resolver; the setting, `getColorScheme()`, `refreshColorScheme()` and the AngularJS attribute `ll-color-scheme` exist; demo section 17 and the README recipe document it. Verified in headless Chromium; the headed-browser, Firefox and Safari passes are listed in TODO.md.
 
 Vocabulary (naming-conventions.md 7a.11): a "theme" is one of the five stylesheets under `src/themes/`. A "color scheme" is either light or dark. A "mark" is a class name or an HTML attribute from the list under "Built-in marks", placed on the widget root or on an ancestor of the widget root. A built-in CSS rule turns each mark into the CSS variable `--llselect-color-scheme` with the value `light`, `dark` or `auto`; a host page may also set this variable directly. "The widget root" is the element the library mounts on, class `.llselect-root`. "The resolver" is the shared JavaScript that decides the widget's color scheme.
 
