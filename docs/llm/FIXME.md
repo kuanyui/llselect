@@ -4,7 +4,7 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (site color-scheme switch)
 
-Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time; round 1 was Opus 5 (max) on the shipped commit, its findings fixed in one batch below; rounds 2-3 are Opus 4.8, Codex 5.5 and Codex Sol on the fixed state (entries follow).
+Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`739aeaf`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Rounds 3-4: Codex 5.5 and Codex Sol (entries follow).
 
 - [x] **[MEDIUM-155] - the vanilla filter input was painted dark by the UA under a dark page scheme**
   - Symptom: with `color-scheme: dark` on the page root, the vanilla theme's filter input rendered as a dark field with white text inside the white popup (measured: rgb(59, 59, 59)); every other theme sets both colors.
@@ -13,8 +13,10 @@ Process: post-change review of the site's light / dark switch (`88f698a`: `demo/
   - Verified: headless Chromium, dark OS, the open popup of a filterable example shows a white field.
 - [x] **[MEDIUM-156] - benchmark charts kept Chart.js's light defaults under the dark scheme**
   - Symptom: tick, legend and title text stayed #666 and the grid rgba(0,0,0,0.1), unreadable on the dark page; a scheme change did not repaint.
-  - Fix: `demo/benchmark.js` reads the scheme (attribute, else `matchMedia`) into `Chart.defaults.color` / `borderColor` before each build, and a `MutationObserver` on `data-color-scheme` plus the media-query listener repaint live charts.
-  - Verified: headless Chromium, dark OS, a chart built from a one-library run shows light text.
+  - Fix: `demo/benchmark.js` reads the scheme (attribute, else `matchMedia`) into `Chart.defaults.color` / `borderColor` before each build, and a `MutationObserver` on `data-color-scheme` plus the media-query listener rebuild live charts from state (`renderChart`, `renderIxChart`).
+  - Verified: headless Chromium: a chart built under the dark scheme shows light text; a chart built in light, then the switch, then an OS flip without an override, resolves ticks, legend, grid and title to the dark values each time.
+  - Q: Why rebuild the chart, not `chart.update()`?
+    - A: Because, measured on Chart.js 4.4.7, `update()` re-reads the changed `Chart.defaults` for the legend only; scale ticks, grid and title kept the old values (QUALITY-169).
 - [x] **[MEDIUM-157] - the generated pages lost their no-JavaScript dark fallback**
   - Symptom: before the switch, a dark-OS visitor with scripts off saw the site pages dark; the first version keyed every dark value on the attribute the script writes.
   - Fix: the dark token set is printed twice, under `@media (prefers-color-scheme: dark) { :root:not([data-color-scheme]) }` and under `:root[data-color-scheme="dark"]`; the script writes the attribute only for a stored override. Same shape in `demo/style.css`.
@@ -37,6 +39,10 @@ Process: post-change review of the site's light / dark switch (`88f698a`: `demo/
   - Fix: "private browsing".
 - [x] **[QUALITY-168] - two copied demo files carry no switch**
   - Fix: none. `demo/index.html` is a redirect stub; `demo/bench-reflow.html` is an unlinked measurement harness with its own light styles. Every page reachable from the nav has the switch.
+- [x] **[QUALITY-169] - the charts' live repaint path was unverified, and once measured it recolored the legend only**
+  - Symptom: round 2 noted the recorded verification covered the build-time path only; measured, `chart.update('none')` after changing `Chart.defaults` recolored the legend but left ticks, grid and title light.
+  - Fix: a scheme change rebuilds live charts from state (MEDIUM-156).
+  - Verified: the live-path probe under MEDIUM-156.
 - [x] **[DOCUMENTATION-165] - the body-rule comment claimed "same colors in light"**
   - Symptom: Bootstrap 3's body text is #333, the token is #222, and the comment named no page.
   - Fix: the comment names `demo/angularjs/benchmark.html` and states what each scheme shows.

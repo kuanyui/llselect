@@ -630,8 +630,10 @@ let chartInstance = null
 
 // Chart.js paints text and grid lines from Chart.defaults (gray text, faint
 // black lines), which the page's dark scheme cannot reach: re-read them before
-// each build and repaint live charts when the scheme changes (color-scheme.js
-// writes data-color-scheme for an override; the OS case comes from matchMedia).
+// each build, and rebuild live charts from state when the scheme changes
+// (color-scheme.js writes data-color-scheme for an override; the OS case comes
+// from matchMedia). Rebuild, not update(): update() re-reads the defaults for
+// the legend only, not for scale ticks, grid and title (measured, 4.4.7).
 const darkSchemeMq = window.matchMedia('(prefers-color-scheme: dark)')
 function isDarkScheme() {
   const attr = document.documentElement.getAttribute('data-color-scheme')
@@ -643,13 +645,12 @@ function syncChartDefaults() {
   window.Chart.defaults.color = dark ? '#c4c4c4' : '#666'
   window.Chart.defaults.borderColor = dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)'
 }
-function repaintCharts() {
-  syncChartDefaults()
-  if (!window.Chart) { return }
-  for (const chart of Object.values(window.Chart.instances)) { chart.update('none') }
+function rebuildCharts() {
+  if (chartInstance) { renderChart() }
+  for (const mode of IX_MODES) { if (mode.chart) { renderIxChart(mode) } }
 }
-new MutationObserver(repaintCharts).observe(document.documentElement, { attributes: true, attributeFilter: ['data-color-scheme'] })
-darkSchemeMq.addEventListener('change', repaintCharts)
+new MutationObserver(rebuildCharts).observe(document.documentElement, { attributes: true, attributeFilter: ['data-color-scheme'] })
+darkSchemeMq.addEventListener('change', rebuildCharts)
 
 function renderChart() {
   const canvas = document.getElementById('chart')
