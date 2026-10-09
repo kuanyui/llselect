@@ -2,6 +2,28 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (theme dark color schemes, post-fix round 3)
+
+Process: the third fix batch (commit `e2440e2`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, two QUALITY, five DOCUMENTATION. Opus 4.8: fix first, two DOCUMENTATION. Codex 5.5: fix first, one QUALITY, one DOCUMENTATION. Codex Sol: fix first, two QUALITY, three DOCUMENTATION. All four found the observer and the theme value correct; the contract text lagged. The entries below merge the overlapping findings.
+
+- [x] **[QUALITY-250] - the observer kept a removed `<body>` referenced and kept old bodies observed**
+  - Fix: on a `<body>` identity change the observer disconnects and re-registers `<html>` and the current `<body>` (none while it is missing), so a removed `<body>` is neither observed nor referenced.
+  - Verified: the replaced-body test also removes the `<body>` without replacement and adds a new one.
+- [x] **[QUALITY-251] - the system-color keywords matched ordinary values (`transition: background .2s`, `font: menu`, `url(menu.svg)`)**
+  - Fix: the literal-color scan covers only properties that accept a color (`color`, `background*`, `border*`, `outline*`, the shadows, `fill`, `stroke`, `filter`, ...) and custom properties other than `--llselect-*`, after stripping strings and `url()`.
+- [x] **[DOCUMENTATION-252] - DESIGN described the observer as attributes only, its trigger list missed a replaced or late `<body>`, and a replaced `<html>` element was not a listed limit**
+  - Fix: the resolver bullet names the observation targets (the attributes of `<html>` and of the current `<body>`, the child list of `<html>`, no subtree) and the trigger; the known limits say a replaced `<html>` element is not observed again and needs `refreshColorScheme()`.
+  - Q: Why not observe the document node for a replaced `<html>` as well?
+    - A: Because `document.open()` and `documentElement.replaceWith()` remove every widget with the old `<html>`; a page that moves its widgets into a new `<html>` is not a case worth code, and a one-line limit covers it.
+- [x] **[DOCUMENTATION-253] - the bootstrap-5 shadow comparison was wrong twice: the dark block redefines the shadow as plain black**
+  - Fix: DESIGN, the divider comment in the theme and the MEDIUM-211 entry describe the dividers alone (both blocks read `--bs-body-color-rgb`); the shadow reads it in the light block only.
+  - Q: Why did a wrong claim about the shadow survive two rounds?
+    - A: Because the check behind the first correction read the light block only. A claim that compares one declaration with another is verified in both blocks before it is written.
+- [x] **[DOCUMENTATION-254] - wording that contradicted the code or lacked a referent**
+  - Fix: `destroy()` says a further call empties the mount element again, and that collectability also needs the application to drop its references; DESIGN's bootstrap-5 note says the light focus border follows `--bs-primary-rgb` while the dark one is the literal Bootstrap itself uses in both schemes; demo 17.5 names the demo's own style.css; the `'auto'` bullet of `angularjs/API.md` is a nested list, one decision stage per item.
+- [x] **[NEEDS-VERIFICATION-255] - the copy changed in this round went through the wording review**
+  - Fix: Codex Astra at medium effort (the substitute for Codex Luna 6) reviewed the changed `destroy()` bullets, the demo 17.5 hint and the `ll-color-scheme` list: 4 findings, 4 applied (a repeated `destroy()` "repeats the cleanup", the demo hint names style.css and the theme's dark rule, the fallback condition of the `color-scheme` step spelled out, the reference sentence moved out of the decision list).
+
 ## review (theme dark color schemes, post-fix round 2)
 
 Process: the second fix batch (commits `8498748` and `63c6995`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, five QUALITY, six DOCUMENTATION. Opus 4.8: ship, one QUALITY, one DOCUMENTATION. Codex 5.5: fix first, two QUALITY, one DOCUMENTATION. Codex Sol: fix first, two MEDIUM, four QUALITY, three DOCUMENTATION. The entries below merge the overlapping findings.
@@ -61,7 +83,7 @@ Process: the fix batch `45d34ab` went to the other four panel members for a post
 - [x] **[DOCUMENTATION-234] - the Tailwind table in DESIGN kept the old hover border value**
   - Fix: dark `--llselect-trigger-hover-line` is slate-400 in the table too.
 - [x] **[DOCUMENTATION-235] - the 3:1 border claim covered dividers and the tag outline, which sit near 1.4:1 in every dark palette, and omitted bootstrap-5's filter border**
-  - Fix: the contrast floor in DESIGN, the TODO status and the bootstrap-5 note name the borders they cover (trigger, filter input, popup) and the focus rings; dividers and the tag outline are decorative and exempt; bootstrap-5's filter-input border is listed with its trigger border as Bootstrap's own. In the round below, the #868e96 attribution is corrected to Bootstrap 4.0's gray-600, and "like the shadow" to what the shadow does.
+  - Fix: the contrast floor in DESIGN, the TODO status and the bootstrap-5 note name the borders they cover (trigger, filter input, popup) and the focus rings; dividers and the tag outline are decorative and exempt; bootstrap-5's filter-input border is listed with its trigger border as Bootstrap's own. In the round below, the #868e96 attribution is corrected to Bootstrap 4.0's gray-600, and "like the shadow" is dropped: the dark block redefines the shadow as plain black, so the dividers alone read the variable in both blocks (the first correction, "as the shadow already does", was wrong too; DOCUMENTATION-253 holds the lesson).
 - [x] **[DOCUMENTATION-236] - docstring sentences a developer could misread**
   - Fix: the shadow-root bullet of `refreshColorScheme()` says the page checks do not reach a shadow root and when to call; `getColorScheme()` says it decides now while the first decision is still queued (DESIGN matched); the dangling "comes last" sentence of the setting is deleted; the marks bullet lists `auto` for `data-color-scheme` and says a mark on the root itself counts; the forced-value sentence in the type docstring and in `angularjs/API.md` carries the bootstrap-5 note.
 - [x] **[DOCUMENTATION-237] - README and demo wording**
@@ -75,7 +97,7 @@ Process: post-implementation review of the themes' dark color schemes (commits `
 
 - [x] **[MEDIUM-211] - bootstrap-5's dark dividers were a fixed white tint while its surfaces follow Bootstrap's variables**
   - Symptom: on a page whose Bootstrap variables stay light while the widget resolves dark (OS dark, `color-scheme: light dark`, no `data-bs-theme`), the header, footer and command-row dividers painted white on white.
-  - Fix: both blocks read `rgba(var(--bs-body-color-rgb, ...), 0.12)`, as the shadow already does (declared once, kept by the dark block); the light fallback is the near-black Bootstrap text color, a hue change from pure black that the eye cannot tell at 12 percent.
+  - Fix: both blocks read `rgba(var(--bs-body-color-rgb, ...), 0.12)`, (the light shadow reads the same variable; the dark shadow stays black); the light fallback is the near-black Bootstrap text color, a hue change from pure black that the eye cannot tell at 12 percent.
 - [x] **[MEDIUM-212] - three dark border values sat below the 3:1 floor the specification states**
   - Symptom: vanilla's filter-input border #555 on #1e1e1e (2.2:1), bootstrap-4's trigger and filter borders #6c757d on #343a40 (2.5:1), tailwind's hover border darker than its rest border; the docs claimed every palette passed, and bootstrap-5's exception was written as 2.1:1, the value on the demo page's background; on Bootstrap's own dark body background it is 1.9:1, and the popup border (Bootstrap's translucent border) is 1.6:1.
   - Fix: vanilla #6b6b6b, bootstrap-4 #868e96 (Bootstrap 4.0's gray-600), tailwind hover slate-400; the contrast probe now measures the filter border and the hover border too; the bootstrap-5 note corrected.
