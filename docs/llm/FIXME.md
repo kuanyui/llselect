@@ -2,16 +2,52 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (theme dark color schemes, post-fix)
+
+Process: the fix batch `45d34ab` went to the other four panel members for a post-fix review, one at a time, read-only, with the round below in the brief; Codex Sol also covered the whole implementation, since its first-round review never arrived. Opus 5: fix first, one MEDIUM, five QUALITY, nine DOCUMENTATION. Opus 4.8: fix first, three QUALITY, two DOCUMENTATION, one NEEDS-VERIFICATION. Codex 5.5: fix first, one MEDIUM, four QUALITY, three DOCUMENTATION. Codex Sol: fix first, three MEDIUM, five QUALITY, eight DOCUMENTATION. The entries below merge the overlapping findings.
+
+- [x] **[QUALITY-228] - check.mjs rule 6 lost the dark block: masking brackets as letters defeated the class-name lookahead**
+  - Symptom: `.llselect-root[data-llselect-color-scheme='dark']` masked to `.llselect-rootxxx...`, so the `(?![\w-])` lookahead failed and the dark block, the one place the forbidden declarations are most likely to land, went unchecked; `div.llselect-root` and `.foo.llselect-root` were still missed by the `(^|[^\w-])` prefix.
+  - Fix: masking (repeated, innermost first) only locates the commas and the last combinator; the subject is tested unmasked with `/\.llselect-root(?![\w-])/`, so `.llselect-root[attr]`, `div.llselect-root`, `[attr].llselect-root` and `:is(.llselect-root)` all count, and a comma inside `:is()` or an attribute value no longer splits the list.
+  - Verified: the rule rejects a copy of vanilla.css with `color-scheme: dark` added to the dark block, and passes the shipped themes.
+- [x] **[QUALITY-229] - the literal-color check reported drifted line numbers and missed named colors, modern color functions and same-line declarations**
+  - Cause: comments were deleted with their newlines before the lines were counted; the scan was per line and matched `#hex`, `rgb()` and `hsl()` only.
+  - Fix: comments become blanks of equal length; the scan is per declaration (split on `;`), skips only properties that start with `--llselect-`, and matches hex, every color function (rgb, hsl, hwb, lab, lch, oklab, oklch, color, color-mix; case-insensitive) and the CSS named colors; `transparent` and `currentColor` stay allowed.
+- [x] **[QUALITY-230] - the `<body>` observation retry needed a later subscription**
+  - Symptom: one widget built from a script in `<head>` wired the document before `<body>` existed and never observed it; only a second subscription repaired that.
+  - Fix: when `<body>` is missing at wiring time, a one-shot `DOMContentLoaded` listener observes it; the per-document wiring record is gone again.
+  - Verified: by reading; jsdom parses a document in one step, so the `<head>`-script case is in the manual pass.
+- [x] **[QUALITY-231] - four tests were green for the wrong reason**
+  - Symptom: "destroy() ends the subscription" passed because `destroy()` removes the attribute the shared pass queries; "every widget" built one widget; "one batch" cannot be observed in jsdom; the identity check in `cancelFirstDecision` had no test.
+  - Fix: the destroy test puts the attribute back before the `<html>` change; the observer test builds two widgets; the batch test is named for what it asserts (all decided after one microtask, none before); a new test calls `getColorScheme()` on a replaced older instance and asserts the newer instance still decides in the batch.
+- [x] **[DOCUMENTATION-232] - three statements of the no-leak promise disagreed**
+  - Symptom: DESIGN and the resolver comment said the shared listeners retain nothing; the `destroy()` docstring said a discarded instance keeps deciding while its mount is in the document; the code does the latter, as the widget's own DOM listeners already do.
+  - Fix: all three say the same thing: the shared listeners hold no instance; an instance stays reachable only through its mount element; once the mount leaves the document, everything is collectable, with or without `destroy()`.
+- [x] **[DOCUMENTATION-233] - two instances on one element: the supported order was undocumented, and the identity check in `unsubscribeColorScheme` guarded an unsupported path**
+  - Fix: the `destroy()` docstring and DESIGN's known limits state the order (destroy first, then build) and that an older instance must not be used after a rebuild, `destroy()` included; the `unsubscribeColorScheme` identity check is removed; the claim in the constructor and the identity check in `cancelFirstDecision` stay, since they cover the documented case of a closed instance discarded without `destroy()`.
+  - Q: Why not guard every root mutation of `destroy()` with an owner token, so an older instance's `destroy()` after a rebuild is harmless?
+    - A: Because the newer constructor already empties the element, and a `destroy()` that skips its teardown when it is not the owner would leave the host believing two instances are live. The supported order is cheap to follow, and a host that breaks it gets a visibly empty widget, not silent corruption.
+- [x] **[DOCUMENTATION-234] - the Tailwind table in DESIGN kept the old hover border value**
+  - Fix: dark `--llselect-trigger-hover-line` is slate-400 in the table too.
+- [x] **[DOCUMENTATION-235] - the 3:1 border claim covered dividers and the tag outline, which sit near 1.4:1 in every dark palette, and omitted bootstrap-5's filter border**
+  - Fix: the contrast floor in DESIGN, the TODO status and the bootstrap-5 note name the borders they cover (trigger, filter input, popup) and the focus rings; dividers and the tag outline are decorative and exempt; bootstrap-5's filter-input border is listed with its trigger border as Bootstrap's own. In the round below, the #868e96 attribution is corrected to Bootstrap 4.0's gray-600, and "like the shadow" to what the shadow does.
+- [x] **[DOCUMENTATION-236] - docstring sentences a developer could misread**
+  - Fix: the shadow-root bullet of `refreshColorScheme()` says the page checks do not reach a shadow root and when to call; `getColorScheme()` says it decides now while the first decision is still queued (DESIGN matched); the dangling "comes last" sentence of the setting is deleted; the marks bullet lists `auto` for `data-color-scheme` and says a mark on the root itself counts; the forced-value sentence in the type docstring and in `angularjs/API.md` carries the bootstrap-5 note.
+- [x] **[DOCUMENTATION-237] - README and demo wording**
+  - Fix: README: "the same wrapper" became "the element your rule targets, or one of its ancestors"; "as Bootstrap documents" became "the attribute Bootstrap's own documentation uses"; the marks count on the widget root too; the custom-colors bullet says to load the rule after the theme stylesheet. Demo 17.5: "in both schemes" dropped, since the wrapper now resolves dark; the hint says the rule replaces the theme's light and dark values.
+- [x] **[NEEDS-VERIFICATION-238] - the new copy of both fix batches had not been through the wording review the specification requires**
+  - Fix: Codex Astra at medium effort (the substitute for Codex Luna 6, which this account cannot use) reviewed the changed docstrings, the README recipe and the demo hints after this round. WORDING_REVIEW_RESULT
+
 ## review (theme dark color schemes)
 
 Process: post-implementation review of the themes' dark color schemes (commits `c037159` to `a536449`: the 32 variables, the resolver, the setting and methods, the AngularJS attribute, demo section 17, the README recipe) by the other four panel members, one at a time, read-only, on a self-contained brief with the specification (`DESIGN.md` "Color scheme (light / dark) in the themes"). Opus 5: fix first, four MEDIUM, eight QUALITY, six DOCUMENTATION. Opus 4.8: ship, three QUALITY, two DOCUMENTATION. Codex 5.5: fix first, three MEDIUM, two QUALITY, two DOCUMENTATION. Codex Sol: no output, the model reported "at capacity" (re-run pending). The entries below merge the overlapping findings.
 
 - [x] **[MEDIUM-211] - bootstrap-5's dark dividers were a fixed white tint while its surfaces follow Bootstrap's variables**
   - Symptom: on a page whose Bootstrap variables stay light while the widget resolves dark (OS dark, `color-scheme: light dark`, no `data-bs-theme`), the header, footer and command-row dividers painted white on white.
-  - Fix: both blocks read `rgba(var(--bs-body-color-rgb, ...), 0.12)`, like the shadow; the light fallback is the near-black Bootstrap text color, a hue change from pure black that the eye cannot tell at 12 percent.
+  - Fix: both blocks read `rgba(var(--bs-body-color-rgb, ...), 0.12)`, as the shadow already does (declared once, kept by the dark block); the light fallback is the near-black Bootstrap text color, a hue change from pure black that the eye cannot tell at 12 percent.
 - [x] **[MEDIUM-212] - three dark border values sat below the 3:1 floor the specification states**
   - Symptom: vanilla's filter-input border #555 on #1e1e1e (2.2:1), bootstrap-4's trigger and filter borders #6c757d on #343a40 (2.5:1), tailwind's hover border darker than its rest border; the docs claimed every palette passed, and bootstrap-5's exception was written as 2.1:1, the value on the demo page's background; on Bootstrap's own dark body background it is 1.9:1, and the popup border (Bootstrap's translucent border) is 1.6:1.
-  - Fix: vanilla #6b6b6b, bootstrap-4 #868e96 (Bootstrap's gray-500), tailwind hover slate-400; the contrast probe now measures the filter border and the hover border too; the bootstrap-5 note corrected.
+  - Fix: vanilla #6b6b6b, bootstrap-4 #868e96 (Bootstrap 4.0's gray-600), tailwind hover slate-400; the contrast probe now measures the filter border and the hover border too; the bootstrap-5 note corrected.
 - [x] **[MEDIUM-213] - a second instance built on the same element could be overwritten or unsubscribed by the first**
   - Symptom: an older `'auto'` instance's batched first decision ran after a newer forced instance wrote its attribute; the older instance's `destroy()` dropped the newer instance's subscription.
   - Cause: pending decisions were a set of instances and subscriptions were keyed by the root without an identity check.

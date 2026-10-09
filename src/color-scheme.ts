@@ -6,7 +6,7 @@
  * The `colorScheme` setting's values.
  * - `'auto'` (default): the library decides from the page. The setting's
  *   docstring on {@link LLSelectBaseSettings.colorScheme} explains the order.
- * - `'light'` or `'dark'`: always that scheme, regardless of the CSS sources and of the operating system's color preference.
+ * - `'light'` or `'dark'`: that scheme, whatever the CSS sources and the operating system say. With the bootstrap-5 theme, Bootstrap's own variables still supply the colors; see the README section "Dark color scheme".
  * @group Settings
  * @category Base
  */
@@ -105,41 +105,31 @@ export function claimColorSchemeRoot(rootEl: HTMLElement): void {
 // --- shared page listeners --------------------------------------------------
 // One media-query listener and one attribute observer per document re-decide
 // every subscribed widget. Subscribers are keyed by their root element in a
-// WeakMap, and the listeners find live roots through the document, so a
-// discarded instance is retained by nothing here (the existing lifecycle
-// promise of destroy() holds).
+// WeakMap, and the listeners find live roots through the document, so nothing
+// here retains an instance: it stays reachable only through its root element,
+// as it already does through its own DOM listeners (the lifecycle promise of
+// destroy() holds).
 
 interface ColorSchemeSubscriber { refresh(): void }
 const subscribersByRoot = new WeakMap<HTMLElement, ColorSchemeSubscriber>()
-interface DocumentWiring { observer: MutationObserver | null; bodyObserved: boolean }
-const wiringByDocument = new WeakMap<Document, DocumentWiring>()
+const wiredDocuments = new WeakSet<Document>()
 
 export function subscribeColorScheme(rootEl: HTMLElement, subscriber: ColorSchemeSubscriber): void {
   subscribersByRoot.set(rootEl, subscriber)
-  const wiring = wireDocument(rootEl.ownerDocument)
-  // <body> may not have existed when the document was wired (a widget built
-  // from a script in <head>); observe it as soon as a subscription sees it.
-  if (wiring !== null && !wiring.bodyObserved && wiring.observer !== null && rootEl.ownerDocument.body !== null) {
-    wiring.observer.observe(rootEl.ownerDocument.body, { attributes: true })
-    wiring.bodyObserved = true
-  }
+  wireDocument(rootEl.ownerDocument)
 }
 
-/** Drops the subscription only when it is still this one (a newer instance may own the element now). */
-export function unsubscribeColorScheme(rootEl: HTMLElement, subscriber: ColorSchemeSubscriber): void {
-  if (subscribersByRoot.get(rootEl) === subscriber) { subscribersByRoot.delete(rootEl) }
+export function unsubscribeColorScheme(rootEl: HTMLElement): void {
+  subscribersByRoot.delete(rootEl)
 }
 
 // The listeners stay for the document's life: a pass is one query of the
 // document, holds no instance, and an idle document sees few attribute
 // changes on <html> or <body>.
-function wireDocument(doc: Document): DocumentWiring | null {
-  const existing = wiringByDocument.get(doc)
-  if (existing !== undefined) { return existing }
+function wireDocument(doc: Document): void {
   const view = doc.defaultView
-  if (view === null) { return null }
-  const wiring: DocumentWiring = { observer: null, bodyObserved: false }
-  wiringByDocument.set(doc, wiring)
+  if (view === null || wiredDocuments.has(doc)) { return }
+  wiredDocuments.add(doc)
   let scheduled = false
   // Batched: one pass per task, however many attributes changed. Only roots
   // present in the document are reached (a shadow root's widgets re-decide on
@@ -161,15 +151,18 @@ function wireDocument(doc: Document): DocumentWiring | null {
   if (typeof view.MutationObserver === 'function') {
     // A widget mounted on <html> or <body> writes its own attribute on an
     // observed element; those records must not start another pass.
-    wiring.observer = new view.MutationObserver((records) => {
+    const observer = new view.MutationObserver((records) => {
       if (records.every((r) => r.attributeName === COLOR_SCHEME_ATTRIBUTE)) { return }
       refreshAll()
     })
-    wiring.observer.observe(doc.documentElement, { attributes: true })
+    observer.observe(doc.documentElement, { attributes: true })
     if (doc.body !== null) {
-      wiring.observer.observe(doc.body, { attributes: true })
-      wiring.bodyObserved = true
+      observer.observe(doc.body, { attributes: true })
+    } else {
+      // A widget built from a script in <head>: <body> does not exist yet.
+      doc.addEventListener('DOMContentLoaded', () => {
+        if (doc.body !== null) { observer.observe(doc.body, { attributes: true }) }
+      }, { once: true })
     }
   }
-  return wiring
 }

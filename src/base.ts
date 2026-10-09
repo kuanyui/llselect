@@ -217,13 +217,13 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   outsideClickBehavior: LLSelectOutsideClickBehavior
   /**
    * Which color scheme the widget shows: light or dark.
-   * - `'auto'` (default): the library chooses the scheme from the two CSS sources below. The list of what makes the library check again comes last.
-   * - `'light'` or `'dark'`: always that scheme, regardless of the CSS sources and of the operating system's color preference. With the bootstrap-5 theme on a page that sets `data-bs-theme`, Bootstrap's own variables still supply the colors; see the README section "Dark color scheme".
+   * - `'auto'` (default): the library chooses the scheme from the two CSS sources below.
+   * - `'light'` or `'dark'`: that scheme, whatever the CSS sources and the operating system say. With the bootstrap-5 theme on a page that sets `data-bs-theme`, Bootstrap's own variables still supply the colors; see the README section "Dark color scheme".
    * - For `'auto'`, the library checks two sources in order. The widget root is the element the widget is mounted on, class `llselect-root`.
    *   1. The CSS variable `--llselect-color-scheme`, from the widget root's computed style. Any ancestor element may set it; the nearest one wins. The value `light` or `dark` is the answer. The value `auto` follows the operating system's color preference: dark when dark is preferred, otherwise light. Any other value, or none, means: check the next source.
    *   2. The CSS property `color-scheme`, from the widget root's computed style. The answer is dark when its value lists `dark` and either omits `light` or the operating system prefers dark. This is the property that also drives native form controls.
    * - When neither source selects dark, the widget uses light. This holds on a dark operating system too.
-   * - The themes set `--llselect-color-scheme` for these ancestor classes: `dark`, `theme-dark`, `dark-mode`, `theme-light`, `light-mode`. They also recognize the ancestor attributes `data-theme`, `data-bs-theme` and `data-color-scheme` with the values `light` or `dark`. Any other class or attribute needs one rule, for example `.night { --llselect-color-scheme: dark; }`.
+   * - The themes set `--llselect-color-scheme` for these classes: `dark`, `theme-dark`, `dark-mode`, `theme-light`, `light-mode`. They also recognize the attributes `data-theme` and `data-bs-theme` with the values `light` or `dark`, and `data-color-scheme` with the values `light`, `dark` or `auto`. Each of these counts on the widget root and on any ancestor. Any other class or attribute needs one rule, for example `.night { --llselect-color-scheme: dark; }`.
    * - The result is written to the widget root as `data-llselect-color-scheme="light"` or `data-llselect-color-scheme="dark"`. The themes apply their dark colors when the value is `dark`. Do not write that attribute yourself. This attribute name and the `--llselect-*` variable names are fixed; `cssClassPrefix` does not change them.
    * - The library checks the scheme right after the widget is created, before the page paints again, and whenever `open()` or `refreshColorScheme()` runs. It also checks after the operating system's color preference changes, and after an attribute of `<html>` or `<body>` changes. A widget inside a shadow root misses those two automatic checks; it checks on `open()` and on `refreshColorScheme()`.
    * - `getColorScheme()` returns the result. Reading the attribute in the same script run as the construction may still find it missing; `getColorScheme()` never does.
@@ -1025,7 +1025,6 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /** True from construction until the first decision ran (batched into a microtask, see color-scheme.ts). */
   private colorSchemeDecisionPending = false
   private readonly colorSchemeDecision = { decideNow: (): void => { this.syncColorScheme() } }
-  private readonly colorSchemeSubscriber = { refresh: (): void => { this.syncColorScheme() } }
   /**
    * Who the change being applied right now is attributed to; the variants'
    * `onChange` firing reads it. Set to `'user'` by `withUserChangeSource`
@@ -1233,7 +1232,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (this.settings.colorScheme === 'auto') {
       this.colorSchemeDecisionPending = true
       queueFirstDecision(this.rootEl, this.colorSchemeDecision)
-      subscribeColorScheme(this.rootEl, this.colorSchemeSubscriber)
+      subscribeColorScheme(this.rootEl, { refresh: () => { this.syncColorScheme() } })
     } else {
       this.syncColorScheme()
     }
@@ -1580,11 +1579,18 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - REQUIRED before discarding an instance that might be OPEN (framework
    *   wrappers: call this on unmount) - skipping it there leaks the
    *   outside-click / focusout / scroll / resize listeners.
-   * - Discarding a CLOSED instance without `destroy()` leaks nothing; it only
-   *   leaves the root class, the `overflow-anchor` style and the
-   *   `data-llselect-color-scheme` attribute on the mount. While that mount
-   *   stays in the document, the instance keeps deciding its scheme on the
-   *   shared page listeners.
+   * - Discarding a CLOSED instance without `destroy()` leaks nothing beyond
+   *   the mount element: the instance stays reachable only through that
+   *   element, like its own DOM listeners. It leaves the root class, the
+   *   `overflow-anchor` style and the `data-llselect-color-scheme`
+   *   attribute on the mount. While the mount stays in the document, an
+   *   `'auto'` instance keeps deciding its scheme on the shared page
+   *   listeners.
+   * - Building a second instance on the same element replaces the first: the
+   *   first one's pending color-scheme decision and subscription are dropped.
+   *   Call `destroy()` on the first instance BEFORE building the second. The
+   *   first instance must not be used afterwards, `destroy()` included: it
+   *   would empty the element under the new widget.
    * @group Lifecycle
    */
   public destroy(): void {
@@ -1595,7 +1601,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     }
     this.rootEl.classList.remove(this.classIdMap.rootClass, this.classIdMap.openClass)
     this.rootEl.style.overflowAnchor = ''
-    unsubscribeColorScheme(this.rootEl, this.colorSchemeSubscriber)
+    unsubscribeColorScheme(this.rootEl)
     cancelFirstDecision(this.rootEl, this.colorSchemeDecision)
     this.colorSchemeDecisionPending = false
     this.rootEl.removeAttribute(COLOR_SCHEME_ATTRIBUTE)
@@ -1781,7 +1787,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * The color scheme the widget currently shows.
-   * - Returns the result of the latest decision, `'light'` or `'dark'`, without deciding again.
+   * - Returns the result of the latest decision, `'light'` or `'dark'`. If the first decision is still queued, it decides now and returns that result.
    * - Never `'auto'`. The `colorScheme` setting explains how `'auto'` resolves.
    * @group Color scheme
    */
@@ -1794,7 +1800,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Decide the color scheme again, now.
    * - Call it after replacing a stylesheet that affects the scheme. Also call it after changing a scheme-related class, attribute or CSS variable on the widget root or on an ancestor element inside `<body>`.
    * - Call it after inserting into the document a widget that was built while detached: a detached element has no computed style, so the first decision was light.
-   * - Call it after one of the two automatic checks below for a widget inside a shadow root; those checks reach only the document's own elements.
+   * - The two page checks below, after an operating-system change and after an `<html>` or `<body>` attribute change, do not reach a widget inside a shadow root. For such a widget, call it after one of those changes.
    * - The library refreshes by itself when the operating system's color preference changes, when the popup opens, and when an attribute of `<html>` or `<body>` changes.
    * - Changes nothing when the `colorScheme` setting is `'light'` or `'dark'`.
    * @group Color scheme

@@ -106,16 +106,20 @@ test('a forced setting is written at construction, with no microtask', () => {
 
 test('the shared observer: an attribute change on <html> makes every widget decide again', async () => {
   // jsdom has a MutationObserver and no matchMedia; the variable lives on the
-  // root itself (jsdom computes no inherited custom property).
-  const el = mount()
-  const sel = new LLSelectSingle<string>(el)
+  // roots themselves (jsdom computes no inherited custom property).
+  setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const a = document.getElementById('a'), b = document.getElementById('b')
+  assert.ok(a); assert.ok(b)
+  const selA = new LLSelectSingle<string>(a), selB = new LLSelectSingle<string>(b)
   await Promise.resolve()
-  assert.equal(sel.getColorScheme(), 'light')
-  el.style.setProperty('--llselect-color-scheme', 'dark')
+  assert.equal(selA.getColorScheme(), 'light')
+  assert.equal(selB.getColorScheme(), 'light')
+  a.style.setProperty('--llselect-color-scheme', 'dark')
+  b.style.setProperty('--llselect-color-scheme', 'dark')
   document.documentElement.setAttribute('data-color-scheme', 'dark')
   await new Promise((resolve) => setTimeout(resolve, 0))
-  assert.equal(sel.getColorScheme(), 'dark', 'refreshed through the shared observer')
-  assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+  assert.equal(a.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', 'refreshed through the shared observer')
+  assert.equal(b.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
 })
 
 test('destroy() ends the subscription: a later <html> change writes nothing back', async () => {
@@ -123,13 +127,16 @@ test('destroy() ends the subscription: a later <html> change writes nothing back
   const sel = new LLSelectSingle<string>(el)
   await Promise.resolve()
   sel.destroy()
+  // destroy() removed the attribute; put it back so the shared pass finds the
+  // element again, which makes the subscription the only thing under test
+  el.setAttribute(COLOR_SCHEME_ATTRIBUTE, 'light')
   el.style.setProperty('--llselect-color-scheme', 'dark')
   document.documentElement.setAttribute('data-color-scheme', 'dark')
   await new Promise((resolve) => setTimeout(resolve, 0))
-  assert.equal(el.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false)
+  assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
 })
 
-test('several widgets built in one task all decide in the one batch', async () => {
+test('several widgets built in one task have all decided after one microtask, none before', async () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b" style="--llselect-color-scheme: dark"></div></body></html>')
   const a = document.getElementById('a'), b = document.getElementById('b')
   assert.ok(a); assert.ok(b)
@@ -141,7 +148,7 @@ test('several widgets built in one task all decide in the one batch', async () =
   assert.equal(b.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
 })
 
-test('a newer instance on the same element owns it: the older pending decision and subscription are dropped', async () => {
+test('a newer instance built on the same element replaces the older one: the older pending decision and subscription are dropped', async () => {
   const el = mount()
   el.style.setProperty('--llselect-color-scheme', 'dark')
   new LLSelectSingle<string>(el) // 'auto', its first decision pending
@@ -152,6 +159,16 @@ test('a newer instance on the same element owns it: the older pending decision a
   document.documentElement.setAttribute('data-color-scheme', 'dark')
   await new Promise((resolve) => setTimeout(resolve, 0))
   assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light', "the older instance's subscription is gone")
+})
+
+test("getColorScheme() on a replaced older instance does not cancel the newer instance's pending decision", async () => {
+  const el = mount()
+  const older = new LLSelectSingle<string>(el)
+  new LLSelectSingle<string>(el) // 'auto' too: its pending decision replaces the older one's
+  older.getColorScheme() // decides the older one now; the newer decision must stay queued
+  el.style.setProperty('--llselect-color-scheme', 'dark')
+  await Promise.resolve()
+  assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', 'the newer instance still decided in the batch')
 })
 
 test('a widget built on a detached element decides light; refreshColorScheme() after insertion decides again', () => {
