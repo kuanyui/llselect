@@ -225,8 +225,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - So the widget uses light when the variable is not set and the property does not list `dark`. This holds on a dark operating system too.
    * - The themes set `--llselect-color-scheme` for these classes: `dark`, `theme-dark`, `dark-mode`, `theme-light`, `light-mode`. They recognize the attributes `data-theme` and `data-bs-theme` with the value `light` or `dark`. They recognize `data-color-scheme` with the value `light`, `dark` or `auto`. These classes and attributes count on the widget root or on any ancestor. If your page selects the scheme with another class or attribute, add one CSS rule, for example `.night { --llselect-color-scheme: dark; }`.
    * - The result is written to the widget root as `data-llselect-color-scheme="light"` or `data-llselect-color-scheme="dark"`. The themes apply their dark colors when the value is `dark`. Do not write that attribute yourself. This attribute name and the `--llselect-*` variable names are fixed; `cssClassPrefix` does not change them.
-   * - After construction, the library queues the first check; it runs after the current script finishes and before the browser paints again. The library also checks when `open()` or `refreshColorScheme()` runs, when the operating system's color preference changes, and when an attribute of `<html>` or `<body>` changes. A widget inside a shadow root misses the last two automatic checks; it checks on `open()` and on `refreshColorScheme()`.
-   * - `getColorScheme()` returns the result. The attribute may be missing until the first queued check runs. If you call `getColorScheme()` before that, the method checks at once and returns the scheme.
+   * - If `colorScheme` is `'auto'`, the library queues the first check during construction. The check runs after the current script finishes, before the browser paints again. If `colorScheme` is `'light'` or `'dark'`, the library writes that value to the attribute during construction.
+   * - The library also checks when `open()` or `refreshColorScheme()` runs. It checks when the operating system's color preference changes. It also checks when an attribute of `<html>` or `<body>` changes.
+   * - If the widget is inside a shadow root, an operating-system change does not reach it, and neither does an attribute change on `<html>` or `<body>`. The widget still checks when `open()` or `refreshColorScheme()` runs.
+   * - `getColorScheme()` returns the result. If `colorScheme` is `'auto'`, the attribute may be missing until the first queued check runs. If you call `getColorScheme()` before that, the method checks at once and returns the scheme.
    * @group Color scheme
    */
   colorScheme: LLSelectColorScheme
@@ -1578,18 +1580,22 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Removes the library's class, its inline styles and the
    *   `data-llselect-color-scheme` attribute from the mount element, ends the
    *   automatic color-scheme checks, and empties the element.
-   * - After the call the instance is dead: a further `destroy()` does
-   *   nothing, and no other method may be called.
+   * - After `destroy()`, call no method except `destroy()` itself. If no
+   *   second instance has replaced this one, a further `destroy()` does
+   *   nothing. Otherwise that call empties the element under the second
+   *   instance.
    * - REQUIRED before discarding an instance whose popup might be open; a
    *   framework wrapper calls it on unmount. Skipping it there leaks the
    *   outside-click, focusout, scroll and resize listeners.
-   * - Discarding a CLOSED instance without `destroy()` leaks nothing beyond
-   *   the mount element. The instance stays reachable only through that
-   *   element, like its own DOM listeners. The root class, the
-   *   `overflow-anchor` style and the `data-llselect-color-scheme` attribute
-   *   stay on the mount. While the mount stays in the document outside a
-   *   shadow root, an `'auto'` instance keeps deciding its scheme through
-   *   the automatic page checks.
+   * - Discarding a CLOSED instance without `destroy()` leaks nothing: only
+   *   its mount element and `labelEl` retain it, through its own DOM
+   *   listeners. Once those elements leave the document, the instance is
+   *   collectable. The root class, the `overflow-anchor` style and the
+   *   `data-llselect-color-scheme` attribute stay on the mount. If the mount
+   *   stays in the document outside a shadow root, the automatic checks
+   *   continue for an `'auto'` instance: it decides again when the operating
+   *   system's color preference changes, and when an attribute of `<html>`
+   *   or `<body>` changes.
    * - Building a second instance on the same element replaces the first. The
    *   library drops the first instance's queued scheme decision and its
    *   automatic checks. Call `destroy()` on the first instance BEFORE

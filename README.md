@@ -442,7 +442,8 @@ Every theme ships a dark palette. The widget checks two CSS sources, in this ord
 - Per instance: the setting `colorScheme: 'dark'` or `'light'` wins over both CSS sources and the operating system.
 - Bootstrap 5.3 pages: set `data-bs-theme="dark"`, the attribute Bootstrap's own documentation uses. The bootstrap-5 theme takes its colors from Bootstrap's own variables, so that attribute drives it. A forced light widget inside such a page keeps Bootstrap's dark colors.
 - If the variable is not set and the property does not list dark, the widget stays light. This holds on a dark operating system too.
-- Your own colors: redefine the `--llselect-*` variables in a rule that targets the widget root, class `llselect-root`. Load that rule after the theme stylesheet, or give it higher specificity. Every theme file lists the names and roles at its top.
+- Your own colors: redefine the `--llselect-*` variables in a rule like `.acme .llselect-root`, loaded after the theme stylesheet. Every theme file lists the names and roles at its top.
+- Your rule must beat the theme's dark rule, `.llselect-root[data-llselect-color-scheme='dark']`. It wins with higher specificity, or with equal specificity and a later position in the page.
 - A custom dark palette also needs the dark scheme: set `--llselect-color-scheme: dark` on the widget root or an ancestor. The selected scheme controls the scrollbar's look. The color variables do not.
 - Live comparison: section 17 of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
 
