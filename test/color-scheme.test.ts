@@ -167,19 +167,39 @@ test('a replaced <body> is observed too', async () => {
 })
 
 test('a document without <html> throws neither in the observer callback nor at wiring', async () => {
-  // the callback: wired with an <html> that is removed later
+  // the callback: wired with an <html> that is removed later. jsdom reports an
+  // exception thrown inside an observer callback as a window "error" event,
+  // not as a thrown error, so that event is what the test watches
   const el = mount()
   new LLSelectSingle<string>(el)
   await Promise.resolve()
+  const errors: string[] = []
+  window.addEventListener('error', (e) => { errors.push(e.message); e.preventDefault() })
   const body = document.body
   document.removeChild(document.documentElement)
   body.setAttribute('data-color-scheme', 'dark') // the old <body> is still registered: the callback runs with no <html>
   await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.deepEqual(errors, [])
   // the wiring: a fresh document whose <html> is gone before its first widget
   setupDom()
   document.removeChild(document.documentElement)
   const sel = new LLSelectSingle<string>(document.createElement('div'))
   assert.equal(sel.getColorScheme(), 'light')
+})
+
+test('a document wired before <body> exists observes the <body> that arrives later', async () => {
+  setupDom()
+  document.documentElement.removeChild(document.body)
+  const el = document.createElement('div')
+  const sel = new LLSelectSingle<string>(el) // wires the document while only <html> exists
+  const body = document.createElement('body')
+  body.appendChild(el)
+  document.documentElement.appendChild(body)
+  await new Promise((resolve) => setTimeout(resolve, 0)) // the child-list record of <html>: the new <body> is registered
+  el.style.setProperty('--llselect-color-scheme', 'dark')
+  body.setAttribute('data-color-scheme', 'dark')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.equal(sel.getColorScheme(), 'dark', 'the <body> that arrived after the wiring is observed')
 })
 
 test('several widgets built in one task have all decided after one microtask, none before', async () => {
