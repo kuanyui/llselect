@@ -341,7 +341,8 @@ for (const rel of markdownFiles) {
         let argument
         if (text[j] === '"' || text[j] === "'") {
           const close = stringEnd(j, text[j])
-          argument = text.slice(j + 1, close - 1)
+          // CSS drops a backslash-newline continuation from the string value
+          argument = text.slice(j + 1, close - 1).replace(/\\(?:\r\n|[\n\r\f])/g, '')
           j = skipBlanks(close)
         } else {
           const from = j

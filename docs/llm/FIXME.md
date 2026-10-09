@@ -2,6 +2,13 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (theme dark color schemes, post-fix round 11)
+
+Process: the eleventh fix batch (commit `d56a99b`) went to the other four panel members, one at a time, read-only. Opus 5: ship, no finding. Opus 4.8: ship, no finding. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, the same QUALITY. All four found the three outputs of the scanner in step.
+
+- [x] **[QUALITY-276] - a backslash-newline continuation inside a quoted data URL stayed in the argument, so `%\<newline>23f00` escaped the color scan**
+  - Fix: the continuation is dropped from the argument before the `data:` and color tests, as CSS drops it from the string value; the masked texts keep the source's length.
+
 ## review (theme dark color schemes, post-fix round 10)
 
 Process: the tenth fix batch (commit `dec7c8d`) went to the other four panel members, one at a time, read-only. Opus 5: ship, one QUALITY. Opus 4.8: ship, one QUALITY. Codex 5.5: fix first, two QUALITY. Codex Sol: fix first, three QUALITY. All four found the identifier boundary, the blank walk and the three outputs sound (one member fuzzed 100,000 inputs). The entries below merge the overlapping findings.
