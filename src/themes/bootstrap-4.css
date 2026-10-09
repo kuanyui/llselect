@@ -382,9 +382,9 @@
   --llselect-fg-muted: #adb5bd;
   --llselect-bg: #343a40;
   --llselect-bg-muted: #3d444b;
-  --llselect-trigger-line: #6c757d;
+  --llselect-trigger-line: #868e96;
   --llselect-popup-line: rgba(255, 255, 255, 0.4);
-  --llselect-filter-line: #6c757d;
+  --llselect-filter-line: #868e96;
   --llselect-divider: rgba(255, 255, 255, 0.12);
   --llselect-focus-ring: rgba(0, 123, 255, 0.35);
   --llselect-filter-focus-ring: rgba(0, 123, 255, 0.35);

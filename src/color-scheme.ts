@@ -69,23 +69,37 @@ export function readColorSchemeInputs(rootEl: HTMLElement, setting: LLSelectColo
 // paint, and all widgets built in one task share one flush. getColorScheme()
 // and open() decide at once when the decision is still pending.
 interface PendingDecision { decideNow(): void }
-const pendingDecisions = new Set<PendingDecision>()
+// Keyed by the root element: a newer instance built on the same element
+// replaces an older one's pending decision, so the older one can never write
+// the attribute after the newer one did.
+const pendingDecisions = new Map<HTMLElement, PendingDecision>()
 let flushScheduled = false
 
-export function queueFirstDecision(decision: PendingDecision): void {
-  pendingDecisions.add(decision)
+export function queueFirstDecision(rootEl: HTMLElement, decision: PendingDecision): void {
+  pendingDecisions.set(rootEl, decision)
   if (flushScheduled) { return }
   flushScheduled = true
   void Promise.resolve().then(() => {
     flushScheduled = false
-    const batch = [...pendingDecisions]
+    const batch = [...pendingDecisions.values()]
     pendingDecisions.clear()
     for (const d of batch) { d.decideNow() }
   })
 }
 
-export function cancelFirstDecision(decision: PendingDecision): void {
-  pendingDecisions.delete(decision)
+/** Drops the pending decision only when it is still this one (a newer instance may own the element now). */
+export function cancelFirstDecision(rootEl: HTMLElement, decision: PendingDecision): void {
+  if (pendingDecisions.get(rootEl) === decision) { pendingDecisions.delete(rootEl) }
+}
+
+/**
+ * Called by every constructor: the new instance owns the element from now on.
+ * An older instance on the same element loses its pending decision and its
+ * subscription, so it can neither overwrite the attribute nor keep deciding.
+ */
+export function claimColorSchemeRoot(rootEl: HTMLElement): void {
+  pendingDecisions.delete(rootEl)
+  subscribersByRoot.delete(rootEl)
 }
 
 // --- shared page listeners --------------------------------------------------
@@ -97,22 +111,35 @@ export function cancelFirstDecision(decision: PendingDecision): void {
 
 interface ColorSchemeSubscriber { refresh(): void }
 const subscribersByRoot = new WeakMap<HTMLElement, ColorSchemeSubscriber>()
-const wiredDocuments = new WeakSet<Document>()
+interface DocumentWiring { observer: MutationObserver | null; bodyObserved: boolean }
+const wiringByDocument = new WeakMap<Document, DocumentWiring>()
 
 export function subscribeColorScheme(rootEl: HTMLElement, subscriber: ColorSchemeSubscriber): void {
   subscribersByRoot.set(rootEl, subscriber)
-  wireDocument(rootEl.ownerDocument)
+  const wiring = wireDocument(rootEl.ownerDocument)
+  // <body> may not have existed when the document was wired (a widget built
+  // from a script in <head>); observe it as soon as a subscription sees it.
+  if (wiring !== null && !wiring.bodyObserved && wiring.observer !== null && rootEl.ownerDocument.body !== null) {
+    wiring.observer.observe(rootEl.ownerDocument.body, { attributes: true })
+    wiring.bodyObserved = true
+  }
 }
 
-export function unsubscribeColorScheme(rootEl: HTMLElement): void {
-  subscribersByRoot.delete(rootEl)
+/** Drops the subscription only when it is still this one (a newer instance may own the element now). */
+export function unsubscribeColorScheme(rootEl: HTMLElement, subscriber: ColorSchemeSubscriber): void {
+  if (subscribersByRoot.get(rootEl) === subscriber) { subscribersByRoot.delete(rootEl) }
 }
 
-function wireDocument(doc: Document): void {
-  if (wiredDocuments.has(doc)) { return }
-  wiredDocuments.add(doc)
+// The listeners stay for the document's life: a pass is one query of the
+// document, holds no instance, and an idle document sees few attribute
+// changes on <html> or <body>.
+function wireDocument(doc: Document): DocumentWiring | null {
+  const existing = wiringByDocument.get(doc)
+  if (existing !== undefined) { return existing }
   const view = doc.defaultView
-  if (view === null) { return }
+  if (view === null) { return null }
+  const wiring: DocumentWiring = { observer: null, bodyObserved: false }
+  wiringByDocument.set(doc, wiring)
   let scheduled = false
   // Batched: one pass per task, however many attributes changed. Only roots
   // present in the document are reached (a shadow root's widgets re-decide on
@@ -132,8 +159,17 @@ function wireDocument(doc: Document): void {
     if (typeof query.addEventListener === 'function') { query.addEventListener('change', refreshAll) }
   }
   if (typeof view.MutationObserver === 'function') {
-    const observer = new view.MutationObserver(refreshAll)
-    observer.observe(doc.documentElement, { attributes: true })
-    if (doc.body !== null) { observer.observe(doc.body, { attributes: true }) }
+    // A widget mounted on <html> or <body> writes its own attribute on an
+    // observed element; those records must not start another pass.
+    wiring.observer = new view.MutationObserver((records) => {
+      if (records.every((r) => r.attributeName === COLOR_SCHEME_ATTRIBUTE)) { return }
+      refreshAll()
+    })
+    wiring.observer.observe(doc.documentElement, { attributes: true })
+    if (doc.body !== null) {
+      wiring.observer.observe(doc.body, { attributes: true })
+      wiring.bodyObserved = true
+    }
   }
+  return wiring
 }

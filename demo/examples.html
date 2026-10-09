@@ -1048,11 +1048,9 @@
   <section>
     <h2>17. Color scheme (light / dark)</h2>
     <p class="hint">
-      Every theme has a dark palette. These examples show a widget that
-      follows the page, a custom CSS class, a light card inside a dark region,
-      a forced dark scheme, and custom colors. Each widget's root element
-      receives <code>data-llselect-color-scheme="light"</code> or
-      <code>"dark"</code>; the "resolved" line shows that value.
+      Every theme has a dark palette. Each widget's root element receives
+      <code>data-llselect-color-scheme="light"</code> or <code>"dark"</code>.
+      In 17.1 to 17.4 the "resolved" line shows that value.
     </p>
 
     <article>
@@ -1134,8 +1132,10 @@
       <p class="hint">
         The selector <code>.acme-brand .llselect-root</code> gives the widget
         inside the wrapper its own <code>--llselect-*</code> values, purple
-        here, in both schemes. Expand "code" to see them; every theme file
-        lists the names.
+        here, in both schemes. The wrapper also sets
+        <code>--llselect-color-scheme: dark</code>, so the browser paints the
+        scrollbar dark to match. Expand "code" to see the values; every theme
+        file lists the names.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
