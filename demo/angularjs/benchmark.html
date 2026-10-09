@@ -16,7 +16,7 @@
        would stay on the dark page otherwise. */
     a { color: var(--link); }
     a:hover, a:focus { color: var(--accent-hover); }
-    .demo-nav a:hover, .demo-nav a:focus, .demo-subnav a:hover, .demo-subnav a:focus { color: var(--accent); }
+    .demo-nav a:not(.current):hover, .demo-nav a:not(.current):focus, .demo-subnav a:not(.current):hover, .demo-subnav a:not(.current):focus { color: var(--accent); }
     /* ui-select's rows declare no text color: keep the light one on its white dropdown. */
     .ui-select-container, .ui-select-choices { color: #333; }
     .bench-table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
