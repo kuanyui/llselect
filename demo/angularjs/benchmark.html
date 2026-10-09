@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ui-select@0.19.8/dist/select.min.css">
   <style>
+    /* Bootstrap 3 loads after ../style.css: its link blue stays on the dark page otherwise. */
+    a { color: var(--link); }
     .bench-table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
     .bench-table th, .bench-table td { border: 1px solid var(--line); padding: 0.4rem 0.6rem; text-align: right; }
     .bench-table th:first-child, .bench-table td:first-child { text-align: left; }

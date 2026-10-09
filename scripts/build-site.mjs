@@ -455,7 +455,7 @@ main [data-binding]::before { content: attr(data-binding); float: right; margin-
 .toc-tree li > a { margin-left: 1.5rem; }
 .toc summary a { margin-left: 0; }
 /* filter-match highlight; --mark swaps for the dark scheme */
-.toc mark { padding: 0; border-radius: 2px; background: var(--mark); color: inherit; }
+.toc mark { padding: 0; border-radius: 2px; background: var(--mark); color: var(--fg); }
 /* Narrow screens: the sidebar becomes a left off-canvas drawer behind a
    fixed "Sections" button (button + backdrop injected by the toc script). */
 .toc-toggle { display: none; }

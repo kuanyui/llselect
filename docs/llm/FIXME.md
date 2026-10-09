@@ -4,7 +4,7 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (site color-scheme switch)
 
-Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`739aeaf`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Round 3: Codex 5.5 (xhigh): ship, one QUALITY and two DOCUMENTATION findings (170-172), fixed. Round 4: Codex Sol (entries follow).
+Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`739aeaf`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Round 3: Codex 5.5 (xhigh): ship, one QUALITY and two DOCUMENTATION findings (170-172), fixed. Round 4: Codex Sol (max): fix first, three MEDIUM, four QUALITY, three DOCUMENTATION findings (173-182), fixed.
 
 - [x] **[MEDIUM-155] - the vanilla filter input was painted dark by the UA under a dark page scheme**
   - Symptom: with `color-scheme: dark` on the page root, the vanilla theme's filter input rendered as a dark field with white text inside the white popup (measured: rgb(59, 59, 59)); every other theme sets both colors.
@@ -20,6 +20,7 @@ Process: post-change review of the site's light / dark switch (`88f698a`: `demo/
 - [x] **[MEDIUM-157] - the generated pages lost their no-JavaScript dark fallback**
   - Symptom: before the switch, a dark-OS visitor with scripts off saw the site pages dark; the first version keyed every dark value on the attribute the script writes.
   - Fix: the dark token set is printed twice, under `@media (prefers-color-scheme: dark) { :root:not([data-color-scheme]) }` and under `:root[data-color-scheme="dark"]`; the script writes the attribute only for a stored override. Same shape in `demo/style.css`.
+  - Verified: headless Chromium with scripts disabled and a dark OS: the home page, the examples page and the Bootstrap 3 page render dark.
   - Q: Why two copies, not one block?
     - A: Because `light-dark()` and style queries sit above the browser floor; a media query and an attribute selector cannot share one rule, so the set is a constant printed twice in the generator and a commented pair in the demo stylesheet.
 - [x] **[MEDIUM-158] - the attribute always carried a resolved value, so a theme could not tell an explicit choice from "follow the OS"**
@@ -27,19 +28,29 @@ Process: post-change review of the site's light / dark switch (`88f698a`: `demo/
   - Fix: attribute present = explicit override, absent = follow the OS; the TODO entry states this contract and that a theme consults `prefers-color-scheme` only under `:root:not([data-color-scheme])`.
 - [x] **[QUALITY-159] - inline code text had no token, so Bootstrap's pink won under the dark scheme**
   - Symptom: with a Bootstrap theme picked, inline code read in Bootstrap's pink on the dark `--muted` chip, about 3:1.
+  - Cause: the demo's `code` rule set a background and no text color, so Bootstrap's `code` color applied.
   - Fix: `code { color: var(--fg) }` in `demo/style.css`.
+  - Verified: headless Chromium, dark OS, an inline code element on the examples page computes to the `--fg` text color.
 - [x] **[QUALITY-160] - role="switch" on a control that looks like a checkbox**
   - Symptom: sighted users saw a checkbox, assistive technology announced a switch.
+  - Cause: the role was added for the word "switch" in the request, not for a switch-looking control.
   - Fix: dropped; a native checkbox labelled "Dark" announces its own checked state.
+  - Verified: headless Chromium, every page: the input carries no role attribute.
 - [x] **[QUALITY-161] - once stored, a choice could never return to following the OS**
   - Symptom: the first version stored every toggle; only clearing site data brought the OS preference back.
+  - Cause: a two-state control has no third "follow the OS" position, and the first version did not derive one.
   - Fix: the switch stores only an override that differs from the OS preference; setting it to what the OS says clears the stored value and the attribute.
+  - Verified: jsdom smoke and headless Chromium: check on a light OS stores dark; uncheck clears storage and the attribute.
 - [x] **[QUALITY-162] - the inlined script was not escaped**
   - Symptom: a future `</script` or `<!--` in `demo/color-scheme.js` would have ended the inline block early on every generated page.
+  - Cause: the file was interpolated verbatim into the template literal.
   - Fix: the generator escapes `</script` and `<!--` when inlining `demo/color-scheme.js`.
+  - Verified: the replace expression, run on a sample containing both sequences, yields `<\/script` and `<\!--`.
 - [x] **[QUALITY-163] - two token vocabularies for one palette (site `--nav-link` / `--nav-hover` vs demo `--accent` / `--accent-soft`)**
   - Symptom: the same color concept had two names across the two stylesheets, and nothing said whether the differing light values were deliberate.
+  - Cause: the site template named the blue by its only use there (nav links); the demo uses it for buttons and active rows too.
   - Fix: the site template renamed to `--accent` / `--accent-soft`; both files say the light values differ on purpose and the dark values match.
+  - Verified: no `--nav-link` / `--nav-hover` left in the repository.
 - [x] **[QUALITY-164] - "private mode" in a comment gave "mode" a third meaning**
   - Symptom: a `demo/color-scheme.js` comment, in the commit that reserved "mode" for single vs multiple.
   - Fix: "private browsing".
@@ -58,15 +69,55 @@ Process: post-change review of the site's light / dark switch (`88f698a`: `demo/
   - Symptom: `scripts/build-site.mjs` ("same in both themes") and `src/icons.ts` ("light/dark themes"), against rule 7a.11.
   - Fix: "color schemes" in both; the benchmark-stage comment no longer says "light-themed".
 - [x] **[DOCUMENTATION-172] - several resolved entries of this round carried only a Fix line**
-  - Fix: every entry states its Symptom.
+  - Symptom: seven QUALITY entries of round 1 had no Symptom, Cause or Verified line.
+  - Fix: every entry states its Symptom; Cause and Verified where the fact exists.
 - [x] **[DOCUMENTATION-165] - the body-rule comment claimed "same colors in light"**
   - Symptom: Bootstrap 3's body text is #333, the token is #222, and the comment named no page.
   - Fix: the comment names `demo/angularjs/benchmark.html` and states what each scheme shows.
 - [x] **[DOCUMENTATION-166] - rule 7a.11 was separated from rule 10 by a blank line, turning the ordered list loose**
+  - Symptom: Markdown renders a list with a blank line between items as a loose list, so every rule of 7a gained paragraph spacing.
   - Fix: blank line removed.
+- [x] **[MEDIUM-173] - the benchmark's light pin targeted a heading, and body-attached dropdowns escaped it**
+  - Symptom: `#playground` is the section heading, not the widget grid (`#pg-grid`); Select2 and Slim Select append their dropdowns to body, so both inherited the dark root scheme.
+  - Cause: the pin was written from the nav's anchor name, not the markup.
+  - Fix: the pin covers `#pg-grid`, `.select2-container` and `.ss-content`.
+  - Verified: headless Chromium, dark OS: the playground's Select2 search field computes to a white background.
+- [x] **[MEDIUM-174] - demo classes rendered inside widgets took the page's dark tokens on the widgets' white surfaces**
+  - Symptom: row hints (`.hint`), the CSS arrow, the tree caret and the popup link button read in dark-scheme grays and blues on white, down to about 2.2:1.
+  - Cause: those rules were tokenized with the page chrome although their elements live inside the light-themed widget.
+  - Fix: fixed light colors for the widget-internal rules, and `.llselect-root .hint` scoped under the page-level `.hint`; a comment names the theme work as the point where this changes.
+  - Verified: headless Chromium, dark OS: a row hint inside an open popup computes to #666.
+- [x] **[MEDIUM-175] - chart bars kept their light-scheme colors on the dark background**
+  - Symptom: the default blue dataset sat at about 2.4:1 on #1b1b1b, the purple one dimmer.
+  - Fix: every metric and phase carries a `darkColor`; the builders pick it under the dark scheme (the rebuild on a scheme change applies it to live charts).
+  - Verified: headless Chromium, dark OS: the built chart's first dataset uses the dark blue.
+- [x] **[QUALITY-176] - links on the Bootstrap 3 page stayed Bootstrap blue on the dark background**
+  - Symptom: `#337ab7` on #1b1b1b is about 3.8:1, darker on hover.
+  - Cause: the demo stylesheet has no link rule, and Bootstrap 3 loads after it on that page.
+  - Fix: the page's own style block sets `a { color: var(--link) }`.
+  - Verified: headless Chromium, dark OS: a body link on that page computes to the `--link` dark value.
+- [x] **[QUALITY-177] - a filter match in the active sidebar row inherited the active blue over the amber mark**
+  - Symptom: about 3.2:1 in the dark scheme, in both the site sidebar and the examples TOC.
+  - Fix: `.toc mark { color: var(--fg) }` in both stylesheets.
+- [x] **[QUALITY-178] - a scheme rebuild left `animation: false` on the replacement chart**
+  - Symptom: legend clicks after a scheme change no longer animated.
+  - Fix: the rebuild restores the 300 ms animation option after its animation-free update.
+  - Verified: headless Chromium: after the switch, the rebuilt chart's animation option is back to 300 ms.
+- [x] **[QUALITY-179] - the switch mounted at DOMContentLoaded, behind the page-end CDN scripts**
+  - Symptom: on the benchmark pages the control appeared only after jQuery, the competitors and Chart.js had loaded.
+  - Cause: DOMContentLoaded waits for every classic script.
+  - Fix: a MutationObserver mounts the switch as soon as the nav is parsed to its end (a node follows it); DOMContentLoaded stays as the fallback.
+  - Verified: headless Chromium: the switch exists while `document.readyState` is still "loading".
+- [x] **[DOCUMENTATION-180] - resolved entries lacked Cause and Verified lines where the fact existed**
+  - Fix: added across the round.
+- [x] **[DOCUMENTATION-181] - the open QUALITY-167 entry kept line numbers from before the head script insertion**
+  - Fix: renumbered.
+- [x] **[DOCUMENTATION-182] - the TODO contract said "absent means follow the OS" and then listed following the OS as undecided**
+  - Symptom: the page contract and the theme question were written as one sentence.
+  - Fix: the page contract is marked settled; precedence is stated (explicit hooks beat the OS, a page that states light stays light); the open question is narrowed to a theme with no hook at all.
 - [ ] **[QUALITY-167] - demo/angularjs/benchmark.html loads Bootstrap 3 after demo/style.css, so the html font-size pin loses**
   - Symptom: measured in headless Chromium: `html` 10px, nav links 14px with 8px padding, against 16px / 12.8px on the other demo pages. Pre-existing; surfaced while the review compared the two Bootstrap-order comments in `demo/style.css` (`html { font-size: 16px }` and the dark body rule).
-  - Cause: Bootstrap 3's `html { font-size: 10px }` is loaded after the pin (`demo/angularjs/benchmark.html` lines 7-8 vs 10).
+  - Cause: Bootstrap 3's `html { font-size: 10px }` is loaded after the pin (`demo/angularjs/benchmark.html` line 9 vs 12).
   - Fix: open. Swapping the link order lets `demo/style.css` win every tie on that page (body text, code chips), so it needs an eyeball pass; alternatively pin `html` again in the page's own style block.
 
 ## review (item vocabulary, the popupListItem rename, chosenItemsOrder)

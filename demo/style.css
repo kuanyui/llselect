@@ -272,6 +272,11 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .hl-func    { color: #a6e22e; }
 
 .hint { color: var(--fg-muted); font-size: 0.9rem; margin: 0.3rem 0; }
+/* Inside a widget the theme's light palette rules until the themes get dark
+   values (TODO.md "Themes - dark color scheme"): fixed light colors there, not
+   the page tokens. Same for the widget-only rules below (CSS arrow, tree
+   caret, popup link button). */
+.llselect-root .hint { color: #666; }
 
 .out {
   margin-top: 0.5rem;
@@ -488,7 +493,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
   border-right: 5px solid transparent;
   border-top: 5px solid currentColor;
   transition: transform 0.15s;
-  color: var(--fg-muted);
+  color: #666; /* inside the trigger: the theme's light palette */
   margin-inline-start: 0.4rem;
 }
 
@@ -512,12 +517,12 @@ article { margin: 1.5rem 0 2rem 1rem; }
   margin-block: -0.3em;
   border-radius: 4px;
   cursor: pointer;
-  color: var(--fg-muted);
+  color: #555; /* inside a row: the theme's light palette */
 }
 /* Scale the GLYPH (the mdi ::before), not the box - the box and the leaf
    spacer share the row's em, so they stay aligned. */
 .tree-caret::before { font-size: 1.5em; }
-.tree-caret:hover { background: rgba(36, 86, 166, 0.18); color: var(--accent); }
+.tree-caret:hover { background: rgba(36, 86, 166, 0.18); color: #2456a6; }
 /* The single chevron points right (collapsed); rotate it down when the
    branch row says expanded. */
 .llselect-popup-list-row[data-tree-state='expanded'] .tree-caret { transform: rotate(90deg); }
@@ -586,7 +591,7 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .toc .toc-section > a.active { color: var(--accent); }
 /* filter-match highlight; explicit padding/background so Bootstrap's global
    mark rule (0.2em padding) cannot bloat the rows when a BS theme is active */
-.toc mark { padding: 0; background: var(--mark); color: inherit; border-radius: 2px; }
+.toc mark { padding: 0; background: var(--mark); color: var(--fg); border-radius: 2px; }
 
 /* Scroll-following block highlight: the content answers the sidebar's active
    row, same look as the site API pages (build-site.mjs .current-block).
@@ -837,14 +842,14 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .popup-link-button {
   font: inherit;
   font-size: 0.9em;
-  color: var(--link);
+  color: #1c4d8f; /* inside the popup header: the theme's light palette */
   background: none;
   border: 0;
   padding: 0;
   cursor: pointer;
   text-decoration: underline;
 }
-.popup-link-button[aria-disabled='true'] { color: var(--fg-muted); cursor: not-allowed; text-decoration: none; }
+.popup-link-button[aria-disabled='true'] { color: #999; cursor: not-allowed; text-decoration: none; }
 /* #endregion */
 /* #region 14.4 */
 /* Header commands that look exactly like the rows of 15.1, only pinned: the

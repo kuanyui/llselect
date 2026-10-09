@@ -618,12 +618,13 @@ async function measureSizes() {
 // One dataset per metric; the legend (Chart.js's own interactivity) toggles
 // each on/off. Metrics have very different scales, so each bar is normalized to
 // "percent of that metric's best performer" (100% = winner, longer is better)
-// to share one axis; the tooltip shows the real value.
+// to share one axis; the tooltip shows the real value. darkColor: the same hue
+// lifted for the dark scheme (the light values sit under 3:1 on #1b1b1b).
 const METRICS = [
-  { key: 'throughput', label: 'Throughput (widgets/sec)', color: '#2456a6', higherBetter: true, value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null), fmt: v => Math.round(v).toLocaleString() + ' /s' },
-  { key: 'compute', label: 'Build total (ms)', color: '#c9821a', higherBetter: false, value: r => r.compute, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
-  { key: 'nodes', label: 'DOM nodes', color: '#7a3ea6', higherBetter: false, value: r => r.nodes, fmt: v => Math.round(v).toLocaleString() },
-  { key: 'teardown', label: 'Teardown total (ms)', color: '#1a7f37', higherBetter: false, value: r => r.teardown, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
+  { key: 'throughput', label: 'Throughput (widgets/sec)', color: '#2456a6', darkColor: '#7fb1f5', higherBetter: true, value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null), fmt: v => Math.round(v).toLocaleString() + ' /s' },
+  { key: 'compute', label: 'Build total (ms)', color: '#c9821a', darkColor: '#e3b341', higherBetter: false, value: r => r.compute, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
+  { key: 'nodes', label: 'DOM nodes', color: '#7a3ea6', darkColor: '#ab7df8', higherBetter: false, value: r => r.nodes, fmt: v => Math.round(v).toLocaleString() },
+  { key: 'teardown', label: 'Teardown total (ms)', color: '#1a7f37', darkColor: '#3fb950', higherBetter: false, value: r => r.teardown, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
 ]
 
 let chartInstance = null
@@ -659,6 +660,7 @@ function rebuildChart(getChart, render) {
   if (!after) { return }
   visible.forEach((v, i) => { if (i < after.data.datasets.length) { after.setDatasetVisibility(i, v) } })
   after.update('none')
+  after.options.animation = { duration: 300 } // later legend clicks animate again
 }
 function rebuildCharts() {
   if (isDarkScheme() === chartsBuiltDark) { return } // the attribute moved, the effective scheme did not
@@ -696,7 +698,7 @@ function renderChart() {
       if (m.higherBetter) { return best > 0 ? v / best * 100 : (v === best ? 100 : 0) }
       return v > 0 ? best / v * 100 : (v === best ? 100 : 0)
     })
-    return { label: m.label, data, backgroundColor: m.color, borderWidth: 0, hidden: mi !== 0, rawValues: raw, fmt: m.fmt }
+    return { label: m.label, data, backgroundColor: isDarkScheme() ? m.darkColor : m.color, borderWidth: 0, hidden: mi !== 0, rawValues: raw, fmt: m.fmt }
   })
 
   const cfg = {
@@ -738,12 +740,12 @@ function renderChart() {
 // Unchoose (in popup), plus a Remove tag (x) column only when the close-button
 // checkbox is on (see ixPhases).
 const PH = {
-  open: { key: 'open', label: 'Open popup', color: '#2456a6' },
-  filter: { key: 'filter', label: 'Filter candidates', color: '#7a3ea6' },
-  choose: { key: 'choose', label: 'Choose candidate', color: '#1a7f37' },
-  unchoose: { key: 'unchoose', label: 'Unchoose (in popup)', color: '#3a9dbf' },
-  removeTag: { key: 'removeTag', label: 'Remove tag (x)', color: '#b5651d' },
-  close: { key: 'close', label: 'Close popup', color: '#c9821a' },
+  open: { key: 'open', label: 'Open popup', color: '#2456a6', darkColor: '#7fb1f5' },
+  filter: { key: 'filter', label: 'Filter candidates', color: '#7a3ea6', darkColor: '#ab7df8' },
+  choose: { key: 'choose', label: 'Choose candidate', color: '#1a7f37', darkColor: '#3fb950' },
+  unchoose: { key: 'unchoose', label: 'Unchoose (in popup)', color: '#3a9dbf', darkColor: '#6fd3f0' },
+  removeTag: { key: 'removeTag', label: 'Remove tag (x)', color: '#b5651d', darkColor: '#e8a15c' },
+  close: { key: 'close', label: 'Close popup', color: '#c9821a', darkColor: '#e3b341' },
 }
 const NA = 'n/a' // a phase a library does not support - rendered literally, no bar
 function ixCloseBtnOn() { return document.getElementById('ix-closebtn').checked }
@@ -1023,7 +1025,7 @@ function renderIxChart(mode) {
   const datasets = ixPhases(mode).map(p => ({
     label: p.label,
     data: libs.map(k => { const v = mode.results[k][p.key]; return typeof v === 'number' ? v : null }), // n/a -> gap
-    backgroundColor: p.color, borderWidth: 0, stack: 'ix',
+    backgroundColor: isDarkScheme() ? p.darkColor : p.color, borderWidth: 0, stack: 'ix',
     // Deselect the two deselect phases by default: Unchoose is n/a for some
     // libraries (Choices, Tom Select) and Remove tag is opt-in, so including them
     // in the default stacked bar would sum uneven totals. The legend toggles them

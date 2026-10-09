@@ -33,9 +33,7 @@
   }
   apply()
   darkMq.addEventListener('change', apply) // keeps the switch in step while no override is stored
-  document.addEventListener('DOMContentLoaded', () => {
-    const nav = document.querySelector('body > nav')
-    if (!nav) { return }
+  const mount = (nav) => {
     switchInput = document.createElement('input')
     switchInput.type = 'checkbox'
     switchInput.checked = (override ?? osScheme()) === 'dark'
@@ -53,5 +51,19 @@
     label.className = 'color-scheme-switch'
     label.append(switchInput, ' Dark')
     nav.append(label)
-  })
+  }
+  // Mount as soon as the nav is parsed to its end (a node follows it), not at
+  // DOMContentLoaded, which waits for every classic script at the page's end.
+  const tryMount = (navMayBeOpen) => {
+    if (switchInput) { return true }
+    const nav = document.querySelector('body > nav')
+    if (!nav || (!navMayBeOpen && !nav.nextSibling)) { return false }
+    mount(nav)
+    return true
+  }
+  if (!tryMount(false)) {
+    const observer = new MutationObserver(() => { if (tryMount(false)) { observer.disconnect() } })
+    observer.observe(document.documentElement, { childList: true, subtree: true })
+    document.addEventListener('DOMContentLoaded', () => { observer.disconnect(); tryMount(true) })
+  }
 })()
