@@ -55,6 +55,8 @@ React and Vue fail the last two (no standard expression grammar, no standard sta
 
 Each ships a `.min.js` beside it (built by `npm run build`, terser only - there is no bundler). The live [examples](../demo/angularjs/examples.html) and [benchmark](../demo/angularjs/benchmark.html) load these files directly, so what the demo shows is what the package ships.
 
+The look comes from one of the core package's theme files (`@llselect/core/themes/vanilla.css`, `bootstrap-3.css`, `bootstrap-4.css`, `bootstrap-5.css`, `tailwind.css`), loaded with a `<link>`; the directives add nothing to it. Every theme has a dark palette; the core README section "Dark color scheme" says how a page turns it on, and [`ll-color-scheme`](API.md#ll-color-scheme) forces it per element. The examples page has a theme picker at the top.
+
 ## The two `name` attributes
 
 The single most useful thing to know here, because it is a name collision that makes an entire class of workaround look necessary when it is not.

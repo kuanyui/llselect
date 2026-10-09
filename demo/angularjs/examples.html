@@ -7,10 +7,23 @@
   <script src="../color-scheme.js"></script>
   <title>llselect + AngularJS - examples</title>
   <link rel="stylesheet" href="../style.css">
-  <link rel="stylesheet" href="../../dist/themes/vanilla.css">
+  <!-- llselect visual theme. Swapped at runtime by the theme picker (app.js). -->
+  <link id="theme-link" rel="stylesheet" href="../../dist/themes/vanilla.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+  <!-- Bootstrap CSS is loaded ONLY when a Bootstrap theme is picked (app.js). -->
 </head>
 <body ng-app="demo" ng-controller="DemoCtrl as vm">
+  <div class="theme-picker">
+    <label for="theme-select">Theme:</label>
+    <select id="theme-select">
+      <option value="vanilla">Vanilla</option>
+      <option value="tailwind">Tailwind</option>
+      <option value="bootstrap-3">Bootstrap 3</option>
+      <option value="bootstrap-4">Bootstrap 4</option>
+      <option value="bootstrap-5">Bootstrap 5</option>
+    </select>
+  </div>
+
   <nav class="demo-nav">
     <a href="../../">&larr; Home</a>
     <a href="../../api/">API</a>
