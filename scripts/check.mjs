@@ -263,11 +263,11 @@ for (const rel of markdownFiles) {
 // tell a light-only page from an OS-following one. Every color outside the
 // `--llselect-*` declarations must come from a variable (DESIGN.md "The color
 // variables"): a hex or color-function literal counts in any declaration, a
-// hex inside a data: url() too (an embedded image color follows no scheme); a named
-// or system color keyword counts only in a property that takes a color
-// (elsewhere `menu` or `background` is an ordinary value). `transparent` and
-// `currentColor` are not colors here. CSS property names, at-rules and media
-// features match case-insensitively; the custom property
+// hex inside a data: url() too (an embedded image color follows no scheme);
+// a named or system color keyword counts only in a property that takes a
+// color (elsewhere `menu` or `background` is an ordinary value).
+// `transparent` and `currentColor` are not colors here. CSS property names,
+// at-rules and media features match case-insensitively; the custom property
 // `--llselect-color-scheme` is case-sensitive, as CSS defines.
 {
   const NAMED_COLORS = 'aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightslategrey|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|rebeccapurple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen'
@@ -300,9 +300,11 @@ for (const rel of markdownFiles) {
   // comment opener inside a string is text, a "}" or ";" inside a string
   // splits nothing, a ")" inside a quoted url() ends nothing, and every index
   // and line number still points into the file), the text with only the
-  // comments blanked (for messages), and the span of every url() with its
+  // comments blanked (for messages), and the start of every url() with its
   // argument (for the color scan). An escaped character stays inside its
-  // string or url(); a string ends at a newline at the latest.
+  // string or url(); a string ends at a newline at the latest. A url() needs
+  // an identifier boundary before it (`noturl(` is not one); CSS whitespace
+  // and comments may sit between `url(`, a quoted argument and the `)`.
   const scanCss = (text) => {
     let masked = '', noComments = '', i = 0
     const urls = []
@@ -318,15 +320,20 @@ for (const rel of markdownFiles) {
         const stop = stringEnd(i, c)
         masked += blank(text.slice(i, stop)); noComments += text.slice(i, stop); i = stop; continue
       }
-      if (/^url\(/i.test(text.slice(i, i + 4))) {
-        let j = i + 4
-        while (j < text.length && (text[j] === ' ' || text[j] === '\t' || text[j] === '\n')) { j += 1 }
+      if (/^url\(/i.test(text.slice(i, i + 4)) && !/[\w-]/.test(text[i - 1] ?? '')) {
+        const skipBlanks = (k) => {
+          for (;;) {
+            while (k < text.length && /[ \t\n\r\f]/.test(text[k])) { k += 1 }
+            if (text[k] === '/' && text[k + 1] === '*') { const close = text.indexOf('*/', k + 2); k = close === -1 ? text.length : close + 2; continue }
+            return k
+          }
+        }
+        let j = skipBlanks(i + 4)
         let argument
         if (text[j] === '"' || text[j] === "'") {
           const close = stringEnd(j, text[j])
           argument = text.slice(j + 1, close - 1)
-          j = close
-          while (j < text.length && text[j] !== ')' && text[j] !== '\n') { j += 1 }
+          j = skipBlanks(close)
         } else {
           const from = j
           while (j < text.length && text[j] !== ')') { j += text[j] === '\\' ? 2 : 1 }
@@ -370,7 +377,7 @@ for (const rel of markdownFiles) {
         // only an embedded image (a data: URL) carries a color of its own; url(#id) and url(file.svg) point elsewhere
         const embeddedColor = urls.some((u) => u.start >= from && u.start < to && /^data:/i.test(u.argument) && URL_COLOR.test(u.argument))
         const flagged = !property.startsWith('--llselect-') && (COLOR_LITERAL.test(value) || (COLOR_PROPERTY.test(property) && COLOR_KEYWORD.test(value)) || embeddedColor)
-        if (flagged) { problems.push(`${f}:${lineOf(css, from)}: literal color outside the --llselect-* declarations: ${source.slice(from, to).trim()}`) }
+        if (flagged) { problems.push(`${f}:${lineOf(css, from)}: literal color outside the --llselect-* declarations: ${noComments.slice(from, to).replace(/\s+/g, ' ').trim()}`) }
         start += declaration.length + 1
       }
     }
