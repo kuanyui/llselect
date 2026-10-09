@@ -17,7 +17,8 @@
 //   6. Theme files keep the color-scheme contract (DESIGN.md "Color scheme
 //      (light / dark) in the themes"): no `color-scheme` and no
 //      `--llselect-color-scheme` declared on the widget root, no
-//      `prefers-color-scheme` media query.
+//      `prefers-color-scheme` media query, no literal color outside the
+//      `--llselect-*` variable declarations.
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import ts from 'typescript'
@@ -267,13 +268,24 @@ for (const rel of markdownFiles) {
     for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       const selectors = m[1].split(',').map((s) => s.trim()).filter((s) => s !== '' && !s.startsWith('@'))
       const onRoot = selectors.some((s) => {
-        const subject = s.split(/\s+|>|\+|~/).filter(Boolean).pop()
-        return subject !== undefined && /^\.llselect-root(?![\w-])/.test(subject)
+        // The subject is the last compound selector; parentheses and brackets
+        // are masked first so their contents cannot split it or carry the
+        // class name; the class may sit anywhere in the compound.
+        const masked = s.replace(/\([^()]*\)/g, (x) => 'x'.repeat(x.length)).replace(/\[[^\]]*\]/g, (x) => 'x'.repeat(x.length))
+        const parts = masked.split(/\s+|>|\+|~/).filter(Boolean)
+        const subject = parts.pop()
+        return subject !== undefined && /(^|[^\w-])\.llselect-root(?![\w-])/.test(subject)
       })
       if (!onRoot) { continue }
       const body = m[2]
       if (/(^|[\s;])color-scheme\s*:/.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares color-scheme on the widget root; the resolver reads it there`) }
       if (/--llselect-color-scheme\s*:/.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares --llselect-color-scheme on the widget root; it would hide an ancestor's value`) }
+    }
+    // Every color outside the variable declarations must come from a variable
+    // (DESIGN.md "The color variables"); keywords such as transparent stay.
+    for (const [index, line] of css.split('\n').entries()) {
+      if (/^\s*--llselect-[a-z-]+\s*:/.test(line)) { continue }
+      if (/#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/.test(line)) { problems.push(`${f}:${index + 1}: literal color outside the variable declarations: ${line.trim()}`) }
     }
   }
 }

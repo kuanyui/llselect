@@ -728,6 +728,26 @@ test('config: <ui-llselect> takes popupWidthPolicy, and NOT arrow / filterable /
   assert.equal(a.$$('ui-llselect .llselect-popup-list-row').length, 1, 'the ui-select filter chain must still run')
 })
 
+test('config colorScheme reaches <ui-llselect>', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person" aria-label="P">
+          <ui-llselect-match>{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.person = undefined },
+    config: ['llselectConfigProvider', function (llselectConfigProvider) { llselectConfigProvider.defaults({ colorScheme: 'dark' }) }],
+  })
+  assert.deepEqual(a.errors, [])
+  const sel = a.ng.element(a.$('ui-llselect')).controller('uiLlselect').instance()
+  assert.equal(sel.getColorScheme(), 'dark')
+  assert.equal(sel.rootEl.getAttribute('data-llselect-color-scheme'), 'dark')
+})
+
 test('config uiTranslationPack reaches <ui-llselect multiple>: the tag remove button speaks the pack', () => {
   const a = boot({
     files: ['llselect-angularjs.js', 'llselect-ui-select.js'],

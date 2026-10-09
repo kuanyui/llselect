@@ -17,7 +17,7 @@
   --llselect-trigger-hover-line: var(--bs-border-color, #dee2e6); /* border of the hovered trigger */
   --llselect-popup-line: var(--bs-border-color-translucent, rgba(0, 0, 0, 0.175)); /* border of the popup */
   --llselect-filter-line: var(--bs-border-color, #dee2e6); /* border of the filter input */
-  --llselect-divider: rgba(0, 0, 0, 0.12); /* dividers before and after action rows and the choose-all row; header, footer and pinned-row edges */
+  --llselect-divider: rgba(var(--bs-body-color-rgb, 33, 37, 41), 0.12); /* dividers before and after action rows and the choose-all row; header, footer and pinned-row edges; follows Bootstrap's text color like the shadow */
   --llselect-focus-line: rgba(var(--bs-primary-rgb, 13, 110, 253), 0.5); /* border (vanilla: outline) of the focused or open trigger */
   --llselect-filter-focus-line: var(--bs-primary, #0d6efd); /* border of the focused filter input */
   --llselect-focus-ring: rgba(var(--bs-primary-rgb, 13, 110, 253), 0.25); /* ring shadow of the focused or open trigger */
@@ -382,7 +382,7 @@
   --llselect-trigger-hover-line: var(--bs-border-color, #495057);
   --llselect-popup-line: var(--bs-border-color-translucent, rgba(255, 255, 255, 0.15));
   --llselect-filter-line: var(--bs-border-color, #495057);
-  --llselect-divider: rgba(255, 255, 255, 0.12);
+  --llselect-divider: rgba(var(--bs-body-color-rgb, 222, 226, 230), 0.12);
   --llselect-filter-focus-line: var(--bs-link-color, #6ea8fe);
   --llselect-shadow: rgba(0, 0, 0, 0.5);
   --llselect-row-hover-bg: var(--bs-tertiary-bg, #2b3035);

@@ -2,6 +2,51 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (theme dark color schemes)
+
+Process: post-implementation review of the themes' dark color schemes (commits `c037159` to `a536449`: the 32 variables, the resolver, the setting and methods, the AngularJS attribute, demo section 17, the README recipe) by the other four panel members, one at a time, read-only, on a self-contained brief with the specification (`DESIGN.md` "Color scheme (light / dark) in the themes"). Opus 5: fix first, four MEDIUM, eight QUALITY, six DOCUMENTATION. Opus 4.8: ship, three QUALITY, two DOCUMENTATION. Codex 5.5: fix first, three MEDIUM, two QUALITY, two DOCUMENTATION. Codex Sol: no output, the model reported "at capacity" (re-run pending). The entries below merge the overlapping findings.
+
+- [x] **[MEDIUM-211] - bootstrap-5's dark dividers were a fixed white tint while its surfaces follow Bootstrap's variables**
+  - Symptom: on a page whose Bootstrap variables stay light while the widget resolves dark (OS dark, `color-scheme: light dark`, no `data-bs-theme`), the header, footer and command-row dividers painted white on white.
+  - Fix: both blocks read `rgba(var(--bs-body-color-rgb, ...), 0.12)`, like the shadow; the light fallback is the near-black Bootstrap text color, a hue change from pure black that the eye cannot tell at 12 percent.
+- [x] **[MEDIUM-212] - three dark border values sat below the 3:1 floor the specification states**
+  - Symptom: vanilla's filter-input border #555 on #1e1e1e (2.2:1), bootstrap-4's trigger and filter borders #6c757d on #343a40 (2.5:1), tailwind's hover border darker than its rest border; the docs claimed every palette passed, and bootstrap-5's exception was written as 2.1:1, the value on the demo page's background; on Bootstrap's own dark body background it is 1.9:1, and the popup border (Bootstrap's translucent border) is 1.6:1.
+  - Fix: vanilla #6b6b6b, bootstrap-4 #868e96 (Bootstrap's gray-500), tailwind hover slate-400; the contrast probe now measures the filter border and the hover border too; the bootstrap-5 note corrected.
+- [x] **[MEDIUM-213] - a second instance built on the same element could be overwritten or unsubscribed by the first**
+  - Symptom: an older `'auto'` instance's batched first decision ran after a newer forced instance wrote its attribute; the older instance's `destroy()` dropped the newer instance's subscription.
+  - Cause: pending decisions were a set of instances and subscriptions were keyed by the root without an identity check.
+  - Fix: pending decisions are keyed by the root element; every constructor claims the element (drops the older pending decision and subscription); `cancelFirstDecision` and `unsubscribeColorScheme` act only when the entry is still their own.
+  - Verified: test "a newer instance on the same element owns it".
+- [x] **[MEDIUM-214] - under bootstrap-5 a forced light widget inside a data-bs-theme="dark" page stays Bootstrap-dark**
+  - Symptom: the setting promised "always that scheme"; Bootstrap's variables supply the colors regardless.
+  - Fix: documented, not changed: the setting docstring, the README Bootstrap bullet and DESIGN's known limits say so. Changing the CSS would give up decision 5 (Bootstrap drives the bootstrap-5 theme).
+- [x] **[QUALITY-215] - a widget built on a detached element decided light and nothing re-decided it on insertion**
+  - Fix: documented in DESIGN's known limits and in the `refreshColorScheme()` docstring (call it after inserting); test added. The batched first decision already covers "built and inserted in the same task".
+- [x] **[QUALITY-216] - when the document was wired before <body> existed, <body> was never observed**
+  - Fix: the wiring records whether `<body>` is observed; every later subscription observes it as soon as it exists.
+- [x] **[QUALITY-217] - the observer reacted to the resolver's own attribute when the widget root is <html> or <body>**
+  - Fix: records whose attribute is `data-llselect-color-scheme` start no pass.
+- [x] **[QUALITY-218] - check.mjs rule 6 missed a compound selector with the root class not first, and nothing checked for literal colors**
+  - Fix: the subject is matched anywhere in the last compound after masking parentheses and brackets; a second check rejects any literal color outside the `--llselect-*` declarations.
+- [x] **[QUALITY-219] - the shared listener path had no jsdom coverage**
+  - Fix: tests for the observer pass, for the subscription ending on `destroy()`, for several widgets in one batch, and for the ui-select bridge's config passthrough.
+- [x] **[QUALITY-220] - demo 17.5 painted a dark palette on a widget resolved light, so the scrollbar came out light**
+  - Fix: the wrapper also sets `--llselect-color-scheme: dark`; the README's custom-colors bullet says to pair a palette with its scheme.
+- [x] **[QUALITY-221] - the shared listeners stay for the document's life**
+  - Fix: none. A pass is one document query, holds no instance, and `<html>` / `<body>` attribute changes are rare; a counter to disconnect and reconnect was judged more state than it saves.
+- [x] **[DOCUMENTATION-222] - the README recipe broke the README limits and listed the marks incompletely**
+  - Fix: nested list, one mark family per line, sentences under 20 words, at most two code names per line, the light classes and `auto` listed.
+- [x] **[DOCUMENTATION-223] - the destroy() docstring did not mention the attribute, the subscription, or the residue of a discarded instance**
+  - Fix: both sentences extended.
+- [x] **[DOCUMENTATION-224] - the setting docstring reused "trigger" for the update conditions and numbered the fallback as a source**
+  - Fix: reworded; the fallback is a plain bullet.
+- [x] **[DOCUMENTATION-225] - widgets inside a shadow root miss the two automatic re-decisions, undocumented**
+  - Fix: the setting docstring, the `refreshColorScheme()` docstring and DESIGN's Shadow DOM limit say so.
+- [x] **[DOCUMENTATION-226] - the fixed variable and attribute names under cssClassPrefix were undocumented**
+  - Fix: the setting docstring and DESIGN's known limits say the names never change.
+- [x] **[DOCUMENTATION-227] - the demo section 17 intro enumerated the examples in one misreadable sentence and claimed a "resolved" line for 17.5**
+  - Fix: the intro keeps two facts; the "resolved" claim is limited to 17.1 to 17.4.
+
 ## review (site color-scheme switch)
 
 Process: post-change review of the site's light / dark switch (`88f698a`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`739aeaf`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Round 3: Codex 5.5 (xhigh): ship, one QUALITY and two DOCUMENTATION findings (170-172), fixed. Round 4: Codex Sol (max): fix first, three MEDIUM, four QUALITY, three DOCUMENTATION findings (173-182), fixed. Round 5 (post-fix review of round 4 by the other four members, one at a time): Opus 5: fix first, two MEDIUM, four QUALITY, five DOCUMENTATION (183-193; two were the pre-change baseline, kept). Opus 4.8: ship, one QUALITY, two DOCUMENTATION (194-196). Codex 5.5: fix first, one MEDIUM, three DOCUMENTATION (197-200). Codex Sol: fix first, one MEDIUM, one QUALITY, three DOCUMENTATION (201-205). Round 6 (confirmation of `6ceeccd` by Opus 5): ship, two QUALITY, three DOCUMENTATION (206-210), comment and doc level plus one pin, applied without a further review round. Entries follow the round-4 ones.

@@ -886,7 +886,9 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
    .llselect-root; a rule that targets the root redefines any of them. This
    stylesheet loads BEFORE the theme, so the rule also names the attribute to
    outweigh the theme's dark block; a stylesheet loaded after the theme needs
-   only ".acme-brand .llselect-root". */
+   only ".acme-brand .llselect-root". The wrapper declares the scheme that
+   matches the palette: the browser paints the scrollbar from the scheme. */
+.acme-brand { --llselect-color-scheme: dark; }
 .acme-brand .llselect-root,
 .acme-brand .llselect-root[data-llselect-color-scheme] {
   --llselect-fg: #f3e8ff;

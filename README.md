@@ -433,16 +433,29 @@ sel = new LLSelectMultiple(el, {
 
 #### Dark color scheme
 
-Every theme ships a dark palette. With the default setting `colorScheme: 'auto'`, the widget checks the CSS variable `--llselect-color-scheme` first, then the CSS property `color-scheme`.
+Every theme ships a dark palette. The widget checks two CSS sources, in this order: the variable `--llselect-color-scheme`, then the property `color-scheme`.
 
-- Standard: declare `color-scheme: light dark` on `<html>`. The widget then follows the operating system's color preference, like a native `<select>`.
-- Your own toggle: set `--llselect-color-scheme` to `dark` or `light` on an ancestor element of the widget. One rule does it: `.night { --llselect-color-scheme: dark; }`.
-- Built in: the themes set that variable for the ancestor classes `dark`, `theme-dark` and `dark-mode`, and for the ancestor attributes `data-theme`, `data-bs-theme` and `data-color-scheme` with the values `dark` or `light`.
-- Nested regions: the widget inherits the variable from the nearest ancestor that sets it. Put `data-color-scheme="light"` on a card to keep its widgets light inside a dark page.
-- Per instance: the setting `colorScheme: 'dark'` or `'light'` overrides both CSS sources and the operating system's preference.
-- When neither CSS source selects dark, the widget stays light, on a dark operating system too.
-- Your own colors: redefine the `--llselect-*` variables in a rule that targets `.llselect-root`. The names and roles are listed at the top of every theme file.
+- Standard: declare `color-scheme: light dark` on `<html>`. The widget then follows the operating system, like a native select element.
+- Your own toggle: set the variable to dark or light on an ancestor of the widget. One rule does it: `.night { --llselect-color-scheme: dark; }`.
+- Built in: the themes set the variable for the marks in the table below, on any ancestor.
+- Nested regions: the nearest ancestor that sets the variable wins. A card with `data-color-scheme="light"` stays light inside a dark page.
+- Per instance: the setting `colorScheme: 'dark'` or `'light'` wins over both CSS sources and the operating system.
+- Bootstrap 5.3 pages: set `data-bs-theme="dark"` as Bootstrap documents. The bootstrap-5 theme takes its colors from Bootstrap's own variables, so that attribute drives it. A forced light widget inside such a page keeps Bootstrap's dark colors.
+- When neither CSS source selects dark, the widget stays light. This holds on a dark operating system too.
+- Your own colors: redefine the `--llselect-*` variables in a rule that targets the widget root, class `llselect-root`. Every theme file lists the names and roles at its top.
+- A custom dark palette also needs `--llselect-color-scheme: dark` on the same wrapper. The browser paints the scrollbar from the scheme, not from the variables.
 - Live comparison: section 17 of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
+
+| Built-in mark on an ancestor | Selects |
+|---|---|
+| class `dark` | dark |
+| class `theme-dark` | dark |
+| class `dark-mode` | dark |
+| class `theme-light` | light |
+| class `light-mode` | light |
+| attribute `data-theme` | its value, dark or light |
+| attribute `data-bs-theme` | its value, dark or light |
+| attribute `data-color-scheme` | its value: dark, light, or auto to follow the operating system |
 
 ### Subclassing (extending the library)
 

@@ -104,6 +104,67 @@ test('a forced setting is written at construction, with no microtask', () => {
   assert.equal(sel.rootEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
 })
 
+test('the shared observer: an attribute change on <html> makes every widget decide again', async () => {
+  // jsdom has a MutationObserver and no matchMedia; the variable lives on the
+  // root itself (jsdom computes no inherited custom property).
+  const el = mount()
+  const sel = new LLSelectSingle<string>(el)
+  await Promise.resolve()
+  assert.equal(sel.getColorScheme(), 'light')
+  el.style.setProperty('--llselect-color-scheme', 'dark')
+  document.documentElement.setAttribute('data-color-scheme', 'dark')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.equal(sel.getColorScheme(), 'dark', 'refreshed through the shared observer')
+  assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+})
+
+test('destroy() ends the subscription: a later <html> change writes nothing back', async () => {
+  const el = mount()
+  const sel = new LLSelectSingle<string>(el)
+  await Promise.resolve()
+  sel.destroy()
+  el.style.setProperty('--llselect-color-scheme', 'dark')
+  document.documentElement.setAttribute('data-color-scheme', 'dark')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.equal(el.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false)
+})
+
+test('several widgets built in one task all decide in the one batch', async () => {
+  setupDom('<!doctype html><html><body><div id="a"></div><div id="b" style="--llselect-color-scheme: dark"></div></body></html>')
+  const a = document.getElementById('a'), b = document.getElementById('b')
+  assert.ok(a); assert.ok(b)
+  new LLSelectSingle<string>(a)
+  new LLSelectSingle<string>(b)
+  assert.equal(a.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false)
+  await Promise.resolve()
+  assert.equal(a.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
+  assert.equal(b.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+})
+
+test('a newer instance on the same element owns it: the older pending decision and subscription are dropped', async () => {
+  const el = mount()
+  el.style.setProperty('--llselect-color-scheme', 'dark')
+  new LLSelectSingle<string>(el) // 'auto', its first decision pending
+  new LLSelectSingle<string>(el, { colorScheme: 'light' })
+  assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
+  await Promise.resolve()
+  assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light', "the older instance's batched decision did not overwrite the forced one")
+  document.documentElement.setAttribute('data-color-scheme', 'dark')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light', "the older instance's subscription is gone")
+})
+
+test('a widget built on a detached element decides light; refreshColorScheme() after insertion decides again', () => {
+  setupDom()
+  const el = document.createElement('div')
+  const sel = new LLSelectSingle<string>(el)
+  assert.equal(sel.getColorScheme(), 'light')
+  el.style.setProperty('--llselect-color-scheme', 'dark')
+  document.body.appendChild(el)
+  sel.refreshColorScheme()
+  assert.equal(sel.getColorScheme(), 'dark')
+})
+
 test('destroy() removes the attribute from the root and cancels a pending first decision', async () => {
   const sel = new LLSelectSingle<string>(mount())
   await Promise.resolve()
