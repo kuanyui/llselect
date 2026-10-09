@@ -1130,11 +1130,12 @@
     <article>
       <h3>17.5 Your own colors: the --llselect-* variables</h3>
       <p class="hint">
-        The selector <code>.acme-brand .llselect-root</code> gives the widget
-        inside the wrapper its own <code>--llselect-*</code> values, purple
-        here, in place of the theme's light and dark values. The wrapper also
-        sets <code>--llselect-color-scheme: dark</code>, so the browser paints
-        the scrollbar dark to match. Every theme file lists the variable names.
+        The wrapper <code>.acme-brand</code> contains the widget. The rule
+        <code>.acme-brand .llselect-root</code> gives that widget its own
+        <code>--llselect-*</code> values, purple here, in place of the theme's
+        palette. The wrapper also sets
+        <code>--llselect-color-scheme: dark</code>, so the browser paints the
+        scrollbar dark to match. Every theme file lists the variable names.
       </p>
       <div class="demo-split">
         <div class="demo-pane">

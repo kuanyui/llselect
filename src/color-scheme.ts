@@ -4,9 +4,9 @@
 
 /**
  * The `colorScheme` setting's values.
- * - `'auto'` (default): the library decides from the page. The setting's
+ * - `'auto'`, the default: the library decides from the widget root's computed CSS. The setting's
  *   docstring on {@link LLSelectBaseSettings.colorScheme} explains the order.
- * - `'light'` or `'dark'`: that scheme, whatever the CSS sources and the operating system say. With the bootstrap-5 theme, Bootstrap's own variables still supply the colors; see the README section "Dark color scheme".
+ * - `'light'` or `'dark'`: the widget shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables; see the README section "Dark color scheme".
  * @group Settings
  * @category Base
  */

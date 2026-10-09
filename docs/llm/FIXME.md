@@ -36,7 +36,7 @@ Process: the fix batch `45d34ab` went to the other four panel members for a post
 - [x] **[DOCUMENTATION-237] - README and demo wording**
   - Fix: README: "the same wrapper" became "the element your rule targets, or one of its ancestors"; "as Bootstrap documents" became "the attribute Bootstrap's own documentation uses"; the marks count on the widget root too; the custom-colors bullet says to load the rule after the theme stylesheet. Demo 17.5: "in both schemes" dropped, since the wrapper now resolves dark; the hint says the rule replaces the theme's light and dark values.
 - [x] **[NEEDS-VERIFICATION-238] - the new copy of both fix batches had not been through the wording review the specification requires**
-  - Fix: Codex Astra at medium effort (the substitute for Codex Luna 6, which this account cannot use) reviewed the changed docstrings, the README recipe and the demo hints after this round. WORDING_REVIEW_RESULT
+  - Fix: Codex Astra at medium effort (the substitute for Codex Luna 6, which this account cannot use) reviewed the changed docstrings, the README recipe, the demo hints and the `ll-color-scheme` entry after this round: 34 findings, 32 applied (the condition of each sentence spelled out, the `color-scheme` property rule as three "if" sentences, the `destroy()` docstring restructured into one lead sentence and bullets, "marks" replaced by "classes and attributes" in the README). Two declined: the `**Expression** ->` line of `angularjs/API.md` keeps the format every attribute entry there uses; the Bootstrap caveat is not repeated in the README's nested-regions bullet, since the Bootstrap bullet two lines down carries it.
 
 ## review (theme dark color schemes)
 
