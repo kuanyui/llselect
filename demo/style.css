@@ -277,6 +277,9 @@ article { margin: 1.5rem 0 2rem 1rem; }
    the page tokens. Same for the widget-only rules below (CSS arrow, tree
    caret, popup link button). */
 .llselect-root .hint { color: #666; }
+/* Links inside a widget (the 14.x footer link): the UA's dark-scheme link
+   color would land on the white popup otherwise. */
+.llselect-root a { color: #1c4d8f; }
 
 .out {
   margin-top: 0.5rem;
