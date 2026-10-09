@@ -158,9 +158,9 @@ $scope.ifaceMatch = function (i, query) {
 
 **Expression** -> `colorScheme`. `'auto'` (llselect's default) / `'light'` / `'dark'` - quoted: `ll-color-scheme="'dark'"`.
 
-- `'auto'`: llselect decides from the page. It reads the CSS variable `--llselect-color-scheme` on any ancestor element, then the page's CSS property `color-scheme` together with the OS preference. The core setting's docstring lists the exact order.
-- `'light'` / `'dark'`: that scheme, whatever the page says.
-- The result lands on the widget root as `data-llselect-color-scheme="light|dark"`; the themes key their dark colors on it.
+- `'auto'`: the widget reads `--llselect-color-scheme` from its root element's computed style, inherited values included. When that value is not `light`, `dark` or `auto`, it checks the root's computed `color-scheme` together with the operating system's color preference. The core setting `colorScheme` (`LLSelectBaseSettings`, in the API reference) states the precedence rules.
+- `'light'` or `'dark'`: always that scheme, regardless of the CSS sources and of the operating system's color preference.
+- The widget's root element receives `data-llselect-color-scheme="light"` or `data-llselect-color-scheme="dark"`. The themes apply their dark colors when the value is `dark`.
 
 ### `ll-arrow`
 
@@ -394,7 +394,7 @@ Boolean. The app-wide default behind [`ll-highlight`](#ll-highlight): wrap each 
 
 #### `colorScheme`
 
-`'auto' | 'light' | 'dark' | null` - `null` (the default) resolves to llselect's own `'auto'`. The app-wide default behind [`ll-color-scheme`](#ll-color-scheme); the `<ui-llselect>` bridge reads it too, since ui-select's markup has no word for it.
+Accepted values: `'auto'`, `'light'`, `'dark'` and `null`. The default `null` uses the core library's own default, `'auto'`. This is the application-wide default; the [`ll-color-scheme`](#ll-color-scheme) attribute overrides it per element. `<ui-llselect>` uses this default too, because ui-select's markup has no attribute for it.
 
 #### `uiTranslationPack`
 

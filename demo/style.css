@@ -61,6 +61,12 @@
     --ok-bg: rgba(46, 160, 67, 0.15);
   }
 }
+/* Widgets follow the page: with no stored choice the page follows the OS, and
+   the themes' own color-scheme path covers that in browsers that have the
+   property; the variable covers Firefox 78-95 as well. A stored choice writes
+   data-color-scheme on <html>, a mark the themes recognize. */
+html:not([data-color-scheme]) { --llselect-color-scheme: auto; }
+
 :root[data-color-scheme="dark"] {
   color-scheme: dark;
   --fg: #d8d8d8;
@@ -272,14 +278,12 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .hl-func    { color: #a6e22e; }
 
 .hint { color: var(--fg-muted); font-size: 0.9rem; margin: 0.3rem 0; }
-/* Inside a widget the theme's light palette rules until the themes get dark
-   values (TODO.md "Themes - dark color scheme"): fixed light colors there, not
-   the page tokens. Same for the link rule next and the widget-only rules
-   further down (CSS arrow, tree caret, popup link button). */
-.llselect-root .hint { color: #666; }
-/* Links inside a widget (the footer link of core 14.x and AngularJS 12c): the
-   UA's dark-scheme link color would land on the white popup otherwise. */
-.llselect-root a { color: #1c4d8f; }
+/* Inside a widget the theme's palette rules, light or dark: these read the
+   theme's --llselect-* variables, not the page tokens. Same for the
+   widget-only rules further down (CSS arrow, tree caret, popup link button). */
+.llselect-root .hint { color: var(--llselect-fg-muted); }
+/* Links inside a widget (the footer link of core 14.x and AngularJS 12c). */
+.llselect-root a { color: var(--llselect-row-chosen-fg); }
 
 .out {
   margin-top: 0.5rem;
@@ -496,7 +500,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
   border-right: 5px solid transparent;
   border-top: 5px solid currentColor;
   transition: transform 0.15s;
-  color: #666; /* inside the trigger: the theme's light palette */
+  color: var(--llselect-fg-muted); /* inside the trigger: the theme's palette */
   margin-inline-start: 0.4rem;
 }
 
@@ -520,12 +524,12 @@ article { margin: 1.5rem 0 2rem 1rem; }
   margin-block: -0.3em;
   border-radius: 4px;
   cursor: pointer;
-  color: #555; /* inside a row: the theme's light palette */
+  color: var(--llselect-fg-muted); /* inside a row: the theme's palette */
 }
 /* Scale the GLYPH (the mdi ::before), not the box - the box and the leaf
    spacer share the row's em, so they stay aligned. */
 .tree-caret::before { font-size: 1.5em; }
-.tree-caret:hover { background: rgba(36, 86, 166, 0.18); color: #2456a6; }
+.tree-caret:hover { background: rgba(36, 86, 166, 0.18); color: var(--llselect-row-chosen-fg); }
 /* The single chevron points right (collapsed); rotate it down when the
    branch row says expanded. */
 .llselect-popup-list-row[data-tree-state='expanded'] .tree-caret { transform: rotate(90deg); }
@@ -845,15 +849,81 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .popup-link-button {
   font: inherit;
   font-size: 0.9em;
-  color: #1c4d8f; /* inside the popup header: the theme's light palette */
+  color: var(--llselect-row-chosen-fg); /* inside the popup header: the theme's palette */
   background: none;
   border: 0;
   padding: 0;
   cursor: pointer;
   text-decoration: underline;
 }
-.popup-link-button[aria-disabled='true'] { color: #999; cursor: not-allowed; text-decoration: none; }
+.popup-link-button[aria-disabled='true'] { color: var(--llselect-fg-muted); cursor: not-allowed; text-decoration: none; }
 /* #endregion */
+/* #region 17.2 */
+/* A dark region of a page that switches with its own class. The one line a
+   theme needs is the variable; the rest is this region's own look. */
+.acme-dark {
+  --llselect-color-scheme: dark;
+  background: #1f2430;
+  color: #d8dee9;
+  padding: 1rem;
+  border-radius: 6px;
+}
+/* #endregion */
+
+/* #region 17.3 */
+/* A light card inside the dark region: data-color-scheme="light" on the card
+   is a mark the themes recognize; the nearest mark wins. */
+.demo-card {
+  background: #fff;
+  color: #222;
+  padding: 1rem;
+  border-radius: 6px;
+}
+/* #endregion */
+
+/* #region 17.5 */
+/* Your own colors: every --llselect-* variable has a light value on
+   .llselect-root; a rule that targets the root redefines any of them. This
+   stylesheet loads BEFORE the theme, so the rule also names the attribute to
+   outweigh the theme's dark block; a stylesheet loaded after the theme needs
+   only ".acme-brand .llselect-root". */
+.acme-brand .llselect-root,
+.acme-brand .llselect-root[data-llselect-color-scheme] {
+  --llselect-fg: #f3e8ff;
+  --llselect-control-fg: #f3e8ff;
+  --llselect-fg-soft: #c4b5fd;
+  --llselect-fg-muted: #a78bfa;
+  --llselect-bg: #2e1065;
+  --llselect-bg-muted: #3b0764;
+  --llselect-trigger-line: #7c3aed;
+  --llselect-trigger-hover-line: #a78bfa;
+  --llselect-popup-line: #7c3aed;
+  --llselect-filter-line: #7c3aed;
+  --llselect-divider: rgba(255, 255, 255, 0.15);
+  --llselect-focus-line: #c4b5fd;
+  --llselect-filter-focus-line: #c4b5fd;
+  --llselect-focus-ring: rgba(196, 181, 253, 0.4);
+  --llselect-filter-focus-ring: rgba(196, 181, 253, 0.4);
+  --llselect-shadow: rgba(0, 0, 0, 0.5);
+  --llselect-control-shadow: transparent;
+  --llselect-row-fg: #f3e8ff;
+  --llselect-row-hover-bg: #4c1d95;
+  --llselect-row-hover-fg: #ffffff;
+  --llselect-row-focused-bg: #6d28d9;
+  --llselect-row-focused-fg: #ffffff;
+  --llselect-row-focused-hover-bg: #7c3aed;
+  --llselect-row-chosen-fg: #e9d5ff;
+  --llselect-tag-bg: #4c1d95;
+  --llselect-tag-fg: #f3e8ff;
+  --llselect-tag-line: #7c3aed;
+  --llselect-tag-remove-fg: #c4b5fd;
+  --llselect-tag-remove-hover-bg: #6d28d9;
+  --llselect-tag-remove-hover-fg: #ffffff;
+  --llselect-clear-hover-fg: #ffffff;
+  --llselect-clear-hover-bg: #4c1d95;
+}
+/* #endregion */
+
 /* #region 14.4 */
 /* Header commands that look exactly like the rows of 15.1, only pinned: the
    header's own padding is zeroed and each command is a <button> wearing the
