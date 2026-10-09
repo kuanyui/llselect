@@ -302,13 +302,21 @@ for (const rel of markdownFiles) {
   // and line number still points into the file), the text with only the
   // comments blanked (for messages), and the start of every url() with its
   // argument (for the color scan). An escaped character stays inside its
-  // string or url(); a string ends at a newline at the latest. A url() needs
-  // an identifier boundary before it (`noturl(` is not one); CSS whitespace
-  // and comments may sit between `url(`, a quoted argument and the `)`.
+  // string or url(); a string continues across a backslash-newline and ends
+  // at any other newline at the latest. A url() needs an identifier boundary
+  // before it (`noturl(` and the escaped `not\url(` are not one); CSS
+  // whitespace and comments may sit between `url(`, a quoted argument and
+  // the `)`, and such comments are blanked in the comment-free text too.
   const scanCss = (text) => {
     let masked = '', noComments = '', i = 0
     const urls = []
-    const stringEnd = (from, quote) => { let j = from + 1; while (j < text.length && text[j] !== quote && text[j] !== '\n') { j += text[j] === '\\' ? 2 : 1 } return Math.min(j + 1, text.length) }
+    const stringEnd = (from, quote) => {
+      let j = from + 1
+      while (j < text.length && text[j] !== quote && text[j] !== '\n' && text[j] !== '\r' && text[j] !== '\f') {
+        if (text[j] === '\\') { j += text[j + 1] === '\r' && text[j + 2] === '\n' ? 3 : 2 } else { j += 1 }
+      }
+      return Math.min(j + 1, text.length)
+    }
     while (i < text.length) {
       const c = text[i]
       if (c === '/' && text[i + 1] === '*') {
@@ -320,11 +328,12 @@ for (const rel of markdownFiles) {
         const stop = stringEnd(i, c)
         masked += blank(text.slice(i, stop)); noComments += text.slice(i, stop); i = stop; continue
       }
-      if (/^url\(/i.test(text.slice(i, i + 4)) && !/[\w-]/.test(text[i - 1] ?? '')) {
+      if (/^url\(/i.test(text.slice(i, i + 4)) && !/[\w\\-]/.test(text[i - 1] ?? '')) {
+        const comments = []
         const skipBlanks = (k) => {
           for (;;) {
             while (k < text.length && /[ \t\n\r\f]/.test(text[k])) { k += 1 }
-            if (text[k] === '/' && text[k + 1] === '*') { const close = text.indexOf('*/', k + 2); k = close === -1 ? text.length : close + 2; continue }
+            if (text[k] === '/' && text[k + 1] === '*') { const close = text.indexOf('*/', k + 2); const after = close === -1 ? text.length : close + 2; comments.push([k, after]); k = after; continue }
             return k
           }
         }
@@ -341,7 +350,9 @@ for (const rel of markdownFiles) {
         }
         const stop = Math.min(j + 1, text.length)
         urls.push({ start: i, argument })
-        masked += blank(text.slice(i, stop)); noComments += text.slice(i, stop); i = stop; continue
+        let segment = text.slice(i, stop)
+        for (const [a, b] of comments) { segment = segment.slice(0, a - i) + blank(text.slice(a, b)) + segment.slice(b - i) }
+        masked += blank(text.slice(i, stop)); noComments += segment; i = stop; continue
       }
       masked += c; noComments += c; i += 1
     }
