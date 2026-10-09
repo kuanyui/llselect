@@ -482,18 +482,54 @@ Vocabulary (naming-conventions.md 7a.11): a "theme" is one of the five styleshee
 
 ### The color variables
 
-- Every color in every theme becomes one of these variables, declared on `.llselect-root` with the theme's light value: `--llselect-fg` (text), `--llselect-fg-muted` (placeholder, group label, hint, disabled text), `--llselect-bg` (trigger and popup surface), `--llselect-bg-muted` (group label and header / footer surface), `--llselect-line` (trigger and popup border), `--llselect-divider` (command-row dividers, header / footer borders; today hard-coded `rgba(0, 0, 0, 0.12)` in every theme), `--llselect-accent` (focus border, chosen text, links in slots), `--llselect-accent-fg` (text on the accent color), `--llselect-row-hover-bg`, `--llselect-row-focused-bg`, `--llselect-row-focused-fg`, `--llselect-tag-bg`, `--llselect-tag-fg`, `--llselect-focus-ring` (the focus ring color), `--llselect-shadow` (the color component of the popup shadow; offsets, blur and spread stay in the `box-shadow` declaration). This is the planned set. During the first implementation step of the TODO.md entry "Dark values for every shipped theme", audit every color declaration in the five themes, add a variable for every role not covered here, and update this list in place.
+- Every color in every theme is one of these 32 variables, declared on `.llselect-root` with the theme's light value (the audit of the five themes produced this list; each theme declares all 32, a few as aliases of another variable where its own look needs no distinct value): `--llselect-fg` (text inside the popup: header and footer slot content), `--llselect-control-fg` (text of the trigger and of the filter input), `--llselect-fg-soft` (the arrow and the group labels), `--llselect-fg-muted` (the placeholder, the no-results text, the clear button at rest), `--llselect-bg` (surface of the trigger, the popup, the filter input, the pinned rows), `--llselect-bg-muted` (surface of the group labels), `--llselect-trigger-line` (border of the trigger), `--llselect-trigger-hover-line` (border of the hovered trigger), `--llselect-popup-line` (border of the popup), `--llselect-filter-line` (border of the filter input), `--llselect-divider` (dividers before and after action rows and the choose-all row; header, footer and pinned-row edges), `--llselect-focus-line` (border (vanilla: outline) of the focused or open trigger), `--llselect-filter-focus-line` (border of the focused filter input), `--llselect-focus-ring` (ring shadow of the focused or open trigger), `--llselect-filter-focus-ring` (ring shadow of the focused filter input), `--llselect-shadow` (color of the popup shadow), `--llselect-control-shadow` (color of the inset shadow of the trigger), `--llselect-row-fg` (text of a row), `--llselect-row-hover-bg` (surface of a hovered row), `--llselect-row-hover-fg` (text of a hovered row), `--llselect-row-focused-bg` (surface of the row that keyboard focus is on), `--llselect-row-focused-fg` (text of that row), `--llselect-row-focused-hover-bg` (surface of that row while hovered), `--llselect-row-chosen-fg` (text of a chosen row), `--llselect-tag-bg` (surface of a tag), `--llselect-tag-fg` (text of a tag), `--llselect-tag-line` (border of a tag), `--llselect-tag-remove-fg` (the x button of a tag), `--llselect-tag-remove-hover-bg` (surface of the hovered x button), `--llselect-tag-remove-hover-fg` (the hovered x button), `--llselect-clear-hover-fg` (the hovered clear button), `--llselect-clear-hover-bg` (surface of the hovered clear button). The keywords `transparent`, `inherit` and `currentColor` stay literal: they are not palette colors. Shadow variables hold the color component only; offsets, blur and spread stay in the `box-shadow` declaration.
 - Outside the variable declarations, every CSS declaration that supplies a color obtains it from a variable. Literal colors appear only in the variable declarations and in the palette comment required below.
 
 ### Rules for every theme file
 
-- The dark block: `.llselect-root[data-llselect-color-scheme="dark"] { ... }` redefines every color variable above with the theme's dark value. Before writing it, record a dark value for every variable of that theme in a comment at the top of the theme file, next to the light values. The dark block does not touch `--llselect-color-scheme`.
+- The dark block: `.llselect-root[data-llselect-color-scheme="dark"] { ... }` redefines every color variable above with the theme's dark value. Variables it does not list keep their light value or their alias. It does not touch `--llselect-color-scheme`. The dark values were chosen against the contrast floor under "Verification before shipping"; bootstrap-5's dark values are Bootstrap 5.3's own dark-mode variables with those values as fallbacks, so its trigger border under `data-bs-theme="dark"` is Bootstrap's `--bs-border-color` (#495057), about 2.1:1 on a near-black page, as Bootstrap ships it.
 - Browser-painted parts (the popup scrollbar, the filter input's caret) follow the resolved scheme through two descendant rules. For dark: `.llselect-root[data-llselect-color-scheme="dark"] .llselect-trigger, .llselect-root[data-llselect-color-scheme="dark"] .llselect-popup { color-scheme: dark; }`. For light: the same rule with both attribute values and the `color-scheme` value replaced by `light`.
 - Never declare the CSS property `color-scheme` in a rule whose selector targets `.llselect-root` itself: the resolver reads the computed `color-scheme` there and would read its own output.
 - Theme rules must not declare `--llselect-color-scheme` with a selector that explicitly selects the `.llselect-root` class: it would hide the value an ancestor set. A built-in mark rule may still set the variable on a widget root that carries a mark, and a host may set it on the widget root through its own rule or inline style.
 - Theme files must not contain any `@media` condition that uses `prefers-color-scheme`, whatever value it queries: pure CSS cannot tell a light-only page from an OS-following page.
 - `bootstrap-5.css` keeps Bootstrap's variable references in both schemes: light fallbacks in the `.llselect-root` declarations (`--llselect-bg: var(--bs-body-bg, #fff)`), dark fallbacks in the dark block (`--llselect-bg: var(--bs-body-bg, #212529)`). With `colorScheme: 'auto'` and no higher-priority input, `data-bs-theme="dark"` on the widget root or on an ancestor selects the dark scheme; Bootstrap's variables supply the colors where Bootstrap defines them, and the fallbacks apply elsewhere.
-- `tailwind.css` maps each variable to a Tailwind palette variable with a fallback, light and dark separately: for example `--llselect-bg: var(--color-white, #fff)` in the light set and `--llselect-bg: var(--color-slate-900, #0f172a)` in the dark set. During the first implementation step of the TODO.md entry "Dark values for every shipped theme", add the complete mapping table to this subsection: each variable's light palette reference and fallback, and its dark palette reference and fallback.
+- `tailwind.css` maps each variable to a Tailwind palette variable with a fallback, light and dark separately. The complete mapping:
+
+| Variable | Light | Dark |
+|---|---|---|
+| `--llselect-fg` | `var(--color-slate-900, #0f172a)` | `var(--color-slate-100, #f1f5f9)` |
+| `--llselect-control-fg` | `var(--llselect-fg)` | `same as light` |
+| `--llselect-fg-soft` | `var(--color-slate-500, #64748b)` | `var(--color-slate-400, #94a3b8)` |
+| `--llselect-fg-muted` | `var(--color-slate-400, #94a3b8)` | `var(--color-slate-400, #94a3b8)` |
+| `--llselect-bg` | `var(--color-white, #fff)` | `var(--color-slate-900, #0f172a)` |
+| `--llselect-bg-muted` | `var(--color-slate-50, #f8fafc)` | `var(--color-slate-800, #1e293b)` |
+| `--llselect-trigger-line` | `var(--color-slate-300, #cbd5e1)` | `var(--color-slate-500, #64748b)` |
+| `--llselect-trigger-hover-line` | `var(--color-slate-400, #94a3b8)` | `var(--color-slate-600, #475569)` |
+| `--llselect-popup-line` | `var(--color-slate-200, #e2e8f0)` | `var(--color-slate-500, #64748b)` |
+| `--llselect-filter-line` | `var(--color-slate-300, #cbd5e1)` | `var(--color-slate-500, #64748b)` |
+| `--llselect-divider` | `rgba(0, 0, 0, 0.12)` | `rgba(255, 255, 255, 0.12)` |
+| `--llselect-focus-line` | `var(--color-blue-500, #3b82f6)` | `var(--color-blue-400, #60a5fa)` |
+| `--llselect-filter-focus-line` | `var(--color-blue-500, #3b82f6)` | `var(--color-blue-400, #60a5fa)` |
+| `--llselect-focus-ring` | `rgba(59, 130, 246, 0.3)` | `rgba(96, 165, 250, 0.35)` |
+| `--llselect-filter-focus-ring` | `var(--color-blue-100, #dbeafe)` | `rgba(96, 165, 250, 0.35)` |
+| `--llselect-shadow` | `rgba(0, 0, 0, 0.1)` | `rgba(0, 0, 0, 0.5)` |
+| `--llselect-control-shadow` | `transparent` | `same as light` |
+| `--llselect-row-fg` | `var(--color-slate-700, #334155)` | `var(--color-slate-300, #cbd5e1)` |
+| `--llselect-row-hover-bg` | `var(--color-slate-100, #f1f5f9)` | `var(--color-slate-800, #1e293b)` |
+| `--llselect-row-hover-fg` | `var(--color-slate-900, #0f172a)` | `var(--color-slate-100, #f1f5f9)` |
+| `--llselect-row-focused-bg` | `var(--color-blue-50, #eff6ff)` | `var(--color-blue-950, #172554)` |
+| `--llselect-row-focused-fg` | `var(--color-blue-700, #1d4ed8)` | `var(--color-blue-200, #bfdbfe)` |
+| `--llselect-row-focused-hover-bg` | `var(--color-blue-100, #dbeafe)` | `var(--color-blue-900, #1e3a8a)` |
+| `--llselect-row-chosen-fg` | `var(--color-blue-600, #2563eb)` | `var(--color-blue-400, #60a5fa)` |
+| `--llselect-tag-bg` | `var(--color-blue-50, #eff6ff)` | `var(--color-blue-950, #172554)` |
+| `--llselect-tag-fg` | `var(--color-blue-700, #1d4ed8)` | `var(--color-blue-200, #bfdbfe)` |
+| `--llselect-tag-line` | `transparent` | `same as light` |
+| `--llselect-tag-remove-fg` | `var(--color-blue-400, #60a5fa)` | `var(--color-blue-400, #60a5fa)` |
+| `--llselect-tag-remove-hover-bg` | `var(--color-blue-100, #dbeafe)` | `var(--color-blue-900, #1e3a8a)` |
+| `--llselect-tag-remove-hover-fg` | `var(--color-blue-700, #1d4ed8)` | `var(--color-blue-100, #dbeafe)` |
+| `--llselect-clear-hover-fg` | `var(--color-slate-600, #475569)` | `var(--color-slate-200, #e2e8f0)` |
+| `--llselect-clear-hover-bg` | `var(--color-slate-100, #f1f5f9)` | `var(--color-slate-800, #1e293b)` |
+
 - `scripts/check.mjs` rejects, in every theme file: a rule that declares `color-scheme` on the widget root; a rule that declares `--llselect-color-scheme` on the widget root; an `@media` rule whose condition contains `prefers-color-scheme`. Check each selector of a selector list separately. "On the widget root" means a selector that explicitly selects the `.llselect-root` element itself, such as `.llselect-root` or `.llselect-root.foo`; a selector that only contains `.llselect-root` as an ancestor, such as `.llselect-root .llselect-popup`, is not rejected.
 
 ### Public API
