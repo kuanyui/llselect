@@ -748,7 +748,7 @@ const NG_KINDS = new Map(Object.entries({
   'ng-model': 'attribute', 'ng-change': 'attribute', 'll-options': 'attribute', name: 'attribute', required: 'attribute',
   'll-on-open': 'attribute', 'll-on-close': 'attribute', 'll-on-filter-query-change': 'attribute',
   'll-disabled': 'attribute', 'll-placeholder': 'attribute', 'll-filterable': 'attribute', 'll-filter-fn': 'attribute',
-  'll-clearable': 'attribute', 'll-popup-width-policy': 'attribute', 'll-arrow': 'attribute', 'll-highlight': 'attribute',
+  'll-clearable': 'attribute', 'll-popup-width-policy': 'attribute', 'll-color-scheme': 'attribute', 'll-arrow': 'attribute', 'll-highlight': 'attribute',
   'll-popup-list-item-content-fn': 'attribute', 'll-trigger-content-fn': 'attribute',
   'll-popup-header-content-fn': 'attribute', 'll-popup-footer-content-fn': 'attribute',
   'll-popup-list-leading-action-rows': 'attribute', 'll-popup-list-trailing-action-rows': 'attribute',

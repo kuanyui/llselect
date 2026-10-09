@@ -14,6 +14,10 @@
 //   4. `any` needs an explaining comment on the same or previous line.
 //   5. Release wiring: the angularjs package version and its `@llselect/core`
 //      peer range follow the root package.json version.
+//   6. Theme files keep the color-scheme contract (DESIGN.md "Color scheme
+//      (light / dark) in the themes"): no `color-scheme` and no
+//      `--llselect-color-scheme` declared on the widget root, no
+//      `prefers-color-scheme` media query.
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import ts from 'typescript'
@@ -246,6 +250,31 @@ for (const rel of markdownFiles) {
   const peer = ngPkg.peerDependencies?.['@llselect/core']
   if (peer !== `^${rootPkg.version}`) {
     problems.push(`angularjs/package.json: peer range for @llselect/core is ${peer}, expected ^${rootPkg.version}`)
+  }
+}
+
+// --- rule 6: theme files keep the color-scheme contract ----------------------
+// The resolver reads the computed `color-scheme` and `--llselect-color-scheme`
+// of the widget root; a theme declaring either there would feed it its own
+// output or hide an ancestor's mark. A `prefers-color-scheme` query cannot
+// tell a light-only page from an OS-following one.
+{
+  for (const f of walk('src/themes', '.css')) {
+    const css = readFileSync(join(root, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
+    for (const m of css.matchAll(/@media([^{]*)\{/g)) {
+      if (/prefers-color-scheme/.test(m[1])) { problems.push(`${f}: @media${m[1].trimEnd()} - a theme file must not query prefers-color-scheme`) }
+    }
+    for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const selectors = m[1].split(',').map((s) => s.trim()).filter((s) => s !== '' && !s.startsWith('@'))
+      const onRoot = selectors.some((s) => {
+        const subject = s.split(/\s+|>|\+|~/).filter(Boolean).pop()
+        return subject !== undefined && /^\.llselect-root(?![\w-])/.test(subject)
+      })
+      if (!onRoot) { continue }
+      const body = m[2]
+      if (/(^|[\s;])color-scheme\s*:/.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares color-scheme on the widget root; the resolver reads it there`) }
+      if (/--llselect-color-scheme\s*:/.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares --llselect-color-scheme on the widget root; it would hide an ancestor's value`) }
+    }
   }
 }
 
