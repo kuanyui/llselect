@@ -136,6 +136,21 @@ test('destroy() ends the subscription: a later <html> change writes nothing back
   assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
 })
 
+test('a replaced <body> is observed too', async () => {
+  const el = mount()
+  const sel = new LLSelectSingle<string>(el)
+  await Promise.resolve()
+  const body = document.createElement('body')
+  body.appendChild(el)
+  document.body = body
+  await new Promise((resolve) => setTimeout(resolve, 0)) // the child-list record of <html> arrives; the new <body> is observed
+  el.style.setProperty('--llselect-color-scheme', 'dark')
+  body.setAttribute('data-color-scheme', 'dark')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.equal(sel.getColorScheme(), 'dark')
+  assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+})
+
 test('several widgets built in one task have all decided after one microtask, none before', async () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b" style="--llselect-color-scheme: dark"></div></body></html>')
   const a = document.getElementById('a'), b = document.getElementById('b')
@@ -143,6 +158,7 @@ test('several widgets built in one task have all decided after one microtask, no
   new LLSelectSingle<string>(a)
   new LLSelectSingle<string>(b)
   assert.equal(a.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false)
+  assert.equal(b.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false)
   await Promise.resolve()
   assert.equal(a.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
   assert.equal(b.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
@@ -165,7 +181,7 @@ test("getColorScheme() on a replaced older instance does not cancel the newer in
   const el = mount()
   const older = new LLSelectSingle<string>(el)
   new LLSelectSingle<string>(el) // 'auto' too: its pending decision replaces the older one's
-  older.getColorScheme() // decides the older one now; the newer decision must stay queued
+  older.getColorScheme() // an unsupported call on a replaced instance: it decides the older one now and must leave the newer decision queued
   el.style.setProperty('--llselect-color-scheme', 'dark')
   await Promise.resolve()
   assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', 'the newer instance still decided in the batch')

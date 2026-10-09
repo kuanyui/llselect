@@ -106,9 +106,9 @@ export function claimColorSchemeRoot(rootEl: HTMLElement): void {
 // One media-query listener and one attribute observer per document re-decide
 // every subscribed widget. Subscribers are keyed by their root element in a
 // WeakMap, and the listeners find live roots through the document, so nothing
-// here retains an instance: it stays reachable only through its root element,
-// as it already does through its own DOM listeners (the lifecycle promise of
-// destroy() holds).
+// here retains an instance: a closed instance stays reachable only through its
+// own elements (the root, and labelEl when set), as it already does through
+// its DOM listeners (the lifecycle promise of destroy() holds).
 
 interface ColorSchemeSubscriber { refresh(): void }
 const subscribersByRoot = new WeakMap<HTMLElement, ColorSchemeSubscriber>()
@@ -150,19 +150,22 @@ function wireDocument(doc: Document): void {
   }
   if (typeof view.MutationObserver === 'function') {
     // A widget mounted on <html> or <body> writes its own attribute on an
-    // observed element; those records must not start another pass.
+    // observed element; those records must not start another pass. The child
+    // list of <html> is watched too, so a <body> that appears later (a widget
+    // built from a script in <head>) or gets replaced is observed as well.
+    let observedBody: HTMLElement | null = null
     const observer = new view.MutationObserver((records) => {
+      observeBody()
       if (records.every((r) => r.attributeName === COLOR_SCHEME_ATTRIBUTE)) { return }
       refreshAll()
     })
-    observer.observe(doc.documentElement, { attributes: true })
-    if (doc.body !== null) {
-      observer.observe(doc.body, { attributes: true })
-    } else {
-      // A widget built from a script in <head>: <body> does not exist yet.
-      doc.addEventListener('DOMContentLoaded', () => {
-        if (doc.body !== null) { observer.observe(doc.body, { attributes: true }) }
-      }, { once: true })
+    const observeBody = (): void => {
+      if (doc.body !== null && doc.body !== observedBody) {
+        observedBody = doc.body
+        observer.observe(observedBody, { attributes: true })
+      }
     }
+    observer.observe(doc.documentElement, { attributes: true, childList: true })
+    observeBody()
   }
 }

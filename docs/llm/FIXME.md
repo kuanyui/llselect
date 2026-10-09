@@ -2,6 +2,38 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (theme dark color schemes, post-fix round 2)
+
+Process: the second fix batch (commits `8498748` and `63c6995`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, five QUALITY, six DOCUMENTATION. Opus 4.8: ship, one QUALITY, one DOCUMENTATION. Codex 5.5: fix first, two QUALITY, one DOCUMENTATION. Codex Sol: fix first, two MEDIUM, four QUALITY, three DOCUMENTATION. The entries below merge the overlapping findings.
+
+- [x] **[MEDIUM-239] - bootstrap-5's focused trigger border was a 50 percent tint of the primary color, which composites dark on a dark page**
+  - Symptom: `rgba(var(--bs-primary-rgb), 0.5)` equals Bootstrap's `#86b7fe` over white but gives about 1.8:1 over Bootstrap's dark body; Bootstrap itself keeps the opaque `#86b7fe` in dark mode.
+  - Fix: the dark block sets `--llselect-focus-line: #86b7fe` (Bootstrap's input focus border color, which has no CSS variable and does not change in dark mode); about 7:1 on the dark body.
+- [x] **[DOCUMENTATION-240] - the 3:1 claim covered the translucent focus halos, which sit between 1.3:1 and 2:1 in bootstrap-4, bootstrap-5 and tailwind**
+  - Fix: the contrast floor names the focused control's border (3:1 or better in every dark palette after MEDIUM-239) and exempts the ring shadow drawn around it as decoration that follows each framework's own halo; bootstrap-3's denser halo passes on its own. A probe over the five palettes measured the focused borders and the halos.
+- [x] **[QUALITY-241] - a replaced <body> was never observed again, and the <head>-script repair depended on DOMContentLoaded**
+  - Cause: the document is wired once; the one-shot `DOMContentLoaded` listener covered only the first appearance of `<body>`.
+  - Fix: the observer also watches the child list of `<html>` (not the subtree); every callback observes the current `<body>` when it is new. That covers a `<body>` appearing after a `<head>` script and a `document.body` replaced later.
+  - Verified: test "a replaced <body> is observed too"; the `<head>`-script case stays in the manual pass.
+- [x] **[QUALITY-242] - the literal-color check reported each declaration one line early**
+  - Cause: a declaration chunk starts with the newline left by the previous `;`.
+  - Fix: the line is counted at the first non-blank character of the declaration.
+- [x] **[QUALITY-243] - rule 6 matched `color-scheme` and `prefers-color-scheme` case-sensitively and knew no system colors**
+  - Fix: the property name, the at-rule and the media feature match case-insensitively (the custom property `--llselect-color-scheme` stays case-sensitive, as CSS defines it); the CSS system colors join the literal-color list; keyword boundaries exclude the hyphen, so `context-menu` does not match `Menu`.
+- [x] **[QUALITY-244] - the batch test asserted "none before" for one of its two widgets**
+  - Fix: both roots are asserted attribute-free before the microtask.
+- [x] **[DOCUMENTATION-245] - the retention statements missed two facts: the promise holds for a CLOSED instance, and `labelEl` is a second retaining element**
+  - Fix: DESIGN's resolver bullet, the resolver comment and the `destroy()` docstring say: a CLOSED instance stays reachable only through its mount element and `labelEl`, like its own DOM listeners; an OPEN instance holds document listeners until `close()` or `destroy()`.
+- [x] **[DOCUMENTATION-246] - the first-check bullets of the setting docstring read as if every value queued the first check; `destroy()` promised that a further call does nothing, without the rebuild condition**
+  - Fix: both scoped: a forced value is written during construction; a further `destroy()` does nothing unless a second instance was built on the element since.
+- [x] **[DOCUMENTATION-247] - the reason logged for keeping the `cancelFirstDecision` identity check was wrong**
+  - Q: Why keep the identity check in `cancelFirstDecision` when `unsubscribeColorScheme` lost its own?
+    - A: Because a discarded instance calls no method, so neither check serves it. The cancel check serves the unsupported path where a replaced older instance's `getColorScheme()` runs: that call does not empty the element, so a dropped newer decision would be silent. `destroy()` on that path empties the element anyway, so its check protected nothing visible.
+- [x] **[DOCUMENTATION-248] - README and demo misstated the cascade for custom colors; API.md never said what the value `auto` does; DESIGN pointed at a heading that does not exist and omitted the literal-color rule**
+  - Fix: README says a rule needs the specificity of a class plus an attribute and later source order, with `.acme .llselect-root` as the example; demo 17.5 explains why its rule also names the attribute (the demo stylesheet loads before the theme) and drops the sentence that only named the wrapper; API.md states the `auto` outcome; DESIGN names "Rules for every theme file" and lists the literal-color rejection.
+- [x] **[NEEDS-VERIFICATION-249] - the copy changed in this round went through the wording review**
+  - Fix: Codex Astra at medium effort (the substitute for Codex Luna 6) reviewed the changed setting bullets, the changed `destroy()` bullets, the README custom-colors bullet, the demo 17.5 hint and the `ll-color-scheme` sentence: 14 findings, 14 applied (conditions as "if" sentences, the check triggers one per sentence, the retention direction stated, the README cascade rule corrected to "higher specificity, or equal specificity and a later position").
+
 ## review (theme dark color schemes, post-fix)
 
 Process: the fix batch `45d34ab` went to the other four panel members for a post-fix review, one at a time, read-only, with the round below in the brief; Codex Sol also covered the whole implementation, since its first-round review never arrived. Opus 5: fix first, one MEDIUM, five QUALITY, nine DOCUMENTATION. Opus 4.8: fix first, three QUALITY, two DOCUMENTATION, one NEEDS-VERIFICATION. Codex 5.5: fix first, one MEDIUM, four QUALITY, three DOCUMENTATION. Codex Sol: fix first, three MEDIUM, five QUALITY, eight DOCUMENTATION. The entries below merge the overlapping findings.
@@ -15,8 +47,7 @@ Process: the fix batch `45d34ab` went to the other four panel members for a post
   - Fix: comments become blanks of equal length; the scan is per declaration (split on `;`), skips only properties that start with `--llselect-`, and matches hex, every color function (rgb, hsl, hwb, lab, lch, oklab, oklch, color, color-mix; case-insensitive) and the CSS named colors; `transparent` and `currentColor` stay allowed.
 - [x] **[QUALITY-230] - the `<body>` observation retry needed a later subscription**
   - Symptom: one widget built from a script in `<head>` wired the document before `<body>` existed and never observed it; only a second subscription repaired that.
-  - Fix: when `<body>` is missing at wiring time, a one-shot `DOMContentLoaded` listener observes it; the per-document wiring record is gone again.
-  - Verified: by reading; jsdom parses a document in one step, so the `<head>`-script case is in the manual pass.
+  - Fix: a one-shot `DOMContentLoaded` listener observed `<body>` when it was missing at wiring time; superseded by QUALITY-241, which watches the child list of `<html>` instead and covers a replaced `<body>` too.
 - [x] **[QUALITY-231] - four tests were green for the wrong reason**
   - Symptom: "destroy() ends the subscription" passed because `destroy()` removes the attribute the shared pass queries; "every widget" built one widget; "one batch" cannot be observed in jsdom; the identity check in `cancelFirstDecision` had no test.
   - Fix: the destroy test puts the attribute back before the `<html>` change; the observer test builds two widgets; the batch test is named for what it asserts (all decided after one microtask, none before); a new test calls `getColorScheme()` on a replaced older instance and asserts the newer instance still decides in the batch.
@@ -24,7 +55,7 @@ Process: the fix batch `45d34ab` went to the other four panel members for a post
   - Symptom: DESIGN and the resolver comment said the shared listeners retain nothing; the `destroy()` docstring said a discarded instance keeps deciding while its mount is in the document; the code does the latter, as the widget's own DOM listeners already do.
   - Fix: all three say the same thing: the shared listeners hold no instance; an instance stays reachable only through its mount element; once the mount leaves the document, everything is collectable, with or without `destroy()`.
 - [x] **[DOCUMENTATION-233] - two instances on one element: the supported order was undocumented, and the identity check in `unsubscribeColorScheme` guarded an unsupported path**
-  - Fix: the `destroy()` docstring and DESIGN's known limits state the order (destroy first, then build) and that an older instance must not be used after a rebuild, `destroy()` included; the `unsubscribeColorScheme` identity check is removed; the claim in the constructor and the identity check in `cancelFirstDecision` stay, since they cover the documented case of a closed instance discarded without `destroy()`.
+  - Fix: the `destroy()` docstring and DESIGN's known limits state the order (destroy first, then build) and that an older instance must not be used after a rebuild, `destroy()` included; the `unsubscribeColorScheme` identity check is removed; the claim in the constructor stays, since it covers a closed instance discarded without `destroy()`; the identity check in `cancelFirstDecision` stays for the reason under DOCUMENTATION-247.
   - Q: Why not guard every root mutation of `destroy()` with an owner token, so an older instance's `destroy()` after a rebuild is harmless?
     - A: Because the newer constructor already empties the element, and a `destroy()` that skips its teardown when it is not the owner would leave the host believing two instances are live. The supported order is cheap to follow, and a host that breaks it gets a visibly empty widget, not silent corruption.
 - [x] **[DOCUMENTATION-234] - the Tailwind table in DESIGN kept the old hover border value**

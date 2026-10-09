@@ -260,10 +260,14 @@ for (const rel of markdownFiles) {
 // output or hide an ancestor's mark. A `prefers-color-scheme` query cannot
 // tell a light-only page from an OS-following one. Every color outside the
 // `--llselect-*` declarations must come from a variable (DESIGN.md "The color
-// variables"); `transparent` and `currentColor` are not colors here.
+// variables"); `transparent` and `currentColor` are not colors here. CSS
+// property names, at-rules and media features match case-insensitively; the
+// custom property `--llselect-color-scheme` is case-sensitive, as CSS defines.
 {
   const NAMED_COLORS = 'aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightslategrey|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|rebeccapurple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen'
-  const COLOR_LITERAL = new RegExp(`#[0-9a-f]{3,8}\\b|\\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\\(|\\b(?:${NAMED_COLORS})\\b`, 'i')
+  const SYSTEM_COLORS = 'accentcolor|accentcolortext|activetext|buttonborder|buttonface|buttontext|canvas|canvastext|field|fieldtext|graytext|highlight|highlighttext|linktext|mark|marktext|selecteditem|selecteditemtext|visitedtext|activeborder|activecaption|appworkspace|background|buttonhighlight|buttonshadow|captiontext|inactiveborder|inactivecaption|inactivecaptiontext|infobackground|infotext|menu|menutext|scrollbar|threeddarkshadow|threedface|threedhighlight|threedlightshadow|threedshadow|window|windowframe|windowtext'
+  // Keyword boundaries exclude the hyphen, so `context-menu` does not match `menu`.
+  const COLOR_LITERAL = new RegExp(`#[0-9a-f]{3,8}\\b|(?<![\\w-])(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\\(|(?<![\\w-])(?:${NAMED_COLORS}|${SYSTEM_COLORS})(?![\\w-])`, 'i')
   // Masks the contents of parentheses and brackets (innermost first, repeated)
   // so a comma or a combinator inside them cannot split a selector.
   const maskSelector = (s) => { let prev; do { prev = s; s = s.replace(/\([^()]*\)|\[[^[\]]*\]/g, (x) => 'x'.repeat(x.length)) } while (s !== prev); return s }
@@ -282,14 +286,14 @@ for (const rel of markdownFiles) {
   for (const f of walk('src/themes', '.css')) {
     // Comments become blanks of the same length: indexes and line numbers stay those of the file.
     const css = readFileSync(join(root, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '))
-    for (const m of css.matchAll(/@media([^{]*)\{/g)) {
-      if (/prefers-color-scheme/.test(m[1])) { problems.push(`${f}: @media${m[1].trimEnd()} - a theme file must not query prefers-color-scheme`) }
+    for (const m of css.matchAll(/@media([^{]*)\{/gi)) {
+      if (/prefers-color-scheme/i.test(m[1])) { problems.push(`${f}: @media${m[1].trimEnd()} - a theme file must not query prefers-color-scheme`) }
     }
     for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       const selectors = splitSelectorList(m[1]).filter((s) => s !== '' && !s.startsWith('@'))
       const body = m[2]
       if (selectors.some((s) => /\.llselect-root(?![\w-])/.test(subjectOf(s)))) {
-        if (/(^|[\s;])color-scheme\s*:/.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares color-scheme on the widget root; the resolver reads it there`) }
+        if (/(^|[\s;])color-scheme\s*:/i.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares color-scheme on the widget root; the resolver reads it there`) }
         if (/--llselect-color-scheme\s*:/.test(body)) { problems.push(`${f}: "${selectors.join(', ')}" declares --llselect-color-scheme on the widget root; it would hide an ancestor's value`) }
       }
       let offset = m.index + m[1].length + 1
@@ -297,7 +301,8 @@ for (const rel of markdownFiles) {
         const colon = declaration.indexOf(':')
         const property = colon === -1 ? '' : declaration.slice(0, colon).trim()
         if (!property.startsWith('--llselect-') && COLOR_LITERAL.test(declaration.slice(colon + 1))) {
-          problems.push(`${f}:${lineOf(css, offset)}: literal color outside the --llselect-* declarations: ${declaration.trim()}`)
+          // the chunk starts with the newline left by the previous ";": count at its first non-blank character
+          problems.push(`${f}:${lineOf(css, offset + declaration.length - declaration.trimStart().length)}: literal color outside the --llselect-* declarations: ${declaration.trim()}`)
         }
         offset += declaration.length + 1
       }
