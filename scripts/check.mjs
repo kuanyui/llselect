@@ -19,8 +19,8 @@
 //      `--llselect-color-scheme` declared on the widget root, no
 //      `prefers-color-scheme` media query, no literal color outside the
 //      `--llselect-*` variable declarations (hex and color functions in any
-//      declaration, also inside a url(); named and system colors in the
-//      properties that take a color).
+//      declaration, a hex also inside a data: url(); named and system colors
+//      in the properties that take a color).
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import ts from 'typescript'
@@ -263,7 +263,7 @@ for (const rel of markdownFiles) {
 // tell a light-only page from an OS-following one. Every color outside the
 // `--llselect-*` declarations must come from a variable (DESIGN.md "The color
 // variables"): a hex or color-function literal counts in any declaration, a
-// hex inside a url() too (an embedded image color follows no scheme); a named
+// hex inside a data: url() too (an embedded image color follows no scheme); a named
 // or system color keyword counts only in a property that takes a color
 // (elsewhere `menu` or `background` is an ordinary value). `transparent` and
 // `currentColor` are not colors here. CSS property names, at-rules and media
@@ -295,44 +295,57 @@ for (const rel of markdownFiles) {
   const subjectOf = (s) => { const m = /[\s>+~]+(?=[^\s>+~]*$)/.exec(maskSelector(s)); return m === null ? s : s.slice(m.index + m[0].length) }
   const lineOf = (text, index) => text.slice(0, index).split('\n').length
   const blank = (x) => x.replace(/[^\n]/g, ' ')
-  // One left-to-right pass turns comments, strings and unquoted url() into
-  // blanks of the same length: a comment opener inside a string is text, a
-  // "}" or ";" inside a string splits nothing, a ")" inside a quoted url()
-  // ends nothing (the string branch masks the quoted argument), and every
-  // index and line number still points into the file. An escaped character
-  // stays inside its string or url(); a string ends at a newline at the latest.
-  const maskCss = (text) => {
-    let out = '', i = 0
+  // One left-to-right pass over a theme file. It returns the text with
+  // comments, strings and url() turned into blanks of the same length (so a
+  // comment opener inside a string is text, a "}" or ";" inside a string
+  // splits nothing, a ")" inside a quoted url() ends nothing, and every index
+  // and line number still points into the file), the text with only the
+  // comments blanked (for messages), and the span of every url() with its
+  // argument (for the color scan). An escaped character stays inside its
+  // string or url(); a string ends at a newline at the latest.
+  const scanCss = (text) => {
+    let masked = '', noComments = '', i = 0
+    const urls = []
+    const stringEnd = (from, quote) => { let j = from + 1; while (j < text.length && text[j] !== quote && text[j] !== '\n') { j += text[j] === '\\' ? 2 : 1 } return Math.min(j + 1, text.length) }
     while (i < text.length) {
       const c = text[i]
       if (c === '/' && text[i + 1] === '*') {
         const close = text.indexOf('*/', i + 2)
         const stop = close === -1 ? text.length : close + 2
-        out += blank(text.slice(i, stop)); i = stop; continue
+        masked += blank(text.slice(i, stop)); noComments += blank(text.slice(i, stop)); i = stop; continue
       }
       if (c === '"' || c === "'") {
-        let j = i + 1
-        while (j < text.length && text[j] !== c && text[j] !== '\n') { j += text[j] === '\\' ? 2 : 1 }
-        const stop = Math.min(j + 1, text.length)
-        out += blank(text.slice(i, stop)); i = stop; continue
+        const stop = stringEnd(i, c)
+        masked += blank(text.slice(i, stop)); noComments += text.slice(i, stop); i = stop; continue
       }
       if (/^url\(/i.test(text.slice(i, i + 4))) {
-        if (/^url\(\s*["']/i.test(text.slice(i, i + 16))) { out += blank('url('); i += 4; continue }
         let j = i + 4
-        while (j < text.length && text[j] !== ')') { j += text[j] === '\\' ? 2 : 1 }
+        while (j < text.length && (text[j] === ' ' || text[j] === '\t' || text[j] === '\n')) { j += 1 }
+        let argument
+        if (text[j] === '"' || text[j] === "'") {
+          const close = stringEnd(j, text[j])
+          argument = text.slice(j + 1, close - 1)
+          j = close
+          while (j < text.length && text[j] !== ')' && text[j] !== '\n') { j += 1 }
+        } else {
+          const from = j
+          while (j < text.length && text[j] !== ')') { j += text[j] === '\\' ? 2 : 1 }
+          argument = text.slice(from, j)
+        }
         const stop = Math.min(j + 1, text.length)
-        out += blank(text.slice(i, stop)); i = stop; continue
+        urls.push({ start: i, argument })
+        masked += blank(text.slice(i, stop)); noComments += text.slice(i, stop); i = stop; continue
       }
-      out += c; i += 1
+      masked += c; noComments += c; i += 1
     }
-    return out
+    return { masked, noComments, urls }
   }
   for (const f of walk('src/themes', '.css')) {
     const source = readFileSync(join(root, f), 'utf8')
-    const css = maskCss(source)
+    const { masked: css, noComments, urls } = scanCss(source)
     // the source text for a message: a prelude also holds the comments before
     // it, which the masked text has already blanked
-    const unmasked = (index, length) => source.slice(index, index + length).replace(/\/\*[\s\S]*?\*\//g, blank)
+    const unmasked = (index, length) => noComments.slice(index, index + length)
     for (const m of css.matchAll(/@media([^{]*)\{/gi)) {
       if (/prefers-color-scheme/i.test(m[1])) { problems.push(`${f}: @media${unmasked(m.index + 6, m[1].length).trimEnd()} - a theme file must not query prefers-color-scheme`) }
     }
@@ -353,10 +366,11 @@ for (const rel of markdownFiles) {
         const value = declaration.slice(colon + 1)
         // the chunk starts with the newline left by the previous ";": the declaration begins at its first non-blank character
         const lead = declaration.length - declaration.trimStart().length
-        const original = source.slice(bodyStart + start + lead, bodyStart + start + declaration.length)
-        const urls = [...original.matchAll(/url\((?:[^)\\]|\\.)*\)/gi)].map((u) => u[0])
-        const flagged = !property.startsWith('--llselect-') && (COLOR_LITERAL.test(value) || (COLOR_PROPERTY.test(property) && COLOR_KEYWORD.test(value)) || urls.some((u) => URL_COLOR.test(u)))
-        if (flagged) { problems.push(`${f}:${lineOf(css, bodyStart + start + lead)}: literal color outside the --llselect-* declarations: ${original.trim()}`) }
+        const from = bodyStart + start + lead, to = bodyStart + start + declaration.length
+        // only an embedded image (a data: URL) carries a color of its own; url(#id) and url(file.svg) point elsewhere
+        const embeddedColor = urls.some((u) => u.start >= from && u.start < to && /^data:/i.test(u.argument) && URL_COLOR.test(u.argument))
+        const flagged = !property.startsWith('--llselect-') && (COLOR_LITERAL.test(value) || (COLOR_PROPERTY.test(property) && COLOR_KEYWORD.test(value)) || embeddedColor)
+        if (flagged) { problems.push(`${f}:${lineOf(css, from)}: literal color outside the --llselect-* declarations: ${source.slice(from, to).trim()}`) }
         start += declaration.length + 1
       }
     }

@@ -2,6 +2,20 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (theme dark color schemes, post-fix round 8)
+
+Process: the eighth fix batch (commit `7945d2d`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY, three DOCUMENTATION. Opus 4.8: fix first, one QUALITY, two DOCUMENTATION. Codex 5.5: fix first, one QUALITY, one DOCUMENTATION. Codex Sol: fix first, three QUALITY, two DOCUMENTATION. All four found the masker and the pinned test sound. The entries below merge the overlapping findings.
+
+- [x] **[QUALITY-269] - the url() color scan ran a fresh regex over the unmasked source: a url() inside a comment or a string counted, a quoted url() holding ")" was missed, and a fragment reference such as `url(#cafe)` was a false positive**
+  - Fix: the single pass records every real url() with its argument; the scan covers only `data:` URLs (an embedded image), so `url(#id)` and `url(file.svg)` are not scanned; the lookahead for a quoted argument walks the whitespace instead of slicing 16 characters.
+- [x] **[QUALITY-270] - the messages blanked a `/*` inside a selector string as a comment**
+  - Fix: the same pass also returns the text with only the comments blanked; messages quote from it.
+- [x] **[DOCUMENTATION-271] - DESIGN's property list missed `tap-highlight-color`; the header summary of `scripts/check.mjs` claimed color functions inside a url() are scanned; "such a declaration" named a narrower scope than the code**
+  - Fix: the list names the property; the header says "a hex also inside a data: url()"; DESIGN says "any declaration other than the `--llselect-*` variables".
+- [ ] **[QUALITY-272] - rule 6 has no automated test; the probe that checked every round lives outside the repo**
+  - Symptom: the rule changed in every round of this feature, each time verified by a throwaway script that writes a temporary theme file; `npm run check` and `npm test` exercise neither the masker nor the scanner on a crafted input.
+  - Fix (owner decision pending): extract the scan into a module the test runner can import (a file next to check.mjs under scripts, exporting a function that takes a file's text and returns its problems), make `scripts/check.mjs` call it, and turn the probe's cases into a `node:test` file. Needs a place for script tests: the root runner compiles `test/**/*.ts` only.
+
 ## review (theme dark color schemes, post-fix round 7)
 
 Process: the seventh fix batch (commit `a820acd`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY, one DOCUMENTATION. Opus 4.8: fix first, one DOCUMENTATION. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, three QUALITY, one DOCUMENTATION. All four found the two observer tests sound. The entries below merge the overlapping findings.
