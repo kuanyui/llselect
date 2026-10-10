@@ -2,6 +2,343 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (disabled chosen item: documentation)
+
+Process: the owner asked what happens when a chosen item's option becomes disabled and chose "document only", since the behavior already matches a native `<select>`. The documentation commit went to the other four panel members round after round, one at a time, read-only. Round one: Opus 5 fix first (four MEDIUM, two DOCUMENTATION, three QUALITY), Opus 4.8 ship (one QUALITY, two DOCUMENTATION), Codex 5.5 fix first (one DOCUMENTATION), Codex Sol fix first (one QUALITY, five DOCUMENTATION). Round two: Opus 5 fix first (one MEDIUM, two DOCUMENTATION, four QUALITY), Opus 4.8 ship (two DOCUMENTATION), Codex 5.5 and Codex Sol fix first (one DOCUMENTATION each). Round three: Opus 5 fix first (one MEDIUM, three QUALITY), Opus 4.8 fix first (one MEDIUM, two QUALITY), Codex 5.5 fix first (one MEDIUM, one DOCUMENTATION), Codex Sol fix first (one MEDIUM, one QUALITY, one DOCUMENTATION). Round four: Opus 5 ship (one QUALITY, three DOCUMENTATION), Opus 4.8 ship (one QUALITY), Codex 5.5 ship, Codex Sol fix first (one MEDIUM). Round five: Opus 5 fix first (one MEDIUM, one DOCUMENTATION, three QUALITY), Opus 4.8 fix first (one QUALITY), Codex 5.5 fix first (one MEDIUM, two DOCUMENTATION), Codex Sol fix first (one MEDIUM, two DOCUMENTATION). Round six: Opus 5 fix first (two MEDIUM, four QUALITY, two DOCUMENTATION), Opus 4.8 fix first (one DOCUMENTATION), Codex 5.5 fix first (one MEDIUM, one DOCUMENTATION), Codex Sol fix first (one MEDIUM, two DOCUMENTATION). Round seven: Opus 5 fix first (two MEDIUM, two QUALITY, three DOCUMENTATION), Opus 4.8 fix first (one DOCUMENTATION), Codex 5.5 fix first (one MEDIUM, one DOCUMENTATION), Codex Sol fix first (one MEDIUM, one DOCUMENTATION). Round eight: Opus 5 fix first (three MEDIUM, one QUALITY, three DOCUMENTATION), Opus 4.8 fix first (one MEDIUM, one QUALITY), Codex 5.5 fix first (two MEDIUM), Codex Sol fix first (two MEDIUM, one QUALITY). Round nine: Opus 5 fix first (four MEDIUM, two QUALITY, three DOCUMENTATION), Opus 4.8 ship (one QUALITY), Codex 5.5 fix first (one QUALITY), Codex Sol fix first (two MEDIUM, one QUALITY, two DOCUMENTATION). Round ten: Opus 5 fix first (three MEDIUM, two QUALITY, one DOCUMENTATION), Opus 4.8 fix first (one MEDIUM), Codex 5.5 fix first (two MEDIUM), Codex Sol fix first (one MEDIUM, one DOCUMENTATION). Round eleven: Opus 5 fix first (one MEDIUM, two QUALITY, three DOCUMENTATION), Opus 4.8 fix first (two DOCUMENTATION), Codex 5.5 ship, Codex Sol fix first (one MEDIUM, two QUALITY). Round twelve: Opus 5 fix first (one MEDIUM, one QUALITY, two DOCUMENTATION), Opus 4.8 fix first (one MEDIUM), Codex 5.5 fix first (one MEDIUM), Codex Sol fix first (one MEDIUM, two DOCUMENTATION). Round thirteen: Opus 5 fix first (two MEDIUM, two QUALITY, two DOCUMENTATION), Opus 4.8 ship, Codex 5.5 fix first (one QUALITY), Codex Sol fix first (one MEDIUM, one QUALITY, three DOCUMENTATION). Round fourteen: Opus 5 fix first (one MEDIUM, one QUALITY, four DOCUMENTATION), Opus 4.8 fix first (one DOCUMENTATION), Codex 5.5 fix first (two DOCUMENTATION), Codex Sol fix first (two DOCUMENTATION). Round fifteen: Opus 5 fix first (one QUALITY, five DOCUMENTATION), Opus 4.8 fix first (one QUALITY, two DOCUMENTATION), Codex 5.5 fix first (one QUALITY), Codex Sol fix first (one QUALITY, four DOCUMENTATION). Round sixteen: Opus 5 fix first (two MEDIUM, two QUALITY, five DOCUMENTATION), Opus 4.8 fix first (two DOCUMENTATION), Codex 5.5 fix first (one MEDIUM, two DOCUMENTATION), Codex Sol ship. Round seventeen: Opus 5 fix first (one QUALITY, six DOCUMENTATION), Opus 4.8 ship, Codex 5.5 ship, Codex Sol ship. Round eighteen: Opus 5 fix first (one QUALITY, two DOCUMENTATION), Opus 4.8 fix first (one DOCUMENTATION), Codex 5.5 ship, Codex Sol fix first (one DOCUMENTATION). Round nineteen: Opus 5 fix first (three DOCUMENTATION), Opus 4.8 fix first (one DOCUMENTATION), Codex 5.5 ship, Codex Sol fix first (one DOCUMENTATION). Round twenty: Opus 5 fix first (five DOCUMENTATION), Opus 4.8 ship, Codex 5.5 ship, Codex Sol ship. Round twenty-one: Opus 5 fix first (two DOCUMENTATION), Opus 4.8 ship, Codex 5.5 ship, Codex Sol fix first (one DOCUMENTATION). Round twenty-two: Opus 5 fix first (two DOCUMENTATION), Opus 4.8 ship, Codex 5.5 ship, Codex Sol fix first (one DOCUMENTATION). Round twenty-three: Opus 5 fix first (two DOCUMENTATION), Opus 4.8 ship, Codex 5.5 ship, Codex Sol ship. Round twenty-four: Opus 5 fix first (two DOCUMENTATION), Opus 4.8 ship, Codex 5.5 ship, Codex Sol ship. Round twenty-five: Opus 5 ship (one DOCUMENTATION), Opus 4.8 ship, Codex 5.5 fix first (one DOCUMENTATION), Codex Sol fix first (one DOCUMENTATION, the same as Opus 5's). Round twenty-six: Opus 5 fix first (three DOCUMENTATION), Opus 4.8, Codex 5.5 and Codex Sol fix first (one DOCUMENTATION each, the same as one of Opus 5's). Round twenty-seven: Opus 5 fix first (four DOCUMENTATION), Opus 4.8 fix first (one DOCUMENTATION, the same as one of Opus 5's), Codex 5.5 ship, Codex Sol ship. Round twenty-eight: Opus 5 fix first (two DOCUMENTATION), Opus 4.8 ship, Codex 5.5 ship, Codex Sol fix first (one DOCUMENTATION, the same as one of Opus 5's). Round twenty-nine: Opus 5 fix first (two DOCUMENTATION), Opus 4.8 ship, Codex 5.5 ship, Codex Sol ship. Round thirty: Opus 5 fix first (two DOCUMENTATION), Opus 4.8 ship, Codex 5.5 ship, Codex Sol ship. Round thirty-one: Opus 5 fix first (two DOCUMENTATION), Opus 4.8 fix first (one DOCUMENTATION, the same as one of Opus 5's), Codex 5.5 ship, Codex Sol ship. The loop paused after round thirty-one for the owner's call (NEEDS-VERIFICATION-417); the owner chose to continue. From round thirty-two on, the fixes come from a model outside the panel, so all five panel members are asked. Round thirty-two: Fable 5 did not run (the account's Fable usage limit), Opus 5 fix first (three DOCUMENTATION), Opus 4.8 ship, Codex 5.5 ship, Codex Sol did not run (the model was at capacity on two tries). Round thirty-three, which also reviewed the wording-review model commit: Fable 5 did not run (usage limit), Opus 5 fix first (two DOCUMENTATION on this section, three on that commit), Opus 4.8, Codex 5.5 and Codex Sol fix first on that commit only; its findings are logged under "review (wording-review model)". Round thirty-four, which also reviewed the wording-review model fixes and the color-scheme docs follow-up: Fable 5 did not run (usage limit), Opus 5 fix first (one DOCUMENTATION and one QUALITY on this section), Opus 4.8, Codex 5.5 and Codex Sol fix first on the other commits only. Round thirty-five, which also reviewed the docs follow-up fixes and the wording-review model fix: Fable 5 did not run (usage limit), Opus 5 fix first (one DOCUMENTATION on this section), Opus 4.8 ship, Codex 5.5 ship, Codex Sol fix first on the docs follow-up only. Round thirty-six: Fable 5 did not run (usage limit), Opus 5 and Codex Sol fix first (one DOCUMENTATION each on this section, the same finding, besides their findings on the docs follow-up), Opus 4.8 ship, Codex 5.5 ship. Round thirty-seven: Fable 5 did not run (usage limit); Opus 5, Opus 4.8, Codex 5.5 and Codex Sol found nothing on this section. The loop ends there for this section: the four members who could run found nothing on its last commit, and Fable 5 could not run from round thirty-two on. As the owner instructed, the commits of this work were then squashed into one (committee: 5 of 7 for one commit, 2 for keeping the first commit apart), keeping the first commit's author date and the last commit's committer date. Every copy change went through the wording review: one review each for the first commit, for rounds one to eleven, and for rounds fourteen to twenty-two (8, 5, 7, 2, 3, 5, 3, 4, 4, 8, 4, 2, 5, 1, 3, 1, 2, 1, 2, 0 and 0 findings applied; the fixes of rounds twelve, thirteen and twenty-three to thirty-six changed no reader-facing copy; one finding of the round-five wording review concerned a sentence outside the change). The entries below merge the overlapping findings.
+
+- [x] **[MEDIUM-277] - the README told the app to "drop the values" of disabled items, which still submits the field name for a single select's fixed hidden input**
+  - Fix: remove or disable the hidden input instead; the `required` nuance added (the browser omits the option on submit, the required check still counts it); an item whose group is disabled counts too.
+  - Q: Why a clause about group-disabled items, not a public "is this item effectively disabled" query?
+    - A: Because that query is `protected` by a DESIGN decision ("not public"), and a public API change needs its own review; the clause tells the app what to reproduce. The owner can reopen that decision.
+- [x] **[MEDIUM-278] - the `itemDisabledFn` docstring named methods that exist on one class only, and "the trigger still shows it" was false for the multiple count summary**
+  - Fix: per-class nested lists (TypeDoc prints the base docstring under the single and multiple settings too); the count summary includes the item; `'tags'` mode shows the chip; a custom trigger content function decides; the row facts hold when the row is rendered.
+- [x] **[MEDIUM-279] - the clear button, a user action that drops a disabled chosen item, was missing from the docstring and overstated in A11Y**
+  - Fix: a docstring bullet; A11Y narrows "only user re-toggling is blocked" to the item itself and points to the clear-button section for the removal paths.
+- [x] **[QUALITY-280] - the single-select test's post-click assertion could not fail, and the count-summary claim had no test**
+  - Fix: the click assertion also checks that the popup stayed open (an activation would have closed it); the multiple retention test asserts the "1 / 3 selected" summary.
+- [x] **[DOCUMENTATION-281] - DESIGN called the submission omission "the one native behavior with no counterpart" and said llselect "has no form part"**
+  - Fix: `required` named as the second behavior; "does not submit form values"; DESIGN describes what the README says.
+- [x] **[MEDIUM-282] - the docstring called the clear button "the only user action" that drops a disabled chosen item, which is false for a single select, where choosing another item replaces it, and for a disabled control**
+  - Symptom: found by all four members in round three; the sentence sat in the shared part of the docstring, so TypeDoc printed it under the single settings too.
+  - Fix: the single list says another choice replaces the item; the exclusivity claim was later replaced by the blocked, built-in and app paths (MEDIUM-284); the shared bullet requires `clearable` on and an enabled control; the `'tags'` facts are one per bullet; the retention fact is stated once, the native parity once.
+  - Q: Why is the clear button not "the only user action" that drops a disabled chosen item?
+    - A: Because a single select replaces the item on the next choice, a disabled control blocks the button, and an action row supplied by the app may call `setChosenItems()`. The docstring now names the blocked paths (the item's own row and chip) and the built-in path with its conditions, instead of claiming exclusivity.
+- [x] **[QUALITY-283] - the clear-button behavior for a disabled chosen item had no test**
+  - Fix: a test clicks the clear button in both classes and asserts an empty selection.
+- [x] **[MEDIUM-284] - the multiple list still claimed the clear button is the only user action that removes the item, while an action row may call `setChosenItems()`, `clearable` is off by default, and the button sits outside the tab order**
+  - Fix: the list names the blocked paths (the item's own row and chip), the built-in path with its conditions, and the app path; the shared bullet says Tab does not reach the button (its wording went through two more corrections: the dropped enabled-control condition (MEDIUM-293) and the claim that the button takes clicks only (MEDIUM-298)); A11Y lists the blocked actions and the removal paths.
+- [x] **[QUALITY-285] - the multiple half of the clear-button test did not assert its precondition**
+  - Fix: it asserts the disabled item is chosen before the click.
+- [x] **[DOCUMENTATION-286] - this round's log kept the wrong conclusion in the title of the clear-button entry (MEDIUM-279), had no Q&A for the correction, and its Process paragraph stopped at round two**
+  - Fix: title reworded, a Q&A under the only-user-action entry (MEDIUM-282), Process extended through round four.
+- [x] **[MEDIUM-287] - A11Y's Disabled section still said the clear button "still clears it" without conditions, and its keyboard sentence called the chip inert as a whole**
+  - Fix: the Disabled section points to the clear-button section for the removal paths; the keyboard sentence names the tags-mode chip's remove button and the clear button's conditions.
+- [x] **[QUALITY-288] - the single half of the clear-button test did not assert its precondition**
+  - Fix: it asserts the disabled item is chosen before the click, like the multiple half.
+- [x] **[DOCUMENTATION-289] - docstring bullets repeated facts or held two; the app path sat under the clearable-off condition; the tab-order fact sat under the enabled-control condition**
+  - Fix: the row-and-chip summary bullet is gone (the tags and row bullets already say it); the app path and the action-row fact are unconditional bullets; the tab-order fact depends on `clearable` only.
+- [x] **[MEDIUM-290] - `unchooseAll()` named two drop paths when `toggleItem()` and any excluding `setChosenItems()` drop a disabled chosen item too**
+  - Fix: the docstring lists the paths with their conditions.
+- [x] **[DOCUMENTATION-291] - the fix line of the only-user-action entry (MEDIUM-282) kept the conclusion that the multiple-list exclusivity entry (MEDIUM-284) had replaced**
+  - Fix: it describes the current state and names the multiple-list exclusivity entry (MEDIUM-284).
+- [x] **[MEDIUM-292] - every removal inventory omitted `setItems()`: a new item list that no longer contains the chosen item drops it in both classes**
+  - Fix: the `itemDisabledFn` docstring, the `unchooseAll()` docstring and A11Y's removal-path list name that path.
+- [x] **[MEDIUM-293] - the clear-button bullet "You can click the clear button" dropped the enabled-control condition and repeated the clearing fact; A11Y said keyboard users clear through the popup, which a single select cannot do**
+  - Fix: the bullet keeps only the tab-order fact; A11Y scopes popup deselection to a multiple select and says a single select replaces the value or uses an app-supplied control; the row exception covers click and Enter; the chip-body remark is gone.
+- [x] **[QUALITY-294] - the clear-button test never asserted that the chosen item was disabled at click time**
+  - Fix: both halves open the popup and assert the item's row carries `aria-disabled` before the click.
+- [x] **[QUALITY-295] - the setters were listed twice and "that call" had no single referent**
+  - Fix: one app-path list with the native comparison; "those setters".
+- [x] **[DOCUMENTATION-296] - the Process paragraph counted four rounds while listing five, and the docstring-restructure entry (DOCUMENTATION-289) bundled five findings**
+  - Fix: the count is gone (the listed rounds carry it); the bundle is split into the docstring-restructure entry, the `unchooseAll()` drop-path entry and the stale-conclusion entry (289, 290 and 291).
+- [x] **[DOCUMENTATION-297] - A11Y's removal-path list opened with a blocked action as its first entry**
+  - Fix: the blocked actions are the intro sentence; the list holds the four removal paths.
+- [x] **[MEDIUM-298] - "cannot focus or activate the clear button" and "takes clicks only" overstated `tabindex="-1"`, which only removes the button from the tab order; the button can hold focus (the focus hand-off relies on it)**
+  - Fix: both texts say only that Tab does not reach the button; A11Y adds that it can still hold focus (its first version also claimed that Enter or Space then clears, corrected under MEDIUM-302, and that the hand-off keeps focus after a clear, corrected under MEDIUM-304).
+  - Q: Why is "pointer control" or "clicks only" not a precise description of a `tabindex="-1"` button?
+    - A: Because it names the usual path, not the capability: the button can hold focus (the hand-off relies on it), and what a key does to it depends on the handlers above it.
+- [x] **[DOCUMENTATION-299] - the native analogy "like setting `option.selected`" was applied to `setItems()`, whose native counterpart is removing the `<option>`**
+  - Fix: the analogy names the three selection setters; the `setItems()` bullet carries its own.
+- [x] **[QUALITY-300] - the `setItems()` removal path had no test, and `chooseAll()` (with `toggleAll()` when it chooses) drops a chosen item outside the current list, which the "preserved" claims did not say**
+  - Fix: a test removes a disabled chosen item through `setItems()` in both classes and asserts `onChange`; the `chooseAll()` and `unchooseAll()` docstrings state the rebuild-from-list condition.
+- [x] **[DOCUMENTATION-301] - two fix lines still pointed at "A11Y's keyboard sentence", and "the sixth review" was ambiguous**
+  - Fix: the lines name the removal-path list and the round-five wording review.
+- [x] **[MEDIUM-302] - A11Y claimed that a focused clear button clears on Enter or Space; the trigger's keydown handler takes those keys first (open when closed, activate the focused row when open) and cancels the keydown, so no click is synthesized**
+  - Fix: A11Y says the button fires only on a click or `click()` from script; a test presses Enter on the focused button and asserts the popup opened and the selection stayed.
+  - Q: Why was "a focused button fires click on Enter or Space" wrong here although it holds for a plain button?
+    - A: Because the keydown bubbles to the trigger's handler, which maps Enter and Space and calls `preventDefault()` before the browser would synthesize the click. A claim about what an element does is checked against the component's own event handlers, not only against the element's DOM capability.
+- [x] **[MEDIUM-303] - the drop-path entry named `toggleAll()` without its branch: its unchoose branch runs `unchooseAll()`, which preserves disabled chosen items, listed or not; and "a list that no longer contains the item" pointed at `setItems()`, which already drops such items itself**
+  - Fix: `chooseAll()` and `unchooseAll()` say "a chosen item outside the current item list (`setChosenItems()` and `toggleItem()` accept such items)" and name `toggleAll()`'s choose branch only; `toggleAll()`'s own docstring states both branches (MEDIUM-310).
+  - Q: Why must a claim about `toggleAll()` name the branch?
+    - A: Because a method that delegates inherits the behavior of the branch it takes; "it drops" or "it preserves" is true of one branch only.
+- [x] **[MEDIUM-304] - "the focus hand-off preserves that focus" did not hold for a clear: the rebuilt button is hidden by every theme while `data-empty` is true, so focus leaves it; and a click focuses a button only in some browsers**
+  - Fix: A11Y limits the hand-off to re-renders that leave the button visible, says a successful clear hides it, and marks click focus as browser-dependent.
+  - Q: Why was "the hand-off preserves that focus" wrong for a clear although the hand-off code does focus the rebuilt button?
+    - A: Because the same render then marks the trigger empty, and every theme hides the button on that mark; a claim that an element keeps focus must account for the CSS that may hide it.
+- [x] **[QUALITY-305] - the `setItems()` test did not pin that the item was disabled, did not perform the chosen-then-disabled transition in the multiple half, and had no `onChange` baseline before each call**
+  - Fix: both halves choose while enabled, disable and rerender, assert the row's `aria-disabled`, assert the baseline, then assert exactly one more callback.
+- [x] **[DOCUMENTATION-306] - the native analogy for `setItems()` hid that a native single select then selects its first enabled option**
+  - Fix: the analogy states the difference (llselect shows the placeholder); its conditions followed under MEDIUM-312.
+- [x] **[DOCUMENTATION-307] - "those setters" lost `setItems()` for the action-row sentence**
+  - Fix: the action-row bullet follows the path list and says "any of those calls".
+- [x] **[DOCUMENTATION-308] - the Q of the overstated-focus entry (MEDIUM-298) asked about rounds, not about the judgement**
+  - Fix: the Q asks why the description is imprecise.
+- [x] **[MEDIUM-309] - A11Y's keydown sentence lost the enabled-control condition: a disabled control's keydown handler returns before cancelling the key, so the browser synthesizes the button's click, which the button's handler ignores**
+  - Fix: the sentence states both cases.
+- [x] **[MEDIUM-310] - `toggleAll()`'s own docstring promised "none chosen", which its unchoose branch does not deliver for disabled chosen items**
+  - Fix: the docstring states both branches and what each keeps or drops.
+- [x] **[MEDIUM-311] - A11Y's removal-path list said "only through these paths" and omitted the `chooseAll()` path for an item outside the current list**
+  - Fix: the path is listed with its condition.
+- [x] **[MEDIUM-312] - the native fallback after an option removal was stated without its conditions (display size 1, an enabled option remaining)**
+  - Fix: both conditions stated; the comparison sentences moved from the call list to the native-parity bullets.
+- [x] **[QUALITY-313] - the Enter test could not fail on a missing `preventDefault()` (jsdom synthesizes no click) and did not pin the focus; the `chooseAll()` drop and the single placeholder after `setItems()` had no test**
+  - Fix: `fireKey` returns the event; the test asserts the focus, `defaultPrevented`, the open popup and the kept selection for Enter and Space; a test chooses an unlisted item and runs `chooseAll()`; the `setItems()` test asserts the placeholder; the manual pass gains the real-browser check.
+- [x] **[DOCUMENTATION-314] - the native consequences of `setItems()` sat inside the app-call list**
+  - Fix: moved to the native-parity bullets.
+- [x] **[DOCUMENTATION-316] - `toggleItem()` was missing as a second source of chosen items outside the current list**
+  - Fix: named next to `setChosenItems()` in every such sentence.
+- [x] **[DOCUMENTATION-317] - the drop list of `unchooseAll()` ended with a sentence about a path that preserves**
+  - Fix: the preserving branch is described in `toggleAll()`'s own docstring.
+- [x] **[DOCUMENTATION-318] - the title of the unlisted-choice claims entry (QUALITY-300) kept the branch-less conclusion about `toggleAll()`**
+  - Fix: the title names the branch.
+- [x] **[DOCUMENTATION-319] - the focus-hand-off entry (MEDIUM-304), a cross-round correction, had no Q&A**
+  - Fix: the Q&A records the lesson.
+- [x] **[DOCUMENTATION-320] - the native-fallback entry (DOCUMENTATION-306) bundled three findings**
+  - Fix: split into the native-fallback entry, the action-row-referent entry and the Q-wording entry (306, 307 and 308); this entry's own predecessor bundled six and is split into the native-consequences entry (314) and the entries about `toggleItem()` as a source, the preserving sentence, the title of the unlisted-choice claims entry (QUALITY-300), the Q&A of the focus-hand-off entry (MEDIUM-304) and this bundle itself (316 to 320).
+  - Q: Why one finding per entry, even when they land in one fix commit?
+    - A: Because a finding is referred to by what it is; a bundle has no single name, hides which part a later round overturned, and tempts a severity that fits none of its parts.
+- [ ] **[QUALITY-315] - eight commit subjects of this session exceed the 140-character cap**
+  - Symptom: the round-bundle commits named every sub-part; CLAUDE.md caps a subject at 140 characters and asks for about 72. Fifteen subjects exceeded the cap; the squash of this section's commits into one removed seven of them, and the eight left are color-scheme commits that precede this work.
+  - Fix (owner decision pending): rewriting the eight gives every later commit a new hash and needs a remap of the color-scheme commit hashes this file cites. Options: rewrite them with the remap, or leave them and keep future subjects short.
+- [x] **[MEDIUM-321] - the condition for `toggleAll()` calling `chooseAll()` missed the list with no enabled item, where `allChosen` is false and `chooseAll()` runs**
+  - Fix: `toggleAll()`'s first branch requires at least one enabled item; the two cross-references name the two cases in which it calls `chooseAll()` (the list has no enabled item, or an enabled item in the list is unchosen); a test with no enabled item asserts the unlisted disabled choice is dropped.
+- [x] **[MEDIUM-322] - the `itemDisabledFn` app-call list lacked the `chooseAll()` path for an item outside the current list, which the other two inventories had gained**
+  - Fix: the sub-bullet is added, with `toggleAll()`.
+- [x] **[MEDIUM-323] - A11Y's Disabled section said bulk actions act on enabled items only, and `chooseAll()` said disabled chosen items are preserved, both without the current-list condition**
+  - Fix: both sentences carry it.
+- [x] **[QUALITY-324] - the disabled-control key claim had no assertion**
+  - Fix: the key test adds a disabled-control branch asserting the keydown is not cancelled.
+- [x] **[QUALITY-326] - the `chooseAll()` test covered an enabled unlisted item only**
+  - Fix: it adds a disabled unlisted item and the no-enabled-item `toggleAll()` case.
+- [x] **[DOCUMENTATION-325] - the list-hygiene entry (DOCUMENTATION-314) bundled six findings**
+  - Fix: split into the native-consequences entry (314) and the entries about `toggleItem()` as a source, the preserving sentence, the title of the unlisted-choice claims entry (QUALITY-300), the Q&A of the focus-hand-off entry (MEDIUM-304) and the bundled native-fallback entry (316 to 320), with the lesson under the one-finding entry (DOCUMENTATION-320).
+- [x] **[MEDIUM-327] - DESIGN's "Bulk ops skip disabled" bullet, its group-disabled layering bullet, the naming-conventions bulk-scope ruling and `chooseAll()`'s first bullet stated the preservation and the enabled-only scope without the current-list condition**
+  - Fix: each carries the condition for `chooseAll` (its over-application to `unchooseAll`, the per-method scope entry, followed as MEDIUM-334).
+- [x] **[DOCUMENTATION-331] - DESIGN's `toggleAll` sentence missed the no-enabled-item branch**
+  - Fix: the bullet states both branches.
+- [x] **[QUALITY-328] - the two new `chooseAll()` cases did not assert that the unlisted item entered the selection**
+  - Fix: the preconditions are asserted.
+- [x] **[QUALITY-332] - the disabled-control key branch did not pin the focus on the button**
+  - Fix: it asserts the focus.
+- [x] **[DOCUMENTATION-329] - the `itemDisabledFn` sub-bullet said `toggleAll()` removes the item "when it calls `chooseAll()`" without saying when that is**
+  - Fix: the two cases are named.
+- [x] **[DOCUMENTATION-330] - the entry that logged the missing disabled-control key assertion together with the `chooseAll()` coverage gap (QUALITY-324) bundled two findings**
+  - Fix: split into the key-assertion entry (324) and the `chooseAll()` coverage entry (326).
+- [x] **[DOCUMENTATION-333] - the fix line of the entry about `toggleAll()`'s no-enabled-item case (MEDIUM-321) quoted a sentence that the wording review had replaced**
+  - Fix: the fix line describes the shipped wording.
+- [x] **[MEDIUM-334] - the naming-conventions bulk-scope ruling and DESIGN's group-disabled layering bullet applied the current-list condition to every bulk op, while `unchooseAll()` filters the chosen set and preserves or clears items listed or not**
+  - Fix: the ruling states the scope per method, as DESIGN's "Bulk ops skip disabled" bullet does; the layering bullet points at that bullet.
+  - Q: Why state the scope per method rather than for the bulk-op family?
+    - A: Because the family shares only the enabled-items rule; `chooseAll` rebuilds from the item list and `unchooseAll` filters the chosen set, so a sentence about "bulk ops" that mentions the list is wrong for one of them.
+- [x] **[DOCUMENTATION-335] - the naming-conventions ruling named `chooseAll` alone as the method that drops a chosen item outside the list**
+  - Fix: `toggleAll` inherits the scope of the branch it calls.
+- [x] **[QUALITY-336] - the disabled-unlisted `chooseAll()` case never showed that the component treats the unlisted item as disabled**
+  - Fix: the case first runs `unchooseAll()` and asserts the unlisted disabled item is kept, then restores the selection and runs `chooseAll()`.
+- [x] **[QUALITY-339] - DESIGN's "listed or not" claim for `unchooseAll()` had no test**
+  - Fix: covered by the same `unchooseAll()` step (the enabled half followed as QUALITY-344).
+- [x] **[DOCUMENTATION-337] - three round-eleven entries bundled two findings each**
+  - Fix: split into the current-list entry and the toggleAll-branch entry (327 and 331), the precondition entry and the focus entry (328 and 332), the bundle entry and the stale-quote entry (330 and 333).
+- [x] **[DOCUMENTATION-338] - one round-eleven entry named prior findings by id alone**
+  - Fix: the prior findings are named by what they are.
+- [ ] **[QUALITY-340] - older rounds reuse finding numbers (31, 29 and 27 each appear twice), against the unique-id rule**
+  - Symptom: found during the disabled-item rounds; the duplicates sit in unrelated old sections.
+  - Fix (owner decision pending): renumbering the later duplicates changes ids that commit messages and other entries cite; the alternative is to leave them and keep new ids unique.
+- [x] **[MEDIUM-341] - the naming-conventions ruling's family sentence still promised that every bulk op preserves disabled chosen items, which `chooseAll` and `toggleAll`'s choose branch break for an item outside the current list**
+  - Fix: the family sentence keeps the enabled-items rule only; preservation is stated per method.
+- [x] **[MEDIUM-342] - A11Y's bulk-actions sentence kept the current-list condition for every bulk op, which is wrong for `unchooseAll`**
+  - Fix: the sentence states the scope per method, as DESIGN does.
+- [x] **[QUALITY-343] - after the `unchooseAll()` step the disabled-unlisted case restored the selection without asserting it, so the `chooseAll()` assertion no longer had an immediate precondition**
+  - Fix: the restore is asserted.
+- [x] **[QUALITY-344] - the enabled half of `unchooseAll()`'s "listed or not" claim had no test**
+  - Fix: the case adds an enabled unlisted item and asserts `unchooseAll()` clears it while keeping the disabled one.
+- [x] **[DOCUMENTATION-345] - two round-twelve entries bundled two findings each**
+  - Fix: split into the disabled-setup entry and the "listed or not" coverage entry (336 and 339), and the bundle entry and the id-alone entry (337 and 338).
+- [x] **[DOCUMENTATION-346] - the fix line of the three-bundles entry (DOCUMENTATION-337) named findings by bare numbers, and the fix line of the current-list entry (MEDIUM-327) named one by id alone**
+  - Fix: both name the findings, with the ids trailing.
+- [x] **[MEDIUM-347] - the `unchooseAll()` docstring and the unchoose branch of `toggleAll()`'s docstring did not say that enabled chosen items outside the current item list are cleared too**
+  - Fix: both say that the cleared and the preserved items are affected even if the item is outside the current item list.
+- [x] **[DOCUMENTATION-348] - the per-method bulk-scope lists in DESIGN and the naming ruling omitted `toggleAllVisible`**
+  - Fix: both say it acts on the visible enabled subset and preserves every other choice, listed or not.
+- [x] **[DOCUMENTATION-349] - A11Y's bulk-actions sentence said "when it calls `chooseAll`" without the two cases**
+  - Fix: the cases are named in the sentence.
+- [x] **[QUALITY-350] - the test named for `chooseAll()` and `toggleAll()` also held the `unchooseAll()` assertions**
+  - Fix: the name covers all three.
+- [x] **[DOCUMENTATION-351] - the round-thirteen bundle entry (DOCUMENTATION-345) bundled two findings itself**
+  - Fix: split into the round-twelve bundles entry and the bare-number fix lines entry (345 and 346).
+- [x] **[DOCUMENTATION-353] - the fix lines of the one-finding lesson entry, the six-way split entry, the key-and-coverage split entry and the round-thirteen bundle entry named findings by bare numbers (320, 325, 330, 345)**
+  - Fix: each names the findings, with the ids trailing.
+- [x] **[QUALITY-352] - the round-thirteen commit subject ran to 155 characters, a fifteenth case of the open subject-length entry (QUALITY-315)**
+  - Fix: amended to 112 characters with its dates kept.
+- [x] **[QUALITY-354] - the unlisted-item test promised that `toggleAll()` drops an unlisted item "disabled or not" but exercised only the no-enabled-item case**
+  - Fix: a case with an unchosen enabled item in the list and an enabled unlisted choice asserts the drop.
+- [x] **[DOCUMENTATION-355] - A11Y's bulk-actions sentence lacked `toggleAllVisible` after DESIGN and the naming ruling gained it**
+  - Fix: the clause is added.
+- [x] **[QUALITY-356] - the "preserves every other choice, listed or not" claim for `toggleAllVisible` had no unlisted-item test**
+  - Fix: a test keeps an enabled and a disabled unlisted choice through both directions.
+- [x] **[DOCUMENTATION-357] - the `unchooseAll()` bullet about disabled items also carried the clicking rationale**
+  - Fix: the rationale is its own bullet.
+- [x] **[DOCUMENTATION-358] - the fix line of the `unchooseAll()` scope entry (MEDIUM-347) quoted wording the wording review had replaced**
+  - Fix: it describes the shipped wording.
+- [x] **[DOCUMENTATION-359] - the round-fourteen log entry about bundles (DOCUMENTATION-351) bundled two findings itself**
+  - Fix: split into the round-thirteen bundle entry and the bare-number fix lines entry (351 and 353).
+- [x] **[DOCUMENTATION-360] - the fix lines of the one-finding lesson entry and the round-thirteen bundle entry still referred to findings by a bare range or bare numbers (DOCUMENTATION-320, DOCUMENTATION-351)**
+  - Fix: both name the findings.
+- [x] **[DOCUMENTATION-361] - the round-thirteen commit-subject entry (QUALITY-352) recorded 107 characters for a 112-character subject**
+  - Fix: corrected.
+- [x] **[MEDIUM-362] - the `unchooseAll()` rationale bullet had become a family-level claim with the current-list condition, which contradicted the bullet above it**
+  - Fix: the bullet is the plain rationale again: clicking a disabled item does not change its selection state, and this bulk op mirrors that.
+- [x] **[MEDIUM-363] - the `toggleAllVisible()` docstring and A11Y's choose-all row scope listed the preserved choices without "not in the current item list"**
+  - Fix: both lists name the unlisted case.
+- [x] **[MEDIUM-371] - the `toggleAllVisible()` docstring called its unfiltered scope "the same scope as `toggleAll`" although `toggleAll`'s choose branch drops unlisted choices**
+  - Fix: the docstring says what each `toggleAll` branch does with chosen items outside the current item list, and when each branch runs.
+- [x] **[DOCUMENTATION-364] - A11Y's bulk-actions sentence listed three methods in its family parenthesis and appended `toggleAllVisible` as an outsider**
+  - Fix: the parenthesis names all four.
+- [x] **[QUALITY-365] - `toggleAll()`'s unchoose branch had no unlisted-choice test**
+  - Fix: a case with every enabled listed item chosen plus an enabled and a disabled unlisted choice asserts the enabled one is cleared and the disabled one stays.
+- [x] **[DOCUMENTATION-366] - the unlisted-item test's name claimed `toggleAll()` drops the item without naming the branch**
+  - Fix: the name states both branches.
+- [x] **[QUALITY-367] - the `toggleAllVisible()` unlisted test never pinned that the unlisted item counts as disabled**
+  - Fix: in tags mode, the test asserts the disabled chip carries `aria-disabled` and the enabled one does not.
+- [x] **[DOCUMENTATION-368] - the fix line of the round-fourteen bundle entry (DOCUMENTATION-359) used bare numbers**
+  - Fix: it names the findings.
+- [x] **[DOCUMENTATION-369] - the title of the bare-references entry (DOCUMENTATION-360) named the fix lines by id alone**
+  - Fix: it names them.
+- [x] **[DOCUMENTATION-370] - the fix line of the round-count entry (DOCUMENTATION-296) used bare numbers, a case the earlier clean-ups missed**
+  - Fix: it names the findings.
+- [x] **[DOCUMENTATION-372] - the unconditional "unlike `toggleAll`" guarantee of `toggleAllVisible()` sat inside the no-query bullet, which read as a condition on it**
+  - Fix: it is its own bullet.
+- [x] **[DOCUMENTATION-373] - the `unchooseAll()` rationale bullet restated the preservation fact of the bullet above it**
+  - Fix: it states the rationale only.
+- [x] **[DOCUMENTATION-374] - the `toggleAllVisible()` docstring named the source of unlisted chosen items in a separate sentence, unlike the trailing parenthesis the `unchooseAll()` docstring uses**
+  - Fix: the trailing parenthesis.
+- [x] **[QUALITY-375] - the `toggleAllVisible()` unlisted test ran without a filter query only, while the guarantee is unconditional**
+  - Fix: a second instance repeats both directions under a query that narrows the visible subset.
+- [x] **[DOCUMENTATION-376] - the `toggleAllVisible()` scope entry (MEDIUM-363) bundled the missing unlisted case with the wrong cross-comparison**
+  - Fix: split into the missing-unlisted-case entry (MEDIUM-363) and the cross-comparison entry (MEDIUM-371).
+- [x] **[DOCUMENTATION-377] - the fix line of the six-way split entry (DOCUMENTATION-325) still referred to two entries by bare number**
+  - Fix: it names them.
+- [x] **[DOCUMENTATION-378] - the titles of the one-finding lesson entry and the six-way split entry (DOCUMENTATION-320, DOCUMENTATION-325) named their predecessors by id alone**
+  - Fix: both name them.
+- [x] **[DOCUMENTATION-379] - the fix line of the split entry for the `toggleAllVisible()` scope (DOCUMENTATION-376) named one half by bare number**
+  - Fix: it names both halves.
+- [x] **[DOCUMENTATION-380] - the `toggleAllVisible()` docstring stated the unlisted-choice fact twice, in the preservation list and in the "unlike `toggleAll`" bullet**
+  - Fix: the preservation bullet is unconditional, and the contrast bullet speaks of `toggleAll` only.
+- [x] **[QUALITY-381] - the `toggleAllVisible()` unlisted test's name did not say that it runs with and without a filter query**
+  - Fix: the name says so.
+- [x] **[DOCUMENTATION-382] - the `toggleAllVisible()` contrast bullet did not say when `toggleAll` calls `chooseAll()`**
+  - Symptom: the round-eighteen rewrite made `toggleAll` the subject of the bullet, so its two cases became necessary, as in the `itemDisabledFn` sub-bullet entry (DOCUMENTATION-329) and the A11Y bulk-actions entry (DOCUMENTATION-349).
+  - Fix: the bullet states the two cases, like the `unchooseAll()` docstring does.
+- [x] **[DOCUMENTATION-383] - the `toggleAllVisible()` preservation bullet packed the rule, the four kinds of preserved items and the source of unlisted chosen items into one bullet**
+  - Fix: the four kinds are sub-bullets; the source sits in a trailing parenthesis on the last one.
+- [x] **[DOCUMENTATION-384] - the round-eighteen rewrite moved the source of unlisted chosen items back into a standalone sentence, which the parenthesis entry (DOCUMENTATION-374) had ruled out, and no entry recorded the reversal**
+  - Symptom: the fix lines of the parenthesis entry and of the cross-comparison entry (MEDIUM-371) no longer matched the shipped wording.
+  - Fix: the parenthesis is back (DOCUMENTATION-383); the fix line of the cross-comparison entry quotes the shipped wording.
+  - Q: Why restore the parenthesis, not record the standalone sentence as the new ruling?
+    - A: Because the `unchooseAll()` docstring names the source the same way, and the round-seventeen wording review had accepted the parenthesis; the round-eighteen split answered a wording finding about the bullet's first clause, not about the parenthesis.
+- [x] **[DOCUMENTATION-385] - the `toggleAllVisible()` docstring placed the `toggleAll` contrast between two facts about the method itself, before the no-filter-query bullet that states its whole-list case**
+  - Fix: the contrast follows the no-filter-query bullet.
+  - Q: Why does the title not say that the two scopes coincide when there is no filter query and `hideChosenRows` is off?
+    - A: Because only the listed enabled items are the same then; `toggleAll` still affects chosen items outside the current item list (its `chooseAll` branch drops them all, disabled or not, and its `unchooseAll` branch clears the enabled ones and keeps the disabled ones), while `toggleAllVisible()` keeps every one of them.
+- [x] **[DOCUMENTATION-386] - the round-nineteen fix line of the duplicate-fact entry (DOCUMENTATION-380) claimed the nesting that the nested-sub-bullets entry (DOCUMENTATION-383) made**
+  - Fix: its own fix line is back.
+- [x] **[DOCUMENTATION-387] - the title of the parenthesis entry (DOCUMENTATION-374) said both other docstrings use a trailing parenthesis, while `chooseAll()` names the source in a bullet of its own**
+  - Fix: the title names `unchooseAll()` only.
+- [x] **[DOCUMENTATION-388] - the `toggleAllVisible()` docstring did not say that with `hideChosenRows` on it only chooses, since no visible item is chosen then**
+  - Symptom: the `hideChosenRows` setting docstring and DESIGN say it; an app's action row calls the method directly and reads its docstring only.
+  - Fix: a bullet after the two branches.
+  - Q: Why does the bullet say "a chosen item is not visible", not "no visible item is chosen" or "every visible item is unchosen"?
+    - A: Because the wording review read each of those as an action in one pass and as a state in the next; "is not visible" has no action reading.
+- [x] **[DOCUMENTATION-389] - the first two sub-bullets of the preservation list used two sentence shapes for the same relation**
+  - Fix: both say "items hidden by".
+- [x] **[DOCUMENTATION-390] - the no-filter-query bullet of the `toggleAllVisible()` docstring used "it" as its subject right before the `toggleAll` bullet, whose "it" is `toggleAll`**
+  - Fix: the bullet's subject is "this method".
+- [x] **[DOCUMENTATION-391] - the title of the contrast-position entry (DOCUMENTATION-385) said the two scopes coincide in the no-filter-query case, while `toggleAll` still drops or clears unlisted choices there**
+  - Fix: the title names the bullet by its whole-list case, without that claim.
+- [x] **[DOCUMENTATION-392] - one member asked to cut the premise "a chosen item is not visible" from the `hideChosenRows` bullet of the `toggleAllVisible()` docstring, since the Visible sub-bullet implies it**
+  - Fix: none. The bullet must stand on its own for a reader who skims to it; the premise is the one fact of the Visible definition that decides the direction, and the `hideChosenRows` setting docstring states the same conclusion with its premise too.
+- [x] **[DOCUMENTATION-393] - the `toggleAll` contrast bullet of the `toggleAllVisible()` docstring covered the `chooseAll()` branch only, so a reader could infer that the `unchooseAll()` branch keeps chosen items outside the current item list, which is false for enabled ones**
+  - Symptom: the correction of the contrast-position entry's title (DOCUMENTATION-391) stated the fact in the log but not in the docstring.
+  - Fix: the bullet names both branches, what each does with chosen items outside the list, and when each runs; the fix line of the cross-comparison entry (MEDIUM-371) follows.
+- [x] **[DOCUMENTATION-394] - the title of the subject entry (DOCUMENTATION-390) said the bullet opened with "it", while "it" was the subject of its main clause after a when-clause**
+  - Fix: the title says the bullet used "it" as its subject.
+- [x] **[DOCUMENTATION-395] - the correction of the contrast-position entry's title (DOCUMENTATION-391) dropped the scope-coincidence claim without a Q&A for the lesson**
+  - Fix: a Q&A under the contrast-position entry (DOCUMENTATION-385).
+- [x] **[DOCUMENTATION-396] - the Q&A under the contrast-position entry (DOCUMENTATION-385) stated the no-filter-query condition without the `hideChosenRows` condition, while the docstring bullet carries both**
+  - Fix: the question states both.
+- [x] **[DOCUMENTATION-397] - A11Y's bulk-actions sentence stated `toggleAll`'s `chooseAll` branch only and left its other branch to inference, like the contrast bullet before the both-branches entry (DOCUMENTATION-393)**
+  - Fix: the sentence names both branches of `toggleAll` and the condition of each; its first wording closed with a demonstrative whose antecedent was wrong, corrected under the competing-antecedent entry (DOCUMENTATION-399).
+- [x] **[DOCUMENTATION-398] - the answer of the Q&A under the contrast-position entry (DOCUMENTATION-385) said `toggleAll` drops or clears every chosen item outside the current item list, while its `unchooseAll` branch keeps the disabled ones, as `toggleAllVisible()` does**
+  - Fix: the answer names what each branch does.
+- [x] **[DOCUMENTATION-399] - A11Y's bulk-actions sentence closed its `toggleAll` clause with "inherits that scope" right after describing `chooseAll`'s scope, so the demonstrative competed with the wrong antecedent**
+  - Fix: `toggleAll` gets a clause of its own, "inherits the scope of the branch it calls", with the condition of each branch, as naming-conventions puts it.
+- [x] **[DOCUMENTATION-400] - the fix line of the A11Y entry (DOCUMENTATION-397) named its further correction by id alone**
+  - Fix: it says what the correction was; the fix line of the multiple-list exclusivity entry (MEDIUM-284) had the same shape and now names its two corrections.
+- [x] **[DOCUMENTATION-401] - the answer of the Q&A under the contrast-position entry (DOCUMENTATION-385) said the `unchooseAll` branch clears the enabled outside-list choices without saying it keeps the disabled ones, the case the per-branch entry (DOCUMENTATION-398) is about**
+  - Fix: the parenthesis says both.
+- [x] **[DOCUMENTATION-402] - the round-twenty-five sentence of the Process paragraph did not say that two of its three reports were the same finding, so its count did not match the two entries**
+  - Fix: it says so.
+  - Q: Why keep the count of three reports, not change it to two?
+    - A: Because three members reported one finding each and two of the reports were the same finding, merged into two entries; the round-twenty-six brief, not the log, had miscounted.
+- [x] **[DOCUMENTATION-403] - the fix line of the multiple-list exclusivity entry (MEDIUM-284) named the overstated-focus correction (MEDIUM-298) after its corrected text, "the overstated tab-order claim", which read as if the tab-order statement had been wrong**
+  - Fix: it names the defect.
+- [x] **[DOCUMENTATION-404] - ten older titles and fix lines of this section still referred to an entry by bare id first**
+  - Fix: each names the entry with the id trailing; the fix line of the bare-reference entry (DOCUMENTATION-400) uses the same name for the multiple-list exclusivity entry (MEDIUM-284), since "the exclusivity-claim entry" also fits the only-user-action entry (MEDIUM-282).
+- [x] **[DOCUMENTATION-405] - the fix line of the multiple-list exclusivity entry (MEDIUM-284) named the shared bullet's second correction after the fix line's own paraphrase ("cannot be focused or activated") of A11Y's sentence ("cannot focus or activate the clear button"), while the bullet itself had said "pressing Tab does not focus the clear button: it takes clicks only"**
+  - Fix: it names the bullet's own claim.
+- [x] **[DOCUMENTATION-406] - "the subject-length entry" named two entries: the character-count entry (DOCUMENTATION-361) used it for the round-thirteen commit-subject entry (QUALITY-352), whose own title uses it for the open subject-length entry (QUALITY-315)**
+  - Fix: the character-count entry says "the round-thirteen commit-subject entry", and the title of the round-thirteen commit-subject entry carries the id of the open subject-length entry.
+- [x] **[DOCUMENTATION-407] - the count entry (DOCUMENTATION-402) did not record that the three-report count was questioned and confirmed**
+  - Fix: a Q&A.
+- [x] **[DOCUMENTATION-408] - the rename of the reference in the fix line of the bare-reference entry (DOCUMENTATION-400) had no record**
+  - Fix: the sweep entry (DOCUMENTATION-404) mentions it.
+- [x] **[DOCUMENTATION-409] - the title of the bullet's-own-claim entry (DOCUMENTATION-405) quoted "cannot be focused or activated" as A11Y's sentence, while that was the fix line's paraphrase; A11Y had said "cannot focus or activate the clear button; it takes clicks only", so "it takes clicks only" was A11Y's wording too, not the bullet's alone**
+  - Fix: the title quotes A11Y's words and the bullet's words.
+- [x] **[DOCUMENTATION-410] - the two-names entry (DOCUMENTATION-406) itself called the entries "the round-thirteen entry" and "the open entry", which also fit the round-thirteen bundle entry (DOCUMENTATION-345) and the open duplicate-ids entry (QUALITY-340)**
+  - Fix: it uses the full names.
+- [x] **[DOCUMENTATION-411] - the closing clause of the A11Y-quote entry (DOCUMENTATION-409) said the "takes clicks only" contrast was not A11Y-only, while the title of the bullet's-own-claim entry (DOCUMENTATION-405) had attributed the phrase to the bullet, so the point was that the phrase was not the bullet's alone**
+  - Fix: the clause says so.
+- [x] **[DOCUMENTATION-412] - the shorthand-collision entry (DOCUMENTATION-410) named a collision for "the round-thirteen entry" only, while "the open entry" also fit the open duplicate-ids entry (QUALITY-340)**
+  - Fix: it names both collisions.
+- [x] **[DOCUMENTATION-413] - the title of the bullet's-own-claim entry (DOCUMENTATION-405) labelled A11Y's own words "cannot focus or activate the clear button" as "a paraphrase of A11Y's sentence", a label the A11Y-quote correction (DOCUMENTATION-409) created by inserting "a paraphrase of" in the same edit that put A11Y's original in place of the fix line's paraphrase**
+  - Fix: the title quotes both, the fix line's paraphrase "cannot be focused or activated" and A11Y's sentence "cannot focus or activate the clear button", each labelled.
+- [x] **[DOCUMENTATION-414] - the contrast-direction entry (DOCUMENTATION-411) referred to "the title it corrects" without naming the bullet's-own-claim entry (DOCUMENTATION-405)**
+  - Fix: it names the entry.
+- [x] **[DOCUMENTATION-415] - the title of the label entry (DOCUMENTATION-413) said the A11Y-quote correction (DOCUMENTATION-409) had left the label unchanged, while that correction had inserted "a paraphrase of" in the same edit that put the original in place**
+  - Fix: the clause says both happened in one edit.
+- [x] **[DOCUMENTATION-416] - the title of the bullet's-own-claim entry (DOCUMENTATION-405) said "its own paraphrase" right after "the shared bullet's second correction", so the possessive read as the bullet's, while the same sentence goes on to quote what the bullet itself had said**
+  - Fix: "the fix line's own paraphrase".
+- [x] **[NEEDS-VERIFICATION-417] - the round-thirty-one log corrections (DOCUMENTATION-415, DOCUMENTATION-416) had no post-fix review when the loop paused**
+  - Symptom: rounds twenty-three to thirty-one changed no code and no reader-facing copy; round twenty-four's findings concerned A11Y's bulk-actions sentence and the Q&A of the contrast-position entry (DOCUMENTATION-385), and from round twenty-five to round thirty-one every finding concerned this log's own text, most of them from one member; the loop was paused after round thirty-one.
+  - Fix: the owner chose to continue until the panel approves, since quality comes first; round thirty-two reviewed both corrections.
+- [x] **[DOCUMENTATION-418] - the Symptom of the loop-pause entry (NEEDS-VERIFICATION-417) said every finding from round twenty-four on came from one member, while rounds twenty-five to twenty-eight and thirty-one had two to four reporting members**
+  - Fix: it says "most of them from one member".
+- [x] **[DOCUMENTATION-419] - the title of the possessive entry (DOCUMENTATION-416) said the corrected sentence ends with "the bullet itself had said", while that phrase only opens the closing clause, which goes on to quote the bullet**
+  - Fix: it says the sentence goes on to quote what the bullet itself had said.
+- [x] **[DOCUMENTATION-420] - the clause in the title of the label entry (DOCUMENTATION-413) said the A11Y-quote correction "labelled it a paraphrase" right after "the paraphrase", so the nearest antecedent gave the empty reading "labelled the paraphrase a paraphrase"**
+  - Fix: the clause refers back to the quoted label instead of saying "labelled it"; its verb was corrected once more under the insertion entry (DOCUMENTATION-425).
+- [x] **[DOCUMENTATION-424] - the Symptom of the loop-pause entry (NEEDS-VERIFICATION-417) said every finding from round twenty-four on concerned the entries that logged the previous round, while round twenty-four's concerned A11Y's bulk-actions sentence and an older Q&A, and rounds twenty-six and twenty-seven corrected older entries of this section**
+  - Fix: it names round twenty-four's two subjects and says that from round twenty-five to round thirty-one every finding concerned this log's own text; the bound came with the unbounded-claim entry (DOCUMENTATION-436).
+- [x] **[DOCUMENTATION-425] - the clause in the title of the label entry (DOCUMENTATION-413) said the A11Y-quote correction inserted the label "a paraphrase of A11Y's sentence", while that edit inserted the words "a paraphrase of" into the label "A11Y's sentence", which was already there**
+  - Fix: the verb becomes "created by inserting", with the inserted words quoted; the fix line was reworded under the nested-quotes entry (DOCUMENTATION-437).
+- [x] **[DOCUMENTATION-436] - the Symptom of the loop-pause entry (NEEDS-VERIFICATION-417) said every finding "from round twenty-five on" concerned this log's own text, with no end, while round thirty-three found defects in TODO.md and DESIGN.md**
+  - Fix: "from round twenty-five to round thirty-one", in the Symptom and in the fix line of the round-twenty-four entry (DOCUMENTATION-424).
+- [x] **[DOCUMENTATION-437] - the fix line of the insertion entry (DOCUMENTATION-425) nested one quotation inside another and ended in three double quotes**
+  - Fix: one level of quotes. Reported as QUALITY; filed as DOCUMENTATION under the severity entry (DOCUMENTATION-444).
+- [x] **[DOCUMENTATION-444] - the nested-quotes entry was filed as QUALITY, while this section files the wording defects of the log's own text as DOCUMENTATION**
+  - Fix: it is DOCUMENTATION-437; the id number stays. The open duplicate-ids entry (QUALITY-340) stays QUALITY: it concerns the id rule, not wording.
+- [x] **[DOCUMENTATION-452] - the title of the severity entry (DOCUMENTATION-444) said this section files every defect of the log's own text as DOCUMENTATION and keeps QUALITY for tests and commit subjects, while the open duplicate-ids entry (QUALITY-340) is a log-text defect filed as QUALITY**
+  - Fix: the title speaks of wording defects only, and the fix line names the duplicate-ids entry as the id-rule case.
+
 ## review (theme dark color schemes, post-fix round 11)
 
 Process: the eleventh fix batch (commit `0613216`) went to the other four panel members, one at a time, read-only. Opus 5: ship, no finding. Opus 4.8: ship, no finding. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, the same QUALITY. All four found the three outputs of the scanner in step.

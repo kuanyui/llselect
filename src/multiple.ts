@@ -379,10 +379,14 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
 
   /**
    * Choose every enabled item.
-   * - It acts on enabled items only, like every `choose*` bulk op. Bulk ops
-   *   mirror clicking, and clicking cannot reach disabled items.
-   * - Already-chosen disabled items are preserved. To change disabled items
-   *   too, use `setChosenItems`.
+   * - It chooses only enabled items from the current item list, like every
+   *   `choose*` bulk op. Bulk ops mirror clicking, and clicking cannot reach
+   *   disabled items.
+   * - Already-chosen disabled items in the current item list are preserved.
+   *   To change disabled items too, use `setChosenItems`.
+   * - `setChosenItems()` and `toggleItem()` accept items outside the current
+   *   item list. If a chosen item is outside that list, this method drops it
+   *   when it rebuilds the selection, disabled or not.
    * - Fires `onChange` only when the chosen items actually change.
    * @group Selection
    */
@@ -392,9 +396,24 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
 
   /**
    * Unchoose every enabled item.
-   * - Already-chosen disabled items are preserved. Bulk ops mirror clicking,
-   *   and clicking cannot reach disabled items.
-   * - Two paths DO drop them: the clear button, and `setChosenItems([])`.
+   * - It filters the chosen set: every enabled chosen item leaves the
+   *   selection, even if the item is outside the current item list.
+   * - Every disabled chosen item stays chosen, even if the item is outside
+   *   the current item list.
+   * - Clicking a disabled item does not change its selection state, and this
+   *   method follows that rule.
+   * - The paths that DO drop them:
+   *   - the clear button, when `clearable` is on and the control is enabled;
+   *   - `toggleItem()` with the item;
+   *   - `setChosenItems()` with a selection that excludes the item;
+   *   - `setItems()` with a list that no longer contains the item;
+   *   - `chooseAll()`, if the item is outside the current item list: it
+   *     rebuilds the selection from that list, which drops the item
+   *     (`setChosenItems()` and `toggleItem()` can select items outside
+   *     the list);
+   *   - `toggleAll()`, if the item is outside the current item list, in the
+   *     two cases where it calls `chooseAll()`: the list has no enabled item,
+   *     or an enabled item in the list is unchosen.
    * - Fires `onChange` only when the chosen items actually change.
    * @group Selection
    */
@@ -403,8 +422,22 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Toggle between "all enabled chosen" and "none chosen".
-   * - It ignores disabled items, like every `choose*` bulk op.
+   * Toggle between "all enabled chosen" and "all enabled unchosen".
+   * - If the current item list holds at least one enabled item and every
+   *   enabled item is chosen:
+   *   - It calls `unchooseAll()`.
+   *   - Every enabled chosen item leaves the selection, even if the item is
+   *     outside the current item list.
+   *   - Every disabled chosen item stays chosen, even if the item is outside
+   *     the current item list.
+   * - Otherwise:
+   *   - It calls `chooseAll()`.
+   *   - Every enabled item in the current item list becomes chosen.
+   *   - Disabled chosen items in the current item list stay chosen.
+   *   - Chosen items outside the current item list leave the selection,
+   *     disabled or not.
+   * - Disabled items in the current item list keep their selection state,
+   *   like with every `choose*` bulk op.
    * - This is NOT the in-popup choose-all row's action. The row acts on the
    *   visible enabled subset only: see {@link toggleAllVisible}.
    * @group Selection
@@ -427,10 +460,23 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *     group.
    * - If all of them are already chosen, it unchooses exactly those.
    * - Otherwise, it chooses the ones still missing.
-   * - Choices outside that set (filtered-out, hidden by `hideChosenRows`, or
-   *   disabled) are preserved either way.
-   * - With no filter query and without `hideChosenRows`, the acted-on set is
-   *   every enabled item, the same scope as `toggleAll`.
+   * - When `hideChosenRows` is on, a chosen item is not visible, so this
+   *   method only chooses.
+   * - If this method does not act on a chosen item, that item stays chosen.
+   *   This covers:
+   *   - items hidden by the active filter query;
+   *   - items hidden by `hideChosenRows`;
+   *   - disabled items;
+   *   - chosen items outside the current item list (`setChosenItems()` and
+   *     `toggleItem()` accept such items).
+   * - When there is no filter query and `hideChosenRows` is off, this method
+   *   acts on every enabled item of the current item list.
+   * - `toggleAll` can drop chosen items outside the current item list:
+   *   - If the current item list has no enabled item, or an enabled item in
+   *     that list is unchosen, `toggleAll` calls `chooseAll()`. That call
+   *     drops every chosen item outside the list, disabled or not.
+   *   - Otherwise `toggleAll` calls `unchooseAll()`. That call clears every
+   *     enabled chosen item outside the list and keeps the disabled ones.
    * - Fires `onChange` only when the chosen items actually change.
    * - The acted-on set is computed by the overridable method `getVisibleEnabledItems`,
    *   shared with the choose-all row.

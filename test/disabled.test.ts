@@ -15,8 +15,10 @@ function options(sel: { popupListEl: HTMLElement }): HTMLElement[] {
   return Array.from(sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]'))
 }
 
-function fireKey(target: HTMLElement, key: string): void {
-  target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+function fireKey(target: HTMLElement, key: string): KeyboardEvent {
+  const ev = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+  target.dispatchEvent(ev)
+  return ev
 }
 
 function focusedText(sel: { popupListEl: HTMLElement; classIdMap: { popupListRowFocusedClass: string } }): string | null | undefined {
@@ -175,8 +177,152 @@ test('an already-chosen item that becomes disabled stays chosen', () => {
   disabled = true
   sel.rerender()
   assert.deepEqual([...sel.getChosenItems()], ['b']) // retained
+  assert.equal(sel.triggerEl.textContent?.trim(), '1 / 3 selected', 'the count summary counts the disabled chosen item')
   sel.chooseAll() // preserves disabled-chosen 'b', adds enabled a, c
   assert.deepEqual([...sel.getChosenItems()], ['a', 'b', 'c'])
+})
+
+test('single: an already-chosen item that becomes disabled stays chosen and the trigger keeps showing it', () => {
+  let disabled = false
+  const sel = new LLSelectSingle<string>(mount(), { itemDisabledFn: i => disabled && i === 'b' })
+  sel.setItems(['a', 'b', 'c'])
+  sel.setChosenItem('b')
+  disabled = true
+  sel.rerender()
+  assert.equal(sel.getChosenItem(), 'b')
+  assert.equal(sel.triggerEl.textContent?.trim(), 'b')
+  sel.open()
+  const row = options(sel).find((o) => o.textContent === 'b')
+  assert.ok(row)
+  assert.equal(row.getAttribute('aria-selected'), 'true')
+  assert.equal(row.getAttribute('aria-disabled'), 'true')
+  row.click()
+  assert.equal(sel.getChosenItem(), 'b', "the chosen item is still 'b'")
+  assert.equal(sel.popupEl.hidden, false, 'the click was not handled as an activation, which would have closed the popup')
+})
+
+test('the clear button drops a disabled chosen item, in both classes', () => {
+  let disabled = false
+  const single = new LLSelectSingle<string>(mount(), { clearable: true, itemDisabledFn: i => disabled && i === 'b' })
+  single.setItems(['a', 'b', 'c'])
+  single.setChosenItem('b')
+  disabled = true
+  single.rerender()
+  assert.equal(single.getChosenItem(), 'b', 'the disabled item is chosen before the click')
+  single.open()
+  assert.equal(options(single).find((o) => o.textContent === 'b')?.getAttribute('aria-disabled'), 'true', 'the chosen item is disabled at click time')
+  single.close()
+  single.triggerEl.querySelector<HTMLElement>(`.${single.classIdMap.triggerClearButtonClass}`)!.click()
+  assert.equal(single.getChosenItem(), undefined)
+  const multiple = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', clearable: true, itemDisabledFn: i => disabled && i === 'b' })
+  multiple.setItems(['a', 'b', 'c'])
+  multiple.setChosenItems(['a', 'b'])
+  multiple.rerender()
+  assert.deepEqual([...multiple.getChosenItems()], ['a', 'b'], 'the disabled item is chosen before the click')
+  multiple.open()
+  assert.equal(options(multiple).find((o) => o.textContent === 'b')?.getAttribute('aria-disabled'), 'true', 'the chosen item is disabled at click time')
+  multiple.close()
+  multiple.triggerEl.querySelector<HTMLElement>(`.${multiple.classIdMap.triggerClearButtonClass}`)!.click()
+  assert.deepEqual([...multiple.getChosenItems()], [])
+})
+
+test('setItems() drops a disabled chosen item that the new list no longer contains, in both classes', () => {
+  let disabled = false
+  const changes: string[] = []
+  const single = new LLSelectSingle<string>(mount(), { placeholder: 'Pick one', itemDisabledFn: i => disabled && i === 'b', onChange: () => { changes.push('single') } })
+  single.setItems(['a', 'b', 'c'])
+  single.setChosenItem('b')
+  disabled = true
+  single.rerender()
+  single.open()
+  assert.equal(options(single).find((o) => o.textContent === 'b')?.getAttribute('aria-disabled'), 'true', 'the chosen item is disabled before the list changes')
+  single.close()
+  assert.equal(single.getChosenItem(), 'b')
+  assert.deepEqual(changes, ['single'], 'disabling and rerendering fired nothing')
+  single.setItems(['a', 'c'])
+  assert.equal(single.getChosenItem(), undefined)
+  assert.equal(single.triggerEl.textContent?.trim(), 'Pick one', 'the trigger shows the placeholder, where a native single select would pick its first enabled option')
+  assert.deepEqual(changes, ['single', 'single'], 'the removal fired onChange once')
+  disabled = false
+  const multiple = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', itemDisabledFn: i => disabled && i === 'b', onChange: () => { changes.push('multiple') } })
+  multiple.setItems(['a', 'b', 'c'])
+  multiple.setChosenItems(['a', 'b'])
+  disabled = true
+  multiple.rerender()
+  multiple.open()
+  assert.equal(options(multiple).find((o) => o.textContent === 'b')?.getAttribute('aria-disabled'), 'true', 'the chosen item is disabled before the list changes')
+  multiple.close()
+  assert.deepEqual([...multiple.getChosenItems()], ['a', 'b'])
+  assert.deepEqual(changes, ['single', 'single', 'multiple'], 'disabling and rerendering fired nothing')
+  multiple.setItems(['a', 'c'])
+  assert.deepEqual([...multiple.getChosenItems()], ['a'])
+  assert.deepEqual(changes, ['single', 'single', 'multiple', 'multiple'], 'the removal fired onChange once')
+})
+
+test('Enter or Space on the focused clear button goes to the trigger: the keydown is cancelled, the popup opens, the selection stays', () => {
+  const sel = new LLSelectSingle<string>(mount(), { clearable: true })
+  sel.setItems(['a', 'b', 'c'])
+  sel.setChosenItem('b')
+  for (const key of ['Enter', ' ']) {
+    const button = sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
+    button.focus()
+    assert.equal(document.activeElement, button, 'the button holds focus')
+    const ev = fireKey(button, key)
+    assert.equal(ev.defaultPrevented, true, 'the trigger cancelled the keydown, so a browser synthesizes no click')
+    assert.equal(sel.getChosenItem(), 'b', 'the key did not clear')
+    assert.equal(sel.isOpened(), true, 'the trigger handled the key as Open')
+    sel.close()
+  }
+  // a disabled control: the trigger ignores the key without cancelling it (a browser then synthesizes the button's click, which the button ignores)
+  sel.setDisabled(true)
+  const button = sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  button.focus()
+  assert.equal(document.activeElement, button, 'the button holds focus on the disabled control')
+  const ev = fireKey(button, 'Enter')
+  assert.equal(ev.defaultPrevented, false, 'a disabled control does not cancel the keydown')
+  assert.equal(sel.getChosenItem(), 'b')
+  assert.equal(sel.isOpened(), false)
+})
+
+test('a chosen item outside the current item list: chooseAll(), and toggleAll() in its choose branch, drop it, disabled or not; unchooseAll(), and toggleAll() in its unchoose branch, keep it when disabled and clear it when enabled', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x' })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a', 'z']) // 'z' is not in the list; setChosenItems accepts it
+  assert.deepEqual([...sel.getChosenItems()], ['a', 'z'])
+  sel.chooseAll()
+  assert.deepEqual([...sel.getChosenItems()], ['a', 'b'], 'rebuilt from the list: z is gone')
+  const disabledZ = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', itemDisabledFn: i => i === 'z' })
+  disabledZ.setItems(['a', 'b'])
+  disabledZ.setChosenItems(['a', 'z']) // 'z' is disabled and outside the list
+  assert.deepEqual([...disabledZ.getChosenItems()], ['a', 'z'])
+  disabledZ.unchooseAll()
+  assert.deepEqual([...disabledZ.getChosenItems()], ['z'], 'unchooseAll() treats the unlisted item as disabled and keeps it, listed or not')
+  disabledZ.setChosenItems(['a', 'y', 'z']) // 'y' is enabled and outside the list
+  assert.deepEqual([...disabledZ.getChosenItems()], ['a', 'y', 'z'])
+  disabledZ.unchooseAll()
+  assert.deepEqual([...disabledZ.getChosenItems()], ['z'], 'unchooseAll() clears enabled chosen items, listed or not')
+  disabledZ.setChosenItems(['a', 'z'])
+  assert.deepEqual([...disabledZ.getChosenItems()], ['a', 'z'], 'the disabled unlisted item is chosen again')
+  disabledZ.chooseAll()
+  assert.deepEqual([...disabledZ.getChosenItems()], ['a', 'b'], 'a disabled unlisted item is dropped too')
+  const noEnabled = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', itemDisabledFn: () => true })
+  noEnabled.setItems(['a'])
+  noEnabled.setChosenItems(['z'])
+  assert.deepEqual([...noEnabled.getChosenItems()], ['z'])
+  noEnabled.toggleAll()
+  assert.deepEqual([...noEnabled.getChosenItems()], [], 'with no enabled item in the list, toggleAll() calls chooseAll(), which drops z')
+  const partly = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x' })
+  partly.setItems(['a', 'b'])
+  partly.setChosenItems(['a', 'y']) // 'y' is enabled and outside the list; 'b' is enabled and unchosen
+  assert.deepEqual([...partly.getChosenItems()], ['a', 'y'])
+  partly.toggleAll()
+  assert.deepEqual([...partly.getChosenItems()], ['a', 'b'], 'with an enabled item unchosen, toggleAll() calls chooseAll(), which drops the enabled unlisted y')
+  const allChosen = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', itemDisabledFn: i => i === 'z' })
+  allChosen.setItems(['a', 'b'])
+  allChosen.setChosenItems(['a', 'b', 'y', 'z']) // every enabled listed item chosen; 'y' enabled and 'z' disabled, both outside the list
+  assert.deepEqual([...allChosen.getChosenItems()], ['a', 'b', 'y', 'z'])
+  allChosen.toggleAll()
+  assert.deepEqual([...allChosen.getChosenItems()], ['z'], 'with every enabled listed item chosen, toggleAll() calls unchooseAll(): the enabled unlisted y is cleared, the disabled unlisted z stays')
 })
 
 test('unchooseAll preserves disabled-chosen items', () => {
