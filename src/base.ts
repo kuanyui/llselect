@@ -464,6 +464,46 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * Re-evaluated on every render (never cached). For a generic `T` this is the
    * only way to mark items - the library cannot read a `disabled` field off an
    * unknown type. See `docs/llm/DESIGN.md`.
+   * - When a chosen item becomes disabled, it stays chosen. The bullets below describe that state.
+   * - For an `LLSelectSingle`:
+   *   - `getChosenItem()` still returns the item.
+   *   - The trigger shows the item's text by default.
+   *   - Choosing another item replaces it, as in a native `<select>`.
+   * - For an `LLSelectMultiple`:
+   *   - `getChosenItems()` still includes the item.
+   *   - When `triggerDisplay` is `'count'`, the default, the count summary includes the item.
+   *   - When `triggerDisplay` is `'tags'`:
+   *     - The trigger shows a chip for the item.
+   *     - The chip has `aria-disabled` set to true.
+   *     - Clicking the chip's remove button does nothing.
+   *   - `clearable` is off by default.
+   *   - When `clearable` is off, no built-in user action removes the item.
+   * - Your app can remove the disabled chosen item:
+   *   - For a single select, call `setChosenItem()` with another item or with `undefined`.
+   *   - For a multiple select, call `setChosenItems()` with a selection that excludes the item.
+   *   - For a multiple select, call `toggleItem()` with the item.
+   *   - In both classes, call `setItems()` with a list that no longer contains the item.
+   *   - For a multiple select, if the item is outside the current item list:
+   *     - `chooseAll()` removes it from the selection.
+   *     - If the current item list has no enabled item, or an enabled item in it is unchosen, `toggleAll()` calls `chooseAll()`, which removes it as above.
+   * - An action row you supply can make any of those calls.
+   * - `setChosenItem()`, `setChosenItems()` and `toggleItem()` ignore the item's disabled state, like setting `option.selected` in script.
+   * - If you supply a custom trigger content function, that function controls what the trigger shows.
+   * - When the item's row is rendered:
+   *   - The row has `aria-selected` and `aria-disabled` set to true.
+   *   - Clicking the row does nothing.
+   * - When `clearable` is on and the control is enabled:
+   *   - Clicking the trigger's clear button clears the selection.
+   *   - That also removes the disabled chosen item.
+   * - When `clearable` is on, pressing Tab does not reach the clear button.
+   * - A native `<select>` behaves the same way: a selected `<option>` keeps its selection when it is disabled.
+   * - Removing the selected `<option>` removes that option from a native select's selection. `setItems()` with a list that excludes the chosen item removes the item here the same way.
+   * - After the selected option is removed:
+   *   - If a native single select has display size 1 and an enabled option remains, it selects its first enabled option.
+   *   - An `LLSelectSingle` shows the placeholder.
+   * - When a form submits, the browser omits selected options that are disabled.
+   * - A native select's required check still counts those options as selections.
+   * - llselect does not submit form values, so your app decides what to submit. The README section on form integration shows the hidden-input mirror, which does not exclude disabled items by itself.
    * @group Disabling
    */
   itemDisabledFn: ((item: T) => boolean) | null

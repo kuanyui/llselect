@@ -236,6 +236,32 @@ test('toggleAllVisible() with no filter query acts on every enabled item, disabl
   assert.deepEqual([...sel.getChosenItems()], ['locked'])
 })
 
+test('toggleAllVisible() preserves chosen items outside the current item list, enabled or disabled, in both directions, with and without a filter query', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', triggerDisplay: 'tags', itemDisabledFn: (i) => i === 'locked' || i === 'z' })
+  sel.setItems(['a', 'b', 'locked'])
+  sel.setChosenItems(['locked', 'y', 'z']) // 'y' enabled and 'z' disabled, both outside the list
+  assert.deepEqual([...sel.getChosenItems()], ['locked', 'y', 'z'])
+  const chips = Array.from(sel.triggerEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`))
+  assert.equal(chips.find((c) => c.textContent === 'z')?.getAttribute('aria-disabled'), 'true', 'the unlisted z counts as disabled')
+  assert.equal(chips.find((c) => c.textContent === 'y')?.hasAttribute('aria-disabled'), false, 'the unlisted y counts as enabled')
+  sel.toggleAllVisible()
+  assert.deepEqual([...sel.getChosenItems()], ['locked', 'y', 'z', 'a', 'b'], 'choosing the visible enabled subset keeps the unlisted choices')
+  sel.toggleAllVisible()
+  assert.deepEqual([...sel.getChosenItems()], ['locked', 'y', 'z'], 'unchoosing the visible enabled subset keeps the unlisted choices')
+  // the same holds while a filter query narrows the visible subset
+  const filtered = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', filterable: true, itemDisabledFn: (i) => i === 'locked' || i === 'z' })
+  filtered.setItems(['a', 'b', 'locked'])
+  filtered.setChosenItems(['locked', 'y', 'z'])
+  filtered.open()
+  const input = filtered.popupEl.querySelector('input')!
+  input.value = 'a' // visible: a only
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  filtered.toggleAllVisible()
+  assert.deepEqual([...filtered.getChosenItems()], ['locked', 'y', 'z', 'a'], 'with a query, choosing the visible subset keeps the unlisted choices')
+  filtered.toggleAllVisible()
+  assert.deepEqual([...filtered.getChosenItems()], ['locked', 'y', 'z'], 'with a query, unchoosing the visible subset keeps the unlisted choices')
+})
+
 test('the first item becoming disabled in place hands focus back to the choose-all row', () => {
   let disabled = false
   const sel = new LLSelectMultiple<string>(mount(), {

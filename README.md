@@ -249,6 +249,8 @@ The mirror covers submission only. The rest of native form behavior stays yours 
 - **Initial value**: if the server renders a pre-filled `value` attribute, apply the same value to llselect with `setChosenItem()` / `setChosenItems()` - the setters fire `onChange`, so the mirror stays in sync from then on.
 - **`form.reset()`** restores hidden inputs to their markup `value` attribute and does not touch llselect, so the two drift apart. Listen for the form's `reset` event and re-sync with `setChosenItem()` / `setChosenItems()`, or avoid reset.
 - **Constraint validation** (`required` etc.) never fires on hidden inputs - validate the llselect state in your submit handler.
+- **A chosen item that becomes disabled** stays chosen. A native `<select>` also keeps a disabled option selected. Native `required` still counts it as chosen. When a form submits, the browser omits selected options that are disabled.
+- **Matching native submission**: disabling an item does not fire `onChange`, so the hidden input keeps its value. If a chosen item is disabled when the form submits, remove or disable its hidden input. An item whose group is disabled through `groupDisabledFn` counts as disabled too.
 - **`<label for>`** cannot target llselect (plain `div`s are not labelable) - pass the element instead: `labelEl: document.querySelector('label[for="country"]')` covers both halves (accessible name via a live `aria-labelledby` reference, and label clicks focus the trigger).
 
 Why there is no built-in setting for this, and why the recipe uses hidden inputs rather than a hidden `<select>` mirror: [docs/llm/DESIGN.md](docs/llm/DESIGN.md) "`<form>` integration (ruled out of core)".
