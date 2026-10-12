@@ -84,6 +84,16 @@ Combine the inherited-signal camp with the native mirror; it is the only shape t
 - D6 Observation: shared batched observer on `html` / `body` attributes plus open-time re-evaluation plus the refresh method (recommended); or no observer in v1.
 - D7 The floor audit: accept `:has()` / `color-mix()` as degradable enhancements and correct the CLAUDE.md floor sentence (recommended); or add `@supports` guards and fallbacks. Decided by the owner: a feature above the floor is acceptable when the difference in older browsers is cosmetic only; a difference that hides state the user needs gets a plain fallback declaration. Applied: the `color-mix()` tints were first given fallback lines, then removed altogether by the variable conversion (bootstrap-5 computes its tints as `rgba()` over `--bs-primary-rgb`, tailwind uses a fixed `rgba()` for its ring); `:has()`, the `:focus-visible` selector lists and unprefixed `user-select` stay as cosmetic degradations; the CLAUDE.md floor bullet states the rule and the status of each use.
 
+## Follow-up round: a function that refreshes every widget in a region
+
+The question: should the package export `refreshColorSchemes(within?: ParentNode): void`, which re-decides every widget inside a region or a shadow root, or do docs suffice? Members: Opus 4.8, Opus 5, Sonnet 4.6, Sonnet 5, Codex Sol, Codex 5.5, Codex Astra, each at its highest effort, read-only.
+
+- Tally: docs only, 7 of 7; ratified by the owner.
+- Reasons: every case already works through `refreshColorScheme()` on each affected instance; the cases are rare (a scheme switched at runtime on an element below `<body>`, widgets in a shadow root); an export added later breaks no one, while one removed later would; CLAUDE.md "nothing speculative".
+- Widening the shared observer to the subtree: rejected by Opus 4.8, Sonnet 5, Codex Sol and Codex 5.5, supported by no member. It would react to unrelated DOM changes on every page and still could not enter shadow roots.
+- If a consumer needs the batch call later: name it `refreshAllColorSchemes(within?: ParentNode): void`, since `refreshColorSchemes` is one letter from the per-instance method (Opus 5). `within.querySelectorAll` neither matches `within` itself nor enters nested shadow roots, so the docstring says so or the function tests `within` with `matches()` (Opus 5). Forced and destroyed widgets stay unchanged; a detached subtree has no computed style; a default of the current document ties the function to the global `document`, unlike the rest of `color-scheme.ts` (Opus 4.8).
+- Docs the members asked for, now shipped: the README recipe's live-switching and shadow-root bullets and the opt-out for an unrelated mark; DESIGN.md's known-limit entry for an unrelated mark, the outer-theme condition for marks outside a shadow root, and the automatic-pass cost with its environment.
+
 ## Verification before shipping (union of the members' lists)
 
 - Native comparison on Chrome, Firefox and Safari, floor and current: a native `<select>` beside the widget must render the same scheme for every combination of declared `color-scheme` (`normal`, `light`, `dark`, `light dark`) and OS preference; Firefox 78-95 stays light and throws nothing.

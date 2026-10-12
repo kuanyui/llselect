@@ -447,6 +447,8 @@ Every theme ships a dark palette. The widget checks two CSS sources, in this ord
 - Your own colors: redefine the `--llselect-*` variables in a rule like `.acme .llselect-root`, loaded after the theme stylesheet. Every theme file lists the names and roles at its top.
 - Your rule must beat the theme's dark rule, `.llselect-root[data-llselect-color-scheme='dark']`. It wins with higher specificity, or with equal specificity and a later position in the page.
 - A custom dark palette also needs the dark scheme: set `--llselect-color-scheme: dark` on the widget root or an ancestor. The selected scheme controls the scrollbar's look. The color variables do not.
+- At runtime: the widget rechecks the scheme when a class or attribute changes on the html or body element. It also rechecks when its popup opens or the operating system preference changes. The widget does not recheck after a class or attribute change on any element other than html or body. If the change affects a widget's scheme, call `refreshColorScheme()` for every affected widget. Usually, the affected widgets are on or inside that element.
+- Shadow DOM: load the theme stylesheet inside the shadow root. A built-in class or attribute may be on an ancestor outside the shadow root. The class or attribute takes effect only if the document outside the shadow root also loads the theme stylesheet. Inside a shadow root, the widget does not detect class or attribute changes on the html or body element. The widget also does not detect operating system preference changes. When one of these changes affects the scheme, call `refreshColorScheme()` for every widget inside the shadow root. Refreshing a widget whose scheme is unchanged changes nothing.
 - Live comparison: section 17 of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
 
 | Class or attribute on the widget root or an ancestor | Selects |
@@ -459,6 +461,14 @@ Every theme ships a dark palette. The widget checks two CSS sources, in this ord
 | attribute `data-theme` | its value, dark or light |
 | attribute `data-bs-theme` | its value, dark or light |
 | attribute `data-color-scheme` | its value: dark, light, or auto to follow the operating system |
+
+Your page may already use a class or attribute from the table for another purpose. Widgets on or inside an element with that class or attribute then take the scheme the table lists. To stop that class or attribute from setting the scheme, add a rule that beats its theme rule:
+
+```css
+.hero.dark { --llselect-color-scheme: inherit; }
+```
+
+With this rule, that element takes its parent's value of the variable. If that value is empty, the widget falls back to the property. To keep the widgets light even inside a dark page, write `light` instead of `inherit`.
 
 ### Subclassing (extending the library)
 

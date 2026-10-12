@@ -2,9 +2,103 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (color-scheme docs follow-up)
+
+Process: the follow-up documents the decision not to add a function that refreshes every widget in a region (`color-scheme-committee.md`, the follow-up round: 7 of 7 for docs only, ratified by the owner). Every claim of the new README copy was verified in headless Chromium 151 before writing. The first probe run reported an OS-preference check as failed: the probe waited two `setTimeout(0)` ticks, while Chromium fires the media query change at the next rendering frame; with two animation frames of wait, every check passed. The README copy went through the wording review on Codex Luna (`gpt-5.6-luna`, medium effort) four times before the first panel review (5, 4, 5 and 4 findings) and six times after it (7, 3, 2, 1, 1 and 3). Each point was applied as proposed, rewritten when the proposed sentence was itself unclear, reached 20 words or contradicted a verified fact, or declined: "these changes" in the shadow-root bullet's refresh instruction, which points at the two sentences right before it. The verb "switch the scheme", raised twice, was declined while the bullet's first sentence still defined the switch; the round-thirty-five rewrite removed the verb, so the copy now meets the point (see the decline-reason entry, DOCUMENTATION-443). Round thirty-four, the first panel review of the commit: Fable 5 did not run (usage limit), Opus 5 fix first (four DOCUMENTATION), Opus 4.8 fix first (one DOCUMENTATION), Codex 5.5 fix first (two DOCUMENTATION), Codex Sol fix first (five DOCUMENTATION). Round thirty-five: Fable 5 did not run (usage limit), Opus 5 fix first (five DOCUMENTATION on this commit), Opus 4.8 ship, Codex 5.5 ship, Codex Sol fix first (one DOCUMENTATION). Round thirty-six: Fable 5 did not run (usage limit), Opus 5 fix first (six DOCUMENTATION on this commit), Opus 4.8 ship, Codex 5.5 ship, Codex Sol fix first (four DOCUMENTATION on this commit). Round thirty-seven: Fable 5 did not run (usage limit), Opus 5 fix first (three DOCUMENTATION), Opus 4.8 fix first (one DOCUMENTATION, the same as one of Opus 5's), Codex 5.5 ship, Codex Sol fix first (three DOCUMENTATION). Round thirty-eight: Fable 5 did not run (usage limit), Opus 5 fix first (seven DOCUMENTATION on this commit, besides two findings on the closed disabled-item section), Opus 4.8 fix first (one DOCUMENTATION), Codex 5.5 ship, Codex Sol fix first (two DOCUMENTATION). Round thirty-nine: Fable 5 did not run (usage limit), Opus 5 fix first (three DOCUMENTATION on this commit, besides two on the closed disabled-item section), Opus 4.8 ship, Codex 5.5 ship, Codex Sol fix first (three DOCUMENTATION, one the same as Opus 5's). The entries below merge the overlapping findings.
+
+- [x] **[DOCUMENTATION-427] - the README's runtime bullet and its passage on an unrelated class or attribute spoke of widgets "inside" the element, which leaves out a widget mounted on it, while the recipe lets a class or attribute sit on the widget root**
+  - Fix: both said "on or inside". The runtime bullet lost the phrase under the affected-widgets entry (DOCUMENTATION-456) and regained it, as the usual place of the affected widgets, under the it-reference entry (DOCUMENTATION-459).
+- [x] **[DOCUMENTATION-428] - two new README sentences ran to 20 words or more: the runtime bullet's first sentence with its label (23) and the opt-out sentence with its inline example (20)**
+  - Fix: a shorter label and a shorter clause; the example moved to a CSS block.
+- [x] **[DOCUMENTATION-429] - the README's opt-out sentence said "the theme's rule", a phrase the same section uses for the theme's dark rule, which is a different rule**
+  - Fix: "its theme rule", right after the sentence names the class or attribute.
+- [x] **[DOCUMENTATION-430] - the README said the widgets "then follow the element's parent", which is false when the property selects dark: the rule passes on the parent's variable only**
+  - Fix: the element takes its parent's value of the variable, and if that value is empty, the widget falls back to the property.
+- [x] **[DOCUMENTATION-431] - the README's opt-out example sat inline in a sentence that already named other code**
+  - Fix: a fenced CSS block.
+- [x] **[DOCUMENTATION-432] - DESIGN.md's cost bullet said the pass is "the first column minus 3.81 ms", while the first column is the widget count**
+  - Fix: it names the two columns.
+- [x] **[DOCUMENTATION-433] - DESIGN.md's cost bullet did not state the workloads exactly, and "one `LLSelectSingle` with three items per widget" read as a single widget**
+  - Fix: the attribute, its values and the count of each workload, the page's `color-scheme`, and each widget's setup.
+- [x] **[DOCUMENTATION-434] - DESIGN.md's cost bullet said every subscribed widget gets a computed-style read, while the document query cannot find one in a shadow root or in a detached tree**
+  - Fix: "per subscribed widget that query finds", and a sentence on the widgets it misses. The same edit dropped "in one batch"; the batching entry (DOCUMENTATION-451) restored the fact as its own sentence.
+- [x] **[DOCUMENTATION-435] - TODO.md's Firefox and Safari pass named no versions, while Firefox 78-95 has no `color-scheme` property and cannot reproduce the `inherit` case under a dark `color-scheme`**
+  - Fix: "current Firefox and Safari", and the expected light result in Firefox 78-95.
+- [x] **[DOCUMENTATION-438] - the README's runtime bullet said "another element", whose only contrast, the html or body element, stood two sentences earlier**
+  - Fix: a sentence says the widget does not recheck after a class or attribute change on any element other than html or body, and the next one tells the page what to call; that sentence changed again under the scheme-only entry (DOCUMENTATION-445) and the affected-widgets entry (DOCUMENTATION-456).
+- [x] **[DOCUMENTATION-439] - the README's runtime bullet used "rechecks" and then "checks" for the same act**
+  - Fix: "rechecks" throughout.
+- [x] **[DOCUMENTATION-440] - DESIGN.md's cost bullet did not say what a run's timing spans, so a reader could time only the change and the pass, and subtracting 3.81 ms would then give a negative figure**
+  - Fix: a run's figure is the loop's elapsed time divided by its number of changes, so it includes each `setTimeout(0)` wait.
+- [x] **[DOCUMENTATION-441] - DESIGN.md's cost bullet listed only the computed-style read per widget, while a resolver run also queries `matchMedia` and writes the output attribute when the result changed**
+  - Fix: the bullet lists the three steps. The batching sentence added in the same edit is recorded under the batching entry (DOCUMENTATION-451).
+- [x] **[DOCUMENTATION-442] - the fix line of the shadow-and-detached entry (DOCUMENTATION-434) did not record that the same edit dropped "in one batch"**
+  - Fix: it records the drop and points to the restored sentence.
+- [x] **[DOCUMENTATION-443] - the Process paragraph declined the verb "switch the scheme" because "the bullet's first sentence defines" it, while the round-thirty-four edit had already shortened that sentence so that it named no switch**
+  - Fix: the sentence with the verb is replaced under the distant-contrast entry (DOCUMENTATION-438), and the Process paragraph keeps the reason only as history: the point was declined while the reason held and is met now.
+  - Q: Why did a declined wording point lose its reason?
+    - A: Because the reason pointed at a sentence that a later fix in the same round rewrote. A decline holds only while the text its reason relies on stays.
+- [x] **[DOCUMENTATION-445] - the README's runtime bullet asked for a refresh after any class or attribute change on another element, including changes that do not touch the scheme**
+  - Fix: the sentence asks for a refresh only when the change affects the scheme; which widgets it names changed again under the affected-widgets entry (DOCUMENTATION-456) and the it-reference entry (DOCUMENTATION-459).
+- [x] **[DOCUMENTATION-446] - DESIGN.md's cost bullet listed two triggers of the automatic pass and left out a `<body>` that appears or is replaced, which the same section names as a third**
+  - Fix: the list has all three; the child-list entry (DOCUMENTATION-457) widened the second one to every change of the child list of `<html>`.
+- [x] **[DOCUMENTATION-447] - DESIGN.md's table showed the scheme switch with the 3.81 ms timer included and did not say so, while the text subtracted the timer for the other column only**
+  - Fix: the column is named "scheme switch, timer included", and a sentence says so.
+- [x] **[DOCUMENTATION-448] - DESIGN.md's cost bullet gave the whole extra cost of a scheme switch to "the browser's restyle and repaint of every widget, which any design pays", while the pass interleaves each widget's style read with the previous widget's attribute write**
+  - Symptom: each write makes the next read recompute style; the comment above the batched first decision in `src/color-scheme.ts` names the same effect.
+  - Fix: the bullet states the interleaving, limits "which any design pays" to the restyle and repaint, and said a read-all-then-write-all variant was not measured; the double-count entry (DOCUMENTATION-454) measured it.
+- [x] **[DOCUMENTATION-449] - the Process paragraph kept the verb "switch the scheme" in its declined list after the round-thirty-five rewrite removed the verb, so the point was met, not declined**
+  - Fix: the paragraph says the point was declined while its reason held and is met now.
+- [x] **[DOCUMENTATION-450] - the fix line of the decline-reason entry (DOCUMENTATION-443) cited the distant-contrast entry by bare id**
+  - Fix: it names the entry.
+- [x] **[DOCUMENTATION-451] - DESIGN.md's cost bullet lost the fact that changes made together cost one pass when round thirty-four dropped "in one batch", and the pass-inventory entry (DOCUMENTATION-441) recorded the restoring sentence under a title about other steps**
+  - Fix: round thirty-five restored the fact as a sentence on attribute changes made together; this entry records it, and the fix lines of the pass-inventory entry and of the shadow-and-detached entry (DOCUMENTATION-434) point here. The pass-definition entry (DOCUMENTATION-469) widened the sentence to every trigger that arrives before the queued pass runs.
+- [x] **[DOCUMENTATION-453] - the fix line of the distant-contrast entry (DOCUMENTATION-438) quoted the start "When another element gets a class or attribute change", which the scheme-only rewrite (DOCUMENTATION-445) had replaced**
+  - Fix: it describes the sentence without quoting its start and names the later rewrites.
+- [x] **[DOCUMENTATION-454] - DESIGN.md's cost bullet counted every widget's restyle twice: inside the pass, as the interleaved recomputations, and after it, as the restyle any design pays**
+  - Fix: the bullet says the order makes small recomputations inside the pass, N-1 of them for N widgets since the first-N-1-writes entry (DOCUMENTATION-467); any design pays the restyle and the repaint; the order adds the overhead of the separate recomputations. An emulation in headless Chromium measured that overhead: 2.40, 21.21 and 59.24 ms per switch for 100, 1000 and 3000 widgets, against 1.82, 15.70 and 51.41 ms when every widget is read first.
+  - Q: Why record the measured overhead, not change the pass to read every widget first?
+    - A: Because the overhead is 15 to 35 percent of the batched order's time, 0.58, 5.51 and 7.83 ms per switch at 100, 1000 and 3000 widgets, not a whole-page recomputation per widget, and a scheme switch is a rare user action; a second loop and a buffer of results would add code for that gain.
+- [x] **[DOCUMENTATION-455] - the README's runtime bullet said "for every widget" while the shadow-root bullet right after it said "on each widget" for the same instruction**
+  - Fix: both say "for every widget"; the shadow-root sentence also gained the condition "When one of these changes affects the scheme".
+- [x] **[DOCUMENTATION-456] - the README's runtime bullet asked for a refresh of the widgets on or inside the changed element only, while a CSS selector can make a change on one element select the scheme of widgets elsewhere, for example a sibling's**
+  - Fix: "for every widget it affects".
+- [x] **[DOCUMENTATION-457] - DESIGN.md named "a `<body>` that appears or is replaced" as the observer's child-list trigger, while every change to the child list of `<html>` starts a pass**
+  - Fix: the cost bullet and the "when the resolver runs" bullet name the child list of `<html>`, with a replaced `<body>` as the example.
+- [x] **[DOCUMENTATION-458] - the fix line of the decline-reason entry (DOCUMENTATION-443) said the Process paragraph no longer gives the reason, while the paragraph keeps it as history**
+  - Fix: it says the paragraph keeps the reason only as history.
+- [x] **[DOCUMENTATION-459] - the README's runtime bullet ended "for every widget it affects", where "it" could mean the change or the scheme, and no longer said where the affected widgets usually are**
+  - Fix: "for every affected widget", and a sentence says they are usually on or inside that element.
+- [x] **[DOCUMENTATION-460] - the README's shadow-root bullet asked for a refresh of every widget inside the shadow root, under the same condition for which the runtime bullet asks only for the affected ones, without saying why**
+  - Fix: a sentence says that refreshing a widget whose scheme is unchanged changes nothing.
+- [x] **[DOCUMENTATION-461] - DESIGN.md described the emulation of the pass's order too loosely to repeat: not what each widget reads, whether it queries `matchMedia`, whether the switches wait for a timer, or what the time spans**
+  - Fix: a bullet of its own gives the loop: two `getComputedStyle` reads and one attribute write per root, one computed `color` read after the loop, no `matchMedia`, no timer between switches, script time only.
+- [x] **[DOCUMENTATION-462] - DESIGN.md's trigger lists said an attribute change on `<html>` or `<body>` starts a pass, while a batch made only of the library's own output-attribute writes, by a widget mounted there, starts none**
+  - Fix: the "when the resolver runs" bullet states the exception, and the cost bullet points to that bullet instead of repeating the list, so the two cannot drift apart again.
+- [x] **[DOCUMENTATION-463] - the fix line of the interleaving entry (DOCUMENTATION-448) still said the bullet calls the read-all-then-write-all variant unmeasured, after the double-count entry measured it**
+  - Fix: it points to the measurement.
+- [x] **[DOCUMENTATION-464] - the fix line of the scheme-only entry (DOCUMENTATION-445) quoted "every widget mounted on or inside that element", which the affected-widgets entry had replaced**
+  - Fix: it describes the sentence and names the later rewrites.
+- [x] **[DOCUMENTATION-465] - the fix line of the widget-root entry (DOCUMENTATION-427) said both places say "on or inside", while the runtime bullet had lost the phrase**
+  - Fix: it tells where the phrase went and came back.
+- [x] **[DOCUMENTATION-466] - the Q&A under the double-count entry (DOCUMENTATION-454) called the overhead a share "of a few milliseconds per switch", which holds for 100 widgets only**
+  - Fix: the answer gives the absolute overhead per size.
+- [x] **[DOCUMENTATION-467] - DESIGN.md said the pass's order makes one small recomputation per widget, while only the first N-1 of N writes are followed by another read; the last widget restyles at the next rendering update**
+  - Fix: "N-1 separate recomputations", and the last widget's restyle is stated.
+- [x] **[DOCUMENTATION-469] - DESIGN.md's cost bullet defined a pass as "one run of the shared observer or of the OS-preference listener", while those two queue one pass in a microtask that later triggers share, and an observer run made only of the library's own attribute writes starts none**
+  - Fix: the pass is the queued document query with its resolver runs; the bullet says the two queue it and that triggers arriving before it runs share it.
+- [x] **[DOCUMENTATION-470] - DESIGN.md's emulation did not say on which element it reads the final computed `color`**
+  - Fix: the first root.
+- [x] **[DOCUMENTATION-471] - DESIGN.md set the emulation's absolute times next to the table's as if comparable, while the emulation reads each root twice and times the final forced recomputation**
+  - Fix: a sentence says only the difference between the two orders carries over to the pass.
+- [x] **[DOCUMENTATION-472] - the Q&A under the double-count entry (DOCUMENTATION-454) gave the overhead as a share of "the measured style work" without naming the base: 15 to 35 percent holds against the batched order's time, not the pass order's**
+  - Fix: "of the batched order's time".
+- [x] **[DOCUMENTATION-473] - the Process paragraph called the declined "these changes" the shadow-root bullet's last sentence, while the round-thirty-eight fix appended another sentence to that bullet**
+  - Fix: "the shadow-root bullet's refresh instruction".
+
 ## review (wording-review model)
 
-Process: the owner ruled that the wording review needs no model as strong as Codex Astra. The commit recording it (DESIGN.md's wording-review bullet, a corrected log claim and a Q&A under NEEDS-VERIFICATION-238) went to the panel with the disabled-chosen-item round-thirty-two fixes, as round thirty-three of that review: Fable 5 did not run (the account's Fable usage limit), Opus 5 fix first (three DOCUMENTATION on this commit), Opus 4.8 and Codex 5.5 fix first (one DOCUMENTATION each, the same as one of Opus 5's), Codex Sol fix first (two DOCUMENTATION, both the same as Opus 5's). Round thirty-four: Fable 5 did not run (usage limit), Opus 4.8 fix first (one DOCUMENTATION); Opus 5, Codex 5.5 and Codex Sol found nothing on this section's commits. The entries below merge the overlapping findings.
+Process: the owner ruled that the wording review needs no model as strong as Codex Astra. The commit recording it (DESIGN.md's wording-review bullet, a corrected log claim and a Q&A under NEEDS-VERIFICATION-238) went to the panel with the disabled-chosen-item round-thirty-two fixes, as round thirty-three of that review: Fable 5 did not run (the account's Fable usage limit), Opus 5 fix first (three DOCUMENTATION on this commit), Opus 4.8 and Codex 5.5 fix first (one DOCUMENTATION each, the same as one of Opus 5's), Codex Sol fix first (two DOCUMENTATION, both the same as Opus 5's). Round thirty-four: Fable 5 did not run (usage limit), Opus 4.8 fix first (one DOCUMENTATION); Opus 5, Codex 5.5 and Codex Sol found nothing on this section's commits. Round thirty-five: Fable 5 did not run (usage limit); Opus 5, Opus 4.8, Codex 5.5 and Codex Sol found nothing on this section's commit. Round thirty-six: nothing found on this section. Round thirty-seven: nothing found on this section. Round thirty-eight: nothing found on this section. Round thirty-nine: nothing found on this section. The entries below merge the overlapping findings.
 
 - [x] **[DOCUMENTATION-421] - TODO.md's entry for the dark theme values still said Codex Luna 6 is not available on this account, the claim this commit removed from the log's wording-review entry (NEEDS-VERIFICATION-238), where it read "which this account cannot use"**
   - Fix: it says the reviews ran on Codex Astra after an earlier session tried an id the installed Codex CLI does not offer, and that DESIGN.md now names `gpt-5.6-luna`.
