@@ -2,6 +2,21 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (demo section order and color-scheme showcase)
+
+Process: the owner asked to move the i18n sections of the demo pages to the end, with the color-scheme section before i18n and the AngularJS page's "Full source" section always last; then for a single and a multiple select with an arrow, checkboxes and tags after the color-scheme examples. The section-order rule in CLAUDE.md and the move went to the five panel members, one at a time, read-only. After Opus 5 the round was stopped, so that the next round covers the move and the new examples together. The fixes went into the two unpushed commits, rebuilt with both dates kept. Round one: Opus 5 fix first (two DOCUMENTATION, three QUALITY).
+
+- [x] **[DOCUMENTATION-611] - the Process record of the earlier demo-renumbering review still said the i18n section moved to the end "(16)", while it is now 17**
+  - Fix: "(17)", like the other renumbered references in the log.
+- [x] **[DOCUMENTATION-612] - the section-order rule said every reference to a section number moves, while two kinds stayed on purpose: `docs/llm/archive/` and verbatim quotes of old commit subjects**
+  - Fix: the rule names both.
+- [x] **[QUALITY-613] - the rule's list of references read as complete, but it left out comments in `demo/` and the other examples page's text, and the search behind it missed the "(16)" form**
+  - Fix: the rule says to `git grep` the old numbers in every form and gives the list as examples.
+- [x] **[QUALITY-614] - the rule said the color-scheme section "landed behind" the i18n section, and "behind" can be misread**
+  - Fix: the rule says an earlier reorder moved the i18n section to the end and the color-scheme section was then added after it.
+- [x] **[QUALITY-615] - the rule commit's subject listed the rule's two parts**
+  - Fix: the subject is "docs: [CLAUDE.md] demo section order rule".
+
 ## review (LAN URLs on make server)
 
 Process: the owner asked `make server` to also print URLs built from this machine's current IP address, so another device on the LAN can open the site. The commit adding `scripts/print-lan-urls.mjs`, which the `serve:site` npm script runs between the site build and the python server, went to all five panel members, one at a time, read-only, since the change came from a model outside the panel. Round one: Opus 5 ship (two QUALITY), Opus 4.8 ship, Codex 5.5 fix first (one MEDIUM), Codex Sol fix first (the same MEDIUM and two QUALITY), Fable 5 ship (one QUALITY, the same as one of Opus 5's). Round two: Opus 4.8, Codex 5.5 and Fable 5 ship; Opus 5 ship (three QUALITY); Codex Sol fix first (two QUALITY, one DOCUMENTATION). Round three: Opus 4.8, Codex 5.5 and Fable 5 ship; Opus 5 fix first (two DOCUMENTATION); Codex Sol fix first (two DOCUMENTATION: one covering both of Opus 5's, one new). Round four: all five ship; Opus 5 reported three DOCUMENTATION points and Opus 4.8 one of them, all on how this log is worded, so under the stop rule they went to the owner, who ruled to fix them without another round.
