@@ -436,7 +436,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 /* #endregion */
 
-/* Icon + text rows for rich item content (core 5.4-5.6, 11.x, 16.2;
+/* Icon + text rows for rich item content (core 5.4-5.6, 11.x, 17.2;
    angularjs 8). */
 .lang-row {
   display: inline-flex;
@@ -858,7 +858,7 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 }
 .popup-link-button[aria-disabled='true'] { color: var(--llselect-fg-muted); cursor: not-allowed; text-decoration: none; }
 /* #endregion */
-/* #region 17.2 */
+/* #region 16.2 */
 /* A dark region of a page that switches with its own class. The one line a
    theme needs is the variable; the rest is this region's own look. */
 .acme-dark {
@@ -870,7 +870,7 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 }
 /* #endregion */
 
-/* #region 17.3 */
+/* #region 16.3 */
 /* A light card inside the dark region: data-color-scheme="light" on the card
    is a mark the themes recognize; the nearest mark wins. */
 .demo-card {
@@ -881,7 +881,7 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 }
 /* #endregion */
 
-/* #region 17.5 */
+/* #region 16.5 */
 /* Your own colors: every --llselect-* variable has a light value on
    .llselect-root; a rule that targets the root redefines any of them. This
    stylesheet loads BEFORE the theme, so the rule also names the attribute to

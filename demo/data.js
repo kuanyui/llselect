@@ -88,7 +88,7 @@ export const PROGRAMMING_LANGUAGES = [
   { name: 'Kotlin', icon: 'language-kotlin', color: '#7f52ff' },
 ]
 
-// i18n / RTL demo (section 16): mixed-direction labels. The Unicode Bidi
+// i18n / RTL demo (section 17): mixed-direction labels. The Unicode Bidi
 // Algorithm reorders runs inside each label automatically; the parenthesised
 // and numbered entries show how weak characters follow the item's base
 // direction (see DESIGN.md "RTL").
