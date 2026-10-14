@@ -699,6 +699,17 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
   user-select: none;
 }
 .demo-nav .color-scheme-switch input { margin: 0; cursor: pointer; }
+/* "Dark" switch that color-scheme.js mounts above each example that follows
+   the page's color scheme (16.1, 16.6, 16.7) */
+.demo-pane [data-color-scheme-switch] { display: block; margin-bottom: 0.4rem; }
+.demo-pane .color-scheme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  user-select: none;
+}
+.demo-pane .color-scheme-switch input { margin: 0; cursor: pointer; }
 
 /* second nav tier (AngularJS section): identity label + in-section items */
 .demo-subnav {

@@ -10,6 +10,9 @@
 //   the override, so the page follows the OS again; the other value stores one.
 //   A stored override outlives later OS changes, even one that makes the OS
 //   agree with it: only the switch clears it.
+// - A page can ask for more switches: once the page is parsed, each element
+//   with the attribute data-color-scheme-switch gets one. All switches share
+//   one state (the examples page puts one beside each example that follows it).
 // Classic script on purpose: the demo pages load it with <script src> in
 // <head>; scripts/build-site.mjs inlines it into the generated pages' <head>.
 // Vocabulary: "theme" is the library's visual theme (dist/themes/*.css);
@@ -27,20 +30,20 @@
     }
   }
   let override = readOverride() // null = follow the OS
-  let switchInput = null
+  const switchInputs = []
   const apply = () => {
     const root = document.documentElement
     if (override) { root.setAttribute('data-color-scheme', override) } else { root.removeAttribute('data-color-scheme') }
-    if (switchInput) { switchInput.checked = (override ?? osScheme()) === 'dark' }
+    for (const input of switchInputs) { input.checked = (override ?? osScheme()) === 'dark' }
   }
   apply()
-  darkMq.addEventListener('change', apply) // keeps the switch in step while no override is stored
-  const mount = (nav) => {
-    switchInput = document.createElement('input')
-    switchInput.type = 'checkbox'
-    switchInput.checked = (override ?? osScheme()) === 'dark'
-    switchInput.addEventListener('change', () => {
-      const chosen = switchInput.checked ? 'dark' : 'light'
+  darkMq.addEventListener('change', apply) // keeps the switches in step while no override is stored
+  const createSwitch = () => {
+    const input = document.createElement('input')
+    input.type = 'checkbox'
+    input.checked = (override ?? osScheme()) === 'dark'
+    input.addEventListener('change', () => {
+      const chosen = input.checked ? 'dark' : 'light'
       override = chosen === osScheme() ? null : chosen
       try {
         if (override) { localStorage.setItem(STORAGE_KEY, override) } else { localStorage.removeItem(STORAGE_KEY) }
@@ -49,20 +52,23 @@
       }
       apply()
     })
+    switchInputs.push(input)
     const label = document.createElement('label')
     label.className = 'color-scheme-switch'
-    label.append(switchInput, ' Dark')
-    nav.append(label)
+    label.append(input, ' Dark')
+    return label
   }
+  let navSwitchMounted = false
   // Mount as soon as the nav is parsed to its end (a node follows it), not at
   // DOMContentLoaded, which waits for every classic script at the page's end.
   // parsingDone: the document is fully parsed, so the nav is complete even
   // when nothing follows it.
   const tryMount = (parsingDone) => {
-    if (switchInput) { return true }
+    if (navSwitchMounted) { return true }
     const nav = document.querySelector('body > nav')
     if (!nav || (!parsingDone && !nav.nextSibling)) { return false }
-    mount(nav)
+    nav.append(createSwitch())
+    navSwitchMounted = true
     return true
   }
   if (!tryMount(false)) {
@@ -70,4 +76,7 @@
     observer.observe(document.documentElement, { childList: true, subtree: true })
     document.addEventListener('DOMContentLoaded', () => { observer.disconnect(); tryMount(true) })
   }
+  document.addEventListener('DOMContentLoaded', () => {
+    for (const slot of document.querySelectorAll('[data-color-scheme-switch]')) { slot.append(createSwitch()) }
+  })
 })()
