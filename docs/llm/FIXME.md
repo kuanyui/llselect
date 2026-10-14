@@ -2,9 +2,9 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
-## review (demo section order and color-scheme showcase)
+## review (demo pages: section order, color-scheme showcase, nav and Dark switches)
 
-Process: the owner asked to move the i18n sections of the demo pages to the end, with the color-scheme section before i18n and the AngularJS page's "Full source" section always last; then for a single and a multiple select with an arrow, checkboxes and tags after the color-scheme examples. The section-order rule in CLAUDE.md and the move went to the five panel members, one at a time, read-only. After Opus 5 the round was stopped, so that the next round covers the move and the new examples together. The fixes went into the two unpushed commits, rebuilt with both dates kept. Round one: Opus 5 fix first (two DOCUMENTATION, three QUALITY).
+Process: the owner asked to move the i18n sections of the demo pages to the end, with the color-scheme section before i18n and the AngularJS page's "Full source" section always last; then for a single and a multiple select with an arrow, checkboxes and tags after the color-scheme examples; then for a Dark switch within reach while viewing them, which became one switch above each example that follows the page's color scheme; and asked why the demo pages showed Dark where the other pages show the repo link, which the demo pages never had, so their nav gained it. Each round goes to the five panel members, one at a time, read-only. Round one reached only Opus 5, on the rule and the move, before it was stopped to take in the new examples: Opus 5 fix first (two DOCUMENTATION, three QUALITY). Its fixes went into the rule commit and the move commit, rebuilt with both dates kept. Round two reached only Opus 5, on six commits, before it was stopped because the owner moved the Dark switch next to the examples: Opus 5 fix first (one QUALITY, three DOCUMENTATION).
 
 - [x] **[DOCUMENTATION-611] - the Process record of the earlier demo-renumbering review still said the i18n section moved to the end "(16)", while it is now 17**
   - Fix: "(17)", like the other renumbered references in the log.
@@ -16,6 +16,16 @@ Process: the owner asked to move the i18n sections of the demo pages to the end,
   - Fix: the rule says an earlier reorder moved the i18n section to the end and the color-scheme section was then added after it.
 - [x] **[QUALITY-615] - the rule commit's subject listed the rule's two parts**
   - Fix: the subject is "docs: [CLAUDE.md] demo section order rule".
+- [x] **[QUALITY-616] - the AngularJS examples page has the same sticky bar as the core examples page, but got no Dark switch in it**
+  - Fix: none.
+  - Q: Why no extra switch on the AngularJS examples page, not one in its sticky bar too?
+    - A: Because the owner moved the extra switches beside the examples that follow the page's color scheme, and that page has no such example. Its nav switch stays.
+- [x] **[DOCUMENTATION-617] - the comment on the color-scheme.js script tag of the core examples page said it "mounts the nav switch", while that page also gets switches beside its examples**
+  - Fix: "mounts the Dark switches".
+- [x] **[DOCUMENTATION-618] - the Process record said the rule and the move went to the five panel members, while only Opus 5 ran before the round was stopped**
+  - Fix: the record says how far each round got.
+- [x] **[DOCUMENTATION-619] - the Process record said the fixes went into "the two unpushed commits", while dev holds 54 unpushed commits**
+  - Fix: it names the rule commit and the move commit.
 
 ## review (LAN URLs on make server)
 
