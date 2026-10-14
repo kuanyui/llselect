@@ -1364,6 +1364,75 @@ selPinnedRows.setChosenItems(PINNED_DEFAULTS)
 //#endregion
 
 //#region 16.1
+// Nothing to configure: the page's Dark switch writes data-color-scheme on
+// <html>, a mark the themes turn into --llselect-color-scheme. The widget
+// reads that variable and writes its decision to data-llselect-color-scheme.
+const outSchemePage = document.getElementById('out-scheme-page')
+const selSchemePage = new LLSelectSingle(
+  document.getElementById('mount-scheme-page'),
+  { ariaLabel: 'Follows the page', placeholder: 'Follows the page' },
+)
+selSchemePage.setItems(COUNTRIES)
+const showScheme = (sel, out) => { out.textContent = 'resolved: ' + sel.getColorScheme() }
+showScheme(selSchemePage, outSchemePage)
+// The decision re-runs on the shared page listeners; the readout follows it.
+new MutationObserver(() => showScheme(selSchemePage, outSchemePage))
+  .observe(selSchemePage.rootEl, { attributes: true, attributeFilter: ['data-llselect-color-scheme'] })
+//#endregion
+
+//#region 16.2
+// The wrapper's class is unknown to every theme; one rule in style.css maps
+// it to the variable (.acme-dark { --llselect-color-scheme: dark }).
+const outSchemeClass = document.getElementById('out-scheme-class')
+const selSchemeClass = new LLSelectSingle(
+  document.getElementById('mount-scheme-class'),
+  { ariaLabel: 'Inside a dark region', placeholder: 'Inside a dark region' },
+)
+selSchemeClass.setItems(COUNTRIES)
+showScheme(selSchemeClass, outSchemeClass)
+//#endregion
+
+//#region 16.3
+// Same dark region, but the card carries data-color-scheme="light": the
+// nearest mark wins.
+const outSchemeCard = document.getElementById('out-scheme-card')
+const selSchemeCard = new LLSelectSingle(
+  document.getElementById('mount-scheme-card'),
+  { ariaLabel: 'On a light card', placeholder: 'On a light card' },
+)
+selSchemeCard.setItems(COUNTRIES)
+showScheme(selSchemeCard, outSchemeCard)
+//#endregion
+
+//#region 16.4
+const outSchemeForced = document.getElementById('out-scheme-forced')
+const selSchemeForced = new LLSelectSingle(
+  document.getElementById('mount-scheme-forced'),
+  {
+    ariaLabel: 'Always dark',
+    placeholder: 'Always dark',
+    colorScheme: 'dark', // 'auto' (default) | 'light' | 'dark'
+  },
+)
+selSchemeForced.setItems(COUNTRIES)
+showScheme(selSchemeForced, outSchemeForced)
+//#endregion
+
+//#region 16.5
+// The colors come from style.css (.acme-brand .llselect-root { --llselect-*: ... }).
+const outSchemeBrand = document.getElementById('out-scheme-brand')
+const selSchemeBrand = new LLSelectSingle(
+  document.getElementById('mount-scheme-brand'),
+  {
+    ariaLabel: 'Brand colors',
+    placeholder: 'Brand colors',
+    onChange: (v) => { outSchemeBrand.textContent = 'chosen: ' + JSON.stringify(v) },
+  },
+)
+selSchemeBrand.setItems(COUNTRIES)
+//#endregion
+
+//#region 17.1
 // Language packs (imported at the top: `import { en, ja, zhTW } from
 // '@llselect/core/i18n'`) fill the `uiTranslationPack` setting whole; per-key
 // overrides spread on top (`uiTranslationPack: { ...zhTW, ... }`). The three
@@ -1420,7 +1489,37 @@ i18nPackSelect.addEventListener('change', () => applyI18nPack(i18nPackSelect.val
 applyI18nPack(i18nPackSelect.value)
 //#endregion
 
-//#region 16.3
+//#region 17.2
+// RTL needs no API: the mount's dir="rtl" is inherited like on a native
+// element, and flex rows / logical margins mirror on their own. Same
+// checkbox pattern as 5.5, with the ar pack.
+const outRtlCheckboxes = document.getElementById('out-rtl-checkboxes')
+let selRtlCheckboxes
+selRtlCheckboxes = new LLSelectMultiple(
+  document.getElementById('mount-rtl-checkboxes'),
+  {
+  ariaLabel: 'RTL checkboxes',
+    chooseAllRow: true,
+    uiTranslationPack: ar,
+    createPopupListItemContentElFn: (item) => {
+      const row = document.createElement('span')
+      row.className = 'lang-row'
+      row.append(createOutlinedCheckboxSvgEl({ state: selRtlCheckboxes.isChosen(item) ? 'checked' : 'unchecked' }), item)
+      return row
+    },
+    createChooseAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
+      const row = document.createElement('span')
+      row.className = 'lang-row'
+      row.append(createOutlinedCheckboxSvgEl({ state: chosenState }), ar.chooseAllRowText(chosenCount, totalCount))
+      return row
+    },
+    onChange: (chosen) => { outRtlCheckboxes.textContent = 'chosen: ' + chosen.length + ' items' },
+  }
+)
+selRtlCheckboxes.setItems(MIXED_DIRECTION_COUNTRIES)
+//#endregion
+
+//#region 17.3
 // Every pack, straight out of `uiTranslationPackByLocale` (BCP 47 keys), so new packs
 // appear here without demo edits. One single per pack: closed it shows the
 // pack's `triggerPlaceholder`, open it the search placeholder / clear x /
@@ -1451,105 +1550,6 @@ for (const [tag, pack] of Object.entries(uiTranslationPackByLocale)) {
   })
   allSel.setItems(MIXED_DIRECTION_COUNTRIES)
 }
-//#endregion
-
-//#region 17.1
-// Nothing to configure: the page's Dark switch writes data-color-scheme on
-// <html>, a mark the themes turn into --llselect-color-scheme. The widget
-// reads that variable and writes its decision to data-llselect-color-scheme.
-const outSchemePage = document.getElementById('out-scheme-page')
-const selSchemePage = new LLSelectSingle(
-  document.getElementById('mount-scheme-page'),
-  { ariaLabel: 'Follows the page', placeholder: 'Follows the page' },
-)
-selSchemePage.setItems(COUNTRIES)
-const showScheme = (sel, out) => { out.textContent = 'resolved: ' + sel.getColorScheme() }
-showScheme(selSchemePage, outSchemePage)
-// The decision re-runs on the shared page listeners; the readout follows it.
-new MutationObserver(() => showScheme(selSchemePage, outSchemePage))
-  .observe(selSchemePage.rootEl, { attributes: true, attributeFilter: ['data-llselect-color-scheme'] })
-//#endregion
-
-//#region 17.2
-// The wrapper's class is unknown to every theme; one rule in style.css maps
-// it to the variable (.acme-dark { --llselect-color-scheme: dark }).
-const outSchemeClass = document.getElementById('out-scheme-class')
-const selSchemeClass = new LLSelectSingle(
-  document.getElementById('mount-scheme-class'),
-  { ariaLabel: 'Inside a dark region', placeholder: 'Inside a dark region' },
-)
-selSchemeClass.setItems(COUNTRIES)
-showScheme(selSchemeClass, outSchemeClass)
-//#endregion
-
-//#region 17.3
-// Same dark region, but the card carries data-color-scheme="light": the
-// nearest mark wins.
-const outSchemeCard = document.getElementById('out-scheme-card')
-const selSchemeCard = new LLSelectSingle(
-  document.getElementById('mount-scheme-card'),
-  { ariaLabel: 'On a light card', placeholder: 'On a light card' },
-)
-selSchemeCard.setItems(COUNTRIES)
-showScheme(selSchemeCard, outSchemeCard)
-//#endregion
-
-//#region 17.4
-const outSchemeForced = document.getElementById('out-scheme-forced')
-const selSchemeForced = new LLSelectSingle(
-  document.getElementById('mount-scheme-forced'),
-  {
-    ariaLabel: 'Always dark',
-    placeholder: 'Always dark',
-    colorScheme: 'dark', // 'auto' (default) | 'light' | 'dark'
-  },
-)
-selSchemeForced.setItems(COUNTRIES)
-showScheme(selSchemeForced, outSchemeForced)
-//#endregion
-
-//#region 17.5
-// The colors come from style.css (.acme-brand .llselect-root { --llselect-*: ... }).
-const outSchemeBrand = document.getElementById('out-scheme-brand')
-const selSchemeBrand = new LLSelectSingle(
-  document.getElementById('mount-scheme-brand'),
-  {
-    ariaLabel: 'Brand colors',
-    placeholder: 'Brand colors',
-    onChange: (v) => { outSchemeBrand.textContent = 'chosen: ' + JSON.stringify(v) },
-  },
-)
-selSchemeBrand.setItems(COUNTRIES)
-//#endregion
-
-//#region 16.2
-// RTL needs no API: the mount's dir="rtl" is inherited like on a native
-// element, and flex rows / logical margins mirror on their own. Same
-// checkbox pattern as 5.5, with the ar pack.
-const outRtlCheckboxes = document.getElementById('out-rtl-checkboxes')
-let selRtlCheckboxes
-selRtlCheckboxes = new LLSelectMultiple(
-  document.getElementById('mount-rtl-checkboxes'),
-  {
-  ariaLabel: 'RTL checkboxes',
-    chooseAllRow: true,
-    uiTranslationPack: ar,
-    createPopupListItemContentElFn: (item) => {
-      const row = document.createElement('span')
-      row.className = 'lang-row'
-      row.append(createOutlinedCheckboxSvgEl({ state: selRtlCheckboxes.isChosen(item) ? 'checked' : 'unchecked' }), item)
-      return row
-    },
-    createChooseAllRowContentElFn: (chosenState, chosenCount, totalCount) => {
-      const row = document.createElement('span')
-      row.className = 'lang-row'
-      row.append(createOutlinedCheckboxSvgEl({ state: chosenState }), ar.chooseAllRowText(chosenCount, totalCount))
-      return row
-    },
-    onChange: (chosen) => { outRtlCheckboxes.textContent = 'chosen: ' + chosen.length + ' items' },
-  }
-)
-selRtlCheckboxes.setItems(MIXED_DIRECTION_COUNTRIES)
 //#endregion
 
 // Self-extraction: fetch this file's source, locate `//#region NAME` ...
