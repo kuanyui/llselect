@@ -4,10 +4,10 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (demo pages: section order, color-scheme showcase, nav and Dark switches)
 
-Process: the owner asked to move the i18n sections of the demo pages to the end, with the color-scheme section before i18n and the AngularJS page's "Full source" section always last; then for a single and a multiple select with an arrow, checkboxes and tags after the color-scheme examples; then for a Dark switch within reach while viewing them, which became one switch above each example that follows the page's color scheme; and asked why the demo pages showed Dark where the other pages show the repo link, which the demo pages never had, so their nav gained it. Each round goes to the five panel members, one at a time, read-only. Round one reached only Opus 5, on the rule and the move, before it was stopped to take in the new examples: Opus 5 fix first (two DOCUMENTATION, three QUALITY). Its fixes went into the rule commit and the move commit, rebuilt with both dates kept. Round two reached only Opus 5, on six commits, before it was stopped because the owner moved the Dark switch next to the examples: Opus 5 fix first (one QUALITY, three DOCUMENTATION).
+Process: the owner asked to move the i18n sections of the demo pages to the end, with the color-scheme section before i18n and the AngularJS page's "Full source" section always last; then for a single and a multiple select with an arrow, checkboxes and tags after the color-scheme examples; then for a Dark switch within reach while viewing them, which became one switch above each example that follows the page's color scheme; and asked why the demo pages showed Dark where the other pages show the repo link, which the demo pages never had, so their nav gained it. Each round goes to the five panel members, one at a time, read-only. Round one reached only Opus 5, on the rule and the move, before it was stopped to take in the new examples: Opus 5 fix first (two DOCUMENTATION, three QUALITY). Its fixes went into the rule commit and the move commit, rebuilt with both dates kept. Round two reached only Opus 5, on six commits, before it was stopped because the owner moved the Dark switch next to the examples: Opus 5 fix first (one QUALITY, three DOCUMENTATION). Round three reached all five, on seven commits, with a pause after Opus 5 for the 0.0.10 bump: Opus 5 ship (one QUALITY, two DOCUMENTATION), Opus 4.8 ship, Codex 5.5 fix first (one QUALITY), Codex Sol fix first (the same QUALITY, plus the code names on one line), Fable 5 ship (one DOCUMENTATION, the same as Opus 5's QUALITY). Round four: all five ship; Opus 5 reported one QUALITY and two DOCUMENTATION, Opus 4.8 one DOCUMENTATION. Round five: all five ship; Opus 5 reported one QUALITY. Round six reached four members, since Codex 5.5 could not run (the Codex CLI answered that the gpt-5.5 model is not supported when using Codex with a ChatGPT account): Opus 4.8, Codex Sol and Fable 5 ship, Opus 5 ship (one QUALITY, one DOCUMENTATION). The DOCUMENTATION point is on how this log is worded, so under the stop rule it went to the owner, who ruled to fix it without another round. The owner then had the fixes of rounds three to six put into one commit and the 0.0.10 bump moved after it; the dates came from the original commits, so the bump is dated before its parent.
 
 - [x] **[DOCUMENTATION-611] - the Process record of the earlier demo-renumbering review still said the i18n section moved to the end "(16)", while it is now 17**
-  - Fix: "(17)", like the other renumbered references in the log.
+  - Fix: "(17)" at first; the number was then dropped under the past-move entry (DOCUMENTATION-626).
 - [x] **[DOCUMENTATION-612] - the section-order rule said every reference to a section number moves, while two kinds stayed on purpose: `docs/llm/archive/` and verbatim quotes of old commit subjects**
   - Fix: the rule names both.
 - [x] **[QUALITY-613] - the rule's list of references read as complete, but it left out comments in `demo/` and the other examples page's text, and the search behind it missed the "(16)" form**
@@ -16,7 +16,7 @@ Process: the owner asked to move the i18n sections of the demo pages to the end,
   - Fix: the rule says an earlier reorder moved the i18n section to the end and the color-scheme section was then added after it.
 - [x] **[QUALITY-615] - the rule commit's subject listed the rule's two parts**
   - Fix: the subject is "docs: [CLAUDE.md] demo section order rule".
-- [x] **[QUALITY-616] - the AngularJS examples page has the same sticky bar as the core examples page, but got no Dark switch in it**
+- [x] **[QUALITY-616] - while the core examples page had a Dark switch in its sticky bar, the AngularJS examples page, which has the same bar, got none**
   - Fix: none.
   - Q: Why no extra switch on the AngularJS examples page, not one in its sticky bar too?
     - A: Because the owner moved the extra switches beside the examples that follow the page's color scheme, and that page has no such example. Its nav switch stays.
@@ -26,6 +26,36 @@ Process: the owner asked to move the i18n sections of the demo pages to the end,
   - Fix: the record says how far each round got.
 - [x] **[DOCUMENTATION-619] - the Process record said the fixes went into "the two unpushed commits", while dev holds 54 unpushed commits**
   - Fix: it names the rule commit and the move commit.
+- [x] **[QUALITY-623] - the headed-browser item for the color-scheme switch in TODO.md still named only the nav switch, so the switches beside 16.1, 16.6 and 16.7 and the demo pages' repo link had no Firefox / Safari check**
+  - Fix: the item names them.
+- [x] **[QUALITY-624] - the 16.1 hint opened with a sentence of 23 words, and one source line of it carried three code names**
+  - Fix: two sentences; dark and light are plain words; "does the same" became "does the same as the navigation switch".
+- [x] **[DOCUMENTATION-625] - the title of the AngularJS-switch entry (QUALITY-616) spoke in the present tense, as if the core examples page's sticky bar still had a Dark switch**
+  - Fix: the title says the core page had one at the time.
+- [x] **[DOCUMENTATION-626] - the "(17)" fix of the renumbered-Process entry (DOCUMENTATION-611) made the earlier round's Process record say that round moved the i18n section to 17, while it moved it to 16**
+  - Fix: the record says the section moved to the end, with no number.
+  - Q: Why drop the number there, not renumber it like the other references?
+    - A: Because that line records what an earlier change did. A pointer to current content follows a renumbering; a record of a past change does not, and without a number it is true both then and now.
+- [x] **[QUALITY-627] - the TODO item checked the demo pages' repo link only for its place, while each demo page carries its own copy of the GitLab swap script, which no test, check or other item covers**
+  - Fix: the item also checks that the link reads GitLab on kuanyui.gitlab.io.
+- [x] **[DOCUMENTATION-628] - one member asked the CLAUDE.md renumbering rule for a third exception, for records of what an earlier change did**
+  - Fix: none.
+  - Q: Why no third exception, not one that keeps such records as written?
+    - A: Because the four other members found the rule fine: a record without a number holds no reference to update, and the lesson sits in the past-move entry's Q&A (DOCUMENTATION-626).
+- [x] **[DOCUMENTATION-629] - the fix line of the hint-limit entry (QUALITY-624) left out its third change, "does the same as the navigation switch"**
+  - Fix: the line names it.
+- [x] **[DOCUMENTATION-630] - one member read the round-three Process record's "Fable 5 ship (one DOCUMENTATION, the same as Opus 5's QUALITY)" as a slip for "one QUALITY"**
+  - Fix: none.
+  - Q: Why keep "one DOCUMENTATION", not "one QUALITY"?
+    - A: Because Fable 5 labeled its finding DOCUMENTATION. The record keeps each member's own label, and the finding is logged once, as the TODO entry (QUALITY-623).
+- [x] **[QUALITY-631] - the TODO check that the swap-script entry (QUALITY-627) added looked only at the link text, while each page writes the GitLab URL into its own copy of the script**
+  - Fix: the check also opens the link and expects https://gitlab.com/kuanyui/llselect.
+- [x] **[QUALITY-632] - the TODO item checks the GitLab URL of the demo pages' repo link, while the GitHub URL that each page writes in its HTML has no test, check or TODO item**
+  - Fix: none.
+  - Q: Why no check of the GitHub URL in the TODO item, not one beside the GitLab check?
+    - A: Because the GitHub URL is static HTML, and headless Chromium already found it on all four demo pages. The GitLab URL comes from a script that runs only on a gitlab host, so only kuanyui.gitlab.io can show it.
+- [x] **[DOCUMENTATION-633] - the GitLab-URL entry (QUALITY-631) extends the swap-script entry (QUALITY-627) without naming it, while the section's other follow-up entries name the one they extend**
+  - Fix: its title names it.
 
 ## review (LAN URLs on make server)
 
@@ -1277,7 +1307,7 @@ Process: post-fix review of the item-row rename (`8cb3658`), the item vocabulary
 
 ## review (demo renumbering, AngularJS i18n demo, the ui-select bridge's language-pack door)
 
-Process: post-fix review of three change sets in one working tree: the core demo's i18n section moved to the end (17) with every cross reference renumbered, the AngularJS demo's new section 14 (the API.md "Switching the UI language at runtime" recipe, verbatim, driving every widget on the page from `$translate`), and `<ui-llselect>` gaining the app-wide defaults plus an `instance()` controller. All four members reviewed (fresh sessions, max effort, read-only): Opus 5 and Opus 4.8 first, then Codex 5.5 and Codex Sol on the fixed tree. The harness stopped every `codex exec` started as a tracked background task within two minutes for "running low on memory" while `free -m` showed about 2.1 GB available; run detached from that tracking (`setsid nohup`, one at a time) both finished in 5 and 10 minutes, with total used memory peaking at about 1.0 GB of 2.9 GB and never less than 1.86 GB available, so the trigger was the harness's background-task guard, not exhaustion. No member found a correctness defect. Verified after the fixes: `npm run verify` green (531 core tests, 89 AngularJS tests), and the AngularJS page driven end to end in jsdom against the real CDN libraries (angular-translate with its static-files loader, angular-validation, ui-bootstrap): ja / zh-TW / en re-pack every widget without an explicit placeholder, explicit placeholders stay, chosen values survive, and `INVALID_REQUIRED` keeps resolving to the English message through `fallbackLanguage`.
+Process: post-fix review of three change sets in one working tree: the core demo's i18n section moved to the end with every cross reference renumbered, the AngularJS demo's new section 14 (the API.md "Switching the UI language at runtime" recipe, verbatim, driving every widget on the page from `$translate`), and `<ui-llselect>` gaining the app-wide defaults plus an `instance()` controller. All four members reviewed (fresh sessions, max effort, read-only): Opus 5 and Opus 4.8 first, then Codex 5.5 and Codex Sol on the fixed tree. The harness stopped every `codex exec` started as a tracked background task within two minutes for "running low on memory" while `free -m` showed about 2.1 GB available; run detached from that tracking (`setsid nohup`, one at a time) both finished in 5 and 10 minutes, with total used memory peaking at about 1.0 GB of 2.9 GB and never less than 1.86 GB available, so the trigger was the harness's background-task guard, not exhaustion. No member found a correctness defect. Verified after the fixes: `npm run verify` green (531 core tests, 89 AngularJS tests), and the AngularJS page driven end to end in jsdom against the real CDN libraries (angular-translate with its static-files loader, angular-validation, ui-bootstrap): ja / zh-TW / en re-pack every widget without an explicit placeholder, explicit placeholders stay, chosen values survive, and `INVALID_REQUIRED` keeps resolving to the English message through `fallbackLanguage`.
 
 - [x] **[MEDIUM-139] - three lead sentences still called the two AngularJS files independent**
   - Symptom: `angularjs/README.md` line 5, `angularjs/API.md` line 5 and the `demo/angularjs/examples.html` intro said "two independent files" / "copy one or the other" after `llselect.uiCompat` gained a dependency on the `llselect` module; SPEC.md had already been updated.
