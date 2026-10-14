@@ -52,7 +52,16 @@
     <a href="examples.html">Examples</a>
     <a href="benchmark.html" class="current">Benchmark</a>
     <a href="../angularjs/">AngularJS</a>
+    <a href="https://github.com/kuanyui/llselect" class="repo">GitHub</a>
   </nav>
+  <script>
+  // One build serves both hosts: the nav repo link follows the serving domain.
+  if (location.hostname.includes('gitlab')) {
+    const repoLink = document.querySelector('nav a.repo')
+    repoLink.href = 'https://gitlab.com/kuanyui/llselect'
+    repoLink.textContent = 'GitLab'
+  }
+  </script>
 
   <h1>llselect vs the field</h1>
   <p>
