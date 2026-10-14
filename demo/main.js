@@ -1432,6 +1432,41 @@ const selSchemeBrand = new LLSelectSingle(
 selSchemeBrand.setItems(COUNTRIES)
 //#endregion
 
+//#region 16.6
+// No colorScheme setting: like 16.1, it follows the page's Dark switch.
+new LLSelectSingle(
+  document.getElementById('mount-scheme-single'),
+  {
+    ariaLabel: 'With an arrow',
+    placeholder: 'With an arrow',
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+  },
+).setItems(COUNTRIES)
+//#endregion
+
+//#region 16.7
+// isChosen() gives each row its checkbox state. The function runs only when a
+// row renders, after construction, so it can read selSchemeMultiple.
+let selSchemeMultiple
+selSchemeMultiple = new LLSelectMultiple(
+  document.getElementById('mount-scheme-multiple'),
+  {
+    ariaLabel: 'Checkboxes and tags',
+    placeholder: 'Checkboxes and tags',
+    triggerDisplay: 'tags',
+    createTriggerArrowContentElFn: () => createChevronDownSvgEl(),
+    createPopupListItemContentElFn: (item) => {
+      const row = document.createElement('span')
+      row.className = 'lang-row' // inline-flex + gap (demo CSS)
+      row.append(createOutlinedCheckboxSvgEl({ state: selSchemeMultiple.isChosen(item) ? 'checked' : 'unchecked' }), item)
+      return row
+    },
+  },
+)
+selSchemeMultiple.setItems(COUNTRIES)
+selSchemeMultiple.setChosenItems(['Japan', 'Brazil', 'Canada'])
+//#endregion
+
 //#region 17.1
 // Language packs (imported at the top: `import { en, ja, zhTW } from
 // '@llselect/core/i18n'`) fill the `uiTranslationPack` setting whole; per-key

@@ -436,7 +436,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 /* #endregion */
 
-/* Icon + text rows for rich item content (core 5.4-5.6, 11.x, 17.2;
+/* Icon + text rows for rich item content (core 5.4-5.6, 11.x, 16.7, 17.2;
    angularjs 8). */
 .lang-row {
   display: inline-flex;
