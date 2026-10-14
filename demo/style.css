@@ -685,12 +685,13 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 }
 .demo-nav a:hover { background: var(--accent-soft); }
 .demo-nav a.current { background: var(--accent); color: var(--accent-fg); }
-/* "Dark" switch, mounted by color-scheme.js at the nav's right end */
+.demo-nav a.repo { margin-left: auto; }
+/* "Dark" switch, mounted by color-scheme.js after the repo link */
 .demo-nav .color-scheme-switch {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  margin: 0 0 0 auto;
+  margin: 0;
   padding: 0.35rem 0.5rem;
   font-weight: 600;
   color: var(--accent);
