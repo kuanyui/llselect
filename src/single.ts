@@ -33,6 +33,15 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * - `meta.source` says who initiated the change: `'user'` for a pointer or
    *   keyboard interaction inside the widget, `'api'` for any programmatic
    *   call. See {@link LLSelectChangeMeta}.
+   * - Runs after the value changed and the trigger was updated.
+   * - `getChosenItem()` already returns the new value.
+   * - A setter may be called from inside it. The nested `onChange` then
+   *   reports `meta.source` `'api'`.
+   * - A modal dialog may be opened, or focus moved, from inside it.
+   * - Focus that already moved outside the widget is not reclaimed.
+   * - Moving focus outside the widget closes the popup, as always.
+   * - A pick closes the popup when the handler returns, if it is still open.
+   * - Other changes leave the popup as it is.
    * @group Events
    */
   onChange: ((chosenItem: T | undefined, previousChosenItem: T | undefined, meta: LLSelectChangeMeta) => void) | null

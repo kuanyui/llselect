@@ -45,9 +45,14 @@ export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
  * `meta.source`.
  * - `'user'`: a pointer or keyboard interaction inside the widget - an
  *   option toggle, a tag's remove button, the clear button, the choose-all
- *   row.
+ *   row, an action row's `onActivate`.
  * - `'api'`: any programmatic call - `setChosenItem` / `setChosenItems`,
  *   `toggleItem`, the `choose*` bulk ops, `setItems` reconciliation.
+ * - Only the first chosen-state change of one interaction reports `'user'`.
+ *   A later change in the same interaction reports `'api'`.
+ * - One exception today: a `setItems` call inside an action row's
+ *   `onActivate`, before any other chosen-state change, has its
+ *   reconciliation report `'user'`.
  * @group Events
  */
 export type LLSelectChangeSource = 'user' | 'api'
@@ -637,17 +642,21 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   createGroupLabelContentElFn: ((groupKey: GroupKey, itemsInGroup: readonly T[]) => HTMLElement | null) | null
   /**
-   * Fired right after the popup opens. An `open()` call that does not actually
-   * open the popup (already open, a disabled control, or a trigger scrolled out
-   * of view or clipped) does not fire it. Fires in ADDITION to the protected
-   * `onOpened` hook - the setting is for consumers, the hook for subclasses;
-   * both run. `null` (default) = nothing.
+   * Fired right after the popup opens.
+   * - An `open()` call that does not actually open the popup (already open, a
+   *   disabled control, or a trigger scrolled out of view or clipped) does
+   *   not fire it.
+   * - Fires in ADDITION to the protected `onOpened` hook: the setting is for
+   *   consumers, the hook for subclasses, both run.
+   * - `null` (default) = no consumer listener.
    * @group Events
    */
   onOpen: (() => void) | null
   /**
-   * Fired right after the popup closes. A no-op `close()` does not fire it.
-   * Additive with the protected `onClosed` hook, like {@link onOpen}.
+   * Fired right after the popup closes.
+   * - A no-op `close()` does not fire it.
+   * - Additive with the protected `onClosed` hook, like {@link onOpen}: both run.
+   * - `null` (default) = no consumer listener.
    * @group Events
    */
   onClose: (() => void) | null
@@ -1070,8 +1079,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * Who the change being applied right now is attributed to; the variants'
    * `onChange` firing reads it. Set to `'user'` by `withUserChangeSource`
-   * and consumed (reset to `'api'`) by the first `onChange` fired, so a
-   * nested api-driven change inside an `onChange` handler reports `'api'`.
+   * and consumed (reset to `'api'`) by the first chosen-state change, before
+   * `onChosenChanged` runs, so a nested api-driven change inside an
+   * `onChange` handler reports `'api'`.
    * @group State (protected)
    */
   protected changeSource: LLSelectChangeSource = 'api'
@@ -1595,6 +1605,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Rebuild the trigger and (while open) the popup list from current state.
    * - Use it after mutating item OBJECTS in place (e.g.
    *   `users[0].name = 'X'`). The library cannot detect that on its own.
+   * - Use it too when a function it reruns reads state that changed outside
+   *   the items, such as the page language.
+   * - It reruns `itemToStringFn` and every content function of the trigger
+   *   and the popup list.
+   * - It does not rerun the header and footer content functions.
+   * - It cannot reach the pack-owned attributes of the filter input, its
+   *   placeholder and fallback `aria-label`; `setUiTranslationPack` does.
    * - It re-derives the display order (the `gatherGroups` gather).
    * - While the filter is active, it re-runs the filter against the current
    *   item text.
@@ -2727,10 +2744,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected createPopupListChooseAllRowEl(): HTMLElement | null { return null }
 
   /**
-   * Run `fn` with chosen-state changes attributed to the user. The library
-   * wraps exactly its pointer / keyboard entry points with it - option
-   * activation, the tag remove button, the clear button, the choose-all row;
-   * everything else reports `'api'`.
+   * Run `fn` with chosen-state changes attributed to the user.
+   * - The library wraps exactly its pointer / keyboard entry points with it:
+   *   option activation, the tag remove button, the clear button, the
+   *   choose-all row, and an action row's `onActivate`.
+   * - A change outside such a call reports `'api'`.
+   * - The attribution is consumed by the first chosen-state change inside
+   *   `fn`, before `onChosenChanged` runs.
+   * - A second change inside the same `fn` reports `'api'`.
    * @group Subclassing: reactions
    */
   protected withUserChangeSource<R>(fn: () => R): R {
