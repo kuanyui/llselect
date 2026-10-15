@@ -65,8 +65,16 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    *   change.
    * - `meta.source` says who initiated the change: `'user'` for a pointer or
    *   keyboard interaction inside the widget (an option toggle, a tag's
-   *   remove button, the clear button, the choose-all row), `'api'` for any
-   *   programmatic call. See {@link LLSelectChangeMeta}.
+   *   remove button, the clear button, the choose-all row, an action row's
+   *   `onActivate`), `'api'` for any programmatic call. See
+   *   {@link LLSelectChangeMeta}.
+   * - Runs after the value changed and the trigger was updated.
+   * - `getChosenItems()` already returns the new value.
+   * - A setter may be called from inside it. The nested `onChange` then
+   *   reports `meta.source` `'api'`.
+   * - A modal dialog may be opened, or focus moved, from inside it.
+   * - Focus that already moved outside the widget is not reclaimed.
+   * - Moving focus outside the widget closes the popup, as always.
    * @group Events
    */
   onChange: ((chosenItems: readonly T[], previousChosenItems: readonly T[], meta: LLSelectChangeMeta) => void) | null
