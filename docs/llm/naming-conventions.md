@@ -301,6 +301,10 @@ API-surface review round (user rulings): added public `isOpened(): boolean` (sta
 
 Highlight ruling (user): "highlight" names exactly ONE concept - query-match marking, the exported `createHighlightedTextEl(text, query, createMatchElFn?)` (create*El family; wraps each occurrence in `<mark>` inside a detached span, query-highlight.ts). The keyboard-focused option is "focused" wording everywhere ("style the focused item" at `popupListRowFocusedClass`, "focus the chosen item" at single's `focusInitial`, the base.ts click-handler comment - all reworded off "highlight"). Tolerated other senses, both outside the library API: ui-select's own `| highlight:` filter / `on-highlight` attribute quoted as external vocabulary in the angularjs docs (that filter IS query-match marking, so it agrees); the demo site's code syntax-highlighting tooling (`demo/highlight.js`), a different bounded context that never renders inside the library.
 
+Change reason ruling (user): the third `onChange` argument gains `reason`, not `action` (action rows and keyboard actions own that word), a plain string union `LLSelectChangeReason` with the value meanings as bullets on the alias and on the field, no `const` object and no enum; the one affected item is `item`, the bare noun (s7a.10); `LLSelectChangeMeta<T = unknown>` follows the defaulted-generic rule; `LLSelectChangeMeta<T>` is a discriminated union on `reason` (user ruling, the semantics are clearer): `LLSelectItemChangeMeta<T>` for one added or removed item and `LLSelectWholeValueChangeMeta` for the whole value, both extending `LLSelectBaseChangeMeta`, which carries the shared docstrings once (DESIGN.md "Change reason").
+
+Event names ruling (user): the after-the-fact events keep the ecosystem names - `onChange`, `onOpen`, `onClose`, `onFilterQueryChange`; a cancelable hook takes the `before` prefix (`onBeforeChange`), as the web platform pairs `beforeinput` with `input`; no `after` prefix; the protected hooks keep their tenses (`onChosenChanging` / `onChosenChanged`).
+
 ## 6. Phasing
 
 DONE - all three phases applied (npm test passes; npm run build green).

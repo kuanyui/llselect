@@ -557,6 +557,72 @@ test('single without track by: aria-selected and open-focus survive an equal-obj
   assert.ok(focused && focused.textContent.includes('Bob'), 'reopen must focus the chosen row, not the first-row fallback')
 })
 
+test('on-remove hands back the stored entry when the row clicked is a different object equal under track by', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect multiple ng-model="vm.sel" remove-selected="false" on-remove="vm.removed.push($item)">
+          <ui-llselect-match placeholder="Pick">{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users track by p.id" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }]; this.sel = []; this.removed = [] },
+  })
+  const sel = a.ng.element(a.$('ui-llselect')).controller('uiLlselect').instance()
+  const fresh = { id: 2, name: 'Bob' }
+  sel.setChosenItems([fresh]) // a fresh object, equal to the list's Bob under track by
+  a.$('ui-llselect .llselect-trigger').click()
+  a.$$('ui-llselect .llselect-popup-list-row')[1].click() // the list's Bob row deselects the stored `fresh`
+  assert.deepEqual(a.errors, [])
+  assert.equal(a.scope.vm.removed.length, 1)
+  assert.equal(a.scope.vm.removed[0], fresh, 'on-remove must hand back the stored entry, as the previous-set diff did')
+})
+
+test('on-remove fires once per removed entry on a bulk change, through the previous-set diff', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect multiple ng-model="vm.sel" on-select="vm.added.push($item)" on-remove="vm.removed.push($item)">
+          <ui-llselect-match placeholder="Pick">{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users track by p.id" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }, { id: 3, name: 'Carol' }]; this.sel = []; this.added = []; this.removed = [] },
+  })
+  const sel = a.ng.element(a.$('ui-llselect')).controller('uiLlselect').instance()
+  const [alice, bob] = a.scope.vm.users
+  sel.setChosenItems([alice, bob]) // a whole-value write: reason 'set', the diff path
+  sel.setChosenItems([]) // an empty whole-value write: reason 'clear', the diff path
+  assert.deepEqual(a.errors, [])
+  assert.deepEqual(a.scope.vm.added, [alice, bob], 'on-select once per added entry')
+  assert.deepEqual(a.scope.vm.removed, [alice, bob], 'on-remove once per removed entry, the stored objects')
+})
+
+test('on-remove fires through the diff when instance().setItems() drops chosen entries (reason items)', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect multiple ng-model="vm.sel" on-remove="vm.removed.push($item)">
+          <ui-llselect-match placeholder="Pick">{{$item.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users track by p.id" ll-item-text="p.name"><span>{{p.name}}</span></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }, { id: 3, name: 'Carol' }]; this.sel = []; this.removed = [] },
+  })
+  const sel = a.ng.element(a.$('ui-llselect')).controller('uiLlselect').instance()
+  const [alice, bob, carol] = a.scope.vm.users
+  sel.setChosenItems([alice, bob])
+  sel.setItems([carol]) // the reconciliation drops both chosen entries: reason 'items', the diff path
+  assert.deepEqual(a.errors, [])
+  assert.deepEqual(a.scope.vm.removed, [alice, bob], 'on-remove once per dropped entry')
+})
+
 test('QUALITY-92: choosing a second item does not re-fire on-select for a NaN already chosen', () => {
   const a = boot({
     files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
@@ -574,9 +640,13 @@ test('QUALITY-92: choosing a second item does not re-fire on-select for a NaN al
   })
   assert.deepEqual(a.errors, [])
   a.$('ui-llselect .llselect-trigger').click()
-  a.$$('ui-llselect .llselect-popup-list-row')[0].click() // chooses 1 (the chosen NaN row is hidden by remove-selected)
+  a.$$('ui-llselect .llselect-popup-list-row')[0].click() // chooses 1 (the chosen NaN row is hidden by remove-selected): the toggle path
   assert.equal(a.scope.vm.n.length, 2)
-  assert.deepEqual(a.scope.vm.picked, [1], 'only the newly chosen item fires on-select; an indexOf diff would also re-fire the NaN')
+  assert.deepEqual(a.scope.vm.picked, [1], 'only the newly chosen item fires on-select on the toggle path')
+  const sel = a.ng.element(a.$('ui-llselect')).controller('uiLlselect').instance()
+  sel.setChosenItems([NaN]) // a whole-value write: the diff path; nothing is added
+  sel.setChosenItems([NaN, 1]) // the diff path again: NaN is retained under SameValueZero, only 1 is added
+  assert.deepEqual(a.scope.vm.picked, [1, 1], 'the diff path keeps the NaN through SameValueZero; an indexOf diff would re-fire it')
 })
 
 test('QUALITY-92: a NaN model value resolves through a repeat alias too (the reverse lookup is SameValueZero)', () => {

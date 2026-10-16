@@ -50,7 +50,7 @@ Agent-facing record of the committee convened on three API questions raised by a
 ### Q2 - reason and item
 
 - `minimal`: all six. `reason`: all six; `action` already names action rows and keyboard actions in this project, one word one concept (Opus 5, Codex Sol); two of the values name consequences, not actions (Sonnet 5).
-- Two definition fixes from Opus 5, accepted by the others' shapes: `reason` names the operation on the data and `source` names the initiator, so a programmatic `toggleItem` that adds is `{ source: 'api', reason: 'choose' }`; the choose-all row and every bulk op are `'set'`.
+- Two definition fixes from Opus 5, accepted by the others' shapes: `reason` names the operation on the data and `source` names the initiator, so a programmatic `toggleItem` that adds is `{ source: 'api', reason: 'choose' }`; the choose-all row and every bulk op are `'set'` (refined when shipped: a bulk op whose result is empty is `'clear'`, and `item` rides with `'choose'` / `'unchoose'`; DESIGN.md "Change reason").
 - Type shape: `LLSelectChangeMeta<T = unknown>` with a defaulted type parameter so existing annotations keep compiling (Opus 4.8, Opus 5, Sonnet 4.6, Codex Astra); Sonnet 5 notes that any standalone annotation of the non-generic name is a type-level break. `item` as an optional field present only on `'choose'` / `'unchoose'` (four members) or as a discriminated union on `reason`, where `item` exists exactly when the reason is one of those two (Codex Sol).
 - Q2 ships even if Q1 is rejected: all six. Q1 without Q2: yes but less expressive (five); reluctantly, land Q2 first and Q1 on top (Opus 5).
 

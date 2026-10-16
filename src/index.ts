@@ -5,15 +5,19 @@
  */
 export { LLSelectBase } from './base.js'
 export type {
+  LLSelectBaseChangeMeta,
   LLSelectBaseSettings,
   LLSelectBaseSettingsInput,
   LLSelectChangeMeta,
+  LLSelectChangeReason,
   LLSelectChangeSource,
   LLSelectClassIdMap,
   LLSelectConstructionContext,
+  LLSelectItemChangeMeta,
   LLSelectOutsideClickBehavior,
   LLSelectPopupListActionRow,
   LLSelectSettingsInputOf,
+  LLSelectWholeValueChangeMeta,
 } from './base.js'
 
 /**

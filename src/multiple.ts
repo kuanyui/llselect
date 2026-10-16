@@ -3,6 +3,7 @@ import {
   defaultCompareFn,
   type LLSelectBaseSettings,
   type LLSelectChangeMeta,
+  type LLSelectChangeReason,
   type LLSelectSettingsInputOf,
 } from './base.js'
 
@@ -68,6 +69,11 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    *   remove button, the clear button, the choose-all row, an action row's
    *   `onActivate`), `'api'` for any programmatic call. See
    *   {@link LLSelectChangeMeta}.
+   * - `meta.reason` says what the change did: `'choose'` or `'unchoose'`
+   *   with the one toggled item in `meta.item`, `'clear'` for an empty
+   *   whole-value write or an emptying bulk op, `'set'` for a whole-value
+   *   write with items or a bulk op whose result is not empty, `'items'`
+   *   for a `setItems` reconciliation. See {@link LLSelectChangeReason}.
    * - Runs after the value changed and the trigger was updated.
    * - `getChosenItems()` already returns the new value.
    * - A setter may be called from inside it. The nested `onChange` then
@@ -77,7 +83,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * - Moving focus outside the widget closes the popup, as always.
    * @group Events
    */
-  onChange: ((chosenItems: readonly T[], previousChosenItems: readonly T[], meta: LLSelectChangeMeta) => void) | null
+  onChange: ((chosenItems: readonly T[], previousChosenItems: readonly T[], meta: LLSelectChangeMeta<T>) => void) | null
   /**
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen items
@@ -318,7 +324,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     const previous = this.chosenItems
     this.chosenItems = next
     this.rerender()
-    this.fireChange(previous)
+    this.fireChange(previous, next.length === 0 ? 'clear' : 'set')
   }
 
   /**
@@ -362,7 +368,12 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     const previous = this.chosenItems
     const compareFn = this.settings.compareFn
     const idx = previous.findIndex(c => compareFn(c, item))
-    if (idx >= 0) {
+    const removed = idx >= 0
+    // The removed entry is the STORED one: with a key-based compareFn the
+    // caller's `item` may be a different, equal object, and meta.item must
+    // name what left the selection.
+    const changedItem = removed ? previous[idx]! : item
+    if (removed) {
       this.chosenItems = [...previous.slice(0, idx), ...previous.slice(idx + 1)]
     } else {
       this.chosenItems = this.orderChosen([...previous, item])
@@ -382,7 +393,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       this.replacePopupListItemElInDom(item)
       this.replaceChooseAllRowElInDom()
     }
-    this.fireChange(previous)
+    this.fireChange(previous, removed ? 'unchoose' : 'choose', changedItem)
   }
 
   /**
@@ -864,7 +875,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       // setItems rendered the open popup before this reconciliation, so rows
       // whose content read the chosen list must be rebuilt from the final one.
       if (this.isOpened()) { this.renderPopupList() }
-      this.fireChange(previous)
+      this.fireChange(previous, 'items')
       return
     }
     if (swapped) { this.chosenItems = ordered }
@@ -942,12 +953,19 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     return true
   }
 
-  private fireChange(previousChosenItems: readonly T[]): void {
+  // The overloads make a single-item reason require its item at compile time.
+  private fireChange(previousChosenItems: readonly T[], reason: 'choose' | 'unchoose', item: T): void
+  private fireChange(previousChosenItems: readonly T[], reason: 'clear' | 'set' | 'items'): void
+  private fireChange(previousChosenItems: readonly T[], reason: LLSelectChangeReason, item?: T): void {
     // Consume the source before any observer runs: a programmatic setter
     // called from inside onChange (or a subclass reaction) must report
     // 'api', not inherit the outer interaction's 'user' attribution.
-    const meta: LLSelectChangeMeta = { source: this.changeSource }
+    const source = this.changeSource
     this.changeSource = 'api'
+    // The item shape for the two single-item reasons, even when T admits undefined.
+    const meta: LLSelectChangeMeta<T> = reason === 'choose' || reason === 'unchoose'
+      ? { source, reason, item: item as T }
+      : { source, reason }
     this.onChosenChanged()
     const onChange = this.settings.onChange
     onChange?.(this.chosenItems, previousChosenItems, meta)

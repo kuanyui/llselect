@@ -393,11 +393,11 @@
           return compileTemplateSlot(slots.matchHtml, item, 'trigger', function (s) { s.$item = item })
         }
       }
-      settings.onChange = function (items, previous) {
+      settings.onChange = function (items, previous, meta) {
         $select.selected = items.slice()
         if (gate.suppressed) { return }
         ngModelCtrl.$setViewValue(items.map(toModel))
-        applyOnScope(function () { fireSelectRemove(items, previous) })
+        applyOnScope(function () { fireSelectRemove(items, previous, meta) })
       }
       sel = new CompatMultiple(element[0], settings)
       ngModelCtrl.$isEmpty = function (value) { return !value || value.length === 0 }
@@ -420,21 +420,26 @@
       sel = new CompatSingle(element[0], settings)
     }
 
-    function fireSelectRemove(items, previous) {
+    function fireSelectRemove(items, previous, meta) {
+      // One toggled item: the core names it in meta.item, so no diff is needed.
+      if (meta.reason === 'choose' || meta.reason === 'unchoose') {
+        var fn = meta.reason === 'choose' ? onSelectFn : onRemoveFn
+        if (fn) { fn(scope, { $item: meta.item, $model: toModel(meta.item), $select: $select }) }
+        return
+      }
+      // A bulk change ('set', 'clear', 'items'): diff against the previous set.
       // Membership by the bridge's own identity (settings.compareFn: the
-      // track-by key, else angular.equals), so a structurally equal reload
-      // object counts as the same item here too. `includes` (SameValueZero,
-      // so NaN included) answers first: retained items keep their reference
-      // between `previous` and `items`, and a pairwise angular.equals scan
-      // over every retained item would be O(k^2) deep compares per toggle.
-      // The compareFn fallback runs for each changed item `includes` misses
-      // (one per toggle, several on a clear) but never MATCHES in the bridge
-      // today: the core swaps
-      // chosen references to the list's objects on every reload, and
-      // reload-driven changes are write-back gated, so no in-bridge path hands
-      // a fresh equal object here. Keep it: any future path that does (an
-      // instance door, an ungated setItems) would otherwise fire a spurious
-      // on-select per swapped item.
+      // track-by key, else angular.equals), so a structurally equal object
+      // counts as the same item here too. `includes` (SameValueZero, so NaN
+      // included) answers first: retained items keep their reference between
+      // `previous` and `items`, and a pairwise angular.equals scan over every
+      // retained item would be O(k^2) deep compares per bulk change. The
+      // compareFn fallback then runs for each entry `includes` missed: the
+      // entries that a clear, a set or a setItems drop added or removed. It matters
+      // on the instance door: instance().setChosenItems() with fresh equal
+      // objects, or an ungated instance().setItems(), can leave a fresh equal
+      // object on one side, and without the fallback that would fire a
+      // spurious on-select or on-remove per swapped object.
       var has = function (list, item) {
         return list.includes(item) || list.some(function (other) { return settings.compareFn(other, item) })
       }

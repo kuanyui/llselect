@@ -3,6 +3,7 @@ import {
   defaultCompareFn,
   type LLSelectBaseSettings,
   type LLSelectChangeMeta,
+  type LLSelectChangeReason,
   type LLSelectSettingsInputOf,
 } from './base.js'
 
@@ -33,6 +34,9 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * - `meta.source` says who initiated the change: `'user'` for a pointer or
    *   keyboard interaction inside the widget, `'api'` for any programmatic
    *   call. See {@link LLSelectChangeMeta}.
+   * - `meta.reason` says what the change did: `'choose'` with the item in
+   *   `meta.item`, `'clear'` for an empty write, or `'items'` for a
+   *   `setItems` drop. See {@link LLSelectChangeReason}.
    * - Runs after the value changed and the trigger was updated.
    * - `getChosenItem()` already returns the new value.
    * - A setter may be called from inside it. The nested `onChange` then
@@ -44,7 +48,7 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * - Other changes leave the popup as it is.
    * @group Events
    */
-  onChange: ((chosenItem: T | undefined, previousChosenItem: T | undefined, meta: LLSelectChangeMeta) => void) | null
+  onChange: ((chosenItem: T | undefined, previousChosenItem: T | undefined, meta: LLSelectChangeMeta<T>) => void) | null
   /**
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen item
@@ -146,7 +150,7 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
     // aria-selected stays true to state (O(1); no-op while closed).
     if (previous !== undefined) { this.replacePopupListItemElInDom(previous) }
     if (item !== undefined) { this.replacePopupListItemElInDom(item) }
-    this.fireChange(previous)
+    if (item === undefined) { this.fireChange(previous, 'clear') } else { this.fireChange(previous, 'choose', item) }
   }
 
   /**
@@ -261,7 +265,7 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
       if (idx < 0) {
         this.chosenItem = undefined
         this.renderTrigger()
-        this.fireChange(previous)
+        this.fireChange(previous, 'items')
         return
       }
       const matched = this.items[idx]!
@@ -281,12 +285,19 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
     return compareFn(a, b)
   }
 
-  private fireChange(previousChosenItem: T | undefined): void {
+  // The overloads make a single-item reason require its item at compile time.
+  private fireChange(previousChosenItem: T | undefined, reason: 'choose' | 'unchoose', item: T): void
+  private fireChange(previousChosenItem: T | undefined, reason: 'clear' | 'set' | 'items'): void
+  private fireChange(previousChosenItem: T | undefined, reason: LLSelectChangeReason, item?: T): void {
     // Consume the source before any observer runs: a programmatic setter
     // called from inside onChange (or a subclass reaction) must report
     // 'api', not inherit the outer interaction's 'user' attribution.
-    const meta: LLSelectChangeMeta = { source: this.changeSource }
+    const source = this.changeSource
     this.changeSource = 'api'
+    // The item shape for the two single-item reasons, even when T admits undefined.
+    const meta: LLSelectChangeMeta<T> = reason === 'choose' || reason === 'unchoose'
+      ? { source, reason, item: item as T }
+      : { source, reason }
     this.onChosenChanged()
     const onChange = this.settings.onChange
     onChange?.(this.chosenItem, previousChosenItem, meta)
