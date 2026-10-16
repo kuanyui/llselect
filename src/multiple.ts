@@ -2,6 +2,7 @@ import {
   LLSelectBase,
   defaultCompareFn,
   type LLSelectBaseSettings,
+  type LLSelectBeforeChangeEvent,
   type LLSelectChangeMeta,
   type LLSelectChangeReason,
   type LLSelectSettingsInputOf,
@@ -84,6 +85,36 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * @group Events
    */
   onChange: ((chosenItems: readonly T[], previousChosenItems: readonly T[], meta: LLSelectChangeMeta<T>) => void) | null
+  /**
+   * Fired before a user interaction changes the chosen items, with a way to
+   * stop it.
+   * - Fires for the library's own pointer and keyboard paths only: a row
+   *   toggle in the popup, a tag chip's remove button, the clear button, the
+   *   choose-all row. Programmatic setters, the `setItems` reconciliation and
+   *   an action row's own setter calls never fire it.
+   * - `nextChosenItems` is the list about to be set. `previousChosenItems`
+   *   is the current one.
+   * - `event.reason` and `event.item` say what the change would do, as in
+   *   `onChange`.
+   * - `event.preventDefault()` stops the change: nothing is written, nothing
+   *   re-renders, `onChange` does not fire. The popup's open state does not
+   *   change; a click has already moved the active option to the clicked row.
+   * - A change that would change nothing never fires it: the clear button on
+   *   an empty selection, the choose-all row with nothing to act on.
+   * - Runs after the protected `onChosenChanging` hook. Both run, either may
+   *   cancel, and `event.defaultPrevented` shows the hook's decision.
+   * - A setter called from inside the handler wins, `setItems` included: the
+   *   pending change is dropped. That change reports `meta.source` `'user'`,
+   *   as the first change of the interaction.
+   * - For a confirmation dialog: call `event.preventDefault()`, open the
+   *   dialog, and call a setter after the user agreed. That change reports
+   *   `meta.source` `'api'`.
+   * - An error thrown by a handler propagates. The change does not happen.
+   * - `null` (default) = nothing is called; no user change is ever stopped
+   *   by it.
+   * @group Events
+   */
+  onBeforeChange: ((nextChosenItems: readonly T[], previousChosenItems: readonly T[], event: LLSelectBeforeChangeEvent<T>) => void) | null
   /**
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen items
@@ -177,7 +208,8 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * as the first option of the listbox.
    * - Default `false`.
    * - Activating the row (Enter, click, or Space while the filter is off)
-   *   runs `toggleAllVisible`: it toggles the items `getVisibleEnabledItems()`
+   *   commits what `toggleAllVisible` computes, after the before-change
+   *   gate: it toggles the items `getVisibleEnabledItems()`
    *   returns; that method's docstring defines exactly which items those
    *   are. The public `chooseAll` / `unchooseAll` / `toggleAll` keep their
    *   whole-list semantics.
@@ -262,6 +294,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   constructor(targetEl: HTMLElement, settings?: LLSelectSettingsInputOf<S>, subclassSettings?: Omit<S, keyof LLSelectMultipleSettings<T, GroupKey>>) {
     const ownExtras = {
       onChange: settings?.onChange ?? null,
+      onBeforeChange: settings?.onBeforeChange ?? null,
       createTriggerContentElFn: settings?.createTriggerContentElFn ?? null,
       triggerDisplay: settings?.triggerDisplay ?? 'count',
       createTagContentElFn: settings?.createTagContentElFn ?? null,
@@ -305,21 +338,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * @group Selection
    */
   public setChosenItems(chosenItems: readonly T[]): void {
-    // Set semantics, as compareFn's contract promises. The choose* bulk ops
-    // filter through isChosen and never produce duplicates; this setter is
-    // the one door raw arrays (framework model write-back included) come in
-    // through, so the dedup lives here.
-    let next: T[]
-    if (this.settings.compareFn === defaultCompareFn) {
-      next = [...new Set(chosenItems)]
-    } else {
-      next = []
-      const compareFn = this.settings.compareFn
-      for (const item of chosenItems) {
-        if (!next.some(c => compareFn(c, item))) { next.push(item) }
-      }
-    }
-    next = this.orderChosen(next)
+    const next = this.normalizeChosen(chosenItems)
     if (this.arraysEqual(next, this.chosenItems)) { return }
     const previous = this.chosenItems
     this.chosenItems = next
@@ -366,18 +385,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    */
   public toggleItem(item: T): void {
     const previous = this.chosenItems
-    const compareFn = this.settings.compareFn
-    const idx = previous.findIndex(c => compareFn(c, item))
-    const removed = idx >= 0
-    // The removed entry is the STORED one: with a key-based compareFn the
-    // caller's `item` may be a different, equal object, and meta.item must
-    // name what left the selection.
-    const changedItem = removed ? previous[idx]! : item
-    if (removed) {
-      this.chosenItems = [...previous.slice(0, idx), ...previous.slice(idx + 1)]
-    } else {
-      this.chosenItems = this.orderChosen([...previous, item])
-    }
+    const { next, removed, changedItem } = this.nextAfterToggle(item)
+    this.chosenItems = next
     // Only one item's selection changed, so the popup list replaces just that
     // one row (plus the choose-all tri-state) instead of rebuilding every row -
     // O(1) in list size. Exceptions: hideChosenRows moves the row in or out of
@@ -470,7 +479,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   /**
    * Toggle the visible enabled items between all-chosen and all-unchosen.
    * - This is the choose-all row's action (the `chooseAllRow` setting) as a
-   *   public method. The row delegates here.
+   *   public method. The row computes the same next value and commits it
+   *   through the before-change gate, so an override here does not change
+   *   the row.
    * - Acts on exactly the items that satisfy all of the following:
    *   - Visible: the item is in `getVisibleItems()`. It matches the active
    *     filter query, and with `hideChosenRows` it is not chosen. With no
@@ -502,17 +513,65 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * @group Selection
    */
   public toggleAllVisible(): void {
+    const next = this.nextAfterToggleAllVisible()
+    if (next !== null) { this.setChosenItems(next) }
+  }
+
+  /**
+   * What the choose-all row would commit: the normalized next chosen array,
+   * or `null` when nothing is actionable. Shared by `toggleAllVisible` and
+   * the before-change gate, so the hook sees exactly what the setter commits.
+   */
+  private nextAfterToggleAllVisible(): T[] | null {
     const actionable = this.getVisibleEnabledItems()
-    if (actionable.length === 0) { return }
+    if (actionable.length === 0) { return null }
     const allChosen = actionable.every(i => this.isChosen(i))
     if (allChosen) {
       const compareFn = this.settings.compareFn
-      this.setChosenItems(this.chosenItems.filter(c =>
-        !actionable.some(v => compareFn(v, c))))
-    } else {
-      const additions = actionable.filter(v => !this.isChosen(v))
-      this.setChosenItems([...this.chosenItems, ...additions])
+      return this.normalizeChosen(this.chosenItems.filter(c => !actionable.some(v => compareFn(v, c))))
     }
+    const additions = actionable.filter(v => !this.isChosen(v))
+    return this.normalizeChosen([...this.chosenItems, ...additions])
+  }
+
+  /**
+   * Dedupe and order a raw chosen array: set semantics, as compareFn's
+   * contract promises. The choose* bulk ops filter through isChosen and never
+   * produce duplicates; setChosenItems is the one door raw arrays (framework
+   * model write-back included) come in through, so the dedup lives here.
+   */
+  private normalizeChosen(chosenItems: readonly T[]): T[] {
+    let next: T[]
+    if (this.settings.compareFn === defaultCompareFn) {
+      next = [...new Set(chosenItems)]
+    } else {
+      next = []
+      const compareFn = this.settings.compareFn
+      for (const item of chosenItems) {
+        if (!next.some(c => compareFn(c, item))) { next.push(item) }
+      }
+    }
+    return this.orderChosen(next)
+  }
+
+  /**
+   * What a toggle of `item` would do: the next chosen array, whether the item
+   * leaves, and the entry that changes. Shared by `toggleItem` and the
+   * before-change gate, so the hook sees exactly what the setter commits.
+   * - The removed entry is the STORED one: with a key-based compareFn the
+   *   caller's `item` may be a different, equal object, and meta.item must
+   *   name what left the selection.
+   */
+  private nextAfterToggle(item: T): { next: T[]; removed: boolean; changedItem: T } {
+    const previous = this.chosenItems
+    const compareFn = this.settings.compareFn
+    const idx = previous.findIndex(c => compareFn(c, item))
+    const removed = idx >= 0
+    const changedItem = removed ? previous[idx]! : item
+    const next = removed
+      ? [...previous.slice(0, idx), ...previous.slice(idx + 1)]
+      : this.orderChosen([...previous, item])
+    return { next, removed, changedItem }
   }
 
   /**
@@ -662,7 +721,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
 
   /**
    * Build one chip's remove (x) button. The library owns the button + its click
-   * (`stopPropagation` so it never toggles the popup, then `toggleItem`; a no-op
+   * (`stopPropagation` so it never toggles the popup, then the gated toggle,
+   * which `onChosenChanging` and `onBeforeChange` may stop, else `toggleItem`; a no-op
    * while the whole control OR the item itself is disabled) + `tabindex="-1"` +
    * `aria-label` (from `itemToTagRemoveButtonAriaLabel`). An effectively-disabled
    * item's button also gets `aria-disabled="true"`.
@@ -688,7 +748,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       // disabled-blind so the programmatic channel matches native <select>.
       if (this.isDisabled()) { return }
       if (this.isItemEffectivelyDisabled(item)) { return }
-      this.withUserChangeSource(() => this.toggleItem(item))
+      this.withUserChangeSource(() => this.requestAndToggle(item))
     })
     return btn
   }
@@ -737,19 +797,58 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Toggle on click. Multi mode keeps the popup open.
+   * Toggle on click, after asking `onChosenChanging` and `onBeforeChange`.
+   * Multi mode keeps the popup open either way.
    * @group Subclassing: reactions
    */
   protected override onPopupListItemActivated(item: T): void {
-    this.toggleItem(item)
+    this.requestAndToggle(item)
+  }
+
+  /** The gated toggle shared by the row activation and the tag remove button. */
+  private requestAndToggle(item: T): void {
+    const { next, removed, changedItem } = this.nextAfterToggle(item)
+    if (this.requestUserChange(next, removed ? 'unchoose' : 'choose', changedItem)) { this.toggleItem(item) }
   }
 
   /**
-   * Clear button empties the chosen-items set to `[]`.
+   * Clear button empties the chosen-items set to `[]`, after asking
+   * `onChosenChanging` and `onBeforeChange`.
    * @group Subclassing: semantics
    */
   protected override clearSelection(): void {
-    this.setChosenItems([])
+    if (this.requestUserChange([], 'clear')) { this.setChosenItems([]) }
+  }
+
+  /**
+   * Subclass hook: called before a user interaction changes the chosen items,
+   * with the way to stop it. Default no-op.
+   * - Runs before the `onBeforeChange` setting. Both run, either may call
+   *   `event.preventDefault()`.
+   * - The parameters are the setting's: the list about to be set, the
+   *   current one, the event.
+   * @group Subclassing: reactions
+   */
+  protected onChosenChanging(_nextChosenItems: readonly T[], _previousChosenItems: readonly T[], _event: LLSelectBeforeChangeEvent<T>): void {}
+
+  /**
+   * The gate every user path to a change runs through: skips a no-op, asks the
+   * hook and the setting, and says whether the setter may run.
+   */
+  private requestUserChange(next: readonly T[], reason: 'choose' | 'unchoose', item: T): boolean
+  private requestUserChange(next: readonly T[], reason: 'clear' | 'set'): boolean
+  private requestUserChange(next: readonly T[], reason: 'choose' | 'unchoose' | 'clear' | 'set', item?: T): boolean {
+    const previous = this.chosenItems
+    if (this.arraysEqual(next, previous)) { return false }
+    const revision = this.changeRevision
+    const allowed = this.dispatchBeforeChange(reason === 'choose' || reason === 'unchoose' ? { reason, item: item as T } : { reason }, (event) => {
+      this.onChosenChanging(next, previous, event)
+      const fn = this.settings.onBeforeChange
+      fn?.(next, previous, event)
+    })
+    // A setter called inside the handlers wins, setItems included: the pending
+    // change is dropped, even when the handler restored the previous value.
+    return allowed && this.changeRevision === revision
   }
 
   /**
@@ -815,11 +914,15 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Activate the choose-all row: delegates to {@link toggleAllVisible}.
+   * Activate the choose-all row: computes what {@link toggleAllVisible} would
+   * commit, asks `onChosenChanging` and `onBeforeChange` with it, then commits
+   * exactly that value, even if a handler changed which items are enabled.
    * @group Subclassing: reactions
    */
   protected override onChooseAllRowActivated(): void {
-    this.toggleAllVisible()
+    const next = this.nextAfterToggleAllVisible()
+    if (next === null) { return }
+    if (this.requestUserChange(next, next.length === 0 ? 'clear' : 'set')) { this.setChosenItems(next) }
   }
 
   /**
@@ -957,6 +1060,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   private fireChange(previousChosenItems: readonly T[], reason: 'choose' | 'unchoose', item: T): void
   private fireChange(previousChosenItems: readonly T[], reason: 'clear' | 'set' | 'items'): void
   private fireChange(previousChosenItems: readonly T[], reason: LLSelectChangeReason, item?: T): void {
+    this.changeRevision++
     // Consume the source before any observer runs: a programmatic setter
     // called from inside onChange (or a subclass reaction) must report
     // 'api', not inherit the outer interaction's 'user' attribution.

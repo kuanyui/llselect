@@ -1116,3 +1116,111 @@ test('llselectConfigProvider.defaults({ colorScheme }) is the app-wide default; 
   assert.equal(a.$('[name=fromConfig]').getAttribute('data-llselect-color-scheme'), 'dark')
   assert.equal(a.$('[name=fromAttr]').getAttribute('data-llselect-color-scheme'), 'light')
 })
+
+test('ll-on-before-change: $next and $previous are model values; preventDefault keeps the model and ng-change silent; a single pick still closes', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.userId" ng-change="vm.changed = vm.changed + 1"
+        ll-on-before-change="vm.seen.push($next + '<' + $previous + ':' + $event.reason + ':' + $event.item.name); vm.block && $event.preventDefault()"
+        ll-options="u.id as u.name for u in vm.users"></llselect-single>
+    </div>`,
+    controller: function () { this.users = USERS; this.userId = 1; this.changed = 0; this.seen = []; this.block = true },
+  })
+  a.$('llselect-single .llselect-trigger').click()
+  a.$$('llselect-single .llselect-popup-list-row')[1].click() // Bob (id 2), vetoed
+  assert.deepEqual(a.errors, [])
+  assert.equal(a.scope.vm.userId, 1, 'the model must keep its value')
+  assert.equal(a.scope.vm.changed, 0, 'ng-change must not run')
+  assert.deepEqual(a.scope.vm.seen, ['2<1:choose:Bob'], '$next / $previous are the model values, $event.item the raw item')
+  assert.equal(a.$('llselect-single .llselect-trigger').getAttribute('aria-expanded'), 'false', 'a vetoed single pick still closes')
+  a.scope.$apply(() => { a.scope.vm.block = false })
+  a.$('llselect-single .llselect-trigger').click()
+  a.$$('llselect-single .llselect-popup-list-row')[1].click() // Bob, allowed
+  assert.equal(a.scope.vm.userId, 2)
+  assert.equal(a.scope.vm.changed, 1)
+})
+
+test('ll-on-before-change on a multiple select: $next and $previous are model arrays', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-multiple ng-model="vm.ids" ll-on-before-change="vm.seen.push($previous.join() + '>' + $next.join() + ':' + $event.reason)"
+        ll-options="u.id as u.name for u in vm.users"></llselect-multiple>
+    </div>`,
+    controller: function () { this.users = USERS; this.ids = [1]; this.seen = [] },
+  })
+  a.$('llselect-multiple .llselect-trigger').click()
+  a.$$('llselect-multiple .llselect-popup-list-row')[1].click() // Bob (id 2)
+  assert.deepEqual(a.errors, [])
+  assert.equal(a.scope.vm.ids.join(), '1,2') // the model array lives in the jsdom realm, so compare by value
+  assert.deepEqual(a.scope.vm.seen, ['1>1,2:choose'])
+})
+
+test('ll-on-before-change on a single select: an empty value is null in $previous and in $next, as ng-model holds it', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.fruit" ll-clearable="true"
+        ll-on-before-change="vm.seen.push(($previous === null) + ':' + ($next === null))"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.fruit = null; this.seen = [] },
+  })
+  a.$('llselect-single .llselect-trigger').click()
+  a.$$('llselect-single .llselect-popup-list-row')[0].click() // Apple from nothing: $previous is null
+  a.$('llselect-single .llselect-trigger-clear-button').click() // the clear button: $next is null
+  assert.deepEqual(a.errors, [])
+  assert.deepEqual(a.scope.vm.seen, ['true:false', 'false:true'])
+  assert.equal(a.scope.vm.fruit, null)
+})
+
+test('ll-on-before-change: $previous is what ng-model holds, even a value the list cannot resolve', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.fruit" ll-on-before-change="vm.seen.push($previous + '>' + $next)"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.fruit = 'Durian'; this.seen = [] },
+  })
+  a.$('llselect-single .llselect-trigger').click()
+  a.$$('llselect-single .llselect-popup-list-row')[0].click() // Apple
+  assert.deepEqual(a.errors, [])
+  assert.deepEqual(a.scope.vm.seen, ['Durian>Apple'])
+  assert.equal(a.scope.vm.fruit, 'Apple')
+})
+
+test('ll-on-before-change: an expression error goes to $exceptionHandler and does not veto', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.fruit" ll-on-before-change="vm.boom()"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.fruit = null; this.boom = function () { throw new Error('boom') } },
+  })
+  a.$('llselect-single .llselect-trigger').click()
+  a.$$('llselect-single .llselect-popup-list-row')[0].click() // Apple
+  assert.equal(a.errors.length, 1)
+  assert.match(String(a.errors[0]), /boom/)
+  assert.equal(a.scope.vm.fruit, 'Apple', 'the change proceeds; only preventDefault() vetoes')
+})
+
+test('ll-on-before-change: a model write inside the expression wins and the pending pick is dropped', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.fruit" ng-change="vm.changed = vm.changed + 1"
+        ll-on-before-change="vm.fruit = 'Cherry'"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.fruit = null; this.changed = 0 },
+  })
+  a.$('llselect-single .llselect-trigger').click()
+  a.$$('llselect-single .llselect-popup-list-row')[0].click() // Apple: the expression writes Cherry instead
+  assert.deepEqual(a.errors, [])
+  assert.equal(a.scope.vm.fruit, 'Cherry')
+  assert.equal(a.text('llselect-single .llselect-trigger-content'), 'Cherry')
+  assert.equal(a.scope.vm.changed, 0, 'a model write is programmatic: ng-change does not run, and the dropped pick never reached it')
+})

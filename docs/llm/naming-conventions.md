@@ -305,6 +305,8 @@ Change reason ruling (user): the third `onChange` argument gains `reason`, not `
 
 Event names ruling (user): the after-the-fact events keep the ecosystem names - `onChange`, `onOpen`, `onClose`, `onFilterQueryChange`; a cancelable hook takes the `before` prefix (`onBeforeChange`), as the web platform pairs `beforeinput` with `input`; no `after` prefix; the protected hooks keep their tenses (`onChosenChanging` / `onChosenChanged`).
 
+Before-change ruling (user): `onBeforeChange(next, previous, event)` with `event.preventDefault()` and `event.defaultPrevented`, the DOM's own words (`cancel()` also reads as "the user cancelled"); the event type is `LLSelectBeforeChangeEvent<T>`, the `LLSelectChangeMeta<T>` facts plus the two controls; the protected hook is `onChosenChanging`, the present participle beside `onChosenChanged`.
+
 ## 6. Phasing
 
 DONE - all three phases applied (npm test passes; npm run build green).

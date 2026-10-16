@@ -2,6 +2,7 @@ import {
   LLSelectBase,
   defaultCompareFn,
   type LLSelectBaseSettings,
+  type LLSelectBeforeChangeEvent,
   type LLSelectChangeMeta,
   type LLSelectChangeReason,
   type LLSelectSettingsInputOf,
@@ -49,6 +50,35 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * @group Events
    */
   onChange: ((chosenItem: T | undefined, previousChosenItem: T | undefined, meta: LLSelectChangeMeta<T>) => void) | null
+  /**
+   * Fired before a user interaction changes the chosen item, with a way to
+   * stop it.
+   * - Fires for the library's own pointer and keyboard paths only: a pick in
+   *   the popup, and the clear button. Programmatic setters, the `setItems`
+   *   reconciliation and an action row's own setter calls never fire it.
+   * - `nextChosenItem` is the value about to be set. `previousChosenItem` is
+   *   the current one.
+   * - `event.preventDefault()` stops the change: nothing is written, nothing
+   *   re-renders, `onChange` does not fire.
+   * - A vetoed pick still closes the popup, like any pick in single mode
+   *   while the popup is open. Only a pick does this.
+   * - A vetoed clear leaves everything as it is.
+   * - A pick of the already chosen item never fires it: nothing would change.
+   * - Runs after the protected `onChosenChanging` hook. Both run, either may
+   *   cancel, and `event.defaultPrevented` shows the hook's decision.
+   * - A setter called from inside the handler wins, `setItems` included: the
+   *   pending change is dropped. That change reports `meta.source` `'user'`,
+   *   as the first change of the interaction.
+   * - For a confirmation dialog: call `event.preventDefault()`, open the
+   *   dialog, and call `setChosenItem` after the user agreed. That change
+   *   reports `meta.source` `'api'`.
+   * - An error thrown by a handler propagates and the change does not
+   *   happen. If a pick threw, the popup does not close.
+   * - `null` (default) = nothing is called; no user change is ever stopped
+   *   by it.
+   * @group Events
+   */
+  onBeforeChange: ((nextChosenItem: T | undefined, previousChosenItem: T | undefined, event: LLSelectBeforeChangeEvent<T>) => void) | null
   /**
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen item
@@ -112,6 +142,7 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   constructor(targetEl: HTMLElement, settings?: LLSelectSettingsInputOf<S>, subclassSettings?: Omit<S, keyof LLSelectSingleSettings<T, GroupKey>>) {
     const ownExtras = {
       onChange: settings?.onChange ?? null,
+      onBeforeChange: settings?.onBeforeChange ?? null,
       createTriggerContentElFn: settings?.createTriggerContentElFn ?? null,
     } satisfies Omit<LLSelectSingleSettings<T, GroupKey>, keyof LLSelectBaseSettings<T, GroupKey>>
     // Cast mirrored from the base constructor: TS cannot prove "own extras +
@@ -194,19 +225,54 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
 
   /**
    * Pick this item as the chosen item and close the popup.
+   * - Asks `onChosenChanging` and `onBeforeChange` first; a veto keeps the
+   *   current value.
+   * - Closes the popup either way, unless a handler threw.
    * @group Subclassing: reactions
    */
   protected override onPopupListItemActivated(item: T): void {
-    this.setChosenItem(item)
+    if (this.requestUserChange(item, 'choose', item)) { this.setChosenItem(item) }
     this.close()
   }
 
   /**
-   * Clear button empties the single selection to `undefined`.
+   * Clear button empties the single selection to `undefined`, after asking
+   * `onChosenChanging` and `onBeforeChange`.
    * @group Subclassing: semantics
    */
   protected override clearSelection(): void {
-    this.setChosenItem(undefined)
+    if (this.requestUserChange(undefined, 'clear')) { this.setChosenItem(undefined) }
+  }
+
+  /**
+   * Subclass hook: called before a user interaction changes the chosen item,
+   * with the way to stop it. Default no-op.
+   * - Runs before the `onBeforeChange` setting. Both run, either may call
+   *   `event.preventDefault()`.
+   * - The parameters are the setting's: the value about to be set, the
+   *   current one, the event.
+   * @group Subclassing: reactions
+   */
+  protected onChosenChanging(_nextChosenItem: T | undefined, _previousChosenItem: T | undefined, _event: LLSelectBeforeChangeEvent<T>): void {}
+
+  /**
+   * The gate every user path to a change runs through: skips a no-op, asks the
+   * hook and the setting, and says whether the setter may run.
+   */
+  private requestUserChange(next: T | undefined, reason: 'choose', item: T): boolean
+  private requestUserChange(next: T | undefined, reason: 'clear'): boolean
+  private requestUserChange(next: T | undefined, reason: 'choose' | 'clear', item?: T): boolean {
+    const previous = this.chosenItem
+    if (this.areEqual(next, previous)) { return false }
+    const revision = this.changeRevision
+    const allowed = this.dispatchBeforeChange(reason === 'choose' ? { reason, item: item as T } : { reason }, (event) => {
+      this.onChosenChanging(next, previous, event)
+      const fn = this.settings.onBeforeChange
+      fn?.(next, previous, event)
+    })
+    // A setter called inside the handlers wins, setItems included: the pending
+    // change is dropped, even when the handler restored the previous value.
+    return allowed && this.changeRevision === revision
   }
 
   /**
@@ -289,6 +355,7 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   private fireChange(previousChosenItem: T | undefined, reason: 'choose' | 'unchoose', item: T): void
   private fireChange(previousChosenItem: T | undefined, reason: 'clear' | 'set' | 'items'): void
   private fireChange(previousChosenItem: T | undefined, reason: LLSelectChangeReason, item?: T): void {
+    this.changeRevision++
     // Consume the source before any observer runs: a programmatic setter
     // called from inside onChange (or a subclass reaction) must report
     // 'api', not inherit the outer interaction's 'user' attribution.

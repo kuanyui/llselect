@@ -272,7 +272,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Popup header / footer, pinned        | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update; see Popup header / footer |
 | i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir` |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
-| Events                               | `onChange(current, previous, meta)`, `onOpen`, `onClose`, `onFilterQueryChange(query)`; `meta` carries `source`, `reason` and, for one added or removed item, `item` |
+| Events                               | `onChange(current, previous, meta)`, `onBeforeChange(next, previous, event)`, `onOpen`, `onClose`, `onFilterQueryChange(query)`; `meta` carries `source`, `reason` and, for one added or removed item, `item`; `event` adds `preventDefault()` |
 
 ### Typing to jump (prefix typeahead)
 
@@ -334,7 +334,7 @@ A complete worked subclass, in TypeScript with typed subclass settings (the clas
 | Highlight filter matches in rows | `createPopupListItemContentElFn` + the `createHighlightedTextEl` helper |
 | Equality for object items        | `compareFn`                     |
 | Dropdown arrow                   | `createTriggerArrowContentElFn` |
-| Events                           | `onChange`, `onOpen`, `onClose`, `onFilterQueryChange` |
+| Events                           | `onChange`, `onBeforeChange`, `onOpen`, `onClose`, `onFilterQueryChange` |
 
 ```js
 const sel = new LLSelectSingle(el, {
@@ -432,6 +432,28 @@ sel = new LLSelectMultiple(el, {
   ],
 })
 ```
+
+#### Confirm before a change
+
+`onBeforeChange` runs before a user pick, toggle, chip removal, clear or choose-all is written. Call `event.preventDefault()` to stop it.
+
+The value stays and `onChange` does not fire. A vetoed pick in single mode still closes the popup, like any pick.
+
+```js
+let sel
+let agreed = false
+sel = new LLSelectSingle(el, {
+  onBeforeChange: (next, _previous, event) => {
+    if (next !== 'advanced' || agreed) { return }
+    event.preventDefault() // the value stays as it was
+    askForAgreement().then((ok) => { if (ok) { agreed = true; sel.setChosenItem('advanced') } }) // reported as source 'api'
+  },
+})
+```
+
+- Programmatic setters never ask. Guard your own calls in your own code.
+- A setter called inside the handler wins; the pending change is dropped.
+- A rule that never allows an item belongs in `itemDisabledFn`. `onBeforeChange` is for a decision that depends on the moment.
 
 #### Dark color scheme
 

@@ -229,7 +229,7 @@
   }
 
   /**
-   * ll-on-open / ll-on-close / ll-on-filter-query-change: an event
+   * ll-on-open / ll-on-close / ll-on-filter-query-change / ll-on-before-change: an event
    * expression, evaluated on EACH event
    * (like ng-click), not once at link like the other ll-* attributes. llselect
    * fires these callbacks from its own pointer / keyboard handlers, outside
@@ -247,7 +247,8 @@
     var expr = attrs[name]
     settings[key] = function () {
       // toLocals maps the core's callback arguments to expression locals
-      // (ll-on-filter-query-change exposes `$query`); the others have none.
+      // (ll-on-filter-query-change exposes `$query`, ll-on-before-change
+      // `$next` / `$previous` / `$event`); the others have none.
       var locals = toLocals ? toLocals.apply(null, arguments) : undefined
       if (!scope.$root.$$phase) { scope.$apply(function () { scope.$eval(expr, locals) }); return }
       try { scope.$eval(expr, locals) } catch (e) { exceptionHandler(e) }
@@ -450,6 +451,14 @@
             if (gate.isSuppressed()) { return }
             ngModelCtrl.$setViewValue(item === undefined ? null : parsed.toModelValue(scope, item))
           }
+          // ll-on-before-change: $next is the MODEL value about to be set and
+          // $previous is what ng-model holds right now, even a value the item
+          // list could not resolve, so a handler compares them with vm state
+          // directly; the raw item rides on $event.item.
+          wireEventAttr(scope, attrs, 'llOnBeforeChange', settings, 'onBeforeChange', $exceptionHandler, function (next, _previous, event) {
+            var current = ngModelCtrl.$viewValue
+            return { $next: next === undefined ? null : parsed.toModelValue(scope, next), $previous: current == null ? null : current, $event: event }
+          })
 
           var sel = new llselect.LLSelectSingle(element[0], settings)
           ctrls[1].$$setInstance(sel)
@@ -545,6 +554,13 @@
               return parsed.toModelValue(scope, item)
             }))
           }
+          // ll-on-before-change: $next is the MODEL array about to be set and
+          // $previous is what ng-model holds right now; the raw item rides on
+          // $event.item.
+          wireEventAttr(scope, attrs, 'llOnBeforeChange', settings, 'onBeforeChange', $exceptionHandler, function (next, _previous, event) {
+            var current = ngModelCtrl.$viewValue
+            return { $next: next.map(function (item) { return parsed.toModelValue(scope, item) }), $previous: Array.isArray(current) ? current : [], $event: event }
+          })
 
           var sel = new llselect.LLSelectMultiple(element[0], settings)
           ctrls[1].$$setInstance(sel)
