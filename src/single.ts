@@ -196,6 +196,14 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   protected override renderTriggerContent(): void {
     this.syncEmptyStateToDom()
     const plainValue = this.chosenItem === undefined ? this.settings.placeholder : this.itemToString(this.chosenItem!)
+    // The chosen item's language rides on the value mirror and on the content
+    // slot, custom content included: AT reads the slot while the filter is
+    // inactive and the mirror while it is active, and an app's own lang on its
+    // element wins, being nearer. The placeholder is interface text, so an
+    // empty selection carries none.
+    const lang = this.chosenItem === undefined ? null : this.itemToLang(this.chosenItem!)
+    this.commitLangToDom(this.triggerValueEl, lang)
+    this.commitLangToDom(this.triggerContentEl, lang)
     const fn = this.settings.createTriggerContentElFn
     const custom = fn?.({ chosenItem: this.chosenItem, items: this.getItems() }) ?? null
     if (custom !== null) {

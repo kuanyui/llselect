@@ -26,6 +26,7 @@ test('multiple: every settings function and action-row function runs with `this`
     compareFn: function (this: unknown, a, b) { seen.compareFn = this; return a === b },
     filterFn: function (this: unknown, item, query) { seen.filterFn = this; return item.includes(query) },
     itemToStringFn: function (this: unknown, item) { seen.itemToStringFn = this; return item },
+    itemToLangFn: function (this: unknown) { seen.itemToLangFn = this; return null },
     itemDisabledFn: function (this: unknown) { seen.itemDisabledFn = this; return false },
     createPopupListItemContentElFn: function (this: unknown) { seen.createPopupListItemContentElFn = this; return null },
     itemToGroupKeyFn: function (this: unknown, item) { seen.itemToGroupKeyFn = this; return item[0] ?? null },
@@ -66,7 +67,7 @@ test('multiple: every settings function and action-row function runs with `this`
   sel.toggleItem('apple') // unchooses it: onChange again, compareFn; the tag content fns ran on the click above
   sel.close()
   const expected = [
-    'filterable', 'compareFn', 'filterFn', 'itemToStringFn', 'itemDisabledFn', 'createPopupListItemContentElFn',
+    'filterable', 'compareFn', 'filterFn', 'itemToStringFn', 'itemToLangFn', 'itemDisabledFn', 'createPopupListItemContentElFn',
     'itemToGroupKeyFn', 'groupKeyToStringFn', 'groupDisabledFn', 'createGroupLabelContentElFn',
     'createTriggerContentElFn', 'createTriggerArrowContentElFn', 'createTriggerClearButtonContentElFn',
     'createPopupListNoResultsContentElFn', 'createPopupHeaderContentElFn', 'createPopupFooterContentElFn',

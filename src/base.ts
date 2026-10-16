@@ -628,6 +628,41 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   itemToStringFn: ((item: T) => string) | null
   /**
+   * Item -> its BCP 47 language code, such as `'de'` or `'zh-TW'`, written as
+   * the `lang` attribute. It is not a language name.
+   * - `null` (default) = the library writes no `lang` anywhere.
+   * - A function returning `null` = the library writes no `lang` for that item;
+   *   its own text then inherits the page's language, and your custom chip
+   *   content keeps whatever `lang` it has.
+   * - An empty string sets `lang=""`, which HTML reads as "language unknown".
+   * - Why: a screen reader that switches voices by language reads an option
+   *   in the voice of the `lang` in effect on its row.
+   * - Without this setting every row inherits the page's language, so on an
+   *   English page the rows of a language picker are read in the English voice.
+   * - Example, a language picker on an English page:
+   *   ```ts
+   *   new LLSelectSingle(el, {
+   *     itemToStringFn: (l) => l.name, // 'English', 'Deutsch', 'Francais'
+   *     itemToLangFn: (l) => l.code,   // 'en', 'de', 'fr'
+   *   })
+   *   ```
+   *   Without the setting the row is `<div role="option">Deutsch</div>`,
+   *   read in the English voice. With it, `<div role="option" lang="de">Deutsch</div>`.
+   * - Written where the library shows that item's text:
+   *   - the option row;
+   *   - the single select's trigger content slot and its hidden value mirror
+   *     whenever an item is chosen; custom trigger content inherits the slot's
+   *     code, and its own `lang` wins;
+   *   - a tag chip's text span, or its custom content.
+   * - Not written on a chip's remove button, whose name mixes interface text
+   *   with the item's text, nor on the multiple select's count summary.
+   * - The multiple select's value mirror carries the code only while exactly
+   *   one chip shows; the joined texts of several items carry none.
+   * - Read by the `itemToLang` method's default.
+   * @group Items
+   */
+  itemToLangFn: ((item: T) => string | null) | null
+  /**
    * Item -> the visible content ELEMENT of its popup list row, without subclassing.
    * - The trigger never calls it: single mode has `createTriggerContentElFn`, tags have `createTagContentElFn`.
    * - When the select is an `LLSelectMultiple`, read chosen state through
@@ -878,6 +913,8 @@ export interface LLSelectClassIdMap {
   tagClass: string
   /** Class on a tag's remove (x) button; `aria-label` names the item, `tabindex="-1"`. */
   tagRemoveButtonClass: string
+  /** Class on a tag's default text span (built when `createTagContentElFn` is unset or returns `null`); it carries the item's `lang` from `itemToLangFn`. */
+  tagTextClass: string
   /**
    * Class on a tag chip whose item is effectively disabled (which also carries
    * `aria-disabled="true"`, and whose x button no longer removes it). Mirrors
@@ -985,6 +1022,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     tagsClass: `${prefix}-tags`,
     tagClass: `${prefix}-tag`,
     tagRemoveButtonClass: `${prefix}-tag-remove-button`,
+    tagTextClass: `${prefix}-tag-text`,
     tagDisabledClass: `${prefix}-tag-disabled`,
     openClass: `${prefix}-open`,
     triggerId: `${uniq}-trigger`,
@@ -1336,6 +1374,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
       itemToStringFn: settings?.itemToStringFn ?? null,
+      itemToLangFn: settings?.itemToLangFn ?? null,
       createPopupListItemContentElFn: settings?.createPopupListItemContentElFn ?? null,
       itemToGroupKeyFn: settings?.itemToGroupKeyFn ?? null,
       gatherGroups: settings?.gatherGroups ?? true,
@@ -2427,7 +2466,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Internals: the base sets `id` (`<listbox id>-item<index>`, the target of
    *   `aria-activedescendant`), `role="option"`, the visible content from
    *   {@link createPopupListItemContentEl} (else `textContent` from {@link itemToString}),
-   *   `aria-label` = `itemToString` when the content is custom, `aria-disabled`
+   *   `aria-label` = `itemToString` when the content is custom, `lang` from
+   *   {@link itemToLang} when it returns one, `aria-disabled`
    *   plus the disabled class when {@link isItemEffectivelyDisabled}, and a
    *   click handler that focuses the row by `index`, then runs `onPopupListItemActivated`.
    *
@@ -2452,6 +2492,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       el.setAttribute('aria-label', this.itemToString(item))
       el.appendChild(content)
     }
+    this.commitLangToDom(el, this.itemToLang(item))
     // No `title` attribute by default: items wrap (themes default), so the
     // full text is already visible and a tooltip is redundant. Adding
     // `title` would also fight third-party tooltip libraries (Tippy etc.).
@@ -2487,6 +2528,29 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected itemToString(item: T): string {
     const fn = this.settings.itemToStringFn
     return fn ? fn(item) : String(item)
+  }
+
+  /**
+   * Map an item to the value of its `lang` attribute, or `null` for none.
+   * - Default reads the `itemToLangFn` setting; `null` while it is unset.
+   * - The library writes the result where it shows that item's text; the
+   *   `itemToLangFn` docstring lists the places.
+   * - Configure via `itemToLangFn` (no subclass needed); override only when
+   *   extending.
+   * @group Subclassing: semantics
+   */
+  protected itemToLang(item: T): string | null {
+    const fn = this.settings.itemToLangFn
+    return fn ? fn(item) : null
+  }
+
+  /**
+   * Set or remove an element's `lang` attribute. `null` removes it; an empty
+   * string sets `lang=""`, HTML's "language unknown".
+   * @internal
+   */
+  protected commitLangToDom(el: HTMLElement, lang: string | null): void {
+    if (lang === null) { el.removeAttribute('lang') } else { el.setAttribute('lang', lang) }
   }
 
   /**
