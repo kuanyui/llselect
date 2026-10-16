@@ -8,6 +8,7 @@ export type {
   LLSelectBaseChangeMeta,
   LLSelectBaseSettings,
   LLSelectBaseSettingsInput,
+  LLSelectBeforeChangeEvent,
   LLSelectChangeMeta,
   LLSelectChangeReason,
   LLSelectChangeSource,

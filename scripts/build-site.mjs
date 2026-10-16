@@ -746,7 +746,7 @@ renderMarkdownPage('angularjs/README.md', 'public/angularjs/index.html', { title
 const NG_KINDS = new Map(Object.entries({
   'llselect-single': 'directive', 'llselect-multiple': 'directive', 'ui-llselect': 'directive',
   'ng-model': 'attribute', 'ng-change': 'attribute', 'll-options': 'attribute', name: 'attribute', required: 'attribute',
-  'll-on-open': 'attribute', 'll-on-close': 'attribute', 'll-on-filter-query-change': 'attribute',
+  'll-on-open': 'attribute', 'll-on-close': 'attribute', 'll-on-filter-query-change': 'attribute', 'll-on-before-change': 'attribute',
   'll-disabled': 'attribute', 'll-placeholder': 'attribute', 'll-filterable': 'attribute', 'll-filter-fn': 'attribute',
   'll-clearable': 'attribute', 'll-popup-width-policy': 'attribute', 'll-color-scheme': 'attribute', 'll-arrow': 'attribute', 'll-highlight': 'attribute',
   'll-popup-list-item-content-fn': 'attribute', 'll-trigger-content-fn': 'attribute',

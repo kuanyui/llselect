@@ -45,6 +45,7 @@ test('multiple: every settings function and action-row function runs with `this`
     onOpen: function (this: unknown) { seen.onOpen = this },
     onClose: function (this: unknown) { seen.onClose = this },
     onChange: function (this: unknown) { seen.onChange = this },
+    onBeforeChange: function (this: unknown) { seen.onBeforeChange = this },
     onFilterQueryChange: function (this: unknown) { seen.onFilterQueryChange = this },
     popupListLeadingActionRows: [{
       textFn: function (this: unknown) { seen.textFn = this; return 'cmd' },
@@ -61,7 +62,8 @@ test('multiple: every settings function and action-row function runs with `this`
   input.value = 'a'
   input.dispatchEvent(new Event('input', { bubbles: true }))
   sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListActionRowClass}`)!.click()
-  sel.toggleItem('apple') // onChange, compareFn, the tag content fns
+  sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListRowClass}:not(.${sel.classIdMap.chooseAllRowClass}):not(.${sel.classIdMap.popupListActionRowClass})`)!.click() // onBeforeChange, then onChange
+  sel.toggleItem('apple') // unchooses it: onChange again, compareFn; the tag content fns ran on the click above
   sel.close()
   const expected = [
     'filterable', 'compareFn', 'filterFn', 'itemToStringFn', 'itemDisabledFn', 'createPopupListItemContentElFn',
@@ -69,7 +71,7 @@ test('multiple: every settings function and action-row function runs with `this`
     'createTriggerContentElFn', 'createTriggerArrowContentElFn', 'createTriggerClearButtonContentElFn',
     'createPopupListNoResultsContentElFn', 'createPopupHeaderContentElFn', 'createPopupFooterContentElFn',
     'createChooseAllRowContentElFn', 'createTagContentElFn', 'createTagRemoveButtonContentElFn',
-    'onOpen', 'onClose', 'onChange', 'onFilterQueryChange', 'groupKeyCompareFn',
+    'onOpen', 'onClose', 'onChange', 'onBeforeChange', 'onFilterQueryChange', 'groupKeyCompareFn',
     'textFn', 'createContentElFn', 'disabledFn', 'onActivate',
   ]
   for (const name of expected) {
@@ -78,19 +80,20 @@ test('multiple: every settings function and action-row function runs with `this`
   }
 })
 
-test('single: onChange and the trigger content fn run with `this` undefined', () => {
+test('single: onChange, onBeforeChange and the trigger content fn run with `this` undefined', () => {
   const seen: Record<string, unknown> = {}
   const sel = new LLSelectSingle<string>(mount(), {
     ariaLabel: 'x',
     createTriggerContentElFn: function (this: unknown) { seen.createTriggerContentElFn = this; return null },
     onChange: function (this: unknown) { seen.onChange = this },
+    onBeforeChange: function (this: unknown) { seen.onBeforeChange = this },
     compareFn: function (this: unknown, a, b) { seen.compareFn = this; return a === b },
   })
   sel.setItems(['a', 'b'])
   sel.setChosenItem('b')
   sel.open() // the initial focus finds the chosen item through compareFn
-  sel.close()
-  for (const name of ['createTriggerContentElFn', 'onChange', 'compareFn']) {
+  sel.popupListEl.querySelector<HTMLElement>('[role="option"]')!.click() // a pick: onBeforeChange, then onChange; closes
+  for (const name of ['createTriggerContentElFn', 'onChange', 'onBeforeChange', 'compareFn']) {
     assert.ok(name in seen, `${name} was called`)
     assert.equal(seen[name], undefined, `${name}: this must be undefined`)
   }

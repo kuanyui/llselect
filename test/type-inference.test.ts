@@ -78,3 +78,29 @@ test('meta types: item is T after narrowing on reason, T | undefined before, in 
   })
   assert.ok(true)
 })
+
+test('before-change event types: read-only facts, a user source, no items reason, item is T after narrowing', () => {
+  new LLSelectMultiple(mount(), {
+    onBeforeChange: (_next: readonly User[], _prev, event) => {
+      expectType<'user'>(event.source)
+      // @ts-expect-error - a before-change event never carries the items reason
+      if (event.reason === 'items') { void 0 }
+      if (event.reason === 'choose') {
+        expectType<User>(event.item)
+        // @ts-expect-error - the facts are read-only
+        event.item = _next[0]!
+      }
+      // @ts-expect-error - the facts are read-only
+      event.source = 'user'
+      // @ts-expect-error - the facts are read-only
+      event.reason = 'clear'
+    },
+  })
+  new LLSelectSingle(mount(), {
+    onBeforeChange: (_next: User | undefined, _prev, event) => {
+      expectType<User | undefined>(event.item)
+      if (event.reason === 'clear') { expectType<undefined>(event.item) }
+    },
+  })
+  assert.ok(true)
+})

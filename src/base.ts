@@ -141,6 +141,30 @@ export interface LLSelectWholeValueChangeMeta extends LLSelectBaseChangeMeta {
 export type LLSelectChangeMeta<T = unknown> = LLSelectItemChangeMeta<T> | LLSelectWholeValueChangeMeta
 
 /**
+ * The argument of `onBeforeChange` and `onChosenChanging`: what a user change
+ * is about to do, and the way to stop it.
+ * - The same facts as {@link LLSelectChangeMeta}, read-only: `source`,
+ *   `reason`, and `item` for a `'choose'` or `'unchoose'`.
+ * - After `if (event.reason === 'choose')` the type of `event.item` is `T`.
+ * @group Events
+ */
+export type LLSelectBeforeChangeEvent<T = unknown> = Readonly<LLSelectChangeMeta<T>> & {
+  /** Always `'user'`: only the library's own pointer and keyboard paths dispatch it. */
+  readonly source: 'user'
+  /** Never `'items'`: the `setItems` reconciliation is not a user change. */
+  readonly reason: Exclude<LLSelectChangeReason, 'items'>
+  /** `true` once `preventDefault()` was called while the hook or the setting ran; a later call does nothing. */
+  readonly defaultPrevented: boolean
+  /**
+   * Stop the change: nothing is written, nothing re-renders, `onChange` does
+   * not fire.
+   * - Counts only while the hook and the setting run. A call after they
+   *   returned does nothing.
+   */
+  preventDefault(): void
+}
+
+/**
  * One app command rendered by the library as a `role="option"` row inside the
  * popup list: the entries of `popupListLeadingActionRows` /
  * `popupListTrailingActionRows`.
@@ -1158,6 +1182,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group State (protected)
    */
   protected changeSource: LLSelectChangeSource = 'api'
+  /**
+   * Bumped by every chosen-state change and every `setItems`. The
+   * before-change gate drops a pending change when it moved during the
+   * handlers, so a setter called inside them wins, even one that restores
+   * the previous value.
+   * @internal
+   */
+  protected changeRevision = 0
   private triggerArrowEl: HTMLElement
   /** The clear button once a trigger render has built it (`clearable` only), else `null`; every later trigger render swaps it through `createTriggerClearButtonEl` (or keeps it, if that override returns the same element). */
   private triggerClearButtonEl: HTMLElement | null = null
@@ -1877,6 +1909,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   public setItems(items: readonly T[]): void {
     this.items = items.slice()
+    this.changeRevision++
     this.warnOnDuplicateItems()
     this.gatheredItems = undefined
     if (this.filterActive) { this.recomputeFilteredItems() }
@@ -2815,6 +2848,25 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: rendering
    */
   protected createPopupListChooseAllRowEl(): HTMLElement | null { return null }
+
+  /**
+   * Dispatch the before-change event of one user change and report whether
+   * the change may proceed. The variants call it from their gate with a
+   * closure that runs `onChosenChanging` and the `onBeforeChange` setting.
+   * - `preventDefault()` counts only inside `dispatch`; the event is sealed
+   *   afterwards.
+   * @internal
+   */
+  protected dispatchBeforeChange(facts: { reason: 'choose' | 'unchoose'; item: T } | { reason: 'clear' | 'set' }, dispatch: (event: LLSelectBeforeChangeEvent<T>) => void): boolean {
+    let prevented = false
+    let open = true
+    const preventDefault = (): void => { if (open) { prevented = true } }
+    const event: LLSelectBeforeChangeEvent<T> = 'item' in facts
+      ? { source: 'user', reason: facts.reason, item: facts.item, get defaultPrevented() { return prevented }, preventDefault }
+      : { source: 'user', reason: facts.reason, get defaultPrevented() { return prevented }, preventDefault }
+    try { dispatch(event) } finally { open = false }
+    return !prevented
+  }
 
   /**
    * Run `fn` with chosen-state changes attributed to the user.

@@ -28,7 +28,7 @@ Attributes of both `<llselect-single>` and `<llselect-multiple>`. Every entry op
 - **Expression**: `$eval`'d against the scope ONCE at link time. llselect resolves its settings bag once at construction, so a later scope change does not move them; only the method-backed [`ll-disabled`](#ll-disabled) is watched (see the [Gotchas](README.md#gotchas)). String values need their own quotes: `ll-placeholder="'Pick one'"`.
 - **Literal**: plain attribute text.
 - **Flag**: acts by presence alone.
-- **Event expression**: evaluated on EACH event, inside a digest, like `ng-click`. Only [`ll-on-open`](#ll-on-open) / [`ll-on-close`](#ll-on-close) / [`ll-on-filter-query-change`](#ll-on-filter-query-change).
+- **Event expression**: evaluated on EACH event, inside a digest, like `ng-click`. Only [`ll-on-open`](#ll-on-open) / [`ll-on-close`](#ll-on-close) / [`ll-on-filter-query-change`](#ll-on-filter-query-change) / [`ll-on-before-change`](#ll-on-before-change).
 
 App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` / `uiTranslationPack` are set once via [`llselectConfigProvider`](#llselectconfigprovider); a per-element attribute always wins.
 
@@ -67,6 +67,19 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 - Same rules as [`ll-on-open`](#ll-on-open).
 - Fires on typing, when an IME composition ends, and when Esc clears a non-empty query. Not when the text stays the same, not when a close clears the query (use [`ll-on-close`](#ll-on-close)), not on an open.
 - The list is already rebuilt when it runs, so `instance().getVisibleItems()` reflects `$query`.
+
+### `ll-on-before-change`
+
+**Event expression** -> `onBeforeChange`. Evaluated before a user interaction changes the value, inside a digest, with `$next` (the value about to be set), `$previous` (the current one) and `$event`.
+
+- Same rules as [`ll-on-open`](#ll-on-open).
+- `$next` is the model value about to be set (the `ll-options` value clause applied); `$previous` is what `ng-model` holds right now, even a value the item list could not resolve. For a multiple select both are arrays.
+- An error thrown by the expression goes to `$exceptionHandler`, like `ng-click`. It does not veto: the change proceeds.
+- A model write inside the expression wins: the digest renders it into the widget and the pending change is dropped; `ng-change` runs for neither.
+- `$event.preventDefault()` stops the change: the model stays and `ng-change` does not run. Only a vetoed pick in a single select still closes the popup, like any pick; a vetoed toggle, chip removal or clear keeps the value and the popup's open state, while a click may already have moved the active option.
+- Fires only for the user's own pointer and keyboard paths: a pick or a row toggle, a tag's remove button, the clear button, the choose-all row. A model write and an `instance()` setter never fire it.
+- `$event.reason` says what the change would do, as the core's `meta` does for `onChange`; `$event.item` is the raw item of a `'choose'` or `'unchoose'`.
+- For a confirmation dialog: call `$event.preventDefault()`, open the dialog, and write the model after the user agreed.
 
 ### `ll-options`
 
@@ -147,7 +160,7 @@ $scope.ifaceMatch = function (i, query) {
 
 **Expression** -> `clearable`. Shows the trigger's clear (x) button.
 
-- Clearing writes the empty value into `ng-model`: `undefined` (single) / `[]` (multiple), through the normal `ng-change` pipeline.
+- Clearing writes the empty value into `ng-model`: `null` (single) / `[]` (multiple), through the normal `ng-change` pipeline.
 - If the model must stay a plain `string`, add a real "none" item to `ll-options` instead of enabling this - the same pattern as a native `<select>` placeholder option.
 
 ### `ll-popup-width-policy`
