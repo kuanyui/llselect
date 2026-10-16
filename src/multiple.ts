@@ -151,6 +151,9 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    *   for icon-only content include your own (visually hidden) text if the
    *   chip should be announced as more than its remove button. See
    *   `docs/llm/A11Y.md` "Tags".
+   * - The library sets the item's `lang` from `itemToLangFn` on the element
+   *   you return, overwriting yours, when that function returns a code; it
+   *   never removes the attribute.
    * @group Trigger
    */
   createTagContentElFn: ((item: T) => HTMLElement | null) | null
@@ -661,6 +664,11 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       : this.settings.uiTranslationPack.triggerCountSummary(chosenCount, this.items.length)
     const fn = this.settings.createTriggerContentElFn
     const custom = fn?.({ chosenItems: this.getChosenItems(), items: this.getItems() }) ?? null
+    // The value mirror carries the one chosen item's language while it shows
+    // exactly that item's text (tags mode, one chip); joined texts and the
+    // count summary are mixed or pack language and carry none.
+    const mirrorLang = custom === null && this.settings.triggerDisplay === 'tags' && chosenCount === 1 ? this.itemToLang(this.chosenItems[0]!) : null
+    this.commitLangToDom(this.triggerValueEl, mirrorLang)
     if (custom !== null) {
       this.commitTriggerContentToDom(custom, countValue)
       return
@@ -691,7 +699,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
 
   /**
    * Build one removable tag chip: its content (from `createTagContentEl`, else
-   * plain `itemToString`) plus its remove (x) button (from `createTagRemoveButtonEl`).
+   * plain `itemToString` in a span of its own) plus its remove (x) button (from
+   * `createTagRemoveButtonEl`). The content element carries the item's `lang`
+   * from `itemToLang` when it returns one; the button never does.
    * A chip whose item is effectively disabled gets `aria-disabled="true"` +
    * `tagDisabledClass`, and its x turns inert - mirroring a disabled option row.
    * Override for full control of the chip container; override the two sub-parts
@@ -702,11 +712,20 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     const tag = document.createElement('span')
     tag.className = this.classIdMap.tagClass
     // Same null-branch shape as createPopupListItemEl / createGroupEl: null = plain-text
-    // default. Text must be set before the remove button (textContent wipes children).
+    // default. The text sits in its own span so the item's `lang` covers the
+    // text and not the remove button, whose name mixes pack and item text.
     const content = this.createTagContentEl(item)
+    const lang = this.itemToLang(item)
     if (content === null) {
-      tag.textContent = this.itemToString(item)
+      const text = document.createElement('span')
+      text.className = this.classIdMap.tagTextClass
+      text.textContent = this.itemToString(item)
+      this.commitLangToDom(text, lang)
+      tag.appendChild(text)
     } else {
+      // App-owned content: the library sets or overwrites the attribute when the
+      // function returns a code, and never removes it.
+      if (lang !== null) { this.commitLangToDom(content, lang) }
       tag.appendChild(content)
     }
     if (this.isItemEffectivelyDisabled(item)) {

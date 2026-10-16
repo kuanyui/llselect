@@ -270,7 +270,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Action rows: commands in the list    | `popupListLeadingActionRows`, `popupListTrailingActionRows` - option rows in the arrow-key ring; see Action rows |
 | Pinned rows                          | `popupListLeadingRowsPinned`, `popupListTrailingRowsPinned` - the choose-all row and the command rows stay in view while the items scroll |
 | Popup header / footer, pinned        | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update; see Popup header / footer |
-| i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir` |
+| i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir`, `itemToLangFn` writes each item's `lang` for screen readers that switch voices |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
 | Events                               | `onChange(current, previous, meta)`, `onBeforeChange(next, previous, event)`, `onOpen`, `onClose`, `onFilterQueryChange(query)`; `meta` carries `source`, `reason` and, for one added or removed item, `item`; `event` adds `preventDefault()` |
 

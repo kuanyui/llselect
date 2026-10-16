@@ -208,7 +208,7 @@ Methods (protected, overridable):
 | `createTagRemoveButtonEl`        | `create*El` - one chip's whole remove button (wiring + aria)   |
 | `createTagRemoveButtonContentEl` | `create*El` - the remove button's icon (reads the setting)     |
 
-`classIdMap` gained `tagsClass` / `tagClass` / `tagRemoveButtonClass`. All obey s1-s3 + s7.
+`classIdMap` gained `tagsClass` / `tagClass` / `tagRemoveButtonClass`, and later `tagTextClass` for the chip's default text span, the element that carries the item's `lang`. All obey s1-s3 + s7.
 
 ### 4f. Clear button (clearable) additions
 
@@ -306,6 +306,8 @@ Change reason ruling (user): the third `onChange` argument gains `reason`, not `
 Event names ruling (user): the after-the-fact events keep the ecosystem names - `onChange`, `onOpen`, `onClose`, `onFilterQueryChange`; a cancelable hook takes the `before` prefix (`onBeforeChange`), as the web platform pairs `beforeinput` with `input`; no `after` prefix; the protected hooks keep their tenses (`onChosenChanging` / `onChosenChanged`).
 
 Before-change ruling (user): `onBeforeChange(next, previous, event)` with `event.preventDefault()` and `event.defaultPrevented`, the DOM's own words (`cancel()` also reads as "the user cancelled"); the event type is `LLSelectBeforeChangeEvent<T>`, the `LLSelectChangeMeta<T>` facts plus the two controls; the protected hook is `onChosenChanging`, the present participle beside `onChosenChanged`.
+
+Item language ruling (user): the setting is `itemToLangFn` and the protected method `itemToLang`, HTML's own attribute name, like `ariaLabel` for the value written into `aria-label`, against the committee's `itemToLanguageTagFn`; "language id" was ruled out because `src/i18n.ts` uses it for the primary subtag; `LangAttr` was ruled out because no attribute value in this API carries `Attr`. `commitLangToDom(el, lang)` takes its target element, unlike the other `commit*ToDom` writers that own their container, because one attribute goes on five different elements.
 
 ## 6. Phasing
 
