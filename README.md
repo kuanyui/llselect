@@ -272,7 +272,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Popup header / footer, pinned        | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update; see Popup header / footer |
 | i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir` |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
-| Events                               | `onChange(current, previous)`, `onOpen`, `onClose`, `onFilterQueryChange(query)`                                          |
+| Events                               | `onChange(current, previous, meta)`, `onOpen`, `onClose`, `onFilterQueryChange(query)`; `meta` carries `source`, `reason` and, for one added or removed item, `item` |
 
 ### Typing to jump (prefix typeahead)
 
@@ -348,7 +348,7 @@ Settings are frozen after construction. The library re-applies nothing on its ow
 
 - Data changes by method, for example `setItems`.
 - Only two texts have setters: `setPlaceholder`, `setUiTranslationPack`.
-- Event callbacks are settings too, one callback per event. To swap a handler at runtime or call several listeners, wrap it in your own function: `onChange: (current, previous) => myHandler?.(current, previous)`.
+- Event callbacks are settings too, one callback per event. To swap a handler at runtime or call several listeners, wrap it in your own function: `onChange: (current, previous, meta) => myHandler?.(current, previous, meta)`.
 - For anything else, build a new instance.
 
 #### Highlight what the filter matched

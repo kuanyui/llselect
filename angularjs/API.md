@@ -511,7 +511,7 @@ Migrating a call site, at a glance:
 | `search-enabled` | `filterable`. Defaults to `true`, following ui-select's default rather than llselect's `false` - it is ui-select's markup, so its defaults are what the call site expects |
 | `remove-selected` (multiple only, as in ui-select) | `hideChosenRows`. Defaults to `true` like ui-select (chosen items leave the dropdown), rather than llselect's `false` - same fidelity rule as `search-enabled`. Pass `remove-selected="false"` to keep chosen rows listed |
 | `placeholder`, `allow-clear` (on `<ui-select-match>`) | `placeholder`, `clearable` |
-| `on-select`, `on-remove` | derived from `onChange` by diffing against the previous set |
+| `on-select`, `on-remove` | multiple: from `onChange`, `meta.item` when `meta.reason` is `'choose'` or `'unchoose'`, else a diff against the previous set; single: `on-select` fires with the new item, `on-remove` never fires |
 | `ng-disabled` / the `disabled` attribute | `setDisabled()`, via `attrs.$observe('disabled')` - the exact mechanism ui-select itself uses, its string quirks included (a truthy string like interpolated `"false"` disables). The observed attribute stays inert on the host, so hover - and a why-tooltip - keep working while disabled |
 | `aria-labelledby` / `aria-label` / `title` (on `<ui-llselect>`) | `ariaLabelledBy` / `ariaLabel` - the field's accessible name. Precedence follows ARIA: `aria-labelledby` (forwarded verbatim, names the field by reference) wins over `aria-label`, which wins over `title`; `title` keeps ui-select parity (its templates feed their aria labels from it) |
 | `$select.selected`, `$select.search`, `$select.multiple` | published on each template's scope |

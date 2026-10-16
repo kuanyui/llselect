@@ -58,14 +58,87 @@ export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
 export type LLSelectChangeSource = 'user' | 'api'
 
 /**
- * Extra facts about one `onChange` firing, as the callback's third argument.
- * An object on purpose: future fields can be added without breaking the
- * callback signature.
+ * What a chosen-state change did to the data, delivered to `onChange` as
+ * `meta.reason`.
+ * - It names the operation. `meta.source` names who started it.
+ * - A single-item operation keeps its reason even when the result is empty.
+ * - In multiple mode, a whole-value write or a bulk op reads its result:
+ *   empty is `'clear'`, otherwise `'set'`.
+ * - In single mode, setting an item is `'choose'` and the empty write is
+ *   `'clear'`.
+ * - `'choose'`: one item was added, or the single value was set to an item.
+ * - `'unchoose'`: one item was removed, even when that empties the selection.
+ * - `'clear'`: an empty whole-value write - the clear button,
+ *   `setChosenItem(undefined)`, `setChosenItems([])`, or a bulk op whose
+ *   result is empty.
+ * - `'set'`: a whole-value write with items (`setChosenItems`), or a bulk op
+ *   whose result is not empty (a `choose*` method, the choose-all row).
+ * - `'items'`: a `setItems` call dropped or reordered chosen entries, even
+ *   when that empties the selection.
+ * - `meta.item` holds the one item of a `'choose'` or `'unchoose'`.
  * @group Events
  */
-export interface LLSelectChangeMeta {
+export type LLSelectChangeReason = 'choose' | 'unchoose' | 'clear' | 'set' | 'items'
+
+/**
+ * The part of `onChange`'s third argument that both shapes share: who started
+ * the change and what it did. See {@link LLSelectChangeMeta} for the shapes.
+ * @group Events
+ */
+export interface LLSelectBaseChangeMeta {
+  /** Who started the change. See {@link LLSelectChangeSource}. */
   source: LLSelectChangeSource
+  /**
+   * What the change did to the data, whoever started it.
+   * - `'choose'`: one item was added, or the single value was set to an item.
+   * - `'unchoose'`: one item was removed.
+   * - `'clear'`: an empty whole-value write, or a bulk op whose result is empty.
+   * - `'set'`: a whole-value write with items, or a bulk op whose result is not empty.
+   * - `'items'`: a `setItems` call dropped or reordered chosen entries.
+   * - See {@link LLSelectChangeReason} for which operation gets which value.
+   */
+  reason: LLSelectChangeReason
 }
+
+/**
+ * `onChange`'s third argument when one item was added or removed.
+ * - `reason` is `'choose'` or `'unchoose'`.
+ * - `item` is that one item, always present.
+ * @group Events
+ */
+export interface LLSelectItemChangeMeta<T> extends LLSelectBaseChangeMeta {
+  reason: 'choose' | 'unchoose'
+  /**
+   * The one item that was added or removed.
+   * - On `'unchoose'` it is the stored entry, not an equal object the caller
+   *   passed to `toggleItem`.
+   */
+  item: T
+}
+
+/**
+ * `onChange`'s third argument when the whole value changed at once.
+ * - `reason` is `'clear'`, `'set'` or `'items'`.
+ * - There is no single item, so `item` is never present.
+ * @group Events
+ */
+export interface LLSelectWholeValueChangeMeta extends LLSelectBaseChangeMeta {
+  reason: 'clear' | 'set' | 'items'
+  /** Never present: these reasons concern the whole value. */
+  item?: never
+}
+
+/**
+ * Extra facts about one `onChange` firing, as the callback's third argument.
+ * - A discriminated union on `reason`: after `if (meta.reason === 'choose')`
+ *   the type of `meta.item` is `T`, with no `undefined`.
+ * - `T` is the item type. It defaults to `unknown`, so a bare
+ *   `LLSelectChangeMeta` annotation keeps compiling.
+ * - An object on purpose: future fields can be added without breaking the
+ *   callback signature.
+ * @group Events
+ */
+export type LLSelectChangeMeta<T = unknown> = LLSelectItemChangeMeta<T> | LLSelectWholeValueChangeMeta
 
 /**
  * One app command rendered by the library as a `role="option"` row inside the

@@ -6,7 +6,7 @@ import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle } from '../src/single.js'
 import { LLSelectMultiple } from '../src/multiple.js'
-import type { LLSelectMultipleSettings, LLSelectSettingsInputOf } from '../src/index.js'
+import type { LLSelectChangeReason, LLSelectMultipleSettings, LLSelectSettingsInputOf } from '../src/index.js'
 
 interface User { name: string }
 
@@ -46,4 +46,35 @@ class Tree extends LLSelectMultiple<User, string, TreeSettings> {
 test('QUALITY-83: the subclass form (the S channel) still compiles and resolves its own settings', () => {
   const tree = new Tree(mount())
   assert.equal(tree.depth(), 1)
+})
+
+test('meta types: reason is the closed union and item is T or undefined', () => {
+  const sel = new LLSelectMultiple(mount(), {
+    onChange: (_items: readonly User[], _prev, meta) => {
+      expectType<LLSelectChangeReason>(meta.reason)
+      expectType<User | undefined>(meta.item)
+    },
+  })
+  assert.equal(sel.getChosenItems().length, 0)
+})
+
+test('meta types: item is T after narrowing on reason, T | undefined before, in both variants', () => {
+  new LLSelectMultiple(mount(), {
+    onChange: (_items: readonly User[], _prev, meta) => {
+      // @ts-expect-error - before narrowing, item is T | undefined
+      expectType<User>(meta.item)
+      if (meta.reason === 'choose' || meta.reason === 'unchoose') { expectType<User>(meta.item) }
+      if (meta.reason === 'set') { expectType<undefined>(meta.item) }
+    },
+  })
+  new LLSelectSingle(mount(), {
+    onChange: (_item: User | undefined, _prev, meta) => {
+      expectType<LLSelectChangeReason>(meta.reason)
+      expectType<User | undefined>(meta.item)
+      // @ts-expect-error - before narrowing, item is T | undefined
+      expectType<User>(meta.item)
+      if (meta.reason === 'choose') { expectType<User>(meta.item) }
+    },
+  })
+  assert.ok(true)
 })
