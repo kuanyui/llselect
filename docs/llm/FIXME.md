@@ -4,19 +4,29 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (group language: groupKeyToLangFn and the AngularJS lang attributes)
 
-Process: the owner asked whether a group should get a `lang` like the items do, as DESIGN.md had foreseen with the `groupKeyToLangFn` sibling; two commits followed, the core setting and the two AngularJS attributes (`ll-item-to-lang-fn` had been missing since the item commit). Post-fix panel: Opus 5 and Opus 4.8 answered; Codex 5.5 could not run on this account ("not supported when using Codex with a ChatGPT account"); Codex Sol answered "model at capacity" on every try of the round. No HIGH, MEDIUM or QUALITY finding; both members ruled the row inheritance right.
+Process: the owner asked whether a group should get a `lang` like the items do, as DESIGN.md had foreseen with the `groupKeyToLangFn` sibling; two commits followed, the core setting and the two AngularJS attributes (`ll-item-to-lang-fn` had been missing since the item commit). Post-fix panel, round one: Opus 5 and Opus 4.8 answered; Codex 5.5 cannot run on this account ("not supported when using Codex with a ChatGPT account"); Codex Sol answered "model at capacity" on every try. Rounds two and three, on the documentation fixes: Opus 5, Opus 4.8 and Codex Sol; round three found every fix resolved and left only wording findings on the plan preamble and on this log. No HIGH or QUALITY finding in any round; both round-one members ruled the row inheritance right. The one MEDIUM came from `npm run verify`, not from the panel: it ran only after the rounds, because the reviewer CLIs and the verify cannot share the container's memory.
 
+- [x] **[MEDIUM-598] - the two AngularJS lang attributes were missing from the site generator's kind map, so `build:site` and `npm run verify` failed**
+  - Symptom: `scripts/build-site.mjs` throws "entries open with a binding token but are missing from the kind map: ll-item-to-lang-fn, ll-group-key-to-lang-fn" while rendering `angularjs/API.md`.
+  - Cause: the hand-written `NG_KINDS` map must name every attribute heading of `angularjs/API.md`, and the commit that added the two entries did not touch it; `npm run check`, `npm test` and the AngularJS suite do not run the site build.
+  - Fix: both attributes in `NG_KINDS`.
+  - Verified: `npm run verify` green after the fix; round four of the panel read the map against the headings.
+  - Q: Why did three read-only panel rounds miss a build failure?
+    - A: Because the panel reads, it does not build, and `npm run verify` had to wait until no reviewer CLI was running. Run the verify before the first round, not after the last.
 - [x] **[DOCUMENTATION-641] - `ll-group-key-to-lang-fn` shipped without the example pair its sibling got**
   - Symptom: `ll-item-to-lang-fn` carried a `js` and an `html` example, the group entry none, so the one non-obvious fact, that the function receives the raw `group by` value, had no example showing a `group by` clause.
   - Fix: the pair added, with `group by l.group` in the example's `ll-options`.
+  - Verified: rounds two and three read the example against `NG_OPTIONS_REGEXP` and `evalFnAttr`; `npm run verify` green.
 - [x] **[DOCUMENTATION-642] - DESIGN.md "Item language" lost the reason why the count summary gets no `lang`, and never said that the trigger ignores the group's code**
   - Symptom: the group rewrite of the "where it is written" bullet dropped "pack copy in the page's language" from the count summary, leaving "mixed-language", which describes the joined value mirror; and the single select's trigger, which sits outside the group DOM and writes only the item's own code, was not mentioned.
   - Fix: both sentences in the bullet.
+  - Verified: rounds two and three read both sentences against `createGroupEl` and the single trigger's `itemToLang` write; `npm run verify` green.
   - Q: Why write the group's code on the `role="group"` container, which the rows inherit, not on the visible label?
     - A: Because the group's accessible name is the container's `aria-label`, and a name is read in the `lang` in effect on its element; the visible label is `aria-hidden`, so a code there reaches no screen reader. The rows inherit as `<option>` children of `<optgroup lang>` do, and `itemToLangFn` gives a row its own code.
 - [x] **[DOCUMENTATION-643] - the implementation plan in TODO.md had no record of the two group-language commits and its heading still read "(open)"**
   - Symptom: the plan listed P1 to P3 as done under a heading still marked open, and the group commits, which extend the same work and close the AngularJS gap P3 left, had no entry.
-  - Fix: a P4 entry in the plan's shape; the heading retitled like the popup-slots plan; the preamble says P4 came later.
+  - Fix: a P4 entry in the plan's shape; the heading retitled like the popup-slots plan; the preamble says P4 came later and shared one post-fix review.
+  - Verified: rounds two and three read the entry against the two commits' file lists; `npm run verify` green.
 
 ## review (committee: a veto for user changes, a change reason, the item language)
 
