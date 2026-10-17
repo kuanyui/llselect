@@ -204,6 +204,10 @@
     if (itemContentFn) { settings.createPopupListItemContentElFn = itemContentFn }
     var filterFn = evalFnAttr(scope, attrs, 'llFilterFn')
     if (filterFn) { settings.filterFn = filterFn }
+    var itemToLangFn = evalFnAttr(scope, attrs, 'llItemToLangFn')
+    if (itemToLangFn) { settings.itemToLangFn = itemToLangFn }
+    var groupKeyToLangFn = evalFnAttr(scope, attrs, 'llGroupKeyToLangFn')
+    if (groupKeyToLangFn) { settings.groupKeyToLangFn = groupKeyToLangFn }
     var triggerContentFn = evalFnAttr(scope, attrs, 'llTriggerContentFn')
     if (triggerContentFn) { settings.createTriggerContentElFn = triggerContentFn }
     // Popup header / footer slots. The core calls each fn exactly ONCE, in its
