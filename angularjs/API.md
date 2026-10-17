@@ -250,6 +250,15 @@ $scope.langCode = function (l) { return l.code } // 'en', 'de', 'fr'
 - `null` (for one group, or no attribute at all) = no `lang` for that group.
 - The container carries the group's accessible name, so a screen reader reads the name in that language. The group's rows inherit the code unless [`ll-item-to-lang-fn`](#ll-item-to-lang-fn) gives them their own.
 
+```js
+$scope.groupLang = function (key) { return key === 'other' ? null : key } // 'de', 'fr'
+```
+
+```html
+<llselect-single ng-model="picked" ll-group-key-to-lang-fn="groupLang"
+  ll-options="l.name group by l.group for l in languages track by l.code"></llselect-single>
+```
+
 ### `ll-trigger-content-fn`
 
 **Expression** -> `createTriggerContentElFn`. Custom visible content for the trigger, under the same rules as [`ll-popup-list-item-content-fn`](#ll-popup-list-item-content-fn) (outside any digest, never `$compile`'d).
