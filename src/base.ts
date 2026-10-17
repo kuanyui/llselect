@@ -753,6 +753,34 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   groupKeyToStringFn: ((groupKey: GroupKey) => string) | null
   /**
+   * Group key -> the group's BCP 47 language code, such as `'de'` or `'zh-TW'`,
+   * written as the `lang` attribute of the group container. It is not a
+   * language name.
+   * - `null` (default) = the library writes no `lang` on any group.
+   * - A function returning `null` = no `lang` for that group; its label then
+   *   inherits the page's language.
+   * - An empty string sets `lang=""`, which HTML reads as "language unknown".
+   * - Why: the group's accessible name is the container's `aria-label`, and a
+   *   screen reader reads it in the voice of the `lang` in effect on that
+   *   element. The visible label is `aria-hidden`, so the code goes on the
+   *   container, where the name lives.
+   * - The group's option rows inherit the code, unless `itemToLangFn` writes
+   *   their own. Custom label content from `createGroupLabelContentElFn`
+   *   inherits it too, and its own `lang` wins.
+   * - Example, languages grouped under their own names on an English page:
+   *   ```ts
+   *   new LLSelectSingle(el, {
+   *     itemToGroupKeyFn: (l) => l.code,      // 'de', 'fr'
+   *     groupKeyToStringFn: (c) => NAMES[c],  // 'Deutsch', 'Francais'
+   *     groupKeyToLangFn: (c) => c,
+   *   })
+   *   ```
+   * - Read by the `groupKeyToLang` method's default. The sibling of
+   *   {@link itemToLangFn}.
+   * @group Grouping
+   */
+  groupKeyToLangFn: ((groupKey: GroupKey) => string | null) | null
+  /**
    * Predicate: is this whole group disabled?
    * - `null` (default) = no group disabled.
    * - `true` = every item in the group is treated as disabled (layers on top of
@@ -1380,6 +1408,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       gatherGroups: settings?.gatherGroups ?? true,
       groupKeyCompareFn: settings?.groupKeyCompareFn ?? null,
       groupKeyToStringFn: settings?.groupKeyToStringFn ?? null,
+      groupKeyToLangFn: settings?.groupKeyToLangFn ?? null,
       groupDisabledFn: settings?.groupDisabledFn ?? null,
       createGroupLabelContentElFn: settings?.createGroupLabelContentElFn ?? null,
       onOpen: settings?.onOpen ?? null,
@@ -2366,7 +2395,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - To change the element itself, override it, call `super.createGroupEl(...)`,
    *   and edit the returned element. Keep the `role` and `aria-label` the base set.
    * - Internals: the base sets the id, `role="group"` named by `groupKeyToString`
-   *   (`aria-label`), an `aria-hidden` visible label element filled from
+   *   (`aria-label`), `lang` from {@link groupKeyToLang} (none for `null`), an
+   *   `aria-hidden` visible label element filled from
    *   {@link createGroupLabelContentEl} (else the plain label text), then the
    *   group's item elements; `aria-disabled` + `data-disabled` when the group
    *   is disabled.
@@ -2384,6 +2414,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     group.className = this.classIdMap.groupClass
     group.setAttribute('role', 'group')
     group.setAttribute('aria-label', text)
+    this.commitLangToDom(group, this.groupKeyToLang(key))
     if (this.isGroupDisabled(key)) {
       group.setAttribute('aria-disabled', 'true')
       group.setAttribute('data-disabled', 'true')
@@ -2606,6 +2637,20 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected groupKeyToString(key: GroupKey): string {
     const fn = this.settings.groupKeyToStringFn
     return fn ? fn(key) : String(key)
+  }
+
+  /**
+   * Map a group key to the value of the group's `lang` attribute, or `null`
+   * for none.
+   * - Default reads the `groupKeyToLangFn` setting; `null` while it is unset.
+   * - `createGroupEl` writes the result on the group container.
+   * - Configure via `groupKeyToLangFn` (no subclass needed); override only
+   *   when extending. Mirrors `itemToLang`.
+   * @group Subclassing: semantics
+   */
+  protected groupKeyToLang(key: GroupKey): string | null {
+    const fn = this.settings.groupKeyToLangFn
+    return fn ? fn(key) : null
   }
 
   /**
