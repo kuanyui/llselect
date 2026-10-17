@@ -4,15 +4,22 @@ Findings from reviews of llselect, newest round on top. Format spec (severity wo
 
 ## review (group language: groupKeyToLangFn and the AngularJS lang attributes)
 
-Process: the owner asked whether a group should get a `lang` like the items do, as DESIGN.md had foreseen with the `groupKeyToLangFn` sibling; two commits followed, the core setting and the two AngularJS attributes (`ll-item-to-lang-fn` had been missing since the item commit). Post-fix panel, round one: Opus 5 and Opus 4.8 answered; Codex 5.5 cannot run on this account ("not supported when using Codex with a ChatGPT account"); Codex Sol answered "model at capacity" on every try. Rounds two and three, on the documentation fixes: Opus 5, Opus 4.8 and Codex Sol; round three found every fix resolved and left only wording findings on the plan preamble and on this log. No HIGH or QUALITY finding in any round; both round-one members ruled the row inheritance right. The one MEDIUM came from `npm run verify`, not from the panel: it ran only after the rounds, because the reviewer CLIs and the verify cannot share the container's memory.
+Process: the owner asked whether a group should get a `lang` like the items do, as DESIGN.md had foreseen with the `groupKeyToLangFn` sibling; two commits followed, the core setting and the two AngularJS attributes (`ll-item-to-lang-fn` had been missing since the item commit). Post-fix panel, round one: Opus 5 and Opus 4.8 answered; Codex 5.5 cannot run on this account ("not supported when using Codex with a ChatGPT account"); Codex Sol answered "model at capacity" on every try. Rounds two and three, on the documentation fixes: Opus 5, Opus 4.8 and Codex Sol; round three found every fix resolved and left only wording findings on the plan preamble and on this log. Round four, on the build fix and the records: Opus 5 and Opus 4.8 (Codex Sol at capacity) found the fixes resolved, a duplicate finding id in this log, and the pre-existing `colorScheme` omission in the same map. No HIGH finding in any round; both round-one members ruled the row inheritance right. The one MEDIUM came from `npm run verify`, not from the panel: it ran only after the rounds, because the reviewer CLIs and the verify cannot share the container's memory.
 
-- [x] **[MEDIUM-598] - the two AngularJS lang attributes were missing from the site generator's kind map, so `build:site` and `npm run verify` failed**
-  - Symptom: `scripts/build-site.mjs` throws "entries open with a binding token but are missing from the kind map: ll-item-to-lang-fn, ll-group-key-to-lang-fn" while rendering `angularjs/API.md`.
+- [x] **[MEDIUM-644] - the two AngularJS lang attributes were missing from the site generator's kind map, so `build:site` and `npm run verify` failed**
+  - Symptom: `scripts/build-site.mjs` throws "build:site: entries open with a binding token but are missing from the kind map: ll-item-to-lang-fn, ll-group-key-to-lang-fn" while rendering `angularjs/API.md`.
   - Cause: the hand-written `NG_KINDS` map must name every attribute heading of `angularjs/API.md`, and the commit that added the two entries did not touch it; `npm run check`, `npm test` and the AngularJS suite do not run the site build.
   - Fix: both attributes in `NG_KINDS`.
   - Verified: `npm run verify` green after the fix; round four of the panel read the map against the headings.
   - Q: Why did three read-only panel rounds miss a build failure?
     - A: Because the panel reads, it does not build, and `npm run verify` had to wait until no reviewer CLI was running. Run the verify before the first round, not after the last.
+  - Q: Why MEDIUM-644, not MEDIUM-598?
+    - A: Because `N` is one counter across every severity, not one per severity: 598 was already `QUALITY-598`, and the counter stood at 643 after the three DOCUMENTATION entries below.
+- [x] **[QUALITY-645] - the same map omitted the `colorScheme` property heading of `defaults()`, which no guard catches**
+  - Symptom: the `colorScheme` heading under `llselectConfigProvider` `defaults()` renders without a kind badge; the binding-token assert covers attribute entries only, and `kindsStrict` reports unused keys only.
+  - Cause: pre-existing; the map was not updated when `colorScheme` joined `defaults()`.
+  - Fix: `colorScheme: 'property'` in `NG_KINDS`.
+  - Verified: `npm run verify` green after the fix.
 - [x] **[DOCUMENTATION-641] - `ll-group-key-to-lang-fn` shipped without the example pair its sibling got**
   - Symptom: `ll-item-to-lang-fn` carried a `js` and an `html` example, the group entry none, so the one non-obvious fact, that the function receives the raw `group by` value, had no example showing a `group by` clause.
   - Fix: the pair added, with `group by l.group` in the example's `ll-options`.
