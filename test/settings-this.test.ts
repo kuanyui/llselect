@@ -31,6 +31,7 @@ test('multiple: every settings function and action-row function runs with `this`
     createPopupListItemContentElFn: function (this: unknown) { seen.createPopupListItemContentElFn = this; return null },
     itemToGroupKeyFn: function (this: unknown, item) { seen.itemToGroupKeyFn = this; return item[0] ?? null },
     groupKeyToStringFn: function (this: unknown, key) { seen.groupKeyToStringFn = this; return key },
+    groupKeyToLangFn: function (this: unknown) { seen.groupKeyToLangFn = this; return null },
     groupKeyCompareFn: function (this: unknown, a, b) { seen.groupKeyCompareFn = this; return a === b },
     groupDisabledFn: function (this: unknown) { seen.groupDisabledFn = this; return false },
     createGroupLabelContentElFn: function (this: unknown) { seen.createGroupLabelContentElFn = this; return null },
@@ -68,7 +69,7 @@ test('multiple: every settings function and action-row function runs with `this`
   sel.close()
   const expected = [
     'filterable', 'compareFn', 'filterFn', 'itemToStringFn', 'itemToLangFn', 'itemDisabledFn', 'createPopupListItemContentElFn',
-    'itemToGroupKeyFn', 'groupKeyToStringFn', 'groupDisabledFn', 'createGroupLabelContentElFn',
+    'itemToGroupKeyFn', 'groupKeyToStringFn', 'groupKeyToLangFn', 'groupDisabledFn', 'createGroupLabelContentElFn',
     'createTriggerContentElFn', 'createTriggerArrowContentElFn', 'createTriggerClearButtonContentElFn',
     'createPopupListNoResultsContentElFn', 'createPopupHeaderContentElFn', 'createPopupFooterContentElFn',
     'createChooseAllRowContentElFn', 'createTagContentElFn', 'createTagRemoveButtonContentElFn',
