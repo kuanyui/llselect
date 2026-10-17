@@ -921,7 +921,7 @@ export interface LLSelectClassIdMap {
   chooseAllRowClass: string
   /** Class on every row of the popup list (`role="option"`): item rows, the choose-all row, and action rows. */
   popupListRowClass: string
-  /** Extra class on the row that currently has keyboard focus. Style the focused row with it. */
+  /** Extra class on the active row: the row `aria-activedescendant` points to, which the arrow keys move. Style the active row with it. The row never holds DOM focus. */
   popupListRowFocusedClass: string
   /** Class on a disabled row, which also carries `aria-disabled="true"`. A stable hook for styling and tooltip targeting. */
   popupListRowDisabledClass: string
@@ -1228,7 +1228,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * Position in `getVisibleItems()` (the rendered list, not `items`) of the
    * currently keyboard-focused item, or `-1` when nothing is focused (closed
-   * popup, or no items).
+   * popup, or no items). "Focused" here means the active row, the row
+   * `aria-activedescendant` points to; DOM focus stays on the trigger or the
+   * filter input.
    * @group State (protected)
    */
   protected focusedIndex = -1
@@ -2777,7 +2779,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Called when an item is activated (click or keyboard select). Default
+   * Called when an item row is activated: Enter on the active row, Space on
+   * it while the filter is inactive, or a click on the row. Default
    * no-op; subclasses implement their selection behaviour (single mode picks
    * and closes, multiple mode toggles and keeps the popup open).
    * @group Subclassing: reactions
@@ -2999,8 +3002,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Subclass hook: the choose-all row was activated - Enter while it is focused
-   * (subclasses also wire their row's click handler to this). Default no-op.
+   * Subclass hook: the choose-all row was activated - Enter, or Space while
+   * the filter is inactive, while it is the active row (subclasses also wire
+   * their row's click handler to this). Default no-op.
    * @group Subclassing: reactions
    */
   protected onChooseAllRowActivated(): void {}
@@ -3008,7 +3012,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * Decide which item to focus when the popup opens. Default focuses the
    * first item (or no-op if the list is empty). Override to focus the
-   * currently chosen item, last-used item, etc.
+   * currently chosen item, last-used item, etc. "Focus" here means the
+   * active row (`aria-activedescendant`), not DOM focus, which the open
+   * moves to the filter input or keeps on the trigger.
    * @group Subclassing: focus
    */
   protected focusInitial(): void {
@@ -3020,7 +3026,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Move keyboard focus to the item at `index`. The value is clamped to
    * `[-1, items.length-1]`; pass `-1` to clear focus. Updates the focused
    * class, `aria-activedescendant`, and scrolls the item into view. No-op
-   * if the clamped value equals the current focused index.
+   * if the clamped value equals the current focused index. "Keyboard
+   * focus" here means the active row, not DOM focus, which stays on the
+   * trigger or the filter input.
    * @group Subclassing: focus
    */
   protected setFocusedIndex(index: number): void {
@@ -3035,7 +3043,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * Move keyboard focus onto the choose-all row. Returns whether the row is now
    * focused (`false` = none is rendered, nothing changed). The item focus is
-   * cleared (`focusedIndex` becomes -1). Protected so a subclass can wire its
+   * cleared (`focusedIndex` becomes -1). "Keyboard focus" here means the
+   * active row, not DOM focus, which stays on the trigger or the filter input. Protected so a subclass can wire its
    * choose-all row's click to focus-then-activate (mirroring how item clicks
    * call `setFocusedIndex` before `onPopupListItemActivated`) and use it in
    * `focusInitial` (the choose-all row is the listbox's FIRST option).

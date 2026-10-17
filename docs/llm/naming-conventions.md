@@ -309,6 +309,8 @@ Before-change ruling (user): `onBeforeChange(next, previous, event)` with `event
 
 Item language ruling (user): the setting is `itemToLangFn` and the protected method `itemToLang`, HTML's own attribute name, like `ariaLabel` for the value written into `aria-label`, against the committee's `itemToLanguageTagFn`; "language id" was ruled out because `src/i18n.ts` uses it for the primary subtag; `LangAttr` was ruled out because no attribute value in this API carries `Attr`. `commitLangToDom(el, lang)` takes its target element, unlike the other `commit*ToDom` writers that own their container, because one attribute goes on five different elements. The group sibling is `groupKeyToLangFn` with the protected `groupKeyToLang`, named after `groupKeyToStringFn` / `groupKeyToString`; it writes a sixth element, the group container.
 
+Focus, active, activated ruling (user): three words, three things, defined in `A11Y.md` "Focus". "Focus" is DOM focus, `document.activeElement`; "the active row" is the row `aria-activedescendant` points to; "activated" means that row's action ran, the `on*Activated` hooks. New names, public or protected, use "active" for that row and "focus" only for DOM focus. The existing `focused*` family (`focusedIndex`, `setFocusedIndex`, `focusChooseAllRow`, `focusInitial`, `popupListRowFocusedClass`) keeps "focused" for the active row, as the highlight ruling records, because renaming a public or protected member is a breaking change; each docstring says which row the word means.
+
 ## 6. Phasing
 
 DONE - all three phases applied (npm test passes; npm run build green).
