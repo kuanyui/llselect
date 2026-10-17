@@ -760,7 +760,7 @@ const NG_KINDS = new Map(Object.entries({
   'll-chosen-items-order': 'attribute',
   'll-choose-all-row': 'attribute', 'll-hide-chosen-rows': 'attribute', 'll-checkboxes': 'attribute', 'll-item-text': 'attribute',
   defaults: 'method', instance: 'method',
-  arrow: 'property', filterable: 'property', highlight: 'property', popupWidthPolicy: 'property', uiTranslationPack: 'property',
+  arrow: 'property', colorScheme: 'property', filterable: 'property', highlight: 'property', popupWidthPolicy: 'property', uiTranslationPack: 'property',
 }))
 renderMarkdownPage('angularjs/API.md', 'public/angularjs/api.html', { title: '@llselect/angularjs API', description: 'Attribute reference for the @llselect/angularjs AngularJS 1.x directives', prefix: '../', current: 'AngularJS', subnav: angularjsSubnavHtml('../', 'API'), toc: true, kinds: NG_KINDS, kindsStrict: true })
 
