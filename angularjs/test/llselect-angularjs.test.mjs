@@ -655,6 +655,30 @@ test('ll-filter-fn drives the search box beyond the label-text default', () => {
   assert.equal(rows[0].textContent, 'vlan 2')
 })
 
+test('ll-item-to-lang-fn and ll-group-key-to-lang-fn write lang on the rows and on the group containers', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.lang" ll-item-to-lang-fn="vm.itemLang" ll-group-key-to-lang-fn="vm.groupLang"
+        ll-options="l.name group by l.group for l in vm.langs track by l.code"></llselect-single>
+    </div>`,
+    controller: function () {
+      this.langs = [
+        { code: 'de', name: 'Deutsch', group: 'de' },
+        { code: 'de-AT', name: 'Deutsch (Osterreich)', group: 'de' },
+        { code: 'xx', name: 'Unknown', group: 'other' },
+      ]
+      this.lang = undefined
+      this.itemLang = function (l) { return l.code === 'xx' ? null : l.code }
+      this.groupLang = function (key) { return key === 'other' ? null : key }
+    },
+  })
+  assert.deepEqual(a.errors, [])
+  a.$('.llselect-trigger').click()
+  assert.deepEqual(Array.from(a.$$('[role="group"]'), (g) => g.getAttribute('lang')), ['de', null])
+  assert.deepEqual(Array.from(a.$$('[role="option"]'), (r) => r.getAttribute('lang')), ['de', 'de-AT', null])
+})
+
 test('ll-highlight wraps filter matches in <mark>, and the marks clear with the query', () => {
   const a = boot({
     deps: ['llselect'],

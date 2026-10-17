@@ -224,6 +224,32 @@ $scope.renderRow = function (fruit) {
 - App-wide default: the `highlight` key of [`llselectConfigProvider`](#llselectconfigprovider).
 - The option's accessible name stays the plain `ll-options` text (core contract).
 
+### `ll-item-to-lang-fn`
+
+**Expression** -> `itemToLangFn`. Each item's language, written as the `lang` attribute where the library shows that item's text.
+
+- Evaluated once at link time to a function `(item) => string | null`. The string is a BCP 47 code such as `'de'` or `'zh-TW'`, not a language name.
+- `null` (for one item, or no attribute at all) = no `lang` for that item; its text inherits the page's language.
+- Written on the option row, on the single select's trigger text and on a tag chip's text. Not on a chip's remove button, nor on the count summary.
+- Why: a screen reader that switches voices by language reads an option in the voice of the `lang` in effect on its row. Without it, a language picker on an English page is read in the English voice.
+
+```js
+$scope.langCode = function (l) { return l.code } // 'en', 'de', 'fr'
+```
+
+```html
+<llselect-single ng-model="picked" ll-item-to-lang-fn="langCode"
+  ll-options="l.name for l in languages track by l.code"></llselect-single>
+```
+
+### `ll-group-key-to-lang-fn`
+
+**Expression** -> `groupKeyToLangFn`. A group's language, written as the `lang` attribute of the group container that `group by` builds.
+
+- Evaluated once at link time to a function `(groupKey) => string | null`; `groupKey` is the value of the `group by` clause.
+- `null` (for one group, or no attribute at all) = no `lang` for that group.
+- The container carries the group's accessible name, so a screen reader reads the name in that language. The group's rows inherit the code unless [`ll-item-to-lang-fn`](#ll-item-to-lang-fn) gives them their own.
+
 ### `ll-trigger-content-fn`
 
 **Expression** -> `createTriggerContentElFn`. Custom visible content for the trigger, under the same rules as [`ll-popup-list-item-content-fn`](#ll-popup-list-item-content-fn) (outside any digest, never `$compile`'d).
