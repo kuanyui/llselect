@@ -86,7 +86,7 @@ Direct children of a major family get the family's prefix (`triggerContentEl`, `
 
 ARIA role attribute values (`"combobox"`, `"listbox"`, `"option"`, `"group"`, `"searchbox"`, `"checkbox"`) are spec strings and stay verbatim in `setAttribute` calls. JS-side names are independent and follow the rules above (e.g. our `role="listbox"` element is called `popupListEl`).
 
-The full keyboard / focus / ARIA behavior contract is in `A11Y.md`. The `combobox` role sits on the filter input when `filterable: true` (the trigger demotes to a `button`); with `filterable: false` the trigger itself is the `role="combobox"` host. Both modes shipped with Phase 8 and are final by design, not transitional.
+The row `aria-activedescendant` points to is "the active row" in prose and in new names; the existing `focused*` identifiers keep their word (`naming-conventions.md` "Focus, active, activated ruling"). The full keyboard / focus / ARIA behavior contract is in `A11Y.md`. The `combobox` role sits on the filter input when `filterable: true` (the trigger demotes to a `button`); with `filterable: false` the trigger itself is the `role="combobox"` host. Both modes shipped with Phase 8 and are final by design, not transitional.
 
 ## Library scope
 
