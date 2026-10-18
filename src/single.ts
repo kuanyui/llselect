@@ -240,7 +240,7 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
    */
   protected override onPopupListItemActivated(item: T): void {
     if (this.requestUserChange(item, 'choose', item)) { this.setChosenItem(item) }
-    this.close()
+    this.closeWithReason('choose')
   }
 
   /**

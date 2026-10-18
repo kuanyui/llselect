@@ -81,6 +81,52 @@ export type LLSelectChangeSource = 'user' | 'api'
 export type LLSelectChangeReason = 'choose' | 'unchoose' | 'clear' | 'set' | 'items'
 
 /**
+ * Why the popup opened: the value of `meta.reason` in {@link LLSelectOpenMeta}.
+ * - `'toggle'`: a click on the trigger, or a `toggle()` call.
+ * - `'keyboard'`: ArrowDown, ArrowUp, Enter or Space on the closed trigger.
+ * - `'typeahead'`: a printable character typed on the closed trigger.
+ * - `'api'`: an `open()` call.
+ * @group Events
+ */
+export type LLSelectOpenReason = 'toggle' | 'keyboard' | 'typeahead' | 'api'
+
+/**
+ * `onOpen`'s argument.
+ * @group Events
+ */
+export interface LLSelectOpenMeta {
+  /** Why the popup opened. See {@link LLSelectOpenReason}. */
+  reason: LLSelectOpenReason
+}
+
+/**
+ * Why the popup closed: the value of `meta.reason` in {@link LLSelectCloseMeta}.
+ * - `'choose'`: a pick in single mode, vetoed or not; a veto stops the
+ *   value, not the close.
+ * - `'escape'`: Escape or Alt+ArrowUp, on the trigger, on the filter input,
+ *   or on a control the app placed in a header / footer slot.
+ * - `'outside'`: a mousedown or click outside the widget.
+ * - `'blur'`: DOM focus left the widget.
+ * - `'toggle'`: a click on the trigger, or a `toggle()` call.
+ * - `'api'`: a `close()` call.
+ * - `'disabled'`: `setDisabled(true)`.
+ * - `'destroy'`: `destroy()`.
+ * - `'hidden'`: the trigger scrolled out of view or was clipped, so the
+ *   popup could not stay anchored.
+ * @group Events
+ */
+export type LLSelectCloseReason = 'choose' | 'escape' | 'outside' | 'blur' | 'toggle' | 'api' | 'disabled' | 'destroy' | 'hidden'
+
+/**
+ * `onClose`'s argument.
+ * @group Events
+ */
+export interface LLSelectCloseMeta {
+  /** Why the popup closed. See {@link LLSelectCloseReason}. */
+  reason: LLSelectCloseReason
+}
+
+/**
  * The part of `onChange`'s third argument that both shapes share: who started
  * the change and what it did. See {@link LLSelectChangeMeta} for the shapes.
  * @group Events
@@ -803,6 +849,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   createGroupLabelContentElFn: ((groupKey: GroupKey, itemsInGroup: readonly T[]) => HTMLElement | null) | null
   /**
    * Fired right after the popup opens.
+   * - `meta.reason` says why: `'toggle'`, `'keyboard'`, `'typeahead'` or
+   *   `'api'`. See {@link LLSelectOpenReason}.
    * - An `open()` call that does not actually open the popup (already open, a
    *   disabled control, or a trigger scrolled out of view or clipped) does
    *   not fire it.
@@ -811,17 +859,21 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - `null` (default) = no consumer listener.
    * @group Events
    */
-  onOpen: (() => void) | null
+  onOpen: ((meta: LLSelectOpenMeta) => void) | null
   /**
    * Fired right after the popup closes.
-   * - A no-op `close()` does not fire it.
+   * - `meta.reason` says why, one value per close path. See
+   *   {@link LLSelectCloseReason}.
+   * - A no-op `close()` does not fire it. The first close that takes effect
+   *   reports its reason; a `close()` called while that close runs is a
+   *   no-op.
    * - Additive with the protected `onClosed` hook, like {@link onOpen}: both run.
    * - When focus leaving the widget closes the popup, this fires before
    *   {@link onBlur}.
    * - `null` (default) = no consumer listener.
    * @group Events
    */
-  onClose: (() => void) | null
+  onClose: ((meta: LLSelectCloseMeta) => void) | null
   /**
    * Fired when DOM focus enters the widget.
    * - DOM focus is the element that receives keyboard input,
@@ -1357,6 +1409,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private leadingActionRowEls: HTMLElement[] = []
   private trailingActionRowEls: HTMLElement[] = []
   private outsideHandler: ((ev: Event) => void) | undefined
+  /**
+   * The reason the next `open()` / `close()` reports. An internal path sets
+   * it right before the call (`openWithReason` / `closeWithReason`); the
+   * method reads and resets it first thing, so a call from outside reports
+   * `'api'` and a refused call leaves nothing behind.
+   */
+  private pendingOpenReason: LLSelectOpenReason = 'api'
+  private pendingCloseReason: LLSelectCloseReason = 'api'
   /** The whole-life focus listeners on `rootEl`; see `attachFocusListeners`. */
   private focusInHandler: ((ev: FocusEvent) => void) | undefined
   private focusOutHandler: ((ev: FocusEvent) => void) | undefined
@@ -1713,6 +1773,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Open & close
    */
   public open(): void {
+    const reason = this.pendingOpenReason
+    this.pendingOpenReason = 'api'
     if (this.opened || this.disabled || this.closing) { return }
     // A trigger already scrolled out of view / clipped by an ancestor when
     // open() runs cannot host a visible popup, so opening is a no-op (mirrors
@@ -1772,7 +1834,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.focusedIndex = -1
     this.renderPopupList()
     this.positioner = createPositioner(this.triggerEl, this.popupEl, {
-      onHide: () => this.close(),
+      onHide: () => this.closeWithReason('hidden'),
       widthPolicy: this.settings.popupWidthPolicy,
       innerScrollEl: this.popupListEl,
     })
@@ -1780,7 +1842,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.focusInitial()
     this.onOpened()
     const onOpen = this.settings.onOpen
-    onOpen?.()
+    onOpen?.({ reason })
     if (this.filterActive) {
       this.filterInputEl.focus({ preventScroll: true })
     }
@@ -1804,6 +1866,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Open & close
    */
   public close(): void {
+    const reason = this.pendingCloseReason
+    this.pendingCloseReason = 'api'
     if (!this.opened) { return }
     const shouldReturnFocus = this.isFocused(this.popupEl)
     this.opened = false
@@ -1867,7 +1931,23 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.renderTriggerArrow()
     this.onClosed()
     const onClose = this.settings.onClose
-    onClose?.()
+    onClose?.({ reason })
+  }
+
+  /** `open()` with a stated reason; see `pendingOpenReason`. */
+  private openWithReason(reason: LLSelectOpenReason): void {
+    this.pendingOpenReason = reason
+    this.open()
+  }
+
+  /**
+   * `close()` with a stated reason; see `pendingCloseReason`. Protected for
+   * the single select's pick, which closes with `'choose'`.
+   * @internal
+   */
+  protected closeWithReason(reason: LLSelectCloseReason): void {
+    this.pendingCloseReason = reason
+    this.close()
   }
 
   /**
@@ -1934,7 +2014,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // First: the close() below and the replaceChildren() at the end can move
     // focus, and no parting focusout may reach onBlur (A11Y.md "Focus").
     this.detachFocusListeners()
-    this.close()
+    this.closeWithReason('destroy')
     if (this.settings.labelEl !== null) {
       this.settings.labelEl.removeEventListener('click', this.handleLabelElClick)
       if (this.labelElIdMinted) { this.settings.labelEl.removeAttribute('id') }
@@ -1954,9 +2034,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   public toggle(): void {
     if (this.opened) {
-      this.close()
+      this.closeWithReason('toggle')
     } else {
-      this.open()
+      this.openWithReason('toggle')
     }
   }
 
@@ -2114,7 +2194,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   public setDisabled(value: boolean): void {
     if (this.disabled === value) { return }
     this.disabled = value
-    if (value && this.opened) { this.close() }
+    if (value && this.opened) { this.closeWithReason('disabled') }
     this.syncDisabledStateToDom()
   }
 
@@ -3301,7 +3381,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.outsideHandler = (ev: Event) => {
         const t = this.eventTargetNode(ev)
         if (t instanceof Node && !this.rootEl.contains(t)) {
-          this.close()
+          this.closeWithReason('outside')
         }
       }
       document.addEventListener('mousedown', this.outsideHandler)
@@ -3329,7 +3409,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         if (t instanceof Node && !this.rootEl.contains(t)) {
           ev.stopPropagation()
           ev.preventDefault()
-          this.close()
+          this.closeWithReason('outside')
         }
       }
       document.addEventListener('click', this.outsideHandler, true)
@@ -3368,7 +3448,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private attachFocusListeners(): void {
     this.focusOutHandler = (ev: FocusEvent): void => {
       if (this.isInsideRoot(ev.relatedTarget)) { return }
-      if (this.opened) { this.close() }
+      if (this.opened) { this.closeWithReason('blur') }
       const onBlur = this.settings.onBlur
       onBlur?.()
     }
@@ -3412,7 +3492,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const t = this.eventTargetNode(ev)
     if (t instanceof Node && this.filterInputEl.contains(t)) { return }
     ev.preventDefault()
-    this.close()
+    this.closeWithReason('escape')
   }
 
   private handleKeydown(ev: KeyboardEvent): void {
@@ -3430,7 +3510,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
     switch (action) {
       case LLSelectKeyboardAction.Open:
-        this.open()
+        this.openWithReason('keyboard')
         return
       case LLSelectKeyboardAction.Close:
         // Esc two-stage while the filter is active: clear the filter first; only
@@ -3441,7 +3521,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
           this.handleSearchInputEvent()
           return
         }
-        this.close()
+        this.closeWithReason('escape')
         return
       case LLSelectKeyboardAction.Select: {
         if (this.focusedRow?.kind === 'choose-all') {
@@ -3514,7 +3594,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.typeaheadLastTime = now
     const openedByThisKey = !this.opened
     if (openedByThisKey) {
-      this.open()
+      this.openWithReason('typeahead')
       // open() can refuse (hidden anchor): nothing to move focus in, and the
       // buffer must not survive into a later successful open.
       if (!this.opened) { this.typeaheadBuffer = ''; return true }
