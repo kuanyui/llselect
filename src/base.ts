@@ -830,7 +830,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   header / footer slot.
    * - Fires once when focus comes from outside the widget or from nowhere:
    *   Tab onto the trigger, a click on the trigger or on the label, a
-   *   programmatic `triggerEl.focus()`.
+   *   programmatic `triggerEl.focus()`, or an `open()` call on an unfocused
+   *   widget whose filter is active, which moves focus to the filter input
+   *   after `onOpen`.
    * - Does not fire for a move inside the widget, such as `open()` moving
    *   focus from the trigger to the filter input.
    * - Has no link to the active row, the row the arrow keys move inside the
@@ -848,8 +850,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - Does not fire for a move inside the widget.
    * - When focus leaving closes the popup, {@link onClose} fires first, so
    *   `isOpened()` is already `false` here.
-   * - Does not fire from `destroy()` or from `setDisabled(true)`; neither
-   *   moves focus.
+   * - Does not fire from `destroy()` or from `setDisabled(true)`.
+   *   `setDisabled(true)` closes an open popup, which returns focus to the
+   *   trigger, inside the widget; `destroy()` detaches the focus listeners
+   *   before its teardown can move focus.
    * - While the popup is open with `outsideClickBehavior: 'block'`, an
    *   outside mousedown is default-prevented: focus stays, the popup closes,
    *   and this does not fire.
@@ -1262,10 +1266,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected items: T[] = []
   /** Whether the popup is currently open; public reader {@link isOpened}. */
   private opened = false
+  /** True while `close()` returns focus to the trigger; `open()` refuses during that call. */
+  private closing = false
   /**
    * Position in `getVisibleItems()` (the rendered list, not `items`) of the
-   * currently keyboard-focused item, or `-1` when nothing is focused (closed
-   * popup, or no items). "Focused" here means the active row, the row
+   * currently keyboard-focused item, or `-1` when no item is focused: the
+   * popup is closed, no item is rendered, or the choose-all row or an action
+   * row is the active row. "Focused" here means the active row, the row
    * `aria-activedescendant` points to; DOM focus stays on the trigger or the
    * filter input.
    * @group State (protected)
@@ -1673,11 +1680,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Open the popup. Builds item elements lazily, attaches the positioner
    * (which auto-closes if the trigger is scrolled out of view), wires the
    * outside-click handler, and moves keyboard focus into the item list.
-   * No-op if already open.
+   * No-op if already open, and while `close()` is returning focus to the
+   * trigger: a focus handler that calls `open()` there is ignored.
    * @group Open & close
    */
   public open(): void {
-    if (this.opened || this.disabled) { return }
+    if (this.opened || this.disabled || this.closing) { return }
     // A trigger already scrolled out of view / clipped by an ancestor when
     // open() runs cannot host a visible popup, so opening is a no-op (mirrors
     // the disabled guard). This also prevents the positioner's initial
@@ -1770,7 +1778,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.triggerEl.setAttribute('aria-expanded', 'false')
     this.triggerEl.setAttribute('data-state', 'closed')
     this.syncTriggerTabindex()
-    if (shouldReturnFocus) { this.triggerEl.focus({ preventScroll: true }) }
+    if (shouldReturnFocus) {
+      // A focus handler on the trigger may call open(); refuse it until the
+      // teardown below is done, or it would set up a popup this close()
+      // then hides and strips of its listeners.
+      this.closing = true
+      try {
+        this.triggerEl.focus({ preventScroll: true })
+      } finally {
+        this.closing = false
+      }
+    }
     this.rootEl.classList.remove(this.classIdMap.openClass)
     if (this.filterActive) {
       this.filterInputEl.setAttribute('aria-expanded', 'false')
@@ -3070,7 +3088,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Move keyboard focus to the item at `index`. The value is clamped to
-   * `[-1, items.length-1]`; pass `-1` to clear focus. Updates the focused
+   * `[-1, getVisibleItems().length - 1]`; pass `-1` to clear focus. Updates the focused
    * class, `aria-activedescendant`, and scrolls the item into view. No-op
    * if the clamped value equals the current focused index. "Keyboard
    * focus" here means the active row, not DOM focus, which stays on the
@@ -3540,6 +3558,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     btn.setAttribute('aria-label', this.settings.uiTranslationPack.triggerClearButtonAriaLabel)
     const icon = this.createTriggerClearButtonContentEl()
     if (icon !== null) { btn.appendChild(icon) }
+    // Keep DOM focus where it is, as the chip's remove button does: a
+    // mousedown would focus the button, the click rebuilds it with the focus
+    // handed over, and the theme then hides it (`data-empty`), dropping focus
+    // to <body> and reporting a blur for a click inside the widget.
+    btn.addEventListener('mousedown', (ev) => { ev.preventDefault() })
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
       // Disabled blocks every USER path to a value change (programmatic

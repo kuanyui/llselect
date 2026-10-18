@@ -868,8 +868,9 @@ test('the control turns touched when focus leaves the widget, as on the llselect
   trigger.focus()
   trigger.click() // open: focus moves inside, to the filter input (search-enabled defaults to true)
   assert.equal(a.scope.f.person.$touched, false, 'an inside move does not touch the control')
-  trigger.ownerDocument.body.focus()
-  a.$('ui-llselect .llselect-filter-input').blur()
+  const outside = trigger.ownerDocument.createElement('button') // <body> is not focusable in jsdom
+  trigger.ownerDocument.body.appendChild(outside)
+  outside.focus() // focus leaves the widget
   assert.equal(a.scope.f.person.$touched, true)
   assert.ok(a.$('ui-llselect').classList.contains('ng-touched'))
   assert.deepEqual(a.errors, [])
