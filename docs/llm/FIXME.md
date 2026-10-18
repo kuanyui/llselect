@@ -2,6 +2,57 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (widget focus events: onFocus and onBlur, the AngularJS attributes and the touched flag)
+
+Process: the events committee (`events-committee.md`) settled the design of three event additions and the owner ruled on them one at a time; the first addition, the widget focus events, landed in three commits (core, AngularJS, docs), with three earlier docs-only commits riding along for review (the three-term definitions of DOM focus, the active row and activation, and two wording fixes of the committee record). `npm run verify` ran green before the round. Round one: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). One HIGH, from Codex Sol: the focus return that `close()` now makes before hiding the popup runs trigger focus handlers before the teardown. Opus 4.8 asked the manual pass to name the `document.activeElement` timing a Tab-away close rests on; done in the TODO entry. Round two reviews the fixes below together with the second addition, the active-row event.
+
+- [x] **[HIGH-646] - a trigger focus handler could reopen the popup inside `close()` and leave it hidden with its listeners stripped**
+  - Symptom: `close()` returns focus to the trigger before its teardown; a focus handler on the trigger that calls `open()` ran with `opened` already false, set up a positioner and the outside-click listeners, and the outer `close()` then detached them, cleared the list and hid the popup while the state said open.
+  - Cause: the focus return moved from the tail of `close()` to before the hide, so the hide cannot drop focus to `<body>`, with no guard for the handlers the return runs.
+  - Fix: `closing` is true during the focus call and `open()` refuses while it is, like its disabled and hidden-anchor refusals; an app that opens on trigger focus no longer reopens the popup it just closed. The `open()` docstring says so. Test: `test/focus-events.test.ts`.
+  - Verified: `npm run verify` green; round two reads the guard.
+- [x] **[MEDIUM-647] - a mouse clear still blurred the widget**
+  - Symptom: a click on the clear button focused it, the rebuilt button inherited the focus, and the theme then hid it under `data-empty`, so the browser dropped focus to `<body>` and the root `focusout` reported `onBlur`, closing an open multiple's popup, for a click inside the widget.
+  - Cause: `createTriggerClearButtonEl` had no `mousedown` rule, unlike the chip's remove button it mirrors.
+  - Fix: the same `preventDefault` on `mousedown`. Test: `test/focus-events.test.ts`.
+  - Verified: `npm run verify` green; round two reads the button.
+- [x] **[MEDIUM-648] - the ui-select bridge removed template DOM before `destroy()` detached the focus listeners**
+  - Symptom: the `$destroy` handler released the row and trigger template scopes, removing their elements, before `sel.destroy()`; a focused control inside a template could fire a `focusout` on removal, in the engines that fire one, and reach `onBlur` and the touched flag during teardown, against the `angularjs/API.md` promise.
+  - Fix: `sel.destroy()` first, then the scope releases.
+  - Verified: the AngularJS suite green; round two reads the handler.
+- [x] **[DOCUMENTATION-649] - `onFocus` was said to precede `onOpen` without qualification**
+  - Symptom: a programmatic `open()` on an unfocused widget whose filter is active fires `onOpen` first and `onFocus` after it, when the filter input takes focus; the `onFocus` docstring's firing list omitted that path, and DESIGN.md stated the order as general.
+  - Fix: the docstring and `angularjs/API.md` list the path; DESIGN.md limits the order to a pointer or keyboard open and names the exception.
+  - Verified: round two reads `open()` against the three texts.
+- [x] **[DOCUMENTATION-650] - "neither moves focus" was false for `setDisabled(true)` and `destroy()`**
+  - Symptom: the `onBlur` docstring, `angularjs/API.md` and DESIGN.md explained the silence of the two calls by "neither moves focus"; `setDisabled(true)` on an open popup returns focus to the trigger, and `destroy()` drops focus to `<body>` when it empties the root.
+  - Fix: the three texts say why neither reports a blur: the disabling moves focus inside the widget, the teardown detaches the listeners first.
+  - Verified: round two reads the three texts.
+- [x] **[DOCUMENTATION-651] - the `focusedIndex` and `setFocusedIndex` docstrings misstated the `-1` case and the clamp range**
+  - Symptom: `focusedIndex` said `-1` means a closed popup or no items, while an active choose-all row or action row also leaves it at `-1`; `setFocusedIndex` said the clamp runs to `items.length - 1`, while it runs over `getVisibleItems()`.
+  - Fix: both docstrings.
+  - Verified: round two reads them against `focusChooseAllRow`, `focusActionRow` and the clamp.
+- [x] **[DOCUMENTATION-652] - the committee record's outcome line skipped one decision, claimed sections that did not exist, and stated the owner's answers less exactly than they were given**
+  - Symptom: the line ruled on seven of the eight decisions, D5 missing; said the rulings live in DESIGN.md one section per event while only the focus-events section existed; and wrote "as recommended" where the owner had answered with a letter, a question, or silence on a unanimous item.
+  - Fix: the line quotes each answer as given, records D5 as not answered, and says each DESIGN.md section is written when its event ships.
+  - Verified: round two reads the line against the record's decisions list.
+- [x] **[DOCUMENTATION-653] - the `$touched` entry in `angularjs/API.md` bundled three facts in one bullet**
+  - Symptom: one bullet carried the flag, the class, the inside-move exception and the validation-message consequence.
+  - Fix: one fact per bullet.
+  - Verified: round two reads the entry.
+  - Q: Why were the TSDoc bullets in `src/base.ts` and the README capability row left as they are, after the same finding named them?
+    - A: Because the one-physical-line rule is for Markdown, where a renderer turns a newline into a break; TSDoc comments in `src/` wrap at the column every other docstring wraps at. The README row is a name list by design, like every other row of its table; the two-code-names limit is for prose, Q&A answers and hints.
+- [x] **[QUALITY-654] - the `'block'` claim and the chip removal's focus stability had no test**
+  - Symptom: the `onBlur` docstring promises no event for an outside press under `outsideClickBehavior: 'block'`, and the chip test only pinned the `preventDefault`; neither the focused host, the open popup nor the event log after a removal was asserted, though jsdom can.
+  - Fix: both tests in `test/focus-events.test.ts`.
+  - Verified: `npm test` green.
+- [x] **[QUALITY-655] - the bridge's touched test moved focus out with `body.focus()`, which jsdom ignores, and then relied on a bare `.blur()`**
+  - Symptom: the test called `body.focus()` and then `.blur()` on the filter input; round one read the second line as dead, since the first had already moved focus out.
+  - Fix: a focusable outside element receives focus, as the core tests do; both old lines are gone.
+  - Verified: the AngularJS suite green.
+  - Q: Why not just drop the `.blur()` line, as round one asked?
+    - A: Because `<body>` is not focusable in jsdom, so `body.focus()` was the no-op and the `.blur()` was the line doing the work; dropping it made the test fail. The round's reading was wrong; the suite caught it.
+
 ## review (group language: groupKeyToLangFn and the AngularJS lang attributes)
 
 Process: the owner asked whether a group should get a `lang` like the items do, as DESIGN.md had foreseen with the `groupKeyToLangFn` sibling; two commits followed, the core setting and the two AngularJS attributes (`ll-item-to-lang-fn` had been missing since the item commit). Post-fix panel, round one: Opus 5 and Opus 4.8 answered; Codex 5.5 cannot run on this account ("not supported when using Codex with a ChatGPT account"); Codex Sol answered "model at capacity" on every try. Rounds two and three, on the documentation fixes: Opus 5, Opus 4.8 and Codex Sol; round three found every fix resolved and left only wording findings on the plan preamble and on this log. Round four, on the build fix and the records: Opus 5 and Opus 4.8 (Codex Sol at capacity) found the fixes resolved, a duplicate finding id in this log, and the pre-existing `colorScheme` omission in the same map. No HIGH finding in any round; both round-one members ruled the row inheritance right. The one MEDIUM came from `npm run verify`, not from the panel: it ran only after the rounds, because the reviewer CLIs and the verify cannot share the container's memory.

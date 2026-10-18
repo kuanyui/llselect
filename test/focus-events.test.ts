@@ -153,15 +153,81 @@ test('focus leaving still closes the popup when neither listener is set', () => 
   assert.equal(sel.isOpened(), false)
 })
 
-test('tags: a mousedown on a chip remove button is default-prevented, so DOM focus stays on the host', () => {
+test('outsideClickBehavior block: an outside press while open closes without onBlur, since the press never moves focus', () => {
+  const { el, outside } = mount()
+  const log: string[] = []
+  const sel = new LLSelectSingle<string>(el, {
+    ariaLabel: 'x',
+    filterable: true,
+    outsideClickBehavior: 'block',
+    onFocus: () => { log.push('focus') },
+    onBlur: () => { log.push('blur') },
+    onClose: () => { log.push('close') },
+  })
+  sel.setItems(['a'])
+  sel.triggerEl.focus()
+  sel.open()
+  const md = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+  outside.dispatchEvent(md)
+  assert.equal(md.defaultPrevented, true, 'the outside mousedown is default-prevented: focus stays')
+  outside.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+  assert.deepEqual(log, ['focus', 'close'])
+  assert.equal(document.activeElement, sel.triggerEl, 'close() returned focus from the filter input to the trigger')
+})
+
+test('a mousedown on the clear button is default-prevented, so a mouse clear never blurs the widget', () => {
   const { el } = mount()
-  const sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', triggerDisplay: 'tags' })
+  const log: string[] = []
+  const sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', clearable: true, onBlur: () => { log.push('blur') } })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a'])
+  const btn = sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  const md = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+  btn.dispatchEvent(md)
+  assert.equal(md.defaultPrevented, true)
+  btn.click()
+  assert.deepEqual(sel.getChosenItems(), [], 'the click still clears')
+  assert.deepEqual(log, [])
+})
+
+test('tags: a mousedown on a chip remove button is default-prevented; the removal keeps the popup open, the host focused, and reports no blur', () => {
+  const { el } = mount()
+  const log: string[] = []
+  const sel = new LLSelectMultiple<string>(el, {
+    ariaLabel: 'x',
+    triggerDisplay: 'tags',
+    onBlur: () => { log.push('blur') },
+    onClose: () => { log.push('close') },
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a'])
+  sel.triggerEl.focus()
+  sel.open()
   const btn = sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!
   const md = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
   btn.dispatchEvent(md)
   assert.equal(md.defaultPrevented, true)
   btn.click()
   assert.deepEqual(sel.getChosenItems(), [], 'the click still removes the item')
+  assert.equal(sel.isOpened(), true)
+  assert.equal(document.activeElement, sel.triggerEl)
+  assert.deepEqual(log, [])
+})
+
+test('open() called from a trigger focus handler during close() is refused, and a later open() works', () => {
+  const { el } = mount()
+  const log: string[] = []
+  const sel = new LLSelectSingle<string>(el, { ariaLabel: 'x', filterable: true, onOpen: () => { log.push('open') }, onClose: () => { log.push('close') } })
+  sel.setItems(['a'])
+  sel.triggerEl.addEventListener('focus', () => { sel.open() }) // an app that opens on focus
+  sel.triggerEl.focus()
+  assert.deepEqual(log, ['open'])
+  sel.close() // the filter input holds focus: close() returns it to the trigger, which runs the handler
+  assert.deepEqual(log, ['open', 'close'])
+  assert.equal(sel.isOpened(), false)
+  assert.equal(sel.popupEl.hidden, true)
+  assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
+  sel.open()
+  assert.deepEqual(log, ['open', 'close', 'open'])
+  assert.equal(sel.isOpened(), true)
 })

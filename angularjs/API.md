@@ -36,7 +36,9 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 **Expression**, required. The chosen item on `<llselect-single>`; the array of chosen items on `<llselect-multiple>`. With `select as` in [`ll-options`](#ll-options), the projected value(s) instead.
 
-- `$touched` turns true, and the `ng-touched` class replaces `ng-untouched`, when DOM focus leaves the widget, as on a native control. A focus move inside the widget, such as the open moving focus from the trigger to the filter input, does not count. Validation messages gated on `$touched` show from then on.
+- `$touched` turns true when DOM focus leaves the widget, as on a native control. The `ng-touched` class replaces `ng-untouched` then.
+- A focus move inside the widget does not count. The open moving focus from the trigger to the filter input is such a move.
+- Validation messages gated on `$touched` show from the first blur on.
 - Removing the element while it holds focus, for example through `ng-if`, does not touch the control.
 
 ### `ng-change`
@@ -67,7 +69,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 **Event expression** -> `onFocus`. Evaluated once when DOM focus enters the widget, inside a digest.
 
-- Fires when focus comes from outside the widget or from nowhere: Tab onto the trigger, a click on the trigger or on its label, a programmatic `instance().triggerEl.focus()`.
+- Fires when focus comes from outside the widget or from nowhere: Tab onto the trigger, a click on the trigger or on its label, a programmatic `instance().triggerEl.focus()`, or an `instance().open()` on an unfocused widget whose filter is active, which moves focus to the filter input after [`ll-on-open`](#ll-on-open).
 - Does not fire for a focus move inside the widget, such as the open moving focus from the trigger to the filter input.
 - It is about DOM focus only. The row the arrow keys move inside the popup is the active row; that row never holds DOM focus.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
@@ -80,7 +82,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 - Does not fire for a focus move inside the widget.
 - The directive marks the control touched first, in the same digest, so the expression already sees `$touched === true` (see [`ng-model`](#ng-model)).
 - When focus leaving closes the popup, [`ll-on-close`](#ll-on-close) runs first; `instance().isOpened()` is already `false` here.
-- Does not fire for the teardown that destroying the element runs, nor for `setDisabled(true)`: neither moves focus.
+- Does not fire for the teardown that destroying the element runs, nor for `setDisabled(true)`. The disabling closes an open popup, which returns focus to the trigger, inside the widget; the teardown detaches the focus listeners first.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
 
 ### `ll-on-filter-query-change`
