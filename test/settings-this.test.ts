@@ -48,6 +48,7 @@ test('multiple: every settings function and action-row function runs with `this`
     onClose: function (this: unknown) { seen.onClose = this },
     onFocus: function (this: unknown) { seen.onFocus = this },
     onBlur: function (this: unknown) { seen.onBlur = this },
+    onActiveItemChange: function (this: unknown) { seen.onActiveItemChange = this },
     onChange: function (this: unknown) { seen.onChange = this },
     onBeforeChange: function (this: unknown) { seen.onBeforeChange = this },
     onFilterQueryChange: function (this: unknown) { seen.onFilterQueryChange = this },
@@ -76,7 +77,7 @@ test('multiple: every settings function and action-row function runs with `this`
     'createTriggerContentElFn', 'createTriggerArrowContentElFn', 'createTriggerClearButtonContentElFn',
     'createPopupListNoResultsContentElFn', 'createPopupHeaderContentElFn', 'createPopupFooterContentElFn',
     'createChooseAllRowContentElFn', 'createTagContentElFn', 'createTagRemoveButtonContentElFn',
-    'onOpen', 'onClose', 'onFocus', 'onBlur', 'onChange', 'onBeforeChange', 'onFilterQueryChange', 'groupKeyCompareFn',
+    'onOpen', 'onClose', 'onFocus', 'onBlur', 'onActiveItemChange', 'onChange', 'onBeforeChange', 'onFilterQueryChange', 'groupKeyCompareFn',
     'textFn', 'createContentElFn', 'disabledFn', 'onActivate',
   ]
   for (const name of expected) {
