@@ -3849,7 +3849,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - The other user paths re-check what they need instead:
    *   - the filter keystroke: the popup is open and its query still stands;
    *   - the clear button: the control is enabled and not destroyed;
-   *   - the chip remove button, all of the following:
+   *   - the chip remove button checks all of the following:
    *     - the control is enabled and not destroyed;
    *     - the item is still chosen, read from the chosen entry as it stands
    *       now;

@@ -2,6 +2,23 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (events, round seven: the item click as a third difference, and a test that could not fail)
+
+Process: round seven, on the round-six fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). Opus 4.8 found all six round-six entries resolved. Opus 5 and Codex Sol found the round-six hover correction overshooting on one point, the click, and the round-six error-routing test unable to fail; Codex Sol found one docstring lead still a fragment.
+
+- [x] **[DOCUMENTATION-695] - the hover correction said both widgets move the highlighted row on an item click, and the trigger list read as exhaustive**
+  - Symptom: ui-select's row click calls `$select.select(...)`, which never writes `activeIndex` (`REFS/ui-select-0.19.8/src/uiSelectChoicesDirective.js`, `uiSelectController.js`); llselect's click does move the active row, so the bridge runs `on-highlight` for the clicked row before the pick: a third difference, not a shared trait. "By a keyboard move or an item click" also left out the open, a filter keystroke and a reload clamp, which the round's own tests fire.
+  - Fix: the bridge comment, the `angularjs/API.md` row, `angularjs/DESIGN.md` and `docs/llm/DESIGN.md` name the three differences and say the expression runs whatever moved the row.
+  - Verified: round eight reads the four texts against the reference copy.
+- [x] **[QUALITY-696] - the error-routing test of QUALITY-690 passed without the fix**
+  - Symptom: the reload's rows were committed before the report that throws, and `$digest` routes a watch listener's throw to `$exceptionHandler` on its own, so the row count and the error count held with the raw call.
+  - Fix: the test holds a chosen item and reloads it under `track by` with a renamed same-key object, then asserts the trigger shows the new name: the reconciliation in `onItemsChanged` runs after the report, so the raw call's throw would skip it.
+  - Verified: the AngularJS suite green; the assertion fails with the catch removed.
+- [x] **[LINT-697] - one nested-list lead was still a fragment**
+  - Symptom: "the chip remove button, all of the following:" in `stateMovedSince`.
+  - Fix: "the chip remove button checks all of the following:".
+  - Verified: round eight reads it.
+
 ## review (events, round six: the bridge's on-highlight facts and the last edge cases)
 
 Process: round six, on the round-five fix commit and the bridge's `on-highlight` mapping: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). Opus 4.8 found all five round-five entries resolved and the mapping clean. Opus 5 found the mapping's account of ui-select wrong on one point, against the reference copy under `REFS/`, and a missing error route. Codex Sol found two edge cases in the round-five code and a stale search value in the mapping. One log-wording finding, fixed alongside: MEDIUM-684's "set first in `destroy()`", where the focus listeners detach first. Codex Sol also found the round-five fix commit's subject at 160 characters, over the 140 the house rule allows; the three local commits were rewritten byte for byte with the shorter subject, dates untouched.
