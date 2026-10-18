@@ -938,18 +938,24 @@ test('an on-highlight expression that throws inside a digest reaches $exceptionH
     deps: ['llselect', 'llselect.uiCompat'],
     html: `
       <div ng-controller="C as vm">
-        <ui-llselect ng-model="vm.person" search-enabled="false">
+        <ui-llselect ng-model="vm.person" search-enabled="false" aria-label="P">
           <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
-          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name" on-highlight="vm.boom()"></ui-llselect-choices>
+          <ui-llselect-choices repeat="p in vm.users track by p.id" ll-item-text="p.name" on-highlight="vm.boom()"></ui-llselect-choices>
         </ui-llselect>
       </div>`,
-    controller: function () { this.users = USERS.slice(0, 1); this.person = undefined; this.boom = function () { throw new Error('boom') } },
+    controller: function () {
+      this.users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Carol' }]
+      this.person = this.users[0]
+      this.boom = function () { throw new Error('boom') }
+    },
   })
-  a.$('ui-llselect .llselect-trigger').click() // open: the initial row fires the expression outside a digest
+  a.$('ui-llselect .llselect-trigger').click() // open: the initial row is the chosen Alice; the expression throws outside a digest
   assert.equal(a.errors.length, 1)
-  // A reload inside a digest re-renders the open list; the clamp moves the row to the new first item and fires again.
-  a.scope.$apply(() => { a.scope.vm.users = [USERS[2], USERS[0]] })
+  // A reload inside a digest re-renders the open list: the clamp keeps index 0, now Carol, so the expression
+  // throws inside the digest. The chosen entry's reconciliation runs AFTER that report: with a raw call the
+  // throw skips it and the trigger keeps the old name.
+  a.scope.$apply(() => { a.scope.vm.users = [{ id: 2, name: 'Carol' }, { id: 1, name: 'Alicia' }] })
   assert.equal(a.errors.length, 2)
   assert.match(a.errors[1].message, /boom/)
-  assert.equal(a.$$('ui-llselect [role="option"]').length, 2, 'the reload completed')
+  assert.equal(a.text('.llselect-trigger-content'), 'Alicia', 'the reconciliation after the throwing report ran')
 })
