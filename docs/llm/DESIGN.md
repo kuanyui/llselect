@@ -436,6 +436,24 @@ Two base settings report DOM focus entering and leaving the whole widget. RULED 
 - AngularJS: `ll-on-focus` / `ll-on-blur` event expressions; the three ngModel directives, `<ui-llselect>` included, mark the control touched on the widget blur, before `ll-on-blur` and in the same digest, as ngModel does for a native control's blur. `angularjs/API.md` states this as the contract, with no behavior-change note: the committee's 5:1 was for the same commit with such a note, and the owner kept the same commit and dropped the note, since the package is pre-0.1.0 and the docs carry no history.
 - Naming: "focus" in a public event name is DOM focus; the row the arrow keys move is "the active row"; the protected `focused*` family keeps its name (`naming-conventions.md` "Focus, active, activated ruling").
 
+## Active item change (`onActiveItemChange`)
+
+One base setting reports the active row, the row `aria-activedescendant` points to and the arrow keys move, whenever it lands on another item or on no item. RULED by the events committee (`events-committee.md`) and the owner:
+
+- Shape: `onActiveItemChange: ((item: T | undefined) => void) | null`; `null` = no consumer listener. `undefined` means no item row is active: the popup is closed, nothing matches the filter, or the choose-all row or an action row is active.
+- Q: Why `item | undefined`, not a discriminated union over the row kinds (`{ kind: 'item', item }` / `{ kind: 'choose-all' }` / `{ kind: 'action', row }`)?
+  - A: Because the one use anyone named, a footer that describes the active item, needs the item and nothing else; a union makes every handler branch on `kind` before it reaches the item, and exports a type and a `kind` vocabulary for a consumer nobody has; and a second parameter can carry the row's identity later without breaking a one-argument handler (Opus 5's framing: A now, extended through a second parameter if a real consumer appears). The union side, Codex Astra and Codex Sol: non-item rows exist today, so representing them is not speculative, and `undefined` merges "nothing is active" with "a non-item row is active". Owner ruling for `item | undefined` after the 4:2 vote; the union's name would have been `onActiveRowChange`, since its payload is a row.
+- Q: Why fire on open and on close too, not only on keyboard moves?
+  - A: Because a consumer that mirrors the row must fill on open and clear on close, and the committee dropped no firing point: open with the initial placement, close with `undefined`, every navigation and typeahead key, a filter keystroke or data re-render that moves the row, and a click, which moves the row before it requests the change.
+- Q: Why compare items with `compareFn`, not by index or by element?
+  - A: Because an in-place rebuild keeps the item while the element changes (a toggle repaints one row, `rerender()` rebuilds all, a reload replaces objects that compare equal), and an index keeps its number while the item under it changes (a filter keystroke). Only the item is the thing the consumer shows.
+- Q: Why one dispatch at the tail of `syncFocusedIndexToDom` plus one in `close()`, not one per navigation method?
+  - A: Because every active-row move ends in that sync: `setFocusedIndex`, `focusChooseAllRow`, `focusActionRow`, and the render clamp in `renderPopupList`, which assigns `focusedIndex` directly; its former four exits were folded into one write (`resolveActiveRowEl`) so the report has one tail. `close()` resets the row by assignment and reports on its own. The filter keystroke sets the landing index before its render instead of after it, so the one sync inside the render reports once and no transient `undefined` leaks while the list rebuilds (Codex Astra, Codex Sol). The report is stored before the listener runs, so a listener that closes or re-renders the widget re-enters against the right baseline.
+- Order: the report precedes `onOpen` on open and `onClose` on close, so both hooks see a settled row state; the committee left the open-side order free.
+- No cause parameter (6:0): nobody asked, and a second argument is non-breaking for an ordinary handler.
+- Name: `onActiveItemChange` (4 votes) over `onActiveRowChange` (the payload is an item, not a row) and `onActiveOptionChange` (ARIA role words stay out of JS names, "ARIA roles vs JS names" above). "Active" is the word A11Y.md already uses for this row; "focus" stays DOM focus.
+- AngularJS: `ll-on-active-item-change` with `$item`, the raw item from the `ll-options` collection.
+
 ## Popup header / footer slots
 
 Two pinned slots around the option list: `popupHeaderEl` between the filter input and the listbox, `popupFooterEl` after the no-results message. Filled by `createPopupHeaderContentElFn` / `createPopupFooterContentElFn` under the Container-Content law (the library owns the `div`, its class and its place; the app owns the content). RULED after the survey and committee rounds in `archive/popup-slots-research.md`:
