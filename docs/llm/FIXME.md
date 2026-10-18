@@ -2,6 +2,63 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (events, round two: the focus-event fixes, the active-row event, the open and close reasons)
+
+Process: round two reviewed the round-one fixes of the widget focus events together with the second and third additions the events committee settled (`events-committee.md`): `onActiveItemChange` and `meta.reason` on `onOpen` / `onClose`. Members: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). `npm run verify` ran green before the round. One HIGH, from Codex Sol: the active-row report ran in the middle of `open()` and `close()`, so a listener that closed or reopened the widget left the outer transition to finish on a stale popup. Opus 4.8 found every round-one fix resolved and the reason threading complete at all seventeen call sites. The bridge's `on-highlight` mapping stays outside both rounds until the owner rules on it.
+
+- [x] **[HIGH-656] - a listener of the active-row event could leave an open or a close half done**
+  - Symptom: `open()` reported the initial row inside `focusInitial()`, before `onOpened`, `onOpen` and the focus move into the filter input; `close()` reported `undefined` before `onClosed` and `onClose`. A listener that closed the widget during the first, or reopened it during the second, returned into steps that then ran on the wrong popup state; a row click and a filter keystroke whose listener closed the popup went on to activate the row and to report the query change. The committee had ruled that such stale continuations are abandoned (Codex Astra).
+  - Fix: the report is the last step of `open()` and of `close()`: `open()` suspends it from the render to the initial placement and reports once at its tail; `close()` reports after `onClose`. The row click activates nothing and the filter keystroke reports no query change when a listener closed the popup. Docstring, DESIGN.md "Active item change" (order and a Q&A) and `angularjs/API.md` follow. Tests: `test/active-item-change.test.ts`, one per reentrant path.
+  - Verified: `npm run verify` green; round three reads the two tails and the two guards.
+- [x] **[MEDIUM-657] - a mouse clear or a chip removal on an unfocused widget left the widget unfocused**
+  - Symptom: with the `mousedown` rule of round one, a click on the clear button or on a chip's remove button moved no focus at all; on an unfocused filled control the field emptied with no `onFocus`, no later `onBlur`, and no touched flag for the AngularJS form, so a required message gated on `$touched` stayed hidden right after the user emptied the field. The `onFocus` docstring and `angularjs/API.md` still promised the event for a click on the trigger, which contains both buttons.
+  - Fix: both click handlers call the `@internal` protected `focusTriggerIfUnfocused`, which focuses the trigger when no element inside the widget holds focus and moves nothing while the trigger, the filter input or a slot control holds it, as a click inside a native control takes focus. Docstrings, `angularjs/API.md`, A11Y.md, DESIGN.md and the TODO passes say so. Tests: `test/focus-events.test.ts`.
+  - Verified: `npm run verify` green; round three reads the helper and its two callers.
+- [x] **[DOCUMENTATION-658] - the action-rows section still listed `onActiveItemChange` as deferred**
+  - Symptom: the "Deferred" bullet of DESIGN.md "Action rows" named the event while its own section ships it.
+  - Fix: the event dropped from the bullet.
+  - Verified: round three reads the bullet.
+- [x] **[DOCUMENTATION-659] - "follows `aria-activedescendant` exactly" overstated when the active-row event fires**
+  - Symptom: A11Y.md and `angularjs/API.md` said the event follows the attribute exactly; a move between the choose-all row and an action row changes the attribute and fires nothing, and a filter keystroke that swaps the item under index 0 fires while the attribute value stays.
+  - Fix: both texts say the event fires when the item of the row changes under `compareFn`.
+  - Verified: round three reads both sentences against `reportActiveItem`.
+- [x] **[DOCUMENTATION-660] - the `'choose'` value carried a 6:0 it did not have**
+  - Symptom: DESIGN.md "Open and close reasons" gave `'choose'` a 6:0; the record has four members for the word, Sonnet 4.6 for `'pick'` and Codex Astra for `'itemActivate'`, and 6:0 only for "a vetoed pick reports the pick's reason".
+  - Fix: the sentence names the four and the two, and attaches the 6:0 to the vetoed-pick clause.
+  - Verified: round three reads the sentence against `events-committee.md` 3a.
+- [x] **[DOCUMENTATION-661] - the naming log called `closeWithReason` private**
+  - Symptom: the helper is `@internal` protected, for the single select's pick; only `openWithReason` is private.
+  - Fix: the entry says so.
+  - Verified: round three reads the entry against `src/base.ts`.
+- [x] **[DOCUMENTATION-662] - the `track by` sameness claim omitted its fallback**
+  - Symptom: `angularjs/API.md` said the active-row event compares items with the `track by` rule; without a `track by` clause the directive sets no `compareFn`, so sameness is identity and a data reload of equal-valued objects fires.
+  - Fix: the bullet names the fallback.
+  - Verified: round three reads the bullet against `compileLlOptions`.
+- [x] **[DOCUMENTATION-663] - Alt+ArrowUp was attributed to slot controls**
+  - Symptom: the `'escape'` bullet of `LLSelectCloseReason` and DESIGN.md said Escape or Alt+ArrowUp on a slot control; `handleSlotKeydown` handles Escape only, and `getActionFromKey` maps Alt+ArrowUp only on the trigger and the filter input.
+  - Fix: both texts scope the keys.
+  - Verified: round three reads both against the two handlers.
+- [x] **[DOCUMENTATION-664] - the clear-button texts still described the focus loss the `mousedown` rule removed**
+  - Symptom: A11Y.md "Clear button" said a click focuses the button in browsers that focus buttons on click, and the TODO pass expected the browser's focus fixup to drop focus to `<body>` after a clear.
+  - Fix: both texts describe the rule and the trigger focus of MEDIUM-657; the script-focus case stays.
+  - Verified: round three reads both.
+- [x] **[DOCUMENTATION-665] - the committee record's decision list read as contradicting its outcome on the open reason**
+  - Symptom: the D7 line says "deferred" while the outcome paragraph says the open reason shipped; the list states the committee's recommendations, which the record did not say.
+  - Fix: a sentence before the list says each line is the recommendation as put to the owner and the paragraph above is the answer.
+  - Verified: round three reads the sentence.
+- [x] **[QUALITY-666] - the clear-button blur test could not fail**
+  - Symptom: the widget never held focus in the test, so `onBlur` could not fire with or without the fix.
+  - Fix: the test covers the unfocused widget (the trigger takes focus, `onFocus` fires) and the focused open widget (the filter input keeps focus, nothing fires); the chip test gains the unfocused case.
+  - Verified: `npm test` green.
+- [x] **[QUALITY-667] - three reason edge cases had no test**
+  - Symptom: a refused close leaving nothing pending, a reopen inside `onClose` reporting `'api'`, and a subclass `close()` override receiving an internal reason were implemented but not pinned.
+  - Fix: one test in `test/open-close-reason.test.ts` covers the three.
+  - Verified: `npm test` green.
+- [x] **[QUALITY-668] - an ungrammatical comment in the bridge's teardown**
+  - Symptom: "when the scope releases below remove its element" had no coherent subject and verb.
+  - Fix: the comment names `releaseRowScopes` / `releaseTriggerScopes`.
+  - Verified: round three reads it.
+
 ## review (widget focus events: onFocus and onBlur, the AngularJS attributes and the touched flag)
 
 Process: the events committee (`events-committee.md`) settled the design of three event additions and the owner ruled on them one at a time; the first addition, the widget focus events, landed in three commits (core, AngularJS, docs), with three earlier docs-only commits riding along for review (the three-term definitions of DOM focus, the active row and activation, and two wording fixes of the committee record). `npm run verify` ran green before the round. Round one: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). One HIGH, from Codex Sol: the focus return that `close()` now makes before hiding the popup runs trigger focus handlers before the teardown. Opus 4.8 asked the manual pass to name the `document.activeElement` timing a Tab-away close rests on; done in the TODO entry. Round two reviews the fixes below together with the second addition, the active-row event.

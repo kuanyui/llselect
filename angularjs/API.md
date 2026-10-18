@@ -71,7 +71,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 **Event expression** -> `onFocus`. Evaluated once when DOM focus enters the widget, inside a digest.
 
-- Fires when focus comes from outside the widget or from nowhere: Tab onto the trigger, a click on the trigger or on its label, a programmatic `instance().triggerEl.focus()`, or an `instance().open()` on an unfocused widget whose filter is active, which moves focus to the filter input after [`ll-on-open`](#ll-on-open).
+- Fires when focus comes from outside the widget or from nowhere: Tab onto the trigger, a click on the trigger or on its label, a programmatic `instance().triggerEl.focus()`, an `instance().open()` on an unfocused widget whose filter is active, which moves focus to the filter input after [`ll-on-open`](#ll-on-open), or a click on the clear button or on a chip's remove button while the widget holds no focus, which focuses the trigger.
 - Does not fire for a focus move inside the widget, such as the open moving focus from the trigger to the filter input.
 - It is about DOM focus only. The row the arrow keys move inside the popup is the active row; that row never holds DOM focus.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
@@ -93,8 +93,8 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 - The active row is the row of the popup list that the arrow keys move and that `aria-activedescendant` points to. It never holds DOM focus; [`ll-on-focus`](#ll-on-focus) is about DOM focus.
 - `$item` is the item from the [`ll-options`](#ll-options) collection, not the `select as` value. It is `undefined` while the popup is closed, when no item matches the filter, and when the active row is the choose-all row or an action row.
-- Fires on open with the initial row, before [`ll-on-open`](#ll-on-open); on every keyboard move; on a click, before the change it requests; when a filter keystroke or a data reload moves the row; and on close with `undefined`, before [`ll-on-close`](#ll-on-close).
-- Fires only when the item changed, compared with the `track by` rule of [`ll-options`](#ll-options); a row redrawn for the same item is silent. A mouse hover never fires: hovering does not move the active row.
+- Fires on open with the initial row, after [`ll-on-open`](#ll-on-open); on every keyboard move; on a click, before the change it requests; when a filter keystroke or a data reload moves the row; and on close with `undefined`, after [`ll-on-close`](#ll-on-close).
+- Fires only when the item changed, compared with the `track by` rule of [`ll-options`](#ll-options), or by identity without a `track by` clause, so a data reload of equal-valued objects fires then. A row redrawn for the same item is silent. A mouse hover never fires: hovering does not move the active row.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
 
 ```html

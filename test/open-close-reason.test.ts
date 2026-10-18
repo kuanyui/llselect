@@ -138,6 +138,33 @@ test('the first effective close reports its reason; a close() inside onClose is 
   assert.deepEqual(closes, ['disabled'])
 })
 
+test('a refused close leaves no reason behind; a reopen inside onClose reports api; an overriding close() still gets the reason', () => {
+  const { el } = mount()
+  const closes: LLSelectCloseReason[] = []
+  const opens: LLSelectOpenReason[] = []
+  class Probe extends LLSelectSingle<string> {
+    public override close(): void { super.close() }
+  }
+  let reopen = false
+  const sel = new Probe(el, {
+    ariaLabel: 'x',
+    onOpen: (meta) => { opens.push(meta.reason) },
+    onClose: (meta) => { closes.push(meta.reason); if (reopen) { reopen = false; sel.open() } },
+  })
+  sel.setItems(['apple'])
+  sel.setDisabled(true) // closed: the internal close for 'disabled' is refused
+  sel.setDisabled(false)
+  sel.open()
+  sel.close()
+  assert.deepEqual(closes, ['api'], 'the refused close left nothing pending')
+  sel.open()
+  reopen = true
+  key(sel.triggerEl, 'Escape') // the override runs, the reason threads through super.close(); onClose reopens
+  assert.deepEqual(closes, ['api', 'escape'])
+  assert.deepEqual(opens, ['api', 'api', 'api'])
+  assert.equal(sel.isOpened(), true)
+})
+
 test('a refused open() leaves no reason behind: the next open() reports api', () => {
   const { el } = mount()
   const { sel, opens } = logged(el)

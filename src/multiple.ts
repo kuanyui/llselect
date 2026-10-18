@@ -775,6 +775,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       // disabled-blind so the programmatic channel matches native <select>.
       if (this.isDisabled()) { return }
       if (this.isItemEffectivelyDisabled(item)) { return }
+      this.focusTriggerIfUnfocused()
       this.withUserChangeSource(() => this.requestAndToggle(item))
     })
     return btn

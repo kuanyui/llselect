@@ -103,8 +103,8 @@ export interface LLSelectOpenMeta {
  * Why the popup closed: the value of `meta.reason` in {@link LLSelectCloseMeta}.
  * - `'choose'`: a pick in single mode, vetoed or not; a veto stops the
  *   value, not the close.
- * - `'escape'`: Escape or Alt+ArrowUp, on the trigger, on the filter input,
- *   or on a control the app placed in a header / footer slot.
+ * - `'escape'`: Escape or Alt+ArrowUp on the trigger or the filter input,
+ *   and Escape on a control the app placed in a header / footer slot.
  * - `'outside'`: a mousedown or click outside the widget.
  * - `'blur'`: DOM focus left the widget.
  * - `'toggle'`: a click on the trigger, or a `toggle()` call.
@@ -882,9 +882,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   header / footer slot.
    * - Fires once when focus comes from outside the widget or from nowhere:
    *   Tab onto the trigger, a click on the trigger or on the label, a
-   *   programmatic `triggerEl.focus()`, or an `open()` call on an unfocused
+   *   programmatic `triggerEl.focus()`, an `open()` call on an unfocused
    *   widget whose filter is active, which moves focus to the filter input
-   *   after `onOpen`.
+   *   after `onOpen`, or a click on the clear button or on a chip's remove
+   *   button while the widget holds no focus, which focuses the trigger.
    * - Does not fire for a move inside the widget, such as `open()` moving
    *   focus from the trigger to the filter input.
    * - Has no link to the active row, the row the arrow keys move inside the
@@ -921,11 +922,15 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - `item` is the item of the new active row, or `undefined` when no item
    *   row is active: the popup is closed, no item matches the filter, or the
    *   active row is the choose-all row or an action row.
-   * - Fires on open with the initial row, before {@link onOpen}; on every
+   * - Fires on open with the initial row, after {@link onOpen}; on every
    *   arrow, page, Home / End and typeahead move; on a click, before the
    *   change it requests; when a filter keystroke, `setItems()`, `rerender()`
    *   or a chosen-state re-render moves the row; and on close with
-   *   `undefined`, before {@link onClose}.
+   *   `undefined`, after {@link onClose}.
+   * - A listener may close or reopen the widget. The report is the last step
+   *   of `open()` and of `close()`, so that nested transition runs after the
+   *   outer one completed. A click or a filter keystroke whose listener closed
+   *   the popup activates nothing and reports no query change.
    * - Fires only when the item changed under `compareFn`. A row rebuilt in
    *   place for the same item does not fire, and a move between the
    *   choose-all row and an action row does not fire either: both are "no
@@ -1405,6 +1410,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private focusedRow: FocusedRingRow | null = null
   /** The last item reported to `onActiveItemChange`, or none; see `reportActiveItem`. */
   private reportedActiveItem: { active: true; item: T } | { active: false } = { active: false }
+  /** True while `open()` renders and places the initial row; its tail reports once instead. */
+  private activeItemReportSuspended = false
   /** The rendered action rows of the current render, in array order; empty while closed. Never part of `itemEls`. */
   private leadingActionRowEls: HTMLElement[] = []
   private trailingActionRowEls: HTMLElement[] = []
@@ -1829,17 +1836,23 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     }
     this.renderTriggerArrow()
     // Start from no active row: a `setFocusedIndex` made while closed must
-    // not be reported as the initial row before `focusInitial` places it.
+    // not be reported as the initial row before `focusInitial` places it;
+    // the report itself waits for the tail of this method.
     this.focusedRow = null
     this.focusedIndex = -1
-    this.renderPopupList()
-    this.positioner = createPositioner(this.triggerEl, this.popupEl, {
-      onHide: () => this.closeWithReason('hidden'),
-      widthPolicy: this.settings.popupWidthPolicy,
-      innerScrollEl: this.popupListEl,
-    })
-    this.attachOutsideClick()
-    this.focusInitial()
+    this.activeItemReportSuspended = true
+    try {
+      this.renderPopupList()
+      this.positioner = createPositioner(this.triggerEl, this.popupEl, {
+        onHide: () => this.closeWithReason('hidden'),
+        widthPolicy: this.settings.popupWidthPolicy,
+        innerScrollEl: this.popupListEl,
+      })
+      this.attachOutsideClick()
+      this.focusInitial()
+    } finally {
+      this.activeItemReportSuspended = false
+    }
     this.onOpened()
     const onOpen = this.settings.onOpen
     onOpen?.({ reason })
@@ -1847,6 +1860,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.filterInputEl.focus({ preventScroll: true })
     }
     restoreWindowScroll()
+    // Last, so a listener that closes the widget does so after this open
+    // completed, with no step above left to run on a closed popup.
+    this.reportActiveItem()
   }
 
   /**
@@ -1927,11 +1943,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.trailingActionRowEls = []
     this.focusedRow = null
     this.comboboxEl.removeAttribute('aria-activedescendant')
-    this.reportActiveItem()
     this.renderTriggerArrow()
     this.onClosed()
     const onClose = this.settings.onClose
     onClose?.({ reason })
+    // Last, so a listener that reopens the widget does so after this close
+    // completed, with no step above left to run on an open popup.
+    this.reportActiveItem()
   }
 
   /** `open()` with a stated reason; see `pendingOpenReason`. */
@@ -2720,6 +2738,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         // on the previous keyboard-focused item while a different one was
         // just clicked.
         this.setFocusedIndex(index)
+        // The move reports the active item; a listener may close the widget,
+        // and a click on a popup that closed under it activates nothing.
+        if (!this.opened) { return }
         this.withUserChangeSource(() => this.onPopupListItemActivated(item))
       })
     }
@@ -3314,6 +3335,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * baseline.
    */
   private reportActiveItem(): void {
+    if (this.activeItemReportSuspended) { return }
     const next = this.resolveActiveItem()
     const last = this.reportedActiveItem
     if (!next.active && !last.active) { return }
@@ -3709,6 +3731,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // setters still work), and the clear button is
       // reachable while closed - open() and keydown are already guarded.
       if (this.isDisabled()) { return }
+      this.focusTriggerIfUnfocused()
       this.withUserChangeSource(() => this.clearSelection())
     })
     return btn
@@ -3751,6 +3774,22 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /** Whether DOM focus is on `el` or inside it (see `focusedElementIn`). */
   private isFocused(el: Element): boolean {
     return this.focusedElementIn(el) !== null
+  }
+
+  /**
+   * Give the trigger DOM focus when no element inside the widget holds it.
+   * - For the click of the clear button and of a chip's remove button: their
+   *   `mousedown` keeps focus where it is, so a click on an unfocused widget
+   *   would otherwise leave it unfocused, with no `onFocus` and no later
+   *   `onBlur` for a form's touched state. A native control takes focus on a
+   *   click inside it.
+   * - While the trigger, the filter input or a slot control holds focus,
+   *   nothing moves.
+   * @internal
+   */
+  protected focusTriggerIfUnfocused(): void {
+    if (this.isFocused(this.rootEl)) { return }
+    this.triggerEl.focus({ preventScroll: true })
   }
 
   /**
@@ -3973,6 +4012,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.focusedRow = null
     this.focusedIndex = this.findNextEnabledIndex(0, 1, this.getVisibleItems())
     this.renderPopupList()
+    // The render reports the active item; a listener may close the widget,
+    // which resets the query, so there is no change left to report.
+    if (!this.opened) { return }
     if (changed) {
       const onFilterQueryChange = this.settings.onFilterQueryChange
       onFilterQueryChange?.(next)
