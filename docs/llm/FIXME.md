@@ -2,9 +2,18 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (events, round eleven: a citation)
+
+Process: round eleven, on the round-ten fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All three found DOCUMENTATION-702 resolved. Opus 4.8 found one citation pointing at the wrong ui-select file. Two log-wording findings from Opus 5, fixed alongside: an Up press also repairs ui-select's out-of-range index, named now in the DOCUMENTATION-701 entry and the round-ten Process; and the round-nine Process repeated the reviewers' `select()` re-point claim as if settled, now marked as the claim round ten qualified.
+
+- [x] **[DOCUMENTATION-703] - `angularjs/DESIGN.md` cited the choices directive for a fact that lives in the controller**
+  - Symptom: the sentence on the bridge's click difference cited `uiSelectChoicesDirective.js` for both the row's `click` and "`on-highlight` runs only from `isActive`"; `isActive` lives in `uiSelectController.js`.
+  - Fix: one citation per fact.
+  - Verified: round twelve reads the sentence against both files.
+
 ## review (events, round ten: the post-click re-point)
 
-Process: round ten, on the round-nine fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All three found the reload and the click facts resolved; Opus 5 and Codex Sol found the clause on ui-select's post-click re-point stated without its conditions. Two log-wording findings, fixed alongside: "the next open or keystroke" in DOCUMENTATION-701, where only a search keystroke or the open repairs an out-of-range index, and its Q, which named a round instead of asking about the judgement.
+Process: round ten, on the round-nine fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All three found the reload and the click facts resolved; Opus 5 and Codex Sol found the clause on ui-select's post-click re-point stated without its conditions. Two log-wording findings, fixed alongside: "the next open or keystroke" in DOCUMENTATION-701, where a search keystroke, the open or an Up press repairs an out-of-range index, and its Q, which named a round instead of asking about the judgement.
 
 - [x] **[DOCUMENTATION-702] - the post-click re-point of ui-select's index was stated without its conditions**
   - Symptom: `angularjs/DESIGN.md`, `docs/llm/DESIGN.md` and the DOCUMENTATION-701 entry said `select()` re-points the index to the chosen item afterwards; `_resetSearchInput` does so only in single mode with `resetSearchInput` on, `select()`'s call precedes the `uis:select` that sets `selected`, so the re-point that sees the chosen item is `close()`'s, which `close-on-select="false"` skips.
@@ -13,10 +22,10 @@ Process: round ten, on the round-nine fix commit: Opus 5, Opus 4.8 and Codex Sol
 
 ## review (events, round nine: the reload and the click in ui-select)
 
-Process: round nine, on the round-eight fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All three found DOCUMENTATION-699 and LINT-700 resolved; all three found the round-eight sentence on ui-select's row moves wrong on the reload, which Opus 4.8 placed in the log entry and the other two in the shipped texts too, and Opus 5 and Codex Sol found "never moves on a row click" overshooting, since `select()` re-points the index to the chosen item afterwards. The DOCUMENTATION-698 entry misstated the code, so it was corrected rather than left as wording.
+Process: round nine, on the round-eight fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All three found DOCUMENTATION-699 and LINT-700 resolved; all three found the round-eight sentence on ui-select's row moves wrong on the reload, which Opus 4.8 placed in the log entry and the other two in the shipped texts too, and Opus 5 and Codex Sol found "never moves on a row click" overshooting, since `select()` re-points the index to the chosen item afterwards, a claim round ten then qualified (DOCUMENTATION-702). The DOCUMENTATION-698 entry misstated the code, so it was corrected rather than left as wording.
 
 - [x] **[DOCUMENTATION-701] - the round-eight sentence counted a reload among ui-select's row moves, and "never on a row click" overshot**
-  - Symptom: ui-select's reload path (`$watchCollection`, `refreshItems`) writes no `activeIndex`; its only clamp sits in `activate`, on the open, so a shorter reloaded list leaves nothing highlighted until the next open or search keystroke, where llselect clamps backward. A row click runs no `on-highlight` for the clicked row, since the expression runs only from `isActive`; whether the index moves to the chosen item afterwards is `close()`'s and `_resetSearchInput`'s business, single mode with `resetSearchInput` on, not the click's.
+  - Symptom: ui-select's reload path (`$watchCollection`, `refreshItems`) writes no `activeIndex`; its only clamp sits in `activate`, on the open, so a shorter reloaded list leaves nothing highlighted until the next open, search keystroke or Up press, where llselect clamps backward. A row click runs no `on-highlight` for the clicked row, since the expression runs only from `isActive`; whether the index moves to the chosen item afterwards is `close()`'s and `_resetSearchInput`'s business, single mode with `resetSearchInput` on, not the click's.
   - Fix: the bridge comment, the `angularjs/API.md` row and note, `angularjs/DESIGN.md` and `docs/llm/DESIGN.md` say ui-select re-points its row on the open and on a search keystroke, keeps the index on a reload, and runs nothing for a clicked row before the selection; the DOCUMENTATION-698 entry says the same.
   - Verified: round ten reads the five texts against `uiSelectController.js` (`_resetSearchInput`, `activate`, `select`, `refreshItems`) and `uiSelectChoicesDirective.js`.
   - Q: Why is a reload not among ui-select's re-point events, when the bridge fires `on-highlight` on a reload?
