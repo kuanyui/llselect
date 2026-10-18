@@ -2,6 +2,33 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (events, round five: the lifecycle checks of the clear and chip clicks, and the bridge's on-highlight)
+
+Process: round five, on the round-four fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). Opus 4.8 found all six round-four entries resolved; Opus 5 and Codex Sol found two of them with a hole each and raised a destroy case both had named. The fixes below land together with the owner's ruling on the bridge's `on-highlight` mapping (D5 "A"), whose note in `angularjs/API.md` the owner asked for: ui-select's two senses of "highlight" and why the bridge keeps the attribute name. Round six reviews both.
+
+- [x] **[MEDIUM-684] - the clear and chip clicks still mutated after an `onFocus` listener destroyed the widget**
+  - Symptom: `destroy()` leaves `disabled` false and the chosen items in place, so the narrow re-checks of MEDIUM-679 passed and `clearSelection` or `requestAndToggle` fired `onBeforeChange` and `onChange` on a torn-down instance and rendered into detached DOM. The stamp of round three had covered this case.
+  - Fix: an `@internal` protected `destroyed` flag, set first in `destroy()`, that both clicks check after the focus step.
+  - Verified: `npm test` green with a destroying listener; round six reads the flag and both handlers.
+- [x] **[MEDIUM-685] - the chip click judged the item by the click's object, not by the chosen entry a reload may have swapped in**
+  - Symptom: an `onFocus` listener that reloaded the items with a compare-equal object that is now disabled left the handler checking the old object, so the x removed a chosen item the A11Y contract calls inert.
+  - Fix: the handler resolves the chosen entry under `compareFn` after the focus step, returns when none or a disabled one is found, and toggles that entry.
+  - Verified: `npm test` green with the reload; round six reads the handler.
+- [x] **[MEDIUM-686] - the filter gate let an emptied query report after a close**
+  - Symptom: a backspace to empty or an Esc-clear sets `next` to `''`; a listener that closed the popup reset the query to `''` too, so `this.query !== next` passed and `onFilterQueryChange('')` fired on the closed widget.
+  - Fix: the gate also requires the popup to be open.
+  - Verified: `npm test` green with an Esc-clear and a closing listener; round six reads the gate.
+  - Q: Why not an open-cycle revision, as Codex Sol asked, for a close followed by a reopen under the same emptying keystroke?
+    - A: Because the reopen leaves the query empty as well, so the `''` the keystroke reports is true as it stands, and a third counter would exist for that one report; the open check answers the plain close, which is the case that reported a stale state.
+- [x] **[DOCUMENTATION-687] - the Q&A's list of narrow checks lacked the destroy and current-entry checks**
+  - Symptom: DESIGN.md "Active item change" named the disabled and removed cases only.
+  - Fix: the Q&A names the destroy check, the current chosen entry, and the emptied-query case with Codex Sol's open-cycle ask.
+  - Verified: round six reads the Q&A against the handlers.
+- [x] **[LINT-688] - the stamp docstrings led with a fragment, combined facts, and dropped the chip's control check**
+  - Symptom: `stateMovedSince` opened with "Whether ..." and packed the three other paths into one bullet, where the chip's control-enabled check was missing; `captureStateStamp`'s first bullet carried three facts.
+  - Fix: a verb in the lead, one fact per bullet, the chip bullet complete.
+  - Verified: round six reads both.
+
 ## review (events, round four: the stamp narrowed to the row clicks)
 
 Process: round four, on the round-three fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All nine round-three entries resolved for all three members. Opus 5 found the stamp over-broad on two paths, which this round narrows; Codex Sol found its own recorded position thinned, which Opus 5 and Opus 4.8 also flagged; no runtime defect from Opus 4.8 or Codex Sol. Two log-wording findings, fixed alongside: the QUALITY-673 symptom named a bare re-entered `open()`, which the `opened` guard stops, and the MEDIUM-670 fix line said five paths and listed six.
