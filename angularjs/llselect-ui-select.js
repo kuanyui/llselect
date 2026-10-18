@@ -189,10 +189,11 @@
     // once per digest while the row is active. Here the core's
     // onActiveItemChange drives it: once per change, with the repeat locals
     // and $select, for item rows only, whatever moved the row (the open, a
-    // key, a filter keystroke, a reload, an item click). ui-select moves its
-    // row on the same events except the click: its click selects without
-    // moving the row. Neither widget moves it on hover (ui-select dropped
-    // its mouseenter in 0.13.0; its hover is CSS).
+    // key, a filter keystroke, a reload, an item click). ui-select re-points
+    // its row on the open and on a search keystroke, keeps the index on a
+    // reload, and runs nothing for a clicked row before the selection.
+    // Neither widget moves the row on hover (ui-select dropped its mouseenter
+    // in 0.13.0; its hover is CSS).
     var onHighlightFn = choicesAttrs['on-highlight'] ? $parse(choicesAttrs['on-highlight']) : null
 
     function locals(item) {

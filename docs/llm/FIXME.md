@@ -2,13 +2,24 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (events, round nine: the reload and the click in ui-select)
+
+Process: round nine, on the round-eight fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All three found DOCUMENTATION-699 and LINT-700 resolved; all three found the round-eight sentence on ui-select's row moves wrong on the reload, which Opus 4.8 placed in the log entry and the other two in the shipped texts too, and Opus 5 and Codex Sol found "never moves on a row click" overshooting, since `select()` re-points the index to the chosen item afterwards. The DOCUMENTATION-698 entry misstated the code, so it was corrected rather than left as wording.
+
+- [x] **[DOCUMENTATION-701] - the round-eight sentence counted a reload among ui-select's row moves, and "never on a row click" overshot**
+  - Symptom: ui-select's reload path (`$watchCollection`, `refreshItems`) writes no `activeIndex`; its only clamp sits in `activate`, on the open, so a shorter reloaded list leaves nothing highlighted until the next open or keystroke, where llselect clamps backward. `select()` and `close()` call `_resetSearchInput`, which re-points the index to the chosen item, so a row click does move it, only afterwards; what is absent is the `on-highlight` run for the clicked row before the selection.
+  - Fix: the bridge comment, the `angularjs/API.md` row and note, `angularjs/DESIGN.md` and `docs/llm/DESIGN.md` say ui-select re-points its row on the open and on a search keystroke, keeps the index on a reload, and runs nothing for a clicked row before the selection; the DOCUMENTATION-698 entry says the same.
+  - Verified: round ten reads the five texts against `uiSelectController.js` (`_resetSearchInput`, `activate`, `select`, `refreshItems`) and `uiSelectChoicesDirective.js`.
+  - Q: Why did round eight's text name a reload among ui-select's re-point events?
+    - A: Because llselect's own reload clamp, in `renderPopupList`, was read into ui-select; the bridge fires `on-highlight` on a reload because llselect's row moved, not because ui-select's would have.
+
 ## review (events, round eight: the last ui-select facts)
 
 Process: round eight, on the round-seven fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All three found QUALITY-696 and LINT-697 resolved, and the click fact of DOCUMENTATION-695 right; all three found the sentence that carried it overshooting the other way.
 
 - [x] **[DOCUMENTATION-698] - "ui-select moves its row by keyboard only" was false**
-  - Symptom: the bridge comment, the `angularjs/API.md` note and `docs/llm/DESIGN.md` narrowed ui-select's row moves to the keyboard; `REFS/ui-select-0.19.8` re-points `activeIndex` on the open (`uiSelectController.js`, `_resetSearchInput`), on every `$select.search` change (`uiSelectChoicesDirective.js`) and on a reload clamp. Only the row click and the hover leave it alone.
-  - Fix: the three texts say ui-select moves its row on the same events except the click, which selects without moving it.
+  - Symptom: the bridge comment, the `angularjs/API.md` note and `docs/llm/DESIGN.md` narrowed ui-select's row moves to the keyboard; `REFS/ui-select-0.19.8` re-points `activeIndex` on the open (`uiSelectController.js`, `_resetSearchInput`) and on every `$select.search` change (`uiSelectChoicesDirective.js`); a reload keeps the index, the row click runs nothing for the clicked row, and the hover is CSS.
+  - Fix: the three texts say ui-select re-points its row on the open and on a search keystroke, keeps the index on a reload, and runs nothing for a clicked row before the selection.
   - Verified: round nine reads the three texts against the reference copy.
 - [x] **[DOCUMENTATION-699] - a stale count**
   - Symptom: the "Not supported" bullet of `angularjs/API.md` still pointed to "its two differences" while the row names three.
