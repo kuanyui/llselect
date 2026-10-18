@@ -28,13 +28,16 @@ Attributes of both `<llselect-single>` and `<llselect-multiple>`. Every entry op
 - **Expression**: `$eval`'d against the scope ONCE at link time. llselect resolves its settings bag once at construction, so a later scope change does not move them; only the method-backed [`ll-disabled`](#ll-disabled) is watched (see the [Gotchas](README.md#gotchas)). String values need their own quotes: `ll-placeholder="'Pick one'"`.
 - **Literal**: plain attribute text.
 - **Flag**: acts by presence alone.
-- **Event expression**: evaluated on EACH event, inside a digest, like `ng-click`. Only [`ll-on-open`](#ll-on-open) / [`ll-on-close`](#ll-on-close) / [`ll-on-filter-query-change`](#ll-on-filter-query-change) / [`ll-on-before-change`](#ll-on-before-change).
+- **Event expression**: evaluated on EACH event, inside a digest, like `ng-click`. Only [`ll-on-open`](#ll-on-open) / [`ll-on-close`](#ll-on-close) / [`ll-on-focus`](#ll-on-focus) / [`ll-on-blur`](#ll-on-blur) / [`ll-on-filter-query-change`](#ll-on-filter-query-change) / [`ll-on-before-change`](#ll-on-before-change).
 
 App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` / `uiTranslationPack` are set once via [`llselectConfigProvider`](#llselectconfigprovider); a per-element attribute always wins.
 
 ### `ng-model`
 
 **Expression**, required. The chosen item on `<llselect-single>`; the array of chosen items on `<llselect-multiple>`. With `select as` in [`ll-options`](#ll-options), the projected value(s) instead.
+
+- `$touched` turns true, and the `ng-touched` class replaces `ng-untouched`, when DOM focus leaves the widget, as on a native control. A focus move inside the widget, such as the open moving focus from the trigger to the filter input, does not count. Validation messages gated on `$touched` show from then on.
+- Removing the element while it holds focus, for example through `ng-if`, does not touch the control.
 
 ### `ng-change`
 
@@ -59,6 +62,26 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 - Same rules as [`ll-on-open`](#ll-on-open).
 - It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and AngularJS broadcasts `$destroy` before disabling the scope.
 - In that teardown case, writes to parent-owned state (`vm.*`, a service) persist; writes to the dying child scope itself are lost with it.
+
+### `ll-on-focus`
+
+**Event expression** -> `onFocus`. Evaluated once when DOM focus enters the widget, inside a digest.
+
+- Fires when focus comes from outside the widget or from nowhere: Tab onto the trigger, a click on the trigger or on its label, a programmatic `instance().triggerEl.focus()`.
+- Does not fire for a focus move inside the widget, such as the open moving focus from the trigger to the filter input.
+- It is about DOM focus only. The row the arrow keys move inside the popup is the active row; that row never holds DOM focus.
+- Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
+
+### `ll-on-blur`
+
+**Event expression** -> `onBlur`. Evaluated once when DOM focus leaves the widget, inside a digest.
+
+- Fires when focus moves to an element outside the widget or to nowhere: Tab away, a click outside, a click on a non-focusable area.
+- Does not fire for a focus move inside the widget.
+- The directive marks the control touched first, in the same digest, so the expression already sees `$touched === true` (see [`ng-model`](#ng-model)).
+- When focus leaving closes the popup, [`ll-on-close`](#ll-on-close) runs first; `instance().isOpened()` is already `false` here.
+- Does not fire for the teardown that destroying the element runs, nor for `setDisabled(true)`: neither moves focus.
+- Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
 
 ### `ll-on-filter-query-change`
 
@@ -540,6 +563,7 @@ Migrating a call site, at a glance:
 - It always renders the chevron - every ui-select theme has a caret, so a bare trigger would read as broken.
 - From [`llselectConfigProvider`](#llselectconfigprovider) it takes the two keys ui-select's markup has no word for: `uiTranslationPack` and `popupWidthPolicy`. The other three follow ui-select: the caret is always rendered (`arrow`), `search-enabled` is ui-select's word for `filterable`, and `highlight` is the row template's own `| highlight:` filter.
 - It publishes a controller under `uiLlselect` with `instance()`, the same door as the two llselect directives, so [Reaching the instance from your own directive](#reaching-the-instance-from-your-own-directive) and [Switching the UI language at runtime](#switching-the-ui-language-at-runtime) cover it.
+- `$touched` turns true when DOM focus leaves the widget, as on the two llselect directives (see [`ng-model`](#ng-model)). ui-select's markup has no attribute for the blur itself, and none is added.
 - How the bridge is built, and why it is not a full ui-select reimplementation: [the README](README.md#the-ui-select-bridge), [`DESIGN.md`](DESIGN.md#the-ui-select-bridge) and [`SPEC.md`](SPEC.md).
 
 ### What carries over

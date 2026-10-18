@@ -226,6 +226,7 @@
     if (attrs.llPopupListTrailingRowsPinned) { settings.popupListTrailingRowsPinned = scope.$eval(attrs.llPopupListTrailingRowsPinned) }
     wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler)
     wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler)
+    wireEventAttr(scope, attrs, 'llOnFocus', settings, 'onFocus', exceptionHandler)
     wireEventAttr(scope, attrs, 'llOnFilterQueryChange', settings, 'onFilterQueryChange', exceptionHandler, function (query) { return { $query: query } })
 
     settings.createTriggerArrowContentElFn = resolveArrow(arrow)
@@ -233,7 +234,8 @@
   }
 
   /**
-   * ll-on-open / ll-on-close / ll-on-filter-query-change / ll-on-before-change: an event
+   * ll-on-open / ll-on-close / ll-on-focus / ll-on-filter-query-change /
+   * ll-on-before-change (ll-on-blur: wireBlurAttr): an event
    * expression, evaluated on EACH event
    * (like ng-click), not once at link like the other ll-* attributes. llselect
    * fires these callbacks from its own pointer / keyboard handlers, outside
@@ -256,6 +258,31 @@
       var locals = toLocals ? toLocals.apply(null, arguments) : undefined
       if (!scope.$root.$$phase) { scope.$apply(function () { scope.$eval(expr, locals) }); return }
       try { scope.$eval(expr, locals) } catch (e) { exceptionHandler(e) }
+    }
+  }
+
+  /**
+   * ll-on-blur, plus the ngModel touched flag. The core fires onBlur once
+   * when DOM focus leaves the whole widget, never for a move inside it. Mark
+   * the control touched first, as ngModel does on a native control's blur
+   * (ngModel.js, the `blur` listener: `ng-touched` replaces `ng-untouched`),
+   * then evaluate ll-on-blur, both in ONE digest with wireEventAttr's phase
+   * check, so the expression already sees `$touched`. ngModel defers its own
+   * $setTouched with $evalAsync inside a digest; here the flag is set in
+   * place, since the expression runs in the same turn anyway. Never on
+   * destroy: the core detaches its focus listeners before anything else in
+   * destroy(), so no onBlur reaches here.
+   */
+  function wireBlurAttr(scope, attrs, settings, ngModelCtrl, exceptionHandler) {
+    var expr = attrs.llOnBlur
+    settings.onBlur = function () {
+      if (ngModelCtrl.$touched && !expr) { return }
+      var run = function () {
+        ngModelCtrl.$setTouched()
+        if (expr) { scope.$eval(expr) }
+      }
+      if (!scope.$root.$$phase) { scope.$apply(run); return }
+      try { run() } catch (e) { exceptionHandler(e) }
     }
   }
 
@@ -442,6 +469,7 @@
           var ngModelCtrl = ctrls[0]
           var parsed = compileLlOptions($parse, attrs.llOptions)
           var settings = commonSettings(scope, attrs, parsed, llselectConfig, $exceptionHandler, function () { return sel })
+          wireBlurAttr(scope, attrs, settings, ngModelCtrl, $exceptionHandler)
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
           if (resolveHighlight(scope, attrs, llselectConfig, settings)) {
@@ -502,6 +530,7 @@
           var ngModelCtrl = ctrls[0]
           var parsed = compileLlOptions($parse, attrs.llOptions)
           var settings = commonSettings(scope, attrs, parsed, llselectConfig, $exceptionHandler, function () { return sel })
+          wireBlurAttr(scope, attrs, settings, ngModelCtrl, $exceptionHandler)
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
           if (attrs.llTriggerDisplay) { settings.triggerDisplay = evalEnumAttr(scope, attrs, 'llTriggerDisplay') }
