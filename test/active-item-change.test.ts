@@ -122,6 +122,23 @@ test('a click whose listener re-rendered the widget or changed the value activat
   assert.equal(sel.getChosenItem(), 'a', 'the listener\'s value stands; the click did not override it')
 })
 
+test('a filter keystroke whose listener re-rendered the widget still reports the query change, since the query stands', () => {
+  const log: string[] = []
+  const sel = new LLSelectSingle<string>(mount(), {
+    ariaLabel: 'x',
+    filterable: true,
+    onActiveItemChange: (item) => { log.push(show(item)); if (item === 'banana') { sel.rerender() } },
+    onFilterQueryChange: (query) => { log.push(`query:${query}`) },
+  })
+  sel.setItems(['apple', 'banana'])
+  sel.open()
+  const input = sel.popupEl.querySelector('input')!
+  input.value = 'b'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.deepEqual(log, ['active:apple', 'active:banana', 'query:b'])
+  assert.equal(sel.getFilterQuery(), 'b')
+})
+
 test('a click whose listener closed the popup activates nothing; a filter keystroke whose listener closed it reports no query change', () => {
   const log: string[] = []
   const sel = new LLSelectSingle<string>(mount(), {

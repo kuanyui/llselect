@@ -775,11 +775,12 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       // disabled-blind so the programmatic channel matches native <select>.
       if (this.isDisabled()) { return }
       if (this.isItemEffectivelyDisabled(item)) { return }
-      const stamp = this.captureStateStamp()
       this.focusTriggerIfUnfocused()
-      // The focus may run onFocus; a listener that disabled, closed, rebuilt
-      // or changed the widget leaves nothing for this click to remove.
-      if (this.isDisabled() || this.isItemEffectivelyDisabled(item) || this.stateMovedSince(stamp)) { return }
+      // The focus may run onFocus; a listener that disabled the control or
+      // the item, or removed the item, leaves nothing for this click to
+      // remove, and a toggle would add the removed item back. One that opened
+      // the popup or loaded items does not stop the removal.
+      if (this.isDisabled() || this.isItemEffectivelyDisabled(item) || !this.isChosen(item)) { return }
       this.withUserChangeSource(() => this.requestAndToggle(item))
     })
     return btn
