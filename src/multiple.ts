@@ -775,7 +775,11 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       // disabled-blind so the programmatic channel matches native <select>.
       if (this.isDisabled()) { return }
       if (this.isItemEffectivelyDisabled(item)) { return }
+      const stamp = this.captureStateStamp()
       this.focusTriggerIfUnfocused()
+      // The focus may run onFocus; a listener that disabled, closed, rebuilt
+      // or changed the widget leaves nothing for this click to remove.
+      if (this.isDisabled() || this.isItemEffectivelyDisabled(item) || this.stateMovedSince(stamp)) { return }
       this.withUserChangeSource(() => this.requestAndToggle(item))
     })
     return btn
@@ -916,8 +920,10 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       el.appendChild(content)
     }
     el.addEventListener('click', () => {
-      // Focus-then-activate, mirroring the item click wiring.
+      // Focus-then-activate, mirroring the item click wiring, guard included.
+      const stamp = this.captureStateStamp()
       this.focusChooseAllRow()
+      if (this.stateMovedSince(stamp)) { return }
       this.withUserChangeSource(() => this.onChooseAllRowActivated())
     })
     return el
