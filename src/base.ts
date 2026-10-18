@@ -1362,6 +1362,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected focusedIndex = -1
   /** Control-level disabled state (whole select); toggled via `setDisabled`. */
   private disabled = false
+  /**
+   * True from `destroy()` on. The clear button's and the chip remove button's
+   * clicks check it after their focus step, since an `onFocus` listener may
+   * destroy the widget there.
+   * @internal
+   */
+  protected destroyed = false
   /** The latest decision; see `getColorScheme()`. */
   private resolvedColorScheme: 'light' | 'dark' = 'light'
   /** True from construction until the first decision ran (batched into a microtask, see color-scheme.ts). */
@@ -2046,6 +2053,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // First: the close() below and the replaceChildren() at the end can move
     // focus, and no parting focusout may reach onBlur (A11Y.md "Focus").
     this.detachFocusListeners()
+    this.destroyed = true
     this.transitionGeneration++
     this.closeWithReason('destroy')
     if (this.settings.labelEl !== null) {
@@ -3750,10 +3758,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // reachable while closed - open() and keydown are already guarded.
       if (this.isDisabled()) { return }
       this.focusTriggerIfUnfocused()
-      // The focus may run onFocus; a listener that disabled the control
-      // leaves nothing for this click to clear. One that opened the popup or
-      // loaded items does not change what a clear means.
-      if (this.isDisabled()) { return }
+      // The focus may run onFocus; a listener that disabled or destroyed the
+      // control leaves nothing for this click to clear. One that opened the
+      // popup or loaded items does not change what a clear means.
+      if (this.destroyed || this.isDisabled()) { return }
       this.withUserChangeSource(() => this.clearSelection())
     })
     return btn
@@ -3816,11 +3824,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Take the stamp a row click compares after its active-row move.
-   * - The three row clicks call it, for an item row, the choose-all row and
-   *   an action row, right before `setFocusedIndex`, `focusChooseAllRow` or
+   * - The three row clicks call it: the item row, the choose-all row, the
+   *   action row.
+   * - They call it right before `setFocusedIndex`, `focusChooseAllRow` or
    *   `focusActionRow`, whose report runs the app's `onActiveItemChange`.
    * - Returns the transition generation and the change revision as they
-   *   stand; {@link stateMovedSince} reads them back.
+   *   stand.
+   * - {@link stateMovedSince} reads them back.
    * @internal
    */
   protected captureStateStamp(): { generation: number; revision: number } {
@@ -3828,16 +3838,19 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Whether a listener moved the widget since `stamp` was taken.
-   * - The three row clicks call it after their active-row move; `stamp` is
-   *   what {@link captureStateStamp} returned before that move.
+   * Returns whether a listener moved the widget since `stamp` was taken.
+   * - The three row clicks call it after their active-row move.
+   * - `stamp` is what {@link captureStateStamp} returned before that move.
    * - True after an open, a close, a `rerender()`, a `destroy()`, a
-   *   `setItems()` or a chosen-state change. The click then activates
-   *   nothing: the row it meant belongs to a popup state that is gone.
-   * - The other user paths re-check the one thing they need instead: the
-   *   filter keystroke that its query still stands, the clear button that
-   *   the control is enabled, the chip remove button that the item is still
-   *   chosen and enabled.
+   *   `setItems()` or a chosen-state change.
+   * - The click then activates nothing: the row it meant belongs to a popup
+   *   state that is gone.
+   * - The other user paths re-check the one thing they need instead.
+   * - The filter keystroke: the popup is open and its query still stands.
+   * - The clear button: the control is enabled and not destroyed.
+   * - The chip remove button: the control is enabled and not destroyed, and
+   *   the item is still chosen and enabled, read from the chosen entry as it
+   *   stands now.
    * @internal
    */
   protected stateMovedSince(stamp: { generation: number; revision: number }): boolean {
@@ -4065,10 +4078,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.focusedIndex = this.findNextEnabledIndex(0, 1, this.getVisibleItems())
     this.renderPopupList()
     // The render reports the active item; a listener that closed the widget
-    // reset the query, so no change of this keystroke is left to report. A
+    // reset the query, so no change of this keystroke is left to report: the
+    // popup is closed, or the reset text differs from the typed one. A
     // rebuild or a value change under it keeps the query, which the app must
     // still hear.
-    if (this.query !== next) { return }
+    if (!this.opened || this.query !== next) { return }
     if (changed) {
       const onFilterQueryChange = this.settings.onFilterQueryChange
       onFilterQueryChange?.(next)
