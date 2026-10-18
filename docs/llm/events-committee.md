@@ -19,7 +19,7 @@ Agent-facing record of the committee convened on three event-API additions that 
 - `onOpen` fires before the filter input receives focus, so `document.activeElement` inside `onOpen` is still the trigger (Sonnet 4.6).
 - `close()` resets the active row by direct assignment, bypassing `setFocusedIndex`, `focusChooseAllRow` and `focusActionRow`; a re-render can clamp or clear the active row too (Opus 5, Sonnet 5, Codex Sol).
 - `naming-conventions.md` rules "focused" as the identifier wording for the keyboard-active option and reserves "highlight" for query-match marking, so Q1a and Q2d amend the naming log; `onHighlightChange` was never open (Opus 5, Sonnet 5, Codex Sol).
-- ui-select's `on-highlight` is unsupported by the bridge because it takes a row scope; ui-select evaluates it from `isActive` in the row's scope during digests, not as a change notification (Opus 5, Codex Astra).
+- ui-select's `on-highlight` is unsupported by the bridge because it takes a row scope; ui-select evaluates it from `isActive` in the row's scope during digests, not as a change notification (Opus 5, Codex Astra). Mapped since, by the owner's D5 ruling; the "no hover" difference the members named rested on a wrong premise about ui-select, corrected in review round six (DESIGN.md "Active item change").
 - `ng-change` is not strictly user-only: the directives suppress the write-back for their own model writes, and an unsuppressed `instance()` setter call reaches `$setViewValue` (Codex Astra). To verify; `angularjs/API.md` says otherwise.
 - Settings are frozen by convention, with the `placeholder` and `uiTranslationPack` exceptions; the pack's message functions get `this` (Codex Astra, Codex Sol). Not material here.
 

@@ -172,7 +172,7 @@
     }
   }
 
-  function link(scope, element, attrs, ngModelCtrl, apiCtrl, slots, $parse, $compile, $rootScope, isMultiple, llselectConfig) {
+  function link(scope, element, attrs, ngModelCtrl, apiCtrl, slots, $parse, $compile, $rootScope, isMultiple, llselectConfig, $exceptionHandler) {
     var repeat = parseRepeat($parse, slots.choicesAttrs.repeat)
     var itemName = repeat.itemName
     var choicesAttrs = slots.choicesAttrs
@@ -186,10 +186,11 @@
     var groupByFn = choicesAttrs['group-by'] ? $parse(choicesAttrs['group-by']) : null
     var disableFn = choicesAttrs['ui-disable-choice'] ? $parse(choicesAttrs['ui-disable-choice']) : null
     // on-highlight: ui-select evaluates it in the row's scope from isActive,
-    // once per digest while the row is active, and its active row follows
-    // the mouse. Here the core's onActiveItemChange drives it: once per
-    // change, with the repeat locals and $select, for item rows only, and
-    // never on hover, since llselect's active row moves by keyboard alone.
+    // once per digest while the row is active. Here the core's
+    // onActiveItemChange drives it: once per change, with the repeat locals
+    // and $select, for item rows only. Both widgets move that row by keyboard
+    // or by an item click, never by hover (ui-select dropped its mouseenter
+    // in 0.13.0; its hover is CSS).
     var onHighlightFn = choicesAttrs['on-highlight'] ? $parse(choicesAttrs['on-highlight']) : null
 
     function locals(item) {
@@ -277,10 +278,14 @@
      * on-select / on-remove run AFTER $setViewValue's self-applied digest has
      * finished, so a plain call would leave anything the app expression
      * writes to scope invisible until some unrelated digest. Real ui-select
-     * fires them inside ng-click's apply; mirror that phase-safely.
+     * fires them inside ng-click's apply; mirror that phase-safely. Inside a
+     * digest $apply's error routing is absent, so route the error here: an
+     * expression that throws must not abort llselect's own work midway (a
+     * $watchCollection-driven setItems, for on-highlight).
      */
     function applyOnScope(fn) {
-      if ($rootScope.$$phase) { fn() } else { scope.$apply(fn) }
+      if (!$rootScope.$$phase) { scope.$apply(fn); return }
+      try { fn() } catch (e) { $exceptionHandler(e) }
     }
 
     var onSelectFn = attrs.onSelect ? $parse(attrs.onSelect) : null
@@ -327,6 +332,9 @@
       onActiveItemChange: onHighlightFn
         ? function (item) {
           if (item === undefined) { return }
+          // The expression may read $select.search; the row content fn syncs
+          // it only when a choices template exists, so sync here too.
+          $select.search = sel ? sel.getFilterQuery() : ''
           applyOnScope(function () { onHighlightFn(scope, angular.extend(locals(item), { $select: $select })) })
         }
         : null,
@@ -545,7 +553,7 @@
   // Depends on the `llselect` module for llselectConfig; AngularJS resolves
   // it at bootstrap, so the two files may load in either order.
   angular.module('llselect.uiCompat', ['llselect'])
-    .directive('uiLlselect', ['$parse', '$compile', '$rootScope', 'llselectConfig', function ($parse, $compile, $rootScope, llselectConfig) {
+    .directive('uiLlselect', ['$parse', '$compile', '$rootScope', 'llselectConfig', '$exceptionHandler', function ($parse, $compile, $rootScope, llselectConfig, $exceptionHandler) {
       return {
         restrict: 'E',
         require: ['ngModel', 'uiLlselect'],
@@ -555,7 +563,7 @@
           // Same test ui-select uses: presence, not value.
           var isMultiple = angular.isDefined(tAttrs.multiple)
           return function (scope, element, attrs, ctrls) {
-            link(scope, element, attrs, ctrls[0], ctrls[1], slots, $parse, $compile, $rootScope, isMultiple, llselectConfig)
+            link(scope, element, attrs, ctrls[0], ctrls[1], slots, $parse, $compile, $rootScope, isMultiple, llselectConfig, $exceptionHandler)
           }
         },
       }

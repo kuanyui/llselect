@@ -291,6 +291,15 @@ test('tags: an onFocus listener that reloads the chosen item as a disabled objec
   assert.deepEqual(sel.getChosenItems().map(i => i.id), [1], 'the reloaded, now disabled, item stays chosen')
 })
 
+test('tags: the x of a chip whose item is itself undefined still removes it', () => {
+  const { el } = mount()
+  const sel = new LLSelectMultiple<string | undefined>(el, { ariaLabel: 'x', triggerDisplay: 'tags', itemToStringFn: (i) => i ?? 'nothing' })
+  sel.setItems([undefined, 'b'])
+  sel.setChosenItems([undefined])
+  sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
+  assert.deepEqual(sel.getChosenItems(), [])
+})
+
 test('tags: an onFocus listener that removed the item leaves the x with nothing to do; it never adds the item back', () => {
   const { el } = mount()
   const sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', triggerDisplay: 'tags', onFocus: () => { sel.setChosenItems([]) } })

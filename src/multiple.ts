@@ -785,8 +785,11 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       // removal.
       if (this.destroyed || this.isDisabled()) { return }
       const compareFn = this.settings.compareFn
-      const current = this.chosenItems.find(c => compareFn(c, item))
-      if (current === undefined || this.isItemEffectivelyDisabled(current)) { return }
+      // By index: an item may itself be `undefined`, which `find` could not tell from no entry.
+      const at = this.chosenItems.findIndex(c => compareFn(c, item))
+      if (at < 0) { return }
+      const current = this.chosenItems[at] as T
+      if (this.isItemEffectivelyDisabled(current)) { return }
       this.withUserChangeSource(() => this.requestAndToggle(current))
     })
     return btn

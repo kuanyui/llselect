@@ -1363,9 +1363,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /** Control-level disabled state (whole select); toggled via `setDisabled`. */
   private disabled = false
   /**
-   * True from `destroy()` on. The clear button's and the chip remove button's
-   * clicks check it after their focus step, since an `onFocus` listener may
-   * destroy the widget there.
+   * Becomes true in `destroy()` and stays true.
+   * - The clear button's and the chip remove button's clicks check it after
+   *   their focus step, since an `onFocus` listener may destroy the widget
+   *   there.
    * @internal
    */
   protected destroyed = false
@@ -3845,12 +3846,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `setItems()` or a chosen-state change.
    * - The click then activates nothing: the row it meant belongs to a popup
    *   state that is gone.
-   * - The other user paths re-check the one thing they need instead.
-   * - The filter keystroke: the popup is open and its query still stands.
-   * - The clear button: the control is enabled and not destroyed.
-   * - The chip remove button: the control is enabled and not destroyed, and
-   *   the item is still chosen and enabled, read from the chosen entry as it
-   *   stands now.
+   * - The other user paths re-check what they need instead:
+   *   - the filter keystroke: the popup is open and its query still stands;
+   *   - the clear button: the control is enabled and not destroyed;
+   *   - the chip remove button, all of the following:
+   *     - the control is enabled and not destroyed;
+   *     - the item is still chosen, read from the chosen entry as it stands
+   *       now;
+   *     - that entry is enabled.
    * @internal
    */
   protected stateMovedSince(stamp: { generation: number; revision: number }): boolean {
