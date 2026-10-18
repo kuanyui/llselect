@@ -1321,3 +1321,22 @@ test('destroying a focused control runs no ll-on-blur and does not touch the con
   assert.equal(control.$touched, false)
   assert.deepEqual(a.errors, [])
 })
+
+test('ll-on-active-item-change runs with $item on open, on each keyboard move and on close, inside a digest', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <span id="n">{{vm.log.join(',')}}</span>
+      <llselect-single ng-model="vm.x" ll-on-active-item-change="vm.log.push($item === undefined ? '-' : $item.name)"
+        ll-options="u.id as u.name disable when u.bad for u in vm.users track by u.id"></llselect-single></div>`,
+    controller: function () { this.users = USERS; this.log = [] },
+  })
+  const trigger = a.$('.llselect-trigger')
+  trigger.click() // open: the initial row is the first enabled item
+  assert.equal(a.$('#n').textContent, 'Alice')
+  trigger.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true })) // Bob is disabled: Carol
+  assert.equal(a.$('#n').textContent, 'Alice,Carol')
+  trigger.click() // close
+  assert.equal(a.$('#n').textContent, 'Alice,Carol,-')
+  assert.deepEqual(a.errors, [])
+})
