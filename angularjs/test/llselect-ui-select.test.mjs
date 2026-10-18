@@ -875,3 +875,29 @@ test('the control turns touched when focus leaves the widget, as on the llselect
   assert.ok(a.$('ui-llselect').classList.contains('ng-touched'))
   assert.deepEqual(a.errors, [])
 })
+
+test('on-highlight runs with the repeat locals when the active row lands on an item row, never for a close', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <span id="n">{{vm.hl.join(',')}}</span>
+        <ui-llselect ng-model="vm.person" search-enabled="false">
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name" ui-disable-choice="p.bad" on-highlight="vm.hl.push(p.name + ':' + $select.multiple)">
+            <span>{{p.name}}</span>
+          </ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.person = undefined; this.hl = [] },
+  })
+  const trigger = a.$('ui-llselect .llselect-trigger')
+  trigger.click() // open: the initial row is Alice
+  assert.equal(a.$('#n').textContent, 'Alice:false')
+  trigger.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true })) // Bob is disabled: Carol
+  assert.equal(a.$('#n').textContent, 'Alice:false,Carol:false')
+  trigger.click() // close: no item is active, nothing runs
+  assert.equal(a.$('#n').textContent, 'Alice:false,Carol:false')
+  assert.deepEqual(a.errors, [])
+})

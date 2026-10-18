@@ -185,6 +185,12 @@
     var itemTextFn = choicesAttrs['ll-item-text'] ? $parse(choicesAttrs['ll-item-text']) : null
     var groupByFn = choicesAttrs['group-by'] ? $parse(choicesAttrs['group-by']) : null
     var disableFn = choicesAttrs['ui-disable-choice'] ? $parse(choicesAttrs['ui-disable-choice']) : null
+    // on-highlight: ui-select evaluates it in the row's scope from isActive,
+    // once per digest while the row is active, and its active row follows
+    // the mouse. Here the core's onActiveItemChange drives it: once per
+    // change, with the repeat locals and $select, for item rows only, and
+    // never on hover, since llselect's active row moves by keyboard alone.
+    var onHighlightFn = choicesAttrs['on-highlight'] ? $parse(choicesAttrs['on-highlight']) : null
 
     function locals(item) {
       var l = {}
@@ -318,6 +324,12 @@
         : null,
       itemToGroupKeyFn: groupByFn ? function (item) { return groupByFn(scope, locals(item)) } : null,
       itemDisabledFn: disableFn ? function (item) { return !!disableFn(scope, locals(item)) } : null,
+      onActiveItemChange: onHighlightFn
+        ? function (item) {
+          if (item === undefined) { return }
+          applyOnScope(function () { onHighlightFn(scope, angular.extend(locals(item), { $select: $select })) })
+        }
+        : null,
       // The ngModel touched flag, as on the two llselect directives: once, when
       // DOM focus leaves the whole widget (the core fires onBlur for no move
       // inside it, and never from destroy()). ui-select's markup has no
