@@ -69,6 +69,8 @@ Agent-facing record of the committee convened on three event-API additions that 
 
 Outcome, the owner's answers, given one decision at a time in conversation: D1 "A"; D2 "A"; D3 "A", the owner then asking why a pre-0.1.0 package needs a behavior-change note, so the touched flag is documented in `angularjs/API.md` as the contract and no such note is written; D4 "A", with the instruction to record the decision and its reasons as a Q&A in `DESIGN.md`; D5 not answered yet, the bridge mapping waits for that answer; D6 the owner asked whether `source` can join `meta` later, was told yes, and raised no objection to reason-only, and chose `'blur'` for the focus-leaving value ("6b A"); D7 the owner wants `onOpen` and `onClose` to take the same `meta` shape, so the open reason ships with the close reason, against the committee's 4:2 deferral; D8 presented to the owner as unanimous and needing no ruling, and the owner raised none. The unanimous Q1 sub-decisions (no `onBlur` from `destroy()` or `setDisabled(true)`, the `relatedTarget` guard, no `focus()` method, the AngularJS attributes) shipped as recommended. `DESIGN.md` records each ruling in a section for its event, written when that event ships.
 
+Each line below states the committee's recommendation as it was put to the owner; the paragraph above states the owner's answer to it.
+
 - D1, the naming split: "focus" is DOM focus in public event names, "active" is the `aria-activedescendant` row, the protected `focused*` family keeps its name; hence `onFocus` / `onBlur` and `onActiveItemChange`.
 - D2, the order: `onClose` then `onBlur` when focus leaving closes the popup.
 - D3, `$setTouched` on the widget blur, in the same commit as `ll-on-blur`, as a documented behavior change.

@@ -19,7 +19,7 @@ function key(el: HTMLElement, k: string): void {
 
 const show = (item: string | undefined): string => `active:${item === undefined ? '-' : item}`
 
-test('open reports the initial item before onOpen; close reports no item before onClose', () => {
+test('open reports the initial item after onOpen; close reports no item after onClose', () => {
   const log: string[] = []
   const sel = new LLSelectSingle<string>(mount(), {
     ariaLabel: 'x',
@@ -31,7 +31,56 @@ test('open reports the initial item before onOpen; close reports no item before 
   sel.setChosenItem('b')
   sel.open() // the initial row is the chosen item
   sel.close()
-  assert.deepEqual(log, ['active:b', 'open', 'active:-', 'close'])
+  assert.deepEqual(log, ['open', 'active:b', 'close', 'active:-'])
+})
+
+test('a listener that closes the widget during open, or reopens it during close, runs after the outer transition completed', () => {
+  const log: string[] = []
+  let closeOnReport = true
+  const sel = new LLSelectSingle<string>(mount(), {
+    ariaLabel: 'x',
+    onActiveItemChange: (item) => {
+      log.push(show(item))
+      if (item !== undefined && closeOnReport) { closeOnReport = false; sel.close() }
+      if (item === undefined && reopenOnReport) { reopenOnReport = false; sel.open() }
+    },
+    onOpen: () => { log.push('open') },
+    onClose: () => { log.push('close') },
+  })
+  let reopenOnReport = false
+  sel.setItems(['a', 'b'])
+  sel.open()
+  assert.deepEqual(log, ['open', 'active:a', 'close', 'active:-'])
+  assert.equal(sel.isOpened(), false)
+  log.length = 0
+  sel.open()
+  reopenOnReport = true
+  sel.close()
+  assert.deepEqual(log, ['open', 'active:a', 'close', 'active:-', 'open', 'active:a'])
+  assert.equal(sel.isOpened(), true)
+})
+
+test('a click whose listener closed the popup activates nothing; a filter keystroke whose listener closed it reports no query change', () => {
+  const log: string[] = []
+  const sel = new LLSelectSingle<string>(mount(), {
+    ariaLabel: 'x',
+    filterable: true,
+    onActiveItemChange: (item) => { log.push(show(item)); if (item === 'banana') { sel.close() } },
+    onChange: (item) => { log.push(`change:${item}`) },
+    onFilterQueryChange: (query) => { log.push(`query:${query}`) },
+  })
+  sel.setItems(['apple', 'banana'])
+  sel.open()
+  sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')[1]!.click()
+  assert.deepEqual(log, ['active:apple', 'active:banana', 'active:-'])
+  assert.equal(sel.getChosenItem(), undefined)
+  log.length = 0
+  sel.open()
+  const input = sel.popupEl.querySelector('input')!
+  input.value = 'b'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.deepEqual(log, ['active:apple', 'active:banana', 'active:-'])
+  assert.equal(sel.getFilterQuery(), '')
 })
 
 test('arrow, Home / End and page moves report each landing once; a move that stays put reports nothing', () => {

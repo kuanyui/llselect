@@ -523,7 +523,7 @@
     scope.$on('$destroy', function () {
       // destroy() first: it detaches the focus listeners before anything
       // moves, so a focused control inside a template cannot report a blur
-      // when the scope releases below remove its element.
+      // when releaseRowScopes / releaseTriggerScopes below remove its element.
       sel.destroy()
       bridge.releaseRowScopes()
       bridge.releaseTriggerScopes()
