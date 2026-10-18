@@ -272,7 +272,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Popup header / footer, pinned        | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update; see Popup header / footer |
 | i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir`, `itemToLangFn` writes each item's `lang` for screen readers that switch voices, `groupKeyToLangFn` the same for a group |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
-| Events                               | `onChange(current, previous, meta)`, `onBeforeChange(next, previous, event)`, `onOpen`, `onClose`, `onFilterQueryChange(query)`; `meta` carries `source`, `reason` and, for one added or removed item, `item`; `event` adds `preventDefault()` |
+| Events                               | `onChange(current, previous, meta)`, `onBeforeChange(next, previous, event)`, `onOpen`, `onClose`, `onFocus`, `onBlur`, `onFilterQueryChange(query)`; `meta` carries `source`, `reason` and, for one added or removed item, `item`; `event` adds `preventDefault()`; `onFocus` / `onBlur` report DOM focus entering / leaving the whole widget, never a move inside it |
 
 ### Typing to jump (prefix typeahead)
 
@@ -334,7 +334,7 @@ A complete worked subclass, in TypeScript with typed subclass settings (the clas
 | Highlight filter matches in rows | `createPopupListItemContentElFn` + the `createHighlightedTextEl` helper |
 | Equality for object items        | `compareFn`                     |
 | Dropdown arrow                   | `createTriggerArrowContentElFn` |
-| Events                           | `onChange`, `onBeforeChange`, `onOpen`, `onClose`, `onFilterQueryChange` |
+| Events                           | `onChange`, `onBeforeChange`, `onOpen`, `onClose`, `onFocus`, `onBlur`, `onFilterQueryChange` |
 
 ```js
 const sel = new LLSelectSingle(el, {

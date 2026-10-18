@@ -67,6 +67,8 @@ Agent-facing record of the committee convened on three event-API additions that 
 
 ## Decisions for the owner
 
+Outcome, the owner's rulings: D1 as recommended; D2 as recommended; D3 as recommended for the commit, with the touched flag documented in `angularjs/API.md` as the contract and no behavior-change note, since the package is pre-0.1.0 and the docs carry no history; D4 as recommended, with the decision and its reasons recorded as a Q&A in `DESIGN.md`; D6 as recommended, `'blur'` included; D7 the opposite of the recommendation: `onOpen` takes a `meta` parameter of the same shape as `onClose`'s, in the same change set, so the two events read alike; D8 as recommended. The rulings live in `DESIGN.md`, one section per event.
+
 - D1, the naming split: "focus" is DOM focus in public event names, "active" is the `aria-activedescendant` row, the protected `focused*` family keeps its name; hence `onFocus` / `onBlur` and `onActiveItemChange`.
 - D2, the order: `onClose` then `onBlur` when focus leaving closes the popup.
 - D3, `$setTouched` on the widget blur, in the same commit as `ll-on-blur`, as a documented behavior change.
