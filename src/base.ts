@@ -816,10 +816,47 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * Fired right after the popup closes.
    * - A no-op `close()` does not fire it.
    * - Additive with the protected `onClosed` hook, like {@link onOpen}: both run.
+   * - When focus leaving the widget closes the popup, this fires before
+   *   {@link onBlur}.
    * - `null` (default) = no consumer listener.
    * @group Events
    */
   onClose: (() => void) | null
+  /**
+   * Fired when DOM focus enters the widget.
+   * - DOM focus is the element that receives keyboard input,
+   *   `document.activeElement`. Inside the widget it can be the trigger, the
+   *   filter input, a chip's remove button, or a control the app placed in a
+   *   header / footer slot.
+   * - Fires once when focus comes from outside the widget or from nowhere:
+   *   Tab onto the trigger, a click on the trigger or on the label, a
+   *   programmatic `triggerEl.focus()`.
+   * - Does not fire for a move inside the widget, such as `open()` moving
+   *   focus from the trigger to the filter input.
+   * - Has no link to the active row, the row the arrow keys move inside the
+   *   popup; that row never holds DOM focus.
+   * - `null` (default) = no consumer listener; no `focusin` listener is
+   *   attached.
+   * @group Events
+   */
+  onFocus: (() => void) | null
+  /**
+   * Fired when DOM focus leaves the widget.
+   * - Fires once when focus moves to an element outside the widget or to
+   *   nowhere: Tab away, a click on an element outside, a click on a
+   *   non-focusable area.
+   * - Does not fire for a move inside the widget.
+   * - When focus leaving closes the popup, {@link onClose} fires first, so
+   *   `isOpened()` is already `false` here.
+   * - Does not fire from `destroy()` or from `setDisabled(true)`; neither
+   *   moves focus.
+   * - While the popup is open with `outsideClickBehavior: 'block'`, an
+   *   outside mousedown is default-prevented: focus stays, the popup closes,
+   *   and this does not fire.
+   * - `null` (default) = no consumer listener.
+   * @group Events
+   */
+  onBlur: (() => void) | null
   /**
    * Called after the filter text changed and the list was re-rendered.
    * - Fires on typing, when an IME composition ends, and when Esc clears a
@@ -1286,6 +1323,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private leadingActionRowEls: HTMLElement[] = []
   private trailingActionRowEls: HTMLElement[] = []
   private outsideHandler: ((ev: Event) => void) | undefined
+  /** The whole-life focus listeners on `rootEl`; see `attachFocusListeners`. */
+  private focusInHandler: ((ev: FocusEvent) => void) | undefined
   private focusOutHandler: ((ev: FocusEvent) => void) | undefined
   /**
    * Block-mode only. Suppresses the browser's default focus shift on outside
@@ -1415,6 +1454,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       createGroupLabelContentElFn: settings?.createGroupLabelContentElFn ?? null,
       onOpen: settings?.onOpen ?? null,
       onClose: settings?.onClose ?? null,
+      onFocus: settings?.onFocus ?? null,
+      onBlur: settings?.onBlur ?? null,
       onFilterQueryChange: settings?.onFilterQueryChange ?? null,
       // Settings cast (one per constructor, see single / multiple): TS
       // cannot prove "base fields + Omit<S, base keys>" reassembles a generic
@@ -1540,6 +1581,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
     this.triggerEl.addEventListener('click', () => this.toggle())
     this.triggerEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
+    this.attachFocusListeners()
     // Hold DOM focus on the combobox host: a mousedown anywhere in the popup - an
     // option, the no-results message, a header / footer slot, popup padding, or
     // the list element itself (tabindex="-1", so click-focusable) - would move focus off the host and
@@ -1695,7 +1737,6 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       innerScrollEl: this.popupListEl,
     })
     this.attachOutsideClick()
-    this.attachFocusOut()
     this.focusInitial()
     this.onOpened()
     const onOpen = this.settings.onOpen
@@ -1717,6 +1758,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * there, or `close()` called from its own click) - focus is returned to
    * the trigger. Tab-away and outside clicks on focusable elements have
    * already moved focus elsewhere, so we leave it alone.
+   * - The return happens before the popup is hidden and before `onClose`:
+   *   hiding a focused element first would let the browser drop focus to
+   *   `<body>`, a blur and focus pair the widget never meant.
    * @group Open & close
    */
   public close(): void {
@@ -1726,6 +1770,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.triggerEl.setAttribute('aria-expanded', 'false')
     this.triggerEl.setAttribute('data-state', 'closed')
     this.syncTriggerTabindex()
+    if (shouldReturnFocus) { this.triggerEl.focus({ preventScroll: true }) }
     this.rootEl.classList.remove(this.classIdMap.openClass)
     if (this.filterActive) {
       this.filterInputEl.setAttribute('aria-expanded', 'false')
@@ -1736,7 +1781,6 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.positioner?.detach()
     this.positioner = undefined
     this.detachOutsideClick()
-    this.detachFocusOut()
     this.popupListEl.replaceChildren()
     // The no-results region hides with the popup; reset so a reopen with a
     // still-empty list counts as a fresh appearance and re-announces.
@@ -1773,7 +1817,6 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.onClosed()
     const onClose = this.settings.onClose
     onClose?.()
-    if (shouldReturnFocus) { this.triggerEl.focus({ preventScroll: true }) }
   }
 
   /**
@@ -1837,6 +1880,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Lifecycle
    */
   public destroy(): void {
+    // First: the close() below and the replaceChildren() at the end can move
+    // focus, and no parting focusout may reach onBlur (A11Y.md "Focus").
+    this.detachFocusListeners()
     this.close()
     if (this.settings.labelEl !== null) {
       this.settings.labelEl.removeEventListener('click', this.handleLabelElClick)
@@ -3228,26 +3274,50 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Close the popup when keyboard focus leaves the widget entirely (e.g. Tab
-   * away). `focusout` bubbles, so listening on `rootEl` catches focus leaving
-   * any descendant; `relatedTarget` is the element gaining focus (or `null`).
-   * The check is written against `rootEl.contains` rather than "the trigger
-   * lost focus" so a future in-popup control - filter input, checkbox - keeps
-   * the popup open while it holds focus.
+   * The whole-life `focusin` / `focusout` pair on `rootEl`. Both bubble from
+   * every descendant, so one listener each sees focus entering or leaving any
+   * part of the widget. `relatedTarget` - the element focus comes from or goes
+   * to - tells an outside move from an inside one; `null` counts as outside
+   * (a click on a non-focusable area, focus from nowhere). The inside test is
+   * `rootEl.contains`, not "the trigger", so the filter input and slot
+   * controls keep the popup open while they hold focus.
+   * - `focusout` is always attached: it closes an open popup when focus leaves
+   *   (A11Y.md "Focus"), then fires `onBlur`, in that order.
+   * - `focusin` is attached only when `onFocus` is set.
+   * - `destroy()` detaches both before its own `close()` and
+   *   `replaceChildren()`, so a parting event cannot reach a listener.
    */
-  private attachFocusOut(): void {
+  private attachFocusListeners(): void {
     this.focusOutHandler = (ev: FocusEvent): void => {
-      const next = ev.relatedTarget
-      if (next instanceof Node && this.rootEl.contains(next)) { return }
-      this.close()
+      if (this.isInsideRoot(ev.relatedTarget)) { return }
+      if (this.opened) { this.close() }
+      const onBlur = this.settings.onBlur
+      onBlur?.()
     }
     this.rootEl.addEventListener('focusout', this.focusOutHandler)
+    if (this.settings.onFocus === null) { return }
+    this.focusInHandler = (ev: FocusEvent): void => {
+      if (this.isInsideRoot(ev.relatedTarget)) { return }
+      const onFocus = this.settings.onFocus
+      onFocus?.()
+    }
+    this.rootEl.addEventListener('focusin', this.focusInHandler)
   }
 
-  private detachFocusOut(): void {
-    if (!this.focusOutHandler) { return }
-    this.rootEl.removeEventListener('focusout', this.focusOutHandler)
-    this.focusOutHandler = undefined
+  private detachFocusListeners(): void {
+    if (this.focusOutHandler) {
+      this.rootEl.removeEventListener('focusout', this.focusOutHandler)
+      this.focusOutHandler = undefined
+    }
+    if (this.focusInHandler) {
+      this.rootEl.removeEventListener('focusin', this.focusInHandler)
+      this.focusInHandler = undefined
+    }
+  }
+
+  /** Whether `target` is a node inside `rootEl`; `null` counts as outside. */
+  private isInsideRoot(target: EventTarget | null): boolean {
+    return target instanceof Node && this.rootEl.contains(target)
   }
 
   /**
