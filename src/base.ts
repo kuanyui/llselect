@@ -1414,11 +1414,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private activeItemReportSuspendDepth = 0
   /**
    * Bumped by `open`, `close`, `rerender` and `destroy`. With `changeRevision`
-   * it forms the stamp a user path takes before a step that runs app
-   * listeners (`captureStateStamp`); the path stops when a listener moved
+   * it forms the stamp a row click takes before its active-row move
+   * (`captureStateStamp`); the click activates nothing when a listener moved
    * either counter, since a close, a reopen, a rebuild or a value change
-   * under it leaves nothing for that path to do (DESIGN.md "Active item
-   * change").
+   * under it leaves the row it meant in a popup state that is gone
+   * (DESIGN.md "Active item change").
    */
   private transitionGeneration = 0
   /** The rendered action rows of the current render, in array order; empty while closed. Never part of `itemEls`. */
@@ -3749,11 +3749,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // setters still work), and the clear button is
       // reachable while closed - open() and keydown are already guarded.
       if (this.isDisabled()) { return }
-      const stamp = this.captureStateStamp()
       this.focusTriggerIfUnfocused()
-      // The focus may run onFocus; a listener that disabled, closed, rebuilt
-      // or changed the widget leaves nothing for this click to clear.
-      if (this.isDisabled() || this.stateMovedSince(stamp)) { return }
+      // The focus may run onFocus; a listener that disabled the control
+      // leaves nothing for this click to clear. One that opened the popup or
+      // loaded items does not change what a clear means.
+      if (this.isDisabled()) { return }
       this.withUserChangeSource(() => this.clearSelection())
     })
     return btn
@@ -3815,9 +3815,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * The stamp a user path takes before a step that runs app listeners: the
-   * transition generation and the change revision. See
-   * {@link stateMovedSince}.
+   * Take the stamp a row click compares after its active-row move.
+   * - The three row clicks call it, for an item row, the choose-all row and
+   *   an action row, right before `setFocusedIndex`, `focusChooseAllRow` or
+   *   `focusActionRow`, whose report runs the app's `onActiveItemChange`.
+   * - Returns the transition generation and the change revision as they
+   *   stand; {@link stateMovedSince} reads them back.
    * @internal
    */
   protected captureStateStamp(): { generation: number; revision: number } {
@@ -3825,12 +3828,16 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Whether a listener moved the widget since `stamp` was taken: an open, a
-   * close, a `rerender()`, a `destroy()`, a `setItems()` or a chosen-state
-   * change. The user path that asks stops then, since the step it was about
-   * to take belongs to a widget state that is gone. The paths: the row
-   * clicks (item, choose-all, action row), the filter keystroke, the clear
-   * button and the chip remove button.
+   * Whether a listener moved the widget since `stamp` was taken.
+   * - The three row clicks call it after their active-row move; `stamp` is
+   *   what {@link captureStateStamp} returned before that move.
+   * - True after an open, a close, a `rerender()`, a `destroy()`, a
+   *   `setItems()` or a chosen-state change. The click then activates
+   *   nothing: the row it meant belongs to a popup state that is gone.
+   * - The other user paths re-check the one thing they need instead: the
+   *   filter keystroke that its query still stands, the clear button that
+   *   the control is enabled, the chip remove button that the item is still
+   *   chosen and enabled.
    * @internal
    */
   protected stateMovedSince(stamp: { generation: number; revision: number }): boolean {
@@ -4056,11 +4063,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // "no item" between the rebuild and the landing.
     this.focusedRow = null
     this.focusedIndex = this.findNextEnabledIndex(0, 1, this.getVisibleItems())
-    const stamp = this.captureStateStamp()
     this.renderPopupList()
-    // The render reports the active item; a listener that closed, rebuilt or
-    // changed the widget leaves no query change of this keystroke to report.
-    if (this.stateMovedSince(stamp)) { return }
+    // The render reports the active item; a listener that closed the widget
+    // reset the query, so no change of this keystroke is left to report. A
+    // rebuild or a value change under it keeps the query, which the app must
+    // still hear.
+    if (this.query !== next) { return }
     if (changed) {
       const onFilterQueryChange = this.settings.onFilterQueryChange
       onFilterQueryChange?.(next)

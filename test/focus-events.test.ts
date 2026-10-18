@@ -241,6 +241,25 @@ test('an onFocus listener that disables the control during a clear click stops t
   assert.equal(document.activeElement, sel.triggerEl)
 })
 
+test('an onFocus listener that opens the popup or loads items does not cancel the clear', () => {
+  const { el } = mount()
+  const sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', clearable: true, onFocus: () => { sel.open(); sel.setItems(['a', 'b', 'c']) } })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a'])
+  sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
+  assert.deepEqual(sel.getChosenItems(), [], 'the clear still means empty')
+  assert.equal(sel.isOpened(), true)
+})
+
+test('tags: an onFocus listener that removed the item leaves the x with nothing to do; it never adds the item back', () => {
+  const { el } = mount()
+  const sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', triggerDisplay: 'tags', onFocus: () => { sel.setChosenItems([]) } })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a'])
+  sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
+  assert.deepEqual(sel.getChosenItems(), [])
+})
+
 test('tags: a chip removal on an unfocused widget focuses the trigger and reports onFocus', () => {
   const { el } = mount()
   const log: string[] = []

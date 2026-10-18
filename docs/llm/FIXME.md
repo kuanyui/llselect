@@ -2,6 +2,37 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (events, round four: the stamp narrowed to the row clicks)
+
+Process: round four, on the round-three fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All nine round-three entries resolved for all three members. Opus 5 found the stamp over-broad on two paths, which this round narrows; Codex Sol found its own recorded position thinned, which Opus 5 and Opus 4.8 also flagged; no runtime defect from Opus 4.8 or Codex Sol. Two log-wording findings, fixed alongside: the QUALITY-673 symptom named a bare re-entered `open()`, which the `opened` guard stops, and the MEDIUM-670 fix line said five paths and listed six.
+
+- [x] **[MEDIUM-678] - the filter keystroke dropped `onFilterQueryChange` when a listener rebuilt or changed the widget while the query stood**
+  - Symptom: the keystroke's guard was the stamp; a `rerender()`, a `setItems()` or a value change inside the active-row report moved it, so the keystroke returned with the query at the new text, the list filtered by it, and the app never told. Only a close resets the query.
+  - Fix: the keystroke reports unless `this.query` no longer equals the typed text, the mark a close leaves.
+  - Verified: `npm test` green with a re-rendering listener; round five reads the gate.
+- [x] **[MEDIUM-679] - the clear and chip clicks stopped on any state move, so an `onFocus` listener that opened the popup or loaded items cancelled them**
+  - Symptom: `focusTriggerIfUnfocused` runs `onFocus`; an app that opens on focus, or loads items on focus, moved the stamp, and the clear or the removal the user had clicked did nothing.
+  - Fix: each click re-checks the one thing it needs after the focus: the clear button that the control is enabled; the chip remove button that the control and the item are enabled and that the item is still chosen, since a toggle of a removed item would add it back. The stamp stays on the three row clicks, where a rebuild under the active-row move leaves the row the click meant in a popup state that is gone. DESIGN.md "Active item change" and the two `@internal` docstrings say which path checks what.
+  - Verified: `npm test` green with an opening and loading listener and a removing listener; round five reads the three handlers.
+  - Q: Why keep the stamp on the row clicks when it was wrong on the clear and chip clicks?
+    - A: Because a row click names a row of the popup, and a close, a reopen, a rebuild or a value change under the active-row move replaces or empties that popup, so the row may no longer be the one the user saw; a clear or a removal names the value, which such a listener leaves meaningful. Codex Sol's generations stay where they answer a real hazard and go where they cancelled the user's intent.
+- [x] **[DOCUMENTATION-680] - Codex Sol's position on the queued reports was recorded thinned**
+  - Symptom: DESIGN.md "Active item change" called three reports a pair, dropped the `onClosed` path, and left out the half of the position that was adopted, the generations and the aborts.
+  - Fix: the position is quoted in the member's words, followed by what was adopted and what was not, with the reason.
+  - Verified: round five reads the Q&A against the round-three text.
+- [x] **[DOCUMENTATION-681] - the stamp's scope was overstated**
+  - Symptom: DESIGN.md said every user path that runs listeners in its middle takes the stamp; the `onBeforeChange` paths never did, and after MEDIUM-679 only the three row clicks do.
+  - Fix: the Q&A names the three clicks and what each other path checks.
+  - Verified: round five reads the Q&A against the handlers.
+- [x] **[DOCUMENTATION-682] - A11Y.md put the trigger focus after a check it precedes**
+  - Symptom: "a click that clears focuses the trigger" and "a click that removes the item focuses the trigger" read as if the focus followed the mutation; the focus comes first, and an `onFocus` listener can then stop the mutation.
+  - Fix: both sentences give the order and the listener case.
+  - Verified: round five reads them against the handlers.
+- [x] **[LINT-683] - the stamp docstrings lacked the lead sentence and the one-fact bullets**
+  - Symptom: `captureStateStamp` and `stateMovedSince` carried one paragraph each.
+  - Fix: a lead sentence, then bullets for the callers, the parameter and the behavior.
+  - Verified: round five reads them.
+
 ## review (events, round three: the stale-continuation guards and the round-two leftovers)
 
 Process: round three, on the round-two fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All three found the round-two code fixes resolved except the reach of the stale-continuation rule: two more clicks lacked the guard, and a close followed by a reopen, a re-render or a value change inside a listener got past an `opened` check; Codex Sol also held HIGH-656 open for the coalesced reports of a reopen inside `onClose`, recorded as a Q&A in DESIGN.md "Active item change" and not applied. Two leftovers of DOCUMENTATION-663 and -664 sat in texts the round-two fix did not touch. One log-wording finding, fixed alongside.
@@ -12,7 +43,7 @@ Process: round three, on the round-two fix commit: Opus 5, Opus 4.8 and Codex So
   - Verified: `npm test` green with a test per click; round four reads both handlers.
 - [x] **[MEDIUM-670] - a close plus reopen, a re-render or a value change inside a listener got past the `opened` guard**
   - Symptom: the item click and the filter keystroke checked `this.opened` after their listener-running step; a listener that closed and reopened the widget, called `rerender()` or `setItems()`, or changed the value left `opened` true, so the click activated and the keystroke reported on a rebuilt or changed widget.
-  - Fix: a transition generation (`open`, `close`, `rerender`, `destroy`) beside the change revision (`setItems`, every chosen-state change); `captureStateStamp` before the step, `stateMovedSince` after it, in the five user paths (the three row clicks, the filter keystroke, the clear and chip clicks). DESIGN.md "Active item change" states the rule.
+  - Fix: a transition generation (`open`, `close`, `rerender`, `destroy`) beside the change revision (`setItems`, every chosen-state change); `captureStateStamp` before the step, `stateMovedSince` after it, in the six user paths (the three row clicks, the filter keystroke, the clear and chip clicks). DESIGN.md "Active item change" states the rule. Round four narrowed the stamp to the three row clicks (MEDIUM-679).
   - Verified: `npm test` green with the re-render and value-change cases; round four reads the stamp and its callers.
 - [x] **[MEDIUM-671] - `open()` finished on a popup a hook of `onOpened` or `onOpen` had closed**
   - Symptom: the focus move into the filter input and the tail report ran after the hooks; a hook that closed the popup left `filterInputEl.focus()` to run on a hidden input, which jsdom honors.
@@ -23,7 +54,7 @@ Process: round three, on the round-two fix commit: Opus 5, Opus 4.8 and Codex So
   - Fix: both handlers take the stamp before the focus and re-check the disabled state after it.
   - Verified: `npm test` green with the disabling listener; round four reads both handlers.
 - [x] **[QUALITY-673] - the report suspension of `open()` was a flag, not a depth**
-  - Symptom: an `open()` re-entered from a content function during the outer render cleared the suspension early, so the outer initial placement reported before the outer open completed.
+  - Symptom: a `close()` followed by an `open()` from a content function during the outer render cleared the suspension early, so the outer initial placement reported before the outer open completed; a bare re-entered `open()` returns at its `opened` guard and could not.
   - Fix: a depth counter.
   - Verified: round four reads `open()` and `reportActiveItem`.
 - [x] **[QUALITY-674] - the refused-close test refused nothing, and the `close()` override went unobserved**
