@@ -251,6 +251,46 @@ test('an onFocus listener that opens the popup or loads items does not cancel th
   assert.equal(sel.isOpened(), true)
 })
 
+test('an onFocus listener that destroys the widget stops the clear and the chip removal', () => {
+  const { el } = mount()
+  const changes: string[] = []
+  const sel = new LLSelectMultiple<string>(el, {
+    ariaLabel: 'x',
+    clearable: true,
+    triggerDisplay: 'tags',
+    onFocus: () => { sel.destroy() },
+    onChange: () => { changes.push('change') },
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a']) // reports one change: the setup
+  changes.length = 0
+  const clearButton = sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  const removeButton = sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!
+  clearButton.click()
+  assert.deepEqual(changes, [])
+  assert.deepEqual(sel.getChosenItems(), ['a'])
+  removeButton.click()
+  assert.deepEqual(changes, [])
+  assert.deepEqual(sel.getChosenItems(), ['a'])
+})
+
+test('tags: an onFocus listener that reloads the chosen item as a disabled object makes the x do nothing', () => {
+  const { el } = mount()
+  type Item = { id: number; name: string; bad: boolean }
+  const sel = new LLSelectMultiple<Item>(el, {
+    ariaLabel: 'x',
+    triggerDisplay: 'tags',
+    compareFn: (a, b) => a.id === b.id,
+    itemToStringFn: (i) => i.name,
+    itemDisabledFn: (i) => i.bad,
+    onFocus: () => { sel.setItems([{ id: 1, name: 'a', bad: true }, { id: 2, name: 'b', bad: false }]) },
+  })
+  sel.setItems([{ id: 1, name: 'a', bad: false }, { id: 2, name: 'b', bad: false }])
+  sel.setChosenItems([{ id: 1, name: 'a', bad: false }])
+  sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
+  assert.deepEqual(sel.getChosenItems().map(i => i.id), [1], 'the reloaded, now disabled, item stays chosen')
+})
+
 test('tags: an onFocus listener that removed the item leaves the x with nothing to do; it never adds the item back', () => {
   const { el } = mount()
   const sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', triggerDisplay: 'tags', onFocus: () => { sel.setChosenItems([]) } })

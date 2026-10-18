@@ -776,12 +776,18 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       if (this.isDisabled()) { return }
       if (this.isItemEffectivelyDisabled(item)) { return }
       this.focusTriggerIfUnfocused()
-      // The focus may run onFocus; a listener that disabled the control or
-      // the item, or removed the item, leaves nothing for this click to
-      // remove, and a toggle would add the removed item back. One that opened
-      // the popup or loaded items does not stop the removal.
-      if (this.isDisabled() || this.isItemEffectivelyDisabled(item) || !this.isChosen(item)) { return }
-      this.withUserChangeSource(() => this.requestAndToggle(item))
+      // The focus may run onFocus; a listener that disabled or destroyed the
+      // control, removed the item, or reloaded it as a disabled object leaves
+      // nothing for this click to remove, and a toggle would add a removed
+      // item back. The checks read the chosen entry as it stands now, since a
+      // reload swaps the stored object for a compare-equal one. A listener
+      // that opened the popup or loaded enabled items does not stop the
+      // removal.
+      if (this.destroyed || this.isDisabled()) { return }
+      const compareFn = this.settings.compareFn
+      const current = this.chosenItems.find(c => compareFn(c, item))
+      if (current === undefined || this.isItemEffectivelyDisabled(current)) { return }
+      this.withUserChangeSource(() => this.requestAndToggle(current))
     })
     return btn
   }

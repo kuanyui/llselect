@@ -139,6 +139,26 @@ test('a filter keystroke whose listener re-rendered the widget still reports the
   assert.equal(sel.getFilterQuery(), 'b')
 })
 
+test('an Esc-clear of the filter whose listener closed the popup reports no query change', () => {
+  const log: string[] = []
+  let armed = false
+  const sel = new LLSelectSingle<string>(mount(), {
+    ariaLabel: 'x',
+    filterable: true,
+    onActiveItemChange: (item) => { log.push(show(item)); if (armed && item === 'apple') { armed = false; sel.close() } },
+    onFilterQueryChange: (query) => { log.push(`query:${query}`) },
+  })
+  sel.setItems(['apple', 'banana'])
+  sel.open()
+  const input = sel.popupEl.querySelector('input')!
+  input.value = 'b'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  armed = true
+  key(input, 'Escape') // clears the query: the list shows every item, the row lands on apple, the listener closes
+  assert.deepEqual(log, ['active:apple', 'active:banana', 'query:b', 'active:apple', 'active:-'])
+  assert.equal(sel.isOpened(), false)
+})
+
 test('a click whose listener closed the popup activates nothing; a filter keystroke whose listener closed it reports no query change', () => {
   const log: string[] = []
   const sel = new LLSelectSingle<string>(mount(), {
