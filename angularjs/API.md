@@ -95,6 +95,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 - `$item` is the item from the [`ll-options`](#ll-options) collection, not the `select as` value. It is `undefined` while the popup is closed, when no item matches the filter, and when the active row is the choose-all row or an action row.
 - Fires on open with the initial row, after [`ll-on-open`](#ll-on-open); on every keyboard move; on a click, before the change it requests; when a filter keystroke or a data reload moves the row; and on close with `undefined`, after [`ll-on-close`](#ll-on-close).
 - Fires only when the item changed, compared with the `track by` rule of [`ll-options`](#ll-options), or by identity without a `track by` clause, so a data reload of equal-valued objects fires then. A row redrawn for the same item is silent. A mouse hover never fires: hovering does not move the active row.
+- ui-select's name for this event is `on-highlight`. [`<ui-llselect>`](#ui-llselect) maps it, and the note there says why llselect does not use that word for the active row.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
 
 ```html
@@ -608,6 +609,10 @@ Migrating a call site, at a glance:
 | `aria-labelledby` / `aria-label` / `title` (on `<ui-llselect>`) | `ariaLabelledBy` / `ariaLabel` - the field's accessible name. Precedence follows ARIA: `aria-labelledby` (forwarded verbatim, names the field by reference) wins over `aria-label`, which wins over `title`; `title` keeps ui-select parity (its templates feed their aria labels from it) |
 | `$select.selected`, `$select.search`, `$select.multiple` | published on each template's scope |
 | `$index` | from `createPopupListItemEl(item, index)` |
+| `on-highlight` (on `<ui-select-choices>`) | `onActiveItemChange`: the expression runs, inside a digest, with the `repeat` locals and `$select`, each time the active row lands on another item row. Two differences from ui-select: llselect never moves the active row on mouse hover, so only the keyboard fires it; and nothing runs for the choose-all row or an action row. ui-select evaluates it once per digest while the row is active; here it runs once per change. The note below says why the attribute keeps ui-select's name |
+
+> [!NOTE]
+> ui-select uses the word "highlight" for two different things. Its `| highlight:` filter marks the text that matches the search. Its `on-highlight` attribute runs when the row under the keyboard, or under the mouse, changes. llselect keeps the word for one thing only, the marking of matched text (`createHighlightedTextEl`), and calls the row the arrow keys move "the active row"; the core event is therefore `onActiveItemChange`, and the llselect directives' attribute is [`ll-on-active-item-change`](#ll-on-active-item-change). The bridge keeps ui-select's attribute name on purpose, for one reason: its contract is ui-select's markup as you wrote it, so a migrating template changes nothing. The name stays ui-select's vocabulary, mapped once to llselect's here, and appears nowhere else in llselect.
 
 ### Filtering
 
@@ -726,4 +731,4 @@ Both directive sets:
 - `tagging`, `tagging-label`, `tagging-tokens` (llselect never creates items).
 - `refresh`, `refresh-delay`, `minimum-input-length`, `spinner-enabled` (no async data-fetching API; root README, "No asynchronous data-fetching API").
 - `sortable`, `limit`, `paste`, `append-to-body`, `close-on-select`, `theme`.
-- `$select` members that take a row scope: `isActive`, `isDisabled`, `isLocked`, plus `on-highlight` and `ui-lock-choice`. See [Why it is not a full ui-select reimplementation](README.md#why-it-is-not-a-full-ui-select-reimplementation) in the README.
+- `$select` members that take a row scope: `isActive`, `isDisabled`, `isLocked`, plus `ui-lock-choice`. See [Why it is not a full ui-select reimplementation](README.md#why-it-is-not-a-full-ui-select-reimplementation) in the README. `on-highlight` is bridged since the core gained `onActiveItemChange`; see [What carries over](#what-carries-over) for its two differences.
