@@ -28,7 +28,7 @@ Attributes of both `<llselect-single>` and `<llselect-multiple>`. Every entry op
 - **Expression**: `$eval`'d against the scope ONCE at link time. llselect resolves its settings bag once at construction, so a later scope change does not move them; only the method-backed [`ll-disabled`](#ll-disabled) is watched (see the [Gotchas](README.md#gotchas)). String values need their own quotes: `ll-placeholder="'Pick one'"`.
 - **Literal**: plain attribute text.
 - **Flag**: acts by presence alone.
-- **Event expression**: evaluated on EACH event, inside a digest, like `ng-click`. Only [`ll-on-open`](#ll-on-open) / [`ll-on-close`](#ll-on-close) / [`ll-on-focus`](#ll-on-focus) / [`ll-on-blur`](#ll-on-blur) / [`ll-on-filter-query-change`](#ll-on-filter-query-change) / [`ll-on-before-change`](#ll-on-before-change).
+- **Event expression**: evaluated on EACH event, inside a digest, like `ng-click`. Only [`ll-on-open`](#ll-on-open) / [`ll-on-close`](#ll-on-close) / [`ll-on-focus`](#ll-on-focus) / [`ll-on-blur`](#ll-on-blur) / [`ll-on-active-item-change`](#ll-on-active-item-change) / [`ll-on-filter-query-change`](#ll-on-filter-query-change) / [`ll-on-before-change`](#ll-on-before-change).
 
 App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` / `uiTranslationPack` are set once via [`llselectConfigProvider`](#llselectconfigprovider); a per-element attribute always wins.
 
@@ -84,6 +84,22 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 - When focus leaving closes the popup, [`ll-on-close`](#ll-on-close) runs first; `instance().isOpened()` is already `false` here.
 - Does not fire for the teardown that destroying the element runs, nor for `setDisabled(true)`. The disabling closes an open popup, which returns focus to the trigger, inside the widget; the teardown detaches the focus listeners first.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
+
+### `ll-on-active-item-change`
+
+**Event expression** -> `onActiveItemChange`. Evaluated when the active row moves to another item, or to no item, inside a digest. `$item` is the item of the new active row, or `undefined`.
+
+- The active row is the row of the popup list that the arrow keys move and that `aria-activedescendant` points to. It never holds DOM focus; [`ll-on-focus`](#ll-on-focus) is about DOM focus.
+- `$item` is the item from the [`ll-options`](#ll-options) collection, not the `select as` value. It is `undefined` while the popup is closed, when no item matches the filter, and when the active row is the choose-all row or an action row.
+- Fires on open with the initial row, before [`ll-on-open`](#ll-on-open); on every keyboard move; on a click, before the change it requests; when a filter keystroke or a data reload moves the row; and on close with `undefined`, before [`ll-on-close`](#ll-on-close).
+- Fires only when the item changed, compared with the `track by` rule of [`ll-options`](#ll-options); a row redrawn for the same item is silent. A mouse hover never fires: hovering does not move the active row.
+- Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
+
+```html
+<llselect-single ng-model="vm.lang" ll-options="l.name for l in vm.languages track by l.code"
+  ll-on-active-item-change="vm.hint = $item ? $item.description : ''"></llselect-single>
+<p>{{vm.hint}}</p>
+```
 
 ### `ll-on-filter-query-change`
 

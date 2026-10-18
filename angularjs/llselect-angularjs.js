@@ -227,6 +227,7 @@
     wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler)
     wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler)
     wireEventAttr(scope, attrs, 'llOnFocus', settings, 'onFocus', exceptionHandler)
+    wireEventAttr(scope, attrs, 'llOnActiveItemChange', settings, 'onActiveItemChange', exceptionHandler, function (item) { return { $item: item } })
     wireEventAttr(scope, attrs, 'llOnFilterQueryChange', settings, 'onFilterQueryChange', exceptionHandler, function (query) { return { $query: query } })
 
     settings.createTriggerArrowContentElFn = resolveArrow(arrow)
@@ -234,8 +235,8 @@
   }
 
   /**
-   * ll-on-open / ll-on-close / ll-on-focus / ll-on-filter-query-change /
-   * ll-on-before-change (ll-on-blur: wireBlurAttr): an event
+   * ll-on-open / ll-on-close / ll-on-focus / ll-on-active-item-change /
+   * ll-on-filter-query-change / ll-on-before-change (ll-on-blur: wireBlurAttr): an event
    * expression, evaluated on EACH event
    * (like ng-click), not once at link like the other ll-* attributes. llselect
    * fires these callbacks from its own pointer / keyboard handlers, outside
@@ -253,8 +254,9 @@
     var expr = attrs[name]
     settings[key] = function () {
       // toLocals maps the core's callback arguments to expression locals
-      // (ll-on-filter-query-change exposes `$query`, ll-on-before-change
-      // `$next` / `$previous` / `$event`); the others have none.
+      // (ll-on-filter-query-change exposes `$query`, ll-on-active-item-change
+      // `$item`, ll-on-before-change `$next` / `$previous` / `$event`); the
+      // others have none.
       var locals = toLocals ? toLocals.apply(null, arguments) : undefined
       if (!scope.$root.$$phase) { scope.$apply(function () { scope.$eval(expr, locals) }); return }
       try { scope.$eval(expr, locals) } catch (e) { exceptionHandler(e) }
