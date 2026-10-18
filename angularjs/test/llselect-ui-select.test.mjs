@@ -860,3 +860,17 @@ test('the bridge module pulls llselect in transitively, whatever the script orde
   assert.deepEqual(a.errors, [])
   assert.equal(a.$('ui-llselect .llselect-trigger-content').textContent.trim(), 'Bitte auswaehlen', 'llselectConfig must be reachable through the transitive dependency alone')
 })
+
+test('the control turns touched when focus leaves the widget, as on the llselect directives', () => {
+  const a = app()
+  const trigger = a.$('ui-llselect .llselect-trigger')
+  assert.equal(a.scope.f.person.$touched, false)
+  trigger.focus()
+  trigger.click() // open: focus moves inside, to the filter input (search-enabled defaults to true)
+  assert.equal(a.scope.f.person.$touched, false, 'an inside move does not touch the control')
+  trigger.ownerDocument.body.focus()
+  a.$('ui-llselect .llselect-filter-input').blur()
+  assert.equal(a.scope.f.person.$touched, true)
+  assert.ok(a.$('ui-llselect').classList.contains('ng-touched'))
+  assert.deepEqual(a.errors, [])
+})

@@ -1248,3 +1248,76 @@ test('ll-on-before-change: a model write inside the expression wins and the pend
   assert.equal(a.text('llselect-single .llselect-trigger-content'), 'Cherry')
   assert.equal(a.scope.vm.changed, 0, 'a model write is programmatic: ng-change does not run, and the dropped pick never reached it')
 })
+
+test('ll-on-focus / ll-on-blur run once when focus enters / leaves the widget, inside a digest; a move inside fires nothing', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <span id="n">{{vm.focuses}}/{{vm.blurs}}</span>
+      <button id="outside">x</button>
+      <llselect-single ng-model="vm.x" ll-filterable="true" ll-on-focus="vm.focuses = vm.focuses + 1" ll-on-blur="vm.blurs = vm.blurs + 1"
+        ll-options="f for f in vm.fruits"></llselect-single></div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.focuses = 0; this.blurs = 0 },
+  })
+  const trigger = a.$('.llselect-trigger')
+  trigger.focus()
+  assert.equal(a.$('#n').textContent, '1/0')
+  trigger.click() // opens; focus moves from the trigger to the filter input: an inside move
+  assert.equal(a.doc.activeElement, a.$('.llselect-filter-input'))
+  assert.equal(a.$('#n').textContent, '1/0')
+  a.$('#outside').focus() // leaves: the popup closes, then the blur runs
+  assert.equal(trigger.getAttribute('aria-expanded'), 'false')
+  assert.equal(a.$('#n').textContent, '1/1')
+  assert.deepEqual(a.errors, [])
+})
+
+test('the control turns touched when focus leaves the widget, before ll-on-blur runs; a move inside does not touch it', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <form name="f" novalidate>
+        <button id="outside">x</button>
+        <llselect-single name="fruit" ng-model="vm.x" ll-filterable="true" ll-on-blur="vm.touchedInBlur = f.fruit.$touched"
+          ll-options="f for f in vm.fruits"></llselect-single>
+        <llselect-multiple name="tops" ng-model="vm.tops" ll-options="f for f in vm.fruits"></llselect-multiple>
+      </form></div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.tops = [] },
+  })
+  const single = a.$('llselect-single')
+  const trigger = a.$('llselect-single .llselect-trigger')
+  assert.equal(a.scope.f.fruit.$touched, false)
+  assert.ok(single.classList.contains('ng-untouched'))
+  trigger.focus()
+  trigger.click() // open: focus moves inside, to the filter input
+  assert.equal(a.scope.f.fruit.$touched, false, 'an inside move does not touch the control')
+  a.$('#outside').focus()
+  assert.equal(a.scope.f.fruit.$touched, true)
+  assert.equal(a.scope.vm.touchedInBlur, true, 'll-on-blur already sees $touched')
+  assert.ok(single.classList.contains('ng-touched'))
+  // The multiple directive, without any ll-on-blur attribute, touches too.
+  a.$('llselect-multiple .llselect-trigger').focus()
+  assert.equal(a.scope.f.tops.$touched, false)
+  a.$('#outside').focus()
+  assert.equal(a.scope.f.tops.$touched, true)
+  assert.deepEqual(a.errors, [])
+})
+
+test('destroying a focused control runs no ll-on-blur and does not touch the control', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <form name="f" novalidate>
+        <div ng-if="vm.show">
+          <llselect-single name="fruit" ng-model="vm.x" ll-on-blur="vm.blurs = vm.blurs + 1"
+            ll-options="f for f in vm.fruits"></llselect-single>
+        </div>
+      </form></div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.show = true; this.blurs = 0 },
+  })
+  const control = a.scope.f.fruit
+  a.$('.llselect-trigger').focus()
+  a.scope.$apply(() => { a.scope.vm.show = false }) // ng-if destroys the focused control
+  assert.equal(a.scope.vm.blurs, 0)
+  assert.equal(control.$touched, false)
+  assert.deepEqual(a.errors, [])
+})

@@ -318,6 +318,14 @@
         : null,
       itemToGroupKeyFn: groupByFn ? function (item) { return groupByFn(scope, locals(item)) } : null,
       itemDisabledFn: disableFn ? function (item) { return !!disableFn(scope, locals(item)) } : null,
+      // The ngModel touched flag, as on the two llselect directives: once, when
+      // DOM focus leaves the whole widget (the core fires onBlur for no move
+      // inside it, and never from destroy()). ui-select's markup has no
+      // attribute for the blur itself, so nothing else is wired here.
+      onBlur: function () {
+        if (ngModelCtrl.$touched) { return }
+        applyOnScope(function () { ngModelCtrl.$setTouched() })
+      },
       compareFn: repeat.trackByFn
         ? function (a, b) {
             return sameValueZero(repeat.trackByFn(scope, locals(a)), repeat.trackByFn(scope, locals(b)))
