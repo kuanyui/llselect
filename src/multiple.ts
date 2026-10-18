@@ -759,6 +759,14 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     if (this.isItemEffectivelyDisabled(item)) { btn.setAttribute('aria-disabled', 'true') }
     const icon = this.createTagRemoveButtonContentEl(item)
     if (icon !== null) { btn.appendChild(icon) }
+    // Keep DOM focus where it is. A mousedown would focus the button (a
+    // tabindex="-1" button is still click-focusable), and the click then
+    // rebuilds the chip strip and destroys it: focus drops to <body>, and
+    // engines differ on whether a focusout fires (TODO.md). Either way is
+    // wrong - a silent drop strands an open popup without its focus host and
+    // skips onBlur; a fired focusout closes the popup and reports a blur for a
+    // click inside the widget. Same rule as the popup's mousedown (A11Y.md).
+    btn.addEventListener('mousedown', (ev) => { ev.preventDefault() })
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
       // Tag chips sit in the trigger, reachable while the whole control or the
