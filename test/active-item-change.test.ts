@@ -37,6 +37,7 @@ test('open reports the initial item after onOpen; close reports no item after on
 test('a listener that closes the widget during open, or reopens it during close, runs after the outer transition completed', () => {
   const log: string[] = []
   let closeOnReport = true
+  let reopenOnReport = false
   const sel = new LLSelectSingle<string>(mount(), {
     ariaLabel: 'x',
     onActiveItemChange: (item) => {
@@ -47,7 +48,6 @@ test('a listener that closes the widget during open, or reopens it during close,
     onOpen: () => { log.push('open') },
     onClose: () => { log.push('close') },
   })
-  let reopenOnReport = false
   sel.setItems(['a', 'b'])
   sel.open()
   assert.deepEqual(log, ['open', 'active:a', 'close', 'active:-'])
@@ -58,6 +58,68 @@ test('a listener that closes the widget during open, or reopens it during close,
   sel.close()
   assert.deepEqual(log, ['open', 'active:a', 'close', 'active:-', 'open', 'active:a'])
   assert.equal(sel.isOpened(), true)
+})
+
+test('an onOpen hook that closes the popup: no focus moves into the hidden popup and no report follows', () => {
+  const log: string[] = []
+  const sel = new LLSelectSingle<string>(mount(), {
+    ariaLabel: 'x',
+    filterable: true,
+    onActiveItemChange: (item) => { log.push(show(item)) },
+    onOpen: () => { log.push('open'); sel.close() },
+    onClose: () => { log.push('close') },
+  })
+  sel.setItems(['a', 'b'])
+  sel.triggerEl.focus()
+  sel.open()
+  assert.deepEqual(log, ['open', 'close'])
+  assert.equal(document.activeElement, sel.triggerEl)
+})
+
+test('choose-all and action-row clicks activate nothing when a listener closed the popup', () => {
+  const log: string[] = []
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x',
+    chooseAllRow: true,
+    popupListTrailingActionRows: [{ textFn: () => 'Clear all', onActivate: () => { log.push('activate') } }],
+    onActiveItemChange: (item) => { log.push(show(item)); if (item === undefined) { sel.close() } },
+  })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  key(sel.triggerEl, 'ArrowDown') // a
+  sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.chooseAllRowClass}`)!.click()
+  assert.deepEqual(log, ['active:a', 'active:-'])
+  assert.deepEqual(sel.getChosenItems(), [], 'the choose-all row did not toggle')
+  log.length = 0
+  sel.open()
+  key(sel.triggerEl, 'ArrowDown') // a
+  sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListActionRowClass}`)!.click()
+  assert.deepEqual(log, ['active:a', 'active:-'], 'the action row did not run')
+})
+
+test('a click whose listener re-rendered the widget or changed the value activates nothing', () => {
+  const log: string[] = []
+  let reaction: 'rerender' | 'change' = 'rerender'
+  const sel = new LLSelectSingle<string>(mount(), {
+    ariaLabel: 'x',
+    onActiveItemChange: (item) => {
+      log.push(show(item))
+      if (item !== 'b') { return }
+      if (reaction === 'rerender') { sel.rerender() } else { sel.setChosenItem('a') }
+    },
+    onChange: (item) => { log.push(`change:${item}`) },
+  })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  const rowB = (): HTMLElement => sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')[1]!
+  rowB().click()
+  assert.deepEqual(log, ['active:a', 'active:b'])
+  assert.equal(sel.getChosenItem(), undefined, 'the rebuilt widget got no pick')
+  reaction = 'change'
+  key(sel.triggerEl, 'ArrowUp') // a, so the next click moves the row again
+  rowB().click()
+  assert.deepEqual(log, ['active:a', 'active:b', 'active:a', 'active:b', 'change:a'])
+  assert.equal(sel.getChosenItem(), 'a', 'the listener\'s value stands; the click did not override it')
 })
 
 test('a click whose listener closed the popup activates nothing; a filter keystroke whose listener closed it reports no query change', () => {

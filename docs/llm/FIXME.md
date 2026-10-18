@@ -2,13 +2,54 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (events, round three: the stale-continuation guards and the round-two leftovers)
+
+Process: round three, on the round-two fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All three found the round-two code fixes resolved except the reach of the stale-continuation rule: two more clicks lacked the guard, and a close followed by a reopen, a re-render or a value change inside a listener got past an `opened` check; Codex Sol also held HIGH-656 open for the coalesced reports of a reopen inside `onClose`, recorded as a Q&A in DESIGN.md "Active item change" and not applied. Two leftovers of DOCUMENTATION-663 and -664 sat in texts the round-two fix did not touch. One log-wording finding, fixed alongside.
+
+- [x] **[MEDIUM-669] - the choose-all and action-row clicks lacked the closed-popup guard the item click got**
+  - Symptom: both clicks ran focus-then-activate; with an item active, the focus step reported `undefined`, and a listener that closed there left `onChooseAllRowActivated` or `onPopupListActionRowActivated` to run on the closed popup, the choose-all row then toggling the whole now-unfiltered selection.
+  - Fix: the same guard after the focus step, through the stamp of MEDIUM-670.
+  - Verified: `npm test` green with a test per click; round four reads both handlers.
+- [x] **[MEDIUM-670] - a close plus reopen, a re-render or a value change inside a listener got past the `opened` guard**
+  - Symptom: the item click and the filter keystroke checked `this.opened` after their listener-running step; a listener that closed and reopened the widget, called `rerender()` or `setItems()`, or changed the value left `opened` true, so the click activated and the keystroke reported on a rebuilt or changed widget.
+  - Fix: a transition generation (`open`, `close`, `rerender`, `destroy`) beside the change revision (`setItems`, every chosen-state change); `captureStateStamp` before the step, `stateMovedSince` after it, in the five user paths (the three row clicks, the filter keystroke, the clear and chip clicks). DESIGN.md "Active item change" states the rule.
+  - Verified: `npm test` green with the re-render and value-change cases; round four reads the stamp and its callers.
+- [x] **[MEDIUM-671] - `open()` finished on a popup a hook of `onOpened` or `onOpen` had closed**
+  - Symptom: the focus move into the filter input and the tail report ran after the hooks; a hook that closed the popup left `filterInputEl.focus()` to run on a hidden input, which jsdom honors.
+  - Fix: `open()` returns after the hooks when the popup is no longer open.
+  - Verified: `npm test` green with the case; round four reads the tail.
+- [x] **[MEDIUM-672] - an `onFocus` listener could disable or empty the control before the clear or the removal ran**
+  - Symptom: `focusTriggerIfUnfocused` runs `onFocus` synchronously after the disabled checks of the clear button and the chip remove button; a listener that disabled the control, removed the item or destroyed the widget was followed by the mutation.
+  - Fix: both handlers take the stamp before the focus and re-check the disabled state after it.
+  - Verified: `npm test` green with the disabling listener; round four reads both handlers.
+- [x] **[QUALITY-673] - the report suspension of `open()` was a flag, not a depth**
+  - Symptom: an `open()` re-entered from a content function during the outer render cleared the suspension early, so the outer initial placement reported before the outer open completed.
+  - Fix: a depth counter.
+  - Verified: round four reads `open()` and `reportActiveItem`.
+- [x] **[QUALITY-674] - the refused-close test refused nothing, and the `close()` override went unobserved**
+  - Symptom: `setDisabled(true)` while closed never calls `close()`, so the test showed only that a plain close reports `'api'`; the override had no observable effect.
+  - Fix: the probe subclass calls `closeWithReason('destroy')` while closed and logs each override run.
+  - Verified: `npm test` green.
+- [x] **[DOCUMENTATION-675] - two texts kept the errors DOCUMENTATION-663 and -664 corrected elsewhere**
+  - Symptom: the `$reason` entry of `angularjs/API.md` still put Alt+ArrowUp on a slot control; DESIGN.md "Widget focus events" still said a successful clear blurs.
+  - Fix: both sentences.
+  - Verified: round four reads them.
+- [x] **[DOCUMENTATION-676] - the inert remove button and the disabled clear button were promised the trigger focus**
+  - Symptom: A11Y.md said the click focuses the trigger; the handlers return first for a disabled control or item.
+  - Fix: both sentences say a click that removes or clears does.
+  - Verified: round four reads them.
+- [x] **[LINT-677] - a test declared a variable after the callback that reads it**
+  - Symptom: `reopenOnReport` in `test/active-item-change.test.ts` was declared below the listener; the listener runs later, so it worked, but the order misleads.
+  - Fix: hoisted.
+  - Verified: `npm test` green.
+
 ## review (events, round two: the focus-event fixes, the active-row event, the open and close reasons)
 
 Process: round two reviewed the round-one fixes of the widget focus events together with the second and third additions the events committee settled (`events-committee.md`): `onActiveItemChange` and `meta.reason` on `onOpen` / `onClose`. Members: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). `npm run verify` ran green before the round. One HIGH, from Codex Sol: the active-row report ran in the middle of `open()` and `close()`, so a listener that closed or reopened the widget left the outer transition to finish on a stale popup. Opus 4.8 found every round-one fix resolved and the reason threading complete at all seventeen call sites. The bridge's `on-highlight` mapping stays outside both rounds until the owner rules on it.
 
 - [x] **[HIGH-656] - a listener of the active-row event could leave an open or a close half done**
   - Symptom: `open()` reported the initial row inside `focusInitial()`, before `onOpened`, `onOpen` and the focus move into the filter input; `close()` reported `undefined` before `onClosed` and `onClose`. A listener that closed the widget during the first, or reopened it during the second, returned into steps that then ran on the wrong popup state; a row click and a filter keystroke whose listener closed the popup went on to activate the row and to report the query change. The committee had ruled that such stale continuations are abandoned (Codex Astra).
-  - Fix: the report is the last step of `open()` and of `close()`: `open()` suspends it from the render to the initial placement and reports once at its tail; `close()` reports after `onClose`. The row click activates nothing and the filter keystroke reports no query change when a listener closed the popup. Docstring, DESIGN.md "Active item change" (order and a Q&A) and `angularjs/API.md` follow. Tests: `test/active-item-change.test.ts`, one per reentrant path.
+  - Fix: the report is the last step of `open()` and of `close()`: `open()` suspends it from the render to the initial placement and reports once at its tail; `close()` reports after `onClose`. The row click activates nothing and the filter keystroke reports no query change when a listener closed the popup. Docstring, DESIGN.md "Active item change" (order and a Q&A) and `angularjs/API.md` follow. Tests: `test/active-item-change.test.ts`, two tests over the four paths.
   - Verified: `npm run verify` green; round three reads the two tails and the two guards.
 - [x] **[MEDIUM-657] - a mouse clear or a chip removal on an unfocused widget left the widget unfocused**
   - Symptom: with the `mousedown` rule of round one, a click on the clear button or on a chip's remove button moved no focus at all; on an unfocused filled control the field emptied with no `onFocus`, no later `onBlur`, and no touched flag for the AngularJS form, so a required message gated on `$touched` stayed hidden right after the user emptied the field. The `onFocus` docstring and `angularjs/API.md` still promised the event for a click on the trigger, which contains both buttons.

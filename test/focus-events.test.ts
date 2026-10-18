@@ -231,6 +231,16 @@ test('tags: a mousedown on a chip remove button is default-prevented; the remova
   assert.deepEqual(log, [])
 })
 
+test('an onFocus listener that disables the control during a clear click stops the clear', () => {
+  const { el } = mount()
+  const sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', clearable: true, onFocus: () => { sel.setDisabled(true) } })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a'])
+  sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
+  assert.deepEqual(sel.getChosenItems(), ['a'], 'the control the listener disabled kept its value')
+  assert.equal(document.activeElement, sel.triggerEl)
+})
+
 test('tags: a chip removal on an unfocused widget focuses the trigger and reports onFocus', () => {
   const { el } = mount()
   const log: string[] = []

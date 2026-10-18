@@ -1410,8 +1410,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private focusedRow: FocusedRingRow | null = null
   /** The last item reported to `onActiveItemChange`, or none; see `reportActiveItem`. */
   private reportedActiveItem: { active: true; item: T } | { active: false } = { active: false }
-  /** True while `open()` renders and places the initial row; its tail reports once instead. */
-  private activeItemReportSuspended = false
+  /** Above zero while `open()` renders and places the initial row; its tail reports once instead. A depth, so a nested open inside a content function cannot end the outer suspension early. */
+  private activeItemReportSuspendDepth = 0
+  /**
+   * Bumped by `open`, `close`, `rerender` and `destroy`. With `changeRevision`
+   * it forms the stamp a user path takes before a step that runs app
+   * listeners (`captureStateStamp`); the path stops when a listener moved
+   * either counter, since a close, a reopen, a rebuild or a value change
+   * under it leaves nothing for that path to do (DESIGN.md "Active item
+   * change").
+   */
+  private transitionGeneration = 0
   /** The rendered action rows of the current render, in array order; empty while closed. Never part of `itemEls`. */
   private leadingActionRowEls: HTMLElement[] = []
   private trailingActionRowEls: HTMLElement[] = []
@@ -1795,6 +1804,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.syncColorScheme()
     const restoreWindowScroll = this.captureWindowScroll()
     this.opened = true
+    this.transitionGeneration++
     // Filter mode is (re)evaluated once per open cycle, before anything that
     // depends on it (role, focus host, filtering).
     this.filterActive = this.computeFilterActive()
@@ -1840,7 +1850,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // the report itself waits for the tail of this method.
     this.focusedRow = null
     this.focusedIndex = -1
-    this.activeItemReportSuspended = true
+    this.activeItemReportSuspendDepth++
     try {
       this.renderPopupList()
       this.positioner = createPositioner(this.triggerEl, this.popupEl, {
@@ -1851,11 +1861,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.attachOutsideClick()
       this.focusInitial()
     } finally {
-      this.activeItemReportSuspended = false
+      this.activeItemReportSuspendDepth--
     }
     this.onOpened()
     const onOpen = this.settings.onOpen
     onOpen?.({ reason })
+    // A hook above may have closed the popup: nothing below is left to do.
+    if (!this.opened) { restoreWindowScroll(); return }
     if (this.filterActive) {
       this.filterInputEl.focus({ preventScroll: true })
     }
@@ -1887,6 +1899,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (!this.opened) { return }
     const shouldReturnFocus = this.isFocused(this.popupEl)
     this.opened = false
+    this.transitionGeneration++
     this.triggerEl.setAttribute('aria-expanded', 'false')
     this.triggerEl.setAttribute('data-state', 'closed')
     this.syncTriggerTabindex()
@@ -1989,6 +2002,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Lifecycle
    */
   public rerender(): void {
+    this.transitionGeneration++
     this.gatheredItems = undefined
     if (this.filterActive) { this.recomputeFilteredItems() }
     this.renderTrigger()
@@ -2032,6 +2046,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // First: the close() below and the replaceChildren() at the end can move
     // focus, and no parting focusout may reach onBlur (A11Y.md "Focus").
     this.detachFocusListeners()
+    this.transitionGeneration++
     this.closeWithReason('destroy')
     if (this.settings.labelEl !== null) {
       this.settings.labelEl.removeEventListener('click', this.handleLabelElClick)
@@ -2737,10 +2752,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         // multi mode (which keeps the popup open) leaves the focused styling
         // on the previous keyboard-focused item while a different one was
         // just clicked.
+        const stamp = this.captureStateStamp()
         this.setFocusedIndex(index)
-        // The move reports the active item; a listener may close the widget,
-        // and a click on a popup that closed under it activates nothing.
-        if (!this.opened) { return }
+        // The move reports the active item; a listener that closed, rebuilt
+        // or changed the widget leaves nothing for this click to activate.
+        if (this.stateMovedSince(stamp)) { return }
         this.withUserChangeSource(() => this.onPopupListItemActivated(item))
       })
     }
@@ -3059,8 +3075,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       el.classList.add(this.classIdMap.popupListRowDisabledClass)
     } else {
       el.addEventListener('click', () => {
-        // Focus-then-activate, mirroring the item click wiring.
+        // Focus-then-activate, mirroring the item click wiring, guard included.
+        const stamp = this.captureStateStamp()
         this.focusActionRow(position, index)
+        if (this.stateMovedSince(stamp)) { return }
         this.activatePopupListActionRow(row)
       })
     }
@@ -3335,7 +3353,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * baseline.
    */
   private reportActiveItem(): void {
-    if (this.activeItemReportSuspended) { return }
+    if (this.activeItemReportSuspendDepth > 0) { return }
     const next = this.resolveActiveItem()
     const last = this.reportedActiveItem
     if (!next.active && !last.active) { return }
@@ -3731,7 +3749,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // setters still work), and the clear button is
       // reachable while closed - open() and keydown are already guarded.
       if (this.isDisabled()) { return }
+      const stamp = this.captureStateStamp()
       this.focusTriggerIfUnfocused()
+      // The focus may run onFocus; a listener that disabled, closed, rebuilt
+      // or changed the widget leaves nothing for this click to clear.
+      if (this.isDisabled() || this.stateMovedSince(stamp)) { return }
       this.withUserChangeSource(() => this.clearSelection())
     })
     return btn
@@ -3790,6 +3812,29 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected focusTriggerIfUnfocused(): void {
     if (this.isFocused(this.rootEl)) { return }
     this.triggerEl.focus({ preventScroll: true })
+  }
+
+  /**
+   * The stamp a user path takes before a step that runs app listeners: the
+   * transition generation and the change revision. See
+   * {@link stateMovedSince}.
+   * @internal
+   */
+  protected captureStateStamp(): { generation: number; revision: number } {
+    return { generation: this.transitionGeneration, revision: this.changeRevision }
+  }
+
+  /**
+   * Whether a listener moved the widget since `stamp` was taken: an open, a
+   * close, a `rerender()`, a `destroy()`, a `setItems()` or a chosen-state
+   * change. The user path that asks stops then, since the step it was about
+   * to take belongs to a widget state that is gone. The paths: the row
+   * clicks (item, choose-all, action row), the filter keystroke, the clear
+   * button and the chip remove button.
+   * @internal
+   */
+  protected stateMovedSince(stamp: { generation: number; revision: number }): boolean {
+    return stamp.generation !== this.transitionGeneration || stamp.revision !== this.changeRevision
   }
 
   /**
@@ -4011,10 +4056,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // "no item" between the rebuild and the landing.
     this.focusedRow = null
     this.focusedIndex = this.findNextEnabledIndex(0, 1, this.getVisibleItems())
+    const stamp = this.captureStateStamp()
     this.renderPopupList()
-    // The render reports the active item; a listener may close the widget,
-    // which resets the query, so there is no change left to report.
-    if (!this.opened) { return }
+    // The render reports the active item; a listener that closed, rebuilt or
+    // changed the widget leaves no query change of this keystroke to report.
+    if (this.stateMovedSince(stamp)) { return }
     if (changed) {
       const onFilterQueryChange = this.settings.onFilterQueryChange
       onFilterQueryChange?.(next)
