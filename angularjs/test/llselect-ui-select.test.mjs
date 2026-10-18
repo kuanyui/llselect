@@ -901,3 +901,55 @@ test('on-highlight runs with the repeat locals when the active row lands on an i
   assert.equal(a.$('#n').textContent, 'Alice:false,Carol:false')
   assert.deepEqual(a.errors, [])
 })
+
+test('on-highlight also runs for an item click, before the pick, and reads the current $select.search without a choices template', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <span id="n">{{vm.hl.join(',')}}</span>
+        <ui-llselect ng-model="vm.person">
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users | filter: $select.search" ll-item-text="p.name" on-highlight="vm.hl.push(p.name + '/' + $select.search)"></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS; this.person = undefined; this.hl = [] },
+  })
+  const trigger = a.$('ui-llselect .llselect-trigger')
+  trigger.click() // open: search-enabled defaults to true, the initial row is Alice
+  assert.equal(a.$('#n').textContent, 'Alice/')
+  const input = a.$('ui-llselect .llselect-filter-input')
+  input.value = 'car'
+  input.dispatchEvent(new a.window.Event('input', { bubbles: true })) // only Carol matches ('c' alone would keep Alice)
+  assert.equal(a.$('#n').textContent, 'Alice/,Carol/car')
+  input.value = ''
+  input.dispatchEvent(new a.window.Event('input', { bubbles: true }))
+  assert.equal(a.$('#n').textContent, 'Alice/,Carol/car,Alice/')
+  a.$$('ui-llselect [role="option"]')[2].click() // Carol: the click moves the row, then picks
+  assert.equal(a.$('#n').textContent, 'Alice/,Carol/car,Alice/,Carol/')
+  assert.equal(a.scope.vm.person.name, 'Carol')
+  assert.deepEqual(a.errors, [])
+})
+
+test('an on-highlight expression that throws inside a digest reaches $exceptionHandler and the reload completes', () => {
+  const a = boot({
+    files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
+    deps: ['llselect', 'llselect.uiCompat'],
+    html: `
+      <div ng-controller="C as vm">
+        <ui-llselect ng-model="vm.person" search-enabled="false">
+          <ui-llselect-match placeholder="Pick">{{$select.selected.name}}</ui-llselect-match>
+          <ui-llselect-choices repeat="p in vm.users" ll-item-text="p.name" on-highlight="vm.boom()"></ui-llselect-choices>
+        </ui-llselect>
+      </div>`,
+    controller: function () { this.users = USERS.slice(0, 1); this.person = undefined; this.boom = function () { throw new Error('boom') } },
+  })
+  a.$('ui-llselect .llselect-trigger').click() // open: the initial row fires the expression outside a digest
+  assert.equal(a.errors.length, 1)
+  // A reload inside a digest re-renders the open list; the clamp moves the row to the new first item and fires again.
+  a.scope.$apply(() => { a.scope.vm.users = [USERS[2], USERS[0]] })
+  assert.equal(a.errors.length, 2)
+  assert.match(a.errors[1].message, /boom/)
+  assert.equal(a.$$('ui-llselect [role="option"]').length, 2, 'the reload completed')
+})

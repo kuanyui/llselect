@@ -2,13 +2,42 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (events, round six: the bridge's on-highlight facts and the last edge cases)
+
+Process: round six, on the round-five fix commit and the bridge's `on-highlight` mapping: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). Opus 4.8 found all five round-five entries resolved and the mapping clean. Opus 5 found the mapping's account of ui-select wrong on one point, against the reference copy under `REFS/`, and a missing error route. Codex Sol found two edge cases in the round-five code and a stale search value in the mapping. One log-wording finding, fixed alongside: MEDIUM-684's "set first in `destroy()`", where the focus listeners detach first. Codex Sol also found the round-five fix commit's subject at 160 characters, over the 140 the house rule allows; the three local commits were rewritten byte for byte with the shorter subject, dates untouched.
+
+- [x] **[DOCUMENTATION-689] - the mapping's docs said ui-select's highlighted row follows the mouse, and sold "no hover" as a difference**
+  - Symptom: the `angularjs/API.md` row and note, the bridge's comment, `angularjs/DESIGN.md` and `docs/llm/DESIGN.md` said ui-select's `on-highlight` runs for the row under the mouse; ui-select 0.19.8 moves `activeIndex` by keyboard only, its `mouseenter` removed in 0.13.0 (`REFS/ui-select-0.19.8/CHANGELOG.md`, PR 1211) and its row hover a CSS rule (`REFS/ui-select-0.19.8/src/common.css`). The committee's "no hover" difference rested on that premise. An item click, which moves llselect's active row, was also left out.
+  - Fix: the five texts say neither widget moves the row on hover, name the two real differences (once per change, nothing for a non-item row), and say a keyboard move or an item click fires it; the committee record notes the corrected premise.
+  - Verified: round seven reads the texts against `REFS/ui-select-0.19.8`; the bridge test clicks a row.
+- [x] **[QUALITY-690] - an `on-highlight` expression that throws inside a digest bypassed `$exceptionHandler`**
+  - Symptom: `applyOnScope` called the function raw inside a digest phase; a throw during the `$watchCollection`-driven `setItems` propagated and skipped the chosen reconciliation. `wireEventAttr` in the llselect directives routes such errors; this helper did not, for `on-select` and `on-remove` either.
+  - Fix: `applyOnScope` catches inside a digest and routes to `$exceptionHandler`, injected into the directive; the `$apply` branch already routed.
+  - Verified: the AngularJS suite green with a throwing expression during a reload; round seven reads the helper.
+- [x] **[MEDIUM-691] - the mapping could hand `on-highlight` a stale `$select.search`**
+  - Symptom: `$select.search` syncs from `getFilterQuery()` only inside the row content function, which returns before the sync when the choices slot has no template; an expression reading `$select.search` then saw the previous query after a clear or a reopen.
+  - Fix: the mapping syncs `$select.search` before evaluating the expression.
+  - Verified: the AngularJS suite green with an empty choices template reading `$select.search`; round seven reads the wrapper.
+- [x] **[MEDIUM-692] - the chip click could not remove a chosen entry whose item is itself `undefined`**
+  - Symptom: the current-entry lookup of MEDIUM-685 used `find`, whose `undefined` result means "no entry" and also "the entry is `undefined`", a value multiple mode supports.
+  - Fix: `findIndex`, then the entry by index.
+  - Verified: `npm test` green with an `undefined` chip; round seven reads the handler.
+- [x] **[LINT-693] - two docstrings still broke the shape rules**
+  - Symptom: the chip bullet of `stateMovedSince` carried four conditions in one bullet; the `destroyed` field led with a fragment.
+  - Fix: a nested condition list; a lead sentence with a verb.
+  - Verified: round seven reads both.
+- [x] **[DOCUMENTATION-694] - the committee record still called `on-highlight` unsupported without the later ruling**
+  - Symptom: the "Corrections to the brief" bullet recorded the committee's verified fact of its time; a reader found no pointer to the D5 ruling that mapped the attribute since.
+  - Fix: the bullet says it was mapped since, by the owner's ruling, with the corrected premise.
+  - Verified: round seven reads the bullet.
+
 ## review (events, round five: the lifecycle checks of the clear and chip clicks, and the bridge's on-highlight)
 
 Process: round five, on the round-four fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). Opus 4.8 found all six round-four entries resolved; Opus 5 and Codex Sol found two of them with a hole each and raised a destroy case both had named. The fixes below land together with the owner's ruling on the bridge's `on-highlight` mapping (D5 "A"), whose note in `angularjs/API.md` the owner asked for: ui-select's two senses of "highlight" and why the bridge keeps the attribute name. Round six reviews both.
 
 - [x] **[MEDIUM-684] - the clear and chip clicks still mutated after an `onFocus` listener destroyed the widget**
   - Symptom: `destroy()` leaves `disabled` false and the chosen items in place, so the narrow re-checks of MEDIUM-679 passed and `clearSelection` or `requestAndToggle` fired `onBeforeChange` and `onChange` on a torn-down instance and rendered into detached DOM. The stamp of round three had covered this case.
-  - Fix: an `@internal` protected `destroyed` flag, set first in `destroy()`, that both clicks check after the focus step.
+  - Fix: an `@internal` protected `destroyed` flag, set in `destroy()` after the focus listeners detach and before the close and the teardown, that both clicks check after the focus step.
   - Verified: `npm test` green with a destroying listener; round six reads the flag and both handlers.
 - [x] **[MEDIUM-685] - the chip click judged the item by the click's object, not by the chosen entry a reload may have swapped in**
   - Symptom: an `onFocus` listener that reloaded the items with a compare-equal object that is now disabled left the handler checking the old object, so the x removed a chosen item the A11Y contract calls inert.
