@@ -862,6 +862,31 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   onBlur: (() => void) | null
   /**
+   * Fired when the active row changes to another item, or to no item.
+   * - The active row is the row of the popup list that the arrow keys move
+   *   and that `aria-activedescendant` points to. It never holds DOM focus;
+   *   {@link onFocus} reports DOM focus.
+   * - `item` is the item of the new active row, or `undefined` when no item
+   *   row is active: the popup is closed, no item matches the filter, or the
+   *   active row is the choose-all row or an action row.
+   * - Fires on open with the initial row, before {@link onOpen}; on every
+   *   arrow, page, Home / End and typeahead move; on a click, before the
+   *   change it requests; when a filter keystroke, `setItems()`, `rerender()`
+   *   or a chosen-state re-render moves the row; and on close with
+   *   `undefined`, before {@link onClose}.
+   * - Fires only when the item changed under `compareFn`. A row rebuilt in
+   *   place for the same item does not fire, and a move between the
+   *   choose-all row and an action row does not fire either: both are "no
+   *   item".
+   * - Runs after the DOM reflects the new row, so `getVisibleItems()` is
+   *   current. Never fires for a mouse hover: hovering does not move the
+   *   active row.
+   * - An item that is itself `undefined` cannot be told from "no item".
+   * - `null` (default) = no consumer listener.
+   * @group Events
+   */
+  onActiveItemChange: ((item: T | undefined) => void) | null
+  /**
    * Called after the filter text changed and the list was re-rendered.
    * - Fires on typing, when an IME composition ends, and when Esc clears a
    *   non-empty query. `query` is the new text.
@@ -1326,6 +1351,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Mutually exclusive with `focusedIndex >= 0`.
    */
   private focusedRow: FocusedRingRow | null = null
+  /** The last item reported to `onActiveItemChange`, or none; see `reportActiveItem`. */
+  private reportedActiveItem: { active: true; item: T } | { active: false } = { active: false }
   /** The rendered action rows of the current render, in array order; empty while closed. Never part of `itemEls`. */
   private leadingActionRowEls: HTMLElement[] = []
   private trailingActionRowEls: HTMLElement[] = []
@@ -1463,6 +1490,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       onClose: settings?.onClose ?? null,
       onFocus: settings?.onFocus ?? null,
       onBlur: settings?.onBlur ?? null,
+      onActiveItemChange: settings?.onActiveItemChange ?? null,
       onFilterQueryChange: settings?.onFilterQueryChange ?? null,
       // Settings cast (one per constructor, see single / multiple): TS
       // cannot prove "base fields + Omit<S, base keys>" reassembles a generic
@@ -1738,6 +1766,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.popupEl.style.bottom = 'auto'
     }
     this.renderTriggerArrow()
+    // Start from no active row: a `setFocusedIndex` made while closed must
+    // not be reported as the initial row before `focusInitial` places it.
+    this.focusedRow = null
+    this.focusedIndex = -1
     this.renderPopupList()
     this.positioner = createPositioner(this.triggerEl, this.popupEl, {
       onHide: () => this.close(),
@@ -1831,6 +1863,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.trailingActionRowEls = []
     this.focusedRow = null
     this.comboboxEl.removeAttribute('aria-activedescendant')
+    this.reportActiveItem()
     this.renderTriggerArrow()
     this.onClosed()
     const onClose = this.settings.onClose
@@ -3149,46 +3182,73 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Make the DOM reflect `focusedIndex`: move the focused class onto the focused
-   * item element, point `aria-activedescendant` at it, and scroll it into view;
-   * when `focusedIndex` is -1 or out of range, clear the class and the attribute.
-   * Reads `itemEls`, so it only has an effect while the popup is open (the list
-   * exists). Called after `focusedIndex` changes (`setFocusedIndex`) and after
-   * the list is rebuilt (`renderPopupList`).
+   * Make the DOM reflect the active row (`focusedRow`, else `focusedIndex`):
+   * move the focused class onto its element, point `aria-activedescendant` at
+   * it, and scroll it into view; with no row, clear the class and the
+   * attribute. Then report the active item (`reportActiveItem`). Reads the
+   * rendered elements, so it only has an effect while the popup is open.
+   * Called after every active-row change (`setFocusedIndex`,
+   * `focusChooseAllRow`, `focusActionRow`) and after the list is rebuilt
+   * (`renderPopupList`, whose clamp assigns `focusedIndex` directly).
    */
   private syncFocusedIndexToDom(): void {
     if (this.focusedEl) {
       this.focusedEl.classList.remove(this.classIdMap.popupListRowFocusedClass)
       this.focusedEl = undefined
     }
-    if (this.focusedRow !== null && this.focusedRow.kind !== 'choose-all') {
-      const rowEl = this.focusedActionRowEl()
-      if (rowEl !== undefined) {
-        rowEl.classList.add(this.classIdMap.popupListRowFocusedClass)
-        this.comboboxEl.setAttribute('aria-activedescendant', rowEl.id)
-        this.focusedEl = rowEl
-        this.scrollRingEntryIntoView(rowEl)
-        return
-      }
-      this.focusedRow = null
-    }
-    if (this.focusedRow?.kind === 'choose-all' && this.chooseAllRowEl) {
-      this.chooseAllRowEl.classList.add(this.classIdMap.popupListRowFocusedClass)
-      this.comboboxEl.setAttribute('aria-activedescendant', this.chooseAllRowEl.id)
-      this.focusedEl = this.chooseAllRowEl
-      this.scrollRingEntryIntoView(this.chooseAllRowEl)
-      return
-    }
-    const i = this.focusedIndex
-    if (i >= 0 && i < this.itemEls.length) {
-      const el = this.itemEls[i]!
+    const el = this.resolveActiveRowEl()
+    if (el === undefined) {
+      this.comboboxEl.removeAttribute('aria-activedescendant')
+    } else {
       el.classList.add(this.classIdMap.popupListRowFocusedClass)
       this.comboboxEl.setAttribute('aria-activedescendant', el.id)
       this.focusedEl = el
       this.scrollRingEntryIntoView(el)
-    } else {
-      this.comboboxEl.removeAttribute('aria-activedescendant')
     }
+    this.reportActiveItem()
+  }
+
+  /**
+   * The element of the active row, or `undefined` when no rendered row is
+   * active. An action row whose element is gone drops `focusedRow` to `null`
+   * and falls through to the item at `focusedIndex`.
+   */
+  private resolveActiveRowEl(): HTMLElement | undefined {
+    if (this.focusedRow !== null && this.focusedRow.kind !== 'choose-all') {
+      const rowEl = this.focusedActionRowEl()
+      if (rowEl !== undefined) { return rowEl }
+      this.focusedRow = null
+    }
+    if (this.focusedRow?.kind === 'choose-all' && this.chooseAllRowEl) { return this.chooseAllRowEl }
+    const i = this.focusedIndex
+    return i >= 0 && i < this.itemEls.length ? this.itemEls[i] : undefined
+  }
+
+  /**
+   * Fire `onActiveItemChange` when the active item differs from the last
+   * report. The tail of `syncFocusedIndexToDom`, which every active-row move
+   * ends in, plus `close()`, which resets the row by assignment. Items are
+   * compared with `compareFn`, never by index or element, so an in-place row
+   * rebuild stays silent. The report is stored before the listener runs, so a
+   * listener that closes or re-renders the widget re-enters with the right
+   * baseline.
+   */
+  private reportActiveItem(): void {
+    const next = this.resolveActiveItem()
+    const last = this.reportedActiveItem
+    if (!next.active && !last.active) { return }
+    if (next.active && last.active && this.settings.compareFn(next.item, last.item)) { return }
+    this.reportedActiveItem = next
+    const onActiveItemChange = this.settings.onActiveItemChange
+    onActiveItemChange?.(next.active ? next.item : undefined)
+  }
+
+  /** The item of the active row; none while closed, on a non-item row, or with no row. */
+  private resolveActiveItem(): { active: true; item: T } | { active: false } {
+    if (!this.opened || this.focusedRow !== null) { return { active: false } }
+    const list = this.getVisibleItems()
+    const i = this.focusedIndex
+    return i >= 0 && i < list.length ? { active: true, item: list[i]! } : { active: false }
   }
 
   /**
@@ -3825,12 +3885,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const changed = next !== this.query
     this.query = next
     this.recomputeFilteredItems()
-    this.focusedIndex = -1
-    this.renderPopupList()
     // First ENABLED match, not blindly index 0: disabled items are skipped
     // by keyboard navigation (A11Y.md "Disabled"), and the active option a
-    // keystroke lands on is keyboard state.
-    this.setFocusedIndex(this.findNextEnabledIndex(0, 1, this.getVisibleItems()))
+    // keystroke lands on is keyboard state. Set before the render, so the
+    // one sync inside it reports the landing once, with no transient
+    // "no item" between the rebuild and the landing.
+    this.focusedRow = null
+    this.focusedIndex = this.findNextEnabledIndex(0, 1, this.getVisibleItems())
+    this.renderPopupList()
     if (changed) {
       const onFilterQueryChange = this.settings.onFilterQueryChange
       onFilterQueryChange?.(next)
