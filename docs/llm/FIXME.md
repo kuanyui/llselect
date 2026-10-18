@@ -2,6 +2,23 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (events, round eight: the last ui-select facts)
+
+Process: round eight, on the round-seven fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All three found QUALITY-696 and LINT-697 resolved, and the click fact of DOCUMENTATION-695 right; all three found the sentence that carried it overshooting the other way.
+
+- [x] **[DOCUMENTATION-698] - "ui-select moves its row by keyboard only" was false**
+  - Symptom: the bridge comment, the `angularjs/API.md` note and `docs/llm/DESIGN.md` narrowed ui-select's row moves to the keyboard; `REFS/ui-select-0.19.8` re-points `activeIndex` on the open (`uiSelectController.js`, `_resetSearchInput`), on every `$select.search` change (`uiSelectChoicesDirective.js`) and on a reload clamp. Only the row click and the hover leave it alone.
+  - Fix: the three texts say ui-select moves its row on the same events except the click, which selects without moving it.
+  - Verified: round nine reads the three texts against the reference copy.
+- [x] **[DOCUMENTATION-699] - a stale count**
+  - Symptom: the "Not supported" bullet of `angularjs/API.md` still pointed to "its two differences" while the row names three.
+  - Fix: "three".
+  - Verified: round nine reads the bullet.
+- [x] **[LINT-700] - a test comment named a clamp that does not run**
+  - Symptom: the error-routing test said the reload's clamp keeps index 0; index 0 is valid after the reload, so no clamp runs, the index simply holds Carol now.
+  - Fix: the comment.
+  - Verified: round nine reads it.
+
 ## review (events, round seven: the item click as a third difference, and a test that could not fail)
 
 Process: round seven, on the round-six fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). Opus 4.8 found all six round-six entries resolved. Opus 5 and Codex Sol found the round-six hover correction overshooting on one point, the click, and the round-six error-routing test unable to fail; Codex Sol found one docstring lead still a fragment.

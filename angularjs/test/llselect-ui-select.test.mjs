@@ -951,8 +951,8 @@ test('an on-highlight expression that throws inside a digest reaches $exceptionH
   })
   a.$('ui-llselect .llselect-trigger').click() // open: the initial row is the chosen Alice; the expression throws outside a digest
   assert.equal(a.errors.length, 1)
-  // A reload inside a digest re-renders the open list: the clamp keeps index 0, now Carol, so the expression
-  // throws inside the digest. The chosen entry's reconciliation runs AFTER that report: with a raw call the
+  // A reload inside a digest re-renders the open list: index 0 stays valid and now holds Carol, so the
+  // expression throws inside the digest. The chosen entry's reconciliation runs AFTER that report: with a raw call the
   // throw skips it and the trigger keeps the old name.
   a.scope.$apply(() => { a.scope.vm.users = [{ id: 2, name: 'Carol' }, { id: 1, name: 'Alicia' }] })
   assert.equal(a.errors.length, 2)
