@@ -1340,3 +1340,21 @@ test('ll-on-active-item-change runs with $item on open, on each keyboard move an
   assert.equal(a.$('#n').textContent, 'Alice,Carol,-')
   assert.deepEqual(a.errors, [])
 })
+
+test('ll-on-open / ll-on-close expose $reason', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <span id="n">{{vm.log.join(',')}}</span>
+      <llselect-single ng-model="vm.x" ll-on-open="vm.log.push('open:' + $reason)" ll-on-close="vm.log.push('close:' + $reason)"
+        ll-options="f for f in vm.fruits"></llselect-single></div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.log = [] },
+  })
+  const trigger = a.$('.llselect-trigger')
+  trigger.click()
+  trigger.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+  a.scope.$apply(() => { a.ng.element(a.$('llselect-single')).controller('llselectSingle').instance().open() })
+  trigger.dispatchEvent(new a.window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })) // picks the active item
+  assert.equal(a.$('#n').textContent, 'open:toggle,close:escape,open:api,close:choose')
+  assert.deepEqual(a.errors, [])
+})

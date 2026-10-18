@@ -224,8 +224,8 @@
     if (trailingActionRows) { settings.popupListTrailingActionRows = trailingActionRows }
     if (attrs.llPopupListLeadingRowsPinned) { settings.popupListLeadingRowsPinned = scope.$eval(attrs.llPopupListLeadingRowsPinned) }
     if (attrs.llPopupListTrailingRowsPinned) { settings.popupListTrailingRowsPinned = scope.$eval(attrs.llPopupListTrailingRowsPinned) }
-    wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler)
-    wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler)
+    wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler, function (meta) { return { $reason: meta.reason } })
+    wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler, function (meta) { return { $reason: meta.reason } })
     wireEventAttr(scope, attrs, 'llOnFocus', settings, 'onFocus', exceptionHandler)
     wireEventAttr(scope, attrs, 'llOnActiveItemChange', settings, 'onActiveItemChange', exceptionHandler, function (item) { return { $item: item } })
     wireEventAttr(scope, attrs, 'llOnFilterQueryChange', settings, 'onFilterQueryChange', exceptionHandler, function (query) { return { $query: query } })
@@ -254,9 +254,9 @@
     var expr = attrs[name]
     settings[key] = function () {
       // toLocals maps the core's callback arguments to expression locals
-      // (ll-on-filter-query-change exposes `$query`, ll-on-active-item-change
-      // `$item`, ll-on-before-change `$next` / `$previous` / `$event`); the
-      // others have none.
+      // (ll-on-open / ll-on-close expose `$reason`, ll-on-filter-query-change
+      // `$query`, ll-on-active-item-change `$item`, ll-on-before-change
+      // `$next` / `$previous` / `$event`); ll-on-focus has none.
       var locals = toLocals ? toLocals.apply(null, arguments) : undefined
       if (!scope.$root.$$phase) { scope.$apply(function () { scope.$eval(expr, locals) }); return }
       try { scope.$eval(expr, locals) } catch (e) { exceptionHandler(e) }

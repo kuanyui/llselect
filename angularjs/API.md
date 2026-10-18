@@ -51,16 +51,18 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ll-on-open`
 
-**Event expression** -> `onOpen`. Evaluated on each open, inside a digest, so scope writes show up at once.
+**Event expression** -> `onOpen`. Evaluated on each open, inside a digest, so scope writes show up at once. `$reason` says why the popup opened.
 
+- `$reason` is one of `'toggle'` (a click on the trigger, or `instance().toggle()`), `'keyboard'` (ArrowDown, ArrowUp, Enter or Space on the closed trigger), `'typeahead'` (a character typed on the closed trigger) or `'api'` (`instance().open()`).
 - Fires on every open that actually happens, user-driven or programmatic (`instance().open()`). A call that does not actually open the popup - already open, disabled, or the trigger scrolled out of view / clipped - does not fire.
 - An error thrown by the expression goes to `$exceptionHandler`, like `ng-click`; it never aborts the open.
 - This is the only way to observe opening from the directive: the core `onOpen` setting is construction-frozen and the directive owns it.
 
 ### `ll-on-close`
 
-**Event expression** -> `onClose`. Evaluated on each close, inside a digest.
+**Event expression** -> `onClose`. Evaluated on each close, inside a digest. `$reason` says why the popup closed.
 
+- `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp, on the trigger, the filter input or a slot control), `'outside'` (a press outside the widget), `'blur'` (DOM focus left the widget), `'toggle'` (a click on the trigger, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed) or `'hidden'` (the trigger scrolled out of view or was clipped).
 - Same rules as [`ll-on-open`](#ll-on-open).
 - It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and AngularJS broadcasts `$destroy` before disabling the scope.
 - In that teardown case, writes to parent-owned state (`vm.*`, a service) persist; writes to the dying child scope itself are lost with it.
