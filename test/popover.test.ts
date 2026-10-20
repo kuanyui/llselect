@@ -77,6 +77,25 @@ test('close survives a force-hidden popover (dialog.showModal hides all popovers
   assert.equal(sel.popupEl.hidden, true)
 })
 
+test('open neutralizes the UA height: fit-content with auto; close clears it (WebKit 18 collapsed the popup to its borders)', () => {
+  const root = mount()
+  mockPopoverSupport()
+  const sel = new LLSelectSingle<string>(root)
+  sel.setItems(['a', 'b'])
+  sel.open()
+  assert.equal(sel.popupEl.style.height, 'auto')
+  sel.close()
+  assert.equal(sel.popupEl.style.height, '')
+})
+
+test('without Popover API: open() leaves the popup height alone', () => {
+  const sel = new LLSelectSingle<string>(mount())
+  sel.setItems(['a', 'b'])
+  sel.open()
+  assert.equal(sel.popupEl.style.height, '')
+  sel.close()
+})
+
 test('detached mount: open() skips showPopover instead of throwing', () => {
   setupDom('<!doctype html><html><body></body></html>')
   const log = mockPopoverSupport()
