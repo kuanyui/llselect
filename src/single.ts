@@ -89,6 +89,7 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen item
    * + items (same convention as `createPopupListItemContentElFn`):
+   * - Called on **every** a trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`); no result is kept.
    * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this for
    *   real markup (icon + text, etc.).
    * - fn returns `null` - use the default for this render: the chosen item's
@@ -238,8 +239,9 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   }
 
   /**
-   * Set this item as the chosen item, **after** the user's Enter, Space or click
-   * on its row, then close the popup.
+   * Set this item as the chosen item **after** Enter on its row while it is the
+   * active row, Space on it while the filter is inactive, or a click on it,
+   * then close the popup.
    *
    * > No **before** counterpart: there is no `onPopupListItemActivating`.
    *

@@ -125,6 +125,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen items
    * + items (same convention as `createPopupListItemContentElFn`):
+   * - Called on **every** a trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`); no result is kept.
    * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this for
    *   real markup such as tag chips.
    * - fn returns `null` - use the default for this render (count summary / tags).
@@ -147,6 +148,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * Item -> the visible content ELEMENT of its tag chip in `'tags'` mode,
    * without subclassing. Mirrors `createPopupListItemContentElFn` (the chip is to the
    * trigger what the option content is to the row):
+   * - Called once per chosen item on **every** a trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`) while `triggerDisplay` is `'tags'`, unless `createTriggerContentElFn` returns an element; no result is kept.
    * - Return an `HTMLElement` and the library inserts it as the chip's content;
    *   the library still owns the chip container + the remove (x) button + aria.
    * - `null` (setting default, or returned for an item) = plain text from
@@ -169,6 +171,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * button, its click (removes the item + `stopPropagation`), `tabindex="-1"`, and
    * the `aria-label` accessible name (from `itemToTagRemoveButtonAriaLabel`);
    * this only fills the decorative icon.
+   * - Called once per chosen item on **every** a trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`) while `triggerDisplay` is `'tags'`, unless `createTriggerContentElFn` returns an element; no result is kept.
    * - Return an `HTMLElement` / `SVGElement`: appended inside the button as its icon.
    * - `null` (setting default, or returned for an item): no icon - the theme
    *   draws the x via its CSS glyph (`.llselect-tag-remove-button:empty::before`).
@@ -233,6 +236,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * The choose-all row's visible content ELEMENT, without subclassing - e.g.
    * a tri-state SVG checkbox (`createOutlinedCheckboxSvgEl`) + the counting text. Mirrors
    * `createPopupListItemContentElFn`. Only used with `chooseAllRow: true`.
+   * - Called **every** time the choose-all row is built: on each full list render (`renderPopupList`, only while the popup is open) and on each `toggleItem`, which rebuilds the row in place; no result is kept.
    * - Receives the tri-state and the counts of the visible enabled subset.
    * - Return an `HTMLElement`: inserted as the row's content; the accessible
    *   name stays pinned to `uiTranslationPack.chooseAllRowText` via `aria-label`, so
@@ -845,9 +849,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Toggle the item **after** the user's Enter, Space or click on its row, once
-   * `onChosenChanging` and `onBeforeChange` allowed it. Multi mode keeps the
-   * popup open either way.
+   * Toggle the item **after** Enter on its row while it is the active row, Space
+   * on it while the filter is inactive, or a click on it, once `onChosenChanging`
+   * and `onBeforeChange` allowed it. Multi mode keeps the popup open either way.
    *
    * > No **before** counterpart: there is no `onPopupListItemActivating`.
    * @group Subclassing: reactions
@@ -970,8 +974,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Runs **after** Enter, Space or a click on the choose-all row, as the
-   * library's response to that input.
+   * Runs **after** Enter on the active choose-all row, Space on it while the
+   * filter is inactive, or a click on it, as the library's response to that
+   * input.
    *
    * > No **before** counterpart: there is no `onChooseAllRowActivating`.
    *
