@@ -32,13 +32,16 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * this change); `undefined` means "no selection" on either side. Does NOT
    * fire on construction nor on `setChosenItem` with an equivalent item.
    * `null` (default) = no listener.
+   *
+   * > Pairs with `onBeforeChange`, which runs **before** the change and can stop it.
+   *
    * - `meta.source` says who initiated the change: `'user'` for a pointer or
    *   keyboard interaction inside the widget, `'api'` for any programmatic
    *   call. See {@link LLSelectChangeMeta}.
    * - `meta.reason` says what the change did: `'choose'` with the item in
    *   `meta.item`, `'clear'` for an empty write, or `'items'` for a
    *   `setItems` drop. See {@link LLSelectChangeReason}.
-   * - Runs after the value changed and the trigger was updated.
+   * - Runs **after** the value changed and the trigger was updated.
    * - `getChosenItem()` already returns the new value.
    * - A setter may be called from inside it. The nested `onChange` then
    *   reports `meta.source` `'api'`.
@@ -51,8 +54,11 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    */
   onChange: ((chosenItem: T | undefined, previousChosenItem: T | undefined, meta: LLSelectChangeMeta<T>) => void) | null
   /**
-   * Fired before a user interaction changes the chosen item, with a way to
+   * Fired **before** a user interaction changes the chosen item, with a way to
    * stop it.
+   *
+   * > Pairs with `onChange`, which runs **after** the change was written.
+   *
    * - Fires for the library's own pointer and keyboard paths only: a pick in
    *   the popup, and the clear button. Programmatic setters, the `setItems`
    *   reconciliation and an action row's own setter calls never fire it.
@@ -64,7 +70,7 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    *   while the popup is open. Only a pick does this.
    * - A vetoed clear leaves everything as it is.
    * - A pick of the already chosen item never fires it: nothing would change.
-   * - Runs after the protected `onChosenChanging` hook. Both run, either may
+   * - Runs **after** the protected `onChosenChanging` hook. Both run, either may
    *   cancel, and `event.defaultPrevented` shows the hook's decision.
    * - A setter called from inside the handler wins, `setItems` included: the
    *   pending change is dropped. That change reports `meta.source` `'user'`,
@@ -253,9 +259,12 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   }
 
   /**
-   * Subclass hook: called before a user interaction changes the chosen item,
+   * Subclass hook: called **before** a user interaction changes the chosen item,
    * with the way to stop it. Default no-op.
-   * - Runs before the `onBeforeChange` setting. Both run, either may call
+   *
+   * > Pairs with `onChosenChanged`, which runs **after** the change was written.
+   *
+   * - Runs **before** the `onBeforeChange` setting. Both run, either may call
    *   `event.preventDefault()`.
    * - The parameters are the setting's: the value about to be set, the
    *   current one, the event.

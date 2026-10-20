@@ -59,6 +59,9 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * construction nor on a setter call that yields an equivalent set
    * (element-wise compared via `compareFn`, order-sensitive).
    * `null` (default) = no listener.
+   *
+   * > Pairs with `onBeforeChange`, which runs **before** the change and can stop it.
+   *
    * - When `chosenItemsOrder` is `'as-listed'`, the order is normalized first,
    *   so a same-set write in another order is no change for items the list
    *   holds.
@@ -75,7 +78,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    *   whole-value write or an emptying bulk op, `'set'` for a whole-value
    *   write with items or a bulk op whose result is not empty, `'items'`
    *   for a `setItems` reconciliation. See {@link LLSelectChangeReason}.
-   * - Runs after the value changed and the trigger was updated.
+   * - Runs **after** the value changed and the trigger was updated.
    * - `getChosenItems()` already returns the new value.
    * - A setter may be called from inside it. The nested `onChange` then
    *   reports `meta.source` `'api'`.
@@ -86,8 +89,11 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    */
   onChange: ((chosenItems: readonly T[], previousChosenItems: readonly T[], meta: LLSelectChangeMeta<T>) => void) | null
   /**
-   * Fired before a user interaction changes the chosen items, with a way to
+   * Fired **before** a user interaction changes the chosen items, with a way to
    * stop it.
+   *
+   * > Pairs with `onChange`, which runs **after** the change was written.
+   *
    * - Fires for the library's own pointer and keyboard paths only: a row
    *   toggle in the popup, a tag chip's remove button, the clear button, the
    *   choose-all row. Programmatic setters, the `setItems` reconciliation and
@@ -101,7 +107,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    *   change; a click has already moved the active option to the clicked row.
    * - A change that would change nothing never fires it: the clear button on
    *   an empty selection, the choose-all row with nothing to act on.
-   * - Runs after the protected `onChosenChanging` hook. Both run, either may
+   * - Runs **after** the protected `onChosenChanging` hook. Both run, either may
    *   cancel, and `event.defaultPrevented` shows the hook's decision.
    * - A setter called from inside the handler wins, `setItems` included: the
    *   pending change is dropped. That change reports `meta.source` `'user'`,
@@ -863,9 +869,12 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Subclass hook: called before a user interaction changes the chosen items,
+   * Subclass hook: called **before** a user interaction changes the chosen items,
    * with the way to stop it. Default no-op.
-   * - Runs before the `onBeforeChange` setting. Both run, either may call
+   *
+   * > Pairs with `onChosenChanged`, which runs **after** the change was written.
+   *
+   * - Runs **before** the `onBeforeChange` setting. Both run, either may call
    *   `event.preventDefault()`.
    * - The parameters are the setting's: the list about to be set, the
    *   current one, the event.
