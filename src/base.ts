@@ -881,9 +881,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   onClose: ((meta: LLSelectCloseMeta) => void) | null
   /**
-   * Fired when DOM focus enters the widget.
+   * Fired **after** DOM focus entered the widget.
    *
-   * > No **before** counterpart: there is no `onBeforeFocus`.
+   * > No **before** counterpart: there is no `onBeforeFocus`, and there cannot be one, since DOM focus events cannot be cancelled.
    *
    * - DOM focus is the element that receives keyboard input,
    *   `document.activeElement`. Inside the widget it can be the trigger, the
@@ -905,9 +905,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   onFocus: (() => void) | null
   /**
-   * Fired when DOM focus leaves the widget.
+   * Fired **after** DOM focus left the widget.
    *
-   * > No **before** counterpart: there is no `onBeforeBlur`.
+   * > No **before** counterpart: there is no `onBeforeBlur`, and there cannot be one, since DOM focus events cannot be cancelled.
    *
    * - Fires once when focus moves to an element outside the widget or to
    *   nowhere: Tab away, a click on an element outside, a click on a
@@ -927,7 +927,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   onBlur: (() => void) | null
   /**
-   * Fired when the active row changes to another item, or to no item.
+   * Fired **after** the active row changed to another item, or to no item.
    *
    * > No **before** counterpart: there is no `onBeforeActiveItemChange`.
    *
@@ -2355,9 +2355,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected onChosenChanged(): void {}
   /**
    * Called inside `setItems`, **after** the new list is installed and an open
-   * popup list re-rendered, and **before** the action rows are rebuilt.
-   * Override to reconcile state that depends on the item list (e.g. clear a
-   * chosen value that disappeared). Default no-op.
+   * popup list re-rendered, and **before** `setItems` rebuilds any rendered
+   * action rows. Override to reconcile state that depends on the item list
+   * (e.g. clear a chosen value that disappeared). Default no-op.
    *
    * > No **before** counterpart: there is no `onItemsChanging`.
    * @group Subclassing: reactions
@@ -3029,8 +3029,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Called when an item row is activated: Enter on the active row, Space on
-   * it while the filter is inactive, or a click on the row. Default
+   * Called **after** the user activates an item row: Enter on the active row,
+   * Space on it while the filter is inactive, or a click on the row. Default
    * no-op; subclasses implement their selection behaviour (single mode picks
    * and closes, multiple mode toggles and keeps the popup open).
    *
@@ -3151,7 +3151,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Subclass hook: an action row was activated.
+   * Subclass hook: called **after** the user activates an action row.
    *
    * > No **before** counterpart: there is no `onPopupListActionRowActivating`.
    *
@@ -3260,9 +3260,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Subclass hook: the choose-all row was activated - Enter, or Space while
-   * the filter is inactive, while it is the active row (subclasses also wire
-   * their row's click handler to this). Default no-op.
+   * Subclass hook: called **after** the user activates the choose-all row:
+   * Enter, or Space while the filter is inactive, while it is the active row
+   * (subclasses also wire their row's click handler to this). Default no-op.
    *
    * > No **before** counterpart: there is no `onChooseAllRowActivating`.
    * @group Subclassing: reactions

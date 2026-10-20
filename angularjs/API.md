@@ -43,7 +43,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ng-change`
 
-**Expression**. Runs on each committed user choice - exactly like on a native control, no `ll-change` needed.
+**Expression**. Runs **after** each committed user choice - exactly like on a native control, no `ll-change` needed.
 
 > Pairs with [`ll-on-before-change`](#ll-on-before-change), which runs **before** a user change and can stop it.
 
@@ -53,7 +53,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ll-on-open`
 
-**Event expression** -> `onOpen`. Evaluated on each open, inside a digest, so scope writes show up at once. `$reason` says why the popup opened.
+**Event expression** -> `onOpen`. Evaluated **after** each open, inside a digest, so scope writes show up at once. `$reason` says why the popup opened.
 
 > No **before** counterpart: there is no `ll-on-before-open`.
 
@@ -64,7 +64,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ll-on-close`
 
-**Event expression** -> `onClose`. Evaluated on each close, inside a digest. `$reason` says why the popup closed.
+**Event expression** -> `onClose`. Evaluated **after** each close, inside a digest. `$reason` says why the popup closed.
 
 > No **before** counterpart: there is no `ll-on-before-close`.
 
@@ -75,9 +75,9 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ll-on-focus`
 
-**Event expression** -> `onFocus`. Evaluated once when DOM focus enters the widget, inside a digest.
+**Event expression** -> `onFocus`. Evaluated once **after** DOM focus entered the widget, inside a digest.
 
-> No **before** counterpart: there is no `ll-on-before-focus`.
+> No **before** counterpart: there is no `ll-on-before-focus`, and there cannot be one, since DOM focus events cannot be cancelled.
 
 - Fires when focus comes from outside the widget or from nowhere: Tab onto the trigger, a click on the trigger or on its label, a programmatic `instance().triggerEl.focus()`, an `instance().open()` on an unfocused widget whose filter is active, which moves focus to the filter input **after** [`ll-on-open`](#ll-on-open), or a click on the clear button or on a chip's remove button while the widget holds no focus, which focuses the trigger.
 - Does not fire for a focus move inside the widget, such as the open moving focus from the trigger to the filter input.
@@ -86,9 +86,9 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ll-on-blur`
 
-**Event expression** -> `onBlur`. Evaluated once when DOM focus leaves the widget, inside a digest.
+**Event expression** -> `onBlur`. Evaluated once **after** DOM focus left the widget, inside a digest.
 
-> No **before** counterpart: there is no `ll-on-before-blur`.
+> No **before** counterpart: there is no `ll-on-before-blur`, and there cannot be one, since DOM focus events cannot be cancelled.
 
 - Fires when focus moves to an element outside the widget or to nowhere: Tab away, a click outside, a click on a non-focusable area.
 - Does not fire for a focus move inside the widget.
@@ -99,7 +99,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ll-on-active-item-change`
 
-**Event expression** -> `onActiveItemChange`. Evaluated when the active row moves to another item, or to no item, inside a digest. `$item` is the item of the new active row, or `undefined`.
+**Event expression** -> `onActiveItemChange`. Evaluated **after** the active row moved to another item, or to no item, inside a digest. `$item` is the item of the new active row, or `undefined`.
 
 > No **before** counterpart: there is no `ll-on-before-active-item-change`.
 
