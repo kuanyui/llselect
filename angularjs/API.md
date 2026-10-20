@@ -77,7 +77,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 **Event expression** -> `onFocus`. Evaluated once **after** DOM focus entered the widget, inside a digest.
 
-> No **before** counterpart: there is no `ll-on-before-focus`, and there cannot be one, since the `focusin` / `focusout` events it would hook are not cancelable.
+> No **before** counterpart: there is no `ll-on-before-focus`, and the `focusin` / `focusout` events the library observes are not cancelable, so none could stop the move.
 
 - Fires when focus comes from outside the widget or from nowhere: Tab onto the trigger, a click on the trigger or on its label, a programmatic `instance().triggerEl.focus()`, an `instance().open()` on an unfocused widget whose filter is active, which moves focus to the filter input **after** [`ll-on-open`](#ll-on-open), or a click on the clear button or on a chip's remove button while the widget holds no focus, which focuses the trigger.
 - Does not fire for a focus move inside the widget, such as the open moving focus from the trigger to the filter input.
@@ -88,7 +88,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 **Event expression** -> `onBlur`. Evaluated once **after** DOM focus left the widget, inside a digest.
 
-> No **before** counterpart: there is no `ll-on-before-blur`, and there cannot be one, since the `focusin` / `focusout` events it would hook are not cancelable.
+> No **before** counterpart: there is no `ll-on-before-blur`, and the `focusin` / `focusout` events the library observes are not cancelable, so none could stop the move.
 
 - Fires when focus moves to an element outside the widget or to nowhere: Tab away, a click outside, a click on a non-focusable area.
 - Does not fire for a focus move inside the widget.
