@@ -1900,11 +1900,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // the positioner's inline top/left override two edges, but the
       // remaining `right/bottom: 0` over-constrain the box - and in an RTL
       // containing block an over-constrained `left` LOSES to `right: 0` -
-      // so neutralize both. (isConnected: showPopover() throws on a
-      // disconnected element; a detached widget is invisible either way.)
+      // so neutralize both. UA `[popover]` also sets `height: fit-content`:
+      // WebKit 18 resolves that to 0 for this column flex box under its
+      // `max-height` with a `flex-basis: 0%` list, so the popup showed as
+      // its two borders (Safari 18, GNOME Web; FIXME HIGH-705); `auto` is the
+      // same shrink-to-fit box in every engine. (isConnected: showPopover()
+      // throws on a disconnected element; a detached widget is invisible
+      // either way.)
       this.popupEl.showPopover()
       this.popupEl.style.right = 'auto'
       this.popupEl.style.bottom = 'auto'
+      this.popupEl.style.height = 'auto'
     }
     this.renderTriggerArrow()
     // Start from no active row: a `setFocusedIndex` made while closed must
@@ -2000,6 +2006,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       }
       this.popupEl.style.right = ''
       this.popupEl.style.bottom = ''
+      this.popupEl.style.height = ''
     }
     this.popupEl.hidden = true
     // Clear inline display + position so the `[hidden]` UA rule can hide the

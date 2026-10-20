@@ -2,6 +2,18 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (owner report: the popup shows as a horizontal line in Safari and GNOME Web)
+
+Process: an owner report from Safari and from GNOME Web (WebKitGTK); reproduced in this devcontainer on Playwright's WebKit 18.4 build through the rootless recipe (`rootless-browser-testing.md`), not on its WebKit 26.5 build; four layout experiments on 18.4 isolated the cause; then the post-fix review by Opus 5, Opus 4.8 and Codex Sol.
+
+- [x] **[HIGH-705] - in WebKit 18 the open popup collapsed to its two borders, a 2px line, with every row present but unseen**
+  - Symptom: click the trigger in Safari 18 or GNOME Web: a horizontal line where the popup should be. On WebKit 18.4 the popup's computed height is 2px and the list's 0px with all rows in the DOM; WebKit 26.5 and Chromium lay it out.
+  - Cause: in the popover top layer the UA stylesheet gives `[popover]` `height: fit-content`; the popup is a column flex container with an inline `max-height` and a list child with `flex: 1 1 0%`, and WebKit 18 resolves that fit-content height to 0. Each of these undoes it on 18.4: `height: auto` on the popup, `flex-basis: auto` on the list, no `max-height`, `display: block`, or no Popover API at all.
+  - Fix: `open()` sets `height: auto` inline next to the `right` / `bottom` neutralization of the UA `inset: 0` (src/base.ts); `close()` clears it. `auto` is the same shrink-to-fit box in every engine, clamped by `max-height`.
+  - Verified: jsdom tests on the mocked Popover API (`popover.test.ts`); the diagnostic page and the examples page on WebKit 18.4 (popup 259.5px, rows visible), WebKit 26.5 and Chromium 153 unchanged.
+  - Q: Why neutralize the UA rule in JavaScript, not change the list's `flex: 1 1 0%` in the themes?
+    - A: Because the trigger is the UA popover rule the library opted into, so the library should undo it, as it already does for `inset: 0`; a theme change would fix the five shipped themes and leave a consumer theme with the same list rule broken.
+
 ## review (owner report: the fit-content popup width rounded short)
 
 Process: an owner report with a minimal page (under `REFS/`, untracked), reproduced in headless Chromium; a six-model committee on the fix, recorded in `popup-width-committee.md`; then the post-fix review by Opus 5, Opus 4.8 and Codex Sol, which found the code correct and whose test and doc findings the follow-up commit fixed.
