@@ -2338,7 +2338,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   protected onOpened(): void {}
   /**
-   * Subclass hook: called once **after** the popup finishes closing. Pairs with the `onClose` setting (both run).
+   * Subclass hook: called once **after** the popup finishes closing. The `onClose` setting fires alongside this (both run).
    *
    * > No **before** counterpart: there is no `onClosing`.
    * @group Subclassing: reactions
@@ -2347,9 +2347,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * Subclass hook: called **after** the chosen state actually changed, right
    * **before** the variant's `onChange` setting fires (hook first, both run -
-   * same pairing as `onOpened` / `onClosed`). Default no-op.
+   * same as `onOpened` / `onClosed`). Default no-op.
    *
-   * > Pairs with `onChosenChanging`, which runs **before** the change and can stop it.
+   * > Pairs with `onChosenChanging`, which runs **before** a user change and can stop it.
    * @group Subclassing: reactions
    */
   protected onChosenChanged(): void {}

@@ -60,7 +60,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * (element-wise compared via `compareFn`, order-sensitive).
    * `null` (default) = no listener.
    *
-   * > Pairs with `onBeforeChange`, which runs **before** the change and can stop it.
+   * > Pairs with `onBeforeChange`, which runs **before** a user change and can stop it.
    *
    * - When `chosenItemsOrder` is `'as-listed'`, the order is normalized first,
    *   so a same-set write in another order is no change for items the list
@@ -845,7 +845,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Toggle on click, after asking `onChosenChanging` and `onBeforeChange`.
+   * Toggle on click, **after** asking `onChosenChanging` and `onBeforeChange`.
    * Multi mode keeps the popup open either way.
    * @group Subclassing: reactions
    */
@@ -989,7 +989,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Re-match the chosen entries against the new list after `setItems`.
+   * Re-match the chosen entries against the new list **after** `setItems`.
    * - Entries the list no longer holds (by `compareFn`) are dropped and
    *   `onChange` fires for the drop.
    * - When the list holds a compareFn-equal but DIFFERENT object (`track by`

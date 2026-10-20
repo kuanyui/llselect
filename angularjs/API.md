@@ -45,7 +45,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 **Expression**. Runs on each committed user choice - exactly like on a native control, no `ll-change` needed.
 
-> Pairs with [`ll-on-before-change`](#ll-on-before-change), which runs **before** the change and can stop it.
+> Pairs with [`ll-on-before-change`](#ll-on-before-change), which runs **before** a user change and can stop it.
 
 - These directives drive a real ngModel; `ng-change` is the standard `$viewChangeListeners` pipeline, which runs only on the `$setViewValue` path: a real user choice.
 - It does NOT fire on load, on a programmatic model write, or when a data reload drops the chosen item - the write-back gate keeps those out of the view-change path (see the [Gotchas](README.md#gotchas)).

@@ -33,7 +33,7 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * fire on construction nor on `setChosenItem` with an equivalent item.
    * `null` (default) = no listener.
    *
-   * > Pairs with `onBeforeChange`, which runs **before** the change and can stop it.
+   * > Pairs with `onBeforeChange`, which runs **before** a user change and can stop it.
    *
    * - `meta.source` says who initiated the change: `'user'` for a pointer or
    *   keyboard interaction inside the widget, `'api'` for any programmatic
@@ -327,7 +327,7 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   }
 
   /**
-   * Re-match the chosen item against the new list after `setItems`.
+   * Re-match the chosen item against the new list **after** `setItems`.
    * - If the list no longer holds it (by `compareFn`), it is dropped and
    *   `onChange` fires.
    * - If the list holds a compareFn-equal but DIFFERENT object (`track by`
