@@ -228,6 +228,64 @@ test('createPositioner sets fixed positioning styles and data-placement', () => 
   p.detach()
 })
 
+// --- fit-content: the natural width is measured as a fractional border box ---
+// The popup is forced to `box-sizing: border-box`, so the computed `width` is
+// the border-box width; `offsetWidth` is that width rounded to the nearest
+// pixel. jsdom has no layout: both are mocked.
+
+function withNaturalWidth(floating: HTMLElement, computedWidth: string, offsetWidth: number): () => void {
+  const original = window.getComputedStyle
+  window.getComputedStyle = ((el: Element, pseudo?: string | null) =>
+    el === floating ? ({ width: computedWidth } as unknown as CSSStyleDeclaration) : original.call(window, el, pseudo)) as typeof window.getComputedStyle
+  Object.defineProperty(floating, 'offsetWidth', { value: offsetWidth, configurable: true })
+  Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+  return () => { window.getComputedStyle = original }
+}
+
+function fitContentWidth(computedWidth: string, offsetWidth: number): string {
+  setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  withMockedRect(anchor, { top: 100, left: 50, right: 150, bottom: 130, width: 100, height: 30 })
+  const restore = withNaturalWidth(floating, computedWidth, offsetWidth)
+  const p = createPositioner(anchor, floating)
+  const width = floating.style.width
+  p.detach()
+  restore()
+  return width
+}
+
+test('fit-content: a fractional natural width is rounded up, not to the nearest pixel', () => {
+  // 249.375px of content got 249px from offsetWidth and wrapped (owner report).
+  assert.equal(fitContentWidth('249.375px', 249), '250px')
+})
+
+test('fit-content: an integral natural width is applied as it is', () => {
+  assert.equal(fitContentWidth('250px', 250), '250px')
+})
+
+test('fit-content: a computed width that disagrees with offsetWidth falls back to offsetWidth plus one', () => {
+  // An engine reporting the content box (border-box width minus the 2px border) or a transformed box.
+  assert.equal(fitContentWidth('247.375px', 249), '250px')
+})
+
+test('fit-content: a non-numeric computed width falls back to offsetWidth plus one', () => {
+  assert.equal(fitContentWidth('max-content', 249), '250px')
+})
+
+test('fit-content: the measuring inline width is restored before the positioner writes its own', () => {
+  setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  withMockedRect(anchor, { top: 100, left: 50, right: 150, bottom: 130, width: 100, height: 30 })
+  const restore = withNaturalWidth(floating, '249.375px', 249)
+  const p = createPositioner(anchor, floating)
+  assert.equal(floating.style.width, '250px')
+  p.detach()
+  restore()
+  assert.equal(floating.style.width, '')
+})
+
 test('detach clears all inline styles and data-placement', () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
   const anchor = document.getElementById('a')!
