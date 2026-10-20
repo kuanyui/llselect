@@ -281,13 +281,12 @@ export interface PositionerOptions {
  * setting `width: max-content`, then restore the prior inline width. Used only
  * in `'fit-content'` mode.
  * - Reads the computed `width`: the fractional border-box width (the popup is
- *   forced to `box-sizing: border-box` at construction), unaffected by a
- *   transform on the popup or an ancestor, rounded up so the box is never
- *   short. `offsetWidth` rounds to the nearest pixel: a 249.375px list got
- *   249px and its text wrapped (owner report; `popup-width-committee.md`).
+ *   forced to `box-sizing: border-box` at construction), unaffected by
+ *   transforms, rounded up so the box is never short of its content.
  * - The guard against `offsetWidth` catches an engine that reports the
- *   content box here, and a non-numeric value: both fall back to the integer
- *   plus one, which is never short either.
+ *   content box, or a non-numeric value: both fall back to the integer plus
+ *   one, never short either. `offsetWidth` alone rounds to the nearest pixel
+ *   (`docs/llm/popup-width-committee.md`).
  */
 function measureNaturalWidth(el: HTMLElement): number {
   const prev = el.style.width

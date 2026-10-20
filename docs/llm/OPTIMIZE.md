@@ -4,6 +4,10 @@ Agent-facing log of llselect's own runtime performance: measurements, regression
 
 Status marks: `[ ]` open, `[~]` in progress, `[x]` done. Newest entry on top. No dates: `git log` owns the when; a measurement is identified by the commit the tree was at. Every measurement records the machine's power profile: a run without it is not comparable with the README (the lesson of the resolved entry below).
 
+## The fit-content width measure keeps its cost
+
+- [x] **`measureNaturalWidth` reads the computed `width` and `offsetWidth` instead of `offsetWidth` alone (the half-pixel fix, MEDIUM-704).** Measured in headless Chromium 153 on an open popup, 2000 calls each with a forced layout per call: the old read 5 microseconds, every candidate 5 to 6. The forced layout is the cost; the extra read is not. The candidates and the numbers: `popup-width-committee.md`.
+
 ## Color-scheme first decision forces one style recalculation per widget
 
 - [ ] **Each widget's first color-scheme decision reads computed style and then writes an attribute, so in a batch every widget after the first forces a style recalculation.** About 50 ms per 1000 widgets on the main thread before the first paint. The benchmark page cannot see it (below). Found in the devcontainer runs of the entry "Mass instantiation looked regressed since v0.0.7". Fix proposed below, not applied, awaiting the owner.
