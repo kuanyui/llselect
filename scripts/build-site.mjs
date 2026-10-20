@@ -56,6 +56,9 @@ for (const f of ['llselect-angularjs.js', 'llselect-ui-select.js']) {
 // convention typedoc-plugin-markdown's intra-page links assume. Reset per page.
 const slugCounts = new Map()
 const ALERT_RE = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/
+// The counterpart notes of the event docs (CLAUDE.md "Event documentation")
+// open with fixed template words; the site gives them a tinted box.
+const COUNTERPART_RE = /^(Pairs with |No \*\*(before|after)\*\* counterpart)/
 // Title icons mirror GitHub's octicon pairing; mdi equivalents (MIT), same
 // source as the other site icons: information-outline / lightbulb-outline /
 // message-alert-outline / alert-outline / alert-octagon-outline.
@@ -91,6 +94,9 @@ marked.use({
     blockquote({ tokens }) {
       const first = tokens[0]
       const m = first?.type === 'paragraph' ? first.text.match(ALERT_RE) : null
+      if (!m && tokens.length === 1 && first?.type === 'paragraph' && COUNTERPART_RE.test(first.text)) {
+        return `<div class="md-counterpart">${this.parser.parse(tokens)}</div>\n`
+      }
       if (!m) { return false } // not an alert: default blockquote rendering
       const label = m[1][0] + m[1].slice(1).toLowerCase()
       let inner = this.parser.parse(tokens)
@@ -481,6 +487,9 @@ main [data-binding]::before { content: attr(data-binding); float: right; margin-
 .md-alert-important { --alert: var(--alert-important); }
 .md-alert-warning { --alert: var(--alert-warning); }
 .md-alert-caution { --alert: var(--alert-caution); }
+/* Counterpart notes of the event docs: a note-colored card, distinct from the alerts (edge only) and from the current-block highlight (accent tint). */
+.md-counterpart { margin: 1rem 0; padding: 0.6rem 1rem; background: var(--muted); border: 1px solid var(--line); border-left: 0.25rem solid var(--alert-note); border-radius: 6px; }
+.md-counterpart p { margin: 0; }
 /* Back-to-top: fixed bottom-right, hidden until scrolled (script toggles). */
 .back-to-top { position: fixed; right: 1rem; bottom: 1rem; z-index: 10; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.45rem 0.9rem; font: inherit; font-weight: 600; color: var(--accent); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
 .back-to-top:hover { background: var(--accent-soft); }
