@@ -136,7 +136,7 @@ cd angularjs && npm run build             # terser only, no bundler; also checke
 
 jsdom cannot test layout, native Tab focus navigation, scrollbar dragging, visual-viewport behavior, or assistive-technology output. Changes touching positioning, focus order, RTL, themes, or ARIA need a real-browser pass - record what to verify in `docs/llm/TODO.md` ("manual verification") if it cannot happen in the same session. A real-browser pass IS possible in this no-sudo devcontainer: `docs/llm/rootless-browser-testing.md` has the rootless Playwright recipe.
 
-The user previews the demo / site through `make server`, which serves the `public/` build output. `public/` regenerates only when `build:site` runs - after changing `demo/`, site generation, or READMEs, run `npm run build:site` before reporting anything as viewable (no server restart needed; mention a browser hard refresh when cached CSS / JS is involved).
+The user previews the demo / site through `make server`, which serves the `public/` build output. `public/` regenerates only when `build:site` runs - after changing `demo/`, site generation, or READMEs, run `npm run build:site` before reporting anything as viewable (no server restart needed; mention a browser hard refresh when cached CSS / JS is involved). `make server` runs `npm run build` and then `build:site` before serving, so a fresh start after a branch switch serves the checked-out code; `make build` is the library build alone.
 
 ### Generated and abandoned files (llselect)
 
