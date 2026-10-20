@@ -5,7 +5,7 @@ Agent-facing record of the committee convened on an owner report: with `popupWid
 ## The report and the facts verified
 
 - The owner's page: the vanilla theme, a 15-glyph CJK option, the trigger at its 14rem min-width. Chromium on Linux: the popup's max-content width is 249.375px; `measureNaturalWidth` read `offsetWidth`, 249; the popup got `width: 249px`; the option wrapped onto two lines. Reproduced in headless Chromium 153 against the current build with a CJK font installed: the same three numbers and two lines.
-- Why the fraction: the row padding 2 x 0.7rem = 22.4px, the 2px popup border, and 15 glyphs at 15.2px (0.95rem).
+- Why the fraction: 15 glyphs at 15px each (the Linux CJK font rounds the 15.2px em to whole-pixel advances) = 225px, plus the row padding 2 x 0.7rem = 22.4px and the 2px popup border = 249.4px, laid out as 249.375px.
 - `offsetWidth` rounds to the nearest pixel (CSSOM View), so a fraction under .5 is lost. Latin text without spaces cannot wrap and overflows unseen; Latin text with a space near the end wraps at the space.
 - The library forces `box-sizing: border-box` on the popup at construction (`src/base.ts`), so `offsetWidth`, `getBoundingClientRect().width` and the computed `width` all describe the same border box.
 - No shipped theme transforms the popup; only the arrow rotates. A consumer's open animation may scale the popup.
@@ -17,6 +17,7 @@ Agent-facing record of the committee convened on an owner report: with `popupWid
 | `transform: scale(0.95)` on the popup | 249.375px | 236.90625 | 249 |
 | `left: 50.5px` | 249.375px | 249.375 | 249 |
 
+- The `left: 50.5px` row did not reproduce the pixel-snap mismatch Opus 5 predicted for the round-match guard; it may still occur at other positions, in the safe direction.
 - Cost, 2000 calls of each candidate on the open popup, every call forcing one layout: the current read 5 microseconds, every candidate 5 to 6. The forced layout is the cost; the read is not.
 
 ## The candidates
@@ -24,7 +25,8 @@ Agent-facing record of the committee convened on an owner report: with `popupWid
 - A, the owner's proposal: `Math.ceil(el.getBoundingClientRect().width)`. Fixes the report. The rect includes transforms: a popup scaled to 0.95 while opening measures 236.9, the ceiling gives 237, and that inline width wraps the content for the whole open cycle.
 - B: `el.offsetWidth + 1`. Never short (natural <= offsetWidth + 0.5), transform-free, but over-allocates up to 1.5px on every open, even for an integral width.
 - F, the floating-ui pattern: `Math.round(rect) === el.offsetWidth ? Math.ceil(rect) : el.offsetWidth + 1`. Exact when nothing scales the box; a mismatch detects a scale and falls back to the integer plus one. A scale that leaves the rounded rect equal to `offsetWidth` slips through (Codex Astra); Chromium reads `offsetWidth` from pixel-snapped edges, so a fractional `left` could trip the guard without a transform, in the safe direction (Opus 5).
-- G: `Math.ceil(parseFloat(getComputedStyle(el).width))`, falling back to `offsetWidth` when not numeric. The resolved `width` of a rendered element is its used value, the border box under `box-sizing: border-box`, unaffected by transforms. Two members doubted that engines at the browser floor report the border box there; Chromium 153 does (table above); Firefox 78 and Safari 14.1 could not be run here.
+- G: `Math.ceil(parseFloat(getComputedStyle(el).width))`, falling back to `offsetWidth` when not numeric. The resolved `width` of a rendered element is its used value, the border box under `box-sizing: border-box`, unaffected by transforms. Opus 5 asserted, in its own words, that the resolved value is the used value and so the content box width, that `box-sizing: border-box` does not change this, and that G would therefore under-measure the 1px-bordered popup by 2px; Opus 4.8 and Sonnet 5 doubted the engines at the browser floor; Codex Sol, who picked G, asked for a Firefox 78 and Safari 14.1 smoke test. The Chromium 153 measurement above shows the border box, 249.375px with the two 1px borders, which overturns the assertion for Chromium; the floor engines could not be run here.
+- C, D and E were drafts the agent discarded before the committee: CSS `max-content` with min and max widths (moves the collision and RTL math into CSS), a ceiling on the final width only (would widen `'match-trigger'` and could breach the viewport clamp), and the fractional rect without a ceiling (equality with the content's width is not guaranteed after layout rounding).
 - H, chosen: G's measure with F's guard. `parseFloat(getComputedStyle(el).width)`; when finite and equal to `offsetWidth` after rounding, `Math.ceil` of it; otherwise `offsetWidth + 1`. Transform-free like G; an engine that reports the content box, a non-numeric value, or a pixel-snap mismatch all fall back to the integer plus one, which is never short.
 
 ## Positions and tally
@@ -33,13 +35,17 @@ Agent-facing record of the committee convened on an owner report: with `popupWid
 - G: Sonnet 4.6, Codex Sol, Codex Astra. Transform-free by construction; the guard only for a non-numeric value.
 - A: nobody; all six named the transform risk. B: nobody.
 - All six: `computePosition` and the style write stay as they are; `'match-trigger'` does not measure; the RTL branch right-aligns with the width and a ceiling only grows leftward; the viewport clamp absorbs the extra pixel; applying `max-content` with min and max would move the collision and RTL math into CSS and break the layout-free tests.
-- All six: the height path (`offsetHeight`, `scrollHeight`, `clientHeight` in `createPositioner`) has the same rounding class, bounded by `maxHeight`: a borderline above / below flip or a sub-pixel gap at worst; not this fix (`TODO.md`).
+- All six: the height path (`offsetHeight`, `scrollHeight`, `clientHeight` in `createPositioner`) has the same rounding class, three rounded reads that can sum to about 1.5px short, bounded by `maxHeight`: a borderline above / below flip or a small gap at worst; not this fix (`TODO.md`).
 - Opus 5: the F snippet in the brief lost the restore of the inline width; the restore stays in every variant.
 - The agent (Fable 5) proposed H after the tally as the synthesis of the two camps; the post-fix review reads it.
 
 ## Decision
 
 H, in `measureNaturalWidth` only. The owner's criteria: robust, and no performance cost, since performance is one of the project's points. H is the most robust of the five, since every known failure falls back to a width that is never short, at the same cost as before: one forced layout per reposition, plus a `getComputedStyle` read and a `parseFloat`, about a microsecond. The regression tests mock the computed width and `offsetWidth` (`test/positioning.test.ts`, the block "fit-content: the natural width is measured as a fractional border box"). The owner's page verified in headless Chromium 153 against the fixed build: 250px and one line, and the same with the popup scaled to 0.95 before opening.
+
+## The post-fix review
+
+- Opus 5, Opus 4.8 and Codex Sol, all at once: the code is correct and complete; no input returns a width short of the content, except an engine that reports the content box while the popup's border plus padding is under half a pixel (no shipped theme) or an engine that reports an integer computed width (Codex Sol), both covered by the Firefox and Safari check in `TODO.md`. Their findings, fixed in the follow-up commit: a test whose name claimed a restore it did not observe (now observed at the height read), a test comment that blamed transforms for a mismatch they cannot cause, the G line above which had softened Opus 5's assertion into a doubt, the glyph arithmetic, the height bound, the skipped candidate letters, and the missing `OPTIMIZE.md` pointer.
 
 ## Follow-ups
 

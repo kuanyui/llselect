@@ -41,7 +41,7 @@ The automatable layer of the original checklist ran green in real Chromium and F
 
 - [ ] **Highlight-example eyeball** (core demo 7.4 + 11.5, angularjs demo 8c + 8f; `<mark>` rendering is visual, jsdom-blind): type in each filter and check the marks track the query per keystroke and clear with it; `<mark>`'s native yellow must stay legible on the hover / keyboard-focus backgrounds and in BOTH color schemes (dark especially - native mark is black-on-yellow); on the core page also under a Bootstrap theme, whose global `mark` rule adds its own padding / background inside popup rows (decide there whether the demo needs a scoped override like the TOC's); angularjs 7c: the faded role hint must stay unmarked while the name carries the mark.
 - [ ] **AngularJS language-switch eyeball** (angularjs demo 14; angular-translate's loader and the CDN are jsdom-blind): pick ja, then zh-TW, then en - every `<llselect-single>` / `<llselect-multiple>` / `<ui-llselect>` on the page re-packs in place (placeholders, search box, clear x, tag remove x, count summary, choose-all row, no-results status), chosen values survive, 1a keeps its explicit `ll-placeholder`, and section 9's validation messages still render in English through `fallbackLanguage('en')` instead of "Could not translate".
-- [ ] **Fit-content width measure on Firefox and Safari** (jsdom has no layout): open a fit-content popup whose content is wider than the trigger on Firefox 78 and Safari 14.1, apply `width: max-content` and read `getComputedStyle(popupEl).width`; expected the border-box width, as Chromium 153 reports (`popup-width-committee.md`). A content-box value only costs up to 1.5px of extra width through the `offsetWidth` guard.
+- [ ] **Fit-content width measure on Firefox and Safari** (jsdom has no layout): open a fit-content popup whose content is wider than the trigger on Firefox 78 and Safari 14.1, apply `width: max-content` and read `getComputedStyle(popupEl).width`; expected the border-box width with its fraction, 249.375px and not 249px, as Chromium 153 reports (`popup-width-committee.md`). A content-box value only costs up to 1.5px of extra width through the `offsetWidth` guard.
 
 ## Change reason, veto hook and item language - implementation plan (shipped; the manual passes above stay open)
 
@@ -111,7 +111,7 @@ Measurements, regressions and the optimization work on them: `OPTIMIZE.md`. This
 
 ## Positioning precision (open)
 
-- [ ] **Height reads round to the pixel** (`offsetHeight`, `scrollHeight`, `clientHeight` in `createPositioner`): the natural height can read up to half a pixel short, which only shifts a borderline above / below flip or leaves a sub-pixel gap, since `maxHeight` clamps separately; the width fix did not touch it (`popup-width-committee.md`).
+- [ ] **Height reads round to the pixel** (`offsetHeight`, `scrollHeight`, `clientHeight` in `createPositioner`): the natural height, summed from three rounded reads, can read up to about 1.5px short, which only shifts a borderline above / below flip or leaves a small gap, since `maxHeight` clamps separately; the width fix did not touch it (`popup-width-committee.md`).
 
 ## Accepted limitations (known, deliberately not planned)
 

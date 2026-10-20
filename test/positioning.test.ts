@@ -265,7 +265,7 @@ test('fit-content: an integral natural width is applied as it is', () => {
 })
 
 test('fit-content: a computed width that disagrees with offsetWidth falls back to offsetWidth plus one', () => {
-  // An engine reporting the content box (border-box width minus the 2px border) or a transformed box.
+  // An engine reporting the content box (the border-box width minus the 2px border), or a pixel-snap mismatch.
   assert.equal(fitContentWidth('247.375px', 249), '250px')
 })
 
@@ -273,17 +273,20 @@ test('fit-content: a non-numeric computed width falls back to offsetWidth plus o
   assert.equal(fitContentWidth('max-content', 249), '250px')
 })
 
-test('fit-content: the measuring inline width is restored before the positioner writes its own', () => {
+test('fit-content: the measuring inline width is restored before the positioner reads the height', () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
   const anchor = document.getElementById('a')!
   const floating = document.getElementById('b')!
   withMockedRect(anchor, { top: 100, left: 50, right: 150, bottom: 130, width: 100, height: 30 })
   const restore = withNaturalWidth(floating, '249.375px', 249)
+  // reposition reads offsetHeight right after the measure: the inline width must be back to its prior value by then.
+  let widthAtHeightRead: string | null = null
+  Object.defineProperty(floating, 'offsetHeight', { configurable: true, get() { widthAtHeightRead = floating.style.width; return 150 } })
   const p = createPositioner(anchor, floating)
+  assert.equal(widthAtHeightRead, '')
   assert.equal(floating.style.width, '250px')
   p.detach()
   restore()
-  assert.equal(floating.style.width, '')
 })
 
 test('detach clears all inline styles and data-placement', () => {
