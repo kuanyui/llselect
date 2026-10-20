@@ -85,6 +85,8 @@ Landed on `dev` in six commits, `937e5db` to `9581257`: the leading / trailing r
 
 ## Performance (open)
 
+Measurements, regressions and the optimization work on them: `OPTIMIZE.md`. This section keeps only the remaining to-do items.
+
 - [ ] **Cache the fit-content natural-width measurement.** With `popupWidthPolicy: 'fit-content'` now the default, every reposition (each captured scroll / resize tick while the popup is open) runs the `width: max-content` measure in `positioning.ts` - a second forced layout on top of the existing height read. Cache the natural width per open cycle and re-measure only when content changes (open, `renderPopupList`, filter query changes, `setItems`); needs an invalidation hook on the positioner. Negligible for typical lists, visible on the 10k stress demos (8.1 / 8.2).
 
 ## API design review (open)
