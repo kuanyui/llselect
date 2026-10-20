@@ -316,7 +316,7 @@ ${items.map(([label, href]) => `<a href="${href}"${label === current ? ' class="
 // cannot end the inline block early.
 const COLOR_SCHEME_JS = readFileSync('demo/color-scheme.js', 'utf8').replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--')
 // The dark token set, printed twice (see the comment in the template CSS).
-const SITE_DARK_VARS = 'color-scheme: dark; --fg: #d8d8d8; --fg-muted: #9a9a9a; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --accent: #7fb1f5; --accent-soft: #263344; --mark: rgba(187, 128, 9, 0.45); --alert-note: #4493f8; --alert-tip: #3fb950; --alert-important: #ab7df8; --alert-warning: #d29922; --alert-caution: #f85149;'
+const SITE_DARK_VARS = 'color-scheme: dark; --fg: #d8d8d8; --fg-muted: #9a9a9a; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --accent: #7fb1f5; --accent-soft: #263344; --mark: rgba(187, 128, 9, 0.45); --alert-note: #4493f8; --alert-tip: #3fb950; --alert-important: #ab7df8; --alert-warning: #d29922; --alert-caution: #f85149; --note-bg: #3b321f; --note-fg: #e9d8b4;'
 
 function renderPage({ title, description, nav, body, toc, subnav = null }) {
   return `<!doctype html>
@@ -329,7 +329,7 @@ function renderPage({ title, description, nav, body, toc, subnav = null }) {
 <script>
 ${COLOR_SCHEME_JS}</script>
 <style>
-:root { color-scheme: light; --fg: #1a1a1a; --fg-muted: #656565; --bg: #ffffff; --muted: #f4f4f4; --line: #d0d0d0; --link: #0550ae; --accent: #2456a6; --accent-soft: #eef3fb; --mark: #ffe066; --alert-note: #0969da; --alert-tip: #1a7f37; --alert-important: #8250df; --alert-warning: #9a6700; --alert-caution: #cf222e; }
+:root { color-scheme: light; --fg: #1a1a1a; --fg-muted: #656565; --bg: #ffffff; --muted: #f4f4f4; --line: #d0d0d0; --link: #0550ae; --accent: #2456a6; --accent-soft: #eef3fb; --mark: #ffe066; --alert-note: #0969da; --alert-tip: #1a7f37; --alert-important: #8250df; --alert-warning: #9a6700; --alert-caution: #cf222e; --note-bg: #f4e6c6; --note-fg: #4a3519; }
 /* The dark set twice on purpose: the OS preference applies only while no
    data-color-scheme attribute is set (demo/color-scheme.js writes one when the
    stored choice differs from the OS); light-dark() and style queries sit above
@@ -487,9 +487,10 @@ main [data-binding]::before { content: attr(data-binding); float: right; margin-
 .md-alert-important { --alert: var(--alert-important); }
 .md-alert-warning { --alert: var(--alert-warning); }
 .md-alert-caution { --alert: var(--alert-caution); }
-/* Counterpart notes of the event docs: a note-colored card, distinct from the alerts (edge only) and from the current-block highlight (accent tint). */
-.md-counterpart { margin: 1rem 0; padding: 0.6rem 1rem; background: var(--muted); border: 1px solid var(--line); border-left: 0.25rem solid var(--alert-note); border-radius: 6px; }
+/* Counterpart notes of the event docs: a kraft-paper card with earth-toned text (owner's pick), no border, so it reads as a note and not as a code block. */
+.md-counterpart { margin: 1rem 0; padding: 0.6rem 1rem; background: var(--note-bg); color: var(--note-fg); border-radius: 6px; }
 .md-counterpart p { margin: 0; }
+.md-counterpart code { background: rgba(127, 127, 127, 0.18); }
 /* Back-to-top: fixed bottom-right, hidden until scrolled (script toggles). */
 .back-to-top { position: fixed; right: 1rem; bottom: 1rem; z-index: 10; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.45rem 0.9rem; font: inherit; font-weight: 600; color: var(--accent); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
 .back-to-top:hover { background: var(--accent-soft); }

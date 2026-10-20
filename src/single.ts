@@ -27,7 +27,7 @@ export interface LLSelectSingleTriggerContext<T> {
  */
 export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBaseSettings<T, GroupKey> {
   /**
-   * Fired when the chosen item actually changes (compared via `compareFn`).
+   * Fired **after** the chosen item actually changed (compared via `compareFn`).
    * Receives the new value and the PREVIOUS one (the snapshot from before
    * this change); `undefined` means "no selection" on either side. Does NOT
    * fire on construction nor on `setChosenItem` with an equivalent item.
@@ -238,7 +238,10 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   }
 
   /**
-   * Pick this item as the chosen item and close the popup.
+   * Pick this item **after** the user activates its row, and close the popup.
+   *
+   * > No **before** counterpart: there is no `onPopupListItemActivating`.
+   *
    * - Asks `onChosenChanging` and `onBeforeChange` first; a veto keeps the
    *   current value.
    * - Closes the popup either way, unless a handler threw.
@@ -328,6 +331,9 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
 
   /**
    * Re-match the chosen item against the new list **after** `setItems` installs it.
+   *
+   * > No **before** counterpart: there is no `onItemsChanging`.
+   *
    * - If the list no longer holds it (by `compareFn`), it is dropped and
    *   `onChange` fires.
    * - If the list holds a compareFn-equal but DIFFERENT object (`track by`

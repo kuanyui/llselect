@@ -53,7 +53,7 @@ export interface LLSelectMultipleTriggerContext<T> {
  */
 export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelectBaseSettings<T, GroupKey> {
   /**
-   * Fired when the chosen-items set actually changes. Receives the new set
+   * Fired **after** the chosen-items set actually changed. Receives the new set
    * and the PREVIOUS one (the snapshot from before this change) - diff them
    * with `compareFn` to compute added / removed. Does NOT fire on
    * construction nor on a setter call that yields an equivalent set
@@ -845,8 +845,10 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Toggle on click, after asking `onChosenChanging` and `onBeforeChange`.
-   * Multi mode keeps the popup open either way.
+   * Toggle the item **after** the user activates its row, once `onChosenChanging`
+   * and `onBeforeChange` allowed it. Multi mode keeps the popup open either way.
+   *
+   * > No **before** counterpart: there is no `onPopupListItemActivating`.
    * @group Subclassing: reactions
    */
   protected override onPopupListItemActivated(item: T): void {
@@ -967,9 +969,12 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Activate the choose-all row: computes what {@link toggleAllVisible} would
-   * commit, asks `onChosenChanging` and `onBeforeChange` with it, then commits
-   * exactly that value, even if a handler changed which items are enabled.
+   * Called **after** the user activates the choose-all row: computes what
+   * {@link toggleAllVisible} would commit, asks `onChosenChanging` and
+   * `onBeforeChange` with it, then commits exactly that value, even if a
+   * handler changed which items are enabled.
+   *
+   * > No **before** counterpart: there is no `onChooseAllRowActivating`.
    * @group Subclassing: reactions
    */
   protected override onChooseAllRowActivated(): void {
@@ -990,6 +995,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
 
   /**
    * Re-match the chosen entries against the new list **after** `setItems` installs it.
+   *
+   * > No **before** counterpart: there is no `onItemsChanging`.
+   *
    * - Entries the list no longer holds (by `compareFn`) are dropped and
    *   `onChange` fires for the drop.
    * - When the list holds a compareFn-equal but DIFFERENT object (`track by`
