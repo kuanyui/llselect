@@ -238,7 +238,8 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   }
 
   /**
-   * Pick this item **after** the user activates its row, and close the popup.
+   * Set this item as the chosen item, **after** the user's Enter, Space or click
+   * on its row, then close the popup.
    *
    * > No **before** counterpart: there is no `onPopupListItemActivating`.
    *
