@@ -1195,14 +1195,14 @@ Process: the owner asked what happens when a chosen item's option becomes disabl
 
 ## review (theme dark color schemes, post-fix round 11)
 
-Process: the eleventh fix batch (commit `0613216`) went to the other four panel members, one at a time, read-only. Opus 5: ship, no finding. Opus 4.8: ship, no finding. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, the same QUALITY. All four found the three outputs of the scanner in step.
+Process: the eleventh fix batch (commit `d894d28`) went to the other four panel members, one at a time, read-only. Opus 5: ship, no finding. Opus 4.8: ship, no finding. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, the same QUALITY. All four found the three outputs of the scanner in step.
 
 - [x] **[QUALITY-276] - a backslash-newline continuation inside a quoted data URL stayed in the argument, so `%\<newline>23f00` escaped the color scan**
   - Fix: the continuation is dropped from the argument before the `data:` and color tests, as CSS drops it from the string value; the masked texts keep the source's length.
 
 ## review (theme dark color schemes, post-fix round 10)
 
-Process: the tenth fix batch (commit `c3005ea`) went to the other four panel members, one at a time, read-only. Opus 5: ship, one QUALITY. Opus 4.8: ship, one QUALITY. Codex 5.5: fix first, two QUALITY. Codex Sol: fix first, three QUALITY. All four found the identifier boundary, the blank walk and the three outputs sound (one member fuzzed 100,000 inputs). The entries below merge the overlapping findings.
+Process: the tenth fix batch (commit `991c816`) went to the other four panel members, one at a time, read-only. Opus 5: ship, one QUALITY. Opus 4.8: ship, one QUALITY. Codex 5.5: fix first, two QUALITY. Codex Sol: fix first, three QUALITY. All four found the identifier boundary, the blank walk and the three outputs sound (one member fuzzed 100,000 inputs). The entries below merge the overlapping findings.
 
 - [x] **[QUALITY-275] - a comment inside a url() stayed in the declaration message; a backslash-newline continuation inside a quoted url() ended the string; an escaped identifier such as `not\url(` counted as a url()**
   - Fix: the url() branch blanks the comments its blank walk skipped (a comment-like text inside the quoted argument stays); a string continues across a backslash followed by a newline (CRLF included) and ends at any unescaped newline character; a backslash before `url(` is an identifier character.
@@ -1213,7 +1213,7 @@ Process: the tenth fix batch (commit `c3005ea`) went to the other four panel mem
 
 ## review (theme dark color schemes, post-fix round 9)
 
-Process: the ninth fix batch (commit `e97cacc`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, two QUALITY, two DOCUMENTATION. Opus 4.8: ship, one QUALITY. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, two QUALITY. All four found the scanner's three outputs length-safe (one member fuzzed 20,000 inputs). The entries below merge the overlapping findings.
+Process: the ninth fix batch (commit `3f6e60a`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, two QUALITY, two DOCUMENTATION. Opus 4.8: ship, one QUALITY. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, two QUALITY. All four found the scanner's three outputs length-safe (one member fuzzed 20,000 inputs). The entries below merge the overlapping findings.
 
 - [x] **[QUALITY-273] - the url() scan took `noturl(` for a url(), skipped only space, tab and newline before a quoted argument, and stopped at a `)` inside a comment after it; the declaration message still printed an inline comment**
   - Fix: a url() needs an identifier boundary before it; the blank walk before and after the argument skips every CSS whitespace character and comments; the declaration message quotes the comment-free text with its whitespace collapsed.
@@ -1222,7 +1222,7 @@ Process: the ninth fix batch (commit `e97cacc`) went to the other four panel mem
 
 ## review (theme dark color schemes, post-fix round 8)
 
-Process: the eighth fix batch (commit `6bc8b11`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY, three DOCUMENTATION. Opus 4.8: fix first, one QUALITY, two DOCUMENTATION. Codex 5.5: fix first, one QUALITY, one DOCUMENTATION. Codex Sol: fix first, three QUALITY, two DOCUMENTATION. All four found the masker and the pinned test sound. The entries below merge the overlapping findings.
+Process: the eighth fix batch (commit `9c7c7c0`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY, three DOCUMENTATION. Opus 4.8: fix first, one QUALITY, two DOCUMENTATION. Codex 5.5: fix first, one QUALITY, one DOCUMENTATION. Codex Sol: fix first, three QUALITY, two DOCUMENTATION. All four found the masker and the pinned test sound. The entries below merge the overlapping findings.
 
 - [x] **[QUALITY-269] - the url() color scan ran a fresh regex over the unmasked source: a url() inside a comment or a string counted, a quoted url() holding ")" was missed, and a fragment reference such as `url(#cafe)` was a false positive**
   - Fix: the single pass records every real url() with its argument; the scan covers only `data:` URLs (an embedded image), so `url(#id)` and `url(file.svg)` are not scanned; the lookahead for a quoted argument walks the whitespace instead of slicing 16 characters.
@@ -1236,7 +1236,7 @@ Process: the eighth fix batch (commit `6bc8b11`) went to the other four panel me
 
 ## review (theme dark color schemes, post-fix round 7)
 
-Process: the seventh fix batch (commit `a557b50`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY, one DOCUMENTATION. Opus 4.8: fix first, one DOCUMENTATION. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, three QUALITY, one DOCUMENTATION. All four found the two observer tests sound. The entries below merge the overlapping findings.
+Process: the seventh fix batch (commit `301a19a`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY, one DOCUMENTATION. Opus 4.8: fix first, one DOCUMENTATION. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, three QUALITY, one DOCUMENTATION. All four found the two observer tests sound. The entries below merge the overlapping findings.
 
 - [x] **[QUALITY-265] - rule 6's messages quoted a preceding comment with the declaration, and the widget-root messages printed masked selectors**
   - Fix: the quote starts at the declaration's first non-blank character; the root messages and the `@media` message quote the unmasked source.
@@ -1251,7 +1251,7 @@ Process: the seventh fix batch (commit `a557b50`) went to the other four panel m
 
 ## review (theme dark color schemes, post-fix round 6)
 
-Process: the sixth fix batch (commit `a7a3f1a`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY. Opus 4.8: ship, one QUALITY. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, three QUALITY. All four found the registration path correct. The entries below merge the overlapping findings.
+Process: the sixth fix batch (commit `3e5ac24`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY. Opus 4.8: ship, one QUALITY. Codex 5.5: fix first, one QUALITY. Codex Sol: fix first, three QUALITY. All four found the registration path correct. The entries below merge the overlapping findings.
 
 - [x] **[QUALITY-262] - the callback half of the no-`<html>` test could not fail, and the "nothing registered yet" start value had no test**
   - Fix: the callback half asserts that no window `error` event fired (jsdom reports a callback exception that way, not as a thrown error); a new test wires a document whose `<body>` is missing and asserts the `<body>` that arrives later is observed.
@@ -1263,7 +1263,7 @@ Process: the sixth fix batch (commit `a7a3f1a`) went to the other four panel mem
 
 ## review (theme dark color schemes, post-fix round 5)
 
-Process: the fifth fix batch (commit `c5d47e8`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, two QUALITY. Opus 4.8: ship, one DOCUMENTATION. Codex 5.5: fix first, two QUALITY. Codex Sol: fix first, three QUALITY, one DOCUMENTATION. All four found the strengthened body test sound. The entries below merge the overlapping findings.
+Process: the fifth fix batch (commit `8b9b231`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, two QUALITY. Opus 4.8: ship, one DOCUMENTATION. Codex 5.5: fix first, two QUALITY. Codex Sol: fix first, three QUALITY, one DOCUMENTATION. All four found the strengthened body test sound. The entries below merge the overlapping findings.
 
 - [x] **[QUALITY-260] - the initial observer registration at wiring time passed `documentElement` unguarded, and the new guard had no test**
   - Fix: `observeBody()` is the only registration path (its "nothing registered yet" start value makes the first call register), so the guard covers wiring too; a test runs the callback after `<html>` is removed and wires a fresh document whose `<html>` is gone.
@@ -1273,7 +1273,7 @@ Process: the fifth fix batch (commit `c5d47e8`) went to the other four panel mem
 
 ## review (theme dark color schemes, post-fix round 4)
 
-Process: the fourth fix batch (commit `fa2e27e`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY, two DOCUMENTATION. Opus 4.8: ship, two QUALITY. Codex 5.5: fix first, two QUALITY. Codex Sol: fix first, three QUALITY. All four found the observer re-registration and the copy correct. The entries below merge the overlapping findings.
+Process: the fourth fix batch (commit `7e3dd93`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, three QUALITY, two DOCUMENTATION. Opus 4.8: ship, two QUALITY. Codex 5.5: fix first, two QUALITY. Codex Sol: fix first, three QUALITY. All four found the observer re-registration and the copy correct. The entries below merge the overlapping findings.
 
 - [x] **[QUALITY-256] - the extended body test passed with the previous observer too, so it did not prove the removed-body fix**
   - Fix: after the new `<body>` is active, the test changes an attribute on the removed `<body>` and asserts no re-decision, then changes one on the new `<body>` and asserts the re-decision.
@@ -1289,7 +1289,7 @@ Process: the fourth fix batch (commit `fa2e27e`) went to the other four panel me
 
 ## review (theme dark color schemes, post-fix round 3)
 
-Process: the third fix batch (commit `1471cda`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, two QUALITY, five DOCUMENTATION. Opus 4.8: fix first, two DOCUMENTATION. Codex 5.5: fix first, one QUALITY, one DOCUMENTATION. Codex Sol: fix first, two QUALITY, three DOCUMENTATION. All four found the observer and the theme value correct; the contract text lagged. The entries below merge the overlapping findings.
+Process: the third fix batch (commit `b3366e6`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, two QUALITY, five DOCUMENTATION. Opus 4.8: fix first, two DOCUMENTATION. Codex 5.5: fix first, one QUALITY, one DOCUMENTATION. Codex Sol: fix first, two QUALITY, three DOCUMENTATION. All four found the observer and the theme value correct; the contract text lagged. The entries below merge the overlapping findings.
 
 - [x] **[QUALITY-250] - the observer kept a removed `<body>` referenced and kept old bodies observed**
   - Fix: on a `<body>` identity change the observer disconnects and re-registers `<html>` and the current `<body>` (none while it is missing), so a removed `<body>` is neither observed nor referenced.
@@ -1311,7 +1311,7 @@ Process: the third fix batch (commit `1471cda`) went to the other four panel mem
 
 ## review (theme dark color schemes, post-fix round 2)
 
-Process: the second fix batch (commits `7d5492d` and `b1050e6`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, five QUALITY, six DOCUMENTATION. Opus 4.8: ship, one QUALITY, one DOCUMENTATION. Codex 5.5: fix first, two QUALITY, one DOCUMENTATION. Codex Sol: fix first, two MEDIUM, four QUALITY, three DOCUMENTATION. The entries below merge the overlapping findings.
+Process: the second fix batch (commits `1848fa9` and `5563754`) went to the other four panel members, one at a time, read-only. Opus 5: fix first, five QUALITY, six DOCUMENTATION. Opus 4.8: ship, one QUALITY, one DOCUMENTATION. Codex 5.5: fix first, two QUALITY, one DOCUMENTATION. Codex Sol: fix first, two MEDIUM, four QUALITY, three DOCUMENTATION. The entries below merge the overlapping findings.
 
 - [x] **[MEDIUM-239] - bootstrap-5's focused trigger border was a 50 percent tint of the primary color, which composites dark on a dark page**
   - Symptom: `rgba(var(--bs-primary-rgb), 0.5)` equals Bootstrap's `#86b7fe` over white but gives about 1.8:1 over Bootstrap's dark body; Bootstrap itself keeps the opaque `#86b7fe` in dark mode.
@@ -1343,7 +1343,7 @@ Process: the second fix batch (commits `7d5492d` and `b1050e6`) went to the othe
 
 ## review (theme dark color schemes, post-fix)
 
-Process: the fix batch `872745b` went to the other four panel members for a post-fix review, one at a time, read-only, with the round below in the brief; Codex Sol also covered the whole implementation, since its first-round review never arrived. Opus 5: fix first, one MEDIUM, five QUALITY, nine DOCUMENTATION. Opus 4.8: fix first, three QUALITY, two DOCUMENTATION, one NEEDS-VERIFICATION. Codex 5.5: fix first, one MEDIUM, four QUALITY, three DOCUMENTATION. Codex Sol: fix first, three MEDIUM, five QUALITY, eight DOCUMENTATION. The entries below merge the overlapping findings.
+Process: the fix batch `8a3c17b` went to the other four panel members for a post-fix review, one at a time, read-only, with the round below in the brief; Codex Sol also covered the whole implementation, since its first-round review never arrived. Opus 5: fix first, one MEDIUM, five QUALITY, nine DOCUMENTATION. Opus 4.8: fix first, three QUALITY, two DOCUMENTATION, one NEEDS-VERIFICATION. Codex 5.5: fix first, one MEDIUM, four QUALITY, three DOCUMENTATION. Codex Sol: fix first, three MEDIUM, five QUALITY, eight DOCUMENTATION. The entries below merge the overlapping findings.
 
 - [x] **[QUALITY-228] - check.mjs rule 6 lost the dark block: masking brackets as letters defeated the class-name lookahead**
   - Symptom: `.llselect-root[data-llselect-color-scheme='dark']` masked to `.llselect-rootxxx...`, so the `(?![\w-])` lookahead failed and the dark block, the one place the forbidden declarations are most likely to land, went unchecked; `div.llselect-root` and `.foo.llselect-root` were still missed by the `(^|[^\w-])` prefix.
@@ -1380,7 +1380,7 @@ Process: the fix batch `872745b` went to the other four panel members for a post
 
 ## review (theme dark color schemes)
 
-Process: post-implementation review of the themes' dark color schemes (commits `18e4b01` to `d8d13ee`: the 32 variables, the resolver, the setting and methods, the AngularJS attribute, demo section 16, the README recipe) by the other four panel members, one at a time, read-only, on a self-contained brief with the specification (`DESIGN.md` "Color scheme (light / dark) in the themes"). Opus 5: fix first, four MEDIUM, eight QUALITY, six DOCUMENTATION. Opus 4.8: ship, three QUALITY, two DOCUMENTATION. Codex 5.5: fix first, three MEDIUM, two QUALITY, two DOCUMENTATION. Codex Sol: no output, the model reported "at capacity" (re-run pending). The entries below merge the overlapping findings.
+Process: post-implementation review of the themes' dark color schemes (commits `d5aa094` to `7fea0a4`: the 32 variables, the resolver, the setting and methods, the AngularJS attribute, demo section 16, the README recipe) by the other four panel members, one at a time, read-only, on a self-contained brief with the specification (`DESIGN.md` "Color scheme (light / dark) in the themes"). Opus 5: fix first, four MEDIUM, eight QUALITY, six DOCUMENTATION. Opus 4.8: ship, three QUALITY, two DOCUMENTATION. Codex 5.5: fix first, three MEDIUM, two QUALITY, two DOCUMENTATION. Codex Sol: no output, the model reported "at capacity" (re-run pending). The entries below merge the overlapping findings.
 
 - [x] **[MEDIUM-211] - bootstrap-5's dark dividers were a fixed white tint while its surfaces follow Bootstrap's variables**
   - Symptom: on a page whose Bootstrap variables stay light while the widget resolves dark (OS dark, `color-scheme: light dark`, no `data-bs-theme`), the header, footer and command-row dividers painted white on white.
@@ -1425,7 +1425,7 @@ Process: post-implementation review of the themes' dark color schemes (commits `
 
 ## review (site color-scheme switch)
 
-Process: post-change review of the site's light / dark switch (`2f9e751`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`696d1e3`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Round 3: Codex 5.5 (xhigh): ship, one QUALITY and two DOCUMENTATION findings (170-172), fixed. Round 4: Codex Sol (max): fix first, three MEDIUM, four QUALITY, three DOCUMENTATION findings (173-182), fixed. Round 5 (post-fix review of round 4 by the other four members, one at a time): Opus 5: fix first, two MEDIUM, four QUALITY, five DOCUMENTATION (183-193; two were the pre-change baseline, kept). Opus 4.8: ship, one QUALITY, two DOCUMENTATION (194-196). Codex 5.5: fix first, one MEDIUM, three DOCUMENTATION (197-200). Codex Sol: fix first, one MEDIUM, one QUALITY, three DOCUMENTATION (201-205). Round 6 (confirmation of `84411e9` by Opus 5): ship, two QUALITY, three DOCUMENTATION (206-210), comment and doc level plus one pin, applied without a further review round. Entries follow the round-4 ones.
+Process: post-change review of the site's light / dark switch (`ff47b61`: `demo/color-scheme.js`, the demo chrome tokens, the site template) by the other four panel members, one at a time. Round 1: Opus 5 (max) on the shipped commit, its findings fixed in one batch (`0d80ba3`). Round 2: Opus 4.8 (max) on the fixed state: ship, one QUALITY finding (169), fixed. Round 3: Codex 5.5 (xhigh): ship, one QUALITY and two DOCUMENTATION findings (170-172), fixed. Round 4: Codex Sol (max): fix first, three MEDIUM, four QUALITY, three DOCUMENTATION findings (173-182), fixed. Round 5 (post-fix review of round 4 by the other four members, one at a time): Opus 5: fix first, two MEDIUM, four QUALITY, five DOCUMENTATION (183-193; two were the pre-change baseline, kept). Opus 4.8: ship, one QUALITY, two DOCUMENTATION (194-196). Codex 5.5: fix first, one MEDIUM, three DOCUMENTATION (197-200). Codex Sol: fix first, one MEDIUM, one QUALITY, three DOCUMENTATION (201-205). Round 6 (confirmation of `3ae53cb` by Opus 5): ship, two QUALITY, three DOCUMENTATION (206-210), comment and doc level plus one pin, applied without a further review round. Entries follow the round-4 ones.
 
 - [x] **[MEDIUM-155] - the vanilla filter input was painted dark by the UA under a dark page scheme**
   - Symptom: with `color-scheme: dark` on the page root, the vanilla theme's filter input rendered as a dark field with white text inside the white popup (measured: rgb(59, 59, 59)); every other theme sets both colors.
@@ -1642,7 +1642,7 @@ Process: post-change review of the site's light / dark switch (`2f9e751`: `demo/
 
 ## review (item vocabulary, the popupListItem rename, chosenItemsOrder)
 
-Process: post-fix review of the item-row rename (`8cb3658`), the item vocabulary docs (`30e1f95`) and the `chosenItemsOrder` setting (`f62d332`) by the other four panel members (Opus 5, Opus 4.8, Codex Sol at max, Codex 5.5 at xhigh), two rounds. Round 1 found no correctness defect and asked for the fixes in `13019d6`; round 2 reviewed that commit and produced the entries below. The rename itself followed a seven-model committee that rejected a `candidateItems` vocabulary unanimously; the ruling is naming-conventions rule 10.
+Process: post-fix review of the item-row rename (`daf4ca6`), the item vocabulary docs (`09a0c90`) and the `chosenItemsOrder` setting (`297a7a9`) by the other four panel members (Opus 5, Opus 4.8, Codex Sol at max, Codex 5.5 at xhigh), two rounds. Round 1 found no correctness defect and asked for the fixes in `5b4b47f`; round 2 reviewed that commit and produced the entries below. The rename itself followed a seven-model committee that rejected a `candidateItems` vocabulary unanimously; the ruling is naming-conventions rule 10.
 
 - [x] **[MEDIUM-150] - setItems rendered an open popup before the multiple variant reconciled the chosen list**
   - Symptom: under `chosenItemsOrder: 'as-listed'`, a row whose content read the chosen order was stale after a `setItems` that reordered the list.
@@ -1717,7 +1717,7 @@ Process: post-fix review of three change sets in one working tree: the core demo
 
 ## review (leading / trailing rows, construction context, this, pinned blocks, filter-query event)
 
-Process: the design settled by the unframed two-stage review (`archive/choose-all-and-callback-context-research.md`, rounds 13-14), then six commits `937e5db` to `9581257`, then one whole-committee review of the change set (six fresh sessions, Codex Sol rerun with a longer cap after a timeout), then this fix batch and its post-fix panel review. The post-fix review (Opus 4.8, Opus 5, Codex 5.5, Codex Sol) confirmed every fix and raised the follow-ups folded into the entries: the A11Y row for Alt+ArrowUp, the archived handoff's paths, the render-time `data-edge-to-items` attribute that zeroes the line between two touching pinned blocks, an inset test starting from a scroll position a browser can hold, a grouped-plus-pinned scroll test, one comment and two prose trims, and the pinned-row scroll assertions now step onto an item first, because Home on an already-active row returned before the guard. A second post-fix pass over those follow-ups found wording and one style item. Examples: an archived path one level short; "below" for "above the browser floor"; a wrapper docstring that said "under it" for both edges; an "only attribute" claim; a compressed `chooseAllRow` sentence; the arrow-function half of the pack's `this` note; the missing eyeball check for two touching pinned blocks; double-quoted attribute selectors in the themes. Two docs commits close the round.
+Process: the design settled by the unframed two-stage review (`archive/choose-all-and-callback-context-research.md`, rounds 13-14), then six commits `299fd9c` to `0333791`, then one whole-committee review of the change set (six fresh sessions, Codex Sol rerun with a longer cap after a timeout), then this fix batch and its post-fix panel review. The post-fix review (Opus 4.8, Opus 5, Codex 5.5, Codex Sol) confirmed every fix and raised the follow-ups folded into the entries: the A11Y row for Alt+ArrowUp, the archived handoff's paths, the render-time `data-edge-to-items` attribute that zeroes the line between two touching pinned blocks, an inset test starting from a scroll position a browser can hold, a grouped-plus-pinned scroll test, one comment and two prose trims, and the pinned-row scroll assertions now step onto an item first, because Home on an already-active row returned before the guard. A second post-fix pass over those follow-ups found wording and one style item. Examples: an archived path one level short; "below" for "above the browser floor"; a wrapper docstring that said "under it" for both edges; an "only attribute" claim; a compressed `chooseAllRow` sentence; the arrow-function half of the pack's `this` note; the missing eyeball check for two touching pinned blocks; double-quoted attribute selectors in the themes. Two docs commits close the round.
 
 - [x] **[HIGH-124] - grouped items no longer scrolled into view**
   - Symptom: with `itemToGroupKeyFn` on a list taller than the popup, arrowing or End moved `aria-activedescendant` onto an item outside the scrollport and the list did not scroll. Every reviewer but one found it; the two flat-list demos hide it.
@@ -1726,8 +1726,8 @@ Process: the design settled by the unframed two-stage review (`archive/choose-al
   - Verified: `test/pinned-rows.test.ts` now drives the widget's own scroll path on stubbed geometry: End on a flat list, End on a grouped list, a pinned row that never scrolls, an item half under the pinned block scrolling past it.
   - Q: Why did 523 green tests miss a scroll regression?
     - A: Because jsdom has no layout: every rect is zero and `scrollTop` never moves, so a guard that returns early and a scroll that does nothing look the same. The scroll helper had pure unit tests; the path from the widget to it had none.
-- [x] **[HIGH-136] - Alt+ArrowUp cleared the filter instead of closing (pre-existing; since `9581257` it also fired the event)**
-  - Symptom: Alt+ArrowUp maps to the Close action like Esc, and the two-stage rule "clear a non-empty query first" ran for it too: with a query typed, Alt+ArrowUp emptied the query and left the popup open, and after `9581257` fired `onFilterQueryChange('')` for a close gesture.
+- [x] **[HIGH-136] - Alt+ArrowUp cleared the filter instead of closing (pre-existing; since `0333791` it also fired the event)**
+  - Symptom: Alt+ArrowUp maps to the Close action like Esc, and the two-stage rule "clear a non-empty query first" ran for it too: with a query typed, Alt+ArrowUp emptied the query and left the popup open, and after `0333791` fired `onFilterQueryChange('')` for a close gesture.
   - Cause: the Close branch in `handleKeydown` tested the action, never the key.
   - Fix: the two-stage clear runs only for `ev.key === 'Escape'`; Alt+ArrowUp always closes, and the close resets the query silently. A11Y.md's filter-active keyboard table gains the Alt+ArrowUp row and the Focus rule names both gestures.
   - Verified: `test/filter-query-change.test.ts` pins Alt+ArrowUp with a query typed: closed, query empty, no event.
