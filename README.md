@@ -435,7 +435,9 @@ sel = new LLSelectMultiple(el, {
 
 #### Confirm before a change
 
-`onBeforeChange` runs before a user pick, toggle, chip removal, clear or choose-all is written. Call `event.preventDefault()` to stop it.
+`onBeforeChange` runs **before** a user pick, toggle, chip removal, clear or choose-all is written. Call `event.preventDefault()` to stop it.
+
+> Pairs with `onChange`, which runs **after** the change was written.
 
 The value stays and `onChange` does not fire. A vetoed pick in single mode still closes the popup, like any pick.
 

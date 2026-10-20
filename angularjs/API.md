@@ -45,6 +45,8 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 **Expression**. Runs on each committed user choice - exactly like on a native control, no `ll-change` needed.
 
+> Pairs with [`ll-on-before-change`](#ll-on-before-change), which runs **before** the change and can stop it.
+
 - These directives drive a real ngModel; `ng-change` is the standard `$viewChangeListeners` pipeline, which runs only on the `$setViewValue` path: a real user choice.
 - It does NOT fire on load, on a programmatic model write, or when a data reload drops the chosen item - the write-back gate keeps those out of the view-change path (see the [Gotchas](README.md#gotchas)).
 - The same holds for everything else riding the ngModel pipeline: validators, `$dirty`, angular-validation.
@@ -52,6 +54,8 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 ### `ll-on-open`
 
 **Event expression** -> `onOpen`. Evaluated on each open, inside a digest, so scope writes show up at once. `$reason` says why the popup opened.
+
+> No **before** counterpart: there is no `ll-on-before-open`.
 
 - `$reason` is one of `'toggle'` (a click on the trigger, or `instance().toggle()`), `'keyboard'` (ArrowDown, ArrowUp, Enter or Space on the closed trigger), `'typeahead'` (a character typed on the closed trigger) or `'api'` (`instance().open()`).
 - Fires on every open that actually happens, user-driven or programmatic (`instance().open()`). A call that does not actually open the popup - already open, disabled, or the trigger scrolled out of view / clipped - does not fire.
@@ -62,6 +66,8 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 **Event expression** -> `onClose`. Evaluated on each close, inside a digest. `$reason` says why the popup closed.
 
+> No **before** counterpart: there is no `ll-on-before-close`.
+
 - `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the widget), `'blur'` (DOM focus left the widget), `'toggle'` (a click on the trigger, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed) or `'hidden'` (the trigger scrolled out of view or was clipped).
 - Same rules as [`ll-on-open`](#ll-on-open).
 - It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and AngularJS broadcasts `$destroy` before disabling the scope.
@@ -71,7 +77,9 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 **Event expression** -> `onFocus`. Evaluated once when DOM focus enters the widget, inside a digest.
 
-- Fires when focus comes from outside the widget or from nowhere: Tab onto the trigger, a click on the trigger or on its label, a programmatic `instance().triggerEl.focus()`, an `instance().open()` on an unfocused widget whose filter is active, which moves focus to the filter input after [`ll-on-open`](#ll-on-open), or a click on the clear button or on a chip's remove button while the widget holds no focus, which focuses the trigger.
+> No **before** counterpart: there is no `ll-on-before-focus`.
+
+- Fires when focus comes from outside the widget or from nowhere: Tab onto the trigger, a click on the trigger or on its label, a programmatic `instance().triggerEl.focus()`, an `instance().open()` on an unfocused widget whose filter is active, which moves focus to the filter input **after** [`ll-on-open`](#ll-on-open), or a click on the clear button or on a chip's remove button while the widget holds no focus, which focuses the trigger.
 - Does not fire for a focus move inside the widget, such as the open moving focus from the trigger to the filter input.
 - It is about DOM focus only. The row the arrow keys move inside the popup is the active row; that row never holds DOM focus.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
@@ -79,6 +87,8 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 ### `ll-on-blur`
 
 **Event expression** -> `onBlur`. Evaluated once when DOM focus leaves the widget, inside a digest.
+
+> No **before** counterpart: there is no `ll-on-before-blur`.
 
 - Fires when focus moves to an element outside the widget or to nowhere: Tab away, a click outside, a click on a non-focusable area.
 - Does not fire for a focus move inside the widget.
@@ -91,9 +101,11 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 **Event expression** -> `onActiveItemChange`. Evaluated when the active row moves to another item, or to no item, inside a digest. `$item` is the item of the new active row, or `undefined`.
 
+> No **before** counterpart: there is no `ll-on-before-active-item-change`.
+
 - The active row is the row of the popup list that the arrow keys move and that `aria-activedescendant` points to. It never holds DOM focus; [`ll-on-focus`](#ll-on-focus) is about DOM focus.
 - `$item` is the item from the [`ll-options`](#ll-options) collection, not the `select as` value. It is `undefined` while the popup is closed, when no item matches the filter, and when the active row is the choose-all row or an action row.
-- Fires on open with the initial row, after [`ll-on-open`](#ll-on-open); on every keyboard move; on a click, before the change it requests; when a filter keystroke or a data reload moves the row; and on close with `undefined`, after [`ll-on-close`](#ll-on-close).
+- Fires on open with the initial row, **after** [`ll-on-open`](#ll-on-open); on every keyboard move; on a click, **before** the change it requests; when a filter keystroke or a data reload moves the row; and on close with `undefined`, **after** [`ll-on-close`](#ll-on-close).
 - Fires only when the item changed, compared with the `track by` rule of [`ll-options`](#ll-options), or by identity without a `track by` clause, so a data reload of equal-valued objects fires then. A row redrawn for the same item is silent. A mouse hover never fires: hovering does not move the active row.
 - ui-select's name for this event is `on-highlight`. [`<ui-llselect>`](#ui-llselect) maps it, and the note there says why llselect does not use that word for the active row.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
@@ -106,7 +118,9 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ll-on-filter-query-change`
 
-**Event expression** -> `onFilterQueryChange`. Evaluated after the filter text changed and the list re-rendered, inside a digest, with the new text as `$query`.
+**Event expression** -> `onFilterQueryChange`. Evaluated **after** the filter text changed and the list re-rendered, inside a digest, with the new text as `$query`.
+
+> No **before** counterpart: there is no `ll-on-before-filter-query-change`.
 
 - Same rules as [`ll-on-open`](#ll-on-open).
 - Fires on typing, when an IME composition ends, and when Esc clears a non-empty query. Not when the text stays the same, not when a close clears the query (use [`ll-on-close`](#ll-on-close)), not on an open.
@@ -114,7 +128,9 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ll-on-before-change`
 
-**Event expression** -> `onBeforeChange`. Evaluated before a user interaction changes the value, inside a digest, with `$next` (the value about to be set), `$previous` (the current one) and `$event`.
+**Event expression** -> `onBeforeChange`. Evaluated **before** a user interaction changes the value, inside a digest, with `$next` (the value about to be set), `$previous` (the current one) and `$event`.
+
+> Pairs with [`ng-change`](#ng-change), which runs **after** the change reached the model.
 
 - Same rules as [`ll-on-open`](#ll-on-open).
 - `$next` is the model value about to be set (the `ll-options` value clause applied); `$previous` is what `ng-model` holds right now, even a value the item list could not resolve. For a multiple select both are arrays.

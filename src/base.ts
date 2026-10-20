@@ -848,7 +848,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   createGroupLabelContentElFn: ((groupKey: GroupKey, itemsInGroup: readonly T[]) => HTMLElement | null) | null
   /**
-   * Fired right after the popup opens.
+   * Fired right **after** the popup opens.
+   *
+   * > No **before** counterpart: there is no `onBeforeOpen`.
+   *
    * - `meta.reason` says why: `'toggle'`, `'keyboard'`, `'typeahead'` or
    *   `'api'`. See {@link LLSelectOpenReason}.
    * - An `open()` call that does not actually open the popup (already open, a
@@ -861,14 +864,17 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   onOpen: ((meta: LLSelectOpenMeta) => void) | null
   /**
-   * Fired right after the popup closes.
+   * Fired right **after** the popup closes.
+   *
+   * > No **before** counterpart: there is no `onBeforeClose`.
+   *
    * - `meta.reason` says why, one value per close path. See
    *   {@link LLSelectCloseReason}.
    * - A no-op `close()` does not fire it. The first close that takes effect
    *   reports its reason; a `close()` called while that close runs is a
    *   no-op.
    * - Additive with the protected `onClosed` hook, like {@link onOpen}: both run.
-   * - When focus leaving the widget closes the popup, this fires before
+   * - When focus leaving the widget closes the popup, this fires **before**
    *   {@link onBlur}.
    * - `null` (default) = no consumer listener.
    * @group Events
@@ -876,6 +882,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   onClose: ((meta: LLSelectCloseMeta) => void) | null
   /**
    * Fired when DOM focus enters the widget.
+   *
+   * > No **before** counterpart: there is no `onBeforeFocus`.
+   *
    * - DOM focus is the element that receives keyboard input,
    *   `document.activeElement`. Inside the widget it can be the trigger, the
    *   filter input, a chip's remove button, or a control the app placed in a
@@ -884,7 +893,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   Tab onto the trigger, a click on the trigger or on the label, a
    *   programmatic `triggerEl.focus()`, an `open()` call on an unfocused
    *   widget whose filter is active, which moves focus to the filter input
-   *   after `onOpen`, or a click on the clear button or on a chip's remove
+   *   **after** `onOpen`, or a click on the clear button or on a chip's remove
    *   button while the widget holds no focus, which focuses the trigger.
    * - Does not fire for a move inside the widget, such as `open()` moving
    *   focus from the trigger to the filter input.
@@ -897,6 +906,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   onFocus: (() => void) | null
   /**
    * Fired when DOM focus leaves the widget.
+   *
+   * > No **before** counterpart: there is no `onBeforeBlur`.
+   *
    * - Fires once when focus moves to an element outside the widget or to
    *   nowhere: Tab away, a click on an element outside, a click on a
    *   non-focusable area.
@@ -916,17 +928,20 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   onBlur: (() => void) | null
   /**
    * Fired when the active row changes to another item, or to no item.
+   *
+   * > No **before** counterpart: there is no `onBeforeActiveItemChange`.
+   *
    * - The active row is the row of the popup list that the arrow keys move
    *   and that `aria-activedescendant` points to. It never holds DOM focus;
    *   {@link onFocus} reports DOM focus.
    * - `item` is the item of the new active row, or `undefined` when no item
    *   row is active: the popup is closed, no item matches the filter, or the
    *   active row is the choose-all row or an action row.
-   * - Fires on open with the initial row, after {@link onOpen}; on every
-   *   arrow, page, Home / End and typeahead move; on a click, before the
+   * - Fires on open with the initial row, **after** {@link onOpen}; on every
+   *   arrow, page, Home / End and typeahead move; on a click, **before** the
    *   change it requests; when a filter keystroke, `setItems()`, `rerender()`
    *   or a chosen-state re-render moves the row; and on close with
-   *   `undefined`, after {@link onClose}.
+   *   `undefined`, **after** {@link onClose}.
    * - A listener may close or reopen the widget. The report is the last step
    *   of `open()` and of `close()`, so that nested transition runs after the
    *   outer one completed. A click or a filter keystroke whose listener closed
@@ -935,7 +950,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   place for the same item does not fire, and a move between the
    *   choose-all row and an action row does not fire either: both are "no
    *   item".
-   * - Runs after the DOM reflects the new row, so `getVisibleItems()` is
+   * - Runs **after** the DOM reflects the new row, so `getVisibleItems()` is
    *   current. Never fires for a mouse hover: hovering does not move the
    *   active row.
    * - An item that is itself `undefined` cannot be told from "no item".
@@ -944,13 +959,16 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   onActiveItemChange: ((item: T | undefined) => void) | null
   /**
-   * Called after the filter text changed and the list was re-rendered.
+   * Called **after** the filter text changed and the list was re-rendered.
+   *
+   * > No **before** counterpart: there is no `onBeforeFilterQueryChange`.
+   *
    * - Fires on typing, when an IME composition ends, and when Esc clears a
    *   non-empty query. `query` is the new text.
    * - Does not fire when the text stays the same, when `close()` clears the
    *   query (use `onClose`), when `open()` starts with an empty query, or on
    *   `setItems()` / `rerender()`.
-   * - Runs after the list is rebuilt, so `getVisibleItems()` already
+   * - Runs **after** the list is rebuilt, so `getVisibleItems()` already
    *   reflects the new text. Rewrite a header count from here, from `onOpen`
    *   and from `onChange`.
    * - `null` (default): nothing is called.
@@ -2311,28 +2329,36 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Subclass hook: called once after the popup finishes opening. Default no-op.
+   * Subclass hook: called once **after** the popup finishes opening. Default no-op.
    * The `onOpen` setting fires alongside this (both run) - hook for subclass
    * logic, setting for consumer notification.
+   *
+   * > No **before** counterpart: there is no `onOpening`.
    * @group Subclassing: reactions
    */
   protected onOpened(): void {}
   /**
-   * Subclass hook: called once after the popup finishes closing. Pairs with the `onClose` setting (both run).
+   * Subclass hook: called once **after** the popup finishes closing. Pairs with the `onClose` setting (both run).
+   *
+   * > No **before** counterpart: there is no `onClosing`.
    * @group Subclassing: reactions
    */
   protected onClosed(): void {}
   /**
-   * Subclass hook: called after the chosen state actually changed, right
-   * before the variant's `onChange` setting fires (hook first, both run -
+   * Subclass hook: called **after** the chosen state actually changed, right
+   * **before** the variant's `onChange` setting fires (hook first, both run -
    * same pairing as `onOpened` / `onClosed`). Default no-op.
+   *
+   * > Pairs with `onChosenChanging`, which runs **before** the change and can stop it.
    * @group Subclassing: reactions
    */
   protected onChosenChanged(): void {}
   /**
-   * Called after `setItems` finishes. Override to reconcile state that
+   * Called **after** `setItems` finishes. Override to reconcile state that
    * depends on the item list (e.g. clear a chosen value that disappeared).
    * Default no-op.
+   *
+   * > No **before** counterpart: there is no `onItemsChanging`.
    * @group Subclassing: reactions
    */
   protected onItemsChanged(): void {}
@@ -3006,6 +3032,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * it while the filter is inactive, or a click on the row. Default
    * no-op; subclasses implement their selection behaviour (single mode picks
    * and closes, multiple mode toggles and keeps the popup open).
+   *
+   * > No **before** counterpart: there is no `onPopupListItemActivating`.
    * @group Subclassing: reactions
    */
   protected onPopupListItemActivated(_item: T): void {}
@@ -3123,8 +3151,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Subclass hook: an action row was activated.
+   *
+   * > No **before** counterpart: there is no `onPopupListActionRowActivating`.
+   *
    * - The library calls it on Enter, on Space while the filter is inactive,
-   *   and on click, after the disabled re-check, as a user change. You never
+   *   and on click, **after** the disabled re-check, as a user change. You never
    *   call it. `row` comes from the library: the activated entry.
    * - Default calls the entry's `onActivate`. The library changes nothing
    *   else: choosing and closing are the entry's job.
@@ -3230,6 +3261,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Subclass hook: the choose-all row was activated - Enter, or Space while
    * the filter is inactive, while it is the active row (subclasses also wire
    * their row's click handler to this). Default no-op.
+   *
+   * > No **before** counterpart: there is no `onChooseAllRowActivating`.
    * @group Subclassing: reactions
    */
   protected onChooseAllRowActivated(): void {}
