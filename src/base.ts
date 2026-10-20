@@ -351,8 +351,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * Equality predicate for item values - return `true` when `a` and `b` are the
    * same item.
    * - Called **every** time the library compares two items; nothing is kept for a later call, except that the multiple select reuses its `hideChosenRows` subtraction until the base visible list (gathered, then filtered) or the chosen list is replaced:
-   *   - on each row render and in-place row rebuild (the chosen check, `isChosen` in the multiple select), on each selection change, on open, on each active-row move between two item rows (the new active item is compared with the last reported one), on typeahead, in the `setItems` reconciliation, in `hideChosenRows` filtering, and in `'as-listed'` ordering;
-   *   - a custom function pays this on every call; the default is skipped by `Set`- and `Map`-based fast paths and by the duplicate-items warning.
+   *   - on each row render and in-place row rebuild (the chosen check: `isChosen` in the multiple select, the `aria-selected` compare in the single select), on each selection change, on open, on each active-row move between two item rows (the new active item is compared with the last reported one), on typeahead, in the `setItems` reconciliation, in `hideChosenRows` filtering, and in `'as-listed'` ordering;
+   *   - a custom function pays this on every call; in the multiple select the default is skipped by `Set`- and `Map`-based fast paths and by the duplicate-items warning, while the single select calls it as given.
    * - Required for non-primitive `T`. The default compares by identity:
    *   `===`, except that `NaN` equals `NaN` (SameValueZero, the same rule
    *   `Set` uses), so every code path agrees on what "the same item" means.
@@ -458,7 +458,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * against the item's resolved text (`itemToStringFn` / `itemToString`).
    * Pass a custom function for fuzzy / domain-specific matching.
    * - Called once per candidate item on **every** recompute of the filtered list with a non-empty query:
-   *   - on each filter input event outside an IME composition, and once at the composition's end;
+   *   - on each filter input event outside an IME composition, and at the composition's end;
    *   - on `setItems`, `rerender()` and a bulk selection write of the multiple select (`setChosenItems` and the choose-all methods, which run `rerender()`) while the popup is open with a query;
    *   - never on open, which clears the query;
    *   - the matching subset is kept until the next recompute or the close that clears the query; nothing else is kept.
@@ -473,7 +473,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * The no-results message's visible content ELEMENT, without subclassing.
    * Mirrors `createPopupListItemContentElFn`: the library owns the message container
    * (`role="status"`, class, show/hide), this fills its content only.
-   * - Called **every** time a full list render (`renderPopupList`, only while the popup is open: on open, on each filter input event outside an IME composition, once at the composition's end, and on the Esc that clears the query, on `setItems`, `rerender()` and a bulk selection write of the multiple select (`setChosenItems` and the choose-all methods), and on `toggleItem` while `hideChosenRows` is on) ends with no visible item, so the query may differ between calls; nothing is kept for a later call.
+   * - Called **every** time a full list render (`renderPopupList`, only while the popup is open: on open, on each filter input event outside an IME composition, at the composition's end, and on the Esc that clears the query, on `setItems`, `rerender()` and a bulk selection write of the multiple select (`setChosenItems` and the choose-all methods), and on `toggleItem` while `hideChosenRows` is on or when its choose-all row rebuild falls back to a full render) ends with no visible item, so the query may differ between calls; nothing is kept for a later call.
    * - The returned element replaces the message only when its text differs from the text shown: the status region is keyed on text, so while the message stays shown, unchanged text is neither re-rendered nor re-announced, and text that changes with the query is announced on each change; after the message hides, its next appearance renders again. Rich content whose markup varies while its text stays constant is therefore not re-rendered.
    * - `query` is the current filter query (`''` when the filter is inactive or
    *   the list is simply empty), so "Nothing matches <query>" is possible.
@@ -626,7 +626,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   - for each item position tested by keyboard or typeahead navigation, and when the initial active row is picked on open;
    *   - on keyboard activation of a row;
    *   - in the choose-all operations and in `getVisibleEnabledItems()`;
-   *   - for each tag chip and its remove button, and again on the remove button's click.
+   *   - for each tag chip and its remove button, and twice more on the remove button's click, before and after the focus it moves.
    * - When a chosen item becomes disabled, it stays chosen. The bullets below describe that state.
    * - For an `LLSelectSingle`:
    *   - `getChosenItem()` still returns the item.
@@ -682,7 +682,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * Item -> display string, without subclassing.
    * - Called **every** time the library needs an item's text; nothing is kept for a later call:
    *   - for each item row on a full list render or in-place rebuild;
-   *   - on each trigger content render that shows item text: the single select with a chosen item; the multiple select in `'tags'` mode, once per chosen item for the hidden value text, once for its chip and once for the chip's remove-button name;
+   *   - on each trigger content render that shows item text: the single select with a chosen item; the multiple select in `'tags'` mode, unless `createTriggerContentElFn` returns an element, once per chosen item for the hidden value mirror, once more for the chip's remove-button name, and once more for the chip's text unless `createTagContentElFn` returns an element;
    *   - for each candidate on a recompute of the filtered list with the default filter;
    *   - on typeahead.
    * - `null` (default) = `String(item)`.
@@ -736,7 +736,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Item -> the visible content ELEMENT of its popup list row, without subclassing.
    * - Called once per visible row; nothing is kept for a later call:
-   *   - on **every** full list render (`renderPopupList`, only while the popup is open: on open, on each filter input event outside an IME composition, once at the composition's end, and on the Esc that clears the query, on `setItems`, `rerender()` and a bulk selection write of the multiple select (`setChosenItems` and the choose-all methods), and on `toggleItem` while `hideChosenRows` is on);
+   *   - on **every** full list render (`renderPopupList`, only while the popup is open: on open, on each filter input event outside an IME composition, at the composition's end, and on the Esc that clears the query, on `setItems`, `rerender()` and a bulk selection write of the multiple select (`setChosenItems` and the choose-all methods), and on `toggleItem` while `hideChosenRows` is on or when its choose-all row rebuild falls back to a full render);
    *   - for each row rebuilt in place by `setChosenItem` or `toggleItem` while the popup is open.
    * - The trigger never calls it: single mode has `createTriggerContentElFn`, tags have `createTagContentElFn`.
    * - When the select is an `LLSelectMultiple`, read chosen state through
@@ -782,7 +782,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * Item -> its group's key (identity), enabling optgroup rendering.
    * - Called with nothing kept for a later call except the gathered order:
    *   - on **every** full list render (`renderPopupList`, only while the popup is open), once per visible item in the scan that splits the list into groups, plus one lookahead read of the item that ends a grouped run, so a run that closes at the end of the list costs no extra read;
-   *   - in the group gather, once per item up to the first repeated key (the whole list when it is contiguous), and once more per item when the list must be re-bucketed; the gathered order is kept until the next `setItems`, `rerender()` or bulk selection write of the multiple select; there is no gather while `gatherGroups` is `false`;
+   *   - in the group gather, once per item up to and including the first item whose non-null key recurs outside its own run (the whole list when it is contiguous), and once more per item when the list must be re-bucketed; the gathered order is kept until the next `setItems`, `rerender()` or bulk selection write of the multiple select (`setChosenItems` and the choose-all methods); there is no gather while `gatherGroups` is `false`;
    *   - whenever the library asks whether an item is disabled and `itemDisabledFn` did not already disable it.
    * - `null` (setting, default): grouping off - flat list, no labels.
    * - fn returns `null`: this item is in no group; renders ungrouped.
@@ -815,7 +815,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * the `gatherGroups` gather and the contiguous-run rendering use it).
    * - Called with nothing kept for a later call except the gathered order:
    *   - on **every** full list render (`renderPopupList`, only while the popup is open), in the scan that splits the list into groups: each item's key against the key that opened the current run, and each run's key against the runs already closed, stopping at the first match, to warn about a key that reappears;
-   *   - in the group gather: each item's key against the key that opened the current run, and each run's opening key against every key seen so far, stopping at the first match, which is what detects a non-contiguous list; when the list must be re-bucketed, each key against the buckets' keys as well; the gathered order is kept until the next `setItems`, `rerender()` or bulk selection write of the multiple select; there is no gather while `gatherGroups` is `false`.
+   *   - in the group gather: each item's key against the key that opened the current run, and each run's opening key against every key seen so far, stopping at the first match, which is what detects a non-contiguous list; when the list must be re-bucketed, each key against the buckets' keys as well; the gathered order is kept until the next `setItems`, `rerender()` or bulk selection write of the multiple select (`setChosenItems` and the choose-all methods); there is no gather while `gatherGroups` is `false`.
    * - `null` (default) = identity, the same rule as the default `compareFn`
    *   (`===`, plus `NaN` equals `NaN`); right for string / number keys.
    * - Supply only when `GroupKey` is an object without usable reference identity.
