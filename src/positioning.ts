@@ -278,13 +278,23 @@ export interface PositionerOptions {
 
 /**
  * Measure the floating element's max-content (natural) width by briefly
- * setting `width: max-content` and reading `offsetWidth`. Restores the prior
- * inline width before returning. Used only in `'fit-content'` mode.
+ * setting `width: max-content`, then restore the prior inline width. Used only
+ * in `'fit-content'` mode.
+ * - Reads the computed `width`: the fractional border-box width (the popup is
+ *   forced to `box-sizing: border-box` at construction), unaffected by a
+ *   transform on the popup or an ancestor, rounded up so the box is never
+ *   short. `offsetWidth` rounds to the nearest pixel: a 249.375px list got
+ *   249px and its text wrapped (owner report; `popup-width-committee.md`).
+ * - The guard against `offsetWidth` catches an engine that reports the
+ *   content box here, and a non-numeric value: both fall back to the integer
+ *   plus one, which is never short either.
  */
 function measureNaturalWidth(el: HTMLElement): number {
   const prev = el.style.width
   el.style.width = 'max-content'
-  const w = el.offsetWidth
+  const used = parseFloat(window.getComputedStyle(el).width)
+  const offset = el.offsetWidth
+  const w = Number.isFinite(used) && Math.round(used) === offset ? Math.ceil(used) : offset + 1
   el.style.width = prev
   return w
 }

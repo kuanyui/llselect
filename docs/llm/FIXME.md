@@ -2,6 +2,18 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (owner report: the fit-content popup width rounded short)
+
+Process: an owner report with a minimal page (under `REFS/`, untracked), reproduced in headless Chromium; a six-model committee on the fix, recorded in `popup-width-committee.md`; then the post-fix review by Opus 5, Opus 4.8 and Codex Sol.
+
+- [x] **[MEDIUM-704] - the fit-content popup could be half a pixel narrower than its content, so CJK text wrapped between characters**
+  - Symptom: a 15-glyph CJK option whose max-content width is 249.375px got a 249px popup and wrapped onto two lines; Latin text with a space near the end wraps at the space.
+  - Cause: `measureNaturalWidth` (`src/positioning.ts`) read `offsetWidth`, which rounds to the nearest pixel.
+  - Fix: read the computed `width` (the fractional border box, since the popup is forced to `box-sizing: border-box`; unaffected by transforms) and round it up, guarded by `offsetWidth`: a mismatch or a non-numeric value falls back to `offsetWidth + 1`, which is never short.
+  - Verified: five jsdom tests mock the computed width and `offsetWidth`; the owner's page in headless Chromium 153 against the fixed build gives 250px and one line, also with the popup scaled to 0.95 before opening.
+  - Q: Why the computed width with an `offsetWidth` guard, not `getBoundingClientRect` rounded up?
+    - A: Because the rect includes transforms: a popup scaled while opening measures small, and the inline width written from it wraps the content for the whole open cycle; the computed width ignores transforms, and the guard catches an engine that reports the content box there.
+
 ## review (events, round eleven: a citation)
 
 Process: round eleven, on the round-ten fix commit: Opus 5, Opus 4.8 and Codex Sol (Codex 5.5 cannot run on this account). All three found DOCUMENTATION-702 resolved. Opus 4.8 found one citation pointing at the wrong ui-select file. Two log-wording findings from Opus 5, fixed alongside: an Up press also repairs ui-select's out-of-range index, named now in the DOCUMENTATION-701 entry and the round-ten Process; and the round-nine Process repeated the reviewers' `select()` re-point claim as if settled, now marked as the claim round ten qualified.
