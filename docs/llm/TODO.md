@@ -81,7 +81,7 @@ Deferred, logged under "API design review" below: an `onActiveItemChange` event 
 
 ## Pinned rows and the filter-query event (done)
 
-Landed on `dev` in six commits, `937e5db` to `9581257`: the leading / trailing rename, `getVisibleEnabledItems()` public, `LLSelectConstructionContext` for the header / footer content functions, `this` undefined in every settings function, the pinned blocks, and `onFilterQueryChange`. The whole-committee review of the change set and its fixes are the newest round in `FIXME.md`. The design and the reasons: `popup-rows-and-callbacks.md`. The process record: `archive/handoff-popup-command-rows.md`. Still open: the "Pinned rows pass" and the "Popup slot and action-row passes" under manual verification above.
+Landed on `dev` in six commits, `299fd9c` to `0333791`: the leading / trailing rename, `getVisibleEnabledItems()` public, `LLSelectConstructionContext` for the header / footer content functions, `this` undefined in every settings function, the pinned blocks, and `onFilterQueryChange`. The whole-committee review of the change set and its fixes are the newest round in `FIXME.md`. The design and the reasons: `popup-rows-and-callbacks.md`. The process record: `archive/handoff-popup-command-rows.md`. Still open: the "Pinned rows pass" and the "Popup slot and action-row passes" under manual verification above.
 
 ## Performance (open)
 

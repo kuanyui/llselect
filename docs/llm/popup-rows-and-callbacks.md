@@ -66,7 +66,7 @@ The constructor calls six settings functions, in this order:
 - `createPopupHeaderContentElFn` and `createPopupFooterContentElFn`, inside the base constructor, before the variant's fields are initialized. `LLSelectMultiple.chosenItems` is still `undefined` here.
 - `createTriggerClearButtonContentElFn`, `createTriggerContentElFn`, `createTriggerArrowContentElFn`, from the initial trigger render at the end of the variant constructor. The variant's fields exist; a further subclass's fields do not yet.
 
-If these functions received the instance, they would receive a half-built object with a full type. `getChosenItems()` is typed `readonly T[]` and would return `undefined`. In single mode that even looks correct, because `undefined` also means "nothing chosen". In multiple mode `.length` throws. `hideChosenRows` changes which one you get. A parameter whose contract is "do not use it yet" is a trap. The closure recipe fails loudly instead: reading the empty variable throws at once, which is exactly what happened in demo 14.4 (commit `c65b1cc`).
+If these functions received the instance, they would receive a half-built object with a full type. `getChosenItems()` is typed `readonly T[]` and would return `undefined`. In single mode that even looks correct, because `undefined` also means "nothing chosen". In multiple mode `.length` throws. `hideChosenRows` changes which one you get. A parameter whose contract is "do not use it yet" is a trap. The closure recipe fails loudly instead: reading the empty variable throws at once, which is exactly what happened in demo 14.4 (commit `1b18096`).
 
 ### 4.2 A function's parameters are its rerun condition
 
@@ -104,7 +104,7 @@ Passing the instance to `onOpen`, `onClose`, `onChange` and `onActivate` only wo
 
 ### 4.9 What the header and footer functions get instead
 
-`createPopupHeaderContentElFn` and `createPopupFooterContentElFn` receive `LLSelectConstructionContext`, a read-only object with `classIdMap` and `uiTranslationPack`. Those are the two things that are complete during construction and the two things the one real bug needed (`c65b1cc` wanted `classIdMap.popupListRowClass`). They are the only settings functions the closure can never serve, because the library calls them once and never again. The trigger content functions also run during construction, but they rerun on every render and already receive their own data, so they get nothing new. The name says the one fact a reader must know: this function runs while the instance is under construction.
+`createPopupHeaderContentElFn` and `createPopupFooterContentElFn` receive `LLSelectConstructionContext`, a read-only object with `classIdMap` and `uiTranslationPack`. Those are the two things that are complete during construction and the two things the one real bug needed (`1b18096` wanted `classIdMap.popupListRowClass`). They are the only settings functions the closure can never serve, because the library calls them once and never again. The trigger content functions also run during construction, but they rerun on every render and already receive their own data, so they get nothing new. The name says the one fact a reader must know: this function runs while the instance is under construction.
 
 ### 4.10 `this`
 
