@@ -327,7 +327,7 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   }
 
   /**
-   * Re-match the chosen item against the new list **after** `setItems`.
+   * Re-match the chosen item against the new list **after** `setItems` installs it.
    * - If the list no longer holds it (by `compareFn`), it is dropped and
    *   `onChange` fires.
    * - If the list holds a compareFn-equal but DIFFERENT object (`track by`

@@ -2102,7 +2102,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Whether the popup is currently open.
-   * - Pairs with `isDisabled()` (state read via method).
+   * - The same method-based state read as `isDisabled()`.
    * - The same state is mirrored on the DOM as CSS hooks:
    *   `data-state="open|closed"` on the trigger, `classIdMap.openClass` on
    *   the root.
@@ -2346,17 +2346,18 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected onClosed(): void {}
   /**
    * Subclass hook: called **after** the chosen state actually changed, right
-   * **before** the variant's `onChange` setting fires (hook first, both run -
-   * same as `onOpened` / `onClosed`). Default no-op.
+   * **before** the variant's `onChange` setting fires (the hook runs first and both run,
+   * as with `onOpened` / `onClosed`). Default no-op.
    *
    * > Pairs with `onChosenChanging`, which runs **before** a user change and can stop it.
    * @group Subclassing: reactions
    */
   protected onChosenChanged(): void {}
   /**
-   * Called **after** `setItems` finishes. Override to reconcile state that
-   * depends on the item list (e.g. clear a chosen value that disappeared).
-   * Default no-op.
+   * Called inside `setItems`, **after** the new list is installed and an open
+   * popup list re-rendered, and **before** the call returns. Override to
+   * reconcile state that depends on the item list (e.g. clear a chosen value
+   * that disappeared). Default no-op.
    *
    * > No **before** counterpart: there is no `onItemsChanging`.
    * @group Subclassing: reactions
@@ -3159,9 +3160,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   call it. `row` comes from the library: the activated entry.
    * - Default calls the entry's `onActivate`. The library changes nothing
    *   else: choosing and closing are the entry's job.
-   * - Override to react before or after: do your work, then call
-   *   `super.onPopupListActionRowActivated(row)`. Without that call the
-   *   entry's `onActivate` never runs.
+   * - Override to react before the entry's `onActivate`: do your work, then
+   *   call `super.onPopupListActionRowActivated(row)`. To react after it, call
+   *   `super` first, then do your work. Without that call the entry's
+   *   `onActivate` never runs.
    * @group Subclassing: reactions
    */
   protected onPopupListActionRowActivated(row: LLSelectPopupListActionRow): void {
