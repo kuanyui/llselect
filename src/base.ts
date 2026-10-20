@@ -335,7 +335,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * The widget's visible label element - the one foreign element the library
    * touches. Emulates native `<label for>` (which cannot target these divs)
    * in both directions:
-   * - Kept **by reference**: the library reads the element's `id` once, at construction, and points `aria-labelledby` at it; assistive technology then reads the element's current text, so later text changes stay correct, while a later `id` change does not.
+   * - Kept **by reference**: the library reads the element's `id` once, at construction, and, when neither `ariaLabel` nor `ariaLabelledBy` is given, points `aria-labelledby` at it; assistive technology then reads the element's current text, so later text changes stay correct, while a later `id` change does not.
    * - clicking it focuses the trigger (focus ONLY; native `<select>` does not
    *   open on label click, neither does this);
    * - it feeds the accessible name as rung 3 of the resolution order (the
@@ -350,9 +350,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Equality predicate for item values - return `true` when `a` and `b` are the
    * same item.
-   * - Called **every** time the library compares two items; no result of the function is stored, while the multiple select reuses its `hideChosenRows` subtraction until the item list or the selection changes:
-   *   - on each row render and in-place row rebuild, on each selection change, on open, on typeahead, in the `setItems` reconciliation, and in `hideChosenRows` filtering;
-   *   - a custom function pays this on every call; the default is skipped by `Set`-based fast paths and by the duplicate-items warning.
+   * - Called **every** time the library compares two items; nothing is kept for a later call, except that the multiple select reuses its `hideChosenRows` subtraction until the base visible list (gathered, then filtered) or the chosen list is replaced:
+   *   - on each row render and in-place row rebuild (`isChosen`), on each selection change, on open, on each active-row move and on close (the active item is compared with the last reported one), on typeahead, in the `setItems` reconciliation, in `hideChosenRows` filtering, and in `'as-listed'` ordering;
+   *   - a custom function pays this on every call; the default is skipped by `Set`- and `Map`-based fast paths and by the duplicate-items warning.
    * - Required for non-primitive `T`. The default compares by identity:
    *   `===`, except that `NaN` equals `NaN` (SameValueZero, the same rule
    *   `Set` uses), so every code path agrees on what "the same item" means.
@@ -386,7 +386,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * The trigger arrow slot's content ELEMENT (typically a dropdown chevron or
    * triangle).
-   * - Called on **every** open and close, and on **every** a full trigger render (`renderTrigger`: construction, a selection change, `rerender()`, `setPlaceholder()`, `setUiTranslationPack()`, and a `setItems` that drops or reorders chosen items), so the returned element can vary with `isOpened`; no result is kept. A `setItems` that leaves the selection as it is re-renders the trigger content only and does not call it.
+   * - Called on **every** open and close, and on **every** full trigger render (`renderTrigger`: construction in the shipped classes, a selection change, `rerender()`, `setPlaceholder()` with a new text, `setUiTranslationPack()`, and a `setItems` that drops or reorders chosen items); nothing is kept for a later call.
+   *   - The returned element can vary with `isOpened`.
+   *   - A `setItems` that leaves the selection as it is re-renders the trigger content only and does not call it.
    * - fn returns `null` - no arrow for that state.
    * - setting is `null` (default) - the library adds nothing to the arrow slot.
    * @group Trigger
@@ -419,7 +421,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   clearable: boolean
   /**
    * Content ELEMENT of the clear button (its x icon), mirroring `createTriggerArrowContentElFn`.
-   * - Called on **every** a full trigger render (`renderTrigger`: construction, a selection change, `rerender()`, `setPlaceholder()`, `setUiTranslationPack()`, and a `setItems` that drops or reorders chosen items) while `clearable` is on; no result is kept. A `setItems` that leaves the selection as it is does not call it.
+   * - Called on **every** full trigger render (`renderTrigger`: construction in the shipped classes, a selection change, `rerender()`, `setPlaceholder()` with a new text, `setUiTranslationPack()`, and a `setItems` that drops or reorders chosen items) while `clearable` is on; nothing is kept for a later call. A `setItems` that leaves the selection as it is does not call it.
    * `null` (default) = the theme's CSS glyph. The library always owns the button,
    * its click (clears + stops propagation) and aria; this only fills the icon.
    * @group Trigger
@@ -455,7 +457,11 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * `null` (default) means the built-in case-insensitive substring match
    * against the item's resolved text (`itemToStringFn` / `itemToString`).
    * Pass a custom function for fuzzy / domain-specific matching.
-   * - Called once per candidate item **every** time the filtered list is recomputed with a non-empty query: on each filter input event (after an IME composition ends), and on `setItems` and `rerender()` while the popup is open with a query. Never on open, which clears the query. The matching subset is kept until the next recompute.
+   * - Called once per candidate item on **every** recompute of the filtered list with a non-empty query:
+   *   - on each filter input event, including an IME composition end;
+   *   - on `setItems`, `rerender()` and a bulk selection write (which runs `rerender()`) while the popup is open with a query;
+   *   - never on open, which clears the query;
+   *   - the matching subset is kept until the next recompute or the close that clears the query; nothing else is kept.
    * - `query` is the RAW input value: not trimmed and not lower-cased. Normalize
    *   it yourself (the built-in lower-cases both sides; it does not trim).
    * - Not called while the query is empty (an empty box shows every item), but a
@@ -467,14 +473,14 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * The no-results message's visible content ELEMENT, without subclassing.
    * Mirrors `createPopupListItemContentElFn`: the library owns the message container
    * (`role="status"`, class, show/hide), this fills its content only.
+   * - Called **every** time a full list render (`renderPopupList`, only while the popup is open: on open, on each filter input event, including an IME composition end and the Esc that clears the query, on `setItems`, `rerender()` and a bulk selection write, and on `toggleItem` while `hideChosenRows` is on) ends with no visible item, so the query may differ between calls; nothing is kept for a later call.
+   * - The returned element replaces the message only when its text differs from the text shown: the status region is keyed on text, so while the message stays shown, unchanged text is neither re-rendered nor re-announced, and text that changes with the query is announced on each change; after the message hides, its next appearance renders again. Rich content whose markup varies while its text stays constant is therefore not re-rendered.
    * - `query` is the current filter query (`''` when the filter is inactive or
    *   the list is simply empty), so "Nothing matches <query>" is possible.
    * - Return an `HTMLElement`: inserted as the content (you own it; include
    *   real text - the status region announces its TEXT content).
    * - `null` (setting default, or returned): plain text from
    *   `uiTranslationPack.popupListNoResults`.
-   * - Called **every** time a full list render (`renderPopupList`, only while the popup is open: on open, on each filter input event, on `setItems`, `rerender()` and a bulk selection write, and on `toggleItem` while `hideChosenRows` is on) ends with no visible item, so the query may differ between calls; no result is kept.
-   * - The returned element replaces the message only when its text differs from the text shown: the status region is keyed on text, so unchanged text is neither re-rendered nor re-announced, while text that changes with the query is announced on each change. Rich content whose markup varies while its text stays constant is therefore not re-rendered.
    * @group Filtering
    */
   createPopupListNoResultsContentElFn: ((query: string) => HTMLElement | null) | null
@@ -512,9 +518,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Content for a pinned footer below the option list, without subclassing.
    * - Called **once**, inside the constructor, before `new` returns.
-   * - Same contract as {@link createPopupHeaderContentElFn}: called once in
-   *   the constructor with a {@link LLSelectConstructionContext}, wrapped in
-   *   the `popupFooterEl` container (class `popupFooterClass`, no ARIA role),
+   * - Same contract as {@link createPopupHeaderContentElFn}: a
+   *   {@link LLSelectConstructionContext} argument, the `popupFooterEl`
+   *   container (class `popupFooterClass`, no ARIA role) around the result,
    *   never rebuilt by the library.
    * - `null` (setting default, or returned): no footer element is built.
    * - Where it sits: after the no-results message, at the bottom of the
@@ -525,7 +531,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Commands rendered as `role="option"` rows at the TOP of the option list,
    * after the choose-all row when there is one, in array order.
-   * - Copied **once** at construction, as a shallow copy: later changes to your array do nothing, while each entry object stays yours and its `textFn`, `disabledFn` and `createContentElFn` run at every rebuild of the rows (each full list render and each selection change). Default `[]`.
+   * - Copied **once** at construction, as a shallow copy: later changes to your array do nothing. Default `[]`.
+   *   - Each entry object stays yours: its `textFn`, `disabledFn` and `createContentElFn` run at every rebuild of the rows, which happens while the popup is open on each full list render, each selection change and each `setItems`.
+   *   - `disabledFn` runs once more when its row is activated.
    * - Each entry is a {@link LLSelectPopupListActionRow}. The library builds
    *   the row elements and wires them into the arrow-key ring: Home / End
    *   reach the ring's ends, disabled rows are skipped, and the popup opens
@@ -550,7 +558,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * Commands rendered as `role="option"` rows at the BOTTOM of the option
    * list, after the last item, in array order. Same contract as
    * {@link popupListLeadingActionRows}.
-   * - Copied **once** at construction, as a shallow copy, like the leading rows.
+   * - Copied **once** at construction, as a shallow copy, with the leading rows' entry contract.
    * - While the filter is active, Home / End move the text caret, so a row
    *   down here is reached only by arrowing past every match: put commands
    *   keyboard users need often in the leading rows.
@@ -613,7 +621,12 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * skipped by keyboard nav; it keeps `role="option"` plus `aria-disabled`.
    * For a generic `T` this is the only way to mark items - the library cannot
    * read a `disabled` field off an unknown type. See `docs/llm/DESIGN.md`.
-   * - Called **every** time the library asks whether an item is disabled; no result is kept: for each item row on a full list render and on an in-place row rebuild, for each item position tested by keyboard or typeahead navigation, on keyboard activation of a row, in the choose-all operations and `getVisibleEnabledItems()`, and for each tag chip and its remove button.
+   * - Called **every** time the library asks whether an item is disabled (`isItemEffectivelyDisabled`); nothing is kept for a later call:
+   *   - for each item row on a full list render and on an in-place row rebuild;
+   *   - for each item position tested by keyboard or typeahead navigation, and when the initial active row is picked on open;
+   *   - on keyboard activation of a row;
+   *   - in the choose-all operations and in `getVisibleEnabledItems()`;
+   *   - for each tag chip and its remove button.
    * - When a chosen item becomes disabled, it stays chosen. The bullets below describe that state.
    * - For an `LLSelectSingle`:
    *   - `getChosenItem()` still returns the item.
@@ -667,7 +680,11 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   focusableWhenDisabled: boolean
   /**
    * Item -> display string, without subclassing.
-   * - Called **every** time the library needs an item's text; no result is kept: for each item row on a full list render or in-place rebuild; on each trigger content render that shows item text (the single select with a chosen item, the multiple select in `'tags'` mode, each chip's remove-button name); for each candidate on a filter recompute with the default filter; and on typeahead.
+   * - Called **every** time the library needs an item's text; nothing is kept for a later call:
+   *   - for each item row on a full list render or in-place rebuild;
+   *   - on each trigger content render that shows item text: the single select with a chosen item, the multiple select in `'tags'` mode, and each chip's remove-button name;
+   *   - for each candidate on a recompute of the filtered list with the default filter;
+   *   - on typeahead.
    * - `null` (default) = `String(item)`.
    * - Read by the `itemToString` method's default; used for list text, the
    *   single trigger text, the option's accessible name, and the default
@@ -679,7 +696,11 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Item -> its BCP 47 language code, such as `'de'` or `'zh-TW'`, written as
    * the `lang` attribute. It is not a language name.
-   * - Called **every** time the library writes an item's text; no result is kept: for each item row on a full list render or in-place rebuild, on each trigger content render of the single select with a chosen item, and for each chip in the multiple select's `'tags'` mode. The count summary never calls it.
+   * - Called **every** time the library writes an item's text; nothing is kept for a later call:
+   *   - for each item row on a full list render or in-place rebuild;
+   *   - on each trigger content render of the single select with a chosen item;
+   *   - for each chip in the multiple select's `'tags'` mode, plus once for the hidden value mirror when exactly one chip shows and no custom trigger content replaces the chips;
+   *   - never for the count summary.
    * - `null` (default) = the library writes no `lang` anywhere.
    * - A function returning `null` = the library writes no `lang` for that item;
    *   its own text then inherits the page's language, and your custom chip
@@ -714,6 +735,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   itemToLangFn: ((item: T) => string | null) | null
   /**
    * Item -> the visible content ELEMENT of its popup list row, without subclassing.
+   * - Called once per visible row; nothing is kept for a later call:
+   *   - on **every** full list render (`renderPopupList`, only while the popup is open: on open, on each filter input event, including an IME composition end and the Esc that clears the query, on `setItems`, `rerender()` and a bulk selection write, and on `toggleItem` while `hideChosenRows` is on);
+   *   - for each row rebuilt in place by `setChosenItem` or `toggleItem` while the popup is open.
    * - The trigger never calls it: single mode has `createTriggerContentElFn`, tags have `createTagContentElFn`.
    * - When the select is an `LLSelectMultiple`, read chosen state through
    *   `isChosen`.
@@ -737,8 +761,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   `createPopupListItemContentElFn` for the look.
    * - For full control of the option element (tag / wiring), subclass
    *   `createPopupListItemEl` instead.
-   * - Called once per visible row on **every** a full list render (`renderPopupList`, only while the popup is open: on open, on each filter input event, on `setItems`, `rerender()` and a bulk selection write, and on `toggleItem` while `hideChosenRows` is on), and for each row rebuilt in place by `setChosenItem` or `toggleItem`; no result is kept. Content
-   *   that reads selection state (e.g. a checkmark on the chosen row via
+   * - Content that reads selection state (e.g. a checkmark on the chosen row via
    *   `createCheckmarkSvgEl`) therefore stays fresh; keep the function cheap.
    *
    * @example
@@ -757,7 +780,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   createPopupListItemContentElFn: ((item: T) => HTMLElement | null) | null
   /**
    * Item -> its group's key (identity), enabling optgroup rendering.
-   * - Called on **every** full list render (`computePopupSegments`), once per visible item and once more for each group's first item; in the group gather, once per item, with that order kept until the next `setItems` or `rerender()`; and whenever the library asks whether an item is disabled and `itemDisabledFn` did not already disable it. No other result is kept.
+   * - Called with nothing kept for a later call except the gathered order:
+   *   - on **every** full list render (`renderPopupList`, only while the popup is open), once per visible item in the scan that splits the list into groups, plus one lookahead read of the item that ends a grouped run, so a run that closes at the end of the list costs no extra read;
+   *   - in the group gather, once per item to detect whether the data is already contiguous, and once more per item when it is not and must be re-bucketed; the gathered order is kept until the next `setItems`, `rerender()` or bulk selection write; there is no gather while `gatherGroups` is `false`;
+   *   - whenever the library asks whether an item is disabled and `itemDisabledFn` did not already disable it.
    * - `null` (setting, default): grouping off - flat list, no labels.
    * - fn returns `null`: this item is in no group; renders ungrouped.
    * - Contiguous items with an equal key (per `groupKeyCompareFn`) form one
@@ -787,7 +813,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Equality for two group keys; decides whether items share a group (both
    * the `gatherGroups` gather and the contiguous-run rendering use it).
-   * - Called on **every** full list render (`computePopupSegments`): for each pair of adjacent keys, and for each group against every group already closed, to warn about a key that reappears; in the group gather, once per item against the keys seen so far, with that order kept until the next `setItems` or `rerender()`. No other result is kept.
+   * - Called with nothing kept for a later call except the gathered order:
+   *   - on **every** full list render (`renderPopupList`, only while the popup is open), in the scan that splits the list into groups: each item's key against the key that opened the current run, and each run's key against the runs already closed, stopping at the first match, to warn about a key that reappears;
+   *   - in the group gather, each item's key against the previous key to detect whether the data is already contiguous, and, when it is not, against the keys seen so far while re-bucketing; the gathered order is kept until the next `setItems`, `rerender()` or bulk selection write; there is no gather while `gatherGroups` is `false`.
    * - `null` (default) = identity, the same rule as the default `compareFn`
    *   (`===`, plus `NaN` equals `NaN`); right for string / number keys.
    * - Supply only when `GroupKey` is an object without usable reference identity.
@@ -798,7 +826,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Group key -> the label's display text. The i18n customization point: keep keys stable,
    * translate here.
-   * - Called once per group on **every** full list render (`renderPopupList`, only while the popup is open), never on an in-place row rebuild; no result is kept.
+   * - Called once per group on **every** full list render (`renderPopupList`, only while the popup is open), never on an in-place row rebuild; nothing is kept for a later call.
    * - `null` (default) = `String(groupKey)`.
    * @group Grouping
    */
@@ -807,7 +835,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * Group key -> the group's BCP 47 language code, such as `'de'` or `'zh-TW'`,
    * written as the `lang` attribute of the group container. It is not a
    * language name.
-   * - Called once per group on **every** full list render (`renderPopupList`, only while the popup is open), never on an in-place row rebuild; no result is kept.
+   * - Called once per group on **every** full list render (`renderPopupList`, only while the popup is open), never on an in-place row rebuild; nothing is kept for a later call.
    * - `null` (default) = the library writes no `lang` on any group.
    * - A function returning `null` = no `lang` for that group; its label then
    *   inherits the page's language.
@@ -834,7 +862,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   groupKeyToLangFn: ((groupKey: GroupKey) => string | null) | null
   /**
    * Predicate: is this whole group disabled?
-   * - Called once per group on **every** full list render, and whenever the library asks whether an item in a group is disabled and `itemDisabledFn` did not already disable it; no result is kept.
+   * - Called once per group on **every** full list render, and whenever the library asks whether an item in a group is disabled and `itemDisabledFn` did not already disable it; nothing is kept for a later call.
    * - `null` (default) = no group disabled.
    * - `true` = every item in the group is treated as disabled (layers on top of
    *   `itemDisabledFn`).
@@ -844,7 +872,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Group label -> its visible content ELEMENT (icon / count badge / rich
    * markup), without subclassing. Mirrors `createPopupListItemContentElFn`.
-   * - Called once per group on **every** full list render (`renderPopupList`, only while the popup is open), never on an in-place row rebuild; no result is kept.
+   * - Called once per group on **every** full list render (`renderPopupList`, only while the popup is open), never on an in-place row rebuild; nothing is kept for a later call.
    * - Return an `HTMLElement` and the library inserts it as the label's visible
    *   content; the group's accessible name stays `groupKeyToString` (on the
    *   container `aria-label`) and the label element stays `aria-hidden`.

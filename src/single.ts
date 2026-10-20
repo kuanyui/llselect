@@ -89,7 +89,7 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen item
    * + items (same convention as `createPopupListItemContentElFn`):
-   * - Called on **every** a trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`); no result is kept.
+   * - Called on **every** trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`); nothing is kept for a later call.
    * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this for
    *   real markup (icon + text, etc.).
    * - fn returns `null` - use the default for this render: the chosen item's

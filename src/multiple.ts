@@ -125,7 +125,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * Render the trigger's content ELEMENT without subclassing - the setting
    * equivalent of overriding `renderTriggerContent`. Receives the chosen items
    * + items (same convention as `createPopupListItemContentElFn`):
-   * - Called on **every** a trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`); no result is kept.
+   * - Called on **every** trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`); nothing is kept for a later call.
    * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this for
    *   real markup such as tag chips.
    * - fn returns `null` - use the default for this render (count summary / tags).
@@ -148,7 +148,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * Item -> the visible content ELEMENT of its tag chip in `'tags'` mode,
    * without subclassing. Mirrors `createPopupListItemContentElFn` (the chip is to the
    * trigger what the option content is to the row):
-   * - Called once per chosen item on **every** a trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`) while `triggerDisplay` is `'tags'`, unless `createTriggerContentElFn` returns an element; no result is kept.
+   * - Called once per chosen item on **every** trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`) while `triggerDisplay` is `'tags'`, unless `createTriggerContentElFn` returns an element; nothing is kept for a later call.
    * - Return an `HTMLElement` and the library inserts it as the chip's content;
    *   the library still owns the chip container + the remove (x) button + aria.
    * - `null` (setting default, or returned for an item) = plain text from
@@ -171,7 +171,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * button, its click (removes the item + `stopPropagation`), `tabindex="-1"`, and
    * the `aria-label` accessible name (from `itemToTagRemoveButtonAriaLabel`);
    * this only fills the decorative icon.
-   * - Called once per chosen item on **every** a trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`) while `triggerDisplay` is `'tags'`, unless `createTriggerContentElFn` returns an element; no result is kept.
+   * - Called once per chosen item on **every** trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`) while `triggerDisplay` is `'tags'`, unless `createTriggerContentElFn` returns an element; nothing is kept for a later call.
    * - Return an `HTMLElement` / `SVGElement`: appended inside the button as its icon.
    * - `null` (setting default, or returned for an item): no icon - the theme
    *   draws the x via its CSS glyph (`.llselect-tag-remove-button:empty::before`).
@@ -236,7 +236,9 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * The choose-all row's visible content ELEMENT, without subclassing - e.g.
    * a tri-state SVG checkbox (`createOutlinedCheckboxSvgEl`) + the counting text. Mirrors
    * `createPopupListItemContentElFn`. Only used with `chooseAllRow: true`.
-   * - Called **every** time the choose-all row is built: on each full list render (`renderPopupList`, only while the popup is open) and on each `toggleItem`, which rebuilds the row in place; no result is kept.
+   * - Called **every** time the choose-all row is built, which needs the popup open and an enabled visible item; nothing is kept for a later call:
+   *   - on each full list render (`renderPopupList`);
+   *   - on each `toggleItem` with `hideChosenRows` off, which rebuilds the row in place (with it on, `toggleItem` runs a full list render).
    * - Receives the tri-state and the counts of the visible enabled subset.
    * - Return an `HTMLElement`: inserted as the row's content; the accessible
    *   name stays pinned to `uiTranslationPack.chooseAllRowText` via `aria-label`, so
