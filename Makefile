@@ -3,7 +3,7 @@
 
 VERSION := $(shell node -p "require('./package.json').version")
 
-.PHONY: help verify check-version login push publish-core publish-angularjs publish tag release
+.PHONY: help verify check-version login push publish-core publish-angularjs publish tag release build server
 
 help: ## list targets
 	@grep -E '^[a-z-]+:.*##' Makefile | awk -F ':.*## ' '{ printf "  make %-18s %s\n", $$1, $$2 }'
@@ -45,5 +45,8 @@ release: check-version login push publish tag ## the whole flow: guard, auth, pu
 	@echo "released: @llselect/core@$$(npm view @llselect/core version) @llselect/angularjs@$$(npm view @llselect/angularjs version)"
 
 
-server:    ## Build and serve the home page at localhost.
+build: ## build the library into dist/ (d.ts, bundles, themes)
+	npm run build
+
+server: build ## build the library and the site, then serve public/ at localhost
 	npm run 'serve:site'
