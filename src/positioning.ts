@@ -284,9 +284,11 @@ export interface PositionerOptions {
  *   forced to `box-sizing: border-box` at construction), unaffected by
  *   transforms, rounded up so the box is never short of its content.
  * - The guard against `offsetWidth` catches an engine that reports the
- *   content box, or a non-numeric value: both fall back to the integer plus
- *   one, never short either. `offsetWidth` alone rounds to the nearest pixel
- *   (`docs/llm/popup-width-committee.md`).
+ *   content box, a non-numeric value, or a pixel-snap mismatch: each falls
+ *   back to the integer plus one, never short either. Not caught: an engine
+ *   that reports an integer computed width, or the content box under less
+ *   than half a pixel of border and padding (no shipped theme). `offsetWidth`
+ *   alone rounds to the nearest pixel (`docs/llm/popup-width-committee.md`).
  */
 function measureNaturalWidth(el: HTMLElement): number {
   const prev = el.style.width
