@@ -509,7 +509,7 @@ Two policies, chosen by the `popupWidthPolicy` setting; `'fit-content'` is the d
 - `'fit-content'` (default): the popup grows to its content's natural width, never narrower than the trigger (`max(trigger, natural)`), shifted and clamped against the viewport (details under Rationale, point 5).
 - `'match-trigger'` (opt-in): the positioner sets `popupEl.style.width` to the trigger's measured width on every reposition (`positioning.ts`). Long items wrap (themes default to `white-space: normal`).
 
-The natural width is the popup's computed `width` under `width: max-content`, a fractional border box, rounded up. `offsetWidth` rounds to the nearest pixel and left a 249.375px list 0.375px short, up to half a pixel in general, wrapping CJK text (owner report). The committee record and the measurements: `popup-width-committee.md`.
+The natural width is the popup's computed `width` under `width: max-content`, a fractional border box, rounded up, guarded by `offsetWidth` (a mismatch falls back to `offsetWidth` plus one). `offsetWidth` rounds to the nearest pixel and left a 249.375px list 0.375px short, up to half a pixel in general, wrapping CJK text (owner report). The committee record and the measurements: `popup-width-committee.md`.
 
 Under either policy, long chosen text in the trigger is ellipsized (`overflow: hidden; text-overflow: ellipsis` on `.llselect-trigger-content`), and the library never touches the trigger's own width.
 
