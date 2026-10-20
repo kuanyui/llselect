@@ -845,7 +845,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Toggle on click, **after** asking `onChosenChanging` and `onBeforeChange`.
+   * Toggle on click, after asking `onChosenChanging` and `onBeforeChange`.
    * Multi mode keeps the popup open either way.
    * @group Subclassing: reactions
    */
@@ -989,7 +989,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Re-match the chosen entries against the new list **after** `setItems`.
+   * Re-match the chosen entries against the new list **after** `setItems` installs it.
    * - Entries the list no longer holds (by `compareFn`) are dropped and
    *   `onChange` fires for the drop.
    * - When the list holds a compareFn-equal but DIFFERENT object (`track by`
