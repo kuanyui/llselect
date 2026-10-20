@@ -845,8 +845,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Toggle the item **after** the user activates its row, once `onChosenChanging`
-   * and `onBeforeChange` allowed it. Multi mode keeps the popup open either way.
+   * Toggle the item **after** the user's Enter, Space or click on its row, once
+   * `onChosenChanging` and `onBeforeChange` allowed it. Multi mode keeps the
+   * popup open either way.
    *
    * > No **before** counterpart: there is no `onPopupListItemActivating`.
    * @group Subclassing: reactions
@@ -969,12 +970,15 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Called **after** the user activates the choose-all row: computes what
-   * {@link toggleAllVisible} would commit, asks `onChosenChanging` and
-   * `onBeforeChange` with it, then commits exactly that value, even if a
-   * handler changed which items are enabled.
+   * Runs **after** Enter, Space or a click on the choose-all row, as the
+   * library's response to that input.
    *
    * > No **before** counterpart: there is no `onChooseAllRowActivating`.
+   *
+   * - Computes what {@link toggleAllVisible} would commit.
+   * - Asks `onChosenChanging` and `onBeforeChange` with that value.
+   * - Then commits exactly that value, even if a handler changed which items
+   *   are enabled.
    * @group Subclassing: reactions
    */
   protected override onChooseAllRowActivated(): void {
