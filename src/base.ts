@@ -2102,7 +2102,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Whether the popup is currently open.
-   * - The same method-based state read as `isDisabled()`.
+   * - Read through a method, like `isDisabled()`.
    * - The same state is mirrored on the DOM as CSS hooks:
    *   `data-state="open|closed"` on the trigger, `classIdMap.openClass` on
    *   the root.
@@ -2349,15 +2349,15 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * **before** the variant's `onChange` setting fires (the hook runs first and both run,
    * as with `onOpened` / `onClosed`). Default no-op.
    *
-   * > Pairs with `onChosenChanging`, which runs **before** a user change and can stop it.
+   * > Pairs with the variant's `onChosenChanging`, which runs **before** a user change and can stop it.
    * @group Subclassing: reactions
    */
   protected onChosenChanged(): void {}
   /**
    * Called inside `setItems`, **after** the new list is installed and an open
-   * popup list re-rendered, and **before** the call returns. Override to
-   * reconcile state that depends on the item list (e.g. clear a chosen value
-   * that disappeared). Default no-op.
+   * popup list re-rendered, and **before** the action rows are rebuilt.
+   * Override to reconcile state that depends on the item list (e.g. clear a
+   * chosen value that disappeared). Default no-op.
    *
    * > No **before** counterpart: there is no `onItemsChanging`.
    * @group Subclassing: reactions
