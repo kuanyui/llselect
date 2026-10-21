@@ -142,6 +142,7 @@
         <th>Library</th>
         <th>Built / target</th>
         <th>Build total (all widgets, ms)</th>
+        <th>Before paint (all widgets, ms)</th>
         <th>DOM nodes (all, resting)</th>
         <th>Teardown total (all widgets, ms)</th>
       </tr>
@@ -159,6 +160,13 @@
         the widgets (the deliberate yields that keep the page responsive are
         excluded). One run, not a median: at this scale the signal dwarfs the
         noise.</li>
+      <li><strong>Before paint (ms)</strong> - what each chunk still costs
+        after its synchronous build and before the page can paint it: the
+        microtasks the builds queued (a Promise or a MutationObserver callback;
+        llselect decides its color scheme there), then one forced style and
+        layout pass over the new widgets, so every library pays its styling
+        here instead of in the frame. Not part of Build total. Work deferred
+        through a timer or <code>requestAnimationFrame</code> is not in it.</li>
       <li><strong>DOM nodes (resting)</strong> - element nodes left under the
         scratch area after building, popups closed. llselect builds no option DOM
         until a popup opens, so this shows its lazy-render footprint.</li>
