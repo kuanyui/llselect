@@ -40,6 +40,7 @@ test('without Popover API: no popover attribute, no extra inline styles (fallbac
   sel.open()
   assert.equal(sel.popupEl.style.right, '')
   assert.equal(sel.popupEl.style.bottom, '')
+  assert.equal(sel.popupEl.style.height, '')
   sel.close()
 })
 
@@ -50,7 +51,7 @@ test('with Popover API: popover="manual" is set at construction (light dismiss s
   assert.equal(sel.popupEl.getAttribute('popover'), 'manual')
 })
 
-test('open enters the top layer and neutralizes the UA inset; close leaves and clears', () => {
+test('open enters the top layer and neutralizes the UA inset and height; close leaves and clears', () => {
   const root = mount()
   const log = mockPopoverSupport()
   const sel = new LLSelectSingle<string>(root)
@@ -61,10 +62,14 @@ test('open enters the top layer and neutralizes the UA inset; close leaves and c
   // in an RTL containing block) - open() must pin right/bottom to auto.
   assert.equal(sel.popupEl.style.right, 'auto')
   assert.equal(sel.popupEl.style.bottom, 'auto')
+  // UA [popover] { height: fit-content } collapsed this column flex box to
+  // its borders in WebKit 18 (HIGH-705) - open() pins height to auto too.
+  assert.equal(sel.popupEl.style.height, 'auto')
   sel.close()
   assert.equal(log.hidden, 1)
   assert.equal(sel.popupEl.style.right, '')
   assert.equal(sel.popupEl.style.bottom, '')
+  assert.equal(sel.popupEl.style.height, '')
 })
 
 test('close survives a force-hidden popover (dialog.showModal hides all popovers)', () => {
@@ -75,25 +80,6 @@ test('close survives a force-hidden popover (dialog.showModal hides all popovers
   sel.open()
   sel.close() // hidePopover throws InvalidStateError inside; must not propagate
   assert.equal(sel.popupEl.hidden, true)
-})
-
-test('open neutralizes the UA height: fit-content with auto; close clears it (WebKit 18 collapsed the popup to its borders)', () => {
-  const root = mount()
-  mockPopoverSupport()
-  const sel = new LLSelectSingle<string>(root)
-  sel.setItems(['a', 'b'])
-  sel.open()
-  assert.equal(sel.popupEl.style.height, 'auto')
-  sel.close()
-  assert.equal(sel.popupEl.style.height, '')
-})
-
-test('without Popover API: open() leaves the popup height alone', () => {
-  const sel = new LLSelectSingle<string>(mount())
-  sel.setItems(['a', 'b'])
-  sel.open()
-  assert.equal(sel.popupEl.style.height, '')
-  sel.close()
 })
 
 test('detached mount: open() skips showPopover instead of throwing', () => {
