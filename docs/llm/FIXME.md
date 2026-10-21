@@ -2,6 +2,18 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (performance: the first color-scheme decision)
+
+Process: found by the devcontainer runs recorded in `OPTIMIZE.md` (traces through the CDP Tracing domain, CPU profiles), fixed in two steps with a measurement after each, then the post-fix review by Opus 5, Opus 4.8 and Codex Sol.
+
+- [x] **[PERFORMANCE-706] - the batched first color-scheme decision forced one style recalculation per widget, then restyled every subtree once more**
+  - Symptom: building 1000 widgets in one loop paid about 50 ms in the first-decision microtask (Chromium 153, this devcontainer), invisible to the benchmark page's Build total; the trace showed one forced `UpdateLayoutTree` per widget from `readColorSchemeInputs`.
+  - Cause: the batch ran each widget's read and write in turn, and a write dirties style, so the next read forced a recalculation; and every attribute write landed after the subtree had been styled, so the themes' attribute-keyed rules invalidated the subtree and the frame styled it again.
+  - Fix: `queueFirstDecision` and the shared `refreshAll` pass run every widget's `read` before any `apply` (src/color-scheme.ts, `ColorSchemeDecision`); the constructor writes a provisional attribute value before the subtree exists, the document's last decision or light (`provisionalColorScheme`, `rememberColorScheme`), so a confirmed guess writes nothing and a wrong guess restyles that widget once.
+  - Verified: four jsdom tests (the read-before-write order, the provisional value, the document memory, the batch outcome); traces in Chromium 153 on the benchmark passes: forced updates 1100 to 140, the frames' own restyle 40 ms to 0, total style time 118 to 132 ms down to 90 ms against v0.0.7's 53 ms for the same elements (`OPTIMIZE.md`).
+  - Q: Why a provisional attribute value at construction, not the real decision read there?
+    - A: Because reading computed style inside each constructor forces one style update per widget (the 2.5x the batching was introduced to remove); the provisional value only needs the previous decision, and the batch corrects a wrong guess at the cost of one restyle for that widget.
+
 ## review (owner report: the popup shows as a horizontal line in Safari and GNOME Web)
 
 Process: an owner report from Safari and from GNOME Web (WebKitGTK); reproduced in this devcontainer on Playwright's WebKit 18.4 build through the rootless recipe (`rootless-browser-testing.md`), not on its WebKit 26.5 build; four layout experiments on 18.4 isolated the cause; then the post-fix review by Opus 5, Opus 4.8 and Codex Sol.

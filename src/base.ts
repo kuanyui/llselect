@@ -18,6 +18,8 @@ import type { LLSelectUiTranslationPack } from './i18n.js'
 import {
   COLOR_SCHEME_ATTRIBUTE,
   cancelFirstDecision,
+  provisionalColorScheme,
+  rememberColorScheme,
   claimColorSchemeRoot,
   queueFirstDecision,
   readColorSchemeInputs,
@@ -379,7 +381,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - If `colorScheme` is `'auto'`, the library queues the first check during construction. The check runs after the current script finishes, before the browser paints again. If `colorScheme` is `'light'` or `'dark'`, the library writes that value to the attribute during construction.
    * - The library also checks when `open()` or `refreshColorScheme()` runs. It checks when the operating system's color preference changes. It also checks when an attribute of `<html>` or `<body>` changes.
    * - If the widget is inside a shadow root, an operating-system change does not reach it, and neither does an attribute change on `<html>` or `<body>`. The widget still checks when `open()` or `refreshColorScheme()` runs.
-   * - `getColorScheme()` returns the result. If `colorScheme` is `'auto'`, the attribute may be missing until the first queued check runs. If you call `getColorScheme()` before that, the method checks at once and returns the scheme.
+   * - `getColorScheme()` returns the result. If `colorScheme` is `'auto'`, the attribute carries a provisional value until the first queued check runs: the document's last decision, or `light`. If you call `getColorScheme()` before that, the method checks at once and returns the scheme.
    * @group Color scheme
    */
   colorScheme: LLSelectColorScheme
@@ -1428,7 +1430,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private resolvedColorScheme: 'light' | 'dark' = 'light'
   /** True from construction until the first decision ran (batched into a microtask, see color-scheme.ts). */
   private colorSchemeDecisionPending = false
-  private readonly colorSchemeDecision = { decideNow: (): void => { this.syncColorScheme() } }
+  private readonly colorSchemeDecision = { read: (): void => { this.readColorScheme() }, apply: (): void => { this.applyColorScheme() } }
   /**
    * Who the change being applied right now is attributed to; the variants'
    * `onChange` firing reads it. Set to `'user'` by `withUserChangeSource`
@@ -1666,14 +1668,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.rootEl.replaceChildren()
     // This instance owns the element from now on (an older instance on it
     // loses its pending decision and its subscription). A forced scheme is
-    // written now; an 'auto' instance decides in a microtask (before the
-    // first paint, one style flush per batch of widgets) and re-decides on
-    // the shared page listeners.
+    // written now; an 'auto' instance writes a provisional value now, before
+    // its subtree exists, decides in a microtask (before the first paint, one
+    // style flush per batch of widgets, reads before writes) and re-decides
+    // on the shared page listeners.
     claimColorSchemeRoot(this.rootEl)
     if (this.settings.colorScheme === 'auto') {
+      this.resolvedColorScheme = provisionalColorScheme(this.rootEl.ownerDocument)
+      this.rootEl.setAttribute(COLOR_SCHEME_ATTRIBUTE, this.resolvedColorScheme)
       this.colorSchemeDecisionPending = true
       queueFirstDecision(this.rootEl, this.colorSchemeDecision)
-      subscribeColorScheme(this.rootEl, { refresh: () => { this.syncColorScheme() } })
+      subscribeColorScheme(this.rootEl, this.colorSchemeDecision)
     } else {
       this.syncColorScheme()
     }
@@ -2335,14 +2340,25 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.syncColorScheme()
   }
 
-  /** Run the decision and reflect it on the root attribute (only when it changed: the root may itself be an observed element). */
+  /** Run the decision and reflect it on the root attribute: the read step, then the write step. */
   private syncColorScheme(): void {
+    this.readColorScheme()
+    this.applyColorScheme()
+  }
+
+  /** The read step: resolve the scheme from the page. A batch runs every widget's read before any write, so one style flush serves them all. */
+  private readColorScheme(): void {
     if (this.colorSchemeDecisionPending) {
       this.colorSchemeDecisionPending = false
       cancelFirstDecision(this.rootEl, this.colorSchemeDecision)
     }
-    const scheme = resolveColorScheme(readColorSchemeInputs(this.rootEl, this.settings.colorScheme))
-    this.resolvedColorScheme = scheme
+    this.resolvedColorScheme = resolveColorScheme(readColorSchemeInputs(this.rootEl, this.settings.colorScheme))
+    rememberColorScheme(this.rootEl.ownerDocument, this.resolvedColorScheme)
+  }
+
+  /** The write step: the root attribute, only when it changed (the root may itself be an observed element). */
+  private applyColorScheme(): void {
+    const scheme = this.resolvedColorScheme
     if (this.rootEl.getAttribute(COLOR_SCHEME_ATTRIBUTE) !== scheme) { this.rootEl.setAttribute(COLOR_SCHEME_ATTRIBUTE, scheme) }
   }
 

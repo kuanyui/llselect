@@ -86,7 +86,7 @@ test("an 'auto' instance decides in a microtask; getColorScheme() decides at onc
   const el = mount()
   el.style.setProperty('--llselect-color-scheme', 'dark')
   const sel = new LLSelectSingle<string>(el)
-  assert.equal(el.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false, 'not yet: the first decision is batched')
+  assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light', 'provisional until the batched first decision: this document has decided nothing yet')
   await Promise.resolve()
   assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
   assert.equal(sel.getColorScheme(), 'dark')
@@ -206,14 +206,52 @@ test('a document wired before <body> exists observes the <body> that arrives lat
   assert.equal(sel.getColorScheme(), 'dark', 'the <body> that arrived after the wiring is observed')
 })
 
-test('several widgets built in one task have all decided after one microtask, none before', async () => {
+test('a batch reads every widget before it writes any attribute (one style flush for the batch)', async () => {
+  setupDom('<!doctype html><html><body></body></html>')
+  const log: string[] = []
+  const originalGetComputedStyle = window.getComputedStyle
+  window.getComputedStyle = ((el: Element, pseudo?: string | null) => { log.push('read'); return originalGetComputedStyle.call(window, el, pseudo) }) as typeof window.getComputedStyle
+  const roots: HTMLElement[] = []
+  for (let i = 0; i < 3; i++) {
+    const el = document.createElement('div')
+    el.style.setProperty('--llselect-color-scheme', 'dark') // the batch must write: the provisional value is light
+    document.body.appendChild(el)
+    const originalSetAttribute = el.setAttribute.bind(el)
+    el.setAttribute = (name: string, value: string) => { if (name === 'data-llselect-color-scheme') { log.push('write') } originalSetAttribute(name, value) }
+    roots.push(el)
+  }
+  const widgets = roots.map((el) => new LLSelectSingle<string>(el, { colorScheme: 'auto' }))
+  assert.deepEqual(log.splice(0), ['write', 'write', 'write'], 'the constructors write the provisional value and read nothing')
+  await Promise.resolve()
+  assert.equal(log.filter((e) => e === 'read').length, 3)
+  assert.equal(log.filter((e) => e === 'write').length, 3)
+  assert.ok(log.lastIndexOf('read') < log.indexOf('write'), `every read precedes every write: ${log.join(' ')}`)
+  for (const w of widgets) { w.destroy() }
+  window.getComputedStyle = originalGetComputedStyle
+})
+
+test("the provisional value is the document's last decision: a widget built after a dark decision starts dark", async () => {
+  setupDom('<!doctype html><html><body><div id="a" style="--llselect-color-scheme: dark"></div><div id="b" style="--llselect-color-scheme: dark"></div></body></html>')
+  const a = document.getElementById('a'), b = document.getElementById('b')
+  assert.ok(a); assert.ok(b)
+  new LLSelectSingle<string>(a)
+  assert.equal(a.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light', 'nothing decided yet in this document')
+  await Promise.resolve()
+  assert.equal(a.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+  new LLSelectSingle<string>(b)
+  assert.equal(b.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', 'provisional: the document last decided dark')
+  await Promise.resolve()
+  assert.equal(b.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+})
+
+test('several widgets built in one task carry the provisional value, then have all decided after one microtask', async () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b" style="--llselect-color-scheme: dark"></div></body></html>')
   const a = document.getElementById('a'), b = document.getElementById('b')
   assert.ok(a); assert.ok(b)
   new LLSelectSingle<string>(a)
   new LLSelectSingle<string>(b)
-  assert.equal(a.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false)
-  assert.equal(b.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false)
+  assert.equal(a.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
+  assert.equal(b.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
   await Promise.resolve()
   assert.equal(a.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
   assert.equal(b.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
