@@ -90,7 +90,7 @@ Row 2 is what these directives give you:
 
 The value is **not** POSTed by a plain form submit. If you need that too, the two `name` attributes live on two different elements and do not interfere: put a hidden input beside it and mirror the value in `onChange`. See "No native form integration" in [`DESIGN.md`](DESIGN.md) for why the package does not do that for you, and [`SPEC.md`](SPEC.md#verified-facts-about-angularjs) for the source references behind every claim above.
 
-The `name` is always written by you, in your own template - the package never generates one. A generated name (say, an auto-incrementing counter) would key your server contract to JavaScript execution order: reorder your code, or mount two selects in a different order, and the payload keys silently swap.
+The `name` is always written by you, in your own template - the package never generates one. A generated name (say, an auto-incrementing counter) would key your server contract to JavaScript execution order: reorder your code, or mount two select widgets in a different order, and the payload keys silently swap.
 
 ## Gotchas
 

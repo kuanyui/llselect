@@ -36,8 +36,8 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 **Expression**, required. The chosen item on `<llselect-single>`; the array of chosen items on `<llselect-multiple>`. With `select as` in [`ll-options`](#ll-options), the projected value(s) instead.
 
-- `$touched` turns true when DOM focus leaves the select, as on a native control. The `ng-touched` class replaces `ng-untouched` then.
-- A focus move inside the select does not count. The open moving focus from the trigger to the filter input is such a move.
+- `$touched` turns true when DOM focus leaves the select widget, as on a native control. The `ng-touched` class replaces `ng-untouched` then.
+- A focus move inside the select widget does not count. The open moving focus from the trigger to the filter input is such a move.
 - Validation messages gated on `$touched` show from the first blur on.
 - Removing the element while it holds focus, for example through `ng-if`, does not touch the control.
 
@@ -68,33 +68,33 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 > No **before** counterpart: there is no `ll-on-before-close`.
 
-- `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the select), `'blur'` (DOM focus left the select), `'toggle'` (a click on the trigger, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed) or `'hidden'` (the trigger scrolled out of view or was clipped).
+- `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the select widget), `'blur'` (DOM focus left the select widget), `'toggle'` (a click on the trigger, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed) or `'hidden'` (the trigger scrolled out of view or was clipped).
 - Same rules as [`ll-on-open`](#ll-on-open).
 - It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and AngularJS broadcasts `$destroy` before disabling the scope.
 - In that teardown case, writes to parent-owned state (`vm.*`, a service) persist; writes to the dying child scope itself are lost with it.
 
 ### `ll-on-focus`
 
-**Event expression** -> `onFocus`. Evaluated once **after** DOM focus entered the select, inside a digest.
+**Event expression** -> `onFocus`. Evaluated once **after** DOM focus entered the select widget, inside a digest.
 
 > No **before** counterpart: there is no `ll-on-before-focus`, and the `focusin` / `focusout` events the library observes are not cancelable, so none could stop the move.
 
-- Fires when focus comes from outside the select or from nowhere: Tab onto the trigger, a click on the trigger or on its label, a programmatic `instance().triggerEl.focus()`, an `instance().open()` on an unfocused select whose filter is active, which moves focus to the filter input **after** [`ll-on-open`](#ll-on-open), or a click on the clear button or on a chip's remove button while the select holds no focus, which focuses the trigger.
-- Does not fire for a focus move inside the select, such as the open moving focus from the trigger to the filter input.
+- Fires when focus comes from outside the select widget or from nowhere: Tab onto the trigger, a click on the trigger or on its label, a programmatic `instance().triggerEl.focus()`, an `instance().open()` on an unfocused select widget whose filter is active, which moves focus to the filter input **after** [`ll-on-open`](#ll-on-open), or a click on the clear button or on a chip's remove button while the select widget holds no focus, which focuses the trigger.
+- Does not fire for a focus move inside the select widget, such as the open moving focus from the trigger to the filter input.
 - It is about DOM focus only. The row the arrow keys move inside the popup is the active row; that row never holds DOM focus.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
 
 ### `ll-on-blur`
 
-**Event expression** -> `onBlur`. Evaluated once **after** DOM focus left the select, inside a digest.
+**Event expression** -> `onBlur`. Evaluated once **after** DOM focus left the select widget, inside a digest.
 
 > No **before** counterpart: there is no `ll-on-before-blur`, and the `focusin` / `focusout` events the library observes are not cancelable, so none could stop the move.
 
-- Fires when focus moves to an element outside the select or to nowhere: Tab away, a click outside, a click on a non-focusable area.
-- Does not fire for a focus move inside the select.
+- Fires when focus moves to an element outside the select widget or to nowhere: Tab away, a click outside, a click on a non-focusable area.
+- Does not fire for a focus move inside the select widget.
 - The directive marks the control touched first, in the same digest, so the expression already sees `$touched === true` (see [`ng-model`](#ng-model)).
 - When focus leaving closes the popup, [`ll-on-close`](#ll-on-close) runs first; `instance().isOpened()` is already `false` here.
-- Does not fire for the teardown that destroying the element runs, nor for `setDisabled(true)`. The disabling closes an open popup, which returns focus to the trigger, inside the select; the teardown detaches the focus listeners first.
+- Does not fire for the teardown that destroying the element runs, nor for `setDisabled(true)`. The disabling closes an open popup, which returns focus to the trigger, inside the select widget; the teardown detaches the focus listeners first.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
 
 ### `ll-on-active-item-change`
@@ -135,7 +135,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 - Same rules as [`ll-on-open`](#ll-on-open).
 - `$next` is the model value about to be set (the `ll-options` value clause applied); `$previous` is what `ng-model` holds right now, even a value the item list could not resolve. For a multiple select both are arrays.
 - An error thrown by the expression goes to `$exceptionHandler`, like `ng-click`. It does not veto: the change proceeds.
-- A model write inside the expression wins: the digest renders it into the select and the pending change is dropped; `ng-change` runs for neither.
+- A model write inside the expression wins: the digest renders it into the select widget and the pending change is dropped; `ng-change` runs for neither.
 - `$event.preventDefault()` stops the change: the model stays and `ng-change` does not run. Only a vetoed pick in a single select still closes the popup, like any pick; a vetoed toggle, chip removal or clear keeps the value and the popup's open state, while a click may already have moved the active option.
 - Fires only for the user's own pointer and keyboard paths: a pick or a row toggle, a tag's remove button, the clear button, the choose-all row. A model write and an `instance()` setter never fire it.
 - `$event.reason` says what the change would do, as the core's `meta` does for `onChange`; `$event.item` is the raw item of a `'choose'` or `'unchoose'`.
@@ -174,14 +174,14 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 ### `ll-disabled`
 
-**Expression, watched** -> `setDisabled()`. Disables the select. The only watched attribute, because it maps to a method; the other attributes feed construction-time settings, read once.
+**Expression, watched** -> `setDisabled()`. Disables the select widget. The only watched attribute, because it maps to a method; the other attributes feed construction-time settings, read once.
 
 Disabling must go through llselect's own `setDisabled()`:
 
 - The state belongs on the inner TRIGGER element: `setDisabled()` sets `aria-disabled` / `data-disabled` (and manages `tabindex`) on the focusable combobox itself. A `disabled="true"` attribute would sit on this host element - not a form control, so the browser ignores it completely.
 - Hover must survive: llselect never uses the native `disabled` attribute, which suppresses pointer events. A disabled trigger stays hoverable (and focusable via the core `focusableWhenDisabled` setting), so a tooltip can still explain WHY it is disabled.
 
-`ng-disabled` is the same trap one level up: it is one `$watch` whose only action is toggling that inert host attribute (`angular.js:24530`), so the markup looks applied while the select stays fully interactive. See [Not supported](#not-supported).
+`ng-disabled` is the same trap one level up: it is one `$watch` whose only action is toggling that inert host attribute (`angular.js:24530`), so the markup looks applied while the select widget stays fully interactive. See [Not supported](#not-supported).
 
 ### `ll-placeholder`
 
@@ -231,12 +231,12 @@ $scope.ifaceMatch = function (i, query) {
 
 **Expression** -> `colorScheme`. `'auto'` (llselect's default) / `'light'` / `'dark'` - quoted: `ll-color-scheme="'dark'"`.
 
-- `'auto'`: the select decides from its root element's computed style, inherited values included, in this order:
-  - The CSS variable `--llselect-color-scheme`. If it is `light` or `dark`, the select uses that scheme. If it is `auto`, the select follows the operating system's color preference.
-  - If the variable is missing or has another value, the select checks the computed `color-scheme` property. If it omits `dark`, the select selects light. If it lists `dark` without `light`, the select selects dark. If it lists both, the select follows the operating system's color preference.
+- `'auto'`: the select widget decides from its root element's computed style, inherited values included, in this order:
+  - The CSS variable `--llselect-color-scheme`. If it is `light` or `dark`, the select widget uses that scheme. If it is `auto`, the select widget follows the operating system's color preference.
+  - If the variable is missing or has another value, the select widget checks the computed `color-scheme` property. If it omits `dark`, the select widget selects light. If it lists `dark` without `light`, the select widget selects dark. If it lists both, the select widget follows the operating system's color preference.
 - For the full rules, see the core setting `colorScheme` under `LLSelectBaseSettings` in the API reference.
-- `'light'` or `'dark'`: the select shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables; see the core README section "Dark color scheme".
-- The select's root element receives `data-llselect-color-scheme="light"` or `data-llselect-color-scheme="dark"`. The themes apply their dark colors when the value is `dark`.
+- `'light'` or `'dark'`: the select widget shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables; see the core README section "Dark color scheme".
+- The select widget's root element receives `data-llselect-color-scheme="light"` or `data-llselect-color-scheme="dark"`. The themes apply their dark colors when the value is `dark`.
 
 ### `ll-arrow`
 
@@ -331,7 +331,7 @@ $scope.groupLang = function (key) { return key === 'other' ? null : key } // 'de
 
 **Expression** -> `createPopupHeaderContentElFn`. Content for a pinned header between the filter input and the option list; it never scrolls with the items.
 
-- Evaluated once at link time to a function `(ctx) => HTMLElement | null`. `ctx` is the core's `LLSelectConstructionContext`: `classIdMap` and the resolved translation pack, the two things that are safe to read while the select is being built. A function that ignores `ctx` works too. That function runs ONCE, right then, at link time - inside whatever digest is compiling the element, if any; do not rely on one. The returned node lives until the element is destroyed.
+- Evaluated once at link time to a function `(ctx) => HTMLElement | null`. `ctx` is the core's `LLSelectConstructionContext`: `classIdMap` and the resolved translation pack, the two things that are safe to read while the select widget is being built. A function that ignores `ctx` works too. That function runs ONCE, right then, at link time - inside whatever digest is compiling the element, if any; do not rely on one. The returned node lives until the element is destroyed.
 - llselect never rebuilds the node. Update it yourself, for example from `ng-change`.
 - `null` (returned, or no attribute) = no header element at all.
 - Not `$compile`d: build plain DOM. A button inside works with the mouse and keeps keyboard input on the combobox; a text field inside must stop its own `mousedown` from bubbling.
@@ -359,7 +359,7 @@ vm.updateFooterCount = function () { footerEl.textContent = vm.langs.length + ' 
 
 - Evaluated once at link time to an array of `{ textFn, createContentElFn?, disabledFn?, onActivate }` objects, the core `LLSelectPopupListActionRow` shape. The array and its objects are copied; later edits to yours do nothing.
 - `onActivate` runs inside a digest, wrapped like [`ll-on-open`](#ll-on-open); errors go to `$exceptionHandler`. It runs on Enter, on Space while the filter is off, and on click. llselect neither chooses nor closes for it.
-- `onActivate` receives the select instance as its first argument. Call it when the command must count as the user's own change: `onActivate: function (sel) { sel.setChosenItems([]) }` reaches `ng-model` through the same path as a click, so `ng-change` runs and the control turns dirty. A plain model write instead (`vm.langs = []`) stays a programmatic change: the view follows, but `ng-change` does not run and the control stays pristine. Pick one; doing both writes the value twice. The core's own descriptor passes no argument; this one is wrapper-only.
+- `onActivate` receives the select widget instance as its first argument. Call it when the command must count as the user's own change: `onActivate: function (sel) { sel.setChosenItems([]) }` reaches `ng-model` through the same path as a click, so `ng-change` runs and the control turns dirty. A plain model write instead (`vm.langs = []`) stays a programmatic change: the view follows, but `ng-change` does not run and the control stays pristine. Pick one; doing both writes the value twice. The core's own descriptor passes no argument; this one is wrapper-only.
 - Like `ng-click`, `onActivate` is not awaited. After an `await`, digest yourself (`$applyAsync`, `$timeout`).
 - `textFn` / `disabledFn` / `createContentElFn` run outside any digest, per render, like [`ll-popup-list-item-content-fn`](#ll-popup-list-item-content-fn); they run again after every chosen change, so they may read live state.
 - Keyboard and screen-reader rules: core `docs/llm/A11Y.md`, "Action rows". A row is announced as an option with its text; it has no selected state.
@@ -452,9 +452,9 @@ vm.langRows = [{
 
 **Expression** -> `chosenItemsOrder`. `'as-chosen'` (default) / `'as-listed'` - quoted: `ll-chosen-items-order="'as-listed'"`.
 
-- With `'as-listed'` the select keeps the chosen items in item list order, and every user change writes the model in that order.
+- With `'as-listed'` the select widget keeps the chosen items in item list order, and every user change writes the model in that order.
 - A model write in another order is not rewritten. The directive never writes a programmatic change back, or the form would turn `$dirty`. The model keeps its order until the next user change.
-- The same holds when the item list itself is reordered: the select follows the new order, the model keeps the old one until the next user change.
+- The same holds when the item list itself is reordered: the select widget follows the new order, the model keeps the old one until the next user change.
 
 ### `ll-checkboxes`
 
@@ -509,7 +509,7 @@ Accepted values: `'auto'`, `'light'`, `'dark'` and `null`. The default `null` us
 
 #### `uiTranslationPack`
 
-An llselect language pack (e.g. `llselectI18n.zhTW`). The clearest app-wide-by-nature case: an app picks its language once, and llselect's chrome strings are not per-field copy. Applied when a select is built, in all three directives; to switch the language of live selects, see [Switching the UI language at runtime](#switching-the-ui-language-at-runtime).
+An llselect language pack (e.g. `llselectI18n.zhTW`). The clearest app-wide-by-nature case: an app picks its language once, and llselect's chrome strings are not per-field copy. Applied when a select widget is built, in all three directives; to switch the language of live select widgets, see [Switching the UI language at runtime](#switching-the-ui-language-at-runtime).
 
 ## Reaching the instance from your own directive
 
@@ -520,7 +520,7 @@ All three directives publish a controller under their directive names (`llselect
 
 ### `instance()`
 
-Returns the live `LLSelectSingle` / `LLSelectMultiple`. Late-bound: the select is constructed at link time, AFTER controllers instantiate - call it from a `$watch` or event handler, never from a controller constructor. Before link it throws; it never returns `null`.
+Returns the live `LLSelectSingle` / `LLSelectMultiple`. Late-bound: the select widget is constructed at link time, AFTER controllers instantiate - call it from a `$watch` or event handler, never from a controller constructor. Before link it throws; it never returns `null`.
 
 A generic permission-driven disable that works on all three directives AND native form controls (this exact shape is pinned by a test):
 
@@ -550,7 +550,7 @@ angular.module('app').directive('ownDisabled', ['permissions', function (permiss
 
 ### Switching the UI language at runtime
 
-The core method `setUiTranslationPack(pack)` swaps llselect's own UI strings in place, so switching language needs no select rebuild. The wiring belongs to the app, because the current language is app state; it uses the same `require` + `instance()` door.
+The core method `setUiTranslationPack(pack)` swaps llselect's own UI strings in place, so switching language needs no select widget rebuild. The wiring belongs to the app, because the current language is app state; it uses the same `require` + `instance()` door.
 
 This recipe integrates angular-translate and changes no call site (this exact shape is pinned by a test):
 
@@ -581,7 +581,7 @@ function i18nPackSync(ctrlName) {
 - The `$watch` applies the pack for the initial language and again on every switch. It deregisters with the scope, so there is nothing to clean up.
 - When no pack matches the key, `{}` restores the English defaults. `setUiTranslationPack` merges its argument over English, never over the previously set pack.
 - An explicit `ll-placeholder` keeps winning over each new pack's `triggerPlaceholder`.
-- A pack set via [`llselectConfigProvider`](#llselectconfigprovider) seeds selects when they are built; this directive is what updates the ones already on screen.
+- A pack set via [`llselectConfigProvider`](#llselectconfigprovider) seeds select widgets when they are built; this directive is what updates the ones already on screen.
 
 ## `<ui-llselect>`
 
@@ -600,7 +600,7 @@ Migrating a call site, at a glance:
 - It always renders the chevron - every ui-select theme has a caret, so a bare trigger would read as broken.
 - From [`llselectConfigProvider`](#llselectconfigprovider) it takes the two keys ui-select's markup has no word for: `uiTranslationPack` and `popupWidthPolicy`. The other three follow ui-select: the caret is always rendered (`arrow`), `search-enabled` is ui-select's word for `filterable`, and `highlight` is the row template's own `| highlight:` filter.
 - It publishes a controller under `uiLlselect` with `instance()`, the same door as the two llselect directives, so [Reaching the instance from your own directive](#reaching-the-instance-from-your-own-directive) and [Switching the UI language at runtime](#switching-the-ui-language-at-runtime) cover it.
-- `$touched` turns true when DOM focus leaves the select, as on the two llselect directives (see [`ng-model`](#ng-model)). ui-select's markup has no attribute for the blur itself, and none is added.
+- `$touched` turns true when DOM focus leaves the select widget, as on the two llselect directives (see [`ng-model`](#ng-model)). ui-select's markup has no attribute for the blur itself, and none is added.
 - How the bridge is built, and why it is not a full ui-select reimplementation: [the README](README.md#the-ui-select-bridge), [`DESIGN.md`](DESIGN.md#the-ui-select-bridge) and [`SPEC.md`](SPEC.md).
 
 ### What carries over
@@ -625,7 +625,7 @@ Migrating a call site, at a glance:
 | `aria-labelledby` / `aria-label` / `title` (on `<ui-llselect>`) | `ariaLabelledBy` / `ariaLabel` - the field's accessible name. Precedence follows ARIA: `aria-labelledby` (forwarded verbatim, names the field by reference) wins over `aria-label`, which wins over `title`; `title` keeps ui-select parity (its templates feed their aria labels from it) |
 | `$select.selected`, `$select.search`, `$select.multiple` | published on each template's scope |
 | `$index` | from `createPopupListItemEl(item, index)` |
-| `on-highlight` (on `<ui-select-choices>`) | `onActiveItemChange`: the expression runs, inside a digest, with the `repeat` locals and `$select`, each time the active row lands on another item row, whatever moved it: the open, a keyboard move, a filter keystroke, a reload, an item click. Three differences from ui-select: it runs once per change, where ui-select evaluates it once per digest while the row is active; nothing runs for the choose-all row or an action row; and an item click runs it for the clicked row before the pick, where ui-select's click selects without running it for the clicked row. Neither select moves that row on mouse hover: ui-select dropped its `mouseenter` in 0.13.0, and its hover is CSS. The note below says why the attribute keeps ui-select's name |
+| `on-highlight` (on `<ui-select-choices>`) | `onActiveItemChange`: the expression runs, inside a digest, with the `repeat` locals and `$select`, each time the active row lands on another item row, whatever moved it: the open, a keyboard move, a filter keystroke, a reload, an item click. Three differences from ui-select: it runs once per change, where ui-select evaluates it once per digest while the row is active; nothing runs for the choose-all row or an action row; and an item click runs it for the clicked row before the pick, where ui-select's click selects without running it for the clicked row. Neither select widget moves that row on mouse hover: ui-select dropped its `mouseenter` in 0.13.0, and its hover is CSS. The note below says why the attribute keeps ui-select's name |
 
 > [!NOTE]
 > ui-select uses the word "highlight" for two different things. Its `| highlight:` filter marks the text that matches the search. Its `on-highlight` attribute runs while a row is its highlighted row, the row the arrow keys, the open or a search keystroke set; a reload keeps the index. llselect keeps the word for one thing only, the marking of matched text (`createHighlightedTextEl`), and calls the row the arrow keys move "the active row"; the core event is therefore `onActiveItemChange`, and the llselect directives' attribute is [`ll-on-active-item-change`](#ll-on-active-item-change). The bridge keeps ui-select's attribute name on purpose, for one reason: its contract is ui-select's markup as you wrote it, so a migrating template changes nothing. The name stays ui-select's vocabulary, mapped once to llselect's here, and appears nowhere else in llselect.
@@ -730,7 +730,7 @@ Ignored attributes are listed under [Not supported](#not-supported).
 
 Deliberate gaps. Each is reported or simply absent, never silently half-working.
 
-- What "reported" means here (verified, not assumed): a directive's `throw` never reaches your code - `$compile`'s `invokeLinkFn` wraps every link function in its own `try`/`catch` and hands the error to `$exceptionHandler` (`angular.js:11374`), which by default logs it. So a bad `ll-options` does not crash the page; the select simply never renders and the reason is in the console. Every AngularJS directive works this way, `uiSelectMinErr` included.
+- What "reported" means here (verified, not assumed): a directive's `throw` never reaches your code - `$compile`'s `invokeLinkFn` wraps every link function in its own `try`/`catch` and hands the error to `$exceptionHandler` (`angular.js:11374`), which by default logs it. So a bad `ll-options` does not crash the page; the select widget simply never renders and the reason is in the console. Every AngularJS directive works this way, `uiSelectMinErr` included.
 
 Both directive sets:
 
@@ -740,7 +740,7 @@ Both directive sets:
 `llselect-angularjs.js`:
 
 - Filters on the collection (`ll-options="c for c in colors | filter:q"`). Filter in your controller and let `$watchCollection` see the result. (`<ui-llselect>` does support `| filter:` inside `repeat`, because that is ui-select's own filtering mechanism.)
-- `ng-disabled` / a plain `disabled` attribute. Both only toggle the host's `disabled` attribute, which nothing here honors - the select stays fully interactive while the markup claims otherwise. Use [`ll-disabled`](#ll-disabled); its entry has the two reasons disabling must go through `setDisabled()`.
+- `ng-disabled` / a plain `disabled` attribute. Both only toggle the host's `disabled` attribute, which nothing here honors - the select widget stays fully interactive while the markup claims otherwise. Use [`ll-disabled`](#ll-disabled); its entry has the two reasons disabling must go through `setDisabled()`.
 
 `llselect-ui-select.js` - ignored attributes, because llselect has no such concept:
 

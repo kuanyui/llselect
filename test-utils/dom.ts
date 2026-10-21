@@ -1,10 +1,10 @@
 import { JSDOM } from 'jsdom'
 
-// The core warns once per page when a widget has no accessible name. Fixtures
+// The core warns once per page when a select widget has no accessible name. Fixtures
 // are unnamed on purpose and node:test runs every file in its own process, so
 // the warn would print once per file. Drop it here; every other warn passes.
 // Tests that assert on warnings replace console.warn themselves, bypassing this.
-const UNNAMED_WARN_PREFIX = 'llselect: this widget has no accessible name'
+const UNNAMED_WARN_PREFIX = 'llselect: this select widget has no accessible name'
 const forwardWarn = console.warn
 console.warn = (...args: unknown[]): void => {
   if (typeof args[0] === 'string' && args[0].startsWith(UNNAMED_WARN_PREFIX)) { return }
