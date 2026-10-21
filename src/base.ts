@@ -1903,8 +1903,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // so neutralize both. UA `[popover]` also sets `height: fit-content`:
       // WebKit 18 resolves that to 0 for this column flex box under its
       // `max-height` with a `flex-basis: 0%` list, so the popup showed as
-      // its two borders (Safari 18, GNOME Web; FIXME HIGH-705); `auto` is the
-      // same shrink-to-fit box in every engine. (isConnected: showPopover()
+      // its two borders (Safari 18, GNOME Web; FIXME HIGH-705); `auto` gave
+      // the same shrink-to-fit box in every engine tested, WebKit 18 and 26,
+      // Chromium and Firefox. (isConnected: showPopover()
       // throws on a disconnected element; a detached widget is invisible
       // either way.)
       this.popupEl.showPopover()

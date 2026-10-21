@@ -9,10 +9,12 @@ Process: an owner report from Safari and from GNOME Web (WebKitGTK); reproduced 
 - [x] **[HIGH-705] - in WebKit 18 the open popup collapsed to its two borders, a 2px line, with every row present but unseen**
   - Symptom: click the trigger in Safari 18 or GNOME Web: a horizontal line where the popup should be. On WebKit 18.4 the popup's computed height is 2px and the list's 0px with all rows in the DOM; WebKit 26.5 and Chromium lay it out.
   - Cause: in the popover top layer the UA stylesheet gives `[popover]` `height: fit-content`; the popup is a column flex container with an inline `max-height` and a list child with `flex: 1 1 0%`, and WebKit 18 resolves that fit-content height to 0. Each of these undoes it on 18.4: `height: auto` on the popup, `flex-basis: auto` on the list, no `max-height`, `display: block`, or no Popover API at all.
-  - Fix: `open()` sets `height: auto` inline next to the `right` / `bottom` neutralization of the UA `inset: 0` (src/base.ts); `close()` clears it. `auto` is the same shrink-to-fit box in every engine, clamped by `max-height`.
-  - Verified: jsdom tests on the mocked Popover API (`popover.test.ts`); the diagnostic page and the examples page on WebKit 18.4 (popup 259.5px, rows visible), WebKit 26.5 and Chromium 153 unchanged.
-  - Q: Why neutralize the UA rule in JavaScript, not change the list's `flex: 1 1 0%` in the themes?
-    - A: Because the trigger is the UA popover rule the library opted into, so the library should undo it, as it already does for `inset: 0`; a theme change would fix the five shipped themes and leave a consumer theme with the same list rule broken.
+  - Fix: `open()` sets `height: auto` inline next to the `right` / `bottom` neutralization of the UA `inset: 0` (src/base.ts); `close()` clears it. `auto` gave the same shrink-to-fit box, clamped by `max-height`, in every engine tested.
+  - Verified: jsdom tests on the mocked Popover API (`popover.test.ts`); the diagnostic page and the examples page on WebKit 18.4 (popup 259.5px, rows visible); WebKit 26.5, Chromium 153 and Firefox 153 (the popover path since Firefox 125) unchanged at about 260px.
+  - Q: Why neutralize the UA rule in JavaScript, not change the list's `flex: 1` (the library's own inline style on `popupListEl`, set in the constructor; no theme sets it)?
+    - A: Because the trigger is the UA popover rule the library opted into, so the library undoes it where it opts in, as it already does for `inset: 0`, and that touches the top-layer path only; a different flex basis would change the list's sizing in every engine and in the fallback path too.
+  - Q: Why an unconditional inline `height: auto`, not one applied only when a measurement finds the collapse, with a prior inline height restored on close?
+    - A: Because the library already owns the popup's inline box while open (`position`, `top`, `left`, `width`, `max-height`, `right`, `bottom`) and clears it on close; one more owned property follows that contract, while a conditional measure would add a layout read on every open to detect a bug one engine generation has. Opus 5 and Opus 4.8 judged the override acceptable on that pattern; Codex Sol asked for the conditional form.
 
 ## review (owner report: the fit-content popup width rounded short)
 
