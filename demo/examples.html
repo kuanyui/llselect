@@ -985,7 +985,7 @@
   <section>
     <h2>16. Color scheme (light / dark)</h2>
     <p class="hint">
-      Every theme has a dark palette. Each widget's root element receives
+      Every theme has a dark palette. Each select's root element receives
       <code>data-llselect-color-scheme="light"</code> or <code>"dark"</code>.
       In 16.1 to 16.4 the "resolved" line shows that value.
     </p>
@@ -996,9 +996,9 @@
         The Dark switch in the navigation sets <code>data-color-scheme</code>
         on <code>&lt;html&gt;</code> to dark or light. When the page follows
         the OS, the switch removes the attribute. The themes recognize that
-        attribute. This widget uses the default <code>colorScheme: 'auto'</code>.
-        The switch above the widget does the same as the navigation switch.
-        Toggle it and watch the widget and its "resolved" value change.
+        attribute. This select uses the default <code>colorScheme: 'auto'</code>.
+        The switch above the select does the same as the navigation switch.
+        Toggle it and watch the select and its "resolved" value change.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -1013,10 +1013,10 @@
     <article>
       <h3>16.2 A page that switches with its own class</h3>
       <p class="hint">
-        The widget's wrapper has the custom class <code>acme-dark</code>, which
+        The select's wrapper has the custom class <code>acme-dark</code>, which
         the themes do not recognize. The rule
         <code>.acme-dark { --llselect-color-scheme: dark; }</code> makes the
-        widget inside the wrapper use dark colors.
+        select inside the wrapper use dark colors.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -1054,7 +1054,7 @@
       <h3>16.4 Forced per instance: colorScheme: 'dark'</h3>
       <p class="hint">
         <code>colorScheme: 'dark'</code> overrides both CSS sources and the
-        operating system's color preference. This widget is dark on the light
+        operating system's color preference. This select is dark on the light
         page and stays dark when the page goes dark.
       </p>
       <div class="demo-split">
@@ -1069,8 +1069,8 @@
     <article>
       <h3>16.5 Your own colors: the --llselect-* variables</h3>
       <p class="hint">
-        The wrapper <code>.acme-brand</code> contains the widget. The rule
-        <code>.acme-brand .llselect-root</code> gives that widget its own color
+        The wrapper <code>.acme-brand</code> contains the select. The rule
+        <code>.acme-brand .llselect-root</code> gives that select its own color
         variables, which replace the theme's palette with purple. The demo
         loads style.css before the theme stylesheet, so the custom color rule
         includes <code>[data-llselect-color-scheme]</code> to beat the theme's
@@ -1093,7 +1093,7 @@
       <h3>16.6 A single select with an arrow</h3>
       <p class="hint">
         The arrow is <code>createChevronDownSvgEl()</code>. Toggle the Dark
-        switch above the widget to see it in both palettes.
+        switch above the select to see it in both palettes.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -1109,7 +1109,7 @@
       <p class="hint">
         The rows use <code>createOutlinedCheckboxSvgEl()</code>, and
         <code>triggerDisplay: 'tags'</code> shows the three countries chosen at
-        start. Toggle the Dark switch above the widget, then open the popup.
+        start. Toggle the Dark switch above the select, then open the popup.
       </p>
       <div class="demo-split">
         <div class="demo-pane">

@@ -14,7 +14,7 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 >
 > Native `<select>` was designed in the 1990s, and the lots of limitations have caused innumerous indescribable discomfort to OCD developers and designers for over two decades:
 >
-> - Unable to customize the HTML template of `<select>`, `<option>`, `<optgroup>` Behavior of dropdown are platform-dependent (popup/dropdown list are OS-native widgets, which are rendered by system instead of browser)
+> - Unable to customize the HTML template of `<select>`, `<option>`, `<optgroup>` Behavior of dropdown are platform-dependent (popup/dropdown list are OS-native controls, which are rendered by system instead of browser)
 > - No filter feature, especially for East-Asian languages.
 > - Values can only be stored as `string`.
 > - Unable to accept mouse event when `<select disabled="true">` (to show tooltip to explain why it's disabled, for example).
@@ -94,12 +94,12 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 >   - Library versions are pinned in the bundle-size table below.
 > - All tests are single select.
 > - **Before paint** starts when the library has built the DOM of every select. It ends when the browser can paint that DOM. In between are the library's microtasks and the browser's first style and layout of that DOM. Build total does not count this time.
->   - Every widget is built WITH a pre-selected value (the benchmark page's `pre-select at build time`).
+>   - Every select is built WITH a pre-selected value (the benchmark page's `pre-select at build time`).
 > - The following table shows **instantiation** only, other tests (interactions like open popup, filter candidates, choose candidate, ... etc) cannot be accurately benchmarked nor able to be fairly compared across libraries due to the details in implementations of each library. But you still can test by yourself in benchmark page (Live Benchmark: [GitHub Page](https://kuanyui.github.io/llselect/demo/benchmark.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/benchmark.html). Source Code: [HTML](demo/benchmark.html), [JS](demo/benchmark.js)), and interact with them and feel the "real experience" instead of relying on inaccurate benchmark results.
 
 ### 100 selects x 100 candidates
 
-| Library           | Build total (all widgets, ms) | Before paint (all widgets, ms)       | DOM nodes (all, resting) | Teardown total (all widgets, ms) |
+| Library           | Build total (all selects, ms) | Before paint (all selects, ms)       | DOM nodes (all, resting) | Teardown total (all selects, ms) |
 |-------------------|-------------------------------|--------------------------------------|--------------------------|----------------------------------|
 | Native `<select>` | 28                            | 105                                  | 10,200                   | 4.40                             |
 | llselect          | 9.10                          | 22                                   | 900                      | 0.50                             |
@@ -109,7 +109,7 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 | Slim Select       | 63                            | 113                                  | 11,000                   | 5.40                             |
 
 ### 1000 selects x 10 candidates
-| Library           | Build total (all widgets, ms) | Before paint (all widgets, ms)       | DOM nodes (all, resting) | Teardown total (all widgets, ms) |
+| Library           | Build total (all selects, ms) | Before paint (all selects, ms)       | DOM nodes (all, resting) | Teardown total (all selects, ms) |
 |-------------------|-------------------------------|--------------------------------------|--------------------------|----------------------------------|
 | Native `<select>` | 31                            | 137                                  | 12,000                   | 5.60                             |
 | llselect          | 32                            | 39                                   | 9,000                    | 5.40                             |
@@ -280,7 +280,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Popup header / footer, pinned        | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update; see Popup header / footer |
 | i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir`, `itemToLangFn` writes each item's `lang` for screen readers that switch voices, `groupKeyToLangFn` the same for a group |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
-| Events                               | `onChange(current, previous, meta)`, `onBeforeChange(next, previous, event)`, `onOpen(meta)`, `onClose(meta)`, `onFocus`, `onBlur`, `onActiveItemChange(item)`, `onFilterQueryChange(query)`; `onChange`'s `meta` carries `source`, `reason` and, for one added or removed item, `item`; `event` adds `preventDefault()`; `onOpen` / `onClose` get a `meta.reason` naming the path, such as `'escape'` or `'outside'`; `onFocus` / `onBlur` report DOM focus entering / leaving the whole widget, never a move inside it; `onActiveItemChange` reports the item the arrow keys land on, `undefined` for no item |
+| Events                               | `onChange(current, previous, meta)`, `onBeforeChange(next, previous, event)`, `onOpen(meta)`, `onClose(meta)`, `onFocus`, `onBlur`, `onActiveItemChange(item)`, `onFilterQueryChange(query)`; `onChange`'s `meta` carries `source`, `reason` and, for one added or removed item, `item`; `event` adds `preventDefault()`; `onOpen` / `onClose` get a `meta.reason` naming the path, such as `'escape'` or `'outside'`; `onFocus` / `onBlur` report DOM focus entering / leaving the whole select, never a move inside it; `onActiveItemChange` reports the item the arrow keys land on, `undefined` for no item |
 
 ### Typing to jump (prefix typeahead)
 
@@ -467,23 +467,23 @@ sel = new LLSelectSingle(el, {
 
 #### Dark color scheme
 
-Every theme ships a dark palette. The widget checks two CSS sources, in this order: the variable `--llselect-color-scheme`, then the property `color-scheme`.
+Every theme ships a dark palette. The select checks two CSS sources, in this order: the variable `--llselect-color-scheme`, then the property `color-scheme`.
 
-- Standard: declare `color-scheme: light dark` on `<html>`. With no variable set, the widget then follows the operating system, like a native select element.
-- Your own toggle: set the variable to dark or light on an ancestor of the widget. One rule does it: `.night { --llselect-color-scheme: dark; }`.
-- Built in: the themes set the variable for the classes and attributes in the table below. They count on the widget root or on any ancestor.
-- Nested regions: the widget inherits the variable from the nearest ancestor that sets it. So a card with `data-color-scheme="light"` keeps its widgets light inside a dark page.
+- Standard: declare `color-scheme: light dark` on `<html>`. With no variable set, the select then follows the operating system, like a native select element.
+- Your own toggle: set the variable to dark or light on an ancestor of the select. One rule does it: `.night { --llselect-color-scheme: dark; }`.
+- Built in: the themes set the variable for the classes and attributes in the table below. They count on the root element or on any ancestor.
+- Nested regions: the select inherits the variable from the nearest ancestor that sets it. So a card with `data-color-scheme="light"` keeps its selects light inside a dark page.
 - Per instance: the setting `colorScheme: 'dark'` or `'light'` wins over both CSS sources and the operating system.
-- Bootstrap 5.3 pages: set `data-bs-theme="dark"`, the attribute Bootstrap's own documentation uses. The bootstrap-5 theme takes its colors from Bootstrap's own variables, so that attribute drives it. A forced light widget inside such a page keeps Bootstrap's dark colors.
-- If the variable is not set and the property does not list dark, the widget stays light. This holds on a dark operating system too.
+- Bootstrap 5.3 pages: set `data-bs-theme="dark"`, the attribute Bootstrap's own documentation uses. The bootstrap-5 theme takes its colors from Bootstrap's own variables, so that attribute drives it. A forced light select inside such a page keeps Bootstrap's dark colors.
+- If the variable is not set and the property does not list dark, the select stays light. This holds on a dark operating system too.
 - Your own colors: redefine the `--llselect-*` variables in a rule like `.acme .llselect-root`, loaded after the theme stylesheet. Every theme file lists the names and roles at its top.
 - Your rule must beat the theme's dark rule, `.llselect-root[data-llselect-color-scheme='dark']`. It wins with higher specificity, or with equal specificity and a later position in the page.
-- A custom dark palette also needs the dark scheme: set `--llselect-color-scheme: dark` on the widget root or an ancestor. The selected scheme controls the scrollbar's look. The color variables do not.
-- At runtime: the widget rechecks the scheme when a class or attribute changes on the html or body element. It also rechecks when its popup opens or the operating system preference changes. The widget does not recheck after a class or attribute change on any element other than html or body. If the change affects a widget's scheme, call `refreshColorScheme()` for every affected widget. Usually, the affected widgets are on or inside that element.
-- Shadow DOM: load the theme stylesheet inside the shadow root. A built-in class or attribute may be on an ancestor outside the shadow root. The class or attribute takes effect only if the document outside the shadow root also loads the theme stylesheet. Inside a shadow root, the widget does not detect class or attribute changes on the html or body element. The widget also does not detect operating system preference changes. When one of these changes affects the scheme, call `refreshColorScheme()` for every widget inside the shadow root. Refreshing a widget whose scheme is unchanged changes nothing.
+- A custom dark palette also needs the dark scheme: set `--llselect-color-scheme: dark` on the root element or an ancestor. The selected scheme controls the scrollbar's look. The color variables do not.
+- At runtime: the select rechecks the scheme when a class or attribute changes on the html or body element. It also rechecks when its popup opens or the operating system preference changes. The select does not recheck after a class or attribute change on any element other than html or body. If the change affects a select's scheme, call `refreshColorScheme()` for every affected select. Usually, the affected selects are on or inside that element.
+- Shadow DOM: load the theme stylesheet inside the shadow root. A built-in class or attribute may be on an ancestor outside the shadow root. The class or attribute takes effect only if the document outside the shadow root also loads the theme stylesheet. Inside a shadow root, the select does not detect class or attribute changes on the html or body element. The select also does not detect operating system preference changes. When one of these changes affects the scheme, call `refreshColorScheme()` for every select inside the shadow root. Refreshing a select whose scheme is unchanged changes nothing.
 - Live comparison: section 16 of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
 
-| Class or attribute on the widget root or an ancestor | Selects |
+| Class or attribute on the root element or an ancestor | Selects |
 |---|---|
 | class `dark` | dark |
 | class `theme-dark` | dark |
@@ -494,13 +494,13 @@ Every theme ships a dark palette. The widget checks two CSS sources, in this ord
 | attribute `data-bs-theme` | its value, dark or light |
 | attribute `data-color-scheme` | its value: dark, light, or auto to follow the operating system |
 
-Your page may already use a class or attribute from the table for another purpose. Widgets on or inside an element with that class or attribute then take the scheme the table lists. To stop that class or attribute from setting the scheme, add a rule that beats its theme rule:
+Your page may already use a class or attribute from the table for another purpose. Selects on or inside an element with that class or attribute then take the scheme the table lists. To stop that class or attribute from setting the scheme, add a rule that beats its theme rule:
 
 ```css
 .hero.dark { --llselect-color-scheme: inherit; }
 ```
 
-With this rule, that element takes its parent's value of the variable. If that value is empty, the widget falls back to the property. To keep the widgets light even inside a dark page, write `light` instead of `inherit`.
+With this rule, that element takes its parent's value of the variable. If that value is empty, the select falls back to the property. To keep the selects light even inside a dark page, write `light` instead of `inherit`.
 
 ### Subclassing (extending the library)
 

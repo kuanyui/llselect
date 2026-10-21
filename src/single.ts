@@ -36,7 +36,7 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * > Pairs with `onBeforeChange`, which runs **before** a user change and can stop it.
    *
    * - `meta.source` says who initiated the change: `'user'` for a pointer or
-   *   keyboard interaction inside the widget, `'api'` for any programmatic
+   *   keyboard interaction inside the select, `'api'` for any programmatic
    *   call. See {@link LLSelectChangeMeta}.
    * - `meta.reason` says what the change did: `'choose'` with the item in
    *   `meta.item`, `'clear'` for an empty write, or `'items'` for a
@@ -46,8 +46,8 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * - A setter may be called from inside it. The nested `onChange` then
    *   reports `meta.source` `'api'`.
    * - A modal dialog may be opened, or focus moved, from inside it.
-   * - Focus that already moved outside the widget is not reclaimed.
-   * - Moving focus outside the widget closes the popup, as always.
+   * - Focus that already moved outside the select is not reclaimed.
+   * - Moving focus outside the select closes the popup, as always.
    * - A pick closes the popup when the handler returns, if it is still open.
    * - Other changes leave the popup as it is.
    * @group Events

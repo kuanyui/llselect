@@ -27,10 +27,10 @@ if (!existsSync(LLSELECT_UMD)) {
   )
 }
 
-// The core warns once per page when a widget has no accessible name. Every
+// The core warns once per page when a select has no accessible name. Every
 // boot() is a new page and fixtures are unnamed on purpose, so the warn would
 // print once per test. Drop it; every other console call still forwards.
-const UNNAMED_WARN_PREFIX = 'llselect: this widget has no accessible name'
+const UNNAMED_WARN_PREFIX = 'llselect: this select has no accessible name'
 function quietConsole() {
   const vc = new VirtualConsole()
   vc.sendTo(console)
