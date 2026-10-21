@@ -160,11 +160,12 @@
         the widgets (the deliberate yields that keep the page responsive are
         excluded). One run, not a median: at this scale the signal dwarfs the
         noise.</li>
-      <li><strong>Before paint (ms)</strong> - after the build, how long until
-        the page can draw the widgets. It counts the work a library delayed,
-        plus the first style and layout of the new widgets. Build total does
-        not include it. Work delayed with a timer or
-        <code>requestAnimationFrame</code> is not counted.</li>
+      <li><strong>Before paint (ms)</strong> - the time between two moments:
+        the library finishes creating the widgets, and the browser can paint
+        them. It holds the library's microtasks and the first style and layout
+        of the new elements. Build total does not count it. Work the library
+        delays with a timer or <code>requestAnimationFrame</code> is not
+        counted.</li>
       <li><strong>DOM nodes (resting)</strong> - element nodes left under the
         scratch area after building, popups closed. llselect builds no option DOM
         until a popup opens, so this shows its lazy-render footprint.</li>
