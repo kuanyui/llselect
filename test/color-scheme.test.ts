@@ -104,6 +104,41 @@ test('a forced setting is written at construction, with no microtask', () => {
   assert.equal(sel.rootEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
 })
 
+test('the shared pass reads every widget before it writes any attribute', async () => {
+  setupDom('<!doctype html><html><body></body></html>')
+  const roots: HTMLElement[] = []
+  for (let i = 0; i < 3; i++) { const el = document.createElement('div'); document.body.appendChild(el); roots.push(el) }
+  const widgets = roots.map((el) => new LLSelectSingle<string>(el))
+  await Promise.resolve()
+  const log: string[] = []
+  const originalGetComputedStyle = window.getComputedStyle
+  window.getComputedStyle = ((el: Element, pseudo?: string | null) => { log.push('read'); return originalGetComputedStyle.call(window, el, pseudo) }) as typeof window.getComputedStyle
+  for (const el of roots) {
+    el.style.setProperty('--llselect-color-scheme', 'dark')
+    const originalSetAttribute = el.setAttribute.bind(el)
+    el.setAttribute = (name: string, value: string) => { if (name === 'data-llselect-color-scheme') { log.push('write') } originalSetAttribute(name, value) }
+  }
+  document.documentElement.setAttribute('data-color-scheme', 'dark')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.equal(log.filter((e) => e === 'read').length, 3)
+  assert.equal(log.filter((e) => e === 'write').length, 3)
+  assert.ok(log.lastIndexOf('read') < log.indexOf('write'), `every read precedes every write: ${log.join(' ')}`)
+  for (const w of widgets) { w.destroy() }
+  window.getComputedStyle = originalGetComputedStyle
+})
+
+test('a forced setting does not become the provisional value of later auto widgets', async () => {
+  setupDom('<!doctype html><html><body><div id="forced"></div><div id="auto"></div></body></html>')
+  const forced = document.getElementById('forced'), auto = document.getElementById('auto')
+  assert.ok(forced); assert.ok(auto)
+  new LLSelectSingle<string>(forced, { colorScheme: 'dark' })
+  assert.equal(forced.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+  new LLSelectSingle<string>(auto)
+  assert.equal(auto.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light', 'the forced dark is not a decision about the page')
+  await Promise.resolve()
+  assert.equal(auto.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
+})
+
 test('the shared observer: an attribute change on <html> makes every widget decide again', async () => {
   // jsdom has a MutationObserver and no matchMedia; the variable lives on the
   // roots themselves (jsdom computes no inherited custom property).
@@ -300,5 +335,5 @@ test('destroy() removes the attribute from the root and cancels a pending first 
   const early = new LLSelectSingle<string>(mount())
   early.destroy()
   await Promise.resolve()
-  assert.equal(early.rootEl.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false, 'destroyed before the batch ran: nothing written')
+  assert.equal(early.rootEl.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false, 'destroyed before the batch ran: the batch writes nothing back')
 })

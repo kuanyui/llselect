@@ -80,7 +80,8 @@ export interface ColorSchemeDecision { read(): void; apply(): void }
 // made. The themes key rules on the attribute, so a write after the subtree
 // was styled restyles the whole subtree; a provisional value the batch then
 // confirms costs nothing, a wrong guess costs that widget one restyle
-// (OPTIMIZE.md measured the restyle at about half the batch's cost).
+// (OPTIMIZE.md: before this, restyling every subtree cost 38 to 43 ms per
+// 1100 widgets).
 const lastSchemeByDocument = new WeakMap<Document, 'light' | 'dark'>()
 
 /** The value a new `'auto'` widget writes before its first decision: the document's last decision, or light. */
@@ -88,7 +89,7 @@ export function provisionalColorScheme(doc: Document): 'light' | 'dark' {
   return lastSchemeByDocument.get(doc) ?? 'light'
 }
 
-/** Records a decision as the document's latest, the next widget's provisional value. */
+/** Records an `'auto'` decision made on a connected root as the document's latest, the next widget's provisional value. */
 export function rememberColorScheme(doc: Document, scheme: 'light' | 'dark'): void {
   lastSchemeByDocument.set(doc, scheme)
 }
