@@ -24,8 +24,15 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 > Yeeeee, it's just because all of the existing libraries are unable to satisfy my requirements, mainly on aspect of performance (initializing hundreds of instances), then flexibility, and explicitly.
 >
 > At least as of May 2026, this situation was still not solved. The only way was implement one to fit my ideal.
-
-
+>
+> #### It's AI era! Why a library instead of using LLM agent to write an ad-hoc select component directly?
+>
+> If you are sensitive enough, you should know select is a terribly long-tailed UI component. Lots of detailed behaviors and edge cases that you won't want to waste time to struggle with. Includes but not limited:
+>
+> - ARIA (detailed behavior of keyboard navigation, `lang` attribute... etc)
+> - Popup width, layout and position on small-sized screen, or items containing long text content.
+> - CJK characters and layout problem (ex: unexpected newline).
+> - System and browser compatibility (Desktop / Mobile / Touchscreen; Firefox / Chromium / Safari)
 
 > [!WARNING]
 > I know [Semantic Versioning](https://semver.org/), but the API of versions < `v0.1.0` is unstable currently and may have breaking changes. I'm still trying to eat my own dog food in real-world projects and trying to make the API stable. Thanks for your understanding.
