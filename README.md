@@ -93,7 +93,7 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 > - Tested versions of each libraries are the latest versions as of **2026-08-25**.
 >   - Library versions are pinned in the bundle-size table below.
 > - All tests are single select.
-> - **Before paint** is what each chunk still costs after its synchronous build: the microtasks it queued, then one forced style and layout pass over the new widgets, so every library pays its first styling in the same column. Not part of Build total.
+> - **Before paint** means: after the build, how long until the page can draw the widgets. It counts the work a library delayed, plus the first style and layout of the new widgets. Build total does not include it.
 >   - Every widget is built WITH a pre-selected value (the benchmark page's `pre-select at build time`).
 > - The following table shows **instantiation** only, other tests (interactions like open popup, filter candidates, choose candidate, ... etc) cannot be accurately benchmarked nor able to be fairly compared across libraries due to the details in implementations of each library. But you still can test by yourself in benchmark page (Live Benchmark: [GitHub Page](https://kuanyui.github.io/llselect/demo/benchmark.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/benchmark.html). Source Code: [HTML](demo/benchmark.html), [JS](demo/benchmark.js)), and interact with them and feel the "real experience" instead of relying on inaccurate benchmark results.
 
