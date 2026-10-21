@@ -66,16 +66,39 @@ export function readColorSchemeInputs(rootEl: HTMLElement, setting: LLSelectColo
 // recalculation; a page that builds many widgets in one loop would pay one per
 // widget (the 1000-widget benchmark measured 2.5x). So the first decision of
 // every 'auto' instance waits for a microtask: it still lands before the first
-// paint, and all widgets built in one task share one flush. getColorScheme()
-// and open() decide at once when the decision is still pending.
-interface PendingDecision { decideNow(): void }
+// paint, and all widgets built in one task share one flush. The flush has two
+// phases, every read then every write: a widget's attribute write dirties
+// style, so reading the next widget right after it would force a
+// recalculation per widget again (OPTIMIZE.md measured 50 ms per 1000).
+// getColorScheme() and open() decide at once when the decision is still
+// pending.
+/** One widget's decision in two steps: `read` resolves the scheme from the page, `apply` writes the attribute. */
+export interface ColorSchemeDecision { read(): void; apply(): void }
+
+// The attribute goes on the root at construction, before the subtree exists,
+// with a provisional value: the document's last decision, light until one is
+// made. The themes key rules on the attribute, so a write after the subtree
+// was styled restyles the whole subtree; a provisional value the batch then
+// confirms costs nothing, a wrong guess costs that widget one restyle
+// (OPTIMIZE.md measured the restyle at about half the batch's cost).
+const lastSchemeByDocument = new WeakMap<Document, 'light' | 'dark'>()
+
+/** The value a new `'auto'` widget writes before its first decision: the document's last decision, or light. */
+export function provisionalColorScheme(doc: Document): 'light' | 'dark' {
+  return lastSchemeByDocument.get(doc) ?? 'light'
+}
+
+/** Records a decision as the document's latest, the next widget's provisional value. */
+export function rememberColorScheme(doc: Document, scheme: 'light' | 'dark'): void {
+  lastSchemeByDocument.set(doc, scheme)
+}
 // Keyed by the root element: a newer instance built on the same element
 // replaces an older one's pending decision, so the older one can never write
 // the attribute after the newer one did.
-const pendingDecisions = new Map<HTMLElement, PendingDecision>()
+const pendingDecisions = new Map<HTMLElement, ColorSchemeDecision>()
 let flushScheduled = false
 
-export function queueFirstDecision(rootEl: HTMLElement, decision: PendingDecision): void {
+export function queueFirstDecision(rootEl: HTMLElement, decision: ColorSchemeDecision): void {
   pendingDecisions.set(rootEl, decision)
   if (flushScheduled) { return }
   flushScheduled = true
@@ -83,12 +106,13 @@ export function queueFirstDecision(rootEl: HTMLElement, decision: PendingDecisio
     flushScheduled = false
     const batch = [...pendingDecisions.values()]
     pendingDecisions.clear()
-    for (const d of batch) { d.decideNow() }
+    for (const d of batch) { d.read() }
+    for (const d of batch) { d.apply() }
   })
 }
 
 /** Drops the pending decision only when it is still this one (a newer instance may own the element now). */
-export function cancelFirstDecision(rootEl: HTMLElement, decision: PendingDecision): void {
+export function cancelFirstDecision(rootEl: HTMLElement, decision: ColorSchemeDecision): void {
   if (pendingDecisions.get(rootEl) === decision) { pendingDecisions.delete(rootEl) }
 }
 
@@ -110,11 +134,10 @@ export function claimColorSchemeRoot(rootEl: HTMLElement): void {
 // own elements (the root, and labelEl when set), as it already does through
 // its DOM listeners (the lifecycle promise of destroy() holds).
 
-interface ColorSchemeSubscriber { refresh(): void }
-const subscribersByRoot = new WeakMap<HTMLElement, ColorSchemeSubscriber>()
+const subscribersByRoot = new WeakMap<HTMLElement, ColorSchemeDecision>()
 const wiredDocuments = new WeakSet<Document>()
 
-export function subscribeColorScheme(rootEl: HTMLElement, subscriber: ColorSchemeSubscriber): void {
+export function subscribeColorScheme(rootEl: HTMLElement, subscriber: ColorSchemeDecision): void {
   subscribersByRoot.set(rootEl, subscriber)
   wireDocument(rootEl.ownerDocument)
 }
@@ -131,7 +154,8 @@ function wireDocument(doc: Document): void {
   if (view === null || wiredDocuments.has(doc)) { return }
   wiredDocuments.add(doc)
   let scheduled = false
-  // Batched: one pass per task, however many attributes changed. Only roots
+  // Batched: one pass per task, however many attributes changed, in two
+  // phases like the first decision (every read, then every write). Only roots
   // present in the document are reached (a shadow root's widgets re-decide on
   // open() or refreshColorScheme()).
   const refreshAll = (): void => {
@@ -139,9 +163,13 @@ function wireDocument(doc: Document): void {
     scheduled = true
     void Promise.resolve().then(() => {
       scheduled = false
+      const batch: ColorSchemeDecision[] = []
       for (const el of doc.querySelectorAll<HTMLElement>(`[${COLOR_SCHEME_ATTRIBUTE}]`)) {
-        subscribersByRoot.get(el)?.refresh()
+        const d = subscribersByRoot.get(el)
+        if (d !== undefined) { batch.push(d) }
       }
+      for (const d of batch) { d.read() }
+      for (const d of batch) { d.apply() }
     })
   }
   if (typeof view.matchMedia === 'function') {
