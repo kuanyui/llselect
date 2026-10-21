@@ -123,7 +123,7 @@ Minified bytes as loaded by the benchmark page (llselect from the local `dist/in
 
 | Library                      | Version    | Minified |
 |------------------------------|------------|----------|
-| llselect                     | 0.0.10     | 53.3 KB  |
+| llselect                     | 0.0.11     | 59.1 KB  |
 | Choices.js                   | 11.1.0     | 73.6 KB  |
 | Select2                      | 4.1.0-rc.0 | 71.4 KB  |
 | Tom Select                   | 2.4.3      | 49.1 KB  |
