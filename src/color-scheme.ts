@@ -4,15 +4,15 @@
 
 /**
  * The `colorScheme` setting's values.
- * - `'auto'`, the default: the library decides from the widget root's computed CSS. The setting's
+ * - `'auto'`, the default: the library decides from the root element's computed CSS. The setting's
  *   docstring on {@link LLSelectBaseSettings.colorScheme} explains the order.
- * - `'light'` or `'dark'`: the widget shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables; see the README section "Dark color scheme".
+ * - `'light'` or `'dark'`: the select widget shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables; see the README section "Dark color scheme".
  * @group Settings
  * @category Base
  */
 export type LLSelectColorScheme = 'auto' | 'light' | 'dark'
 
-/** The attribute the resolver writes on the widget root. The themes key their dark values on it. */
+/** The attribute the resolver writes on the root element. The themes key their dark values on it. */
 export const COLOR_SCHEME_ATTRIBUTE = 'data-llselect-color-scheme'
 /** The CSS variable a host page or a built-in mark sets on any ancestor: `light`, `dark` or `auto`. */
 export const COLOR_SCHEME_VARIABLE = '--llselect-color-scheme'
@@ -21,9 +21,9 @@ const DARK_QUERY = '(prefers-color-scheme: dark)'
 /** The four inputs of one decision, as read from the page. */
 export interface ColorSchemeInputs {
   setting: LLSelectColorScheme
-  /** The computed `--llselect-color-scheme` of the widget root; empty when nobody set it. */
+  /** The computed `--llselect-color-scheme` of the root element; empty when nobody set it. */
   variable: string
-  /** The computed CSS property `color-scheme` of the widget root; empty where the browser lacks the property. */
+  /** The computed CSS property `color-scheme` of the root element; empty where the browser lacks the property. */
   declared: string
   osPrefersDark: boolean
 }
@@ -47,7 +47,7 @@ function prefersDark(view: Window | null): boolean {
   return view !== null && typeof view.matchMedia === 'function' && view.matchMedia(DARK_QUERY).matches
 }
 
-/** Reads the inputs for a widget root: one getComputedStyle call when the setting is `'auto'`. */
+/** Reads the inputs for a root element: one getComputedStyle call when the setting is `'auto'`. */
 export function readColorSchemeInputs(rootEl: HTMLElement, setting: LLSelectColorScheme): ColorSchemeInputs {
   if (setting !== 'auto') { return { setting, variable: '', declared: '', osPrefersDark: false } }
   const view = rootEl.ownerDocument.defaultView
@@ -62,34 +62,34 @@ export function readColorSchemeInputs(rootEl: HTMLElement, setting: LLSelectColo
 }
 
 // --- the first decision, batched -----------------------------------------------
-// getComputedStyle right after the widget's own DOM edits flushes a style
-// recalculation; a page that builds many widgets in one loop would pay one per
-// widget (the 1000-widget benchmark measured 2.5x). So the first decision of
+// getComputedStyle right after the select widget's own DOM edits flushes a style
+// recalculation; a page that builds many select widgets in one loop would pay one per
+// select widget (the benchmark with 1000 select widgets measured 2.5x). So the first decision of
 // every 'auto' instance waits for a microtask: it still lands before the first
-// paint, and all widgets built in one task share one flush. The flush has two
-// phases, every read then every write: a widget's attribute write dirties
-// style, so reading the next widget right after it would force a
-// recalculation per widget again (OPTIMIZE.md measured 50 ms per 1000).
+// paint, and all select widgets built in one task share one flush. The flush has two
+// phases, every read then every write: a select widget's attribute write dirties
+// style, so reading the next select widget right after it would force a
+// recalculation per select widget again (OPTIMIZE.md measured 50 ms per 1000).
 // getColorScheme() and open() decide at once when the decision is still
 // pending.
-/** One widget's decision in two steps: `read` resolves the scheme from the page, `apply` writes the attribute. */
+/** One select widget's decision in two steps: `read` resolves the scheme from the page, `apply` writes the attribute. */
 export interface ColorSchemeDecision { read(): void; apply(): void }
 
 // The attribute goes on the root at construction, before the subtree exists,
-// with a provisional value: the document's last decision, light until one is
-// made. The themes key rules on the attribute, so a write after the subtree
+// with a provisional value: the document's last 'auto' decision on a
+// connected root, light until one is made. The themes key rules on the attribute, so a write after the subtree
 // was styled restyles the whole subtree; a provisional value the batch then
-// confirms costs nothing, a wrong guess costs that widget one restyle
+// confirms costs nothing, a wrong guess costs that select widget one restyle
 // (OPTIMIZE.md: before this, restyling every subtree cost 38 to 43 ms per
-// 1100 widgets).
+// 1100 select widgets).
 const lastSchemeByDocument = new WeakMap<Document, 'light' | 'dark'>()
 
-/** The value a new `'auto'` widget writes before its first decision: the document's last decision, or light. */
+/** The value a new `'auto'` select widget writes before its first decision: the document's last `'auto'` decision on a connected root, or light. */
 export function provisionalColorScheme(doc: Document): 'light' | 'dark' {
   return lastSchemeByDocument.get(doc) ?? 'light'
 }
 
-/** Records an `'auto'` decision made on a connected root as the document's latest, the next widget's provisional value. */
+/** Records an `'auto'` decision made on a connected root as the document's latest, the next select widget's provisional value. */
 export function rememberColorScheme(doc: Document, scheme: 'light' | 'dark'): void {
   lastSchemeByDocument.set(doc, scheme)
 }
@@ -129,7 +129,7 @@ export function claimColorSchemeRoot(rootEl: HTMLElement): void {
 
 // --- shared page listeners --------------------------------------------------
 // One media-query listener and one attribute observer per document re-decide
-// every subscribed widget. Subscribers are keyed by their root element in a
+// every subscribed select widget. Subscribers are keyed by their root element in a
 // WeakMap, and the listeners find live roots through the document, so nothing
 // here retains an instance: a closed instance stays reachable only through its
 // own elements (the root, and labelEl when set), as it already does through
@@ -157,7 +157,7 @@ function wireDocument(doc: Document): void {
   let scheduled = false
   // Batched: one pass per task, however many attributes changed, in two
   // phases like the first decision (every read, then every write). Only roots
-  // present in the document are reached (a shadow root's widgets re-decide on
+  // present in the document are reached (a shadow root's select widgets re-decide on
   // open() or refreshColorScheme()).
   const refreshAll = (): void => {
     if (scheduled) { return }
@@ -178,9 +178,9 @@ function wireDocument(doc: Document): void {
     if (typeof query.addEventListener === 'function') { query.addEventListener('change', refreshAll) }
   }
   if (typeof view.MutationObserver === 'function') {
-    // A widget mounted on <html> or <body> writes its own attribute on an
+    // A select widget mounted on <html> or <body> writes its own attribute on an
     // observed element; those records must not start another pass. The child
-    // list of <html> is watched too, so a <body> that appears later (a widget
+    // list of <html> is watched too, so a <body> that appears later (a select widget
     // built from a script in <head>) or gets replaced is observed as well.
     // undefined until the first registration (<body> is an element or null)
     let observedBody: HTMLElement | null | undefined

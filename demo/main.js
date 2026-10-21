@@ -1365,7 +1365,7 @@ selPinnedRows.setChosenItems(PINNED_DEFAULTS)
 
 //#region 16.1
 // Nothing to configure: the page's Dark switch writes data-color-scheme on
-// <html>, a mark the themes turn into --llselect-color-scheme. The widget
+// <html>, a mark the themes turn into --llselect-color-scheme. The select widget
 // reads that variable and writes its decision to data-llselect-color-scheme.
 const outSchemePage = document.getElementById('out-scheme-page')
 const selSchemePage = new LLSelectSingle(

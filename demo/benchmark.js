@@ -6,7 +6,7 @@
 // - Every library loads its minified CDN build; llselect loads its minified UMD
 //   (../dist/index.umd.js), so bundle size and parse cost are compared like for
 //   like. Native <select> is the baseline floor.
-// - Widgets are built in small chunks with a yield between them, under a per-
+// - Select widgets are built in small chunks with a yield between them, under a per-
 //   library time budget, so a runaway library is cut off instead of freezing
 //   the tab. The yields are excluded from the reported compute time.
 // - Every op is guarded: an adapter that cannot drive a loaded version reports
@@ -28,7 +28,7 @@ const ORDER = ['native', 'llselect', 'choices', 'select2', 'tom-select', 'slim-s
 // Interaction tables exclude native <select>: its dropdown is browser / OS-driven,
 // so open / filter / close are not observable and choosing measures ~0 - no
 // discriminative value, and it would misrepresent the real perceived latency. Its
-// widget is still built and left live below so a reader can feel it by hand.
+// select widget is still built and left live below so a reader can feel it by hand.
 const IX_ORDER = ORDER.filter(k => k !== 'native')
 
 // Short, plain-language note per library AND per interaction phase, of the tuning
@@ -379,9 +379,9 @@ function clearStage() {
   stage.replaceChildren()
 }
 
-// Build all N widgets in chunks, yielding between them. With the budget on, a
+// Build all N select widgets in chunks, yielding between them. With the budget on, a
 // library that overruns is cut off (timedOut). With noTimeout, it builds every
-// widget no matter how long. Returns compute time (yields excluded), the time
+// select widget no matter how long. Returns compute time (yields excluded), the time
 // each chunk still cost before paint (prepaint, see the column's legend) and
 // how many were built.
 async function buildAll(key, scen, runOpts) {
@@ -417,7 +417,7 @@ async function buildAll(key, scen, runOpts) {
     if (++chunk % 8 === 0) { status.textContent = `${DISPLAY[key].name}: built ${built} / ${scen.widgets} ...` }
     // What the chunk still costs before paint, timed apart from Build total:
     // the microtasks it queued (a Promise, a MutationObserver callback) run at
-    // the await, then one forced style and layout pass covers the new widgets
+    // the await, then one forced style and layout pass covers the new select widgets
     // for every library alike (a library whose microtask reads computed style
     // has already paid the style part there). Timers and rAF callbacks stay
     // out of it.
@@ -489,15 +489,15 @@ async function runLib(key, renderAfter = true) {
   if (!available(key)) { setCell(key, 'built', 'not loaded'); return }
   clearStage()
   await raf()
-  status.textContent = `${DISPLAY[key].name}: building ${scen.widgets} widget(s) x ${scen.itemsPer} items ...`
+  status.textContent = `${DISPLAY[key].name}: building ${scen.widgets} select widget(s) x ${scen.itemsPer} items ...`
   await raf()
   const before = countNodes()
   const res = await buildAll(key, scen, runOptsFromDom())
   const nodes = countNodes() - before
 
-  // Teardown: time destroying every widget just built (symmetric to Build total).
-  // This empties the scratch area - the mass widgets are transient proof they
-  // rendered; the interaction section keeps its widgets live for inspection.
+  // Teardown: time destroying every select widget just built (symmetric to Build total).
+  // This empties the scratch area - the mass select widgets are transient proof they
+  // rendered; the interaction section keeps its select widgets live for inspection.
   const td0 = performance.now()
   for (const w of live) { try { ADAPTERS[w.key].teardown(w.h) } catch (e) { /* ignore */ } }
   const teardown = performance.now() - td0
@@ -551,7 +551,7 @@ function setRunning(on) {
   scrollLock(on)
 }
 
-// Block manual scrolling during a run: the harness scrolls each widget into
+// Block manual scrolling during a run: the harness scrolls each select widget into
 // view to measure it, and a user scroll could move one off-screen mid-measure
 // (an off-screen trigger will not open, zeroing its timings). Programmatic
 // scrollIntoView still works; only wheel / touch scrolling is prevented.
@@ -562,7 +562,7 @@ function scrollLock(on) {
     overlay = document.createElement('div')
     overlay.id = 'bench-overlay'
     overlay.innerHTML = '<div class="bench-overlay-box"><strong>Benchmark running</strong>'
-      + '<small>The page auto-scrolls to keep each widget on-screen; manual scrolling is blocked. '
+      + '<small>The page auto-scrolls to keep each select widget on-screen; manual scrolling is blocked. '
       + 'An off-screen trigger will not open, so its timings would read zero.</small>'
       + '<button id="bench-overlay-stop" type="button">Stop</button></div>'
     document.body.appendChild(overlay)
@@ -628,7 +628,7 @@ async function measureSizes() {
 // Interactive horizontal bar chart via Chart.js (loaded from the CDN, like the
 // competitor libraries - demo tooling, never part of what is measured). Default
 // metric is throughput (built / time), which stays comparable even when a
-// library timed out, because it is a per-widget rate rather than a total.
+// library timed out, because it is a rate per select widget rather than a total.
 
 // One dataset per metric; the legend (Chart.js's own interactivity) toggles
 // each on/off. Metrics have very different scales, so each bar is normalized to
@@ -636,7 +636,7 @@ async function measureSizes() {
 // to share one axis; the tooltip shows the real value. darkColor: the same hue
 // lifted for the dark scheme (the light values sit under 3:1 on #1b1b1b).
 const METRICS = [
-  { key: 'throughput', label: 'Throughput (widgets/sec)', color: '#2456a6', darkColor: '#7fb1f5', higherBetter: true, value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null), fmt: v => Math.round(v).toLocaleString() + ' /s' },
+  { key: 'throughput', label: 'Throughput (select widgets/sec)', color: '#2456a6', darkColor: '#7fb1f5', higherBetter: true, value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null), fmt: v => Math.round(v).toLocaleString() + ' /s' },
   { key: 'compute', label: 'Build total (ms)', color: '#c9821a', darkColor: '#e3b341', higherBetter: false, value: r => r.compute, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
   { key: 'prepaint', label: 'Before paint (ms)', color: '#3a9dbf', darkColor: '#6fd3f0', higherBetter: false, value: r => r.prepaint, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
   { key: 'nodes', label: 'DOM nodes', color: '#7a3ea6', darkColor: '#ab7df8', higherBetter: false, value: r => r.nodes, fmt: v => Math.round(v).toLocaleString() },
@@ -747,7 +747,7 @@ function renderChart() {
 }
 
 // --- interaction latency --------------------------------------------------
-// One dedicated widget per library, timing an open -> filter -> select -> close
+// One dedicated select widget per library, timing an open -> filter -> select -> close
 // cycle, run for both single- and multiple-select (two tables + two charts).
 // Each phase is guarded, so a version drift on one op leaves the others intact.
 
@@ -867,7 +867,7 @@ async function measureInteraction(mode, key, stageEl, closeBtn) {
   // OPEN: measured ONCE - the FIRST open, which builds the popup's option DOM. A
   // library that keeps that DOM on close (Slim Select hides it with a CSS scaleY(0)
   // and never removes it) has cheap WARM reopens, so a median of repeats would hide
-  // the real build cost - the first open is the honest one. The widget is freshly
+  // the real build cost - the first open is the honest one. The select widget is freshly
   // set up here (not yet opened), so this open pays the build. to-paint.
   safeOp(() => d.close(h)); await raf()
   const openMs = await timeToPaint(() => d.open(h), stageEl, key)
@@ -1074,7 +1074,7 @@ function ixSetControlsDisabled(on) {
 
 // Build + measure the given libraries in the given modes. A whole-mode run (all
 // libraries) resets that mode's table + stage first; a single-library run rebuilds
-// just that library's widget + row and leaves the others in place.
+// just that library's select widget + row and leaves the others in place.
 async function ixRun(modeKeys, libKeys) {
   const status = document.getElementById('ix-status')
   ixSetControlsDisabled(true)
@@ -1093,7 +1093,7 @@ async function ixRun(modeKeys, libKeys) {
     for (const key of libKeys) {
       if (stopRequested) { break }
       if (!available(key)) { ixSetRow(mode, key, { na: 'not loaded' }); continue }
-      // Per-lib re-run: tear down this library's previous widget / cell / result.
+      // Per-lib re-run: tear down this library's previous select widget / cell / result.
       if (mode.live[key]) {
         try { ADAPTERS[key].teardown(mode.live[key]) } catch (e) { /* ignore */ }
         delete mode.live[key]; delete mode.results[key]
@@ -1123,7 +1123,7 @@ async function ixRun(modeKeys, libKeys) {
   }
   scrollLock(false)
   ixSetControlsDisabled(false)
-  status.textContent = stopRequested ? 'Stopped.' : 'Done. Lower is better. Widgets are live - open them yourself.'
+  status.textContent = stopRequested ? 'Stopped.' : 'Done. Lower is better. The select widgets are live - open them yourself.'
 }
 
 // --- wire up --------------------------------------------------------------
