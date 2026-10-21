@@ -381,8 +381,9 @@ function clearStage() {
 
 // Build all N widgets in chunks, yielding between them. With the budget on, a
 // library that overruns is cut off (timedOut). With noTimeout, it builds every
-// widget no matter how long. Returns compute time (yields excluded) and how
-// many were built.
+// widget no matter how long. Returns compute time (yields excluded), the time
+// each chunk still cost before paint (prepaint, see the column's legend) and
+// how many were built.
 async function buildAll(key, scen, runOpts) {
   const a = ADAPTERS[key]
   const status = document.getElementById('status')
@@ -394,6 +395,7 @@ async function buildAll(key, scen, runOpts) {
   const CHUNK = scen.widgets >= 1000 ? 25 : 1
   let built = 0
   let compute = 0
+  let prepaint = 0
   let timedOut = false
   let errored = false
   let stopped = false
@@ -413,10 +415,20 @@ async function buildAll(key, scen, runOpts) {
     if (stopRequested) { stopped = true; break }
     if (!runOpts.noTimeout && performance.now() - wall0 > BUDGET_MS) { timedOut = true; break }
     if (++chunk % 8 === 0) { status.textContent = `${DISPLAY[key].name}: built ${built} / ${scen.widgets} ...` }
+    // What the chunk still costs before paint, timed apart from Build total:
+    // the microtasks it queued (a Promise, a MutationObserver callback) run at
+    // the await, then one forced style and layout pass covers the new widgets
+    // for every library alike (a library whose microtask reads computed style
+    // has already paid the style part there). Timers and rAF callbacks stay
+    // out of it.
+    const p0 = performance.now()
+    await null
+    void stage.offsetHeight
+    prepaint += performance.now() - p0
     await raf()
   }
   reflow(stage)
-  return { built, compute, timedOut, errored, stopped }
+  return { built, compute, prepaint, timedOut, errored, stopped }
 }
 
 // --- table ----------------------------------------------------------------
@@ -437,7 +449,7 @@ function initTable() {
     a.textContent = DISPLAY[key].name
     nameTd.appendChild(a)
     tr.appendChild(nameTd)
-    for (const col of ['built', 'compute', 'nodes', 'teardown']) {
+    for (const col of ['built', 'compute', 'prepaint', 'nodes', 'teardown']) {
       const td = document.createElement('td'); td.dataset.col = col; td.textContent = ''
       tr.appendChild(td)
     }
@@ -448,7 +460,7 @@ function initTable() {
 function setCell(key, col, text) { rowFor(key).querySelector(`td[data-col="${col}"]`).textContent = text }
 
 function highlightBest() {
-  for (const col of ['compute', 'nodes', 'teardown']) {
+  for (const col of ['compute', 'prepaint', 'nodes', 'teardown']) {
     let best = Infinity, bestText = null
     const cells = []
     for (const key of ORDER) {
@@ -498,6 +510,9 @@ async function runLib(key, renderAfter = true) {
   const computeCell = rowFor(key).querySelector('td[data-col="compute"]')
   computeCell.textContent = fmt(res.compute); computeCell.dataset.value = res.compute
 
+  const prepaintCell = rowFor(key).querySelector('td[data-col="prepaint"]')
+  prepaintCell.textContent = fmt(res.prepaint); prepaintCell.dataset.value = res.prepaint
+
   const nodesCell = rowFor(key).querySelector('td[data-col="nodes"]')
   nodesCell.textContent = nodes.toLocaleString(); nodesCell.dataset.value = nodes
 
@@ -505,7 +520,7 @@ async function runLib(key, renderAfter = true) {
   teardownCell.textContent = fmt(teardown); teardownCell.dataset.value = teardown
 
   results[key] = {
-    built: res.built, target: scen.widgets, compute: res.compute, nodes, teardown,
+    built: res.built, target: scen.widgets, compute: res.compute, prepaint: res.prepaint, nodes, teardown,
     timedOut: res.timedOut, errored: res.errored,
   }
   highlightBest()
@@ -623,6 +638,7 @@ async function measureSizes() {
 const METRICS = [
   { key: 'throughput', label: 'Throughput (widgets/sec)', color: '#2456a6', darkColor: '#7fb1f5', higherBetter: true, value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null), fmt: v => Math.round(v).toLocaleString() + ' /s' },
   { key: 'compute', label: 'Build total (ms)', color: '#c9821a', darkColor: '#e3b341', higherBetter: false, value: r => r.compute, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
+  { key: 'prepaint', label: 'Before paint (ms)', color: '#3a9dbf', darkColor: '#6fd3f0', higherBetter: false, value: r => r.prepaint, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
   { key: 'nodes', label: 'DOM nodes', color: '#7a3ea6', darkColor: '#ab7df8', higherBetter: false, value: r => r.nodes, fmt: v => Math.round(v).toLocaleString() },
   { key: 'teardown', label: 'Teardown total (ms)', color: '#1a7f37', darkColor: '#3fb950', higherBetter: false, value: r => r.teardown, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
 ]
