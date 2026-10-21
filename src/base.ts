@@ -370,7 +370,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   outsideClickBehavior: LLSelectOutsideClickBehavior
   /**
    * Which color scheme the widget shows: light or dark.
-   * - `'auto'`, the default: the library chooses the scheme from the two CSS sources below.
+   * - `'auto'`, the default: the library chooses the scheme from the two CSS sources below. At construction it writes a provisional value, the document's last `'auto'` decision or light, and queues the first check for a microtask, which runs before the page paints again.
    * - `'light'` or `'dark'`: the widget shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables, which turn dark only under `data-bs-theme="dark"`; see the README section "Dark color scheme".
    * - For `'auto'`, the library checks two sources in order. The widget root is the element the widget is mounted on, class `llselect-root`.
    *   1. The CSS variable `--llselect-color-scheme`, from the widget root's computed style. The root or any ancestor may set it. The root's own declaration wins; otherwise the nearest ancestor's value is inherited. The value `light` or `dark` is the answer. The value `auto` follows the operating system's color preference: dark when dark is preferred, otherwise light. If the variable is not set, or has any other value, the library checks the next source.
@@ -1426,7 +1426,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @internal
    */
   protected destroyed = false
-  /** The latest decision; see `getColorScheme()`. */
+  /** The latest decision, or the provisional value before the first one; see `getColorScheme()`. */
   private resolvedColorScheme: 'light' | 'dark' = 'light'
   /** True from construction until the first decision ran (batched into a microtask, see color-scheme.ts). */
   private colorSchemeDecisionPending = false
@@ -2353,7 +2353,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       cancelFirstDecision(this.rootEl, this.colorSchemeDecision)
     }
     this.resolvedColorScheme = resolveColorScheme(readColorSchemeInputs(this.rootEl, this.settings.colorScheme))
-    rememberColorScheme(this.rootEl.ownerDocument, this.resolvedColorScheme)
+    // A forced value says nothing about the page, and a detached root reads
+    // light whatever the page is: neither is the document's decision.
+    if (this.settings.colorScheme === 'auto' && this.rootEl.isConnected) { rememberColorScheme(this.rootEl.ownerDocument, this.resolvedColorScheme) }
   }
 
   /** The write step: the root attribute, only when it changed (the root may itself be an observed element). */
