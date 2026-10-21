@@ -370,7 +370,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   outsideClickBehavior: LLSelectOutsideClickBehavior
   /**
    * Which color scheme the widget shows: light or dark.
-   * - `'auto'`, the default: the library chooses the scheme from the two CSS sources below. At construction it writes a provisional value, the document's last `'auto'` decision or light, and queues the first check for a microtask, which runs before the page paints again.
+   * - `'auto'`, the default: the library chooses the scheme from the two CSS sources below. At construction it writes a provisional value, the document's last `'auto'` decision on a connected root or light, and queues the first check for a microtask, which runs before the page paints again.
    * - `'light'` or `'dark'`: the widget shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables, which turn dark only under `data-bs-theme="dark"`; see the README section "Dark color scheme".
    * - For `'auto'`, the library checks two sources in order. The widget root is the element the widget is mounted on, class `llselect-root`.
    *   1. The CSS variable `--llselect-color-scheme`, from the widget root's computed style. The root or any ancestor may set it. The root's own declaration wins; otherwise the nearest ancestor's value is inherited. The value `light` or `dark` is the answer. The value `auto` follows the operating system's color preference: dark when dark is preferred, otherwise light. If the variable is not set, or has any other value, the library checks the next source.
@@ -381,7 +381,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - If `colorScheme` is `'auto'`, the library queues the first check during construction. The check runs after the current script finishes, before the browser paints again. If `colorScheme` is `'light'` or `'dark'`, the library writes that value to the attribute during construction.
    * - The library also checks when `open()` or `refreshColorScheme()` runs. It checks when the operating system's color preference changes. It also checks when an attribute of `<html>` or `<body>` changes.
    * - If the widget is inside a shadow root, an operating-system change does not reach it, and neither does an attribute change on `<html>` or `<body>`. The widget still checks when `open()` or `refreshColorScheme()` runs.
-   * - `getColorScheme()` returns the result. If `colorScheme` is `'auto'`, the attribute carries a provisional value until the first queued check runs: the document's last decision, or `light`. If you call `getColorScheme()` before that, the method checks at once and returns the scheme.
+   * - `getColorScheme()` returns the result. If `colorScheme` is `'auto'`, the attribute carries a provisional value until the first queued check runs: the document's last `'auto'` decision on a connected root, or `light`. If you call `getColorScheme()` before that, the method checks at once and returns the scheme.
    * @group Color scheme
    */
   colorScheme: LLSelectColorScheme
@@ -2353,8 +2353,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       cancelFirstDecision(this.rootEl, this.colorSchemeDecision)
     }
     this.resolvedColorScheme = resolveColorScheme(readColorSchemeInputs(this.rootEl, this.settings.colorScheme))
-    // A forced value says nothing about the page, and a detached root reads
-    // light whatever the page is: neither is the document's decision.
+    // A forced value says nothing about the page, and a detached root does
+    // not reflect the page: neither is the document's decision.
     if (this.settings.colorScheme === 'auto' && this.rootEl.isConnected) { rememberColorScheme(this.rootEl.ownerDocument, this.resolvedColorScheme) }
   }
 

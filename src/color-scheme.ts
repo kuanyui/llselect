@@ -76,15 +76,15 @@ export function readColorSchemeInputs(rootEl: HTMLElement, setting: LLSelectColo
 export interface ColorSchemeDecision { read(): void; apply(): void }
 
 // The attribute goes on the root at construction, before the subtree exists,
-// with a provisional value: the document's last decision, light until one is
-// made. The themes key rules on the attribute, so a write after the subtree
+// with a provisional value: the document's last 'auto' decision on a
+// connected root, light until one is made. The themes key rules on the attribute, so a write after the subtree
 // was styled restyles the whole subtree; a provisional value the batch then
 // confirms costs nothing, a wrong guess costs that widget one restyle
 // (OPTIMIZE.md: before this, restyling every subtree cost 38 to 43 ms per
 // 1100 widgets).
 const lastSchemeByDocument = new WeakMap<Document, 'light' | 'dark'>()
 
-/** The value a new `'auto'` widget writes before its first decision: the document's last decision, or light. */
+/** The value a new `'auto'` widget writes before its first decision: the document's last `'auto'` decision on a connected root, or light. */
 export function provisionalColorScheme(doc: Document): 'light' | 'dark' {
   return lastSchemeByDocument.get(doc) ?? 'light'
 }
