@@ -241,7 +241,7 @@ test('a document wired before <body> exists observes the <body> that arrives lat
   assert.equal(sel.getColorScheme(), 'dark', 'the <body> that arrived after the wiring is observed')
 })
 
-test('a batch reads every widget before it writes any attribute (one style flush for the batch)', async () => {
+test('a batch reads every widget before it writes any attribute', async () => {
   setupDom('<!doctype html><html><body></body></html>')
   const log: string[] = []
   const originalGetComputedStyle = window.getComputedStyle
@@ -336,4 +336,142 @@ test('destroy() removes the attribute from the root and cancels a pending first 
   early.destroy()
   await Promise.resolve()
   assert.equal(early.rootEl.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false, 'destroyed before the batch ran: the batch writes nothing back')
+})
+
+test("a decision on a detached root is not remembered: the next widget's provisional value is the last connected decision", async () => {
+  setupDom('<!doctype html><html><body><div id="a" style="--llselect-color-scheme: dark"></div><div id="c"></div></body></html>')
+  const a = document.getElementById('a'), c = document.getElementById('c')
+  assert.ok(a); assert.ok(c)
+  new LLSelectSingle<string>(a)
+  await Promise.resolve()
+  assert.equal(a.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', 'the document remembers dark')
+  const detached = new LLSelectSingle<string>(document.createElement('div'))
+  assert.equal(detached.getColorScheme(), 'light', 'decided at once, on a root outside the document')
+  new LLSelectSingle<string>(c)
+  assert.equal(c.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', 'provisional: the detached decision was not remembered')
+  await Promise.resolve()
+  assert.equal(c.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light', 'the batch corrects the guess')
+})
+
+// --- nested roots, and a root replaced inside another root's write -----------
+
+// jsdom computes no inherited color-scheme. This emulates the themes' rule
+// that gives the trigger and the popup the scheme of their root's attribute:
+// a root inside another widget sees the outer root's attribute, every other
+// root sees page.scheme, the scheme the page declares.
+function emulateInheritedColorScheme(page: { scheme: string }): () => void {
+  const original = window.getComputedStyle
+  window.getComputedStyle = ((el: Element, pseudo?: string | null) => {
+    const real = original.call(window, el, pseudo)
+    const outerRoot = el.parentElement?.closest(`[${COLOR_SCHEME_ATTRIBUTE}]`)
+    const scheme = outerRoot ? outerRoot.getAttribute(COLOR_SCHEME_ATTRIBUTE) ?? '' : page.scheme
+    return { getPropertyValue: (name: string) => (name === 'color-scheme' ? scheme : real.getPropertyValue(name)) }
+  }) as unknown as typeof window.getComputedStyle
+  return () => { window.getComputedStyle = original }
+}
+
+// An outer widget with an inner widget in its popup header, built in one task.
+function buildNestedPair(): { outerEl: HTMLElement, innerEl: HTMLElement } {
+  const outerEl = document.createElement('div')
+  document.body.appendChild(outerEl)
+  const innerEl = document.createElement('div')
+  const outer = new LLSelectSingle<string>(outerEl, { createPopupHeaderContentElFn: () => innerEl })
+  new LLSelectSingle<string>(innerEl)
+  assert.ok(outer.popupEl.contains(innerEl) && outerEl.contains(innerEl), 'the inner root sits in the outer popup')
+  return { outerEl, innerEl }
+}
+
+test("the first batch: a root inside another widget's popup reads after the outer root wrote its attribute", async () => {
+  setupDom()
+  const restore = emulateInheritedColorScheme({ scheme: 'dark' })
+  const { outerEl, innerEl } = buildNestedPair()
+  await Promise.resolve()
+  assert.equal(outerEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+  assert.equal(innerEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', "the inner root inherits the outer root's decision, not its provisional light")
+  restore()
+})
+
+test("the shared pass: a root inside another widget's popup reads after the outer root wrote its attribute", async () => {
+  setupDom()
+  const page = { scheme: 'light' }
+  const restore = emulateInheritedColorScheme(page)
+  const { outerEl, innerEl } = buildNestedPair()
+  await Promise.resolve()
+  assert.equal(innerEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
+  page.scheme = 'dark'
+  document.documentElement.setAttribute('data-x', '1')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.equal(outerEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+  assert.equal(innerEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', "the inner root inherits the outer root's new decision")
+  restore()
+})
+
+test('the first batch: nested roots built inner first still decide outer first', async () => {
+  // A leaf root, then a middle root whose popup header holds the leaf, then
+  // an outer root whose popup header holds the middle: the batch comes in
+  // that order. The middle root decides dark through its own variable.
+  setupDom()
+  const restore = emulateInheritedColorScheme({ scheme: 'light' })
+  const leafEl = document.createElement('div')
+  new LLSelectSingle<string>(leafEl)
+  const middleEl = document.createElement('div')
+  middleEl.style.setProperty('--llselect-color-scheme', 'dark')
+  new LLSelectSingle<string>(middleEl, { createPopupHeaderContentElFn: () => leafEl })
+  const outerEl = document.createElement('div')
+  document.body.appendChild(outerEl)
+  new LLSelectSingle<string>(outerEl, { createPopupHeaderContentElFn: () => middleEl })
+  await Promise.resolve()
+  assert.equal(outerEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
+  assert.equal(middleEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+  assert.equal(leafEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', "the leaf reads after the middle root wrote, not the middle root's provisional light")
+  restore()
+})
+
+// Root a is a custom element that observes the output attribute: its callback
+// runs inside the library's setAttribute. When a turns dark, the callback
+// destroys widget b and builds a forced-light widget on b's root while the
+// batch still has b's decision to write.
+function observeAndReplace(): { aEl: HTMLElement, bEl: HTMLElement, state: { b?: LLSelectSingle<string>, replacement?: LLSelectSingle<string> } } {
+  const bEl = document.createElement('div')
+  const state: { b?: LLSelectSingle<string>, replacement?: LLSelectSingle<string> } = {}
+  window.customElements.define('x-observing-root', class extends window.HTMLElement {
+    static get observedAttributes(): string[] { return [COLOR_SCHEME_ATTRIBUTE] }
+    attributeChangedCallback(_name: string, _old: string | null, value: string | null): void {
+      if (value !== 'dark' || state.b === undefined || state.replacement !== undefined) { return }
+      state.b.destroy()
+      state.replacement = new LLSelectSingle<string>(bEl, { colorScheme: 'light' })
+    }
+  })
+  const aEl = document.createElement('x-observing-root')
+  document.body.append(aEl, bEl)
+  return { aEl, bEl, state }
+}
+
+test("the first batch: a widget replaced inside another root's write keeps the replacement's scheme", async () => {
+  setupDom()
+  const { aEl, bEl, state } = observeAndReplace()
+  aEl.style.setProperty('--llselect-color-scheme', 'dark')
+  bEl.style.setProperty('--llselect-color-scheme', 'dark')
+  new LLSelectSingle<string>(aEl)
+  state.b = new LLSelectSingle<string>(bEl)
+  await Promise.resolve()
+  assert.ok(state.replacement, "a's write replaced b")
+  assert.equal(bEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light', 'the replaced instance writes nothing afterwards')
+  assert.equal(state.replacement.getColorScheme(), 'light')
+})
+
+test("the shared pass: a widget replaced inside another root's write keeps the replacement's scheme", async () => {
+  setupDom()
+  const { aEl, bEl, state } = observeAndReplace()
+  new LLSelectSingle<string>(aEl)
+  state.b = new LLSelectSingle<string>(bEl)
+  await Promise.resolve()
+  assert.equal(aEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
+  aEl.style.setProperty('--llselect-color-scheme', 'dark')
+  bEl.style.setProperty('--llselect-color-scheme', 'dark')
+  document.documentElement.setAttribute('data-x', '1')
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.ok(state.replacement, "a's write replaced b")
+  assert.equal(bEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light', 'the replaced instance writes nothing afterwards')
+  assert.equal(state.replacement.getColorScheme(), 'light')
 })

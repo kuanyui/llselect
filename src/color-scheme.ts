@@ -75,6 +75,27 @@ export function readColorSchemeInputs(rootEl: HTMLElement, setting: LLSelectColo
 /** One select widget's decision in two steps: `read` resolves the scheme from the page, `apply` writes the attribute. */
 export interface ColorSchemeDecision { read(): void; apply(): void }
 
+// Shared by the first decision and the page listeners' pass. The roots that
+// no other select widget contains decide in the two phases. A root inside
+// another select widget's trigger or popup inherits that select widget's
+// color-scheme (the themes set it there from the attribute), which those
+// writes may just have changed, so it decides after them, one root at a time,
+// in document order, after every root around it (the first batch comes in
+// construction order, which can put an inner root first). A decision runs
+// only while its instance still owns the root: a custom element's attribute
+// callback runs inside a write and may destroy or replace a select widget.
+function decideBatch(batch: ReadonlyArray<readonly [HTMLElement, ColorSchemeDecision]>): void {
+  const outer: Array<readonly [HTMLElement, ColorSchemeDecision]> = []
+  const nested: Array<readonly [HTMLElement, ColorSchemeDecision]> = []
+  for (const entry of batch) {
+    if (entry[0].parentElement?.closest(`[${COLOR_SCHEME_ATTRIBUTE}]`)) { nested.push(entry) } else { outer.push(entry) }
+  }
+  for (const [, d] of outer) { d.read() }
+  for (const [root, d] of outer) { if (subscribersByRoot.get(root) === d) { d.apply() } }
+  nested.sort(([a], [b]) => ((a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0 ? -1 : 1))
+  for (const [root, d] of nested) { if (subscribersByRoot.get(root) === d) { d.read(); d.apply() } }
+}
+
 // The attribute goes on the root at construction, before the subtree exists,
 // with a provisional value: the document's last 'auto' decision on a
 // connected root, light until one is made. The themes key rules on the attribute, so a write after the subtree
@@ -105,10 +126,9 @@ export function queueFirstDecision(rootEl: HTMLElement, decision: ColorSchemeDec
   flushScheduled = true
   void Promise.resolve().then(() => {
     flushScheduled = false
-    const batch = [...pendingDecisions.values()]
+    const batch = [...pendingDecisions.entries()]
     pendingDecisions.clear()
-    for (const d of batch) { d.read() }
-    for (const d of batch) { d.apply() }
+    decideBatch(batch)
   })
 }
 
@@ -155,8 +175,8 @@ function wireDocument(doc: Document): void {
   if (view === null || wiredDocuments.has(doc)) { return }
   wiredDocuments.add(doc)
   let scheduled = false
-  // Batched: one pass per task, however many attributes changed, in two
-  // phases like the first decision (every read, then every write). Only roots
+  // Batched: one pass per task, however many attributes changed, decided
+  // like the first decision (decideBatch). Only roots
   // present in the document are reached (a shadow root's select widgets re-decide on
   // open() or refreshColorScheme()).
   const refreshAll = (): void => {
@@ -164,13 +184,12 @@ function wireDocument(doc: Document): void {
     scheduled = true
     void Promise.resolve().then(() => {
       scheduled = false
-      const batch: ColorSchemeDecision[] = []
+      const batch: Array<readonly [HTMLElement, ColorSchemeDecision]> = []
       for (const el of doc.querySelectorAll<HTMLElement>(`[${COLOR_SCHEME_ATTRIBUTE}]`)) {
         const d = subscribersByRoot.get(el)
-        if (d !== undefined) { batch.push(d) }
+        if (d !== undefined) { batch.push([el, d]) }
       }
-      for (const d of batch) { d.read() }
-      for (const d of batch) { d.apply() }
+      decideBatch(batch)
     })
   }
   if (typeof view.matchMedia === 'function') {
