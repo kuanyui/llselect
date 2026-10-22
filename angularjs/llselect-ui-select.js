@@ -153,10 +153,10 @@
 
   /**
    * The controller other directives on the same element `require` (by the
-   * directive name `uiLlselect`) to reach the live select widget - the same door
-   * llselect-angularjs.js publishes. instance() is late-bound: the select widget is
-   * constructed in the post-link, AFTER controllers instantiate, so call it
-   * from a $watch / event handler, never from a controller constructor.
+   * directive name `uiLlselect`) to reach the live select widget - the same
+   * door llselect-angularjs.js publishes. instance() is late-bound: the select
+   * widget is constructed in the post-link, AFTER controllers instantiate, so
+   * call it from a $watch / event handler, never from a controller constructor.
    */
   function UiLlselectApiController() {
     /** @type {any} */ // CompatSingle / CompatMultiple extend the untyped UMD global
@@ -342,8 +342,8 @@
         }
         : null,
       // The ngModel touched flag, as on the two llselect directives: once, when
-      // DOM focus leaves the whole select widget (the core fires onBlur for no move
-      // inside it, and never from destroy()). ui-select's markup has no
+      // DOM focus leaves the whole select widget (the core fires onBlur for no
+      // move inside it, and never from destroy()). ui-select's markup has no
       // attribute for the blur itself, so nothing else is wired here.
       onBlur: function () {
         if (ngModelCtrl.$touched) { return }

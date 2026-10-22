@@ -1,9 +1,9 @@
 /* llselect - vanilla theme: minimal sensible defaults, no framework. */
 
 /* Color variables: the light values. Every color below reads one of these,
-   so a host page restyles the widget by redefining them in a rule that
-   targets .llselect-root (README "Customization"). The dark values are in the
-   block at the end of this file. Roles, one per line. */
+   so a host page restyles the select widget by redefining them in a rule
+   that targets .llselect-root (README "Customization"). The dark values are
+   in the block at the end of this file. Roles, one per line. */
 .llselect-root {
   --llselect-fg: #222; /* text inside the popup: header and footer slot content */
   --llselect-control-fg: #222; /* text of the trigger and of the filter input */

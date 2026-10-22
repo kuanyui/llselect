@@ -73,9 +73,10 @@
         '<ui-select-choices repeat="i in items | filter: $select.search">' +
         '<span ng-bind-html="i.name | highlight: $select.search"></span>' +
         '</ui-select-choices></ui-select>',
-      // .ui-select-toggle (the inner span) carries ng-click="$select.activate()".
-      // NOT .ui-select-match, which is the outer div with no handler - clicking
-      // that is a silent no-op, and reports an unopened select widget as a fast one.
+      // .ui-select-toggle (the inner span) carries
+      // ng-click="$select.activate()". NOT .ui-select-match, which is the outer
+      // div with no handler - clicking that is a silent no-op, and reports an
+      // unopened select widget as a fast one.
       triggerSel: '.ui-select-toggle',
       rowSel: '.ui-select-choices-row',
       searchSel: 'input.ui-select-search',
@@ -107,8 +108,9 @@
     var host = stage.children[0]
     var scope = scopes[0]
     if (c.skipInteraction) {
-      // Either the widget has no JS-observable open (native, an OS widget), or
-      // this row is only about validation cost. Report n/a, never a fake 0.
+      // Either the select widget has no JS-observable open (the native select:
+      // an OS widget), or this row is only about validation cost. Report n/a,
+      // never a fake 0.
       out.open = null
       out.rows = host.querySelectorAll(c.rowSel).length
     } else {
@@ -116,8 +118,8 @@
       if (!trigger) { throw new Error('trigger not found: ' + c.triggerSel) }
       // llselect refuses to open a trigger that is outside the layout viewport
       // or clipped by a scroll ancestor (positioning.ts isAnchorHidden), so the
-      // select widget about to be measured has to be on-screen first. Same reason the
-      // main benchmark does this before every timed interaction.
+      // select widget about to be measured has to be on-screen first. Same
+      // reason the main benchmark does this before every timed interaction.
       // Guarded: jsdom has no scrollIntoView, and it has no layout to scroll.
       if (trigger.scrollIntoView) { trigger.scrollIntoView({ block: 'center', behavior: 'instant' }) }
       t0 = now()
@@ -126,7 +128,8 @@
       out.open = now() - t0
       out.rows = host.querySelectorAll(c.rowSel).length
       // A click that silently did nothing would otherwise report an unopened
-      // select widget as the fastest one, and time its digests against an empty list.
+      // select widget as the fastest one, and time its digests against an empty
+      // list.
       if (out.rows === 0) {
         throw new Error('open was a no-op: 0 rows matched ' + c.rowSel +
           '. If this is llselect, the trigger was most likely off-screen or clipped: ' +
@@ -205,8 +208,8 @@
     scope.equalCopy = function () { scope.picked = angular.copy(ITEMS[3]) }
     scope.clear = function () { scope.picked = undefined }
     scope.isListRef = function () { return scope.picked === ITEMS[3] }
-    // What each select widget RESOLVED the model to - the point of the copy probe,
-    // since every one of them displays the right text either way.
+    // What each select widget RESOLVED the model to - the point of the copy
+    // probe, since every one of them displays the right text either way.
     scope.resolved = function (i) {
       var boxes = document.querySelectorAll('.try-box .ui-select-container')
       if (!boxes.length) { return null }

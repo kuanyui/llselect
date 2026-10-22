@@ -81,10 +81,10 @@
   ]
 
   /**
-   * 14: the runtime language switch from API.md ("Switching the UI language
-   * at runtime"), verbatim. Registered under each existing directive name, so
-   * it decorates every <llselect-single> / <llselect-multiple> / <ui-llselect>
-   * on the page: the $watch re-packs the live select widget through instance() on
+   * 14: the runtime language switch from API.md ("Switching the UI language at
+   * runtime"), verbatim. Registered under each existing directive name, so it
+   * decorates every <llselect-single> / <llselect-multiple> / <ui-llselect> on
+   * the page: the $watch re-packs the live select widget through instance() on
    * every language change, and an unmapped key ('en') restores the English
    * defaults with {}.
    */
@@ -250,8 +250,8 @@
        * 12a: tags in the trigger; the count, the match count and a Clear all
        * button in the header. The fn runs once at link and the node is ours:
        * ng-change rewrites the count, ll-on-open and ll-on-filter-query-change
-       * the match count. The button reaches the select widget through instance()
-       * (demo-publish-api), so its click is the user-change path.
+       * the match count. The button reaches the select widget through
+       * instance() (demo-publish-api), so its click is the user-change path.
        */
       vm.countriesHeader = ['Japan', 'Taiwan']
       vm.headerCountApi = null // set by demo-publish-api
