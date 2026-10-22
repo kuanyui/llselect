@@ -358,13 +358,14 @@ test("a decision on a detached root is not remembered: the next widget's provisi
 // jsdom computes no inherited color-scheme. This emulates the themes' rule
 // that gives the trigger and the popup the scheme of their root's attribute:
 // a root inside another widget sees the outer root's attribute, every other
-// root sees page.scheme, the scheme the page declares.
-function emulateInheritedColorScheme(page: { scheme: string }): () => void {
+// root sees page.scheme, the scheme the page declares. A root in `declared`
+// sees its own declaration instead.
+function emulateInheritedColorScheme(page: { scheme: string }, declared = new Map<Element, string>()): () => void {
   const original = window.getComputedStyle
   window.getComputedStyle = ((el: Element, pseudo?: string | null) => {
     const real = original.call(window, el, pseudo)
     const outerRoot = el.parentElement?.closest(`[${COLOR_SCHEME_ATTRIBUTE}]`)
-    const scheme = outerRoot ? outerRoot.getAttribute(COLOR_SCHEME_ATTRIBUTE) ?? '' : page.scheme
+    const scheme = declared.get(el) ?? (outerRoot ? outerRoot.getAttribute(COLOR_SCHEME_ATTRIBUTE) ?? '' : page.scheme)
     return { getPropertyValue: (name: string) => (name === 'color-scheme' ? scheme : real.getPropertyValue(name)) }
   }) as unknown as typeof window.getComputedStyle
   return () => { window.getComputedStyle = original }
@@ -409,19 +410,19 @@ test("the shared pass: a root inside another widget's popup reads after the oute
 test('the first batch: nested roots built inner first still decide outer first', async () => {
   // A leaf root, then a middle root whose popup header holds the leaf, then
   // an outer root whose popup header holds the middle: the batch comes in
-  // that order. On a dark page the outer root's write is the middle root's
-  // only way to dark, and the middle root's write is the leaf's.
+  // that order. The page is light and the middle root declares dark, so the
+  // middle root's write is the leaf's only way to dark.
   setupDom()
-  const restore = emulateInheritedColorScheme({ scheme: 'dark' })
   const leafEl = document.createElement('div')
-  new LLSelectSingle<string>(leafEl)
   const middleEl = document.createElement('div')
+  const restore = emulateInheritedColorScheme({ scheme: 'light' }, new Map<Element, string>([[middleEl, 'dark']]))
+  new LLSelectSingle<string>(leafEl)
   new LLSelectSingle<string>(middleEl, { createPopupHeaderContentElFn: () => leafEl })
   const outerEl = document.createElement('div')
   document.body.appendChild(outerEl)
   new LLSelectSingle<string>(outerEl, { createPopupHeaderContentElFn: () => middleEl })
   await Promise.resolve()
-  assert.equal(outerEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
+  assert.equal(outerEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
   assert.equal(middleEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
   assert.equal(leafEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', "the leaf reads after the middle root wrote, not the middle root's provisional light")
   restore()
