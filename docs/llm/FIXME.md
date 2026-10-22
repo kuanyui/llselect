@@ -34,7 +34,7 @@ Process: the post-fix review of the five commits that fixed the round below, by 
 
 - [ ] **[DOCUMENTATION-724] - the AngularJS demo pages still said bare "widget"**
   - Symptom: `demo/angularjs/examples.html` ("reaches the widget", "receives the widget instance", "hands to the widget", "Widgets already on screen", "every widget on this page") and `demo/angularjs/benchmark.html` ("One live widget each", "each widget", "Every widget resolves this", "20 widgets"), plus the heading "Widgets" and a note that `demo/angularjs/benchmark.js` writes into that page; neither vocabulary commit touched these files (Opus 4.8, Codex Sol, Codex Astra).
-  - Fix: "select widget" in each, the CSS comments of the benchmark page included; "an OS widget", the native select's dropdown, stays.
+  - Fix: "select widget" in each, the CSS comments of the benchmark page included, and "same validator, on llselect" in the note; "an OS widget", the native select's dropdown, stays.
 
 - [ ] **[DOCUMENTATION-725] - `OPTIMIZE.md` called the v0.0.7 numbers "the README" and dated the Before paint column "from v0.0.11"**
   - Symptom: the dev-head Performance bullet gave the v0.0.7 README's numbers in parentheses as "the README", which now holds other numbers; the color-scheme entry said the tables carry the column "from v0.0.11", while the v0.0.11 data commit `4409cd2` has no such column (Opus 4.8).
@@ -74,7 +74,7 @@ Process: Codex Astra (gpt-6-astra, max effort, read-only) and Opus 5.5 reviewed 
 - [x] **[DOCUMENTATION-709] - the second vocabulary commit doubled "select" 108 times on 97 lines in nine files and broke three phrases in five places**
   - Symptom: "the select select widget" in `README.md`, `angularjs/API.md`, `demo/benchmark.html`, `demo/benchmark.js`, `demo/examples.html`, `src/base.ts`, `src/color-scheme.ts`, `src/multiple.ts` and `src/single.ts`, TSDoc that renders into the API reference included. Three phrases, in five places, read wrong even without the doubled word: "the 1000-select widget benchmark", "per select select widget rate" and "no between select select widgets interaction". The benchmark page's status line still said "widget(s)", and the comment of example 16.1, which the examples page shows, still said "widget".
   - Cause: the commit that changed "the select" to "the select widget" (owner ruling, `naming-conventions.md` s7a.10a) was a mechanical replacement whose output nobody read back; `npm run check` does not look for doubled words.
-  - Fix: every doubled word removed and each sentence read again; "the benchmark with 1000 select widgets", "a rate per select widget" and "no interaction between select widgets"; "select widget(s)" in the status line; "The select widget reads that variable" in example 16.1.
+  - Fix: every doubled word removed and each sentence read again; "the benchmark with 1000 select widgets", "a rate per select widget" and "no interaction between select widgets"; "select widget(s)" in the status line; "The select widget reads that variable" in example 16.1. The owner chose to fold the repair into the vocabulary commit by a rewrite of the unpushed history, so no commit adds the doubled word; this entry keeps the record.
   - Verified: `git grep -nE 'select select'` finds only this entry; post-fix round one recounted 108 on 97 lines in nine files at the old head.
 
 - [x] **[QUALITY-710] - the core test harness still filtered the old unnamed-control warning, so the core tests printed it again**
@@ -113,9 +113,10 @@ Process: Codex Astra (gpt-6-astra, max effort, read-only) and Opus 5.5 reviewed 
   - Fix: "Neither library moves that row".
   - Verified: post-fix round one found no issue.
 
-- [ ] **[LINT-717] - three commit subjects exceed the 140-character limit**
+- [x] **[LINT-717] - three commit subjects exceed the 140-character limit**
   - Symptom: the subjects of the commit on the first color-scheme decision (151 characters), of its post-fix round (175) and of the first vocabulary commit (156); `CLAUDE.md` allows 140 at most. None of the three is pushed.
-  - Fix: open; the owner decides whether to rewrite the unpushed history.
+  - Fix: the owner chose to rewrite the unpushed history; the three subjects now have 102, 89 and 124 characters.
+  - Verified: `git log --format=%s 447a0af..dev` prints no subject over 140 characters.
 
 - [ ] **[MEDIUM-718] - a root moved into another document gets no automatic color-scheme updates there (pre-existing at `447a0af`)**
   - Symptom: a select widget built in document A whose root is adopted into a document B that no select widget has wired: B's `matchMedia` change and B's `<html>` / `<body>` attribute changes do not reach it, and `refreshColorScheme()` reads B's styles without wiring B.
