@@ -301,7 +301,7 @@
     {
       key: 'llselect-av',
       label: '<llselect-single> + validation',
-      note: 'same validator, on the llselect select widget',
+      note: 'same validator, on llselect',
       markup: '<form name="f2"><llselect-single name="v2" ng-model="picked" validation="required"' +
         ' ll-options="i.name for i in items track by i.id"></llselect-single></form>',
       triggerSel: '.llselect-trigger',
