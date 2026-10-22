@@ -1118,8 +1118,8 @@ test("ll-color-scheme=\"'dark'\" forces the dark scheme on that element", async 
     controller: function () { this.fruits = FRUITS.slice(); this.fruit = 'Apple' },
   })
   assert.equal(a.$('[name=forced]').getAttribute('data-llselect-color-scheme'), 'dark', 'a forced scheme is written at construction')
-  // An 'auto' instance decides in a microtask (one style flush per batch of
-  // widgets); jsdom declares no color-scheme and has no matchMedia, so light.
+  // An 'auto' instance decides in a microtask; jsdom declares no
+  // color-scheme and has no matchMedia, so light.
   await new Promise((resolve) => setTimeout(resolve, 0))
   assert.equal(a.$('[name=auto]').getAttribute('data-llselect-color-scheme'), 'light')
 })

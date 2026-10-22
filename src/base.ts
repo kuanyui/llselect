@@ -382,7 +382,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - Until the first check runs, the attribute holds a provisional value. The value is the latest `'auto'` result in the same document, or `light` if there is none yet. Only a result for a root inside the document counts.
    * - The library also checks when `open()` or `refreshColorScheme()` runs. It checks when the operating system's color preference changes. It also checks when an attribute of `<html>` or `<body>` changes.
    * - If the select widget is inside a shadow root, an operating-system change does not reach it, and neither does an attribute change on `<html>` or `<body>`. The select widget still checks when `open()` or `refreshColorScheme()` runs.
-   * - `getColorScheme()` returns the result. If you call `getColorScheme()` before the first queued check runs, the method checks at once and returns the scheme.
+   * - `getColorScheme()` returns the result. If the library has not checked yet, `getColorScheme()` checks at once and returns the scheme.
+   * - An early check does not cancel the first queued check. For a select widget inside another select widget's trigger or popup, the queued check can still change the result.
    * @group Color scheme
    */
   colorScheme: LLSelectColorScheme
@@ -1671,8 +1672,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // loses its pending decision and its subscription). A forced scheme is
     // written now; an 'auto' instance writes a provisional value now, before
     // its subtree exists, decides in a microtask before the first paint
-    // (decideBatch: one style flush per batch, nested roots after the others)
-    // and re-decides on the shared page listeners.
+    // (decideBatch: one style flush for the roots outside other select
+    // widgets, a nested root after them) and re-decides on the shared page
+    // listeners.
     claimColorSchemeRoot(this.rootEl)
     if (this.settings.colorScheme === 'auto') {
       this.resolvedColorScheme = provisionalColorScheme(this.rootEl.ownerDocument)
@@ -2318,7 +2320,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * The color scheme the select widget currently shows.
-   * - Returns the result of the latest decision, `'light'` or `'dark'`. If the first decision is still queued, it decides now and returns that result.
+   * - Returns the result of the latest decision, `'light'` or `'dark'`. If the library has not decided yet, the method decides now and returns that result.
+   * - A decision this early does not cancel the first queued decision. For a select widget inside another select widget's trigger or popup, the queued decision can still change the result.
    * - Never `'auto'`. The `colorScheme` setting explains how `'auto'` resolves.
    * @group Color scheme
    */
