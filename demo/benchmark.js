@@ -411,20 +411,22 @@ async function buildAll(key, scen, runOpts) {
       try { live.push({ key, h: a.setup(mount, items, opts) }); built++ } catch (e) { console.warn(key, e); errored = true; break }
     }
     compute += performance.now() - c0
-    if (errored) { break }
-    if (stopRequested) { stopped = true; break }
-    if (!runOpts.noTimeout && performance.now() - wall0 > BUDGET_MS) { timedOut = true; break }
-    if (++chunk % 8 === 0) { status.textContent = `${DISPLAY[key].name}: built ${built} / ${scen.widgets} ...` }
     // What the chunk still costs before paint, timed apart from Build total:
     // the microtasks it queued (a Promise, a MutationObserver callback) run at
     // the await, then one forced style and layout pass covers the new select widgets
     // for every library alike (a library whose microtask reads computed style
-    // has already paid the style part there). Timers and rAF callbacks stay
-    // out of it.
+    // has already paid the style part there). Timers, rAF callbacks and a
+    // microtask queued from inside one of those microtasks stay out of it.
+    // Timed before the exits below, so a chunk that Build total counts is
+    // always timed here too.
     const p0 = performance.now()
     await null
     void stage.offsetHeight
     prepaint += performance.now() - p0
+    if (errored) { break }
+    if (stopRequested) { stopped = true; break }
+    if (!runOpts.noTimeout && performance.now() - wall0 > BUDGET_MS) { timedOut = true; break }
+    if (++chunk % 8 === 0) { status.textContent = `${DISPLAY[key].name}: built ${built} / ${scen.widgets} ...` }
     await raf()
   }
   reflow(stage)
