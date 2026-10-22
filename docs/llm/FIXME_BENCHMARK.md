@@ -6,8 +6,8 @@ Plain checklist for the interaction-latency rework. No severity codes, no number
 
 Found by Codex Astra in the review of the commits after v0.0.11 (`FIXME.md`, round "the commits after v0.0.11").
 
-- [ ] `await null` in `buildAll` runs only the microtasks that a chunk's build queued: a microtask queued from inside one of them runs after the measurement stops, so a library that defers work through a second microtask pays that work unseen. The effect on the published numbers is not measured. Fix: the limit is stated in the legend, the README note ("the microtasks that the library queued while building that chunk"), `SPEC_BENCHMARK.md` and the comment in `buildAll`.
-- [ ] An error, Stop or timeout exit left the loop before the chunk's Before paint measurement, while Build total counted that chunk: a first chunk that overran the budget reported Build work and a Before paint of 0. Fix: `buildAll` times the chunk before it takes an exit.
+- [x] `await null` in `buildAll` runs only the microtasks that a chunk's build queued: a microtask queued from inside one of them runs after the measurement stops, so a library that defers work through a second microtask pays that work unseen. The effect on the published numbers is not measured. Fix: the limit is stated in the legend, the README note ("the microtasks that the library queued while building that chunk"), `SPEC_BENCHMARK.md` and the comment in `buildAll`.
+- [x] An error, Stop or timeout exit left the loop before the chunk's Before paint measurement, while Build total counted that chunk: a first chunk that overran the budget reported Build work and a Before paint of 0. Fix: `buildAll` times the chunk before it takes an exit.
 
 ## Real-browser results that contradict perceived experience (found in testing)
 
