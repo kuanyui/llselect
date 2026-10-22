@@ -2,6 +2,25 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (owner report: version numbers in commit first lines)
+
+Process: an owner report: unrelated version numbers in the commit messages made it hard to find where a version was bumped, and the older bumps do not follow the `bump v0.0.10` form. The owner ruled that at least the first line names no version, and that the commits already on `github/dev` stay untouched while every later commit may be rewritten. The rewrite goes to post-fix round four of the review of the commits after v0.0.11.
+
+- [x] **[LINT-728] - commit first lines named versions outside the version bumps, and the bumps up to 0.0.9 lack the `bump v` form, so a search for a version did not find its bump alone**
+  - Symptom: `git log --grep v0.0.11` listed seven review and benchmark commits besides the bump; `git log --grep v0.0.7` listed four OPTIMIZE commits and missed the bump, whose first line reads `0.0.7; peer range, version const and benchmark data follow`.
+  - Cause: no rule kept versions out of first lines; the bumps from 0.0.2 to 0.0.9 wrote a bare version followed by a list of what changed with it.
+  - Fix: `CLAUDE.md` "Version numbers in commit messages" (owner ruling): a bump's first line is `chore: [scope] bump vX.Y.Z` with nothing after it, and no other first line names a version. The unpushed history was rewritten: ten first lines lost their version number, and the v0.0.11 bump `447a0af` lost the clause after `bump v0.0.11`. The pushed history keeps its first lines; the tags `v0.0.1` to `v0.0.10` and `git log --oneline -G'"version":' -- package.json` find each older bump.
+  - Verified: `git log --format=%s github/dev..dev` prints a version number only in `447a0af`; `git log --oneline --grep v0.0.11` prints that commit alone.
+  - Q: Why rewrite past the owner's signed commit `d417dbb` (docs: [README.md] Update Q&A), not stop there to keep its SSH signature?
+    - A: Because two first lines with `v0.0.7` come before it, and no signature survives a new parent; the owner ruled that every commit after `github/dev` may be rewritten after being told that this commit would lose its signature.
+  - Q: Why do the pushed bumps up to 0.0.9 keep the bare form?
+    - A: Because the owner ruled that the commits already on `github/dev` stay untouched. Rewriting them would need a force push of `dev` and `master` to both remotes, moved tags and lost signatures; the tags and the `-G` search find those bumps.
+
+- [x] **[LINT-729] - fourteen unpushed first lines before the v0.0.11 bump exceeded 140 characters**
+  - Symptom: first lines of 146 to 189 characters, most of them post-fix rounds that listed every fix; `CLAUDE.md` allows 140 at most. Found while fixing LINT-728; LINT-717 covered only the commits after the bump.
+  - Fix: the same rewrite cut each to its subject without the list of fixes, such as `docs: [CLAUDE.md][src] settings timing lines, round 2 fixes`.
+  - Verified: `git log --format=%s github/dev..dev` prints no first line over 140 characters; the longest has 138.
+
 ## review (the commits after v0.0.11, post-fix round three)
 
 Process: the post-fix review of the eight commits after post-fix round two and of the history rewrite, by the same four reviewers. All four found the rewrite content-neutral; Opus 5 diffed each rewritten commit against its original. Opus 5 and Opus 4.8 found that the reworked nesting test needs the sort in a browser too and that the `getColorScheme()` TSDoc matches the code. Findings, fixed: seven bare "widget" in the comments of the five theme stylesheets, which the ruling now covers (all four), and one in `demo/angularjs/benchmark.js` (Opus 4.8), both added to DOCUMENTATION-726; the ruling read as covering `angularjs/test/` (Opus 5), now worded as decided: the shipped source and the displayed demo source, test files not part of it; each new early-check bullet held two facts (Codex Sol, Codex Astra), and Codex Sol asked to name the select widget the condition is about (added to MEDIUM-720); the edited comment blocks of the AngularJS package ran past their wrap width (Opus 5), now re-wrapped. Log-wording findings, fixed alongside: DOCUMENTATION-722 said the AngularJS test comment was scoped, where its claim was dropped (Opus 5, Opus 4.8, Codex Sol); DOCUMENTATION-723 and DOCUMENTATION-725 stayed open after round two had confirmed them (Opus 5, Codex Sol); QUALITY-721 gave no reason for its browser claim (Opus 5). Recorded, not changed: Opus 5 found that the `CLAUDE.md` exemption covers the 45-word cap only, while Codex Astra had cited one fact per bullet against the README's timing bullet; DOCUMENTATION-723 records that the owner kept the note after that objection. Left to the owner: Codex Sol and Codex Astra asked for a fix of MEDIUM-727 or an explicit decision to defer it.
