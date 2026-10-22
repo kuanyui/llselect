@@ -370,7 +370,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   outsideClickBehavior: LLSelectOutsideClickBehavior
   /**
    * Which color scheme the select widget shows: light or dark.
-   * - `'auto'`, the default: the library chooses the scheme from the two CSS sources below. At construction it writes a provisional value, the document's last `'auto'` decision on a connected root or light, and queues the first check for a microtask, which runs before the page paints again.
+   * - `'auto'`, the default: the library chooses the scheme from the two CSS sources below.
    * - `'light'` or `'dark'`: the select widget shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables, which turn dark only under `data-bs-theme="dark"`; see the README section "Dark color scheme".
    * - For `'auto'`, the library checks two sources in order. The root element is the element the select widget is mounted on, class `llselect-root`.
    *   1. The CSS variable `--llselect-color-scheme`, from the root element's computed style. The root or any ancestor may set it. The root's own declaration wins; otherwise the nearest ancestor's value is inherited. The value `light` or `dark` is the answer. The value `auto` follows the operating system's color preference: dark when dark is preferred, otherwise light. If the variable is not set, or has any other value, the library checks the next source.
@@ -379,9 +379,12 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - The themes set `--llselect-color-scheme` for these classes: `dark`, `theme-dark`, `dark-mode`, `theme-light`, `light-mode`. They recognize the attributes `data-theme` and `data-bs-theme` with the value `light` or `dark`. They recognize `data-color-scheme` with the value `light`, `dark` or `auto`. These classes and attributes count on the root element or on any ancestor. If your page selects the scheme with another class or attribute, add one CSS rule, for example `.night { --llselect-color-scheme: dark; }`.
    * - The result is written to the root element as `data-llselect-color-scheme="light"` or `data-llselect-color-scheme="dark"`. The themes apply their dark colors when the value is `dark`. Do not write that attribute yourself. This attribute name and the `--llselect-*` variable names are fixed; `cssClassPrefix` does not change them.
    * - If `colorScheme` is `'auto'`, the library queues the first check during construction. The check runs after the current script finishes, before the browser paints again. If `colorScheme` is `'light'` or `'dark'`, the library writes that value to the attribute during construction.
+   * - Until the first check runs, the attribute holds a provisional value. The value is the latest `'auto'` result in the same document, or `light` if there is none yet. Only a result for a root inside the document counts.
    * - The library also checks when `open()` or `refreshColorScheme()` runs. It checks when the operating system's color preference changes. It also checks when an attribute of `<html>` or `<body>` changes.
    * - If the select widget is inside a shadow root, an operating-system change does not reach it, and neither does an attribute change on `<html>` or `<body>`. The select widget still checks when `open()` or `refreshColorScheme()` runs.
-   * - `getColorScheme()` returns the result. If `colorScheme` is `'auto'`, the attribute carries a provisional value until the first queued check runs: the document's last `'auto'` decision on a connected root, or `light`. If you call `getColorScheme()` before that, the method checks at once and returns the scheme.
+   * - `getColorScheme()` returns the result. If the library has not checked this select widget yet, `getColorScheme()` checks at once and returns the scheme.
+   * - An early check does not cancel the first queued check.
+   * - For a select widget inside another select widget's trigger or popup, the first queued check can still change the result.
    * @group Color scheme
    */
   colorScheme: LLSelectColorScheme
@@ -1669,9 +1672,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // This instance owns the element from now on (an older instance on it
     // loses its pending decision and its subscription). A forced scheme is
     // written now; an 'auto' instance writes a provisional value now, before
-    // its subtree exists, decides in a microtask (before the first paint, one
-    // style flush per batch of select widgets, reads before writes) and re-decides
-    // on the shared page listeners.
+    // its subtree exists, decides in a microtask before the first paint
+    // (decideBatch: one style flush for the roots outside other select
+    // widgets, a nested root after them) and re-decides on the shared page
+    // listeners.
     claimColorSchemeRoot(this.rootEl)
     if (this.settings.colorScheme === 'auto') {
       this.resolvedColorScheme = provisionalColorScheme(this.rootEl.ownerDocument)
@@ -2317,7 +2321,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * The color scheme the select widget currently shows.
-   * - Returns the result of the latest decision, `'light'` or `'dark'`. If the first decision is still queued, it decides now and returns that result.
+   * - Returns the result of the latest decision, `'light'` or `'dark'`. If the library has not decided for this select widget yet, the method decides now and returns that result.
+   * - A decision this early does not cancel the first queued decision.
+   * - For a select widget inside another select widget's trigger or popup, the first queued decision can still change the result.
    * - Never `'auto'`. The `colorScheme` setting explains how `'auto'` resolves.
    * @group Color scheme
    */
@@ -2346,12 +2352,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.applyColorScheme()
   }
 
-  /** The read step: resolve the scheme from the page. A batch runs every select widget's read before any write, so one style flush serves them all. */
+  /** The read step: resolve the scheme from the page. In a batch, the roots outside other select widgets all read before any writes, so one style flush serves them (`decideBatch` in color-scheme.ts). */
   private readColorScheme(): void {
-    if (this.colorSchemeDecisionPending) {
-      this.colorSchemeDecisionPending = false
-      cancelFirstDecision(this.rootEl, this.colorSchemeDecision)
-    }
+    // An early decision leaves the queued one in place: a root inside another
+    // select widget may have read that select widget's provisional value, and
+    // the batch decides it again after the outer root has written.
+    this.colorSchemeDecisionPending = false
     this.resolvedColorScheme = resolveColorScheme(readColorSchemeInputs(this.rootEl, this.settings.colorScheme))
     // A forced value says nothing about the page, and a detached root does
     // not reflect the page: neither is the document's decision.

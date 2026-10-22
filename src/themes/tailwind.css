@@ -4,9 +4,9 @@
    Tailwind installed at all. */
 
 /* Color variables: the light values. Every color below reads one of these,
-   so a host page restyles the widget by redefining them in a rule that
-   targets .llselect-root (README "Customization"). The dark values are in the
-   block at the end of this file. Roles, one per line. */
+   so a host page restyles the select widget by redefining them in a rule
+   that targets .llselect-root (README "Customization"). The dark values are
+   in the block at the end of this file. Roles, one per line. */
 .llselect-root {
   --llselect-fg: var(--color-slate-900, #0f172a); /* text inside the popup: header and footer slot content */
   --llselect-control-fg: var(--llselect-fg); /* text of the trigger and of the filter input */

@@ -93,8 +93,13 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 > - Tested versions of each libraries are the latest versions as of **2026-08-25**.
 >   - Library versions are pinned in the bundle-size table below.
 > - All tests are single select.
-> - **Before paint** starts when the library has built the DOM of every select widget. It ends when the browser can paint that DOM. In between are the library's microtasks and the browser's first style and layout of that DOM. Build total does not count this time.
 >   - Every select widget is built WITH a pre-selected value (the benchmark page's `pre-select at build time`).
+> - **Before paint** measures the work that must finish before the browser can paint the new select widgets. Build total does not count this work.
+>   - The benchmark builds the select widgets in chunks. A chunk is a group of select widgets that the benchmark builds one after another, with no pause. Between two chunks, the benchmark waits for the next frame, so the page stays responsive.
+>   - In the test with 1000 select widgets, a chunk is 25 select widgets. In the test with 100 select widgets, a chunk is 1 select widget.
+>   - For each chunk, the time starts when the library has built the DOM of that chunk. First, the browser runs the microtasks that the library queued while building that chunk. Then the browser does the style and layout work that is still left for that DOM. The time ends when the browser has done that work.
+>   - The column adds up the times of all chunks.
+>   - Work that a library delays with a timer or with `requestAnimationFrame` is not counted. A microtask queued from inside another microtask is not counted either.
 > - The following table shows **instantiation** only, other tests (interactions like open popup, filter candidates, choose candidate, ... etc) cannot be accurately benchmarked nor able to be fairly compared across libraries due to the details in implementations of each library. But you still can test by yourself in benchmark page (Live Benchmark: [GitHub Page](https://kuanyui.github.io/llselect/demo/benchmark.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/benchmark.html). Source Code: [HTML](demo/benchmark.html), [JS](demo/benchmark.js)), and interact with them and feel the "real experience" instead of relying on inaccurate benchmark results.
 
 ### 100 selects x 100 candidates

@@ -73,9 +73,10 @@
         '<ui-select-choices repeat="i in items | filter: $select.search">' +
         '<span ng-bind-html="i.name | highlight: $select.search"></span>' +
         '</ui-select-choices></ui-select>',
-      // .ui-select-toggle (the inner span) carries ng-click="$select.activate()".
-      // NOT .ui-select-match, which is the outer div with no handler - clicking
-      // that is a silent no-op, and reports an unopened widget as a fast one.
+      // .ui-select-toggle (the inner span) carries
+      // ng-click="$select.activate()". NOT .ui-select-match, which is the outer
+      // div with no handler - clicking that is a silent no-op, and reports an
+      // unopened select widget as a fast one.
       triggerSel: '.ui-select-toggle',
       rowSel: '.ui-select-choices-row',
       searchSel: 'input.ui-select-search',
@@ -87,7 +88,7 @@
   function run($compile, $rootScope, stage, c) {
     var out = { label: c.label, note: c.note }
 
-    // --- build: N widgets from scratch -----------------------------------
+    // --- build: N select widgets from scratch ----------------------------
     stage.innerHTML = ''
     var scopes = []
     var t0 = now()
@@ -103,12 +104,13 @@
     out.build = now() - t0
     out.nodes = stage.querySelectorAll('*').length
 
-    // --- open: first widget, list becomes visible -------------------------
+    // --- open: first select widget, list becomes visible ------------------
     var host = stage.children[0]
     var scope = scopes[0]
     if (c.skipInteraction) {
-      // Either the widget has no JS-observable open (native, an OS widget), or
-      // this row is only about validation cost. Report n/a, never a fake 0.
+      // Either the select widget has no JS-observable open (the native select:
+      // an OS widget), or this row is only about validation cost. Report n/a,
+      // never a fake 0.
       out.open = null
       out.rows = host.querySelectorAll(c.rowSel).length
     } else {
@@ -116,8 +118,8 @@
       if (!trigger) { throw new Error('trigger not found: ' + c.triggerSel) }
       // llselect refuses to open a trigger that is outside the layout viewport
       // or clipped by a scroll ancestor (positioning.ts isAnchorHidden), so the
-      // widget about to be measured has to be on-screen first. Same reason the
-      // main benchmark does this before every timed interaction.
+      // select widget about to be measured has to be on-screen first. Same
+      // reason the main benchmark does this before every timed interaction.
       // Guarded: jsdom has no scrollIntoView, and it has no layout to scroll.
       if (trigger.scrollIntoView) { trigger.scrollIntoView({ block: 'center', behavior: 'instant' }) }
       t0 = now()
@@ -126,7 +128,8 @@
       out.open = now() - t0
       out.rows = host.querySelectorAll(c.rowSel).length
       // A click that silently did nothing would otherwise report an unopened
-      // widget as the fastest one, and time its digests against an empty list.
+      // select widget as the fastest one, and time its digests against an empty
+      // list.
       if (out.rows === 0) {
         throw new Error('open was a no-op: 0 rows matched ' + c.rowSel +
           '. If this is llselect, the trigger was most likely off-screen or clipped: ' +
@@ -205,8 +208,8 @@
     scope.equalCopy = function () { scope.picked = angular.copy(ITEMS[3]) }
     scope.clear = function () { scope.picked = undefined }
     scope.isListRef = function () { return scope.picked === ITEMS[3] }
-    // What each widget RESOLVED the model to - the point of the copy probe,
-    // since every one of them displays the right text either way.
+    // What each select widget RESOLVED the model to - the point of the copy
+    // probe, since every one of them displays the right text either way.
     scope.resolved = function (i) {
       var boxes = document.querySelectorAll('.try-box .ui-select-container')
       if (!boxes.length) { return null }
@@ -286,7 +289,7 @@
    * The acceptance question this page has to answer, separately from raw speed:
    * does putting angular-validation on <llselect-single> cost more than putting
    * it on the <select ng-options> it replaces? Same validator, same data, same
-   * digests - only the widget differs.
+   * digests - only the select widget differs.
    */
   var VALIDATION_PAIR = [
     {
@@ -301,7 +304,7 @@
     {
       key: 'llselect-av',
       label: '<llselect-single> + validation',
-      note: 'same validator, llselect widget',
+      note: 'same validator, on llselect',
       markup: '<form name="f2"><llselect-single name="v2" ng-model="picked" validation="required"' +
         ' ll-options="i.name for i in items track by i.id"></llselect-single></form>',
       triggerSel: '.llselect-trigger',
@@ -324,7 +327,7 @@
    * angular-validation reads its messages through angular-translate, so without
    * this every validator rejects a promise per field with "Could not translate:
    * 'INVALID_REQUIRED'" - which is not just console noise here: it is real work
-   * inside the timed section, one rejection per validated widget.
+   * inside the timed section, one rejection per validated select widget.
    *
    * Inline, deliberately NOT useStaticFilesLoader like the demo page uses: that
    * does an $http GET, and a benchmark must not put network I/O in the middle of
@@ -365,7 +368,7 @@
       var main = runSet($compile, $rootScope, stage, CONTESTANTS)
       var av = runSet($compile, $rootScope, stage, VALIDATION_PAIR)
       resultsEl.innerHTML =
-        '<h3>Widgets</h3>' + render(main) +
+        '<h3>Select widgets</h3>' + render(main) +
         '<h3>angular-validation: llselect vs the select it replaces</h3>' + render(av)
       if (playgroundEl) {
         buildPlayground($compile, $rootScope, playgroundEl,

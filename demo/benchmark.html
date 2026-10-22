@@ -160,12 +160,20 @@
         the select widgets (the deliberate yields that keep the page responsive are
         excluded). One run, not a median: at this scale the signal dwarfs the
         noise.</li>
-      <li><strong>Before paint (ms)</strong> - starts when the library has
-        built the DOM of every select widget. Ends when the browser can paint that
-        DOM. In between are the library's microtasks and the browser's first
-        style and layout of that DOM. Build total does not count this time.
-        Work the library delays with a timer or
-        <code>requestAnimationFrame</code> is not counted.</li>
+      <li><strong>Before paint (ms)</strong> - the work that must finish before
+        the browser can paint the new select widgets. Build total does not count
+        this work. The benchmark builds the select widgets in chunks. A chunk is a
+        group of select widgets that the benchmark builds one after another, with
+        no pause. A chunk is 25 select widgets when a test builds 1000 or more,
+        otherwise 1 select widget. Between two chunks, the benchmark waits for the
+        next frame. For each chunk, the time starts when the library has built the
+        DOM of that chunk. First, the browser runs the microtasks that the library
+        queued while building that chunk. Then the browser does the style and
+        layout work that is still left for that DOM. The time ends when the
+        browser has done that work. The column adds up the times of all chunks.
+        Work that a library delays with a timer or with
+        <code>requestAnimationFrame</code> is not counted. A microtask queued from
+        inside another microtask is not counted either.</li>
       <li><strong>DOM nodes (resting)</strong> - element nodes left under the
         scratch area after building, popups closed. llselect builds no option DOM
         until a popup opens, so this shows its lazy-render footprint.</li>

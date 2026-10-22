@@ -2,9 +2,9 @@
    theming), so all values are hard-coded to match BS4 defaults. */
 
 /* Color variables: the light values. Every color below reads one of these,
-   so a host page restyles the widget by redefining them in a rule that
-   targets .llselect-root (README "Customization"). The dark values are in the
-   block at the end of this file. Roles, one per line. */
+   so a host page restyles the select widget by redefining them in a rule
+   that targets .llselect-root (README "Customization"). The dark values are
+   in the block at the end of this file. Roles, one per line. */
 .llselect-root {
   --llselect-fg: #212529; /* text inside the popup: header and footer slot content */
   --llselect-control-fg: #495057; /* text of the trigger and of the filter input */
@@ -51,8 +51,9 @@
   color: var(--llselect-control-fg);
   line-height: 1.5;
   /* BS4's reboot hardcodes body { text-align: left } (BS4 ships no RTL
-     support), which would pin the widget's text left inside dir="rtl".
-     `start` re-follows the widget's own direction; identical in LTR.
+     support), which would pin the select widget's text left inside
+     dir="rtl". `start` re-follows the select widget's own direction;
+     identical in LTR.
      BS3 sets nothing and BS5 leaves --bs-body-text-align undefined, so
      only this theme needs it. */
   text-align: start;
