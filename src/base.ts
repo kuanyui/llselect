@@ -382,8 +382,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - Until the first check runs, the attribute holds a provisional value. The value is the latest `'auto'` result in the same document, or `light` if there is none yet. Only a result for a root inside the document counts.
    * - The library also checks when `open()` or `refreshColorScheme()` runs. It checks when the operating system's color preference changes. It also checks when an attribute of `<html>` or `<body>` changes.
    * - If the select widget is inside a shadow root, an operating-system change does not reach it, and neither does an attribute change on `<html>` or `<body>`. The select widget still checks when `open()` or `refreshColorScheme()` runs.
-   * - `getColorScheme()` returns the result. If the library has not checked yet, `getColorScheme()` checks at once and returns the scheme.
-   * - An early check does not cancel the first queued check. For a select widget inside another select widget's trigger or popup, the queued check can still change the result.
+   * - `getColorScheme()` returns the result. If the library has not checked this select widget yet, `getColorScheme()` checks at once and returns the scheme.
+   * - An early check does not cancel the first queued check.
+   * - For a select widget inside another select widget's trigger or popup, the first queued check can still change the result.
    * @group Color scheme
    */
   colorScheme: LLSelectColorScheme
@@ -2320,8 +2321,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * The color scheme the select widget currently shows.
-   * - Returns the result of the latest decision, `'light'` or `'dark'`. If the library has not decided yet, the method decides now and returns that result.
-   * - A decision this early does not cancel the first queued decision. For a select widget inside another select widget's trigger or popup, the queued decision can still change the result.
+   * - Returns the result of the latest decision, `'light'` or `'dark'`. If the library has not decided for this select widget yet, the method decides now and returns that result.
+   * - A decision this early does not cancel the first queued decision.
+   * - For a select widget inside another select widget's trigger or popup, the first queued decision can still change the result.
    * - Never `'auto'`. The `colorScheme` setting explains how `'auto'` resolves.
    * @group Color scheme
    */
