@@ -84,7 +84,7 @@
    * 14: the runtime language switch from API.md ("Switching the UI language
    * at runtime"), verbatim. Registered under each existing directive name, so
    * it decorates every <llselect-single> / <llselect-multiple> / <ui-llselect>
-   * on the page: the $watch re-packs the live widget through instance() on
+   * on the page: the $watch re-packs the live select widget through instance() on
    * every language change, and an unmapped key ('en') restores the English
    * defaults with {}.
    */
@@ -250,7 +250,7 @@
        * 12a: tags in the trigger; the count, the match count and a Clear all
        * button in the header. The fn runs once at link and the node is ours:
        * ng-change rewrites the count, ll-on-open and ll-on-filter-query-change
-       * the match count. The button reaches the widget through instance()
+       * the match count. The button reaches the select widget through instance()
        * (demo-publish-api), so its click is the user-change path.
        */
       vm.countriesHeader = ['Japan', 'Taiwan']
@@ -373,7 +373,7 @@
 
       /**
        * 13: action rows are plain objects. The directive hands onActivate the
-       * widget instance: calling it is the user-change path (ng-model +
+       * select widget instance: calling it is the user-change path (ng-model +
        * ng-change, like a click); a plain model write would stay programmatic.
        * textFn / disabledFn run again after every change and read the live model.
        */
@@ -401,7 +401,7 @@
       /**
        * 13b: one leading row on a single. It asks for a name, adds it to the
        * array behind ll-options ($watchCollection hands the new list to the
-       * widget), writes the model and closes. Items must be unique: an
+       * select widget), writes the model and closes. Items must be unique: an
        * existing name is picked, not added again. The model write is
        * programmatic, so ng-change stays quiet.
        */

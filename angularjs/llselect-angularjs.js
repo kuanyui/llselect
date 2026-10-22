@@ -265,7 +265,7 @@
 
   /**
    * ll-on-blur, plus the ngModel touched flag. The core fires onBlur once
-   * when DOM focus leaves the whole widget, never for a move inside it. Mark
+   * when DOM focus leaves the whole select widget, never for a move inside it. Mark
    * the control touched first, as ngModel does on a native control's blur
    * (ngModel.js, the `blur` listener: `ng-touched` replaces `ng-untouched`),
    * then evaluate ll-on-blur, both in ONE digest with wireEventAttr's phase
@@ -292,11 +292,11 @@
    * ll-popup-list-leading-action-rows / -trailing-action-rows: read once at link
    * time to an array of the core's LLSelectPopupListActionRow descriptors.
    * Each is cloned - the app's array and objects stay untouched, so one array
-   * can serve several widgets - and its onActivate is wrapped like an event
+   * can serve several select widgets - and its onActivate is wrapped like an event
    * expression: the core runs it from its own pointer / keyboard handlers,
    * outside any digest, so scope writes inside it (an ng-model value, vm
    * state) need $apply; errors go to $exceptionHandler. The wrapper hands
-   * onActivate the widget instance as its first argument (MEDIUM-110): an
+   * onActivate the select widget instance as its first argument (MEDIUM-110): an
    * instance call such as sel.setChosenItems([]) fires the core onChange
    * outside the write-back gate, so it reaches ng-model through
    * $setViewValue like a click - ng-change runs, the control turns dirty -
@@ -319,7 +319,7 @@
         throw new Error('llselect-angularjs: ' + attrs.$attr[name] + '[' + i + '] needs textFn and onActivate functions')
       }
       // Snapshot every field: a later reassignment on the app's object must
-      // not reach the widget (API.md: the descriptors are copied).
+      // not reach the select widget (API.md: the descriptors are copied).
       var activate = row.onActivate
       return {
         textFn: row.textFn,
@@ -375,8 +375,8 @@
   /**
    * The controller other directives on the same element `require` (by the
    * directive names `llselectSingle` / `llselectMultiple`) to reach the live
-   * widget - the door for app-owned policy directives (an app-wide
-   * permission-driven disable, etc.). instance() is late-bound: the widget is
+   * select widget - the door for app-owned policy directives (an app-wide
+   * permission-driven disable, etc.). instance() is late-bound: the select widget is
    * constructed in the post-link, AFTER controllers instantiate, so call it
    * from a $watch / event handler, never from a controller constructor.
    */
@@ -394,7 +394,7 @@
      */
     this.instance = function () {
       if (!sel) {
-        throw new Error('llselect-angularjs: instance() is not available yet - the widget is created at link time; call it from a $watch or event handler')
+        throw new Error('llselect-angularjs: instance() is not available yet - the select widget is created at link time; call it from a $watch or event handler')
       }
       return sel
     }

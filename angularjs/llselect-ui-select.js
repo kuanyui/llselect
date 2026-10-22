@@ -153,8 +153,8 @@
 
   /**
    * The controller other directives on the same element `require` (by the
-   * directive name `uiLlselect`) to reach the live widget - the same door
-   * llselect-angularjs.js publishes. instance() is late-bound: the widget is
+   * directive name `uiLlselect`) to reach the live select widget - the same door
+   * llselect-angularjs.js publishes. instance() is late-bound: the select widget is
    * constructed in the post-link, AFTER controllers instantiate, so call it
    * from a $watch / event handler, never from a controller constructor.
    */
@@ -163,10 +163,10 @@
     var sel = null
     /** Wired by the directive's link; not part of the public surface. */
     this.$$setInstance = function (s) { sel = s }
-    /** The live widget (a CompatSingle / CompatMultiple). Throws before link; never returns null. */
+    /** The live select widget (a CompatSingle / CompatMultiple). Throws before link; never returns null. */
     this.instance = function () {
       if (!sel) {
-        throw new Error('ui-llselect: instance() is not available yet - the widget is created at link time; call it from a $watch or event handler')
+        throw new Error('ui-llselect: instance() is not available yet - the select widget is created at link time; call it from a $watch or event handler')
       }
       return sel
     }
@@ -192,7 +192,7 @@
     // key, a filter keystroke, a reload, an item click). ui-select re-points
     // its row on the open and on a search keystroke, keeps the index on a
     // reload, and runs nothing for a clicked row before the selection.
-    // Neither widget moves the row on hover (ui-select dropped its mouseenter
+    // Neither library moves the row on hover (ui-select dropped its mouseenter
     // in 0.13.0; its hover is CSS).
     var onHighlightFn = choicesAttrs['on-highlight'] ? $parse(choicesAttrs['on-highlight']) : null
 
@@ -342,7 +342,7 @@
         }
         : null,
       // The ngModel touched flag, as on the two llselect directives: once, when
-      // DOM focus leaves the whole widget (the core fires onBlur for no move
+      // DOM focus leaves the whole select widget (the core fires onBlur for no move
       // inside it, and never from destroy()). ui-select's markup has no
       // attribute for the blur itself, so nothing else is wired here.
       onBlur: function () {
