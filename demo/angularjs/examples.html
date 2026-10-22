@@ -630,7 +630,7 @@
       The trigger shows chips, so the header takes over the count.
       <code>ng-change</code> rewrites it; <code>ll-on-open</code> and
       <code>ll-on-filter-query-change</code> rewrite the match count. The
-      button reaches the widget through <code>instance()</code>.
+      button reaches the select widget through <code>instance()</code>.
     </p>
     <div class="demo-row" data-src="12a">
       <llselect-multiple ll-aria-label="Countries (header count)" ng-model="vm.countriesHeader" ll-trigger-display="'tags'" ll-filterable="true"
@@ -700,7 +700,7 @@
     <h2>13. Action rows: ll-popup-list-leading-action-rows / ll-popup-list-trailing-action-rows / ll-popup-list-leading-rows-pinned</h2>
     <p>
       Commands rendered as option rows above or below the items, so the arrow
-      keys reach them. <code>onActivate</code> receives the widget instance;
+      keys reach them. <code>onActivate</code> receives the select widget instance;
       calling it counts as the user's own change, so <code>ng-change</code>
       runs like after a click. <code>textFn</code> and <code>disabledFn</code>
       run again after every change. The same four examples as the core demo's
@@ -743,7 +743,7 @@
     <h3>13c. Sort the list, above the items</h3>
     <p>
       The row flips the array behind <code>ll-options</code>, which
-      <code>$watchCollection</code> hands to the widget. A filter query
+      <code>$watchCollection</code> hands to the select widget. A filter query
       re-applies to the new order, and the chosen item stays chosen.
     </p>
     <div class="demo-row" data-src="13c">
@@ -781,10 +781,10 @@
       summary, the choose-all row and the no-results status. An app picks one
       once, in <code>.config()</code>:
       <code>llselectConfigProvider.defaults({ uiTranslationPack: llselectI18n.zhTW })</code>.
-      Widgets already on screen are the app's job. This page runs the recipe
+      Select widgets already on screen are the app's job. This page runs the recipe
       from <a href="../../angularjs/api.html">API.md</a>, "Switching the UI
       language at runtime", verbatim in <code>app.js</code>. Pick a language:
-      every widget on this page follows, chosen values survive, and 2a keeps
+      every select widget on this page follows, chosen values survive, and 2a keeps
       its explicit <code>ll-placeholder</code>. The page's own copy stays
       English. RTL lives in the core demo, section 17.
     </p>

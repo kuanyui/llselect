@@ -301,7 +301,7 @@
     {
       key: 'llselect-av',
       label: '<llselect-single> + validation',
-      note: 'same validator, llselect widget',
+      note: 'same validator, on the llselect select widget',
       markup: '<form name="f2"><llselect-single name="v2" ng-model="picked" validation="required"' +
         ' ll-options="i.name for i in items track by i.id"></llselect-single></form>',
       triggerSel: '.llselect-trigger',
@@ -365,7 +365,7 @@
       var main = runSet($compile, $rootScope, stage, CONTESTANTS)
       var av = runSet($compile, $rootScope, stage, VALIDATION_PAIR)
       resultsEl.innerHTML =
-        '<h3>Widgets</h3>' + render(main) +
+        '<h3>Select widgets</h3>' + render(main) +
         '<h3>angular-validation: llselect vs the select it replaces</h3>' + render(av)
       if (playgroundEl) {
         buildPlayground($compile, $rootScope, playgroundEl,

@@ -39,7 +39,7 @@
        viewport OR clipped by a scroll ancestor (positioning.ts isAnchorHidden),
        and it closes an open popup that later becomes clipped - and its popup
        renders inside the mount, so an `overflow: auto` stage would clip that
-       too. A plain visible block avoids both. The measured widget is scrolled
+       too. A plain visible block avoids both. The measured select widget is scrolled
        into view first; the rest just sits there. */
     #stage { width: 320px; margin: 1rem 0; }
     #stage:empty { display: none; }
@@ -47,7 +47,7 @@
     #playground:empty { display: none; }
     .try-box h4 { margin: 0 0 0.2rem; font-size: 1rem; }
     .try-box small { color: var(--fg-muted); display: block; margin-bottom: 0.6rem; min-height: 2.4em; }
-    /* Each widget needs room below it for its own popup. */
+    /* Each select widget needs room below it for its own popup. */
     .try-mount { min-height: 3rem; }
     .model-panel { border-top: 2px solid var(--accent); padding-top: 0.8rem; margin-bottom: 2rem; }
     .model-panel .out b { font-size: 1.1rem; }
@@ -120,7 +120,7 @@
   <h2 id="try-heading" hidden>Try them yourself - one shared ng-model</h2>
   <div id="try-note" hidden>
     <p>
-      One live widget each, all four bound to the <b>same</b>
+      One live select widget each, all four bound to the <b>same</b>
       <code>ng-model</code>, on the same <span class="zone-count-inline">...</span>-zone
       list. Two things to do with them.
     </p>
@@ -133,19 +133,19 @@
     <p>
       <b>Check the binding both ways.</b> Choosing in any one of them must move
       all four, and the model is printed below. The two buttons are the
-      interesting part, because they ask each widget what it thinks "the same
+      interesting part, because they ask each select widget what it thinks "the same
       item" means:
     </p>
     <ul>
       <li>
         <b>Set to items[3]</b> - the same object reference that is in the list.
-        Every widget resolves this.
+        Every select widget resolves this.
       </li>
       <li>
         <b>Set to a COPY of items[3]</b> - deep-equal, different reference. This
         is what an app has after an HTTP round trip, or after
         <code>angular.copy</code>. Watch the two booleans, not the text: every
-        widget still displays "the right thing", which is exactly what makes this
+        select widget still displays "the right thing", which is exactly what makes this
         worth checking.
         <br>
         ui-select resolves its model with strict <code>===</code> on the
@@ -190,7 +190,7 @@
       <code>validation="required"</code> on <code>&lt;llselect-single&gt;</code>
       must not cost more than putting it on the <code>&lt;select ng-options&gt;</code>
       it replaces. angular-validation is element-agnostic (it watches
-      <code>ctrl.$modelValue</code>), so the difference should be widget cost
+      <code>ctrl.$modelValue</code>), so the difference should be select widget cost
       only, not validation cost.
     </li>
     <li>
@@ -201,7 +201,7 @@
       option up front rather than lazily.
     </li>
     <li>
-      <b>build</b> creates <span id="widget-count-2">20</span> widgets over the
+      <b>build</b> creates <span id="widget-count-2">20</span> select widgets over the
       whole zone list each. llselect renders the
       item list lazily (only on open), and so does ui-select
       (<code>ng-if="$select.open"</code> on its rows), so this column is mostly
