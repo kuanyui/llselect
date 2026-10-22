@@ -1670,9 +1670,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // This instance owns the element from now on (an older instance on it
     // loses its pending decision and its subscription). A forced scheme is
     // written now; an 'auto' instance writes a provisional value now, before
-    // its subtree exists, decides in a microtask (before the first paint, one
-    // style flush per batch of select widgets, reads before writes) and re-decides
-    // on the shared page listeners.
+    // its subtree exists, decides in a microtask before the first paint
+    // (decideBatch: one style flush per batch, nested roots after the others)
+    // and re-decides on the shared page listeners.
     claimColorSchemeRoot(this.rootEl)
     if (this.settings.colorScheme === 'auto') {
       this.resolvedColorScheme = provisionalColorScheme(this.rootEl.ownerDocument)
@@ -2347,12 +2347,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.applyColorScheme()
   }
 
-  /** The read step: resolve the scheme from the page. A batch runs every select widget's read before any write, so one style flush serves them all. */
+  /** The read step: resolve the scheme from the page. In a batch, the roots outside other select widgets all read before any writes, so one style flush serves them (`decideBatch` in color-scheme.ts). */
   private readColorScheme(): void {
-    if (this.colorSchemeDecisionPending) {
-      this.colorSchemeDecisionPending = false
-      cancelFirstDecision(this.rootEl, this.colorSchemeDecision)
-    }
+    // An early decision leaves the queued one in place: a root inside another
+    // select widget may have read that select widget's provisional value, and
+    // the batch decides it again after the outer root has written.
+    this.colorSchemeDecisionPending = false
     this.resolvedColorScheme = resolveColorScheme(readColorSchemeInputs(this.rootEl, this.settings.colorScheme))
     // A forced value says nothing about the page, and a detached root does
     // not reflect the page: neither is the document's decision.

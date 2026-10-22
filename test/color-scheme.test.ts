@@ -371,14 +371,14 @@ function emulateInheritedColorScheme(page: { scheme: string }): () => void {
 }
 
 // An outer widget with an inner widget in its popup header, built in one task.
-function buildNestedPair(): { outerEl: HTMLElement, innerEl: HTMLElement } {
+function buildNestedPair(): { outerEl: HTMLElement, innerEl: HTMLElement, inner: LLSelectSingle<string> } {
   const outerEl = document.createElement('div')
   document.body.appendChild(outerEl)
   const innerEl = document.createElement('div')
   const outer = new LLSelectSingle<string>(outerEl, { createPopupHeaderContentElFn: () => innerEl })
-  new LLSelectSingle<string>(innerEl)
+  const inner = new LLSelectSingle<string>(innerEl)
   assert.ok(outer.popupEl.contains(innerEl) && outerEl.contains(innerEl), 'the inner root sits in the outer popup')
-  return { outerEl, innerEl }
+  return { outerEl, innerEl, inner }
 }
 
 test("the first batch: a root inside another widget's popup reads after the outer root wrote its attribute", async () => {
@@ -409,21 +409,32 @@ test("the shared pass: a root inside another widget's popup reads after the oute
 test('the first batch: nested roots built inner first still decide outer first', async () => {
   // A leaf root, then a middle root whose popup header holds the leaf, then
   // an outer root whose popup header holds the middle: the batch comes in
-  // that order. The middle root decides dark through its own variable.
+  // that order. On a dark page the outer root's write is the middle root's
+  // only way to dark, and the middle root's write is the leaf's.
   setupDom()
-  const restore = emulateInheritedColorScheme({ scheme: 'light' })
+  const restore = emulateInheritedColorScheme({ scheme: 'dark' })
   const leafEl = document.createElement('div')
   new LLSelectSingle<string>(leafEl)
   const middleEl = document.createElement('div')
-  middleEl.style.setProperty('--llselect-color-scheme', 'dark')
   new LLSelectSingle<string>(middleEl, { createPopupHeaderContentElFn: () => leafEl })
   const outerEl = document.createElement('div')
   document.body.appendChild(outerEl)
   new LLSelectSingle<string>(outerEl, { createPopupHeaderContentElFn: () => middleEl })
   await Promise.resolve()
-  assert.equal(outerEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
+  assert.equal(outerEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
   assert.equal(middleEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
   assert.equal(leafEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', "the leaf reads after the middle root wrote, not the middle root's provisional light")
+  restore()
+})
+
+test("an early getColorScheme() on a root inside another widget's popup is corrected by the first batch", async () => {
+  setupDom()
+  const restore = emulateInheritedColorScheme({ scheme: 'dark' })
+  const { innerEl, inner } = buildNestedPair()
+  assert.equal(inner.getColorScheme(), 'light', "decided at once, while the outer root still holds its provisional light")
+  await Promise.resolve()
+  assert.equal(innerEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', 'the queued decision ran after the outer root wrote')
+  assert.equal(inner.getColorScheme(), 'dark')
   restore()
 })
 
