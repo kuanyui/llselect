@@ -33,7 +33,7 @@ Status marks: `[ ]` open, `[~]` in progress, `[x]` done. Newest entry on top. No
 | Run | 100 x 100 build | 100 x 100 teardown | 1000 x 10 build | 1000 x 10 teardown |
 |---|---|---|---|---|
 | README, v0.0.7 (commit `7ccaf36`), Chromium 151, Performance | 12 | 0.50 | 30 | 4.30 |
-| Tree at 0.0.10 about `b4d46d9`, Chromium 154, profile not recorded | 35 | 2.20 | 58 | 7.80 |
+| Tree at 0.0.10 about `96ac235`, Chromium 154, profile not recorded | 35 | 2.20 | 58 | 7.80 |
 | v0.0.7 checked out and rebuilt, profile not recorded | 35 | 1.70 | 62 | 8.40 |
 | dev head, profile not recorded | 36 | 1.70 | 61 | 8.50 |
 | v0.0.7 checked out and rebuilt, Performance | 15 | 0.70 | 33 | 5.60 |
@@ -51,7 +51,7 @@ Status marks: `[ ]` open, `[~]` in progress, `[x]` done. Newest entry on top. No
   - The benchmark page's timing code and its llselect adapter are unchanged since the README measurement (the diff since `7ccaf36` is demo chrome, chart colors, renamed selectors in the interaction section and the renamed custom-renderer option, which the mass build does not use), and the page writes no attribute on `<html>` or `<body>` during a run, so the shared `refreshAll` pass does not fire.
 - What the benchmark measures (`demo/benchmark.js`, `buildAll`): Build total is the sum of the synchronous adapter `setup` calls over all widgets, one pass, with a `requestAnimationFrame` yield between chunks (25 widgets per chunk at 1000 widgets, 1 at 100); the yields and the final reflow are excluded. Teardown total is one timed loop of the adapter `teardown` over the widgets just built. DOM nodes is the resting count after the build. The interaction tables use medians of repeats; build and teardown do not, so each cell is a single pass.
 - The llselect path per widget (the `llselect` adapter): `new LLSelectSingle(mount, { filterable: true, ariaLabel })`, then `setItems(items)`, then `setChosenItem(items[0])`, since every widget is built pre-selected; teardown is `destroy()`. The items array is built once and shared by all widgets.
-- The run that opened this entry, all six libraries, by the owner on the 13900HX, Chromium 154.0.8037.57 stable x86_64, tree at 0.0.10 after the events work (about commit `b4d46d9`), profile not recorded, single run per cell:
+- The run that opened this entry, all six libraries, by the owner on the 13900HX, Chromium 154.0.8037.57 stable x86_64, tree at 0.0.10 after the events work (about commit `96ac235`), profile not recorded, single run per cell:
 
 | Library | 100 x 100 build (ms) | 100 x 100 DOM nodes | 100 x 100 teardown (ms) | 1000 x 10 build (ms) | 1000 x 10 DOM nodes | 1000 x 10 teardown (ms) |
 |---|---|---|---|---|---|---|
