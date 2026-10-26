@@ -1,10 +1,10 @@
 /* Demo-only layout. All llselect-* visual rules live in dist/themes/*.css
    (loaded via <link> and swapped by the theme picker). */
 
-/* Page chrome colors, light by default. Select widget colors are the theme's
-   business (dist/themes/*.css), never these tokens. The tokens shared with
-   the site template in scripts/build-site.mjs use the same names; the light
-   values differ on purpose, the dark values match. */
+/* Page chrome colors, light by default. Select component colors are the
+   theme's business (dist/themes/*.css), never these tokens. The tokens shared
+   with the site template in scripts/build-site.mjs use the same names; the
+   light values differ on purpose, the dark values match. */
 :root {
   color-scheme: light;
   --fg: #222;              /* body text */
@@ -61,10 +61,10 @@
     --ok-bg: rgba(46, 160, 67, 0.15);
   }
 }
-/* Select widgets follow the page: with no stored choice the page follows the
-   OS, and the themes' own color-scheme path covers that in browsers that have
-   the property; the variable covers Firefox 78-95 as well. A stored choice
-   writes data-color-scheme on <html>, a mark the themes recognize. */
+/* Select components follow the page: with no stored choice the page follows
+   the OS, and the themes' own color-scheme path covers that in browsers that
+   have the property; the variable covers Firefox 78-95 as well. A stored
+   choice writes data-color-scheme on <html>, a mark the themes recognize. */
 html:not([data-color-scheme]) { --llselect-color-scheme: auto; }
 
 :root[data-color-scheme="dark"] {
@@ -278,12 +278,12 @@ article { margin: 1.5rem 0 2rem 1rem; }
 .hl-func    { color: #a6e22e; }
 
 .hint { color: var(--fg-muted); font-size: 0.9rem; margin: 0.3rem 0; }
-/* Inside a select widget the theme's palette rules, light or dark: these read
-   the theme's --llselect-* variables, not the page tokens. Same for the rules
-   further down that apply inside a select widget only (CSS arrow, tree caret,
-   popup link button). */
+/* Inside a select component the theme's palette rules, light or dark: these
+   read the theme's --llselect-* variables, not the page tokens. Same for the
+   rules further down that apply inside a select component only (CSS arrow,
+   tree caret, popup link button). */
 .llselect-root .hint { color: var(--llselect-fg-muted); }
-/* Links inside a select widget (the footer link of core 14.x and AngularJS 12c). */
+/* Links inside a select component (the footer link of core 14.x and AngularJS 12c). */
 .llselect-root a { color: var(--llselect-row-chosen-fg); }
 
 .out {
@@ -312,8 +312,8 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 
 /* Direct child only: a descendant selector also styles the buttons llselect
-   builds inside its own trigger (the clear x), which the select widget's theme
-   owns. */
+   builds inside its own trigger (the clear x), which the select component's
+   theme owns. */
 .demo-row > button {
   padding: 0.4rem 0.8rem;
   border: 1px solid var(--line-strong);
@@ -752,8 +752,8 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 .bench-cols > summary { cursor: pointer; user-select: none; color: var(--accent); }
 .bench-cols[open] > summary { margin-bottom: 0.3rem; }
 #status { color: var(--fg-muted); font-size: 0.9rem; }
-/* Table captions spell out what one number means (per select widget vs total,
-   median vs sum). */
+/* Table captions spell out what one number means (per select component vs
+   total, median vs sum). */
 #results caption, .ix-table caption { caption-side: top; text-align: left; font-size: 0.85rem; color: var(--fg-muted); padding: 0 0 0.4rem; }
 /* Star on a tuned library's name: hover shows the tuning applied (title attribute). */
 .tune-star { color: #c9821a; cursor: help; font-weight: 700; margin-right: 0.2em; }
@@ -776,8 +776,8 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 /* Interaction: the per-mode "Build + measure" primary button, blue among the secondary per-lib ones. */
 .bench-libbuttons button.ix-run-all { font-size: inherit; padding: 0.35rem 1rem; border-color: var(--accent); background: var(--accent); color: var(--accent-fg); }
 .bench-libbuttons button.ix-run-all:hover { background: var(--accent-hover); color: var(--accent-fg); }
-/* Scroll area where a run's select widgets actually render. Fixed height so
-   10k select widgets stay scrollable rather than growing the page. */
+/* Scroll area where a run's select components actually render. Fixed height so
+   10k select components stay scrollable rather than growing the page. */
 .bench-stage {
   height: 420px;
   overflow: auto;
@@ -797,7 +797,7 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
 /* Sized container: Chart.js runs with maintainAspectRatio off and fills it. */
 .bench-chart { position: relative; height: 260px; margin: 0.25rem 0 1rem; }
 
-/* --- interaction latency: one select widget per library, side by side ---- */
+/* --- interaction latency: one select component per library, side by side - */
 .ix-stage { display: flex; flex-wrap: wrap; gap: 12px; margin: 0.5rem 0 1rem; }
 .ix-cell { width: 220px; border: 1px solid var(--line); border-radius: 6px; padding: 8px; background: var(--bg); }
 .ix-lab { font-size: 0.8rem; color: var(--fg-muted); font-weight: 600; margin-bottom: 6px; }

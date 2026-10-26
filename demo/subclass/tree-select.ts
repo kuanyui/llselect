@@ -1,5 +1,5 @@
 /**
- * LLTreeMultipleSelect - a tree multiple select built by SUBCLASSING
+ * LLTreeMultipleSelect - a tree multiple select component built by SUBCLASSING
  * LLSelectMultiple. Demo material; copy and adapt. Not part of the library:
  * a tree lives and dies by its data-structure choices, so it belongs in app
  * land (or its own package), and here it doubles as the worked example of

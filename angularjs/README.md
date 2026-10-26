@@ -90,7 +90,7 @@ Row 2 is what these directives give you:
 
 The value is **not** POSTed by a plain form submit. If you need that too, the two `name` attributes live on two different elements and do not interfere: put a hidden input beside it and mirror the value in `onChange`. See "No native form integration" in [`DESIGN.md`](DESIGN.md) for why the package does not do that for you, and [`SPEC.md`](SPEC.md#verified-facts-about-angularjs) for the source references behind every claim above.
 
-The `name` is always written by you, in your own template - the package never generates one. A generated name (say, an auto-incrementing counter) would key your server contract to JavaScript execution order: reorder your code, or mount two select widgets in a different order, and the payload keys silently swap.
+The `name` is always written by you, in your own template - the package never generates one. A generated name (say, an auto-incrementing counter) would key your server contract to JavaScript execution order: reorder your code, or mount two select components in a different order, and the payload keys silently swap.
 
 ## Gotchas
 
@@ -118,7 +118,7 @@ Four things to know when wiring it up:
 - It hard-depends on `pascalprecht.translate`. Loading `angular-validation.js` without angular-translate fails module instantiation outright.
 - Its messages come through `$translateProvider`. Without it pointed at the package's `locales/validation/*.json`, validators still run correctly but every message renders as `Could not translate: 'INVALID_REQUIRED'`.
 - Validation is debounced by `typingLimit` (`_INACTIVITY_LIMIT`, default 1000 ms in `validation-common.js:14`). It is not instant, which is easy to misread as "it did not fire".
-- Its `elm.bind('blur', ...)` trigger is inert on these directives: blur does not bubble, and the focusable element is llselect's inner trigger, not the custom element the attribute sits on. The `$modelValue` watch is the path that matters for a select, and it works.
+- Its `elm.bind('blur', ...)` trigger is inert on these directives: blur does not bubble, and the focusable element is llselect's inner trigger, not the custom element the attribute sits on. The `$modelValue` watch is the path that matters for a select component, and it works.
 
 ## The ui-select bridge
 

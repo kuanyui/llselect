@@ -392,8 +392,8 @@ test('filterable open: trigger leaves the tab order; close restores it', () => {
   assert.equal(sel.triggerEl.getAttribute('tabindex'), '0')
   sel.open()
   // Only the filter input may be tabbable while open: Shift+Tab must leave
-  // the select widget (and close via focusout), never land on the trigger with
-  // the popup still open.
+  // the select component (and close via focusout), never land on the trigger
+  // with the popup still open.
   assert.equal(sel.triggerEl.getAttribute('tabindex'), '-1')
   sel.close()
   assert.equal(sel.triggerEl.getAttribute('tabindex'), '0')

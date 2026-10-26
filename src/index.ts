@@ -1,6 +1,6 @@
 /**
- * The package entry: the two select classes, their settings types, and the
- * SVG icon builders. Language packs live in `@llselect/core/i18n`.
+ * The package entry: the two select component classes, their settings types,
+ * and the SVG icon builders. Language packs live in `@llselect/core/i18n`.
  * @module @llselect/core
  */
 export { LLSelectBase } from './base.js'

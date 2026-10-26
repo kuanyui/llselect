@@ -153,9 +153,9 @@
 
   /**
    * The controller other directives on the same element `require` (by the
-   * directive name `uiLlselect`) to reach the live select widget - the same
+   * directive name `uiLlselect`) to reach the live select component - the same
    * door llselect-angularjs.js publishes. instance() is late-bound: the
-   * select widget is constructed in the post-link, AFTER controllers
+   * select component is constructed in the post-link, AFTER controllers
    * instantiate, so call it from a $watch / event handler, never from a
    * controller constructor.
    */
@@ -164,10 +164,10 @@
     var sel = null
     /** Wired by the directive's link; not part of the public surface. */
     this.$$setInstance = function (s) { sel = s }
-    /** The live select widget (a CompatSingle / CompatMultiple). Throws before link; never returns null. */
+    /** The live select component (a CompatSingle / CompatMultiple). Throws before link; never returns null. */
     this.instance = function () {
       if (!sel) {
-        throw new Error('ui-llselect: instance() is not available yet - the select widget is created at link time; call it from a $watch or event handler')
+        throw new Error('ui-llselect: instance() is not available yet - the select component is created at link time; call it from a $watch or event handler')
       }
       return sel
     }
@@ -343,9 +343,9 @@
         }
         : null,
       // The ngModel touched flag, as on the two llselect directives: once, when
-      // DOM focus leaves the whole select widget (the core fires onBlur for no
-      // move inside it, and never from destroy()). ui-select's markup has no
-      // attribute for the blur itself, so nothing else is wired here.
+      // DOM focus leaves the whole select component (the core fires onBlur for
+      // no move inside it, and never from destroy()). ui-select's markup has
+      // no attribute for the blur itself, so nothing else is wired here.
       onBlur: function () {
         if (ngModelCtrl.$touched) { return }
         applyOnScope(function () { ngModelCtrl.$setTouched() })

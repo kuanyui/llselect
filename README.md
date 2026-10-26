@@ -27,7 +27,7 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 >
 > #### It's AI era! Why a library instead of using LLM agent to write an ad-hoc select component directly?
 >
-> If you are sensitive enough, you should know select is a terribly long-tailed UI component. Lots of detailed behaviors and edge cases that you won't want to waste time to struggle with. Includes but not limited:
+> If you are sensitive enough, you should know a select component is a terribly long-tailed piece of UI. Lots of detailed behaviors and edge cases that you won't want to waste time to struggle with. Includes but not limited:
 >
 > - ARIA (detailed behavior of keyboard navigation, `lang` attribute... etc)
 > - Popup width, layout and position on small-sized screen, or items containing long text content.
@@ -77,7 +77,7 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
    - The DOM of popup and candidates are lazy-rendering, and remove unneeded element from DOM when unneeded to minimize memory usages.
    - Mutate minimal DOM if possible. Toggling a candidate in the popup list replaces only the affected candidate rows and refreshes the trigger, instead of rebuilding the whole list. (Features that change which rows are listed or add a summary row - `hideChosenRows`, `chooseAllRow` - rebuild or update those parts too.)
 3. Flexible
-   - Highly customizable: HTML templates of select itself, popup, candidates list, candidate row, arrow icon, ...etc.
+   - Highly customizable: HTML templates of the select component itself, popup, candidates list, candidate row, arrow icon, ...etc.
    - Easy to integrate into an existing project / library / style.
    - Settings configure one instance; subclassing extends the library.
 4. Explicit
@@ -92,19 +92,19 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 > - Tested on Intel i9-13900HX (Linux, Wayland, KDE 6 power profile: Performance), Chromium 154.
 > - Tested versions of each libraries are the latest versions as of **2026-08-25**.
 >   - Library versions are pinned in the bundle-size table below.
-> - All tests are single select.
->   - Every select widget is built WITH a pre-selected value (the benchmark page's `pre-select at build time`).
-> - **Before paint** measures the work that must finish before the browser can paint the new select widgets. Build total does not count this work.
->   - The benchmark builds the select widgets in chunks. A chunk is a group of select widgets that the benchmark builds one after another, with no pause. Between two chunks, the benchmark waits for the next frame, so the page stays responsive.
->   - In the test with 1000 select widgets, a chunk is 25 select widgets. In the test with 100 select widgets, a chunk is 1 select widget.
+> - All tests use single select components.
+>   - Every select component is built WITH a pre-selected value (the benchmark page's `pre-select at build time`).
+> - **Before paint** measures the work that must finish before the browser can paint the new select components. Build total does not count this work.
+>   - The benchmark builds the select components in chunks. A chunk is a group of select components that the benchmark builds one after another, with no pause. Between two chunks, the benchmark waits for the next frame, so the page stays responsive.
+>   - In the test with 1000 select components, a chunk is 25 select components. In the test with 100 select components, a chunk is 1 select component.
 >   - For each chunk, the time starts when the library has built the DOM of that chunk. First, the browser runs the microtasks that the library queued while building that chunk. Then the browser does the style and layout work that is still left for that DOM. The time ends when the browser has done that work.
 >   - The column adds up the times of all chunks.
 >   - Work that a library delays with a timer or with `requestAnimationFrame` is not counted. A microtask queued from inside another microtask is not counted either.
 > - The following table shows **instantiation** only, other tests (interactions like open popup, filter candidates, choose candidate, ... etc) cannot be accurately benchmarked nor able to be fairly compared across libraries due to the details in implementations of each library. But you still can test by yourself in benchmark page (Live Benchmark: [GitHub Page](https://kuanyui.github.io/llselect/demo/benchmark.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/benchmark.html). Source Code: [HTML](demo/benchmark.html), [JS](demo/benchmark.js)), and interact with them and feel the "real experience" instead of relying on inaccurate benchmark results.
 
-### 100 select widgets x 100 candidates
+### 100 select components x 100 candidates
 
-| Library           | Build total (all select widgets, ms) | Before paint (all select widgets, ms)       | DOM nodes (all, resting) | Teardown total (all select widgets, ms) |
+| Library           | Build total (all select components, ms) | Before paint (all select components, ms)       | DOM nodes (all, resting) | Teardown total (all select components, ms) |
 |-------------------|-------------------------------|--------------------------------------|--------------------------|----------------------------------|
 | Native `<select>` | 28                            | 105                                  | 10,200                   | 4.40                             |
 | llselect          | 9.10                          | 22                                   | 900                      | 0.50                             |
@@ -113,8 +113,8 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 | Tom Select        | 40                            | 35                                   | 900                      | 1.10                             |
 | Slim Select       | 63                            | 113                                  | 11,000                   | 5.40                             |
 
-### 1000 select widgets x 10 candidates
-| Library           | Build total (all select widgets, ms) | Before paint (all select widgets, ms)       | DOM nodes (all, resting) | Teardown total (all select widgets, ms) |
+### 1000 select components x 10 candidates
+| Library           | Build total (all select components, ms) | Before paint (all select components, ms)       | DOM nodes (all, resting) | Teardown total (all select components, ms) |
 |-------------------|-------------------------------|--------------------------------------|--------------------------|----------------------------------|
 | Native `<select>` | 31                            | 137                                  | 12,000                   | 5.60                             |
 | llselect          | 32                            | 39                                   | 9,000                    | 5.40                             |
@@ -167,7 +167,7 @@ const sel = new LLSelectSingle(document.querySelector('#mount'), {
 sel.setItems(['Apple', 'Banana', 'Cherry'])
 ```
 
-Multi select: `new LLSelectMultiple(el, { ... })` - `getChosenItems()` / `toggleItem()` / `triggerDisplay: 'tags'` / `chooseAllRow: true` / `hideChosenRows: true` and friends.
+Multiple select component: `new LLSelectMultiple(el, { ... })` - `getChosenItems()` / `toggleItem()` / `triggerDisplay: 'tags'` / `chooseAllRow: true` / `hideChosenRows: true` and friends.
 
 Language packs (optional, tree-shakeable pure data):
 
@@ -209,7 +209,7 @@ The bare URLs `https://cdn.jsdelivr.net/npm/@llselect/core` and `https://unpkg.c
   > - What is the schema of data model (`string[]` or `Array<{ key: T, text: string, ... }>`...etc),
   > - How data models are bound,
   > - What APIs of llselect are needed to be exposed (especially the customizable HTML templates),
-  > - How to bind (or when to update) the i18n translation text of select and candidates,
+  > - How to bind (or when to update) the i18n translation text of the select component and candidates,
   >
   > All of the above affects the performance, and complexity of wrapper.
   > A generic wrapper for a frontend framework / library may unnecessarily increase complexity and impact performance (and surely I also have no interests to follow up these quickly-outdated libraries / frameworks). so I decide not to provide official wrapper for frontend frameworks / libraries.
@@ -237,7 +237,7 @@ const sel = new LLSelectSingle(mountEl, {
 sel.setItems([{ code: 'TW', name: 'Taiwan' }, { code: 'JP', name: 'Japan' }])
 ```
 
-Multi select submits one hidden input per chosen value, all with the same `name` (spell it `countries[]` if your backend is PHP / Rails; keep it bare for Go / Python):
+A multiple select component submits one hidden input per chosen value, all with the same `name` (spell it `countries[]` if your backend is PHP / Rails; keep it bare for Go / Python):
 
 ```js
 const form = document.querySelector('form')
@@ -285,7 +285,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Popup header / footer, pinned        | `createPopupHeaderContentElFn`, `createPopupFooterContentElFn` - called once; the node is yours to update; see Popup header / footer |
 | i18n                                 | `uiTranslationPack` setting + `setUiTranslationPack()` runtime switch + `@llselect/core/i18n` packs (`uiTranslationPackByLocale`, keyed by BCP 47 tag), RTL inherited from `dir`, `itemToLangFn` writes each item's `lang` for screen readers that switch voices, `groupKeyToLangFn` the same for a group |
 | Lifecycle                            | `destroy()` (required on unmount), `rerender()`, `setItems()`                                                            |
-| Events                               | `onChange(current, previous, meta)`, `onBeforeChange(next, previous, event)`, `onOpen(meta)`, `onClose(meta)`, `onFocus`, `onBlur`, `onActiveItemChange(item)`, `onFilterQueryChange(query)`; `onChange`'s `meta` carries `source`, `reason` and, for one added or removed item, `item`; `event` adds `preventDefault()`; `onOpen` / `onClose` get a `meta.reason` naming the path, such as `'escape'` or `'outside'`; `onFocus` / `onBlur` report DOM focus entering / leaving the whole select widget, never a move inside it; `onActiveItemChange` reports the item the arrow keys land on, `undefined` for no item |
+| Events                               | `onChange(current, previous, meta)`, `onBeforeChange(next, previous, event)`, `onOpen(meta)`, `onClose(meta)`, `onFocus`, `onBlur`, `onActiveItemChange(item)`, `onFilterQueryChange(query)`; `onChange`'s `meta` carries `source`, `reason` and, for one added or removed item, `item`; `event` adds `preventDefault()`; `onOpen` / `onClose` get a `meta.reason` naming the path, such as `'escape'` or `'outside'`; `onFocus` / `onBlur` report DOM focus entering / leaving the whole select component, never a move inside it; `onActiveItemChange` reports the item the arrow keys land on, `undefined` for no item |
 
 ### Typing to jump (prefix typeahead)
 
@@ -330,11 +330,11 @@ Method names follow a strict grammar. Some notes maybe helpful if you need to cu
 Settings can only fill content inside the elements the library builds. Subclassing changes those elements themselves, including their ARIA.
 
 - So no setting can break the ARIA contract.
-- Use settings first. Subclass only for a new select kind or a framework wrapper.
+- Use settings first. Subclass only for a new kind of select component or a framework wrapper.
 - Content is what a `create*ContentElFn` fills. The element around it, e.g. the `role="option"` row, changes only by overriding `create*El`.
 - Live comparison: the "Subclassing" section of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
 
-A complete worked subclass, in TypeScript with typed subclass settings (the class's `S` generic param): the tree multiple select in demo section 13.2 (`demo/subclass/tree-select.ts`).
+A complete worked subclass, in TypeScript with typed subclass settings (the class's `S` generic param): the tree multiple select component in demo section 13.2 (`demo/subclass/tree-select.ts`).
 
 ### Settings (the common path - no subclass needed)
 
@@ -472,20 +472,20 @@ sel = new LLSelectSingle(el, {
 
 #### Dark color scheme
 
-Every theme ships a dark palette. The select widget checks two CSS sources, in this order: the variable `--llselect-color-scheme`, then the property `color-scheme`.
+Every theme ships a dark palette. The select component checks two CSS sources, in this order: the variable `--llselect-color-scheme`, then the property `color-scheme`.
 
-- Standard: declare `color-scheme: light dark` on `<html>`. With no variable set, the select widget then follows the operating system, like a native select element.
-- Your own toggle: set the variable to dark or light on an ancestor of the select widget. One rule does it: `.night { --llselect-color-scheme: dark; }`.
+- Standard: declare `color-scheme: light dark` on `<html>`. With no variable set, the select component then follows the operating system, like a native select element.
+- Your own toggle: set the variable to dark or light on an ancestor of the select component. One rule does it: `.night { --llselect-color-scheme: dark; }`.
 - Built in: the themes set the variable for the classes and attributes in the table below. They count on the root element or on any ancestor.
-- Nested regions: the select widget inherits the variable from the nearest ancestor that sets it. So a card with `data-color-scheme="light"` keeps its select widgets light inside a dark page.
+- Nested regions: the select component inherits the variable from the nearest ancestor that sets it. So a card with `data-color-scheme="light"` keeps its select components light inside a dark page.
 - Per instance: the setting `colorScheme: 'dark'` or `'light'` wins over both CSS sources and the operating system.
-- Bootstrap 5.3 pages: set `data-bs-theme="dark"`, the attribute Bootstrap's own documentation uses. The bootstrap-5 theme takes its colors from Bootstrap's own variables, so that attribute drives it. A forced light select widget inside such a page keeps Bootstrap's dark colors.
-- If the variable is not set and the property does not list dark, the select widget stays light. This holds on a dark operating system too.
+- Bootstrap 5.3 pages: set `data-bs-theme="dark"`, the attribute Bootstrap's own documentation uses. The bootstrap-5 theme takes its colors from Bootstrap's own variables, so that attribute drives it. A forced light select component inside such a page keeps Bootstrap's dark colors.
+- If the variable is not set and the property does not list dark, the select component stays light. This holds on a dark operating system too.
 - Your own colors: redefine the `--llselect-*` variables in a rule like `.acme .llselect-root`, loaded after the theme stylesheet. Every theme file lists the names and roles at its top.
 - Your rule must beat the theme's dark rule, `.llselect-root[data-llselect-color-scheme='dark']`. It wins with higher specificity, or with equal specificity and a later position in the page.
 - A custom dark palette also needs the dark scheme: set `--llselect-color-scheme: dark` on the root element or an ancestor. The selected scheme controls the scrollbar's look. The color variables do not.
-- At runtime: the select widget rechecks the scheme when a class or attribute changes on the html or body element. It also rechecks when its popup opens or the operating system preference changes. The select widget does not recheck after a class or attribute change on any element other than html or body. If the change affects a select widget's scheme, call `refreshColorScheme()` for every affected select widget. Usually, the affected select widgets are on or inside that element.
-- Shadow DOM: load the theme stylesheet inside the shadow root. A built-in class or attribute may be on an ancestor outside the shadow root. The class or attribute takes effect only if the document outside the shadow root also loads the theme stylesheet. Inside a shadow root, the select widget does not detect class or attribute changes on the html or body element. The select widget also does not detect operating system preference changes. When one of these changes affects the scheme, call `refreshColorScheme()` for every select widget inside the shadow root. Refreshing a select widget whose scheme is unchanged changes nothing.
+- At runtime: the select component rechecks the scheme when a class or attribute changes on the html or body element. It also rechecks when its popup opens or the operating system preference changes. The select component does not recheck after a class or attribute change on any element other than html or body. If the change affects a select component's scheme, call `refreshColorScheme()` for every affected select component. Usually, the affected select components are on or inside that element.
+- Shadow DOM: load the theme stylesheet inside the shadow root. A built-in class or attribute may be on an ancestor outside the shadow root. The class or attribute takes effect only if the document outside the shadow root also loads the theme stylesheet. Inside a shadow root, the select component does not detect class or attribute changes on the html or body element. The select component also does not detect operating system preference changes. When one of these changes affects the scheme, call `refreshColorScheme()` for every select component inside the shadow root. Refreshing a select component whose scheme is unchanged changes nothing.
 - Live comparison: section 16 of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
 
 | Class or attribute on the root element or an ancestor | Selects |
@@ -499,19 +499,19 @@ Every theme ships a dark palette. The select widget checks two CSS sources, in t
 | attribute `data-bs-theme` | its value, dark or light |
 | attribute `data-color-scheme` | its value: dark, light, or auto to follow the operating system |
 
-Your page may already use a class or attribute from the table for another purpose. Select widgets on or inside an element with that class or attribute then take the scheme the table lists. To stop that class or attribute from setting the scheme, add a rule that beats its theme rule:
+Your page may already use a class or attribute from the table for another purpose. Select components on or inside an element with that class or attribute then take the scheme the table lists. To stop that class or attribute from setting the scheme, add a rule that beats its theme rule:
 
 ```css
 .hero.dark { --llselect-color-scheme: inherit; }
 ```
 
-With this rule, that element takes its parent's value of the variable. If that value is empty, the select widget falls back to the property. To keep the select widgets light even inside a dark page, write `light` instead of `inherit`.
+With this rule, that element takes its parent's value of the variable. If that value is empty, the select component falls back to the property. To keep the select components light even inside a dark page, write `light` instead of `inherit`.
 
 ### Subclassing (extending the library)
 
 Subclass only when settings cannot express it:
 
-1. **A new select kind** - new public API / state / interaction (e.g. a TreeSelect).
+1. **A new kind of select component** - new public API / state / interaction (e.g. a TreeSelect).
 2. **A framework wrapper** - e.g. `class VueLLSelect extends LLSelectSingle` for lifecycle glue (call `destroy()` on unmount). This is the main reason llselect is "low-level".
 3. **Core behavior with no setting** - e.g. replace `onPopupListItemActivated` semantics, or take full control of the item element via `createPopupListItemEl` (rich HTML, icons).
 
@@ -544,9 +544,9 @@ The development of `llselect` is influenced by the following FLOSS projects:
 
 ### Origin of This Project
 
-I have had the idea to implement this library at least since 2020, because I had enough of the terrible inflexibility of the HTML native `<select>`, but none of any existing libraries satisfies my requirements. Especially the performance issue when initializing a page containing hundreds of selects components.
+I have had the idea to implement this library at least since 2020, because I had enough of the terrible inflexibility of the HTML native `<select>`, but none of any existing libraries satisfies my requirements. Especially the performance issue when initializing a page containing hundreds of select components.
 
-But I clearly know that there are surprisingly lots of details in the behaviours of a select, and deeply know how time-costing to implementing such library, so I didn't try to write it.
+But I clearly know that there are surprisingly lots of details in the behaviours of a select component, and deeply know how time-costing to implementing such library, so I didn't try to write it.
 
 In 2024 I tried to wrote some drafts for it, but I still had no time to implement it, so the drafts were abandoned.
 

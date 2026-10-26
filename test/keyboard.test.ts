@@ -208,7 +208,7 @@ function focusedLabel(sel: LLSelectSingle<string> | LLSelectMultiple<string>): s
   return el ? el.textContent : null
 }
 
-test('ArrowDown on closed select opens and focuses first option', () => {
+test('ArrowDown on a closed select component opens and focuses first option', () => {
   const sel = mountSelect(['a', 'b', 'c'])
   fireKey(sel.triggerEl, 'ArrowDown')
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
@@ -323,7 +323,7 @@ test('close() resets focused state and aria-activedescendant', () => {
   assert.equal(sel.triggerEl.getAttribute('aria-activedescendant'), null)
 })
 
-test('Enter on closed select opens (does not select)', () => {
+test('Enter on a closed select component opens (does not select)', () => {
   const sel = mountSelect(['a', 'b', 'c'])
   fireKey(sel.triggerEl, 'Enter')
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')

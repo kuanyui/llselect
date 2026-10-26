@@ -265,8 +265,8 @@
 
   /**
    * ll-on-blur, plus the ngModel touched flag. The core fires onBlur once when
-   * DOM focus leaves the whole select widget, never for a move inside it. Mark
-   * the control touched first, as ngModel does on a native control's blur
+   * DOM focus leaves the whole select component, never for a move inside it.
+   * Mark the control touched first, as ngModel does on a native control's blur
    * (ngModel.js, the `blur` listener: `ng-touched` replaces `ng-untouched`),
    * then evaluate ll-on-blur, both in ONE digest with wireEventAttr's phase
    * check, so the expression already sees `$touched`. ngModel defers its own
@@ -292,18 +292,18 @@
    * ll-popup-list-leading-action-rows / -trailing-action-rows: read once at
    * link time to an array of the core's LLSelectPopupListActionRow descriptors.
    * Each is cloned - the app's array and objects stay untouched, so one array
-   * can serve several select widgets - and its onActivate is wrapped like an
-   * event expression: the core runs it from its own pointer / keyboard
+   * can serve several select components - and its onActivate is wrapped like
+   * an event expression: the core runs it from its own pointer / keyboard
    * handlers, outside any digest, so scope writes inside it (an ng-model value,
    * vm state) need $apply; errors go to $exceptionHandler. The wrapper hands
-   * onActivate the select widget instance as its first argument (MEDIUM-110):
-   * an instance call such as sel.setChosenItems([]) fires the core onChange
-   * outside the write-back gate, so it reaches ng-model through $setViewValue
-   * like a click - ng-change runs, the control turns dirty - while a plain
-   * model write stays programmatic. The core's own descriptor passes nothing;
-   * this argument is wrapper-only. textFn / disabledFn / createContentElFn run
-   * outside any digest, per render, like ll-popup-list-item-content-fn, and
-   * receive nothing.
+   * onActivate the select component instance as its first argument
+   * (MEDIUM-110): an instance call such as sel.setChosenItems([]) fires the
+   * core onChange outside the write-back gate, so it reaches ng-model through
+   * $setViewValue like a click - ng-change runs, the control turns dirty -
+   * while a plain model write stays programmatic. The core's own descriptor
+   * passes nothing; this argument is wrapper-only. textFn / disabledFn /
+   * createContentElFn run outside any digest, per render, like
+   * ll-popup-list-item-content-fn, and receive nothing.
    * @param {() => object} getSel - late-bound: the instance exists only after
    *   the settings are built
    * @returns {Array | null}
@@ -319,7 +319,7 @@
         throw new Error('llselect-angularjs: ' + attrs.$attr[name] + '[' + i + '] needs textFn and onActivate functions')
       }
       // Snapshot every field: a later reassignment on the app's object must
-      // not reach the select widget (API.md: the descriptors are copied).
+      // not reach the select component (API.md: the descriptors are copied).
       var activate = row.onActivate
       return {
         textFn: row.textFn,
@@ -375,9 +375,9 @@
   /**
    * The controller other directives on the same element `require` (by the
    * directive names `llselectSingle` / `llselectMultiple`) to reach the live
-   * select widget - the door for app-owned policy directives (an app-wide
+   * select component - the door for app-owned policy directives (an app-wide
    * permission-driven disable, etc.). instance() is late-bound: the
-   * select widget is constructed in the post-link, AFTER controllers
+   * select component is constructed in the post-link, AFTER controllers
    * instantiate, so call it from a $watch / event handler, never from a
    * controller constructor.
    */
@@ -395,7 +395,7 @@
      */
     this.instance = function () {
       if (!sel) {
-        throw new Error('llselect-angularjs: instance() is not available yet - the select widget is created at link time; call it from a $watch or event handler')
+        throw new Error('llselect-angularjs: instance() is not available yet - the select component is created at link time; call it from a $watch or event handler')
       }
       return sel
     }
@@ -423,8 +423,8 @@
   angular.module('llselect', [])
 
     /**
-     * App-wide defaults, set once in .config(). Without this a 40-select app
-     * repeats the same house style 40 times.
+     * App-wide defaults, set once in .config(). Without this an app with 40
+     * select components repeats the same house style 40 times.
      *
      * Only settings that are app-wide by nature are here. `uiTranslationPack` is the
      * clearest case - an app picks its language once, and llselect's chrome

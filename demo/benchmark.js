@@ -1,13 +1,13 @@
 // Mass-instantiation stress benchmark. REAL BROWSER ONLY (needs layout + the
 // CDN libraries loaded by benchmark.html). Builds many INDEPENDENT
-// select widgets for one scenario, renders them in the on-page scratch area,
-// and measures it.
+// select components for one scenario, renders them in the on-page scratch
+// area, and measures it.
 //
 // Fairness notes:
 // - Every library loads its minified CDN build; llselect loads its minified UMD
 //   (../dist/index.umd.js), so bundle size and parse cost are compared like for
 //   like. Native <select> is the baseline floor.
-// - Select widgets are built in small chunks with a yield between them, under a per-
+// - Select components are built in small chunks with a yield between them, under a per-
 //   library time budget, so a runaway library is cut off instead of freezing
 //   the tab. The yields are excluded from the reported compute time.
 // - Every op is guarded: an adapter that cannot drive a loaded version reports
@@ -29,7 +29,7 @@ const ORDER = ['native', 'llselect', 'choices', 'select2', 'tom-select', 'slim-s
 // Interaction tables exclude native <select>: its dropdown is browser / OS-driven,
 // so open / filter / close are not observable and choosing measures ~0 - no
 // discriminative value, and it would misrepresent the real perceived latency. Its
-// select widget is still built and left live below so a reader can feel it by hand.
+// select component is still built and left live below so a reader can feel it by hand.
 const IX_ORDER = ORDER.filter(k => k !== 'native')
 
 // Short, plain-language note per library AND per interaction phase, of the tuning
@@ -112,8 +112,9 @@ function iconSpan(text) {
 }
 function iconHtml(text) { return '<i class="mdi mdi-tag-outline" aria-hidden="true"></i> ' + text }
 
-// How many items to pre-select when the toggle is on: one for a single-select,
-// 10% for a multiple-select (renders a value / tags at build time).
+// How many items to pre-select when the toggle is on: one for a
+// single-select component, 10% for a multiple-select component (renders a
+// value / tags at build time).
 function preCount(items, opts) {
   if (!opts.preselect) { return 0 }
   return opts.multi ? Math.max(1, Math.ceil(items.length * 0.1)) : 1
@@ -151,11 +152,11 @@ const ADAPTERS = {
   llselect: {
     setup(mount, items, opts) {
       const Ctor = opts.multi ? window.llselect.LLSelectMultiple : window.llselect.LLSelectSingle
-      const o = { filterable: true, ariaLabel: 'Benchmark select' }
-      // Match the competitors: their multi-select widgets render each chosen
-      // item as a tag, so llselect renders tags too (not the lighter count
-      // summary), otherwise it would be doing less per-selection work than
-      // they do.
+      const o = { filterable: true, ariaLabel: 'Benchmark select component' }
+      // Match the competitors: their multi-select components render each
+      // chosen item as a tag, so llselect renders tags too (not the lighter
+      // count summary), otherwise it would be doing less per-selection work
+      // than they do.
       if (opts.multi) { o.triggerDisplay = 'tags' }
       if (opts.custom) {
         o.createPopupListItemContentElFn = (it) => iconSpan(it)
@@ -381,9 +382,9 @@ function clearStage() {
   stage.replaceChildren()
 }
 
-// Build all N select widgets in chunks, yielding between them. With the budget on, a
+// Build all N select components in chunks, yielding between them. With the budget on, a
 // library that overruns is cut off (timedOut). With noTimeout, it builds every
-// select widget no matter how long. Returns compute time (yields excluded), the time
+// select component no matter how long. Returns compute time (yields excluded), the time
 // each chunk still cost before paint (prepaint, see the column's legend) and
 // how many were built.
 async function buildAll(key, scen, runOpts) {
@@ -415,7 +416,7 @@ async function buildAll(key, scen, runOpts) {
     compute += performance.now() - c0
     // What the chunk still costs before paint, timed apart from Build total:
     // the microtasks it queued (a Promise, a MutationObserver callback) run at
-    // the await, then one forced style and layout pass covers the new select widgets
+    // the await, then one forced style and layout pass covers the new select components
     // for every library alike (a library whose microtask reads computed style
     // has already paid the style part there). Timers, rAF callbacks and a
     // microtask queued from inside one of those microtasks stay out of it.
@@ -493,15 +494,15 @@ async function runLib(key, renderAfter = true) {
   if (!available(key)) { setCell(key, 'built', 'not loaded'); return }
   clearStage()
   await raf()
-  status.textContent = `${DISPLAY[key].name}: building ${scen.widgets} select widget(s) x ${scen.itemsPer} items ...`
+  status.textContent = `${DISPLAY[key].name}: building ${scen.widgets} select component(s) x ${scen.itemsPer} items ...`
   await raf()
   const before = countNodes()
   const res = await buildAll(key, scen, runOptsFromDom())
   const nodes = countNodes() - before
 
-  // Teardown: time destroying every select widget just built (symmetric to Build total).
-  // This empties the scratch area - the mass select widgets are transient proof they
-  // rendered; the interaction section keeps its select widgets live for inspection.
+  // Teardown: time destroying every select component just built (symmetric to Build total).
+  // This empties the scratch area - the mass select components are transient proof they
+  // rendered; the interaction section keeps its select components live for inspection.
   const td0 = performance.now()
   for (const w of live) { try { ADAPTERS[w.key].teardown(w.h) } catch (e) { /* ignore */ } }
   const teardown = performance.now() - td0
@@ -555,7 +556,7 @@ function setRunning(on) {
   scrollLock(on)
 }
 
-// Block manual scrolling during a run: the harness scrolls each select widget into
+// Block manual scrolling during a run: the harness scrolls each select component into
 // view to measure it, and a user scroll could move one off-screen mid-measure
 // (an off-screen trigger will not open, zeroing its timings). Programmatic
 // scrollIntoView still works; only wheel / touch scrolling is prevented.
@@ -566,7 +567,7 @@ function scrollLock(on) {
     overlay = document.createElement('div')
     overlay.id = 'bench-overlay'
     overlay.innerHTML = '<div class="bench-overlay-box"><strong>Benchmark running</strong>'
-      + '<small>The page auto-scrolls to keep each select widget on-screen; manual scrolling is blocked. '
+      + '<small>The page auto-scrolls to keep each select component on-screen; manual scrolling is blocked. '
       + 'An off-screen trigger will not open, so its timings would read zero.</small>'
       + '<button id="bench-overlay-stop" type="button">Stop</button></div>'
     document.body.appendChild(overlay)
@@ -632,7 +633,7 @@ async function measureSizes() {
 // Interactive horizontal bar chart via Chart.js (loaded from the CDN, like the
 // competitor libraries - demo tooling, never part of what is measured). Default
 // metric is throughput (built / time), which stays comparable even when a
-// library timed out, because it is a rate per select widget rather than a total.
+// library timed out, because it is a rate per select component rather than a total.
 
 // One dataset per metric; the legend (Chart.js's own interactivity) toggles
 // each on/off. Metrics have very different scales, so each bar is normalized to
@@ -640,7 +641,7 @@ async function measureSizes() {
 // to share one axis; the tooltip shows the real value. darkColor: the same hue
 // lifted for the dark scheme (the light values sit under 3:1 on #1b1b1b).
 const METRICS = [
-  { key: 'throughput', label: 'Throughput (select widgets/sec)', color: '#2456a6', darkColor: '#7fb1f5', higherBetter: true, value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null), fmt: v => Math.round(v).toLocaleString() + ' /s' },
+  { key: 'throughput', label: 'Throughput (select components/sec)', color: '#2456a6', darkColor: '#7fb1f5', higherBetter: true, value: r => (r.compute > 0 ? r.built / r.compute * 1000 : null), fmt: v => Math.round(v).toLocaleString() + ' /s' },
   { key: 'compute', label: 'Build total (ms)', color: '#c9821a', darkColor: '#e3b341', higherBetter: false, value: r => r.compute, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
   { key: 'prepaint', label: 'Before paint (ms)', color: '#3a9dbf', darkColor: '#6fd3f0', higherBetter: false, value: r => r.prepaint, fmt: v => (v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString()) + ' ms' },
   { key: 'nodes', label: 'DOM nodes', color: '#7a3ea6', darkColor: '#ab7df8', higherBetter: false, value: r => r.nodes, fmt: v => Math.round(v).toLocaleString() },
@@ -751,7 +752,7 @@ function renderChart() {
 }
 
 // --- interaction latency --------------------------------------------------
-// One dedicated select widget per library, timing an open -> filter -> select -> close
+// One dedicated select component per library, timing an open -> filter -> select -> close
 // cycle, run for both single- and multiple-select (two tables + two charts).
 // Each phase is guarded, so a version drift on one op leaves the others intact.
 
@@ -871,7 +872,7 @@ async function measureInteraction(mode, key, stageEl, closeBtn) {
   // OPEN: measured ONCE - the FIRST open, which builds the popup's option DOM. A
   // library that keeps that DOM on close (Slim Select hides it with a CSS scaleY(0)
   // and never removes it) has cheap WARM reopens, so a median of repeats would hide
-  // the real build cost - the first open is the honest one. The select widget is freshly
+  // the real build cost - the first open is the honest one. The select component is freshly
   // set up here (not yet opened), so this open pays the build. to-paint.
   safeOp(() => d.close(h)); await raf()
   const openMs = await timeToPaint(() => d.open(h), stageEl, key)
@@ -1078,7 +1079,7 @@ function ixSetControlsDisabled(on) {
 
 // Build + measure the given libraries in the given modes. A whole-mode run (all
 // libraries) resets that mode's table + stage first; a single-library run rebuilds
-// just that library's select widget + row and leaves the others in place.
+// just that library's select component + row and leaves the others in place.
 async function ixRun(modeKeys, libKeys) {
   const status = document.getElementById('ix-status')
   ixSetControlsDisabled(true)
@@ -1097,7 +1098,7 @@ async function ixRun(modeKeys, libKeys) {
     for (const key of libKeys) {
       if (stopRequested) { break }
       if (!available(key)) { ixSetRow(mode, key, { na: 'not loaded' }); continue }
-      // Per-lib re-run: tear down this library's previous select widget / cell / result.
+      // Per-lib re-run: tear down this library's previous select component / cell / result.
       if (mode.live[key]) {
         try { ADAPTERS[key].teardown(mode.live[key]) } catch (e) { /* ignore */ }
         delete mode.live[key]; delete mode.results[key]
@@ -1127,7 +1128,7 @@ async function ixRun(modeKeys, libKeys) {
   }
   scrollLock(false)
   ixSetControlsDisabled(false)
-  status.textContent = stopRequested ? 'Stopped.' : 'Done. Lower is better. The select widgets are live - open them yourself.'
+  status.textContent = stopRequested ? 'Stopped.' : 'Done. Lower is better. The select components are live - open them yourself.'
 }
 
 // --- wire up --------------------------------------------------------------
@@ -1172,9 +1173,10 @@ measureSizes()
 
 // --- hands-on playground ---------------------------------------------------
 // Not a benchmark: no timing, no table. Every library builds one live
-// single-select and one live multi-select with n candidates, for judging the
-// feel by hand and for reproducing environment-specific issues (pinch-zoom
-// alignment and the like) against every library at once.
+// single-select component and one live multi-select component with n
+// candidates, for judging the feel by hand and for reproducing
+// environment-specific issues (pinch-zoom alignment and the like) against
+// every library at once.
 {
   const grid = document.getElementById('pg-grid')
   let pgLive = []

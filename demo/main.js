@@ -166,8 +166,9 @@ const selTransform = new LLSelectSingle(
 )
 selTransform.setItems(COUNTRIES)
 //#endregion
-// Position the select roughly in the middle of the container so scrolling
-// up clips the anchor below the container, and scrolling down clips it above.
+// Position the select component roughly in the middle of the container so
+// scrolling up clips the anchor below the container, and scrolling down clips
+// it above.
 const scrollContainer = document.querySelector('.scroll-container')
 const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
 scrollContainer.scrollTop = 10 * rem
@@ -182,7 +183,10 @@ btnPass.addEventListener('click', () => {
 const selPass = new LLSelectSingle(
   document.getElementById('mount-pass'),
   {
-  ariaLabel: 'pass-through select', placeholder: 'pass-through select' }  // default outsideClickBehavior
+  ariaLabel: 'pass-through select component',
+    placeholder: 'pass-through select component',
+    // default outsideClickBehavior
+  }
 )
 selPass.setItems(COUNTRIES)
 //#endregion
@@ -197,8 +201,8 @@ btnBlock.addEventListener('click', () => {
 const selBlock = new LLSelectSingle(
   document.getElementById('mount-block'),
   {
-  ariaLabel: 'block select',
-    placeholder: 'block select',
+  ariaLabel: 'block select component',
+    placeholder: 'block select component',
     outsideClickBehavior: 'block',
   }
 )
@@ -1273,9 +1277,9 @@ selActionRows.setChosenItems(DEFAULT_COUNTRIES)
 //#endregion
 
 //#region 15.2
-// One leading action row (above the items) on a single select. The row asks for a
-// name, adds it to the list, picks it and closes - all app code: a row never
-// closes the popup by itself.
+// One leading action row (above the items) on a single select component. The
+// row asks for a name, adds it to the list, picks it and closes - all app
+// code: a row never closes the popup by itself.
 const outAddRow = document.getElementById('out-add-row')
 let addRowItems = COUNTRIES.slice(0, 5)
 const selAddRow = new LLSelectSingle(
@@ -1365,7 +1369,7 @@ selPinnedRows.setChosenItems(PINNED_DEFAULTS)
 
 //#region 16.1
 // Nothing to configure: the page's Dark switch writes data-color-scheme on
-// <html>, a mark the themes turn into --llselect-color-scheme. The select widget
+// <html>, a mark the themes turn into --llselect-color-scheme. The select component
 // reads that variable and writes its decision to data-llselect-color-scheme.
 const outSchemePage = document.getElementById('out-scheme-page')
 const selSchemePage = new LLSelectSingle(
@@ -1512,7 +1516,7 @@ const i18nSelects = [
 // that per-item dir="auto" / <bdi> would solve (DESIGN.md "RTL").
 for (const sel of i18nSelects) { sel.setItems(MIXED_DIRECTION_COUNTRIES) }
 function applyI18nPack(packName) {
-  // RTL packs set `dir` on the mounts: the component inherits the
+  // RTL packs set `dir` on the mounts: the select component inherits the
   // environment's direction like a native element (there is NO rtl setting).
   // Flex mirrors the trigger slots (arrow lands LEFT, like native <select>),
   // logical padding mirrors the chips, fit-content popups would grow leftward.

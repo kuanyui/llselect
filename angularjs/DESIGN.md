@@ -112,7 +112,7 @@ For the record, reproducing ui-select exactly would also mean reproducing its bu
 
 Core ships `createHighlightedTextEl`, so rebuilding ui-select's `highlight` filter on it looks like the obvious reuse. It was considered and rejected for three reasons.
 
-- An AngularJS filter name is app-global. Apps use `| highlight:` outside select widgets too, for example in tables. If the bridge registered its own `highlight` filter, the module loaded last would silently replace the filter for the whole app. That breaks the file header's promise that the bridge does not conflict with a still-loaded ui-select.
+- An AngularJS filter name is app-global. Apps use `| highlight:` outside select components too, for example in tables. If the bridge registered its own `highlight` filter, the module loaded last would silently replace the filter for the whole app. That breaks the file header's promise that the bridge does not conflict with a still-loaded ui-select.
 - The two implementations behave differently, and a migrating app would see every difference:
   - ui-select's filter is a regex replace on the raw string. It never escapes, so markup inside item data reaches `ng-bind-html` and renders.
   - The core helper builds text nodes, so everything is escaped. That is safer, but the same data now renders differently.

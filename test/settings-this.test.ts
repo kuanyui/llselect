@@ -70,7 +70,7 @@ test('multiple: every settings function and action-row function runs with `this`
   sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListRowClass}:not(.${sel.classIdMap.chooseAllRowClass}):not(.${sel.classIdMap.popupListActionRowClass})`)!.click() // onBeforeChange, then onChange
   sel.toggleItem('apple') // unchooses it: onChange again, compareFn; the tag content fns ran on the click above
   sel.close() // open() moved focus into the filter input (onFocus); close() returns it to the trigger
-  sel.triggerEl.blur() // focus leaves the select widget: onBlur
+  sel.triggerEl.blur() // focus leaves the select component: onBlur
   const expected = [
     'filterable', 'compareFn', 'filterFn', 'itemToStringFn', 'itemToLangFn', 'itemDisabledFn', 'createPopupListItemContentElFn',
     'itemToGroupKeyFn', 'groupKeyToStringFn', 'groupKeyToLangFn', 'groupDisabledFn', 'createGroupLabelContentElFn',

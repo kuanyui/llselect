@@ -69,9 +69,9 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    *   keeping their order relative to each other, so reordering them is a
    *   change.
    * - `meta.source` says who initiated the change: `'user'` for a pointer or
-   *   keyboard interaction inside the select widget (an option toggle, a tag's
-   *   remove button, the clear button, the choose-all row, an action row's
-   *   `onActivate`), `'api'` for any programmatic call. See
+   *   keyboard interaction inside the select component (an option toggle, a
+   *   tag's remove button, the clear button, the choose-all row, an action
+   *   row's `onActivate`), `'api'` for any programmatic call. See
    *   {@link LLSelectChangeMeta}.
    * - `meta.reason` says what the change did: `'choose'` or `'unchoose'`
    *   with the one toggled item in `meta.item`, `'clear'` for an empty
@@ -83,8 +83,8 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * - A setter may be called from inside it. The nested `onChange` then
    *   reports `meta.source` `'api'`.
    * - A modal dialog may be opened, or focus moved, from inside it.
-   * - Focus that already moved outside the select widget is not reclaimed.
-   * - Moving focus outside the select widget closes the popup, as always.
+   * - Focus that already moved outside the select component is not reclaimed.
+   * - Moving focus outside the select component closes the popup, as always.
    * @group Events
    */
   onChange: ((chosenItems: readonly T[], previousChosenItems: readonly T[], meta: LLSelectChangeMeta<T>) => void) | null
@@ -263,8 +263,8 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
 export type LLSelectMultipleSettingsInput<T, GroupKey = string> = LLSelectSettingsInputOf<LLSelectMultipleSettings<T, GroupKey>>
 
 /**
- * Multi-selection select. Clicking an item toggles its membership in the
- * chosen-items set and keeps the popup open. Each item DOM gets
+ * Multi-selection select component. Clicking an item toggles its membership in
+ * the chosen-items set and keeps the popup open. Each item DOM gets
  * `aria-selected="true|false"`; the popup list gets
  * `aria-multiselectable="true"`.
  *
@@ -277,7 +277,7 @@ export type LLSelectMultipleSettingsInput<T, GroupKey = string> = LLSelectSettin
  *   {@link LLSelectBase}.
  * @typeParam S - resolved settings type, for subclasses extending the
  *   settings bag; see {@link LLSelectBase}.
- * @group Select classes
+ * @group Select component classes
  */
 export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelectMultipleSettings<T, GroupKey> = LLSelectMultipleSettings<T, GroupKey>> extends LLSelectBase<T, GroupKey, S> {
   /**
@@ -777,7 +777,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     // engines differ on whether a focusout fires (TODO.md). Either way is
     // wrong - a silent drop strands an open popup without its focus host and
     // skips onBlur; a fired focusout closes the popup and reports a blur for a
-    // click inside the select widget. Same rule as the popup's mousedown (A11Y.md).
+    // click inside the select component. Same rule as the popup's mousedown (A11Y.md).
     btn.addEventListener('mousedown', (ev) => { ev.preventDefault() })
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()

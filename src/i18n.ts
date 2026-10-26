@@ -35,7 +35,7 @@
 //   vetting; do not treat them as shipped-quality until this flag is removed.
 
 /**
- * All chrome strings of one select instance.
+ * All chrome strings of one select component.
  * - `placeholder` is NOT here: it is app copy, not chrome (language packs
  *   never set it).
  * - Static strings are plain strings; parameterized messages are functions

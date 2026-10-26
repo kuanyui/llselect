@@ -401,8 +401,8 @@
       else; a custom one means editing your copy of the file. The house style
       comes from <code>llselectConfigProvider</code> in <code>.config()</code>
       (see <code>app.js</code>) - this demo sets <code>arrow: 'chevron'</code>
-      app-wide, which is why the select widgets above have one without saying
-      so. A per-element <code>ll-arrow</code> wins over it.
+      app-wide, which is why the select components above have one without
+      saying so. A per-element <code>ll-arrow</code> wins over it.
     </p>
     <div class="demo-row" data-src="7">
       <llselect-single ll-aria-label="Country" ng-model="vm.country3" ll-arrow="triangle"
@@ -574,7 +574,8 @@
       <code>typingLimit</code> (default 1000 ms), so it is not instant. Its
       <code>elm.bind('blur')</code> trigger is inert here - blur does not bubble
       and the focusable element is llselect's inner trigger - but the
-      <code>$modelValue</code> watch is the path that matters for a select.
+      <code>$modelValue</code> watch is the path that matters for a
+      select component.
     </p>
     <details class="code-toggle"><summary>markup</summary><pre data-src-for="9"><code></code></pre></details>
   </section>
@@ -630,7 +631,7 @@
       The trigger shows chips, so the header takes over the count.
       <code>ng-change</code> rewrites it; <code>ll-on-open</code> and
       <code>ll-on-filter-query-change</code> rewrite the match count. The
-      button reaches the select widget through <code>instance()</code>.
+      button reaches the select component through <code>instance()</code>.
     </p>
     <div class="demo-row" data-src="12a">
       <llselect-multiple ll-aria-label="Countries (header count)" ng-model="vm.countriesHeader" ll-trigger-display="'tags'" ll-filterable="true"
@@ -700,7 +701,7 @@
     <h2>13. Action rows: ll-popup-list-leading-action-rows / ll-popup-list-trailing-action-rows / ll-popup-list-leading-rows-pinned</h2>
     <p>
       Commands rendered as option rows above or below the items, so the arrow
-      keys reach them. <code>onActivate</code> receives the select widget instance;
+      keys reach them. <code>onActivate</code> receives the select component instance;
       calling it counts as the user's own change, so <code>ng-change</code>
       runs like after a click. <code>textFn</code> and <code>disabledFn</code>
       run again after every change. The same four examples as the core demo's
@@ -743,8 +744,8 @@
     <h3>13c. Sort the list, above the items</h3>
     <p>
       The row flips the array behind <code>ll-options</code>, which
-      <code>$watchCollection</code> hands to the select widget. A filter query
-      re-applies to the new order, and the chosen item stays chosen.
+      <code>$watchCollection</code> hands to the select component. A filter
+      query re-applies to the new order, and the chosen item stays chosen.
     </p>
     <div class="demo-row" data-src="13c">
       <llselect-single ll-aria-label="Country (sort row)" ng-model="vm.countrySorted" ll-filterable="true" ll-popup-list-leading-action-rows="vm.sortRowsBefore"
@@ -781,10 +782,10 @@
       summary, the choose-all row and the no-results status. An app picks one
       once, in <code>.config()</code>:
       <code>llselectConfigProvider.defaults({ uiTranslationPack: llselectI18n.zhTW })</code>.
-      Select widgets already on screen are the app's job. This page runs the recipe
+      Select components already on screen are the app's job. This page runs the recipe
       from <a href="../../angularjs/api.html">API.md</a>, "Switching the UI
       language at runtime", verbatim in <code>app.js</code>. Pick a language:
-      every select widget on this page follows, chosen values survive, and 2a keeps
+      every select component on this page follows, chosen values survive, and 2a keeps
       its explicit <code>ll-placeholder</code>. The page's own copy stays
       English. RTL lives in the core demo, section 17.
     </p>

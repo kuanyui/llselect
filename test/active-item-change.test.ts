@@ -34,7 +34,7 @@ test('open reports the initial item after onOpen; close reports no item after on
   assert.deepEqual(log, ['open', 'active:b', 'close', 'active:-'])
 })
 
-test('a listener that closes the select widget during open, or reopens it during close, runs after the outer transition completed', () => {
+test('a listener that closes the select component during open, or reopens it during close, runs after the outer transition completed', () => {
   const log: string[] = []
   let closeOnReport = true
   let reopenOnReport = false
@@ -97,7 +97,7 @@ test('choose-all and action-row clicks activate nothing when a listener closed t
   assert.deepEqual(log, ['active:a', 'active:-'], 'the action row did not run')
 })
 
-test('a click whose listener re-rendered the select widget or changed the value activates nothing', () => {
+test('a click whose listener re-rendered the select component or changed the value activates nothing', () => {
   const log: string[] = []
   let reaction: 'rerender' | 'change' = 'rerender'
   const sel = new LLSelectSingle<string>(mount(), {
@@ -114,7 +114,7 @@ test('a click whose listener re-rendered the select widget or changed the value 
   const rowB = (): HTMLElement => sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')[1]!
   rowB().click()
   assert.deepEqual(log, ['active:a', 'active:b'])
-  assert.equal(sel.getChosenItem(), undefined, 'the rebuilt select widget got no pick')
+  assert.equal(sel.getChosenItem(), undefined, 'the rebuilt select component got no pick')
   reaction = 'change'
   key(sel.triggerEl, 'ArrowUp') // a, so the next click moves the row again
   rowB().click()
@@ -122,7 +122,7 @@ test('a click whose listener re-rendered the select widget or changed the value 
   assert.equal(sel.getChosenItem(), 'a', 'the listener\'s value stands; the click did not override it')
 })
 
-test('a filter keystroke whose listener re-rendered the select widget still reports the query change, since the query stands', () => {
+test('a filter keystroke whose listener re-rendered the select component still reports the query change, since the query stands', () => {
   const log: string[] = []
   const sel = new LLSelectSingle<string>(mount(), {
     ariaLabel: 'x',
@@ -281,7 +281,7 @@ test('hideChosenRows: choosing the active item removes its row and reports the r
   assert.deepEqual(log, ['active:a', 'active:b', 'active:c'])
 })
 
-test('destroy() while open reports no item; a listener that closes the select widget re-enters with the right baseline', () => {
+test('destroy() while open reports no item; a listener that closes the select component re-enters with the right baseline', () => {
   const log: string[] = []
   const sel = new LLSelectSingle<string>(mount(), { ariaLabel: 'x', onActiveItemChange: (item) => { log.push(show(item)) } })
   sel.setItems(['a', 'b'])

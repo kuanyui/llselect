@@ -4,8 +4,8 @@ import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle } from '../src/single.js'
 
 // Focus management (see docs/llm/A11Y.md "Focus"): how the popup reacts to focus
-// moving in and out of the select widget. Distinct from outside-click (pointer
-// dismissal) and keyboard (key -> action mapping).
+// moving in and out of the select component. Distinct from outside-click
+// (pointer dismissal) and keyboard (key -> action mapping).
 
 function mount(): { sel: LLSelectSingle<string>; outside: HTMLButtonElement } {
   setupDom('<!doctype html><html><body><div id="mount"></div><button id="outside">x</button></body></html>')

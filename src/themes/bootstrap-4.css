@@ -2,7 +2,7 @@
    theming), so all values are hard-coded to match BS4 defaults. */
 
 /* Color variables: the light values. Every color below reads one of these,
-   so a host page restyles the select widget by redefining them in a rule
+   so a host page restyles the select component by redefining them in a rule
    that targets .llselect-root (README "Customization"). The dark values are
    in the block at the end of this file. Roles, one per line. */
 .llselect-root {
@@ -51,8 +51,8 @@
   color: var(--llselect-control-fg);
   line-height: 1.5;
   /* BS4's reboot hardcodes body { text-align: left } (BS4 ships no RTL
-     support), which would pin the select widget's text left inside
-     dir="rtl". `start` re-follows the select widget's own direction;
+     support), which would pin the select component's text left inside
+     dir="rtl". `start` re-follows the select component's own direction;
      identical in LTR.
      BS3 sets nothing and BS5 leaves --bs-body-text-align undefined, so
      only this theme needs it. */
@@ -404,8 +404,8 @@
 /* Browser-painted parts, such as the popup scrollbar and a native control a
    host puts in the trigger or the popup, follow the resolved scheme. Never
    on .llselect-root: the resolver reads the computed color-scheme there. The
-   child combinator keeps an outer select widget's scheme off the trigger and
-   the popup of a select widget nested in it. */
+   child combinator keeps an outer select component's scheme off the trigger
+   and the popup of a select component nested in it. */
 .llselect-root[data-llselect-color-scheme='light'] > .llselect-trigger,
 .llselect-root[data-llselect-color-scheme='light'] > .llselect-popup {
   color-scheme: light;

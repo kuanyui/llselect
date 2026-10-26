@@ -45,8 +45,8 @@ export type LLSelectOutsideClickBehavior = 'pass-through' | 'block'
 /**
  * Who initiated a chosen-state change, delivered to `onChange` as
  * `meta.source`.
- * - `'user'`: a pointer or keyboard interaction inside the select widget - an
- *   option toggle, a tag's remove button, the clear button, the choose-all
+ * - `'user'`: a pointer or keyboard interaction inside the select component -
+ *   an option toggle, a tag's remove button, the clear button, the choose-all
  *   row, an action row's `onActivate`.
  * - `'api'`: any programmatic call - `setChosenItem` / `setChosenItems`,
  *   `toggleItem`, the `choose*` bulk ops, `setItems` reconciliation.
@@ -107,8 +107,8 @@ export interface LLSelectOpenMeta {
  *   value, not the close.
  * - `'escape'`: Escape or Alt+ArrowUp on the trigger or the filter input,
  *   and Escape on a control the app placed in a header / footer slot.
- * - `'outside'`: a mousedown or click outside the select widget.
- * - `'blur'`: DOM focus left the select widget.
+ * - `'outside'`: a mousedown or click outside the select component.
+ * - `'blur'`: DOM focus left the select component.
  * - `'toggle'`: a click on the trigger, or a `toggle()` call.
  * - `'api'`: a `close()` call.
  * - `'disabled'`: `setDisabled(true)`.
@@ -266,9 +266,9 @@ export interface LLSelectConstructionContext {
 }
 
 /**
- * Resolved (defaults applied) settings shared by all select variants.
- * Subclasses (`LLSelectSingle`, `LLSelectMultiple`) extend this with their
- * mode-specific options such as `onChange`.
+ * Resolved (defaults applied) settings shared by all select component
+ * variants. Subclasses (`LLSelectSingle`, `LLSelectMultiple`) extend this with
+ * their mode-specific options such as `onChange`.
  *
  * Settings are frozen after the constructor. What still changes at runtime:
  * - State changes by method, and never was a setting: the items
@@ -334,7 +334,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   ariaLabelledBy: string | null
   /**
-   * The select widget's visible label element - the one foreign element the library
+   * The select component's visible label element - the one foreign element the library
    * touches. Emulates native `<label for>` (which cannot target these divs)
    * in both directions:
    * - Kept **by reference**: the library reads the element's `id` once, at construction, and, when neither `ariaLabel` nor `ariaLabelledBy` is given, points `aria-labelledby` at it; assistive technology then reads the element's current text, so later text changes stay correct, while a later `id` change does not.
@@ -352,9 +352,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Equality predicate for item values - return `true` when `a` and `b` are the
    * same item.
-   * - Called **every** time the library compares two items; nothing is kept for a later call, except that the multiple select reuses its `hideChosenRows` subtraction until the base visible list (gathered, then filtered) or the chosen list is replaced:
-   *   - on each row render and in-place row rebuild (the chosen check: `isChosen` in the multiple select, the `aria-selected` compare in the single select), on each selection change, on open, on each active-row move between two item rows (the new active item is compared with the last reported one), on typeahead, in the `setItems` reconciliation, in `hideChosenRows` filtering, and in `'as-listed'` ordering;
-   *   - a custom function pays this on every call; in the multiple select the default is skipped by `Set`- and `Map`-based fast paths and by the duplicate-items warning, while the single select calls it as given.
+   * - Called **every** time the library compares two items; nothing is kept for a later call, except that the multiple select component reuses its `hideChosenRows` subtraction until the base visible list (gathered, then filtered) or the chosen list is replaced:
+   *   - on each row render and in-place row rebuild (the chosen check: `isChosen` in the multiple select component, the `aria-selected` compare in the single select component), on each selection change, on open, on each active-row move between two item rows (the new active item is compared with the last reported one), on typeahead, in the `setItems` reconciliation, in `hideChosenRows` filtering, and in `'as-listed'` ordering;
+   *   - a custom function pays this on every call; in the multiple select component the default is skipped by `Set`- and `Map`-based fast paths and by the duplicate-items warning, while the single select component calls it as given.
    * - Required for non-primitive `T`. The default compares by identity:
    *   `===`, except that `NaN` equals `NaN` (SameValueZero, the same rule
    *   `Set` uses), so every code path agrees on what "the same item" means.
@@ -369,22 +369,22 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   outsideClickBehavior: LLSelectOutsideClickBehavior
   /**
-   * Which color scheme the select widget shows: light or dark.
+   * Which color scheme the select component shows: light or dark.
    * - `'auto'`, the default: the library chooses the scheme from the two CSS sources below.
-   * - `'light'` or `'dark'`: the select widget shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables, which turn dark only under `data-bs-theme="dark"`; see the README section "Dark color scheme".
-   * - For `'auto'`, the library checks two sources in order. The root element is the element the select widget is mounted on, class `llselect-root`.
+   * - `'light'` or `'dark'`: the select component shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables, which turn dark only under `data-bs-theme="dark"`; see the README section "Dark color scheme".
+   * - For `'auto'`, the library checks two sources in order. The root element is the element the select component is mounted on, class `llselect-root`.
    *   1. The CSS variable `--llselect-color-scheme`, from the root element's computed style. The root or any ancestor may set it. The root's own declaration wins; otherwise the nearest ancestor's value is inherited. The value `light` or `dark` is the answer. The value `auto` follows the operating system's color preference: dark when dark is preferred, otherwise light. If the variable is not set, or has any other value, the library checks the next source.
    *   2. The CSS property `color-scheme`, from the root element's computed style. If it does not list `dark`, the answer is light. If it lists `dark` without `light`, the answer is dark. If it lists both, the answer follows the operating system's color preference. This is the property that also drives native form controls.
-   * - So the select widget uses light when the variable is not set and the property does not list `dark`. This holds on a dark operating system too.
+   * - So the select component uses light when the variable is not set and the property does not list `dark`. This holds on a dark operating system too.
    * - The themes set `--llselect-color-scheme` for these classes: `dark`, `theme-dark`, `dark-mode`, `theme-light`, `light-mode`. They recognize the attributes `data-theme` and `data-bs-theme` with the value `light` or `dark`. They recognize `data-color-scheme` with the value `light`, `dark` or `auto`. These classes and attributes count on the root element or on any ancestor. If your page selects the scheme with another class or attribute, add one CSS rule, for example `.night { --llselect-color-scheme: dark; }`.
    * - The result is written to the root element as `data-llselect-color-scheme="light"` or `data-llselect-color-scheme="dark"`. The themes apply their dark colors when the value is `dark`. Do not write that attribute yourself. This attribute name and the `--llselect-*` variable names are fixed; `cssClassPrefix` does not change them.
    * - If `colorScheme` is `'auto'`, the library queues the first check during construction. The check runs after the current script finishes, before the browser paints again. If `colorScheme` is `'light'` or `'dark'`, the library writes that value to the attribute during construction.
    * - Until the first check runs, the attribute holds a provisional value. The value is the latest `'auto'` result in the same document, or `light` if there is none yet. Only a result for a root inside the document counts.
    * - The library also checks when `open()` or `refreshColorScheme()` runs. It checks when the operating system's color preference changes. It also checks when an attribute of `<html>` or `<body>` changes.
-   * - If the select widget is inside a shadow root, an operating-system change does not reach it, and neither does an attribute change on `<html>` or `<body>`. The select widget still checks when `open()` or `refreshColorScheme()` runs.
-   * - `getColorScheme()` returns the result. If the library has not checked this select widget yet, `getColorScheme()` checks at once and returns the scheme.
+   * - If the select component is inside a shadow root, an operating-system change does not reach it, and neither does an attribute change on `<html>` or `<body>`. The select component still checks when `open()` or `refreshColorScheme()` runs.
+   * - `getColorScheme()` returns the result. If the library has not checked this select component yet, `getColorScheme()` checks at once and returns the scheme.
    * - An early check does not cancel the first queued check.
-   * - For a select widget inside another select widget's trigger or popup, the first queued check can still change the result.
+   * - For a select component inside another select component's trigger or popup, the first queued check can still change the result.
    * @group Color scheme
    */
   colorScheme: LLSelectColorScheme
@@ -402,9 +402,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Whether the trigger shows a clear (x) button that empties the selection.
    * - Default `false`.
-   * - Clearing sets the empty value: `undefined` for a single select, `[]`
-   *   for a multiple. It goes through the normal setters, so `onChange`
-   *   fires with that empty value. There is no separate clear event.
+   * - Clearing sets the empty value: `undefined` for a single
+   *   select component, `[]` for a multiple select component. It goes through
+   *   the normal setters, so `onChange` fires with that empty value. There is
+   *   no separate clear event.
    * - The empty value is not configurable, and no library makes it so:
    *   "nothing chosen" already exists before the first choice, so the value
    *   types carry `undefined` either way.
@@ -464,7 +465,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * Pass a custom function for fuzzy / domain-specific matching.
    * - Called once per candidate item on **every** recompute of the filtered list with a non-empty query:
    *   - on each filter input event outside an IME composition, and at the composition's end;
-   *   - on `setItems`, `rerender()` and a bulk selection write of the multiple select (`setChosenItems` and the choose-all methods, which run `rerender()`) while the popup is open with a query;
+   *   - on `setItems`, `rerender()` and a bulk selection write of the multiple select component (`setChosenItems` and the choose-all methods, which run `rerender()`) while the popup is open with a query;
    *   - never on open, which clears the query;
    *   - the matching subset is kept until the next recompute or the close that clears the query; nothing else is kept.
    * - `query` is the RAW input value: not trimmed and not lower-cased. Normalize
@@ -478,7 +479,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * The no-results message's visible content ELEMENT, without subclassing.
    * Mirrors `createPopupListItemContentElFn`: the library owns the message container
    * (`role="status"`, class, show/hide), this fills its content only.
-   * - Called **every** time a full list render (`renderPopupList`, only while the popup is open: on open, on each filter input event outside an IME composition, at the composition's end, and on the Esc that clears the query, on `setItems`, `rerender()` and a bulk selection write of the multiple select (`setChosenItems` and the choose-all methods), and on `toggleItem` while `hideChosenRows` is on or when its choose-all row rebuild falls back to a full render) ends with no visible item, so the query may differ between calls; nothing is kept for a later call.
+   * - Called **every** time a full list render (`renderPopupList`, only while the popup is open: on open, on each filter input event outside an IME composition, at the composition's end, and on the Esc that clears the query, on `setItems`, `rerender()` and a bulk selection write of the multiple select component (`setChosenItems` and the choose-all methods), and on `toggleItem` while `hideChosenRows` is on or when its choose-all row rebuild falls back to a full render) ends with no visible item, so the query may differ between calls; nothing is kept for a later call.
    * - The returned element replaces the message only when its text differs from the text shown: the status region is keyed on text, so while the message stays shown, unchanged text is neither re-rendered nor re-announced, and text that changes with the query is announced on each change; after the message hides, its next appearance renders again. Rich content whose markup varies while its text stays constant is therefore not re-rendered.
    * - `query` is the current filter query (`''` when the filter is inactive or
    *   the list is simply empty), so "Nothing matches <query>" is possible.
@@ -509,7 +510,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   `if (this.popupHeaderEl) { this.popupEl.prepend(this.popupHeaderEl) }`.
    *   The library never rewrites the popup's child list. A header above the
    *   filter input should hold no focusable controls, or Shift+Tab from the
-   *   input lands in it instead of leaving the select widget.
+   *   input lands in it instead of leaving the select component.
    * - Pointer: a click inside keeps DOM focus on the combobox host (the popup
    *   `mousedown` rule), so a button works without stealing keyboard input. A
    *   text field inside must call `stopPropagation` on its own `mousedown`.
@@ -647,11 +648,12 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   - `clearable` is off by default.
    *   - When `clearable` is off, no built-in user action removes the item.
    * - Your app can remove the disabled chosen item:
-   *   - For a single select, call `setChosenItem()` with another item or with `undefined`.
-   *   - For a multiple select, call `setChosenItems()` with a selection that excludes the item.
-   *   - For a multiple select, call `toggleItem()` with the item.
+   *   - For a single select component, call `setChosenItem()` with another item or with `undefined`.
+   *   - For a multiple select component, call `setChosenItems()` with a selection that excludes the item.
+   *   - For a multiple select component, call `toggleItem()` with the item.
    *   - In both classes, call `setItems()` with a list that no longer contains the item.
-   *   - For a multiple select, if the item is outside the current item list:
+   *   - For a multiple select component, if the item is outside the current
+   *     item list:
    *     - `chooseAll()` removes it from the selection.
    *     - If the current item list has no enabled item, or an enabled item in it is unchosen, `toggleAll()` calls `chooseAll()`, which removes it as above.
    * - An action row you supply can make any of those calls.
@@ -687,7 +689,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * Item -> display string, without subclassing.
    * - Called **every** time the library needs an item's text; nothing is kept for a later call:
    *   - for each item row on a full list render or in-place rebuild;
-   *   - on each trigger content render that shows item text: the single select with a chosen item; the multiple select in `'tags'` mode, unless `createTriggerContentElFn` returns an element, once per chosen item for the hidden value mirror, once more for the chip's remove-button name, and once more for the chip's text unless `createTagContentElFn` returns an element;
+   *   - on each trigger content render that shows item text: the single select component with a chosen item; the multiple select component in `'tags'` mode, unless `createTriggerContentElFn` returns an element, once per chosen item for the hidden value mirror, once more for the chip's remove-button name, and once more for the chip's text unless `createTagContentElFn` returns an element;
    *   - for each candidate on a recompute of the filtered list with the default filter;
    *   - on typeahead.
    * - `null` (default) = `String(item)`.
@@ -703,8 +705,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * the `lang` attribute. It is not a language name.
    * - Called **every** time the library writes an item's text; nothing is kept for a later call:
    *   - for each item row on a full list render or in-place rebuild;
-   *   - on each trigger content render of the single select with a chosen item;
-   *   - for each chip in the multiple select's `'tags'` mode, plus once for the hidden value mirror when exactly one chip shows and no custom trigger content replaces the chips;
+   *   - on each trigger content render of the single select component with a chosen item;
+   *   - for each chip in the multiple select component's `'tags'` mode, plus once for the hidden value mirror when exactly one chip shows and no custom trigger content replaces the chips;
    *   - never for the count summary.
    * - `null` (default) = the library writes no `lang` anywhere.
    * - A function returning `null` = the library writes no `lang` for that item;
@@ -726,14 +728,15 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   read in the English voice. With it, `<div role="option" lang="de">Deutsch</div>`.
    * - Written where the library shows that item's text:
    *   - the option row;
-   *   - the single select's trigger content slot and its hidden value mirror
-   *     whenever an item is chosen; custom trigger content inherits the slot's
-   *     code, and its own `lang` wins;
+   *   - the single select component's trigger content slot and its hidden
+   *     value mirror whenever an item is chosen; custom trigger content
+   *     inherits the slot's code, and its own `lang` wins;
    *   - a tag chip's text span, or its custom content.
    * - Not written on a chip's remove button, whose name mixes interface text
-   *   with the item's text, nor on the multiple select's count summary.
-   * - The multiple select's value mirror carries the code only while exactly
-   *   one chip shows; the joined texts of several items carry none.
+   *   with the item's text, nor on the multiple select component's count
+   *   summary.
+   * - The multiple select component's value mirror carries the code only while
+   *   exactly one chip shows; the joined texts of several items carry none.
    * - Read by the `itemToLang` method's default.
    * @group Items
    */
@@ -741,12 +744,13 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   /**
    * Item -> the visible content ELEMENT of its popup list row, without subclassing.
    * - Called once per visible row; nothing is kept for a later call:
-   *   - on **every** full list render (`renderPopupList`, only while the popup is open: on open, on each filter input event outside an IME composition, at the composition's end, and on the Esc that clears the query, on `setItems`, `rerender()` and a bulk selection write of the multiple select (`setChosenItems` and the choose-all methods), and on `toggleItem` while `hideChosenRows` is on or when its choose-all row rebuild falls back to a full render);
+   *   - on **every** full list render (`renderPopupList`, only while the popup is open: on open, on each filter input event outside an IME composition, at the composition's end, and on the Esc that clears the query, on `setItems`, `rerender()` and a bulk selection write of the multiple select component (`setChosenItems` and the choose-all methods), and on `toggleItem` while `hideChosenRows` is on or when its choose-all row rebuild falls back to a full render);
    *   - for each row rebuilt in place by `setChosenItem` or `toggleItem` while the popup is open.
    * - The trigger never calls it: single mode has `createTriggerContentElFn`, tags have `createTagContentElFn`.
-   * - When the select is an `LLSelectMultiple`, read chosen state through
-   *   `isChosen`.
-   * - When the select is an `LLSelectSingle`, compare with `getChosenItem()`.
+   * - When the select component is an `LLSelectMultiple`, read chosen state
+   *   through `isChosen`.
+   * - When the select component is an `LLSelectSingle`, compare with
+   *   `getChosenItem()`.
    * - Never derive content from the chosen ORDER.
    * - When `toggleItem` changes one item, only that row is rebuilt, so
    *   sibling rows would keep an old position.
@@ -787,7 +791,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * Item -> its group's key (identity), enabling optgroup rendering.
    * - Called with nothing kept for a later call except the gathered order:
    *   - on **every** full list render (`renderPopupList`, only while the popup is open), once per visible item in the scan that splits the list into groups, plus one lookahead read of the item that ends a grouped run, so a run that closes at the end of the list costs no extra read;
-   *   - in the group gather, once per item up to and including the first item whose non-null key recurs outside its own run (the whole list when it is contiguous), and once more per item when the list must be re-bucketed; the gathered order is kept until the next `setItems`, `rerender()` or bulk selection write of the multiple select (`setChosenItems` and the choose-all methods); there is no gather while `gatherGroups` is `false`;
+   *   - in the group gather, once per item up to and including the first item whose non-null key recurs outside its own run (the whole list when it is contiguous), and once more per item when the list must be re-bucketed; the gathered order is kept until the next `setItems`, `rerender()` or bulk selection write of the multiple select component (`setChosenItems` and the choose-all methods); there is no gather while `gatherGroups` is `false`;
    *   - whenever the library asks whether an item is disabled and `itemDisabledFn` did not already disable it.
    * - `null` (setting, default): grouping off - flat list, no labels.
    * - fn returns `null`: this item is in no group; renders ungrouped.
@@ -820,7 +824,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * the `gatherGroups` gather and the contiguous-run rendering use it).
    * - Called with nothing kept for a later call except the gathered order:
    *   - on **every** full list render (`renderPopupList`, only while the popup is open), in the scan that splits the list into groups: each item's key against the key that opened the current run, and each run's key against the runs already closed, stopping at the first match, to warn about a key that reappears;
-   *   - in the group gather: each item's key against the key that opened the current run, and each run's opening key against every key seen so far, stopping at the first match, which is what detects a non-contiguous list; when the list must be re-bucketed, each key against the buckets' keys as well; the gathered order is kept until the next `setItems`, `rerender()` or bulk selection write of the multiple select (`setChosenItems` and the choose-all methods); there is no gather while `gatherGroups` is `false`.
+   *   - in the group gather: each item's key against the key that opened the current run, and each run's opening key against every key seen so far, stopping at the first match, which is what detects a non-contiguous list; when the list must be re-bucketed, each key against the buckets' keys as well; the gathered order is kept until the next `setItems`, `rerender()` or bulk selection write of the multiple select component (`setChosenItems` and the choose-all methods); there is no gather while `gatherGroups` is `false`.
    * - `null` (default) = identity, the same rule as the default `compareFn`
    *   (`===`, plus `NaN` equals `NaN`); right for string / number keys.
    * - Supply only when `GroupKey` is an object without usable reference identity.
@@ -915,28 +919,28 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   reports its reason; a `close()` called while that close runs is a
    *   no-op.
    * - Additive with the protected `onClosed` hook, like {@link onOpen}: both run.
-   * - When focus leaving the select widget closes the popup, this fires **before**
+   * - When focus leaving the select component closes the popup, this fires **before**
    *   {@link onBlur}.
    * - `null` (default) = no consumer listener.
    * @group Events
    */
   onClose: ((meta: LLSelectCloseMeta) => void) | null
   /**
-   * Fired **after** DOM focus entered the select widget.
+   * Fired **after** DOM focus entered the select component.
    *
    * > No **before** counterpart: there is no `onBeforeFocus`, and the `focusin` / `focusout` events the library observes are not cancelable, so none could stop the move.
    *
    * - DOM focus is the element that receives keyboard input,
-   *   `document.activeElement`. Inside the select widget it can be the trigger, the
+   *   `document.activeElement`. Inside the select component it can be the trigger, the
    *   filter input, a chip's remove button, or a control the app placed in a
    *   header / footer slot.
-   * - Fires once when focus comes from outside the select widget or from nowhere:
+   * - Fires once when focus comes from outside the select component or from nowhere:
    *   Tab onto the trigger, a click on the trigger or on the label, a
    *   programmatic `triggerEl.focus()`, an `open()` call on an unfocused
-   *   select widget whose filter is active, which moves focus to the filter input
+   *   select component whose filter is active, which moves focus to the filter input
    *   **after** `onOpen`, or a click on the clear button or on a chip's remove
-   *   button while the select widget holds no focus, which focuses the trigger.
-   * - Does not fire for a move inside the select widget, such as `open()` moving
+   *   button while the select component holds no focus, which focuses the trigger.
+   * - Does not fire for a move inside the select component, such as `open()` moving
    *   focus from the trigger to the filter input.
    * - Has no link to the active row, the row the arrow keys move inside the
    *   popup; that row never holds DOM focus.
@@ -946,19 +950,19 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   onFocus: (() => void) | null
   /**
-   * Fired **after** DOM focus left the select widget.
+   * Fired **after** DOM focus left the select component.
    *
    * > No **before** counterpart: there is no `onBeforeBlur`, and the `focusin` / `focusout` events the library observes are not cancelable, so none could stop the move.
    *
-   * - Fires once when focus moves to an element outside the select widget or to
+   * - Fires once when focus moves to an element outside the select component or to
    *   nowhere: Tab away, a click on an element outside, a click on a
    *   non-focusable area.
-   * - Does not fire for a move inside the select widget.
+   * - Does not fire for a move inside the select component.
    * - When focus leaving closes the popup, {@link onClose} fires first, so
    *   `isOpened()` is already `false` here.
    * - Does not fire from `destroy()` or from `setDisabled(true)`.
    *   `setDisabled(true)` closes an open popup, which returns focus to the
-   *   trigger, inside the select widget; `destroy()` detaches the focus listeners
+   *   trigger, inside the select component; `destroy()` detaches the focus listeners
    *   before its teardown can move focus.
    * - While the popup is open with `outsideClickBehavior: 'block'`, an
    *   outside mousedown is default-prevented: focus stays, the popup closes,
@@ -983,7 +987,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   change it requests; when a filter keystroke, `setItems()`, `rerender()`
    *   or a chosen-state re-render moves the row; and on close with
    *   `undefined`, **after** {@link onClose}.
-   * - A listener may close or reopen the select widget. The report is the last step
+   * - A listener may close or reopen the select component. The report is the last step
    *   of `open()` and of `close()`, so that nested transition runs after the
    *   outer one completed. A click or a filter keystroke whose listener closed
    *   the popup activates nothing and reports no query change.
@@ -1269,8 +1273,8 @@ type PopupListSegment<T, GroupKey> =
   | { readonly group: true; readonly key: GroupKey; readonly index: number; readonly items: T[]; readonly els: HTMLElement[] }
 
 /**
- * Abstract base for all select variants. Owns DOM scaffolding, ARIA wiring,
- * positioning, keyboard navigation, lazy popup-list rendering, and
+ * Abstract base for all select component variants. Owns DOM scaffolding, ARIA
+ * wiring, positioning, keyboard navigation, lazy popup-list rendering, and
  * outside-click handling. Subclasses (`LLSelectSingle`, `LLSelectMultiple`)
  * own chosen-state, decide what happens on item click, and customise the
  * trigger text via `renderTriggerContent`.
@@ -1287,13 +1291,13 @@ type PopupListSegment<T, GroupKey> =
  *   `extends LLSelectBase<T, GroupKey, MySettings>` and `this.settings` is
  *   typed `MySettings`; the constructor's `subclassSettings` param then only
  *   accepts exactly the extra fields.
- * @group Select classes
+ * @group Select component classes
  */
 export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLSelectBaseSettings<T, GroupKey> = LLSelectBaseSettings<T, GroupKey>> {
   /**
-   * The caller-passed mount element, now decorated as the select's root.
-   * Library does not replace this node, so the caller's original reference,
-   * id, and data-* attributes stay valid.
+   * The caller-passed mount element, now decorated as the select component's
+   * root. Library does not replace this node, so the caller's original
+   * reference, id, and data-* attributes stay valid.
    * @group DOM elements
    */
   public readonly rootEl: HTMLElement
@@ -1419,12 +1423,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group State (protected)
    */
   protected focusedIndex = -1
-  /** Control-level disabled state (whole select); toggled via `setDisabled`. */
+  /** Control-level disabled state (whole select component); toggled via `setDisabled`. */
   private disabled = false
   /**
    * Becomes true in `destroy()` and stays true.
    * - The clear button's and the chip remove button's clicks check it after
-   *   their focus step, since an `onFocus` listener may destroy the select widget
+   *   their focus step, since an `onFocus` listener may destroy the select component
    *   there.
    * @internal
    */
@@ -1643,14 +1647,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     } as S
     // Loud failure over a silent a11y violation, like the group-order warn:
     // an unnamed combobox violates WAI-ARIA 1.2 (A11Y.md, name ladder).
-    // Once per page, not per instance - a page full of unnamed select widgets (a
+    // Once per page, not per instance - a page full of unnamed select components (a
     // benchmark, a sandbox) must not flood the console nor pay a per-build
     // cost; one nudge carries the rule.
     if (!warnedUnnamedName && this.settings.ariaLabel === null && this.settings.ariaLabelledBy === null) {
       warnedUnnamedName = true
       // The element rides along so DevTools can jump straight to the first
       // offender instead of leaving the developer to hunt.
-      console.warn('llselect: this select widget has no accessible name - pass ariaLabelledBy, ariaLabel, or labelEl. An unnamed combobox violates WAI-ARIA 1.2. (warned once per page; first offender:)', targetEl)
+      console.warn('llselect: this select component has no accessible name - pass ariaLabelledBy, ariaLabel, or labelEl. An unnamed combobox violates WAI-ARIA 1.2. (warned once per page; first offender:)', targetEl)
     }
     // Label click focuses the trigger (native <select> label behavior: focus
     // only, never open). The one listener destroy() must undo outside the root.
@@ -1662,11 +1666,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // Caller-passed element becomes root (preserves its id / external refs).
     this.rootEl = targetEl
     this.rootEl.classList.add(this.classIdMap.rootClass)
-    // Opt the select subtree out of browser scroll-anchoring. Without this,
-    // showing/hiding the popup on first open after a page load can trigger
-    // a window scroll as the browser tries to keep an anchor element in
-    // place. The property excludes this element and all descendants from
-    // being eligible anchor nodes.
+    // Opt the select component's subtree out of browser scroll-anchoring.
+    // Without this, showing/hiding the popup on first open after a page load
+    // can trigger a window scroll as the browser tries to keep an anchor
+    // element in place. The property excludes this element and all descendants
+    // from being eligible anchor nodes.
     this.rootEl.style.overflowAnchor = 'none'
     this.rootEl.replaceChildren()
     // This instance owns the element from now on (an older instance on it
@@ -1674,8 +1678,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // written now; an 'auto' instance writes a provisional value now, before
     // its subtree exists, decides in a microtask before the first paint
     // (decideBatch: one style flush for the roots outside other
-    // select widgets, a nested root after them) and re-decides on the shared
-    // page listeners.
+    // select components, a nested root after them) and re-decides on the
+    // shared page listeners.
     claimColorSchemeRoot(this.rootEl)
     if (this.settings.colorScheme === 'auto') {
       this.resolvedColorScheme = provisionalColorScheme(this.rootEl.ownerDocument)
@@ -1915,7 +1919,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // its two borders (Safari 18, GNOME Web; FIXME HIGH-705); `auto` gave
       // the same shrink-to-fit box in every engine tested, WebKit 18 and 26,
       // Chromium and Firefox. (isConnected: showPopover()
-      // throws on a disconnected element; a detached select widget is invisible
+      // throws on a disconnected element; a detached select component is invisible
       // either way.)
       this.popupEl.showPopover()
       this.popupEl.style.right = 'auto'
@@ -1950,7 +1954,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.filterInputEl.focus({ preventScroll: true })
     }
     restoreWindowScroll()
-    // Last, so a listener that closes the select widget does so after this open
+    // Last, so a listener that closes the select component does so after this open
     // completed, with no step above left to run on a closed popup.
     this.reportActiveItem()
   }
@@ -1968,7 +1972,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * already moved focus elsewhere, so we leave it alone.
    * - The return happens before the popup is hidden and before `onClose`:
    *   hiding a focused element first would let the browser drop focus to
-   *   `<body>`, a blur and focus pair the select widget never meant.
+   *   `<body>`, a blur and focus pair the select component never meant.
    * @group Open & close
    */
   public close(): void {
@@ -2039,7 +2043,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.onClosed()
     const onClose = this.settings.onClose
     onClose?.({ reason })
-    // Last, so a listener that reopens the select widget does so after this close
+    // Last, so a listener that reopens the select component does so after this close
     // completed, with no step above left to run on an open popup.
     this.reportActiveItem()
   }
@@ -2052,7 +2056,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * `close()` with a stated reason; see `pendingCloseReason`. Protected for
-   * the single select's pick, which closes with `'choose'`.
+   * the single select component's pick, which closes with `'choose'`.
    * @internal
    */
   protected closeWithReason(reason: LLSelectCloseReason): void {
@@ -2118,7 +2122,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   library drops the first instance's queued scheme decision and its
    *   automatic checks. Call `destroy()` on the first instance BEFORE
    *   building the second. After the rebuild, call no method of the first
-   *   instance; its `destroy()` would empty the element under the new select widget.
+   *   instance; its `destroy()` would empty the element under the new select component.
    * @group Lifecycle
    */
   public destroy(): void {
@@ -2248,7 +2252,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Replace the full list the user chooses from.
    * - A chosen item the new list does not hold is dropped.
    * - The input is shallow-copied; later external mutation does not affect
-   *   the select.
+   *   the select component.
    * - Items MUST be unique under `compareFn` (it defines item identity, and the
    *   selection is a set). Duplicates render stale selection DOM; the default
    *   compareFn warns once per page, a custom compareFn is the caller's
@@ -2320,10 +2324,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * The color scheme the select widget currently shows.
-   * - Returns the result of the latest decision, `'light'` or `'dark'`. If the library has not decided for this select widget yet, the method decides now and returns that result.
+   * The color scheme the select component currently shows.
+   * - Returns the result of the latest decision, `'light'` or `'dark'`. If the library has not decided for this select component yet, the method decides now and returns that result.
    * - A decision this early does not cancel the first queued decision.
-   * - For a select widget inside another select widget's trigger or popup, the first queued decision can still change the result.
+   * - For a select component inside another select component's trigger or popup, the first queued decision can still change the result.
    * - Never `'auto'`. The `colorScheme` setting explains how `'auto'` resolves.
    * @group Color scheme
    */
@@ -2336,9 +2340,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Decide the color scheme again, now.
    * - Call it after replacing a stylesheet that affects the scheme.
    * - Call it after a class or attribute that selects the scheme changes on the root element or on an ancestor below `<body>`. The same holds for the variable `--llselect-color-scheme` set there.
-   * - If you build the select widget before inserting its element into the document, call it after the insertion. A detached element has no computed style, so an `'auto'` select widget decided light.
+   * - If you build the select component before inserting its element into the document, call it after the insertion. A detached element has no computed style, so an `'auto'` select component decided light.
    * - The library checks by itself when the popup opens. Outside a shadow root, it also checks when the operating system's color preference changes, and when an attribute of `<html>` or `<body>` changes.
-   * - A select widget inside a shadow root misses those two automatic checks. Call it after such a change.
+   * - A select component inside a shadow root misses those two automatic checks. Call it after such a change.
    * - Changes nothing when the `colorScheme` setting is `'light'` or `'dark'`.
    * @group Color scheme
    */
@@ -2352,11 +2356,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.applyColorScheme()
   }
 
-  /** The read step: resolve the scheme from the page. In a batch, the roots outside other select widgets all read before any writes, so one style flush serves them (`decideBatch` in color-scheme.ts). */
+  /** The read step: resolve the scheme from the page. In a batch, the roots outside other select components all read before any writes, so one style flush serves them (`decideBatch` in color-scheme.ts). */
   private readColorScheme(): void {
     // An early decision leaves the queued one in place: a root inside another
-    // select widget may have read that select widget's provisional value, and
-    // the batch decides it again after the outer root has written.
+    // select component may have read that select component's provisional
+    // value, and the batch decides it again after the outer root has written.
     this.colorSchemeDecisionPending = false
     this.resolvedColorScheme = resolveColorScheme(readColorSchemeInputs(this.rootEl, this.settings.colorScheme))
     // A forced value says nothing about the page, and a detached root does
@@ -2386,7 +2390,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Recompute the trigger's tabindex from every input that owns it: disabled
    * state (with `focusableWhenDisabled`), and the filterable open cycle -
    * while the filter input is the focus host the trigger leaves the tab
-   * order, so the open select widget stays a single tab stop and Shift+Tab exits
+   * order, so the open select component stays a single tab stop and Shift+Tab exits
    * instead of landing on the trigger with the popup still open
    * (`docs/llm/A11Y.md` "Focus").
    */
@@ -2859,7 +2863,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         const stamp = this.captureStateStamp()
         this.setFocusedIndex(index)
         // The move reports the active item; a listener that closed, rebuilt
-        // or changed the select widget leaves nothing for this click to activate.
+        // or changed the select component leaves nothing for this click to activate.
         if (this.stateMovedSince(stamp)) { return }
         this.withUserChangeSource(() => this.onPopupListItemActivated(item))
       })
@@ -2872,8 +2876,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * needs an item's text: list rows, the single trigger text, default filter.
    * - Default reads the `itemToStringFn` setting, else `String(item)`.
    * - Configure via `itemToStringFn` (no subclass needed).
-   * - Override only when extending (a new select type); your override replaces
-   *   the default. For HTML content, subclass `createPopupListItemEl`.
+   * - Override only when extending (a new kind of select component); your
+   *   override replaces the default. For HTML content, subclass
+   *   `createPopupListItemEl`.
    * @group Subclassing: semantics
    */
   protected itemToString(item: T): string {
@@ -3464,7 +3469,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * ends in, plus `close()`, which resets the row by assignment. Items are
    * compared with `compareFn`, never by index or element, so an in-place row
    * rebuild stays silent. The report is stored before the listener runs, so a
-   * listener that closes or re-renders the select widget re-enters with the right
+   * listener that closes or re-renders the select component re-enters with the right
    * baseline.
    */
   private reportActiveItem(): void {
@@ -3589,7 +3594,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * The whole-life `focusin` / `focusout` pair on `rootEl`. Both bubble from
    * every descendant, so one listener each sees focus entering or leaving any
-   * part of the select widget. `relatedTarget` - the element focus comes from or goes
+   * part of the select component. `relatedTarget` - the element focus comes from or goes
    * to - tells an outside move from an inside one; `null` counts as outside
    * (a click on a non-focusable area, focus from nowhere). The inside test is
    * `rootEl.contains`, not "the trigger", so the filter input and slot
@@ -3856,7 +3861,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // Keep DOM focus where it is, as the chip's remove button does: a
     // mousedown would focus the button, the click rebuilds it with the focus
     // handed over, and the theme then hides it (`data-empty`), dropping focus
-    // to <body> and reporting a blur for a click inside the select widget.
+    // to <body> and reporting a blur for a click inside the select component.
     btn.addEventListener('mousedown', (ev) => { ev.preventDefault() })
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
@@ -3914,9 +3919,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Give the trigger DOM focus when no element inside the select widget holds it.
+   * Give the trigger DOM focus when no element inside the select component holds it.
    * - For the click of the clear button and of a chip's remove button: their
-   *   `mousedown` keeps focus where it is, so a click on an unfocused select widget
+   *   `mousedown` keeps focus where it is, so a click on an unfocused select component
    *   would otherwise leave it unfocused, with no `onFocus` and no later
    *   `onBlur` for a form's touched state. A native control takes focus on a
    *   click inside it.
@@ -3945,7 +3950,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Returns whether a listener moved the select widget since `stamp` was taken.
+   * Returns whether a listener moved the select component since `stamp` was taken.
    * - The three row clicks call it after their active-row move.
    * - `stamp` is what {@link captureStateStamp} returned before that move.
    * - True after an open, a close, a `rerender()`, a `destroy()`, a
@@ -3987,7 +3992,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   engine.
    * - Where the engine also fires `focusout` on that removal, its
    *   `relatedTarget` is `null`. The open popup's focus-out guard reads that
-   *   as focus leaving the select widget.
+   *   as focus leaving the select component.
    * - Moving focus first makes the new button the `relatedTarget`, inside the
    *   root.
    * A builder override that returns the SAME element every time is allowed:
@@ -4022,7 +4027,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       next.focus({ preventScroll: true })
       // An override may return a non-focusable element; then the old button
       // still holds focus and removing it would drop focus to <body>. Keep it
-      // in the select widget instead.
+      // in the select component instead.
       if (this.focusedElementIn(next) === null) { this.triggerEl.focus({ preventScroll: true }) }
     }
     old.remove()
@@ -4186,7 +4191,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.focusedRow = null
     this.focusedIndex = this.findNextEnabledIndex(0, 1, this.getVisibleItems())
     this.renderPopupList()
-    // The render reports the active item; a listener that closed the select widget
+    // The render reports the active item; a listener that closed the select component
     // reset the query, so no change of this keystroke is left to report: the
     // popup is closed, or the reset text differs from the typed one. A
     // rebuild or a value change under it keeps the query, which the app must

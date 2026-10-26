@@ -17,7 +17,7 @@
   "categorizeByGroup": true,
   "parametersFormat": "table",
   "groupOrder": [
-    "Select classes", "Settings", "Pack contract", "Language packs", "Icons", "Positioning", "CSS & DOM",
+    "Select component classes", "Settings", "Pack contract", "Language packs", "Icons", "Positioning", "CSS & DOM",
     "Selection", "Items", "Open & close",
     "Accessible name", "Events", "Trigger", "Filtering", "Grouping", "Choose-all", "Popup", "Disabling", "Color scheme", "i18n", "CSS",
     "Lifecycle", "DOM elements",

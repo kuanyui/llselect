@@ -74,7 +74,7 @@ Every content function receives exactly the state that makes the library call it
 
 ### 4.3 Data functions must stay data functions
 
-`compareFn`, `filterFn`, `itemToStringFn`, `itemToGroupKeyFn`, `groupKeyCompareFn`, `groupKeyToStringFn`, `groupDisabledFn` and `itemDisabledFn` run inside the filter, sort, group and render loops. Today they take data and return data. They can be shared between instances and tested without a select widget.
+`compareFn`, `filterFn`, `itemToStringFn`, `itemToGroupKeyFn`, `groupKeyCompareFn`, `groupKeyToStringFn`, `groupDisabledFn` and `itemDisabledFn` run inside the filter, sort, group and render loops. Today they take data and return data. They can be shared between instances and tested without a select component.
 
 - `filterFn` calling `setItems()` recurses, and the outer pass then overwrites the newer result.
 - `itemToGroupKeyFn` calling `getVisibleItems()` under `gatherGroups: true` recurses forever, because the grouped cache is written after the pass.
@@ -82,7 +82,7 @@ Every content function receives exactly the state that makes the library call it
 
 ### 4.4 The rule could not be uniform anyway
 
-- The translation pack's functions (`chooseAllRowText`, `triggerCountSummary`, `tagRemoveButtonAriaLabel`) take numbers and strings only. The i18n bundle is built without the select widget.
+- The translation pack's functions (`chooseAllRowText`, `triggerCountSummary`, `tagRemoveButtonAriaLabel`) take numbers and strings only. The i18n bundle is built without the select component.
 - The exported pure helper `gatherItemsByGroupKey` shares the grouping function types. It would need a wrapper or a second type.
 - The six construction-time functions would need a "not yet" rule. The exceptions would move from the signatures into prose.
 
@@ -96,7 +96,7 @@ The settings interfaces would have to name the classes. A defaulted `Instance` t
 
 ### 4.7 Precedent goes both ways, and the narrow side fits this library
 
-react-select, MUI Autocomplete, Downshift, Headless UI, Vuetify slots and ng-select templates pass data or a narrow context; the instance comes through a separate ref. Selectize and Tom Select bind the instance as `this`; Kendo passes `e.sender` in events; flatpickr, Tippy and AG Grid pass the instance to event hooks but not to data functions; TanStack Table puts `table` inside the cell context. No maintainer statement of "why not" was found. A framework-agnostic select widget configured by a plain object and read by arrow functions sits with the first group.
+react-select, MUI Autocomplete, Downshift, Headless UI, Vuetify slots and ng-select templates pass data or a narrow context; the instance comes through a separate ref. Selectize and Tom Select bind the instance as `this`; Kendo passes `e.sender` in events; flatpickr, Tippy and AG Grid pass the instance to event hooks but not to data functions; TanStack Table puts `table` inside the cell context. No maintainer statement of "why not" was found. A framework-agnostic select component configured by a plain object and read by arrow functions sits with the first group.
 
 ### 4.8 Why not "events only"
 

@@ -36,7 +36,7 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * > Pairs with `onBeforeChange`, which runs **before** a user change and can stop it.
    *
    * - `meta.source` says who initiated the change: `'user'` for a pointer or
-   *   keyboard interaction inside the select widget, `'api'` for any programmatic
+   *   keyboard interaction inside the select component, `'api'` for any programmatic
    *   call. See {@link LLSelectChangeMeta}.
    * - `meta.reason` says what the change did: `'choose'` with the item in
    *   `meta.item`, `'clear'` for an empty write, or `'items'` for a
@@ -46,8 +46,8 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * - A setter may be called from inside it. The nested `onChange` then
    *   reports `meta.source` `'api'`.
    * - A modal dialog may be opened, or focus moved, from inside it.
-   * - Focus that already moved outside the select widget is not reclaimed.
-   * - Moving focus outside the select widget closes the popup, as always.
+   * - Focus that already moved outside the select component is not reclaimed.
+   * - Moving focus outside the select component closes the popup, as always.
    * - A pick closes the popup when the handler returns, if it is still open.
    * - Other changes leave the popup as it is.
    * @group Events
@@ -112,15 +112,16 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
 export type LLSelectSingleSettingsInput<T, GroupKey = string> = LLSelectSettingsInputOf<LLSelectSingleSettings<T, GroupKey>>
 
 /**
- * Single-selection select. Picking an item replaces any prior chosen item
- * and closes the popup. Use `setChosenItem(undefined)` to clear the selection.
+ * Single-selection select component.
+ * Picking an item replaces any prior chosen item and closes the popup.
+ * Use `setChosenItem(undefined)` to clear the selection.
  *
  * @typeParam T - item type. Supply your own `compareFn` for non-primitive `T`.
  * @typeParam GroupKey - group key type of `itemToGroupKeyFn`; see
  *   {@link LLSelectBase}.
  * @typeParam S - resolved settings type, for subclasses extending the
  *   settings bag; see {@link LLSelectBase}.
- * @group Select classes
+ * @group Select component classes
  */
 export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSingleSettings<T, GroupKey> = LLSelectSingleSettings<T, GroupKey>> extends LLSelectBase<T, GroupKey, S> {
   /**

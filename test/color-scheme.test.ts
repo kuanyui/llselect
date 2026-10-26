@@ -44,7 +44,7 @@ test('resolveColorScheme: any other variable text falls through to the declared 
   assert.equal(resolveColorScheme({ setting: 'auto', variable: 'DARK', declared: 'normal', osPrefersDark: true }), 'light')
 })
 
-// --- the select widget -------------------------------------------------------
+// --- the select component ----------------------------------------------------
 
 test("'auto' writes the attribute on the root; with nothing declared the result is light", async () => {
   const sel = new LLSelectSingle<string>(mount())
@@ -106,7 +106,7 @@ test('a forced setting is written at construction, with no microtask', () => {
   assert.equal(sel.rootEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
 })
 
-test('the shared pass reads every select widget before it writes any attribute', async () => {
+test('the shared pass reads every select component before it writes any attribute', async () => {
   setupDom('<!doctype html><html><body></body></html>')
   const roots: HTMLElement[] = []
   for (let i = 0; i < 3; i++) { const el = document.createElement('div'); document.body.appendChild(el); roots.push(el) }
@@ -129,7 +129,7 @@ test('the shared pass reads every select widget before it writes any attribute',
   window.getComputedStyle = originalGetComputedStyle
 })
 
-test('a forced setting does not become the provisional value of later auto select widgets', async () => {
+test('a forced setting does not become the provisional value of later auto select components', async () => {
   setupDom('<!doctype html><html><body><div id="forced"></div><div id="auto"></div></body></html>')
   const forced = document.getElementById('forced'), auto = document.getElementById('auto')
   assert.ok(forced); assert.ok(auto)
@@ -141,7 +141,7 @@ test('a forced setting does not become the provisional value of later auto selec
   assert.equal(auto.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light')
 })
 
-test('the shared observer: an attribute change on <html> makes every select widget decide again', async () => {
+test('the shared observer: an attribute change on <html> makes every select component decide again', async () => {
   // jsdom has a MutationObserver and no matchMedia; the variable lives on the
   // roots themselves (jsdom computes no inherited custom property).
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
@@ -222,7 +222,7 @@ test('a document without <html> throws neither in the observer callback nor at w
   await new Promise((resolve) => setTimeout(resolve, 0))
   assert.deepEqual(errors, [])
   // the wiring: a fresh document whose <html> is gone before its first
-  // select widget
+  // select component
   setupDom()
   document.removeChild(document.documentElement)
   const sel = new LLSelectSingle<string>(document.createElement('div'))
@@ -244,7 +244,7 @@ test('a document wired before <body> exists observes the <body> that arrives lat
   assert.equal(sel.getColorScheme(), 'dark', 'the <body> that arrived after the wiring is observed')
 })
 
-test('a batch reads every select widget before it writes any attribute', async () => {
+test('a batch reads every select component before it writes any attribute', async () => {
   setupDom('<!doctype html><html><body></body></html>')
   const log: string[] = []
   const originalGetComputedStyle = window.getComputedStyle
@@ -268,7 +268,7 @@ test('a batch reads every select widget before it writes any attribute', async (
   window.getComputedStyle = originalGetComputedStyle
 })
 
-test("the provisional value is the document's last decision: a select widget built after a dark decision starts dark", async () => {
+test("the provisional value is the document's last decision: a select component built after a dark decision starts dark", async () => {
   setupDom('<!doctype html><html><body><div id="a" style="--llselect-color-scheme: dark"></div><div id="b" style="--llselect-color-scheme: dark"></div></body></html>')
   const a = document.getElementById('a'), b = document.getElementById('b')
   assert.ok(a); assert.ok(b)
@@ -282,7 +282,7 @@ test("the provisional value is the document's last decision: a select widget bui
   assert.equal(b.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark')
 })
 
-test('several select widgets built in one task carry the provisional value, then have all decided after one microtask', async () => {
+test('several select components built in one task carry the provisional value, then have all decided after one microtask', async () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b" style="--llselect-color-scheme: dark"></div></body></html>')
   const a = document.getElementById('a'), b = document.getElementById('b')
   assert.ok(a); assert.ok(b)
@@ -318,7 +318,7 @@ test("getColorScheme() on a replaced older instance does not cancel the newer in
   assert.equal(el.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'dark', 'the newer instance still decided in the batch')
 })
 
-test('a select widget built on a detached element decides light; refreshColorScheme() after insertion decides again', () => {
+test('a select component built on a detached element decides light; refreshColorScheme() after insertion decides again', () => {
   setupDom()
   const el = document.createElement('div')
   const sel = new LLSelectSingle<string>(el)
@@ -341,7 +341,7 @@ test('destroy() removes the attribute from the root and cancels a pending first 
   assert.equal(early.rootEl.hasAttribute(COLOR_SCHEME_ATTRIBUTE), false, 'destroyed before the batch ran: the batch writes nothing back')
 })
 
-test("a decision on a detached root is not remembered: the next select widget's provisional value is the last connected decision", async () => {
+test("a decision on a detached root is not remembered: the next select component's provisional value is the last connected decision", async () => {
   setupDom('<!doctype html><html><body><div id="a" style="--llselect-color-scheme: dark"></div><div id="c"></div></body></html>')
   const a = document.getElementById('a'), c = document.getElementById('c')
   assert.ok(a); assert.ok(c)
@@ -360,8 +360,8 @@ test("a decision on a detached root is not remembered: the next select widget's 
 
 // jsdom computes no inherited color-scheme. This emulates the themes' rule
 // that gives the trigger and the popup the scheme of their root's attribute:
-// a root inside another select widget sees the outer root's attribute, every
-// other root sees page.scheme, the scheme the page declares. A root in
+// a root inside another select component sees the outer root's attribute,
+// every other root sees page.scheme, the scheme the page declares. A root in
 // `declared` sees its own declaration instead.
 function emulateInheritedColorScheme(page: { scheme: string }, declared = new Map<Element, string>()): () => void {
   const original = window.getComputedStyle
@@ -374,8 +374,8 @@ function emulateInheritedColorScheme(page: { scheme: string }, declared = new Ma
   return () => { window.getComputedStyle = original }
 }
 
-// An outer select widget with an inner select widget in its popup header, built
-// in one task.
+// An outer select component with an inner select component in its popup
+// header, built in one task.
 function buildNestedPair(): { outerEl: HTMLElement, innerEl: HTMLElement, inner: LLSelectSingle<string> } {
   const outerEl = document.createElement('div')
   document.body.appendChild(outerEl)
@@ -386,7 +386,7 @@ function buildNestedPair(): { outerEl: HTMLElement, innerEl: HTMLElement, inner:
   return { outerEl, innerEl, inner }
 }
 
-test("the first batch: a root inside another select widget's popup reads after the outer root wrote its attribute", async () => {
+test("the first batch: a root inside another select component's popup reads after the outer root wrote its attribute", async () => {
   setupDom()
   const restore = emulateInheritedColorScheme({ scheme: 'dark' })
   const { outerEl, innerEl } = buildNestedPair()
@@ -396,7 +396,7 @@ test("the first batch: a root inside another select widget's popup reads after t
   restore()
 })
 
-test("the shared pass: a root inside another select widget's popup reads after the outer root wrote its attribute", async () => {
+test("the shared pass: a root inside another select component's popup reads after the outer root wrote its attribute", async () => {
   setupDom()
   const page = { scheme: 'light' }
   const restore = emulateInheritedColorScheme(page)
@@ -432,7 +432,7 @@ test('the first batch: nested roots built inner first still decide outer first',
   restore()
 })
 
-test("an early getColorScheme() on a root inside another select widget's popup is corrected by the first batch", async () => {
+test("an early getColorScheme() on a root inside another select component's popup is corrected by the first batch", async () => {
   setupDom()
   const restore = emulateInheritedColorScheme({ scheme: 'dark' })
   const { innerEl, inner } = buildNestedPair()
@@ -445,8 +445,8 @@ test("an early getColorScheme() on a root inside another select widget's popup i
 
 // Root a is a custom element that observes the output attribute: its callback
 // runs inside the library's setAttribute. When a turns dark, the callback
-// destroys select widget b and builds a forced-light select widget on b's root
-// while the batch still has b's decision to write.
+// destroys select component b and builds a forced-light select component on
+// b's root while the batch still has b's decision to write.
 function observeAndReplace(): { aEl: HTMLElement, bEl: HTMLElement, state: { b?: LLSelectSingle<string>, replacement?: LLSelectSingle<string> } } {
   const bEl = document.createElement('div')
   const state: { b?: LLSelectSingle<string>, replacement?: LLSelectSingle<string> } = {}
@@ -463,7 +463,7 @@ function observeAndReplace(): { aEl: HTMLElement, bEl: HTMLElement, state: { b?:
   return { aEl, bEl, state }
 }
 
-test("the first batch: a select widget replaced inside another root's write keeps the replacement's scheme", async () => {
+test("the first batch: a select component replaced inside another root's write keeps the replacement's scheme", async () => {
   setupDom()
   const { aEl, bEl, state } = observeAndReplace()
   aEl.style.setProperty('--llselect-color-scheme', 'dark')
@@ -476,7 +476,7 @@ test("the first batch: a select widget replaced inside another root's write keep
   assert.equal(state.replacement.getColorScheme(), 'light')
 })
 
-test("the shared pass: a select widget replaced inside another root's write keeps the replacement's scheme", async () => {
+test("the shared pass: a select component replaced inside another root's write keeps the replacement's scheme", async () => {
   setupDom()
   const { aEl, bEl, state } = observeAndReplace()
   new LLSelectSingle<string>(aEl)
@@ -492,12 +492,13 @@ test("the shared pass: a select widget replaced inside another root's write keep
   assert.equal(state.replacement.getColorScheme(), 'light')
 })
 
-// --- the themes' color-scheme rules on nested select widgets -----------------
+// --- the themes' color-scheme rules on nested select components --------------
 
 // jsdom inherits no color-scheme, but it applies a stylesheet's rules to the
 // elements they match: enough to see which root's rule reaches the trigger
-// and the popup of a select widget nested in another select widget's popup.
-test("every theme gives a nested select widget's trigger and popup the scheme of its own root", () => {
+// and the popup of a select component nested in another select component's
+// popup.
+test("every theme gives a nested select component's trigger and popup the scheme of its own root", () => {
   for (const theme of ['vanilla', 'bootstrap-3', 'bootstrap-4', 'bootstrap-5', 'tailwind']) {
     setupDom()
     const style = document.createElement('style')

@@ -67,8 +67,8 @@
   <p>
     Two browser benchmarks against the native <code>&lt;select&gt;</code> (the
     baseline floor), Choices.js, Select2, Tom Select and Slim Select: building
-    many select widgets at once (mass instantiation), and interacting with one
-    (interaction latency). Everything runs in your browser.
+    many select components at once (mass instantiation), and interacting with
+    one (interaction latency). Everything runs in your browser.
     <strong>Lower is better;</strong> numbers depend on your machine.
   </p>
 
@@ -84,8 +84,8 @@
 
   <h2 id="mass">Mass instantiation</h2>
   <p>
-    A stress test: build many independent select widgets at once and measure
-    it, with the select widgets actually rendered in the scroll area below.
+    A stress test: build many independent select components at once and measure
+    it, with the select components actually rendered in the scroll area below.
   </p>
   <p class="bench-warn">
     Heavy. Each library gets a time budget (about 20 s); a competitor that cannot
@@ -98,16 +98,16 @@
     <label>Scenario
       <select id="scenario">
         <optgroup label="Single-select">
-          <option value="s-100x100" selected>100 select widgets x 100 items (everyday)</option>
-          <option value="s-1000x10">1,000 select widgets x 10 items</option>
-          <option value="s-10000x10">10,000 select widgets x 10 items</option>
-          <option value="s-10x10000">10 select widgets x 10,000 items</option>
+          <option value="s-100x100" selected>100 select components x 100 items (everyday)</option>
+          <option value="s-1000x10">1,000 select components x 10 items</option>
+          <option value="s-10000x10">10,000 select components x 10 items</option>
+          <option value="s-10x10000">10 select components x 10,000 items</option>
         </optgroup>
         <optgroup label="Multiple-select">
-          <option value="m-100x100">100 select widgets x 100 items</option>
-          <option value="m-1000x10">1,000 select widgets x 10 items</option>
-          <option value="m-10000x10">10,000 select widgets x 10 items</option>
-          <option value="m-10x10000">10 select widgets x 10,000 items</option>
+          <option value="m-100x100">100 select components x 100 items</option>
+          <option value="m-1000x10">1,000 select components x 10 items</option>
+          <option value="m-10000x10">10,000 select components x 10 items</option>
+          <option value="m-10x10000">10 select components x 10,000 items</option>
         </optgroup>
       </select>
     </label>
@@ -115,7 +115,7 @@
     <div class="bench-row">
       <label><input type="checkbox" id="custom"> custom renderer (MDI icon per item)</label>
       <label><input type="checkbox" id="preselect" checked> pre-select at build time (single: 1 item, multi: 10%)</label>
-      <label><input type="checkbox" id="no-timeout"> no timeout (build every select widget; may take minutes or run out of memory)</label>
+      <label><input type="checkbox" id="no-timeout"> no timeout (build every select component; may take minutes or run out of memory)</label>
     </div>
     <div class="bench-row">
       <button id="run-all">Run all</button>
@@ -136,15 +136,15 @@
 
   <table id="results">
     <caption>One row per library. Every number is for the WHOLE run - the total
-      across all select widgets built, not an average per select widget.</caption>
+      across all select components built, not an average per select component.</caption>
     <thead>
       <tr>
         <th>Library</th>
         <th>Built / target</th>
-        <th>Build total (all select widgets, ms)</th>
-        <th>Before paint (all select widgets, ms)</th>
+        <th>Build total (all select components, ms)</th>
+        <th>Before paint (all select components, ms)</th>
         <th>DOM nodes (all, resting)</th>
-        <th>Teardown total (all select widgets, ms)</th>
+        <th>Teardown total (all select components, ms)</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -153,39 +153,40 @@
   <details class="bench-cols">
     <summary>What the columns mean</summary>
     <ul class="bench-legend">
-      <li><strong>Built / target</strong> - how many select widgets finished before the
+      <li><strong>Built / target</strong> - how many select components finished before the
         time budget. A competitor that cannot mass-instantiate at this scale
         shows e.g. <code>240 / 10000 (timeout)</code> - itself a result.</li>
       <li><strong>Build total (ms)</strong> - total synchronous time to build all
-        the select widgets (the deliberate yields that keep the page responsive are
+        the select components (the deliberate yields that keep the page responsive are
         excluded). One run, not a median: at this scale the signal dwarfs the
         noise.</li>
       <li><strong>Before paint (ms)</strong> - the work that must finish before
-        the browser can paint the new select widgets. Build total does not count
-        this work. The benchmark builds the select widgets in chunks. A chunk is a
-        group of select widgets that the benchmark builds one after another, with
-        no pause. A chunk is 25 select widgets when a test builds 1000 or more,
-        otherwise 1 select widget. Between two chunks, the benchmark waits for the
-        next frame. For each chunk, the time starts when the library has built the
-        DOM of that chunk. First, the browser runs the microtasks that the library
-        queued while building that chunk. Then the browser does the style and
-        layout work that is still left for that DOM. The time ends when the
-        browser has done that work. The column adds up the times of all chunks.
-        Work that a library delays with a timer or with
+        the browser can paint the new select components. Build total does not count
+        this work. The benchmark builds the select components in chunks. A chunk is a
+        group of select components that the benchmark builds one after another, with
+        no pause. A chunk is 25 select components when a test builds 1000 or
+        more, otherwise 1 select component. Between two chunks, the benchmark
+        waits for the next frame. For each chunk, the time starts when the
+        library has built the DOM of that chunk. First, the browser runs the
+        microtasks that the library queued while building that chunk. Then the
+        browser does the style and layout work that is still left for that DOM.
+        The time ends when the browser has done that work. The column adds up
+        the times of all chunks. Work that a library delays with a timer or
+        with
         <code>requestAnimationFrame</code> is not counted. A microtask queued from
         inside another microtask is not counted either.</li>
       <li><strong>DOM nodes (resting)</strong> - element nodes left under the
         scratch area after building, popups closed. llselect builds no option DOM
         until a popup opens, so this shows its lazy-render footprint.</li>
       <li><strong>Teardown total (ms)</strong> - synchronous time to
-        <code>destroy()</code> every select widget just built (the mirror of Build total).
+        <code>destroy()</code> every select component just built (the mirror of Build total).
         A library that leaks listeners or unwinds slowly shows here. Measuring it
-        clears the scratch area, so the select widgets appear during the build and are
+        clears the scratch area, so the select components appear during the build and are
         gone after. Like Build total it is one run, and a timed-out library tears
         down only what it built.</li>
     </ul>
     <p class="hint">Filtering is measured in the interaction-latency section
-      below, not here - it is about one select widget, not about building many.</p>
+      below, not here - it is about one select component, not about building many.</p>
   </details>
 
   <h3>Comparison chart</h3>
@@ -193,11 +194,11 @@
     (100% = winner, longer is better), so they share one axis. <strong>Click a
     legend entry to show or hide that metric</strong>; hover a bar for the real
     value. Throughput stays fair even when a library timed out (it is a
-    rate per select widget, not a total).</p>
+    rate per select component, not a total).</p>
   <div class="bench-chart"><canvas id="chart"></canvas></div>
   <p id="chart-empty" class="hint">Run a scenario to see the chart.</p>
 
-  <h3>Scratch area <small>(select widgets build here during a run, then the teardown measurement clears them)</small></h3>
+  <h3>Scratch area <small>(select components build here during a run, then the teardown measurement clears them)</small></h3>
   <div id="stage" class="bench-stage"></div>
 
   <h2 id="interaction">Interaction latency</h2>
@@ -216,20 +217,21 @@
     </ul>
     The harness normalises what it can (see <a href="#fair">Fairness</a>) and times
     to the painted frame / settled DOM, but treat small gaps as noise. That is why
-    the measured select widgets are left <strong>live</strong> below - open, filter and
+    the measured select components are left <strong>live</strong> below - open, filter and
     select them yourself to feel the real latency, rather than trusting a single
     number.
   </blockquote>
   <p>
-    The other axis: one dedicated select widget per library. Each operation is
-    timed <strong>separately</strong> (never mixed), so one phase's cost never
-    leaks into another's - <strong>opening a big list in isolation</strong> is
-    where llselect builds its option DOM (it renders nothing until you open). The
-    select widgets stay live below; click them yourself too. Native
+    The other axis: one dedicated select component per library. Each operation
+    is timed <strong>separately</strong> (never mixed), so one phase's cost
+    never leaks into another's - <strong>opening a big list in
+    isolation</strong> is where llselect builds its option DOM (it renders
+    nothing until you open). The select components stay live below; click them
+    yourself too. Native
     <code>&lt;select&gt;</code> is <strong>not in the tables</strong>: its dropdown
     is browser / OS-driven, so the page cannot time its open / filter / close, and
     what JS can measure (setting a value) is ~0 - no discriminative value, and it
-    would hide the real latency you feel. Its select widget is kept live below so you can
+    would hide the real latency you feel. Its select component is kept live below so you can
     open and scroll it by hand and judge that for yourself.
   </p>
   <div class="bench-toolbar" id="ix-toolbar">
@@ -330,7 +332,7 @@
         a run so a CSS transition (Slim Select) is not counted as work. Median of
         a few repeats (first dropped as warm-up). Native <code>&lt;select&gt;</code>
         is not in the tables (browser-driven dropdown, nothing meaningful for JS to
-        time) - its live select widget is below to try by hand.</li>
+        time) - its live select component is below to try by hand.</li>
     </ul>
   </details>
 
@@ -402,9 +404,9 @@
       injected <code>* { transition: none; animation: none }</code> means a CSS
       open / close animation (Slim Select) is not counted as work - the number is
       the render, not the tween.</li>
-    <li><strong>Select widgets are measured on-screen.</strong> llselect refuses to open
+    <li><strong>Select components are measured on-screen.</strong> llselect refuses to open
       an off-screen trigger (a real-use correctness guard), which would read ~0; so
-      each select widget is scrolled into view first, and manual scrolling is blocked by
+      each select component is scrolled into view first, and manual scrolling is blocked by
       the run overlay so a stray scroll cannot move one off-screen mid-measure.</li>
     <li><strong>Each phase is timed on its own.</strong> Open, filter, choose,
       unchoose, remove-tag and close are measured separately, never in one mixed
@@ -464,18 +466,18 @@
 
   <h2 id="method">Method and caveats</h2>
   <ul class="bench-caveats">
-    <li>Select widgets are built in small chunks with a yield between them, so the page
+    <li>Select components are built in small chunks with a yield between them, so the page
       stays responsive and a runaway library can be cut off at its time budget. A
       forced reflow ends each build so deferred layout is not hidden. Tick
-      <em>no timeout</em> to build every select widget regardless (it may take minutes or
+      <em>no timeout</em> to build every select component regardless (it may take minutes or
       run out of memory).</li>
-    <li>The chart defaults to <strong>throughput (select widgets built per second)</strong>
+    <li>The chart defaults to <strong>throughput (select components built per second)</strong>
       because that stays a fair comparison even when a library timed out - it is a
-      rate per select widget, not a total. Switch the metric to compare init time or DOM
+      rate per select component, not a total. Switch the metric to compare init time or DOM
       nodes instead; a bar from an incomplete run is shown in amber with its built
       count.</li>
-    <li>Every select widget is <strong>independent</strong> - its own chosen state, no
-      interaction between select widgets (that would be an integration test, not a render
+    <li>Every select component is <strong>independent</strong> - its own chosen state, no
+      interaction between select components (that would be an integration test, not a render
       stress test).</li>
     <li>Libraries render differently, which is the point of the DOM-nodes column:
       llselect lazy-renders options on open; Tom Select caps rendered options;
@@ -489,8 +491,8 @@
       <code>::before</code> could fake the look but that is free compositor work,
       not the per-tag rendering the others do, so it is deliberately not used -
       Slim Select simply does less tag work here, which its Choose number
-      reflects. This benches a plain filterable select otherwise; tagging, remote
-      data and templating are out of scope.</li>
+      reflects. This benches a plain filterable select component otherwise;
+      tagging, remote data and templating are out of scope.</li>
     <li>A <strong>"-"</strong> or <strong>error</strong> means the adapter could
       not drive that library on the loaded CDN version - tell me which cell.</li>
     <li>Versions under test: <span id="versions"></span></li>
@@ -499,10 +501,10 @@
   <h2 id="playground">Hands-on playground</h2>
   <p>
     Not a benchmark: nothing is measured here. Each library just builds one
-    live single-select and one live multi-select with n candidates, so you can
-    judge the feel yourself - open, filter, choose, scroll - and reproduce
-    environment-specific issues (pinch-zoom alignment, IME, screen readers)
-    against every library at once.
+    live single-select component and one live multi-select component with n
+    candidates, so you can judge the feel yourself - open, filter, choose,
+    scroll - and reproduce environment-specific issues (pinch-zoom alignment,
+    IME, screen readers) against every library at once.
   </p>
   <div class="bench-toolbar" id="pg-toolbar">
     <div class="bench-row">

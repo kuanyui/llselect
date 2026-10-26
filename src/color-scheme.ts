@@ -6,7 +6,7 @@
  * The `colorScheme` setting's values.
  * - `'auto'`, the default: the library decides from the root element's computed CSS. The setting's
  *   docstring on {@link LLSelectBaseSettings.colorScheme} explains the order.
- * - `'light'` or `'dark'`: the select widget shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables; see the README section "Dark color scheme".
+ * - `'light'` or `'dark'`: the select component shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables; see the README section "Dark color scheme".
  * @group Settings
  * @category Base
  */
@@ -62,31 +62,31 @@ export function readColorSchemeInputs(rootEl: HTMLElement, setting: LLSelectColo
 }
 
 // --- the first decision, batched -----------------------------------------------
-// getComputedStyle right after the select widget's own DOM edits flushes a
-// style recalculation; a page that builds many select widgets in one loop
-// would pay one per select widget (the benchmark with 1000 select widgets
-// measured 2.5x). So the first decision of every 'auto' instance waits for a
-// microtask: it still lands before the first paint, and the select widgets
-// built in one task share one flush. The roots outside other select widgets
-// decide in two phases, every read then every write: an attribute write
-// dirties style, so reading the next root right after it would force a
-// recalculation per select widget again (OPTIMIZE.md measured 50 ms per
-// 1000). decideBatch has the exception for nested roots. getColorScheme()
-// and open() decide at once when the decision is still pending; the queued
-// decision still runs.
-/** One select widget's decision in two steps: `read` resolves the scheme from the page, `apply` writes the attribute. */
+// getComputedStyle right after the select component's own DOM edits flushes a
+// style recalculation; a page that builds many select components in one loop
+// would pay one per select component (the benchmark with 1000
+// select components measured 2.5x). So the first decision of every 'auto'
+// instance waits for a microtask: it still lands before the first paint, and
+// the select components built in one task share one flush. The roots outside
+// other select components decide in two phases, every read then every write:
+// an attribute write dirties style, so reading the next root right after it
+// would force a recalculation per select component again (OPTIMIZE.md measured
+// 50 ms per 1000). decideBatch has the exception for nested roots.
+// getColorScheme() and open() decide at once when the decision is still
+// pending; the queued decision still runs.
+/** One select component's decision in two steps: `read` resolves the scheme from the page, `apply` writes the attribute. */
 export interface ColorSchemeDecision { read(): void; apply(): void }
 
 // Shared by the first decision and the page listeners' pass. The roots that
-// no other select widget contains decide in the two phases. A root inside
-// another select widget's trigger or popup inherits that select widget's
+// no other select component contains decide in the two phases. A root inside
+// another select component's trigger or popup inherits that select component's
 // color-scheme (the themes set it there from the attribute), which those
 // writes may just have changed, so it decides after them, one root at a time,
 // in document order, after every root around it (the first batch comes in
 // construction order, which can put an inner root first). A decision writes,
 // and a nested root reads, only while its instance still owns the root: a
 // custom element's attribute callback runs inside a write and may destroy or
-// replace a select widget.
+// replace a select component.
 function decideBatch(batch: ReadonlyArray<readonly [HTMLElement, ColorSchemeDecision]>): void {
   const outer: Array<readonly [HTMLElement, ColorSchemeDecision]> = []
   const nested: Array<readonly [HTMLElement, ColorSchemeDecision]> = []
@@ -103,17 +103,17 @@ function decideBatch(batch: ReadonlyArray<readonly [HTMLElement, ColorSchemeDeci
 // with a provisional value: the document's last 'auto' decision on a
 // connected root, light until one is made. The themes key rules on the attribute, so a write after the subtree
 // was styled restyles the whole subtree; a provisional value the batch then
-// confirms costs nothing, a wrong guess costs that select widget one restyle
-// (OPTIMIZE.md: before this, restyling every subtree cost 38 to 43 ms per
-// 1100 select widgets).
+// confirms costs nothing, a wrong guess costs that select component one
+// restyle (OPTIMIZE.md: before this, restyling every subtree cost 38 to 43 ms
+// per 1100 select components).
 const lastSchemeByDocument = new WeakMap<Document, 'light' | 'dark'>()
 
-/** The value a new `'auto'` select widget writes before its first decision: the document's last `'auto'` decision on a connected root, or light. */
+/** The value a new `'auto'` select component writes before its first decision: the document's last `'auto'` decision on a connected root, or light. */
 export function provisionalColorScheme(doc: Document): 'light' | 'dark' {
   return lastSchemeByDocument.get(doc) ?? 'light'
 }
 
-/** Records an `'auto'` decision made on a connected root as the document's latest, the next select widget's provisional value. */
+/** Records an `'auto'` decision made on a connected root as the document's latest, the next select component's provisional value. */
 export function rememberColorScheme(doc: Document, scheme: 'light' | 'dark'): void {
   lastSchemeByDocument.set(doc, scheme)
 }
@@ -152,7 +152,7 @@ export function claimColorSchemeRoot(rootEl: HTMLElement): void {
 
 // --- shared page listeners --------------------------------------------------
 // One media-query listener and one attribute observer per document re-decide
-// every subscribed select widget. Subscribers are keyed by their root element in a
+// every subscribed select component. Subscribers are keyed by their root element in a
 // WeakMap, and the listeners find live roots through the document, so nothing
 // here retains an instance: a closed instance stays reachable only through its
 // own elements (the root, and labelEl when set), as it already does through
@@ -180,7 +180,7 @@ function wireDocument(doc: Document): void {
   let scheduled = false
   // Batched: one pass per task, however many attributes changed, decided like
   // the first decision (decideBatch). Only roots present in the document are
-  // reached (a shadow root's select widgets re-decide on open() or
+  // reached (a shadow root's select components re-decide on open() or
   // refreshColorScheme()).
   const refreshAll = (): void => {
     if (scheduled) { return }
@@ -200,9 +200,9 @@ function wireDocument(doc: Document): void {
     if (typeof query.addEventListener === 'function') { query.addEventListener('change', refreshAll) }
   }
   if (typeof view.MutationObserver === 'function') {
-    // A select widget mounted on <html> or <body> writes its own attribute on an
+    // A select component mounted on <html> or <body> writes its own attribute on an
     // observed element; those records must not start another pass. The child
-    // list of <html> is watched too, so a <body> that appears later (a select widget
+    // list of <html> is watched too, so a <body> that appears later (a select component
     // built from a script in <head>) or gets replaced is observed as well.
     // undefined until the first registration (<body> is an element or null)
     let observedBody: HTMLElement | null | undefined

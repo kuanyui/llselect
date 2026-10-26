@@ -846,7 +846,7 @@
     </article>
 
     <article>
-      <h3>13.2 Tree multiple select: a whole variant in TypeScript</h3>
+      <h3>13.2 Tree multiple select component: a whole variant in TypeScript</h3>
       <p class="hint">
         Branch rows expand / collapse via the caret, wear a folder icon that
         follows the state, and show a tri-state checkbox derived from their
@@ -947,7 +947,7 @@
 
     <article>
       <h3>15.2 Add a country, above the items</h3>
-      <p class="hint">A single select with one row above the items. Activating it asks for a name, adds it, picks it and closes; the row itself never closes the popup.</p>
+      <p class="hint">A single select component with one row above the items. Activating it asks for a name, adds it, picks it and closes; the row itself never closes the popup.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-add-row"></div>
@@ -985,7 +985,7 @@
   <section>
     <h2>16. Color scheme (light / dark)</h2>
     <p class="hint">
-      Every theme has a dark palette. Each select widget's root element receives
+      Every theme has a dark palette. Each select component's root element receives
       <code>data-llselect-color-scheme="light"</code> or <code>"dark"</code>.
       In 16.1 to 16.4 the "resolved" line shows that value.
     </p>
@@ -996,9 +996,10 @@
         The Dark switch in the navigation sets <code>data-color-scheme</code>
         on <code>&lt;html&gt;</code> to dark or light. When the page follows
         the OS, the switch removes the attribute. The themes recognize that
-        attribute. This select widget uses the default <code>colorScheme: 'auto'</code>.
-        The switch above the select widget does the same as the navigation switch.
-        Toggle it and watch the select widget and its "resolved" value change.
+        attribute. This select component uses the default <code>colorScheme: 'auto'</code>.
+        The switch above the select component does the same as the navigation switch.
+        Toggle it and watch the select component and its "resolved" value
+        change.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -1013,10 +1014,10 @@
     <article>
       <h3>16.2 A page that switches with its own class</h3>
       <p class="hint">
-        The select widget's wrapper has the custom class <code>acme-dark</code>, which
+        The select component's wrapper has the custom class <code>acme-dark</code>, which
         the themes do not recognize. The rule
         <code>.acme-dark { --llselect-color-scheme: dark; }</code> makes the
-        select widget inside the wrapper use dark colors.
+        select component inside the wrapper use dark colors.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -1054,7 +1055,7 @@
       <h3>16.4 Forced per instance: colorScheme: 'dark'</h3>
       <p class="hint">
         <code>colorScheme: 'dark'</code> overrides both CSS sources and the
-        operating system's color preference. This select widget is dark on the light
+        operating system's color preference. This select component is dark on the light
         page and stays dark when the page goes dark.
       </p>
       <div class="demo-split">
@@ -1069,8 +1070,8 @@
     <article>
       <h3>16.5 Your own colors: the --llselect-* variables</h3>
       <p class="hint">
-        The wrapper <code>.acme-brand</code> contains the select widget. The rule
-        <code>.acme-brand .llselect-root</code> gives that select widget its own color
+        The wrapper <code>.acme-brand</code> contains the select component. The rule
+        <code>.acme-brand .llselect-root</code> gives that select component its own color
         variables, which replace the theme's palette with purple. The demo
         loads style.css before the theme stylesheet, so the custom color rule
         includes <code>[data-llselect-color-scheme]</code> to beat the theme's
@@ -1090,10 +1091,10 @@
     </article>
 
     <article>
-      <h3>16.6 A single select with an arrow</h3>
+      <h3>16.6 A single select component with an arrow</h3>
       <p class="hint">
         The arrow is <code>createChevronDownSvgEl()</code>. Toggle the Dark
-        switch above the select widget to see it in both palettes.
+        switch above the select component to see it in both palettes.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -1105,11 +1106,11 @@
     </article>
 
     <article>
-      <h3>16.7 A multiple select with checkboxes, tags and an arrow</h3>
+      <h3>16.7 A multiple select component with checkboxes, tags and an arrow</h3>
       <p class="hint">
         The rows use <code>createOutlinedCheckboxSvgEl()</code>, and
         <code>triggerDisplay: 'tags'</code> shows the three countries chosen at
-        start. Toggle the Dark switch above the select widget, then open the popup.
+        start. Toggle the Dark switch above the select component, then open the popup.
       </p>
       <div class="demo-split">
         <div class="demo-pane">

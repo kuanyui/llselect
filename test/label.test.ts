@@ -3,9 +3,9 @@ import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle } from '../src/single.js'
 
-// The labelEl setting - native <label for> emulation for a select widget made
-// of divs: clicking the label focuses the trigger (never opens), and the label
-// feeds the accessible name as the BOTTOM rung of the ladder
+// The labelEl setting - native <label for> emulation for a select component
+// made of divs: clicking the label focuses the trigger (never opens), and the
+// label feeds the accessible name as the BOTTOM rung of the ladder
 // ariaLabelledBy > ariaLabel > labelEl. Contract: A11Y.md "Field name".
 
 function mountWithLabel(labelId?: string): { mount: HTMLElement; label: HTMLLabelElement } {
