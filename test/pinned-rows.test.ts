@@ -164,8 +164,8 @@ test('ensureVisibleInScroll: insets covering the whole scrollport are ignored (b
   assert.equal(parent.scrollTop, 30)
 })
 
-// The widget's own scroll path, on stubbed geometry: rows inside a pinned
-// wrapper never scroll, everything else does, grouped items included.
+// The select widget's own scroll path, on stubbed geometry: rows inside a
+// pinned wrapper never scroll, everything else does, grouped items included.
 function stubRect(el: Element, top: number, height: number): void {
   Object.defineProperty(el, 'getBoundingClientRect', { value: () => ({ top, bottom: top + height, height }), configurable: true })
 }

@@ -26,7 +26,7 @@ Tuned only to match the competitors, so it is not doing less work than they do.
 ## Select2
 
 - **Results select / unselect on `mouseup`, not `click`.** A synthetic `el.click()` does nothing; the harness dispatches a full pointer + mouse sequence (`pointerdown, mousedown, pointerup, mouseup, click`).
-- **The dropdown portals to `document.body`** and each widget can leave one behind, so option / result selectors are scoped to `.select2-container--open`.
+- **The dropdown portals to `document.body`** and each select widget can leave one behind, so option / result selectors are scoped to `.select2-container--open`.
 - **`closeOnSelect: false` in multi** so a choose does not close the dropdown and skip the open-list re-render.
 - **`.val(...).trigger('change')` does NOT re-render the open results** the way a click does, so Choose is a real click on a result element, not that API call.
 - **In-popup unchoose is native.** A chosen result carries `.select2-results__option--selected`; clicking it in multi fires `unselect`.
@@ -47,7 +47,7 @@ Tuned only to match the competitors, so it is not doing less work than they do.
 - **`allowDeselect: true` in multi** - without it, clicking a chosen option in the open list is ignored (the option-click handler early-returns on `option.selected && !allowDeselect`). With it, the click toggles off.
 - **`maxValuesShown: Infinity`** - past `maxValuesShown` (default 20) selected, Slim collapses ALL tags into one `{n} selected` summary (one node instead of n), which would make its multi DOM-node / tag work collapse to near-nothing.
 - **`closeOnSelect: false` in multi**; filter input debounces ~100 ms (`input.oninput = debounce(fn, 100)`).
-- **The dropdown (`.ss-content`) portals to `document.body`** and every widget leaves one, so option / search selectors target only the OPEN content (`.ss-open-below` / `.ss-open-above`) - a mount-scoped one misses it and a plain document one hits the wrong widget.
+- **The dropdown (`.ss-content`) portals to `document.body`** and every select widget leaves one, so option / search selectors target only the OPEN content (`.ss-open-below` / `.ss-open-above`) - a mount-scoped one misses it and a plain document one hits the wrong select widget.
 - **`setSelected` rebuilds everything on every change** - `updateOptions` (rebuilds the whole native `<select>`), `renderValues` (all tags), `renderOptions` (all option divs). So its Choose / Unchoose / Filter numbers are genuinely high, real work, not animation.
 - **A removed tag's `removeChild` is deferred by a hardcoded 100 ms `setTimeout`** (its exit animation), which `animation:none` cannot reach - the remove / unchoose click runs short timers immediately so only work is timed. Slim 2.10.0 does NOT respect `prefers-reduced-motion` (no `matchMedia` in its JS, none in its CSS), and a page cannot force that setting, so the flush is the fix.
 - **Its multi chip is `textContent` only** (no per-chip HTML hook), so the custom icon reaches its dropdown options but NOT its chips - a real limitation, left plain rather than faked with a CSS `::before`.
@@ -55,4 +55,4 @@ Tuned only to match the competitors, so it is not doing less work than they do.
 
 ## Native `<select>`
 
-- The floor for the mass section (build / nodes / teardown). In the interaction section it has NO row - its dropdown is browser / OS-driven, so the page cannot time open / filter / close, and what JS can measure (setting a value) is ~0. Its widget is left live so a reader can open and scroll it by hand.
+- The floor for the mass section (build / nodes / teardown). In the interaction section it has NO row - its dropdown is browser / OS-driven, so the page cannot time open / filter / close, and what JS can measure (setting a value) is ~0. Its select widget is left live so a reader can open and scroll it by hand.

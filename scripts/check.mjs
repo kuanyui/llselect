@@ -16,7 +16,7 @@
 //      peer range follow the root package.json version.
 //   6. Theme files keep the color-scheme contract (DESIGN.md "Color scheme
 //      (light / dark) in the themes"): no `color-scheme` and no
-//      `--llselect-color-scheme` declared on the widget root, no
+//      `--llselect-color-scheme` declared on the root element, no
 //      `prefers-color-scheme` media query, no literal color outside the
 //      `--llselect-*` variable declarations (hex and color functions in any
 //      declaration, a hex also inside a data: url(); named and system colors
@@ -258,7 +258,7 @@ for (const rel of markdownFiles) {
 
 // --- rule 6: theme files keep the color-scheme contract ----------------------
 // The resolver reads the computed `color-scheme` and `--llselect-color-scheme`
-// of the widget root; a theme declaring either there would feed it its own
+// of the root element; a theme declaring either there would feed it its own
 // output or hide an ancestor's mark. A `prefers-color-scheme` query cannot
 // tell a light-only page from an OS-following one. Every color outside the
 // `--llselect-*` declarations must come from a variable (DESIGN.md "The color
@@ -374,8 +374,8 @@ for (const rel of markdownFiles) {
       if (selectors.some((s) => /\.llselect-root(?![\w-])/.test(subjectOf(s)))) {
         // the message quotes the unmasked selectors (a masked one has blanks for its attribute values)
         const quoted = splitSelectorList(unmasked(m.index, m[1].length)).filter((s) => s !== '' && !s.startsWith('@')).join(', ')
-        if (/(^|[\s;])color-scheme\s*:/i.test(body)) { problems.push(`${f}: "${quoted}" declares color-scheme on the widget root; the resolver reads it there`) }
-        if (/--llselect-color-scheme\s*:/.test(body)) { problems.push(`${f}: "${quoted}" declares --llselect-color-scheme on the widget root; it would hide an ancestor's value`) }
+        if (/(^|[\s;])color-scheme\s*:/i.test(body)) { problems.push(`${f}: "${quoted}" declares color-scheme on the root element; the resolver reads it there`) }
+        if (/--llselect-color-scheme\s*:/.test(body)) { problems.push(`${f}: "${quoted}" declares --llselect-color-scheme on the root element; it would hide an ancestor's value`) }
       }
       const bodyStart = m.index + m[1].length + 1
       let start = 0

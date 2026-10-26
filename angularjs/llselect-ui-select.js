@@ -154,9 +154,10 @@
   /**
    * The controller other directives on the same element `require` (by the
    * directive name `uiLlselect`) to reach the live select widget - the same
-   * door llselect-angularjs.js publishes. instance() is late-bound: the select
-   * widget is constructed in the post-link, AFTER controllers instantiate, so
-   * call it from a $watch / event handler, never from a controller constructor.
+   * door llselect-angularjs.js publishes. instance() is late-bound: the
+   * select widget is constructed in the post-link, AFTER controllers
+   * instantiate, so call it from a $watch / event handler, never from a
+   * controller constructor.
    */
   function UiLlselectApiController() {
     /** @type {any} */ // CompatSingle / CompatMultiple extend the untyped UMD global

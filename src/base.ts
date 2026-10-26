@@ -1673,9 +1673,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // loses its pending decision and its subscription). A forced scheme is
     // written now; an 'auto' instance writes a provisional value now, before
     // its subtree exists, decides in a microtask before the first paint
-    // (decideBatch: one style flush for the roots outside other select
-    // widgets, a nested root after them) and re-decides on the shared page
-    // listeners.
+    // (decideBatch: one style flush for the roots outside other
+    // select widgets, a nested root after them) and re-decides on the shared
+    // page listeners.
     claimColorSchemeRoot(this.rootEl)
     if (this.settings.colorScheme === 'auto') {
       this.resolvedColorScheme = provisionalColorScheme(this.rootEl.ownerDocument)

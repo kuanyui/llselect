@@ -72,7 +72,7 @@ test('group by and disable when reach llselect', () => {
 // ll-trigger-display="tags" $evals to undefined; ll-popup-width-policy="match-trigger"
 // $evals to 0 (AngularJS reads the `-` as subtraction), so the guard must reject any
 // non-string, not just undefined. ll-aria-label names the field so the unrelated
-// unnamed-widget warning stays out of the captured list.
+// warning about an unnamed select widget stays out of the captured list.
 function bridgeWarnings(attr) {
   const warnings = []
   const orig = console.warn
@@ -150,7 +150,7 @@ test('ll-disabled maps to setDisabled()', () => {
   assert.equal(a.$('.llselect-trigger').getAttribute('aria-disabled'), 'true')
 })
 
-test('an unparseable ll-options is reported, and no widget is left behind', () => {
+test('an unparseable ll-options is reported, and no select widget is left behind', () => {
   // A directive's throw NEVER reaches the caller: $compile's invokeLinkFn wraps
   // every link fn in its own try/catch and hands the error to $exceptionHandler
   // (angular.js:11374). So the observable contract is "reported, and nothing
@@ -160,7 +160,7 @@ test('an unparseable ll-options is reported, and no widget is left behind', () =
   const el = a.compile('<llselect-single ng-model="x" ll-options="totally bogus"></llselect-single>')
   assert.equal(a.errors.length, 1, 'nothing was reported to $exceptionHandler')
   assert.match(a.errors[0].message, /cannot parse ll-options/)
-  assert.equal(el[0].querySelector('.llselect-trigger'), null, 'a half-built widget was left behind')
+  assert.equal(el[0].querySelector('.llselect-trigger'), null, 'a half-built select widget was left behind')
 })
 
 test('(key, value) in object is refused explicitly, not silently mishandled', () => {
@@ -218,7 +218,7 @@ test('llselectConfigProvider sets app-wide defaults, and ll-* attributes win', (
   assert.ok(arrows[1].querySelector('svg'), 'the per-element arrow did not render')
   // filterable: true from config means a filter input is built and shown.
   a.$('.llselect-trigger').click()
-  assert.equal(a.$('.llselect-popup input').hasAttribute('hidden'), false, 'config filterable did not reach the widget')
+  assert.equal(a.$('.llselect-popup input').hasAttribute('hidden'), false, 'config filterable did not reach the select widget')
 })
 
 test('llselectConfigProvider.defaults rejects an unknown key instead of ignoring it', () => {
@@ -232,7 +232,7 @@ test('llselectConfigProvider.defaults rejects an unknown key instead of ignoring
   }), /unknown key\(s\): plcaeholder/)
 })
 
-test('config uiTranslationPack reaches the widget (the case that makes a provider worth having)', () => {
+test('config uiTranslationPack reaches the select widget (the case that makes a provider worth having)', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm">
@@ -506,7 +506,7 @@ test('multiple tags: ll-tag-content-fn fills the chip; ll-tag-remove-button-cont
 test('an app policy directive reaches the instance via require and stays safe on native controls', () => {
   // Pins the documented own-disabled example (API.md): named object require
   // (angular.js getControllers, isObject branch), the ?-optional guard for
-  // non-llselect elements, and instance().setDisabled() on the real widget.
+  // non-llselect elements, and instance().setDisabled() on the real select widget.
   const a = boot({
     files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
     deps: ['llselect', 'llselect.uiCompat'],
@@ -546,7 +546,7 @@ test('an app policy directive reaches the instance via require and stays safe on
   assert.equal(a.$$('.llselect-trigger')[0].getAttribute('data-disabled'), 'false', 'must re-enable')
 })
 
-test('the i18n recipe: same-name directives re-pack live widgets from $translate', () => {
+test('the i18n recipe: same-name directives re-pack live select widgets from $translate', () => {
   // Pins the documented recipe (API.md, "Switching the UI language at
   // runtime"): a SECOND directive under each existing name (angular.js keeps
   // an array of directives per name), $watch on $translate.use(), and partial
@@ -589,7 +589,7 @@ test('the i18n recipe: same-name directives re-pack live widgets from $translate
   assert.deepEqual(triggerTexts(), ['Please select', 'Please select'], 'an unmapped key must restore the English defaults')
 })
 
-test('a non-function ll-popup-list-item-content-fn is reported and no widget is left behind', () => {
+test('a non-function ll-popup-list-item-content-fn is reported and no select widget is left behind', () => {
   const a = app()
   const el = a.compile('<llselect-single ng-model="x" ll-popup-list-item-content-fn="\'nope\'" ll-options="f for f in vm.fruits"></llselect-single>')
   assert.equal(a.errors.length, 1)
@@ -614,7 +614,7 @@ test('ll-label-el: the label element names the field and click focuses the trigg
   assert.equal(a.doc.activeElement, trigger, 'label click must focus the trigger')
 })
 
-test('ll-label-el with an unknown id is reported and no widget is left behind', () => {
+test('ll-label-el with an unknown id is reported and no select widget is left behind', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm">
@@ -938,7 +938,7 @@ test('ll-popup-list-trailing-action-rows: rows render, onActivate runs in a dige
   assert.equal(a.text('#n'), '1') // the view updated: onActivate ran inside a digest
   assert.deepEqual(a.scope.vm.t, [])
   const after = a.$('.llselect-popup-list-action-row')
-  assert.equal(after.textContent, 'Clear all (0)') // the model write reached the widget and the row refreshed
+  assert.equal(after.textContent, 'Clear all (0)') // the model write reached the select widget and the row refreshed
   assert.equal(after.getAttribute('aria-disabled'), 'true')
   assert.equal(a.scope.vm.rows[0], original) // the app's object was cloned, not wrapped in place
   assert.equal(typeof original.onActivate, 'function')
@@ -1040,17 +1040,17 @@ test('MEDIUM-110: onActivate receives the instance; calling it is the user-chang
   a.$('.llselect-trigger').click()
   const rows = a.$$('.llselect-popup-list-action-row')
   rows[0].click()
-  assert.equal(typeof a.scope.vm.seen.setChosenItems, 'function') // the live widget instance
+  assert.equal(typeof a.scope.vm.seen.setChosenItems, 'function') // the live select widget instance
   assert.deepEqual([...a.scope.vm.t], []) // the model followed through $setViewValue (spread: the array comes from the page realm)
   assert.equal(a.scope.vm.changes, 1) // ng-change ran, like after a click
   assert.equal(ngModel.$dirty, true)
   rows[1].click() // the model-write idiom: the view follows, but it is programmatic
   assert.deepEqual([...a.scope.vm.t], ['Cherry'])
   assert.equal(a.scope.vm.changes, 1) // ng-change did not run
-  assert.deepEqual(a.$$('.llselect-popup-list-row[aria-selected="true"]').map((el) => el.textContent), ['Cherry']) // the widget rendered it
+  assert.deepEqual(a.$$('.llselect-popup-list-row[aria-selected="true"]').map((el) => el.textContent), ['Cherry']) // the select widget rendered it
 })
 
-test('MEDIUM-110: one shared descriptor array serves two widgets, each onActivate getting its own instance', () => {
+test('MEDIUM-110: one shared descriptor array serves two select widgets, each onActivate getting its own instance', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm">
@@ -1067,11 +1067,11 @@ test('MEDIUM-110: one shared descriptor array serves two widgets, each onActivat
   a.$('#s2 .llselect-trigger').click()
   a.$('#s2 .llselect-popup-list-action-row').click()
   assert.equal(a.scope.vm.b, 'Banana')
-  assert.equal(a.scope.vm.a, null) // the other widget's row would have written vm.a
+  assert.equal(a.scope.vm.a, null) // the other select widget's row would have written vm.a
   assert.equal(typeof a.scope.vm.rows[0].onActivate, 'function') // the app's descriptor is untouched
 })
 
-test("ll-chosen-items-order=\"'as-listed'\": the widget keeps list order; a model write in another order is not rewritten until the user changes the selection", () => {
+test("ll-chosen-items-order=\"'as-listed'\": the select widget keeps list order; a model write in another order is not rewritten until the user changes the selection", () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm"><llselect-multiple ng-model="vm.t" ng-change="vm.changes = vm.changes + 1" ll-aria-label="F"
@@ -1080,7 +1080,7 @@ test("ll-chosen-items-order=\"'as-listed'\": the widget keeps list order; a mode
   })
   assert.deepEqual(a.errors, [])
   a.scope.$apply(() => { a.scope.vm.t = [FRUITS[2], FRUITS[0]] })
-  assert.deepEqual(a.$$('.llselect-tag').map((el) => el.textContent.trim()), [FRUITS[0], FRUITS[2]]) // the widget shows list order
+  assert.deepEqual(a.$$('.llselect-tag').map((el) => el.textContent.trim()), [FRUITS[0], FRUITS[2]]) // the select widget shows list order
   assert.deepEqual([...a.scope.vm.t], [FRUITS[2], FRUITS[0]]) // programmatic: the model is not rewritten
   assert.equal(a.scope.vm.changes, 0)
   a.$('.llselect-trigger').click()
@@ -1089,7 +1089,7 @@ test("ll-chosen-items-order=\"'as-listed'\": the widget keeps list order; a mode
   assert.equal(a.scope.vm.changes, 1)
 })
 
-test("ll-chosen-items-order=\"'as-listed'\": reordering the item list reorders the widget; the model keeps its order until the next user change", () => {
+test("ll-chosen-items-order=\"'as-listed'\": reordering the item list reorders the select widget; the model keeps its order until the next user change", () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm"><llselect-multiple ng-model="vm.t" ng-change="vm.changes = vm.changes + 1" ll-aria-label="F"
@@ -1098,7 +1098,7 @@ test("ll-chosen-items-order=\"'as-listed'\": reordering the item list reorders t
   })
   assert.deepEqual(a.errors, [])
   a.scope.$apply(() => { a.scope.vm.fruits = [FRUITS[2], FRUITS[1], FRUITS[0]] })
-  assert.deepEqual(a.$$('.llselect-tag').map((el) => el.textContent.trim()), [FRUITS[2], FRUITS[0]]) // the widget follows the new list order
+  assert.deepEqual(a.$$('.llselect-tag').map((el) => el.textContent.trim()), [FRUITS[2], FRUITS[0]]) // the select widget follows the new list order
   assert.deepEqual([...a.scope.vm.t], [FRUITS[0], FRUITS[2]]) // the model is not rewritten
   assert.equal(a.scope.vm.changes, 0)
 })
@@ -1249,7 +1249,7 @@ test('ll-on-before-change: a model write inside the expression wins and the pend
   assert.equal(a.scope.vm.changed, 0, 'a model write is programmatic: ng-change does not run, and the dropped pick never reached it')
 })
 
-test('ll-on-focus / ll-on-blur run once when focus enters / leaves the widget, inside a digest; a move inside fires nothing', () => {
+test('ll-on-focus / ll-on-blur run once when focus enters / leaves the select widget, inside a digest; a move inside fires nothing', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm">
@@ -1271,7 +1271,7 @@ test('ll-on-focus / ll-on-blur run once when focus enters / leaves the widget, i
   assert.deepEqual(a.errors, [])
 })
 
-test('the control turns touched when focus leaves the widget, before ll-on-blur runs; a move inside does not touch it', () => {
+test('the control turns touched when focus leaves the select widget, before ll-on-blur runs; a move inside does not touch it', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm">

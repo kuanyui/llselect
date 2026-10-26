@@ -135,12 +135,12 @@ test('a repeat expression without ll-item-text still names the option, via Strin
   assert.equal(a.$('ui-llselect .llselect-popup-list-row').getAttribute('aria-label'), 'a')
 })
 
-test('a missing <ui-llselect-choices> is reported, and no widget is left behind', () => {
+test('a missing <ui-llselect-choices> is reported, and no select widget is left behind', () => {
   const a = app()
   const el = a.compile('<ui-llselect ng-model="x"></ui-llselect>')
   assert.equal(a.errors.length, 1, 'nothing was reported to $exceptionHandler')
   assert.match(a.errors[0].message, /expected one <ui-llselect-choices/)
-  assert.equal(el[0].querySelector('.llselect-trigger'), null, 'a half-built widget was left behind')
+  assert.equal(el[0].querySelector('.llselect-trigger'), null, 'a half-built select widget was left behind')
 })
 
 test('the bridge renders the default chevron arrow', () => {
@@ -157,7 +157,7 @@ test('disabled aligns with ui-select: ng-disabled, static literal, and interpola
   a.scope.$apply(() => { a.scope.vm.locked = true })
   assert.equal(a.$('.llselect-trigger').getAttribute('data-disabled'), 'true', 'ng-disabled did not reach setDisabled')
   a.$('.llselect-trigger').click()
-  assert.equal(a.$$('.llselect-popup-list-row').length, 0, 'a disabled bridge widget must not open')
+  assert.equal(a.$$('.llselect-popup-list-row').length, 0, 'a disabled select widget of the bridge must not open')
   a.scope.$apply(() => { a.scope.vm.locked = false })
   assert.equal(a.$('.llselect-trigger').getAttribute('data-disabled'), 'false', 'must re-enable')
 
@@ -173,7 +173,7 @@ test('disabled aligns with ui-select: ng-disabled, static literal, and interpola
   assert.equal(c.$('.llselect-trigger').getAttribute('data-disabled'), 'true', 'interpolated "false" is a truthy string - ui-select parity')
 })
 
-test('uib-tooltip still shows on hover while the bridge widget is disabled', async () => {
+test('uib-tooltip still shows on hover while the select widget of the bridge is disabled', async () => {
   // The disabled attribute ngDisabled writes is inert on this non-form-
   // associated host (no pointer-event suppression), and setDisabled() keeps
   // the trigger hoverable by design - so a tooltip can explain WHY it is
@@ -722,7 +722,7 @@ test('config uiTranslationPack reaches <ui-llselect> too (an app-wide default is
   })
   assert.deepEqual(a.errors, [])
   const texts = a.$$('ui-llselect .llselect-trigger-content').map((el) => el.textContent.trim())
-  assert.equal(texts[0], 'Bitte auswaehlen', 'the pack must seed the bridge widget')
+  assert.equal(texts[0], 'Bitte auswaehlen', 'the pack must seed the select widget of the bridge')
   assert.equal(texts[1], 'Pick', 'a slot placeholder must still win over the pack')
 })
 
@@ -763,7 +763,7 @@ test('the i18n recipe covers <ui-llselect>: a same-name directive re-packs it fr
   const text = () => a.$('ui-llselect .llselect-trigger-content').textContent.trim()
   assert.equal(text(), 'Please select', 'undefined language must leave the default pack')
   a.scope.$apply(() => { lang = 'de' })
-  assert.equal(text(), 'Bitte auswaehlen', 'the bridge widget must re-pack through instance()')
+  assert.equal(text(), 'Bitte auswaehlen', 'the select widget of the bridge must re-pack through instance()')
   a.scope.$apply(() => { lang = 'fr' })
   assert.equal(text(), 'Please select', 'an unmapped key must restore the English defaults')
 })
@@ -861,7 +861,7 @@ test('the bridge module pulls llselect in transitively, whatever the script orde
   assert.equal(a.$('ui-llselect .llselect-trigger-content').textContent.trim(), 'Bitte auswaehlen', 'llselectConfig must be reachable through the transitive dependency alone')
 })
 
-test('the control turns touched when focus leaves the widget, as on the llselect directives', () => {
+test('the control turns touched when focus leaves the select widget, as on the llselect directives', () => {
   const a = app()
   const trigger = a.$('ui-llselect .llselect-trigger')
   assert.equal(a.scope.f.person.$touched, false)
@@ -870,7 +870,7 @@ test('the control turns touched when focus leaves the widget, as on the llselect
   assert.equal(a.scope.f.person.$touched, false, 'an inside move does not touch the control')
   const outside = trigger.ownerDocument.createElement('button') // <body> is not focusable in jsdom
   trigger.ownerDocument.body.appendChild(outside)
-  outside.focus() // focus leaves the widget
+  outside.focus() // focus leaves the select widget
   assert.equal(a.scope.f.person.$touched, true)
   assert.ok(a.$('ui-llselect').classList.contains('ng-touched'))
   assert.deepEqual(a.errors, [])

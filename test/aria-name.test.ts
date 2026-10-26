@@ -135,7 +135,7 @@ test('tags mode: hidden value span carries plain labels, not remove-button names
   assert.equal(sel.triggerContentEl.querySelectorAll('button').length, 2)
 })
 
-test('an unnamed widget warns once per page; any name-ladder rung stays silent', () => {
+test('an unnamed select widget warns once per page; any name-ladder rung stays silent', () => {
   const warnings: unknown[][] = []
   const orig = console.warn
   console.warn = (...args: unknown[]) => { warnings.push(args) }
@@ -152,7 +152,7 @@ test('an unnamed widget warns once per page; any name-ladder rung stays silent',
     new LLSelectSingle<string>(mount(), { ariaLabel: 'Country' })
     new LLSelectSingle<string>(mount(), { ariaLabelledBy: 'field-label' })
     new LLSelectSingle<string>(mount(), { labelEl: document.getElementById('field-label')! })
-    assert.equal(warnings.length, 1, 'a named widget must not warn')
+    assert.equal(warnings.length, 1, 'a named select widget must not warn')
   } finally { console.warn = orig }
 })
 

@@ -184,7 +184,7 @@ test('QUALITY-89: rerender() with the popup open and the clear button focused ke
   const before = clearBtn(sel)!
   before.focus()
   sel.rerender()
-  assert.equal(sel.isOpened(), true, 'the rebuild must not read as focus leaving the widget')
+  assert.equal(sel.isOpened(), true, 'the rebuild must not read as focus leaving the select widget')
   assert.equal(document.activeElement, clearBtn(sel))
 })
 
@@ -376,7 +376,7 @@ test('QUALITY-89: with a builder that returns the same element but swaps its ico
   assert.equal(document.activeElement, memo, 'a detached node cannot take focus back, so it stays on the parked button')
 })
 
-test('QUALITY-89: with a builder that returns the same element but moves its icon out of the widget, focus stays on the button', () => {
+test('QUALITY-89: with a builder that returns the same element but moves its icon out of the select widget, focus stays on the button', () => {
   const target = mount()
   let memo: HTMLElement | undefined
   const icon = document.createElement('span')
@@ -389,7 +389,7 @@ test('QUALITY-89: with a builder that returns the same element but moves its ico
         memo = super.createTriggerClearButtonEl()
         memo.appendChild(icon)
       } else if (builds > 2) {
-        document.body.appendChild(icon) // a later run parks the icon outside the widget, still connected
+        document.body.appendChild(icon) // a later run parks the icon outside the select widget, still connected
       }
       return memo
     }
@@ -402,7 +402,7 @@ test('QUALITY-89: with a builder that returns the same element but moves its ico
   sel.rerender() // build 3: the override moves the icon out
   assert.equal(icon.isConnected, true)
   assert.equal(memo!.contains(icon), false)
-  assert.equal(document.activeElement, memo, 'focus must not follow the icon out of the widget (that could close an open popup)')
+  assert.equal(document.activeElement, memo, 'focus must not follow the icon out of the select widget (that could close an open popup)')
 })
 
 test('QUALITY-89: focus inside a shadow-rooted icon is handed back to the real element after a same-element render', () => {
@@ -455,7 +455,7 @@ test('QUALITY-89: a detached <a> icon (a string `host` on its own root) does not
   assert.equal(document.activeElement, memo, 'the detached anchor cannot take focus back, so it stays on the button')
 })
 
-test('QUALITY-89: a builder override that returns a non-focusable element keeps focus in the widget (on the trigger)', () => {
+test('QUALITY-89: a builder override that returns a non-focusable element keeps focus in the select widget (on the trigger)', () => {
   class Plain extends LLSelectSingle<string> {
     protected override createTriggerClearButtonEl(): HTMLElement {
       const el = document.createElement('span') // no tabindex: cannot take focus

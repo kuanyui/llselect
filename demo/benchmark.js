@@ -1,6 +1,7 @@
 // Mass-instantiation stress benchmark. REAL BROWSER ONLY (needs layout + the
-// CDN libraries loaded by benchmark.html). Builds many INDEPENDENT selects for
-// one scenario, renders them in the on-page scratch area, and measures it.
+// CDN libraries loaded by benchmark.html). Builds many INDEPENDENT
+// select widgets for one scenario, renders them in the on-page scratch area,
+// and measures it.
 //
 // Fairness notes:
 // - Every library loads its minified CDN build; llselect loads its minified UMD
@@ -151,9 +152,10 @@ const ADAPTERS = {
     setup(mount, items, opts) {
       const Ctor = opts.multi ? window.llselect.LLSelectMultiple : window.llselect.LLSelectSingle
       const o = { filterable: true, ariaLabel: 'Benchmark select' }
-      // Match the competitors: their multi-selects render each chosen item as a
-      // tag, so llselect renders tags too (not the lighter count summary),
-      // otherwise it would be doing less per-selection work than they do.
+      // Match the competitors: their multi-select widgets render each chosen
+      // item as a tag, so llselect renders tags too (not the lighter count
+      // summary), otherwise it would be doing less per-selection work than
+      // they do.
       if (opts.multi) { o.triggerDisplay = 'tags' }
       if (opts.custom) {
         o.createPopupListItemContentElFn = (it) => iconSpan(it)

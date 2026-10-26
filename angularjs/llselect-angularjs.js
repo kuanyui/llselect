@@ -376,9 +376,10 @@
    * The controller other directives on the same element `require` (by the
    * directive names `llselectSingle` / `llselectMultiple`) to reach the live
    * select widget - the door for app-owned policy directives (an app-wide
-   * permission-driven disable, etc.). instance() is late-bound: the select
-   * widget is constructed in the post-link, AFTER controllers instantiate, so
-   * call it from a $watch / event handler, never from a controller constructor.
+   * permission-driven disable, etc.). instance() is late-bound: the
+   * select widget is constructed in the post-link, AFTER controllers
+   * instantiate, so call it from a $watch / event handler, never from a
+   * controller constructor.
    */
   function LlselectApiController() {
     /** @type {LlselectSingleInstance | LlselectMultipleInstance | null} */

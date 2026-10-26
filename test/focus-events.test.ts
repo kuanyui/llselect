@@ -4,11 +4,11 @@ import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle } from '../src/single.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 
-// onFocus / onBlur: DOM focus entering or leaving the whole widget (rootEl),
-// never a move inside it. Contract: docs/llm/A11Y.md "Focus", DESIGN.md
-// "Widget focus events". jsdom moves focus and fires focusin / focusout with
-// relatedTarget on focus() and blur(); it fires nothing when a focused element
-// is removed.
+// onFocus / onBlur: DOM focus entering or leaving the whole select widget
+// (rootEl), never a move inside it. Contract: docs/llm/A11Y.md "Focus",
+// DESIGN.md "Select widget focus events". jsdom moves focus and fires
+// focusin / focusout with relatedTarget on focus() and blur(); it fires
+// nothing when a focused element is removed.
 
 function mount(): { el: HTMLElement; outside: HTMLButtonElement; label: HTMLLabelElement } {
   setupDom('<!doctype html><html><body><label id="lbl">Fruit</label><div id="mount"></div><button id="outside">x</button></body></html>')
@@ -34,7 +34,7 @@ function logged(el: HTMLElement, extra: { filterable?: boolean; labelEl?: HTMLLa
   return { sel, log }
 }
 
-test('onFocus fires once when focus enters from outside; a move inside the widget fires nothing', () => {
+test('onFocus fires once when focus enters from outside; a move inside the select widget fires nothing', () => {
   const { el, outside } = mount()
   const { sel, log } = logged(el, { filterable: true })
   outside.focus()
@@ -109,7 +109,7 @@ test('setDisabled(true) while open and focused closes the popup without onBlur',
   sel.open()
   sel.setDisabled(true)
   assert.deepEqual(log, ['focus', 'open', 'close'])
-  assert.equal(document.activeElement, sel.triggerEl, 'focus returned to the trigger, inside the widget')
+  assert.equal(document.activeElement, sel.triggerEl, 'focus returned to the trigger, inside the select widget')
 })
 
 test('a programmatic triggerEl.focus() and the label click both fire onFocus', () => {
@@ -175,7 +175,7 @@ test('outsideClickBehavior block: an outside press while open closes without onB
   assert.equal(document.activeElement, sel.triggerEl, 'close() returned focus from the filter input to the trigger')
 })
 
-test('a mouse clear on an unfocused widget focuses the trigger and reports onFocus; on a focused open widget it keeps focus on the host and reports nothing', () => {
+test('a mouse clear on an unfocused select widget focuses the trigger and reports onFocus; on a focused open select widget it keeps focus on the host and reports nothing', () => {
   const { el } = mount()
   const log: string[] = []
   const sel = new LLSelectMultiple<string>(el, {
@@ -251,7 +251,7 @@ test('an onFocus listener that opens the popup or loads items does not cancel th
   assert.equal(sel.isOpened(), true)
 })
 
-test('an onFocus listener that destroys the widget stops the clear and the chip removal', () => {
+test('an onFocus listener that destroys the select widget stops the clear and the chip removal', () => {
   const { el } = mount()
   const changes: string[] = []
   const sel = new LLSelectMultiple<string>(el, {
@@ -309,7 +309,7 @@ test('tags: an onFocus listener that removed the item leaves the x with nothing 
   assert.deepEqual(sel.getChosenItems(), [])
 })
 
-test('tags: a chip removal on an unfocused widget focuses the trigger and reports onFocus', () => {
+test('tags: a chip removal on an unfocused select widget focuses the trigger and reports onFocus', () => {
   const { el } = mount()
   const log: string[] = []
   const sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', triggerDisplay: 'tags', onFocus: () => { log.push('focus') } })

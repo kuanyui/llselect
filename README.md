@@ -102,7 +102,7 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 >   - Work that a library delays with a timer or with `requestAnimationFrame` is not counted. A microtask queued from inside another microtask is not counted either.
 > - The following table shows **instantiation** only, other tests (interactions like open popup, filter candidates, choose candidate, ... etc) cannot be accurately benchmarked nor able to be fairly compared across libraries due to the details in implementations of each library. But you still can test by yourself in benchmark page (Live Benchmark: [GitHub Page](https://kuanyui.github.io/llselect/demo/benchmark.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/benchmark.html). Source Code: [HTML](demo/benchmark.html), [JS](demo/benchmark.js)), and interact with them and feel the "real experience" instead of relying on inaccurate benchmark results.
 
-### 100 selects x 100 candidates
+### 100 select widgets x 100 candidates
 
 | Library           | Build total (all select widgets, ms) | Before paint (all select widgets, ms)       | DOM nodes (all, resting) | Teardown total (all select widgets, ms) |
 |-------------------|-------------------------------|--------------------------------------|--------------------------|----------------------------------|
@@ -113,7 +113,7 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 | Tom Select        | 40                            | 35                                   | 900                      | 1.10                             |
 | Slim Select       | 63                            | 113                                  | 11,000                   | 5.40                             |
 
-### 1000 selects x 10 candidates
+### 1000 select widgets x 10 candidates
 | Library           | Build total (all select widgets, ms) | Before paint (all select widgets, ms)       | DOM nodes (all, resting) | Teardown total (all select widgets, ms) |
 |-------------------|-------------------------------|--------------------------------------|--------------------------|----------------------------------|
 | Native `<select>` | 31                            | 137                                  | 12,000                   | 5.60                             |
