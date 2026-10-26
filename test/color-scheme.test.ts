@@ -1,5 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle } from '../src/single.js'
 import { COLOR_SCHEME_ATTRIBUTE, resolveColorScheme } from '../src/color-scheme.js'
@@ -488,4 +490,76 @@ test("the shared pass: a select widget replaced inside another root's write keep
   assert.ok(state.replacement, "a's write replaced b")
   assert.equal(bEl.getAttribute(COLOR_SCHEME_ATTRIBUTE), 'light', 'the replaced instance writes nothing afterwards')
   assert.equal(state.replacement.getColorScheme(), 'light')
+})
+
+// --- the themes' color-scheme rules on nested select widgets -----------------
+
+// jsdom inherits no color-scheme, but it applies a stylesheet's rules to the
+// elements they match: enough to see which root's rule reaches the trigger
+// and the popup of a select widget nested in another select widget's popup.
+test("every theme gives a nested select widget's trigger and popup the scheme of its own root", () => {
+  for (const theme of ['vanilla', 'bootstrap-3', 'bootstrap-4', 'bootstrap-5', 'tailwind']) {
+    setupDom()
+    const style = document.createElement('style')
+    style.textContent = readFileSync(join(process.cwd(), 'src', 'themes', `${theme}.css`), 'utf8')
+    document.head.appendChild(style)
+    const scheme = (el: Element): string => window.getComputedStyle(el).getPropertyValue('color-scheme')
+    for (const [outerScheme, innerScheme] of [['dark', 'light'], ['light', 'dark']] as const) {
+      const outerEl = document.createElement('div')
+      document.body.appendChild(outerEl)
+      const innerEl = document.createElement('div')
+      const outer = new LLSelectSingle<string>(outerEl, { colorScheme: outerScheme, createPopupHeaderContentElFn: () => innerEl })
+      const inner = new LLSelectSingle<string>(innerEl, { colorScheme: innerScheme })
+      const where = `${theme}, ${innerScheme} inside ${outerScheme}`
+      assert.ok(outer.popupEl.contains(innerEl), `${where}: the inner root sits in the outer popup`)
+      assert.equal(scheme(outer.triggerEl), outerScheme, `${where}: the outer trigger`)
+      assert.equal(scheme(outer.popupEl), outerScheme, `${where}: the outer popup`)
+      assert.equal(scheme(inner.triggerEl), innerScheme, `${where}: the inner trigger takes its own root's scheme`)
+      assert.equal(scheme(inner.popupEl), innerScheme, `${where}: the inner popup takes its own root's scheme`)
+    }
+  }
+})
+
+// The computed values above hide a descendant light rule behind the dark rule,
+// which every theme writes later. Matching each rule against every trigger and
+// popup pins both child combinators, whatever their order.
+test("every theme's color-scheme rules match a trigger or a popup only through its own root", () => {
+  for (const theme of ['vanilla', 'bootstrap-3', 'bootstrap-4', 'bootstrap-5', 'tailwind']) {
+    setupDom()
+    const style = document.createElement('style')
+    style.textContent = readFileSync(join(process.cwd(), 'src', 'themes', `${theme}.css`), 'utf8')
+    document.head.appendChild(style)
+    const rules: CSSStyleRule[] = []
+    const collect = (list: CSSRuleList): void => {
+      for (const rule of Array.from(list)) {
+        if ('selectorText' in rule) {
+          if ((rule as CSSStyleRule).style.getPropertyValue('color-scheme') !== '') { rules.push(rule as CSSStyleRule) }
+        } else if ('cssRules' in rule) {
+          collect((rule as CSSGroupingRule).cssRules)
+        }
+      }
+    }
+    assert.ok(style.sheet)
+    collect(style.sheet.cssRules)
+    assert.equal(rules.length, 2, `${theme}: one light rule and one dark rule`)
+    const selects: LLSelectSingle<string>[] = []
+    for (const [outerScheme, innerScheme] of [['dark', 'light'], ['light', 'dark']] as const) {
+      const outerEl = document.createElement('div')
+      document.body.appendChild(outerEl)
+      const innerEl = document.createElement('div')
+      const outer = new LLSelectSingle<string>(outerEl, { colorScheme: outerScheme, createPopupHeaderContentElFn: () => innerEl })
+      const inner = new LLSelectSingle<string>(innerEl, { colorScheme: innerScheme })
+      assert.ok(outer.popupEl.contains(innerEl), `${theme}, ${innerScheme} inside ${outerScheme}: the inner root sits in the outer popup`)
+      selects.push(outer, inner)
+    }
+    for (const rule of rules) {
+      const value = rule.style.getPropertyValue('color-scheme')
+      for (const select of selects) {
+        const own = select.rootEl.getAttribute(COLOR_SCHEME_ATTRIBUTE)
+        for (const el of [select.triggerEl, select.popupEl]) {
+          assert.equal(el.matches(rule.selectorText), own === value, `${theme}: "${rule.selectorText}" against a ${el === select.triggerEl ? 'trigger' : 'popup'} whose root is ${own ?? 'unset'}`)
+        }
+      }
+    }
+  }
 })

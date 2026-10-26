@@ -393,15 +393,17 @@
   --llselect-clear-hover-bg: #3a3a3a;
 }
 
-/* Browser-painted parts (the popup scrollbar, the filter input's caret) follow
-   the resolved scheme. Never on .llselect-root: the resolver reads the
-   computed color-scheme there. */
-.llselect-root[data-llselect-color-scheme='light'] .llselect-trigger,
-.llselect-root[data-llselect-color-scheme='light'] .llselect-popup {
+/* Browser-painted parts, such as the popup scrollbar and a native control a
+   host puts in the trigger or the popup, follow the resolved scheme. Never
+   on .llselect-root: the resolver reads the computed color-scheme there. The
+   child combinator keeps an outer select widget's scheme off the trigger and
+   the popup of a select widget nested in it. */
+.llselect-root[data-llselect-color-scheme='light'] > .llselect-trigger,
+.llselect-root[data-llselect-color-scheme='light'] > .llselect-popup {
   color-scheme: light;
 }
-.llselect-root[data-llselect-color-scheme='dark'] .llselect-trigger,
-.llselect-root[data-llselect-color-scheme='dark'] .llselect-popup {
+.llselect-root[data-llselect-color-scheme='dark'] > .llselect-trigger,
+.llselect-root[data-llselect-color-scheme='dark'] > .llselect-popup {
   color-scheme: dark;
 }
 
