@@ -342,7 +342,7 @@ To make the select component follow the operating system's color preference, use
 
 - If your page is always dark, use the value dark instead of `light dark` or auto, as in `<html data-color-scheme="dark">`.
 - If your page declares its color scheme only in `<meta name="color-scheme">`, add one of the three ways too.
-- If `<html>` has a class or attribute from the next table, the select component already matches your page.
+- If `<html>` has a class or attribute from the next table, the select component already follows that color scheme.
 - For example, Tailwind CSS pages often mark the dark color scheme with `<html class="dark">`.
 - Bootstrap 5.3 pages mark the dark color scheme with `<html data-bs-theme="dark">`.
 - If your page uses none of the following, the select component stays light, even on a dark operating system:
@@ -472,7 +472,7 @@ const sel = new LLSelectSingle(shadow.querySelector('.mount'), { ariaLabel: 'Fru
 ```
 
 - Elements inside the shadow root inherit `--llselect-color-scheme` and `color-scheme` from the page.
-- Outside the shadow root, a built-in class or attribute works only when the page also loads a theme stylesheet.
+- A built-in class or attribute outside the shadow root works only if the page also loads a theme stylesheet.
 
 ### A class or attribute your page already uses (edge case)
 
@@ -658,8 +658,9 @@ Subclass only when settings cannot express it:
 
 1. **A new kind of select component** - new public API / state / interaction (e.g. a TreeSelect).
 2. **A framework wrapper** - e.g. `class VueLLSelect extends LLSelectSingle` for lifecycle glue (call `destroy()` on unmount). This is the main reason llselect is "low-level".
-3. **Core behavior with no setting** - e.g. replace `onPopupListItemActivated` semantics, or add a class or a title to the item row element by overriding `createPopupListItemEl`.
-   - Rich HTML or icons in an item row need no subclass. The `createPopupListItemContentElFn` setting fills the content of each item row.
+3. **Core behavior with no setting** - e.g. replace `onPopupListItemActivated` semantics.
+   - An override of `createPopupListItemEl` can add a class or a title to the item row element.
+   - The `createPopupListItemContentElFn` setting adds rich HTML or icons to an item row without a subclass.
 4. **ARIA attributes** - override the methods that build the elements containing ARIA attributes. For example, add or remove `aria-*` attributes.
    - `create*El` can set ARIA attributes, while `create*ContentEl` **never** sets ARIA attributes.
 

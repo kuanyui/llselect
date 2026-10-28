@@ -790,7 +790,7 @@ function frameDetail(frame) {
   } else if (shownKids(frame.kids).length > 0) {
     out.push('<p class="mg-shape-line">Not one of the five name shapes. It is shown because the calls inside it start here.</p>')
   } else {
-    out.push('<p class="mg-shape-line">Not one of the five name shapes. The methods it calls are not in the reference, so none is listed.</p>')
+    out.push('<p class="mg-shape-line">Not one of the five name shapes. No call that the guide lists ran inside it.</p>')
   }
   if (split !== null && split.shape.verb === 'create') { out.push(createAdvice(frame)) }
   const did = writeBullets(frame.writes, snap)
