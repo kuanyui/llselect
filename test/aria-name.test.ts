@@ -103,6 +103,21 @@ test('predicate filterable: name wiring re-syncs per open cycle', () => {
   sel.close()
 })
 
+test('filterable: the popup dialog carries the field name; while the filter is inactive the popup has none', () => {
+  const labelled = new LLSelectSingle<string>(mount(), { filterable: true, ariaLabelledBy: 'field-label' })
+  assert.equal(labelled.popupEl.getAttribute('aria-labelledby'), 'field-label')
+  assert.equal(labelled.popupEl.getAttribute('aria-label'), null)
+  const named = new LLSelectSingle<string>(mount(), { filterable: true, ariaLabel: 'Country' })
+  assert.equal(named.popupEl.getAttribute('aria-label'), 'Country')
+  assert.equal(named.popupEl.getAttribute('aria-labelledby'), null)
+  const unnamed = new LLSelectSingle<string>(mount(), { filterable: true })
+  assert.equal(unnamed.popupEl.getAttribute('aria-label'), null, 'no invented name: the unnamed-field warning covers it')
+  assert.equal(unnamed.popupEl.getAttribute('aria-labelledby'), null)
+  const inactive = new LLSelectSingle<string>(mount(), { ariaLabel: 'Country' })
+  assert.equal(inactive.popupEl.getAttribute('aria-label'), null)
+  assert.equal(inactive.popupEl.getAttribute('aria-labelledby'), null)
+})
+
 // --- multiple ------------------------------------------------------------
 
 test('LLSelectMultiple: same wiring, multiselectable listbox is named', () => {

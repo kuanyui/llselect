@@ -75,8 +75,9 @@ test('trigger has correct ARIA attributes', () => {
   assert.ok(cb.className.includes('llselect-trigger'))
 })
 
-test('popup wrapper has no ARIA role', () => {
+test('popup wrapper has no ARIA role while the filter is inactive', () => {
   const inst = new TestSelect<string>(mount())
+  assert.equal(inst.popupEl.id, inst.classIdMap.popupId)
   assert.equal(inst.popupEl.getAttribute('role'), null)
   assert.ok(inst.popupEl.className.includes('llselect-popup'))
 })

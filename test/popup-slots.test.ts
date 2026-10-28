@@ -4,6 +4,7 @@ import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle } from '../src/single.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 import type { LLSelectBaseSettingsInput } from '../src/base.js'
+import { resetFocusableBeforeFilterInputWarning } from '../src/base.js'
 import { ja } from '../src/i18n/ja.js'
 
 // Pinned header / footer slots: built once in the constructor, only when their
@@ -323,4 +324,80 @@ test('the content fns receive a construction context: the class map and the reso
   assert.equal(sel.popupHeaderEl!.firstElementChild!.className, sel.classIdMap.popupListRowClass)
   assert.equal(sel.popupFooterEl!.textContent, ja.chooseAllRowText(1, 2))
   assert.deepEqual(Object.keys(header).sort(), ['classIdMap', 'uiTranslationPack'], 'nothing else is handed out')
+})
+
+class HeaderFirst extends LLSelectSingle<string> {
+  constructor(el: HTMLElement, settings: LLSelectBaseSettingsInput<string>) {
+    super(el, settings)
+    if (this.popupHeaderEl) { this.popupEl.prepend(this.popupHeaderEl) }
+  }
+}
+
+function headerWith(build: () => HTMLElement): () => HTMLElement {
+  return () => {
+    const wrap = document.createElement('div')
+    wrap.append(build())
+    return wrap
+  }
+}
+
+function captureWarnings(run: (warnings: readonly unknown[][]) => void): unknown[][] {
+  const warnings: unknown[][] = []
+  const orig = console.warn
+  console.warn = (...args: unknown[]) => { warnings.push(args) }
+  try {
+    resetFocusableBeforeFilterInputWarning()
+    run(warnings)
+  } finally { console.warn = orig }
+  return warnings
+}
+
+test('a Tab stop above the filter input warns once per page at open, with the control attached', () => {
+  let button: HTMLButtonElement | undefined
+  const warnings = captureWarnings((seen) => {
+    const sel = new HeaderFirst(mount(), {
+      ariaLabel: 'x',
+      filterable: true,
+      createPopupHeaderContentElFn: headerWith(() => { button = document.createElement('button'); return button }),
+    })
+    sel.setItems(['a'])
+    assert.equal(seen.length, 0, 'construction never checks: the recipe runs after super()')
+    sel.open()
+    sel.close()
+    sel.open()
+    sel.close()
+    const other = new HeaderFirst(mount(), { ariaLabel: 'y', filterable: true, createPopupHeaderContentElFn: headerWith(() => document.createElement('button')) })
+    other.setItems(['a'])
+    other.open()
+  })
+  assert.equal(warnings.length, 1, 'once per page, not per open or per instance')
+  assert.match(String(warnings[0]![0]), /before the filter input/)
+  assert.equal(warnings[0]![1], button)
+})
+
+test('no Tab stop above the filter input, or the filter inactive: no warning', () => {
+  const warnings = captureWarnings(() => {
+    // The header in its default place, after the filter input.
+    const plain = new LLSelectSingle<string>(mount(), { ariaLabel: 'x', filterable: true, createPopupHeaderContentElFn: headerWith(() => document.createElement('button')) })
+    plain.setItems(['a'])
+    plain.open()
+    plain.close()
+    // Above the input, but out of the Tab order or disabled.
+    for (const build of [
+      () => { const b = document.createElement('button'); b.tabIndex = -1; return b },
+      () => { const b = document.createElement('button'); b.disabled = true; return b },
+      () => document.createElement('span'),
+    ]) {
+      const sel = new HeaderFirst(mount(), { ariaLabel: 'x', filterable: true, createPopupHeaderContentElFn: headerWith(build) })
+      sel.setItems(['a'])
+      sel.open()
+      sel.close()
+    }
+    // Above the input, but the filter is inactive: the trigger, before the popup, is the host.
+    const inactive = new HeaderFirst(mount(), { ariaLabel: 'x', createPopupHeaderContentElFn: headerWith(() => document.createElement('button')) })
+    inactive.setItems(['a'])
+    inactive.open()
+    inactive.close()
+  })
+  assert.deepEqual(warnings, [])
 })

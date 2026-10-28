@@ -543,3 +543,35 @@ test('QUALITY-89: inside a shadow root, close() still returns focus from the fil
   sel.close()
   assert.equal(shadow.activeElement, sel.triggerEl, 'the focus read must use the shadow root, not document.activeElement (the host)')
 })
+
+test('filterable: the popup wrapper is a dialog that the trigger button opens; the input still controls the listbox', () => {
+  const sel = new LLSelectSingle<string>(mount(), { ariaLabel: 'Country', filterable: true })
+  sel.setItems(['a', 'b'])
+  const { popupId, popupListId } = sel.classIdMap
+  assert.equal(sel.popupEl.id, popupId)
+  assert.equal(sel.popupEl.getAttribute('role'), 'dialog')
+  assert.equal(sel.triggerEl.getAttribute('aria-haspopup'), 'dialog')
+  assert.equal(sel.triggerEl.getAttribute('aria-controls'), popupId)
+  assert.equal(filterInput(sel).getAttribute('aria-controls'), popupListId)
+  sel.open()
+  assert.equal(sel.popupEl.getAttribute('role'), 'dialog')
+  assert.ok(filterInput(sel).getAttribute('aria-activedescendant'), 'the active row stays on the input, inside the listbox it controls')
+})
+
+test('predicate filterable: the dialog wiring follows each open cycle, both ways', () => {
+  const sel = new LLSelectSingle<string>(mount(), { ariaLabel: 'Country', filterable: (items) => items.length > 2 })
+  const { popupId, popupListId } = sel.classIdMap
+  sel.setItems(['a', 'b', 'c'])
+  sel.open()
+  assert.equal(sel.popupEl.getAttribute('role'), 'dialog')
+  assert.equal(sel.triggerEl.getAttribute('aria-haspopup'), 'dialog')
+  assert.equal(sel.triggerEl.getAttribute('aria-controls'), popupId)
+  sel.close()
+  sel.setItems(['a', 'b'])
+  sel.open()
+  assert.equal(sel.popupEl.getAttribute('role'), null)
+  assert.equal(sel.popupEl.getAttribute('aria-label'), null)
+  assert.equal(sel.triggerEl.getAttribute('aria-haspopup'), 'listbox')
+  assert.equal(sel.triggerEl.getAttribute('aria-controls'), popupListId)
+  sel.close()
+})

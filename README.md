@@ -582,6 +582,10 @@ const sel = new LLSelectMultiple(el, {
 - A button in a slot works with the mouse and keeps keyboard input on the combobox. Give it `type="button"` and an accessible name.
 - A text field in a slot must stop its own `mousedown` from bubbling, or it cannot take focus.
 - To put the header above the filter input, move it from a subclass constructor: `if (this.popupHeaderEl) { this.popupEl.prepend(this.popupHeaderEl) }`.
+- If `filterable` is not `false`, a header above the filter input must hold no control that Tab reaches.
+- Tab from the filter input skips such a control, and Shift+Tab enters it instead of leaving the select component.
+- To offer a header control, keep the header below the filter input, or move the control to the footer.
+- If the popup opens with such a control, the select component warns once in the console.
 
 #### Action rows: commands inside the list
 
