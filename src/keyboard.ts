@@ -29,6 +29,20 @@ export enum LLSelectKeyboardAction {
 const PAGE_SIZE = 10
 
 /**
+ * Whether a keydown belongs to an IME composition, so the library leaves it
+ * to the IME.
+ * - `isComposing` covers the keys typed while a composition is open.
+ * - `keyCode` 229 covers the key that ends a composition when Safari sends it
+ *   after `compositionend`, with `isComposing` already false.
+ * - That key is typically the Enter that confirms a candidate.
+ * - `keyCode` is deprecated, but nothing else marks that key.
+ * - Sources: MDN "keydown events with IME", WebKit bug 165004.
+ */
+export function isImeKeydown(ev: KeyboardEvent): boolean {
+  return ev.isComposing || ev.keyCode === 229
+}
+
+/**
  * Map a keydown event to a logical {@link LLSelectKeyboardAction}, given whether the
  * popup is currently open.
  * - Returns `undefined` if the key should be left alone (no preventDefault,

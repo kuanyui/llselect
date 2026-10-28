@@ -12,6 +12,7 @@ import {
   getActionFromKey,
   getUpdatedIndex,
   getUpdatedTypeaheadBuffer,
+  isImeKeydown,
 } from './keyboard.js'
 import { en as DEFAULT_UI_TRANSLATION_PACK } from './i18n/en.js'
 import type { LLSelectUiTranslationPack } from './i18n.js'
@@ -3648,7 +3649,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * also close on the same key.
    */
   private handleSlotKeydown(ev: KeyboardEvent): void {
-    if (ev.key !== 'Escape' || ev.isComposing || this.composing || ev.defaultPrevented) { return }
+    if (ev.key !== 'Escape' || isImeKeydown(ev) || this.composing || ev.defaultPrevented) { return }
     const t = this.eventTargetNode(ev)
     if (t instanceof Node && this.filterInputEl.contains(t)) { return }
     ev.preventDefault()
@@ -3657,7 +3658,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   private handleKeydown(ev: KeyboardEvent): void {
     // Leave the keys to the IME while composing.
-    if (ev.isComposing || this.composing) { return }
+    if (isImeKeydown(ev) || this.composing) { return }
     if (this.disabled) { return }
     const inText = ev.currentTarget === this.filterInputEl
     if (!inText && this.handleTypeaheadKeydown(ev)) { return }

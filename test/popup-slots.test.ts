@@ -226,6 +226,17 @@ test('an Esc during IME composition is ignored', () => {
   assert.equal(sel.isOpened(), true)
 })
 
+test('an Esc that Safari sends after compositionend, with keyCode 229, is ignored', () => {
+  const { el } = mountWithOutside()
+  const button = footerButton()
+  const sel = new LLSelectSingle<string>(el, { ariaLabel: 'x', createPopupFooterContentElFn: () => button })
+  sel.setItems(['a'])
+  sel.open()
+  button.focus()
+  button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', keyCode: 229, bubbles: true, cancelable: true }))
+  assert.equal(sel.isOpened(), true)
+})
+
 test('other keys on a slot control are not intercepted', () => {
   const { el } = mountWithOutside()
   const button = footerButton()

@@ -218,6 +218,23 @@ test('IME composition: typing while composing does not filter; compositionend fi
   assert.deepEqual(rendered, ['台北'])
 })
 
+test('IME: the Enter that Safari sends after compositionend, with keyCode 229, chooses no row', () => {
+  const sel = new LLSelectSingle<string>(mount(), { filterable: true })
+  sel.setItems(['台北', '東京', '首爾'])
+  sel.open()
+  const input = filterInput(sel)
+  input.dispatchEvent(new Event('compositionstart', { bubbles: true }))
+  input.value = '台北'
+  input.dispatchEvent(new Event('compositionend', { bubbles: true }))
+  // WebKit's order: compositionend first, then the confirming Enter with isComposing false.
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 229, bubbles: true, cancelable: true }))
+  assert.equal(sel.isOpened(), true)
+  assert.equal(sel.getChosenItem(), undefined)
+  // The next Enter is the user's own and chooses the row.
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true, cancelable: true }))
+  assert.equal(sel.getChosenItem(), '台北')
+})
+
 test('filtering does not change the chosen set; hidden chosen items stay chosen', () => {
   const sel = new LLSelectMultiple<string>(mount(), { filterable: true })
   sel.setItems(['Argentina', 'Brazil', 'Canada'])
