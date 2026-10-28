@@ -341,11 +341,12 @@ To make the select component follow the operating system's color preference, use
 | CSS variable | `html { --llselect-color-scheme: auto; }` in your stylesheet | no | yes |
 
 - If your page is always dark, use the value dark instead of `light dark` or auto, as in `<html data-color-scheme="dark">`.
-- If your page only has the `<meta name="color-scheme">` element, you still need to use one of the three ways.
-- If `<html>` already has a class or attribute from the next table, you need nothing more.
-- For example, dark Tailwind CSS pages often use `<html class="dark">`, and dark Bootstrap 5.3 pages use `<html data-bs-theme="dark">`.
+- If your page declares its color scheme only in `<meta name="color-scheme">`, add one of the three ways too.
+- If `<html>` has a class or attribute from the next table, the select component already matches your page.
+- For example, Tailwind CSS pages often mark the dark color scheme with `<html class="dark">`.
+- Bootstrap 5.3 pages mark the dark color scheme with `<html data-bs-theme="dark">`.
 - If your page uses none of the following, the select component stays light, even on a dark operating system:
-  - one of the three ways, applied to the element you build the select component on or to an ancestor
+  - one of the three ways, applied to the element you build the select component on, or to an ancestor
   - a class or attribute from the next table
   - the setting `colorScheme: 'dark'`
 
@@ -458,7 +459,7 @@ cardSelect.refreshColorScheme() // cardSelect is built on an element inside card
 
 - A class or attribute change usually affects only the select components built on or inside the changed element.
 - If your code replaces a stylesheet, call `refreshColorScheme()` after the new stylesheet has loaded and taken effect.
-- Calling `refreshColorScheme()` when the color scheme has not changed has no effect.
+- If the color scheme has not changed, `refreshColorScheme()` does nothing.
 
 ### Shadow DOM (edge case)
 
@@ -471,7 +472,7 @@ const sel = new LLSelectSingle(shadow.querySelector('.mount'), { ariaLabel: 'Fru
 ```
 
 - Elements inside the shadow root inherit `--llselect-color-scheme` and `color-scheme` from the page.
-- A built-in class or attribute outside the shadow root takes effect only when the page loads a theme stylesheet.
+- Outside the shadow root, a built-in class or attribute works only when the page also loads a theme stylesheet.
 
 ### A class or attribute your page already uses (edge case)
 
@@ -657,7 +658,8 @@ Subclass only when settings cannot express it:
 
 1. **A new kind of select component** - new public API / state / interaction (e.g. a TreeSelect).
 2. **A framework wrapper** - e.g. `class VueLLSelect extends LLSelectSingle` for lifecycle glue (call `destroy()` on unmount). This is the main reason llselect is "low-level".
-3. **Core behavior with no setting** - e.g. replace `onPopupListItemActivated` semantics. Rich HTML or icons in a row need no subclass, because the `createPopupListItemContentElFn` setting builds each row's content.
+3. **Core behavior with no setting** - e.g. replace `onPopupListItemActivated` semantics, or add a class or a title to the item row element by overriding `createPopupListItemEl`.
+   - Rich HTML or icons in an item row need no subclass. The `createPopupListItemContentElFn` setting fills the content of each item row.
 4. **ARIA attributes** - override the methods that build the elements containing ARIA attributes. For example, add or remove `aria-*` attributes.
    - `create*El` can set ARIA attributes, while `create*ContentEl` **never** sets ARIA attributes.
 

@@ -2,6 +2,34 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (the method-name grammar guide and the README "Dark color scheme" rewrite)
+
+Process: the committee (Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5, Codex Sol; Codex Astra left out by the owner's ruling for this task), the review panel (Fable 5, Opus 5, Opus 4.8, Codex Sol) and Codex Luna's wording review checked the guide on the core API page and the rewritten README section; their findings on that work were fixed or declined within that work. The entries below are what they found outside that work, logged open by the owner's ruling to handle them later.
+
+- [ ] **[DOCUMENTATION-763] - README "Method-name grammar" says a `create*El` builds and returns a new element, but `createPopupHeaderEl` and `createPopupFooterEl` can return `null`**
+  - Symptom: the README row for `create*El(...)` reads "Builds a new element and returns it."; `createPopupHeaderEl(): HTMLElement | null` (`src/base.ts:4253`) and `createPopupFooterEl` (`src/base.ts:4287`) return `null` when there is nothing to show (Codex Sol).
+  - Impact: the method-name grammar guide shows that README row as the meaning of the shape, next to a call that returned `null`.
+  - Fix: open. The owner decides whether the README row allows `null` or the methods change.
+
+- [ ] **[DOCUMENTATION-764] - README "Method-name grammar" calls its list of DOM verbs with no suffix complete, but `setUiTranslationPack` writes the filter input's placeholder**
+  - Symptom: the README says "The full fixed list" of verbs that touch the DOM with no suffix and "Every other verb ... never touches the DOM"; `setUiTranslationPack` (`src/base.ts:2217`) sets or removes `filterInputEl.placeholder` itself (Codex Sol).
+  - Fix: open. Codex Sol proposed moving the placeholder write into a zero-parameter `sync*ToDom()` method; the other way is to name the exception in the README.
+
+- [ ] **[DOCUMENTATION-765] - README "Method-name grammar" says a `sync*ToDom()` reads one `this.*` field, but `syncEmptyStateToDom` asks the overridable `isEmpty()`**
+  - Symptom: the README row reads "Reads one `this.*` state field."; `syncEmptyStateToDom` (`src/base.ts:2515`) writes `data-empty` from `this.isEmpty()`, which a variant or a subclass overrides (Codex Sol).
+  - Fix: open. Codex Sol proposed "reads instance state" in the README row.
+  - Q: Why is `replacePopupListActionRowElsInDom`, which does O(rows) DOM work, not logged against the row's "O(1)"?
+    - A: Because its plural `Els` does not fit the `replace*ElInDom` shape, so it is no instance of the shape (Opus 5); the guide gives it no shape button for the same reason.
+
+- [ ] **[DOCUMENTATION-766] - the README sections "Customization: settings or subclassing?" and "Subclassing (extending the library)" break the README reader rules in their older text**
+  - Symptom: parentheses in prose, a 25-word fragment ("A complete worked subclass, ..."), colon labels ("Live comparison:", "How the two layers coexist:", "Rationale:"), the jargon "plain OO", a bare "it" ("The element around it"), three code names on one line, and "Subclass only when settings cannot express it:" with an undefined "it" (Codex Sol, Sonnet 4.6). Codex Sol also holds that "Settings can only fill content inside the elements the library builds" leaves out the ARIA data that settings supply, such as `ariaLabel`.
+  - Fix: open. The owner ruled to leave the older text for a later change; this round touched only reasons 3 and 4 and the "Use settings first" bullet.
+
+- [ ] **[LINT-767] - `scripts/check.mjs` runs its punctuation scan on `demo/*.ts` but not on `demo/*.js`, `demo/*.css` or `demo/*.html`**
+  - Symptom: `asciiFiles` lists `demoTs` only, while `demoJs` gets the brace check (Opus 5); `demo/*.html` is not scanned either (Opus 5.5).
+  - Cause: the comment above `srcTs` lists the demo's i18n / RTL data as an exception, but the scan flags only `BAD_PUNCTUATION` (dashes, smart quotes, the ellipsis, the non-breaking space, CJK punctuation), never letters, so that data would pass it (Opus 5.5).
+  - Fix: open. No file under `demo/` holds a flagged character today, so adding the demo files to `asciiFiles` needs no exception (Opus 5.5).
+
 ## review (the commits after v0.0.11, post-fix round nineteen)
 
 Process: the post-fix review of the two commits that answered round eighteen, by Opus 5, Opus 4.8, Codex Sol and Codex Astra, at max effort and read-only. Opus 4.8: ship. Codex Sol, Codex Astra and Opus 5: fix first, with findings on this file only; Codex Astra and Opus 5 held that the stop rule applies. All four found LINT-762 resolved. Opus 4.8 added that the `LLSelectSingle` lead, now one sentence per line, differs from the leads of `LLSelectMultiple` and `LLSelectBase`, which fill to the column, and called it no blocker and the owner's call; Opus 5 found no rule that asks for either layout, and the lead stays. Under the stop rule the owner ruled the log points fixed without another round: the round-eighteen Process now records the stop-rule position of Opus 5, credits the reading that DOCUMENTATION-754 left out Opus 4.8 to the three who held it, and records that Opus 4.8 found the entry faithful; LINT-762 keeps the reasons of Opus 5 and Opus 4.8 apart, credits the `selPass` layout to the three who found it resolved, and credits Codex Astra with its own suggestion only; DOCUMENTATION-754 keeps the parenthesis that names the six docstrings (all four, each naming some of these). At the same stop the owner ruled the four sentences of DOCUMENTATION-759.

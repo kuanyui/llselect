@@ -2877,8 +2877,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Default reads the `itemToStringFn` setting, else `String(item)`.
    * - Configure via `itemToStringFn` (no subclass needed).
    * - Override only when extending (a new kind of select component); your
-   *   override replaces the default. For HTML content, subclass
-   *   `createPopupListItemEl`.
+   *   override replaces the default. For HTML content in a row, pass the
+   *   `createPopupListItemContentElFn` setting.
    * @group Subclassing: semantics
    */
   protected itemToString(item: T): string {

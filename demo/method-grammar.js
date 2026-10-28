@@ -1,7 +1,8 @@
 // Method-name grammar guide for the core API reference page (public/api/core.html).
-// - Under the page title it adds a button, and on the signature of every
-//   member whose name has a grammar shape it adds a shape button. Both open
-//   one modal.
+// - Under the page title it adds a button. On the signature of every member
+//   whose name has a grammar shape it adds a shape button, and on every
+//   documented element property a button that shows it in the DOM. All of
+//   them open one modal.
 // - The modal runs a real LLSelectSingle, records the methods it calls, and
 //   shows the DOM right after each call, with that call's writes marked.
 // - The shape table is README "Method-name grammar", embedded by
@@ -20,7 +21,8 @@ const THEME_URL = new URL('../dist/themes/vanilla.css', import.meta.url).href
 const DEMO_CLASS = 'LLSelectSingle'
 const DEMO_ITEMS = ['Apple', 'Banana', 'Cherry']
 const DEMO_PICK = 'Cherry'
-// Documented methods that are not shapes; recorded because calls start in them.
+// Documented methods that are not shapes; recorded because other calls start
+// in them, listed or not.
 const ENTRY_METHODS = new Set(['open', 'close', 'toggle', 'setItems', 'setChosenItem', 'rerender', 'onPopupListItemActivated', 'setFocusedIndex'])
 // The README's verbs that touch the DOM with no suffix, as far as the example reaches.
 const NO_SUFFIX_METHODS = new Set(['open', 'close', 'toggle'])
@@ -605,6 +607,7 @@ function focusOn(name) {
     return
   }
   let frame = null
+  let note = null
   if (name !== null) {
     frame = first((f) => f.name === name)
     const shape = shapeOf(name)
@@ -612,12 +615,12 @@ function focusOn(name) {
       // Prefer the same kind: a whole element for createGroupEl, content for createTagContentEl.
       const content = /ContentEl$/.test(name)
       frame = first((f) => shapeOf(f.name) === shape && /ContentEl$/.test(f.name) === content) ?? first((f) => shapeOf(f.name) === shape)
-      if (frame !== null) { view.note = `<code>${esc(name)}</code> does not run in this example. Here is a call with the same name shape.` }
+      if (frame !== null) { note = `<code>${esc(name)}</code> does not run in this example. Here is a call with the same name shape.` }
     }
   }
   if (frame === null) { frame = first((f) => shapeOf(f.name)?.verb === 'render') }
   if (frame === null) { return }
-  select(frame)
+  select(frame, note)
 }
 
 function selectShape(shape) {
@@ -655,7 +658,9 @@ function showProp(name) {
   renderCards()
 }
 
-function select(frame) {
+// Only focusOn passes a note; every other way to a call clears it.
+function select(frame, note = null) {
+  view.note = note
   view.prop = null
   view.step = frame.step
   view.frame = frame
@@ -782,8 +787,10 @@ function frameDetail(frame) {
     out.push(`<p class="mg-shape-line"><code class="mg-shape" data-shape="${split.shape.verb}">${shapeHtml(split.shape)}</code> ${split.shape.meaningHtml}</p>`)
   } else if (NO_SUFFIX_METHODS.has(frame.name)) {
     out.push(`<p class="mg-shape-line">${DATA.noSuffixHtml}</p>`)
-  } else {
+  } else if (shownKids(frame.kids).length > 0) {
     out.push('<p class="mg-shape-line">Not one of the five name shapes. It is shown because the calls inside it start here.</p>')
+  } else {
+    out.push('<p class="mg-shape-line">Not one of the five name shapes. The methods it calls are not in the reference, so none is listed.</p>')
   }
   if (split !== null && split.shape.verb === 'create') { out.push(createAdvice(frame)) }
   const did = writeBullets(frame.writes, snap)
@@ -805,7 +812,10 @@ function frameDetail(frame) {
   }
   if (frame.writes.length === 0) { did.push('Wrote nothing to the page itself.') }
   const inner = changeCount(descendantWrites(frame))
-  if (inner > 0) { did.push(`The calls inside it made ${inner} ${inner === 1 ? 'change' : 'changes'} to the DOM, marked with a dashed outline.`) }
+  if (inner > 0) {
+    const who = shownKids(frame.kids).length > 0 ? 'The calls inside it' : 'Methods inside it that the reference does not list'
+    did.push(`${who} made ${inner} ${inner === 1 ? 'change' : 'changes'} to the DOM, marked with a dashed outline.`)
+  }
   out.push(`<ul>${did.map((b) => `<li>${b}</li>`).join('')}</ul>`)
   if (split !== null) {
     const words = wordsNote(split, frame)
@@ -824,7 +834,7 @@ function createAdvice(frame) {
   if (/ContentEl$/.test(frame.name)) {
     const setting = `${frame.name}Fn`
     const how = members.has(setting) ? `with the <code>${esc(setting)}</code> setting, or in a subclass` : 'in a subclass'
-    return `<p class="mg-advice mg-advice-content"><strong>Content only.</strong> The ARIA stays on the element around this content, which the library builds. Change the content ${how}.</p>`
+    return `<p class="mg-advice mg-advice-content"><strong>Content only.</strong> The library builds the element around this content. The ARIA stays on that element. Change the content ${how}.</p>`
   }
   const aria = frame.ret?.model.attrs.some(([n]) => n === 'role' || n.startsWith('aria-')) ? ', ARIA included' : ''
   return `<p class="mg-advice mg-advice-el"><strong>The whole element${aria}.</strong> Only a subclass can change it. Change it only when you must.</p>`
