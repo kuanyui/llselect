@@ -1514,7 +1514,7 @@ const i18nSelects = [
 // Mixed-direction item texts: bidi reorders runs inside each item on its own; the
 // weak-character entries (parens / digits) show the base-direction caveat
 // that per-item dir="auto" / <bdi> would solve (DESIGN.md "RTL").
-for (const sel of i18nSelects) { sel.setItems(MIXED_DIRECTION_COUNTRIES) }
+for (const sel of i18nSelects) { sel.setItems([...MIXED_DIRECTION_COUNTRIES, '繁體字測試', 'ひらがなテスト']) }
 function applyI18nPack(packName) {
   // RTL packs set `dir` on the mounts: the select component inherits the
   // environment's direction like a native element (there is NO rtl setting).
