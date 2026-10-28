@@ -49,6 +49,7 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 - [`<form>` integration](#form-integration)
 - [Capabilities overview](#capabilities-overview)
 - [API reference](#api-reference)
+- [Dark color scheme](#dark-color-scheme)
 - [Customization: settings or subclassing?](#customization-settings-or-subclassing)
 - [Acknowledgments](#acknowledgments)
 - [License](#license)
@@ -325,12 +326,192 @@ Method names follow a strict grammar. Some notes maybe helpful if you need to cu
 
 - Settings callbacks are named by return type: `create*ElFn` returns an element, `itemTo*Fn` returns a string, other `*Fn` return a boolean, `on*` are event hooks. Full convention: [docs/llm/naming-conventions.md](docs/llm/naming-conventions.md).
 
+## Dark color scheme
+
+Every theme has dark colors, and this section shows how to turn on the dark color scheme.
+
+### Minimal setup
+
+To make the select component follow the operating system's color preference, use one of these three ways:
+
+| Way | Add this | Your page's own form controls (e.g. `<input>`, `<button>`) follow too | Works in Firefox 78 to 95 |
+|---|---|---|---|
+| CSS property | `html { color-scheme: light dark; }` in your stylesheet | yes | no |
+| HTML attribute | `<html data-color-scheme="auto">` | no | yes |
+| CSS variable | `html { --llselect-color-scheme: auto; }` in your stylesheet | no | yes |
+
+- If your page is always dark, use the value dark instead of `light dark` or auto, as in `<html data-color-scheme="dark">`.
+- If your page only has the `<meta name="color-scheme">` element, you still need to use one of the three ways.
+- If `<html>` already has a class or attribute from the next table, you need nothing more.
+- For example, dark Tailwind CSS pages often use `<html class="dark">`, and dark Bootstrap 5.3 pages use `<html data-bs-theme="dark">`.
+- If your page uses none of the following, the select component stays light, even on a dark operating system:
+  - one of the three ways, applied to the element you build the select component on or to an ancestor
+  - a class or attribute from the next table
+  - the setting `colorScheme: 'dark'`
+
+### Built-in classes and attributes
+
+- The root element is the element you pass to `new LLSelectSingle()` or `new LLSelectMultiple()`.
+- Every theme stylesheet has rules for the classes and attributes in the table below.
+- Each rule sets the CSS variable `--llselect-color-scheme` on the element that has the class or attribute.
+- The select component automatically checks its color scheme again at these moments:
+  - when a class or attribute changes on `<html>` or `<body>`
+  - when the popup of the select component opens
+  - when the operating system's color preference changes
+
+| Class or attribute on the root element or an ancestor | Color scheme |
+|---|---|
+| class `dark` | dark |
+| class `theme-dark` | dark |
+| class `dark-mode` | dark |
+| class `theme-light` | light |
+| class `light-mode` | light |
+| `data-theme="dark"` | dark |
+| `data-theme="light"` | light |
+| `data-bs-theme="dark"` | dark |
+| `data-bs-theme="light"` | light |
+| `data-color-scheme="dark"` | dark |
+| `data-color-scheme="light"` | light |
+| `data-color-scheme="auto"` | follows the operating system |
+
+Section 16 of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page shows live examples.
+
+Most pages need only the minimal setup. The sections below cover optional extras and less common pages.
+
+### Set the color scheme with a CSS variable (optional)
+
+To choose the color scheme with your own class, set `--llselect-color-scheme` in a rule for that class:
+
+```css
+.night { --llselect-color-scheme: dark; }
+.day { --llselect-color-scheme: light; }
+.follow-os { --llselect-color-scheme: auto; } /* follows the operating system */
+```
+
+- The element with your class can be the root element or any ancestor of the root element.
+- If the variable holds dark, light or auto, the select component ignores the CSS property `color-scheme`.
+- If several ancestors set the variable, the select component follows the nearest ancestor.
+
+In this example, your page puts a `.day` card inside a `.night` wrapper:
+
+```html
+<div class="night">
+  <div class="card day">
+    <div id="mount"></div> <!-- a select component built here is light -->
+  </div>
+</div>
+```
+
+### One select component (optional)
+
+To give one select component a fixed color scheme, pass the `colorScheme` setting:
+
+```js
+const sel = new LLSelectSingle(el, { ariaLabel: 'Fruit', colorScheme: 'dark' }) // or 'light'
+```
+
+- The `colorScheme` setting takes priority over every class, attribute and CSS rule that chooses light or dark.
+- The `colorScheme` setting also takes priority over the operating system's color preference.
+- If your page uses the bootstrap-5 theme, some colors still come from Bootstrap. The Bootstrap 5.3 section below explains why.
+
+### Your own colors (optional)
+
+The library gives the root element the class `llselect-root`. Every theme stylesheet lists its `--llselect-` color variables and their purposes at the top. To use your own colors, set those variables in a rule that targets the root element itself. In this example, your stylesheet loads after the theme stylesheet:
+
+```css
+/* Works, because it is as specific as the theme's dark rule and comes later */
+.acme .llselect-root { --llselect-bg: #222; --llselect-fg: #eee; }
+
+/* Works only while the color scheme is light, because the theme's dark rule is more specific */
+.llselect-root { --llselect-bg: #222; }
+
+/* Does nothing, because the theme sets its color variables on .llselect-root itself */
+.acme { --llselect-bg: #222; }
+```
+
+- Your rule must take priority over the theme's dark rule, `.llselect-root[data-llselect-color-scheme='dark']`.
+- A rule inside a CSS `@layer` loses to the theme rules, which are not in a layer.
+- The browser draws the popup's scrollbar in the select component's color scheme, not in your custom colors.
+
+If your colors are dark, also set the dark color scheme on the root element or an ancestor:
+
+```css
+.acme { --llselect-color-scheme: dark; }
+```
+
+Then the theme's dark rule fills in the color variables that you did not set.
+
+### Changes the select component does not detect (edge case)
+
+- The select component detects class and attribute changes only on `<html>` and `<body>`.
+- The select component does not detect when your code replaces a stylesheet.
+- A select component inside a shadow root also misses these changes:
+  - a class or attribute change on `<html>` or `<body>`
+  - a change of the operating system's color preference
+
+When a select component misses a change, call `refreshColorScheme()` on each affected select component. In this example, your code turns a card dark:
+
+```js
+cardEl.classList.add('dark')
+cardSelect.refreshColorScheme() // cardSelect is built on an element inside cardEl
+```
+
+- A class or attribute change usually affects only the select components built on or inside the changed element.
+- If your code replaces a stylesheet, call `refreshColorScheme()` after the new stylesheet has loaded and taken effect.
+- Calling `refreshColorScheme()` when the color scheme has not changed has no effect.
+
+### Shadow DOM (edge case)
+
+The page's CSS rules do not match elements inside a shadow root. To style a select component inside a shadow root, load a theme stylesheet inside that shadow root. In this example, your code builds a select component inside a shadow root:
+
+```js
+const shadow = hostEl.attachShadow({ mode: 'open' })
+shadow.innerHTML = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@llselect/core@0/dist/themes/vanilla.css"><div class="mount"></div>'
+const sel = new LLSelectSingle(shadow.querySelector('.mount'), { ariaLabel: 'Fruit' })
+```
+
+- Elements inside the shadow root inherit `--llselect-color-scheme` and `color-scheme` from the page.
+- A built-in class or attribute outside the shadow root takes effect only when the page loads a theme stylesheet.
+
+### A class or attribute your page already uses (edge case)
+
+Your page may already use a built-in class or attribute for another purpose. For example, a banner with the class `dark` makes every select component inside the banner dark:
+
+```html
+<section class="banner dark">...</section>
+```
+
+To stop the theme's `.dark` rule from setting the color scheme on the banner, add this rule:
+
+```css
+.banner.dark { --llselect-color-scheme: inherit; }
+```
+
+- The selector `.banner.dark` is more specific than the theme's `.dark`, so your rule takes priority.
+- The value `inherit` copies `--llselect-color-scheme` from the banner's parent element.
+- If no ancestor sets the variable, the select component uses the CSS property `color-scheme` instead.
+- To keep the select components inside the banner light, set the variable to `light` instead of `inherit`.
+
+### Bootstrap 5.3 (edge case)
+
+- The bootstrap-5 theme takes its colors from Bootstrap's CSS variables.
+- Bootstrap's CSS variables are dark only inside an element with `data-bs-theme="dark"`.
+
+In this example, your page uses Bootstrap 5.3 and the bootstrap-5 theme, with `<html data-bs-theme="dark">`. Your code forces the light color scheme:
+
+```js
+const sel = new LLSelectSingle(el, { ariaLabel: 'Fruit', colorScheme: 'light' })
+```
+
+- The select component still shows the dark colors that Bootstrap defines.
+- The colors that Bootstrap does not define follow the select component's color scheme.
+
 ## Customization: settings or subclassing?
 
 Settings can only fill content inside the elements the library builds. Subclassing changes those elements themselves, including their ARIA.
 
 - So no setting can break the ARIA contract.
-- Use settings first. Subclass only for a new kind of select component or a framework wrapper.
+- If a setting can do what you need, use the setting. Otherwise, subclass.
 - Content is what a `create*ContentElFn` fills. The element around it, e.g. the `role="option"` row, changes only by overriding `create*El`.
 - Live comparison: the "Subclassing" section of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
 
@@ -470,50 +651,15 @@ sel = new LLSelectSingle(el, {
 - A setter called inside the handler wins; the pending change is dropped.
 - A rule that never allows an item belongs in `itemDisabledFn`. `onBeforeChange` is for a decision that depends on the moment.
 
-#### Dark color scheme
-
-Every theme ships a dark palette. The select component checks two CSS sources, in this order: the variable `--llselect-color-scheme`, then the property `color-scheme`.
-
-- Standard: declare `color-scheme: light dark` on `<html>`. With no variable set, the select component then follows the operating system, like a native select element.
-- Your own toggle: set the variable to dark or light on an ancestor of the select component. One rule does it: `.night { --llselect-color-scheme: dark; }`.
-- Built in: the themes set the variable for the classes and attributes in the table below. They count on the root element or on any ancestor.
-- Nested regions: the select component inherits the variable from the nearest ancestor that sets it. So a card with `data-color-scheme="light"` keeps its select components light inside a dark page.
-- Per instance: the setting `colorScheme: 'dark'` or `'light'` wins over both CSS sources and the operating system.
-- Bootstrap 5.3 pages: set `data-bs-theme="dark"`, the attribute Bootstrap's own documentation uses. The bootstrap-5 theme takes its colors from Bootstrap's own variables, so that attribute drives it. A forced light select component inside such a page keeps Bootstrap's dark colors.
-- If the variable is not set and the property does not list dark, the select component stays light. This holds on a dark operating system too.
-- Your own colors: redefine the `--llselect-*` variables in a rule like `.acme .llselect-root`, loaded after the theme stylesheet. Every theme file lists the names and roles at its top.
-- Your rule must beat the theme's dark rule, `.llselect-root[data-llselect-color-scheme='dark']`. It wins with higher specificity, or with equal specificity and a later position in the page.
-- A custom dark palette also needs the dark scheme: set `--llselect-color-scheme: dark` on the root element or an ancestor. The selected scheme controls the scrollbar's look. The color variables do not.
-- At runtime: the select component rechecks the scheme when a class or attribute changes on the html or body element. It also rechecks when its popup opens or the operating system preference changes. The select component does not recheck after a class or attribute change on any element other than html or body. If the change affects a select component's scheme, call `refreshColorScheme()` for every affected select component. Usually, the affected select components are on or inside that element.
-- Shadow DOM: load the theme stylesheet inside the shadow root. A built-in class or attribute may be on an ancestor outside the shadow root. The class or attribute takes effect only if the document outside the shadow root also loads the theme stylesheet. Inside a shadow root, the select component does not detect class or attribute changes on the html or body element. The select component also does not detect operating system preference changes. When one of these changes affects the scheme, call `refreshColorScheme()` for every select component inside the shadow root. Refreshing a select component whose scheme is unchanged changes nothing.
-- Live comparison: section 16 of the [demo examples](https://kuanyui.github.io/llselect/demo/examples.html) page.
-
-| Class or attribute on the root element or an ancestor | Selects |
-|---|---|
-| class `dark` | dark |
-| class `theme-dark` | dark |
-| class `dark-mode` | dark |
-| class `theme-light` | light |
-| class `light-mode` | light |
-| attribute `data-theme` | its value, dark or light |
-| attribute `data-bs-theme` | its value, dark or light |
-| attribute `data-color-scheme` | its value: dark, light, or auto to follow the operating system |
-
-Your page may already use a class or attribute from the table for another purpose. Select components on or inside an element with that class or attribute then take the scheme the table lists. To stop that class or attribute from setting the scheme, add a rule that beats its theme rule:
-
-```css
-.hero.dark { --llselect-color-scheme: inherit; }
-```
-
-With this rule, that element takes its parent's value of the variable. If that value is empty, the select component falls back to the property. To keep the select components light even inside a dark page, write `light` instead of `inherit`.
-
 ### Subclassing (extending the library)
 
 Subclass only when settings cannot express it:
 
 1. **A new kind of select component** - new public API / state / interaction (e.g. a TreeSelect).
 2. **A framework wrapper** - e.g. `class VueLLSelect extends LLSelectSingle` for lifecycle glue (call `destroy()` on unmount). This is the main reason llselect is "low-level".
-3. **Core behavior with no setting** - e.g. replace `onPopupListItemActivated` semantics, or take full control of the item element via `createPopupListItemEl` (rich HTML, icons).
+3. **Core behavior with no setting** - e.g. replace `onPopupListItemActivated` semantics. Rich HTML or icons in a row need no subclass, because the `createPopupListItemContentElFn` setting builds each row's content.
+4. **ARIA attributes** - override the methods that build the elements containing ARIA attributes. For example, add or remove `aria-*` attributes.
+   - `create*El` can set ARIA attributes, while `create*ContentEl` **never** sets ARIA attributes.
 
 How the two layers coexist: every customization point is a `protected` method whose default reads its `*Fn` setting. Overriding the method replaces that default - your override wins, plain OO, no hidden precedence. Rationale: [docs/llm/DESIGN.md](docs/llm/DESIGN.md).
 
@@ -531,6 +677,7 @@ This project heavily relies on LLM agents. More than 99% of the working code was
    - correct unreasonable APIs according to my development experience, trying to avoid misleading APIs naming and anti-patterns common among existing UI component libraries,
    - make the technical decisions,
    - decide API naming conventions,
+   - proofreading the fucking-long and no-clear-focus documentation generated by LLM,
    - test on real browsers and OSes (Firefox / Chromium, Linux / Android) and decide the UI/UX details.
 
 I try to provide usable software, but **I still cannot provide any warranty.**
