@@ -1,6 +1,6 @@
 // Assemble the static Pages site into public/ (host-agnostic; GitLab CI
 // publishes it as-is, the GitHub projects repo nests it under llselect/):
-//   index.html  - landing page rendered from README.md
+//   index.html  - landing page rendered from README.md, with the sidebar outline
 //   demo/       - copied as-is
 //   dist/       - built library (run `npm run build` first)
 //   angularjs/  - the directive sources the angularjs demo loads, plus
@@ -221,19 +221,30 @@ function assertNoUnclassifiedAttributes(body) {
   return body
 }
 
-// Sidebar outline for the (long) API pages: a generic nested tree from the
-// rendered heading ladder (h2..h6) - depths are NOT fixed per role, because a
-// categorized group (@group + @category) sinks its symbols one level deeper
-// than an uncategorized one. Structural typedoc headings are skipped by TEXT,
-// together with their deeper subtree.
+// Sidebar outline for the long pages (the API pages and the README home page):
+// a generic nested tree from the rendered heading ladder (h2..h6) - depths are
+// NOT fixed per role, because a categorized group (@group + @category) sinks
+// its symbols one level deeper than an uncategorized one. Structural typedoc
+// headings are skipped by TEXT, together with their deeper subtree. Headings
+// inside a blockquote or an alert box (the README's opening Q&A) stay out: a
+// section boundary there would split the box.
 const TOC_SKIP = new Set(['Type Parameters', 'Extends', 'Extended by', 'Implements', 'Type Declaration', 'Parameters', 'Returns', 'Inherited from', 'Overrides', 'Example'])
+function quotedHeadingIds(body) {
+  const ids = new Set()
+  for (const quote of body.matchAll(/<blockquote>[\s\S]*?<\/blockquote>|<div class="md-alert[^"]*">[\s\S]*?<\/div>/g)) {
+    for (const m of quote[0].matchAll(/<h[2-6] id="([^"]+)"/g)) { ids.add(m[1]) }
+  }
+  return ids
+}
 function buildTocHtml(body) {
   const root = { depth: 1, children: [] }
   const stack = [root]
+  const quoted = quotedHeadingIds(body)
   let skipDepth = null
   for (const m of body.matchAll(/<h([2-6]) id="([^"]+)"([^>]*)>(.*?)<\/h\1>/g)) {
     const kind = (m[3].match(/data-kind="([^"]+)"/) ?? [])[1] ?? null
     const h = { depth: Number(m[1]), id: m[2], kind, text: m[4].replace(/<[^>]+>/g, ''), children: [] }
+    if (quoted.has(h.id)) { continue }
     if (skipDepth !== null && h.depth > skipDepth) { continue }
     skipDepth = null
     if (TOC_SKIP.has(h.text)) { skipDepth = h.depth; continue }
@@ -746,7 +757,7 @@ function makeApiLinkRewriter(mdDir) {
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
 const ngPkg = JSON.parse(readFileSync('angularjs/package.json', 'utf8'))
-renderMarkdownPage('README.md', 'public/index.html', { title: 'llselect', description: pkg.description, prefix: './', current: 'Home' })
+renderMarkdownPage('README.md', 'public/index.html', { title: 'llselect', description: pkg.description, prefix: './', current: 'Home', toc: true })
 renderMarkdownPage('angularjs/README.md', 'public/angularjs/index.html', { title: 'llselect + AngularJS 1.x', description: ngPkg.description, prefix: '../', current: 'AngularJS', subnav: angularjsSubnavHtml('../', 'README') })
 // The AngularJS reference is hand-written (markup is not a TypeScript
 // surface), so its badge map is hand-written too: keys are heading texts in
