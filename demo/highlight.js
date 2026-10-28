@@ -47,16 +47,107 @@ export function highlightJs(src) {
  * Markup highlighter, for pages whose interesting part IS the markup (the
  * AngularJS demo, where you copy the attributes rather than the JS).
  * Attribute names reuse `hl-func` and tag names `hl-keyword`, so no new CSS.
+ * A tag is colored from its `<` to its `>`. Strings and attribute names count
+ * only inside a tag, so text content stays plain.
  */
 export function highlightHtml(src) {
-  return tokenise(src, [
+  const outside = [
     [/^<!--[\s\S]*?-->/, 'comment'],
-    [/^<\/?[a-zA-Z][\w-]*/, 'keyword'],
-    [/^"(?:[^"\\\n]|\\.)*"/, 'string'],
-    [/^'(?:[^'\\\n]|\\.)*'/, 'string'],
     [/^\{\{[^}]*\}\}/, 'number'],
-    [/^[a-zA-Z_$][\w:-]*(?==)/, 'func'],
-  ])
+  ]
+  const inside = [
+    [/^"[^"]*"/, 'string'],
+    [/^'[^']*'/, 'string'],
+    [/^\{\{[^}]*\}\}/, 'number'],
+    [/^[^\s"'=<>/{}]+/, 'func'],
+  ]
+  let out = ''
+  let i = 0
+  let inTag = false
+  while (i < src.length) {
+    const rest = src.slice(i)
+    const edge = inTag ? rest.match(/^\/?>/) : rest.match(/^<\/?[a-zA-Z][\w-]*/)
+    let token = null
+    let type = 'keyword'
+    if (edge) {
+      token = edge[0]
+      inTag = !inTag
+    } else {
+      for (const [re, t] of inTag ? inside : outside) {
+        const m = rest.match(re)
+        if (m) {
+          token = m[0]
+          type = t
+          break
+        }
+      }
+    }
+    out += token === null ? esc(src[i]) : `<span class="hl-${type}">${esc(token)}</span>`
+    i += token === null ? 1 : token.length
+  }
+  return out
+}
+
+// CSS: outside a declaration block come selectors and at-rules; inside one,
+// property names and values. A block opened by an at-rule such as @media
+// holds rules again. A null type leaves the token plain: identifiers are
+// taken whole, so the 5 in `bootstrap-5` never reads as a number.
+const CSS_ANY = [
+  [/^\/\*[\s\S]*?\*\//, 'comment'],
+  [/^"[^"\n]*"/, 'string'],
+  [/^'[^'\n]*'/, 'string'],
+]
+const CSS_RULES = [
+  [/^@[\w-]+/, 'keyword'],
+  [/^[.#]?-?[A-Za-z_][\w-]*/, 'func'],
+  [/^::?[\w-]+/, 'func'],
+]
+const CSS_DECLS = [
+  [/^-?-?[A-Za-z_][\w-]*(?=\s*:)/, 'keyword'],
+  [/^!important\b/, 'keyword'],
+  [/^#[0-9a-fA-F]{3,8}\b/, 'number'],
+  [/^-?(?:\d+\.?\d*|\.\d+)(?:%|[A-Za-z]+)?/, 'number'],
+  [/^[A-Za-z-][\w-]*(?=\()/, 'func'],
+  [/^-?-?[A-Za-z_][\w-]*/, null],
+]
+
+/**
+ * CSS highlighter for the fenced css blocks of the rendered pages. Selectors
+ * reuse `hl-func`, at-rules and property names `hl-keyword`, numbers and
+ * colors `hl-number`, so no new CSS.
+ */
+export function highlightCss(src) {
+  const blocks = [] // one entry per open brace: true when it holds declarations
+  let atRule = false
+  let out = ''
+  let i = 0
+  while (i < src.length) {
+    const c = src[i]
+    if (c === '{' || c === '}' || c === ';') {
+      if (c === '{') { blocks.push(!atRule) }
+      if (c === '}') { blocks.pop() }
+      atRule = false
+      out += c
+      i++
+      continue
+    }
+    const rest = src.slice(i)
+    const decls = blocks.length > 0 && blocks[blocks.length - 1]
+    let token = null
+    let type = null
+    for (const [re, t] of [...CSS_ANY, ...(decls ? CSS_DECLS : CSS_RULES)]) {
+      const m = rest.match(re)
+      if (m) {
+        token = m[0]
+        type = t
+        break
+      }
+    }
+    if (!decls && type === 'keyword') { atRule = true }
+    out += token === null ? esc(c) : type === null ? esc(token) : `<span class="hl-${type}">${esc(token)}</span>`
+    i += token === null ? 1 : token.length
+  }
+  return out
 }
 
 /** Strip the shared leading indentation so a snippet lifted out of a page reads flush-left. */

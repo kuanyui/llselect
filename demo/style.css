@@ -270,10 +270,11 @@ article { margin: 1.5rem 0 2rem 1rem; }
   color: var(--fg-muted);
 }
 
-/* Minimal JS syntax highlight (One Monokai). */
+/* Minimal JS syntax highlight (One Monokai). The pink is lighter than One
+   Monokai's #f92672, which reads at 3.7:1 on the #282c34 code background. */
 .hl-comment { color: #676f7d; font-style: italic; }
 .hl-string  { color: #e6db74; }
-.hl-keyword { color: #f92672; }
+.hl-keyword { color: #ff79c6; }
 .hl-number  { color: #ae81ff; }
 .hl-func    { color: #a6e22e; }
 

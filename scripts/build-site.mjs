@@ -20,7 +20,7 @@ import { posix } from 'node:path'
 import { marked } from 'marked'
 import { ReflectionKind } from 'typedoc'
 import ts from 'typescript'
-import { highlightJs, highlightHtml } from '../demo/highlight.js'
+import { highlightJs, highlightHtml, highlightCss } from '../demo/highlight.js'
 
 const REPO_URL = 'https://gitlab.com/kuanyui/llselect'
 const REPO_BLOB = `${REPO_URL}/-/blob/master/`
@@ -86,7 +86,7 @@ marked.use({
     // unknown languages render escaped plain.
     code({ text, lang }) {
       const escaped = text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
-      const html = (lang === 'js' || lang === 'ts') ? highlightJs(text) : lang === 'html' ? highlightHtml(text) : escaped
+      const html = (lang === 'js' || lang === 'ts') ? highlightJs(text) : lang === 'html' ? highlightHtml(text) : lang === 'css' ? highlightCss(text) : escaped
       return `<pre><code>${html}</code></pre>\n`
     },
     // GitHub-style alerts: > [!TIP] etc. Marked has no built-in for them, so a
@@ -392,13 +392,14 @@ nav .color-scheme-switch input { margin: 0; cursor: pointer; }
 .subnav a:hover { background: var(--accent-soft); }
 .subnav a.current { background: var(--accent); color: var(--bg); }
 a { color: var(--link); }
-/* Fenced blocks: the demo pages' dark One Monokai look, same in both color schemes */
+/* Fenced blocks: the demo pages' dark One Monokai look, same in both color schemes.
+   The pink is lighter than One Monokai's #f92672, which reads at 3.7:1 on #282c34. */
 pre { padding: 0.8rem 1rem; background: #282c34; color: #abb2bf; border-radius: 4px; overflow-x: auto; font-size: 0.9em; line-height: 1.5; }
 code { background: var(--muted); padding: 0.1em 0.3em; font-size: 0.92em; }
 pre code { padding: 0; background: transparent; color: inherit; }
 .hl-comment { color: #676f7d; font-style: italic; }
 .hl-string { color: #e6db74; }
-.hl-keyword { color: #f92672; }
+.hl-keyword { color: #ff79c6; }
 .hl-number { color: #ae81ff; }
 .hl-func { color: #a6e22e; }
 /* Wide tables scroll inside themselves (display:block makes overflow-x work on
