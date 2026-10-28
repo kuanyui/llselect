@@ -260,7 +260,7 @@ test('a filter with zero matches shows the no-results message (role=status, outs
   assert.equal(msg.hidden, false)
   assert.equal(msg.getAttribute('role'), 'status')
   assert.equal(msg.textContent, 'No results found')
-  assert.equal(msg.parentElement, sel.popupEl) // outside the listbox (options-only children)
+  assert.equal(msg.parentElement, sel.popupEl) // outside the listbox, which holds rows, groups and pinned-block wrappers only
   input.value = '' // clearing the filter hides it again
   input.dispatchEvent(new Event('input', { bubbles: true }))
   assert.equal(msg.hidden, true)
@@ -574,4 +574,50 @@ test('predicate filterable: the dialog wiring follows each open cycle, both ways
   assert.equal(sel.triggerEl.getAttribute('aria-haspopup'), 'listbox')
   assert.equal(sel.triggerEl.getAttribute('aria-controls'), popupListId)
   sel.close()
+})
+
+test('filterable LLSelectMultiple: the same dialog wiring', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'Tags', filterable: true })
+  sel.setItems(['a', 'b'])
+  assert.equal(sel.popupEl.getAttribute('role'), 'dialog')
+  assert.equal(sel.popupEl.getAttribute('aria-label'), 'Tags')
+  assert.equal(sel.triggerEl.getAttribute('aria-haspopup'), 'dialog')
+  assert.equal(sel.triggerEl.getAttribute('aria-controls'), sel.classIdMap.popupId)
+})
+
+test('an open that keeps the filter mode writes neither the trigger wiring nor the popup role', () => {
+  const sel = new LLSelectSingle<string>(mount(), { ariaLabel: 'Country', filterable: (items) => items.length > 2 })
+  sel.setItems(['a', 'b', 'c'])
+  sel.open() // the constructor saw an empty list, so this first open turns the filter on
+  sel.close()
+  const observer = new (document.defaultView!.MutationObserver)(() => {})
+  observer.observe(sel.rootEl, { subtree: true, attributes: true, attributeFilter: ['aria-haspopup', 'aria-controls', 'role'] })
+  const wiring = (): string[] => observer.takeRecords()
+    .filter(r => r.target === sel.triggerEl || r.target === sel.popupEl)
+    .map(r => `${r.target === sel.triggerEl ? 'trigger' : 'popup'}:${r.attributeName ?? ''}`)
+  sel.open() // the same mode again: nothing to write
+  sel.close()
+  assert.deepEqual(wiring(), [])
+  sel.setItems(['a', 'b'])
+  sel.open() // the predicate now turns the filter off: the four values change
+  sel.close()
+  assert.deepEqual(wiring().sort(), ['popup:role', 'trigger:aria-controls', 'trigger:aria-haspopup', 'trigger:role'])
+  observer.disconnect()
+})
+
+test('each part of the dialog wiring is repaired on its own at the next open', () => {
+  const sel = new LLSelectSingle<string>(mount(), { ariaLabel: 'Country', filterable: true })
+  sel.setItems(['a', 'b'])
+  const parts: Array<[HTMLElement, string, string]> = [
+    [sel.triggerEl, 'role', 'button'],
+    [sel.triggerEl, 'aria-haspopup', 'dialog'],
+    [sel.triggerEl, 'aria-controls', sel.classIdMap.popupId],
+    [sel.popupEl, 'role', 'dialog'],
+  ]
+  for (const [el, name, value] of parts) {
+    el.removeAttribute(name) // only this one is stripped; the other three stay right
+    sel.open()
+    assert.equal(el.getAttribute(name), value, `${el === sel.popupEl ? 'popup' : 'trigger'} ${name} repaired`)
+    sel.close()
+  }
 })

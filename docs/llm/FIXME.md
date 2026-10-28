@@ -2,6 +2,53 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (the ARIA findings and the two blind votes)
+
+Process: the owner relayed Codex Astra's audit of the shipped library, the owner's own TalkBack test and one suspicion of the owner's; the committee answered in two blind votes, recorded in `aria-committee.md` with every member's marks and the decisive reasons. The owner delegated the first vote's Q1, Q2 and Q4; the second vote, on the Q3 API and the Q1 names, goes to the owner. The review panel (Fable 5, Opus 5, Opus 4.8, Codex Sol) checked the Q2 and Q4 commits at high effort and the fixes at medium effort; its findings were fixed, declined or left open within that work, and `aria-committee.md` records every finding it declined or left open.
+
+- [x] **[MEDIUM-768] - Action rows carried no `aria-selected`, a required state of `option`**
+  - Symptom: `createPopupListActionRowEl` set `role="option"` and no `aria-selected` (Codex Astra; the first blind vote, Q2).
+  - Cause: the rows left the attribute out on purpose, on the reasoning that a command has no selected state.
+  - Fix: every action row carries `aria-selected="false"`.
+  - Verified: `test/action-rows.test.ts`, `test/select-all.test.ts`.
+  - Q: Why keep a command as an option, not as a real button outside the listbox?
+    - A: Because the arrow-key ring needs the row inside the listbox: `aria-activedescendant` must point at an owned element of the element the combobox's `aria-controls` names. Real buttons already ship as slot buttons, and the README rule tells an app which of the two to use.
+  - Q: Why was leaving out `aria-selected` wrong, when a command is never selected?
+    - A: Because the attribute is required on every option (WAI-ARIA 1.2 section 5.2.2), and leaving it out bought nothing: an option's implicit value is false anyway.
+
+- [x] **[MEDIUM-769] - The position a screen reader announces counted the choose-all row and the action rows**
+  - Symptom: `A11Y.md` recorded that the positional counts ("3 of 16") include the rows (the first blind vote, Q2).
+  - Fix: while the list holds a non-item row, the library writes `aria-posinset` / `aria-setsize`: an item row outside a group counts among the item rows outside groups, a grouped row keeps the browser's count, and each block of non-item rows counts within itself; an in-place row rebuild copies the two attributes.
+  - Verified: `test/action-rows.test.ts`, `test/pinned-rows.test.ts`, `test/select-all.test.ts`.
+
+- [x] **[MEDIUM-770] - While the filter was active, `aria-haspopup="listbox"` named a popup container that is no listbox**
+  - Symptom: the popup wrapper holds the filter input besides the listbox, yet the trigger said `aria-haspopup="listbox"` (the first blind vote, Q4, from Opus 5's proposal).
+  - Cause: WAI-ARIA 1.2 `aria-haspopup` requires the value to match the role of the popup container.
+  - Fix: while the filter is active the wrapper is a named, non-modal `dialog` with the new id `classIdMap.popupId`, and the trigger's `aria-haspopup="dialog"` and `aria-controls` point to it; the three attributes change only with the mode.
+  - Verified: `test/filterable.test.ts`, `test/aria-name.test.ts`, `test/base.test.ts`; the accessibility tree in headless Chromium, read through the DevTools protocol.
+
+- [x] **[DOCUMENTATION-771] - The recipe that moves the header above the filter input named only the Shift+Tab symptom, with no condition**
+  - Symptom: `README.md`, the TSDoc of `createPopupHeaderContentElFn` and `DESIGN.md` gave the recipe with a partial caveat, and `A11Y.md` promised "host -> header controls -> footer controls -> out" without a condition (the owner's suspicion; the first blind vote, Q4).
+  - Fix: every place states the condition: while the filter is active, Tab from the filter input skips a control in such a header, and Shift+Tab enters it instead of leaving the select component. At the end of `open()`, after `onOpen`, the library warns once per page when such a control precedes the input.
+  - Verified: `test/popup-slots.test.ts`; Tab and Shift+Tab in headless Chromium, in both filter modes.
+
+- [ ] **[MEDIUM-772] - The clear button and the tag remove buttons sit inside the trigger, so their names leak into the combobox value**
+  - Symptom: demo 1.3 reads "Value: Japan Clear selection" and demo 11.4 "TypeScript Remove TypeScript Rust Remove Rust" (Codex Astra). While the filter is active, the buttons sit inside a `button`, whose children are presentational. The trigger is built by `createTriggerEl` (`src/base.ts:3950`), the clear button by `createTriggerClearButtonEl` (`src/base.ts:4010`), a remove button by `createTagRemoveButtonEl` (`src/multiple.ts:768`).
+  - Fix: open. The first blind vote decided the structure under the owner's delegation (Codex Sol's proposal); the names are an API decision, and the second blind vote's result awaits the owner.
+
+- [ ] **[MEDIUM-773] - What the trigger shows and what assistive technology reads out come from one pack message**
+  - Symptom: `uiTranslationPack.triggerCountSummary` (`src/i18n/en.ts:14`) feeds both the visible count and the read-out value, and with `createTriggerContentElFn` the read-out keeps the count summary while the filter is active (`renderTriggerContent`, `src/multiple.ts:688`; the owner's TalkBack test).
+  - Fix: open. The owner rejected the first vote's answers because their API did not separate the two in responsibility and in name; the second blind vote's result awaits the owner.
+
+- [ ] **[MEDIUM-774] - Demo 14.1 rewrites its "N of M shown" count with no live region**
+  - Symptom: the header count changes from `onFilterQueryChange` (`demo/main.js:1102`), and screen-reader users never hear it (Opus 5.5's first proposal in the first blind vote; six members named it in their combinations).
+  - Fix: open. The proposed fix is `role="status"` on the count; Codex Sol warned that such a live count "could become noisy".
+
+- [x] **[DOCUMENTATION-775] - `A11Y.md` called the filter-inactive popup wrapper generic, but Chromium exposes it as an unnamed group**
+  - Symptom: headless Chromium reports a shown `popover` element as role `group` with no name, while a plain `div` is generic (found while checking MEDIUM-770).
+  - Fix: `A11Y.md` "Elements, roles, ARIA" says so.
+  - Verified: a minimal page with a shown `popover="manual"` element, read through the DevTools protocol.
+
 ## review (the method-name grammar guide and the README "Dark color scheme" rewrite)
 
 Process: the committee (Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5, Codex Sol; Codex Astra left out by the owner's ruling for this task), the review panel (Fable 5, Opus 5, Opus 4.8, Codex Sol) and Codex Luna's wording review checked the guide on the core API page and the rewritten README section; their findings on that work were fixed or declined within that work. The entries below are what they found outside that work, logged open by the owner's ruling to handle them later.

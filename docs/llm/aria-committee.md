@@ -1,0 +1,159 @@
+# Committee: the ARIA findings and the two blind votes
+
+Agent-facing record of the committee's blind votes on the accessibility findings the owner relayed. `FIXME.md` has the entries (MEDIUM-768 to DOCUMENTATION-775); `DESIGN.md` "Popup header / footer slots" and "Action rows (commands inside the list)" point here; `A11Y.md` holds the contract that came out of the votes. The blind-vote procedure is the one `CLAUDE.md` records.
+
+## The report
+
+The owner relayed four observations: two from Codex Astra's audit of the shipped library, one from the owner's own TalkBack test, and one suspicion of the owner's.
+
+1. Value pollution. In the accessibility tree, demo 1.3 (a single select component with `clearable: true`) showed "Value: Japan Clear selection", and demo 11.4 (a multiple select component with `triggerDisplay: 'tags'`) showed "TypeScript Remove TypeScript Rust Remove Rust". Astra traced it to the buttons sitting inside the combobox, suggested moving the buttons beside the combobox while keeping one visual container, and advised against hiding operable buttons with `aria-hidden`.
+2. Commands as options. `createPopupListActionRowEl` gave the demo 15 commands ("Restore defaults", "Add a country", "Sort the list") `role="option"`. Astra: an option is a selectable list item, and an omitted `aria-selected` still implies false, so the row does not become a command; Astra suggested real buttons outside the listbox, as demo 14.4 does.
+3. The announcement of a multiple select component. The owner tested one with TalkBack; its trigger shows a count such as "3 / 74 selected". The owner asked whether such a control should read out every chosen item at once, whether the developer should decide, or whether an ARIA attribute describes this meaning. Astra answered that no ARIA attribute means "read the count, then every name", and recommended a short count summary by default that the developer can customize, with the library guaranteeing the options' multiselect semantics.
+4. The "header prepended" structure: the header slot, and the subclass recipe that moves the header above the filter input.
+
+The owner delegated the ARIA decisions to the committee, in the owner's words: on ARIA semantics the models should read the W3C specifications directly; each member proposes its own solution, independently and without being misled, and the committee decides; unless something truly needs the owner to decide an API, like Q3, the convener carries the rest through, and on such questions every member still gives its own opinion.
+
+## First blind vote: Q1 to Q4
+
+- Stage 1: a neutral brief (the observations, where the design lives, the W3C sources; no proposals, no options). Nine proposals, at maximum effort: A Opus 5, B Sonnet 5 (second proposal), C Sonnet 4.6, D Codex Astra, E Opus 4.8, F Sonnet 5 (first proposal), G Opus 5.5 (first proposal), H Codex Sol, I Opus 5.5 (second proposal). Opus 5.5 and Sonnet 5 wrote two each at the owner's request.
+- Stage 2: Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5, Codex Sol and Codex Astra marked the anonymized proposals, at maximum effort.
+
+### Q1, the clear button and the tag remove buttons inside the trigger: H, Codex Sol
+
+| Proposal | Best | Second | Unacceptable |
+|---|---|---|---|
+| A, Opus 5 | Sonnet 4.6, Sonnet 5 | Opus 4.8, Opus 5 | Codex Sol, Codex Astra |
+| B, Sonnet 5 (second) | - | Sonnet 4.6, Sonnet 5 | Opus 5.5, Codex Sol, Codex Astra |
+| C, Sonnet 4.6 | - | - | Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5, Codex Sol, Codex Astra |
+| D, Codex Astra | Sonnet 5, Codex Astra | Opus 5, Opus 5.5, Sonnet 4.6, Codex Sol | - |
+| E, Opus 4.8 | - | Sonnet 5 | Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6, Codex Sol, Codex Astra |
+| F, Sonnet 5 (first) | - | Opus 5, Sonnet 4.6, Sonnet 5 | Opus 5.5, Codex Sol, Codex Astra |
+| G, Opus 5.5 (first) | Opus 4.8, Opus 5, Sonnet 5 | Opus 5.5, Sonnet 4.6 | Codex Sol, Codex Astra |
+| H, Codex Sol | Opus 5.5, Sonnet 5, Codex Sol | Opus 5, Sonnet 4.6, Codex Astra | - |
+| I, Opus 5.5 (second) | Opus 4.8, Opus 5, Sonnet 5 | Opus 5.5, Sonnet 4.6 | Codex Sol, Codex Astra |
+
+- H, G and I had 3 best marks each, and H won on second marks, 3 against 2 each.
+- Both Codex members marked G and I unacceptable. Astra on G: "hides tag removal when `hideChosenRows` removes the claimed popup equivalent. Clear-all does not replace individual removal." Sol on I: "tag removal becomes a pointer-only span and again assumes selected options remain available in the popup."
+- Astra marked H second: "The toolbar adds focus-routing complexity and a localized group name beyond D's simpler button approach."
+- The structure H decided: a generic visual wrapper holds the role element and, beside it, every action button; the role element (the `combobox`, or the `button` while the filter is active) holds only value text and never another control; the clear and tag remove buttons sit in a `role="toolbar"` with an accessible name, and a lone clear button needs no toolbar; Tab enters the toolbar once, Left and Right Arrow move, Enter and Space activate; removing a tag focuses the next remove button, removing the last focuses the trigger, clearing returns focus to the trigger; a visually hidden value text must not use `hidden` or `aria-hidden`.
+- Status: the structure is decided under the delegation; its names are an API decision, which went to the second blind vote and the owner.
+
+### Q2, the action rows and the choose-all row: A, Opus 5
+
+| Proposal | Best | Second | Unacceptable |
+|---|---|---|---|
+| A, Opus 5 | Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5 | - | Codex Sol, Codex Astra |
+| B, Sonnet 5 (second) | - | - | Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5, Codex Sol, Codex Astra |
+| C, Sonnet 4.6 | - | Sonnet 4.6, Sonnet 5 | Opus 5, Codex Sol, Codex Astra |
+| D, Codex Astra | Sonnet 5, Codex Sol, Codex Astra | Opus 5, Sonnet 4.6 | - |
+| E, Opus 4.8 | Sonnet 5 | Opus 4.8 | Codex Sol, Codex Astra |
+| F, Sonnet 5 (first) | - | - | Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5, Codex Sol, Codex Astra |
+| G, Opus 5.5 (first) | Sonnet 5 | Opus 4.8, Opus 5.5, Sonnet 4.6 | Codex Sol, Codex Astra |
+| H, Codex Sol | Sonnet 5, Codex Sol, Codex Astra | Opus 5, Sonnet 4.6 | - |
+| I, Opus 5.5 (second) | Opus 4.8 | Opus 5, Sonnet 4.6, Sonnet 5 | Codex Sol, Codex Astra |
+
+- A won with 5 best marks; D and H had 3 each.
+- The two unacceptable marks on A. Astra: "Explicit selection attributes and revised position counts leave commands misrepresented as selectable options. Preserving the arrow-key sequence does not resolve that semantic defect." Sol: "Explicit `aria-selected="false"` fixes the missing required property, but commands remain falsely represented as selectable values. Giving sibling options unrelated `aria-posinset` sets does not create semantic group boundaries." Both preferred D and H: real buttons outside the listbox, with a native tri-state checkbox for choose-all.
+- Implemented under the delegation: `aria-selected="false"` on every action row, and `aria-posinset` / `aria-setsize` while the list holds a non-item row (A11Y.md "Action rows"). Rejected inside A: `aria-roledescription="command"` and a labelled group per command block (DESIGN.md "Action rows").
+
+### Q3, what a multiple select component's trigger announces: I, Opus 5.5 (second proposal); the owner rejected the three options the convener built from the two top-ranked answers, A and I
+
+| Proposal | Best | Second | Unacceptable |
+|---|---|---|---|
+| A, Opus 5 | Opus 4.8, Opus 5, Sonnet 5 | Codex Sol | - |
+| B, Sonnet 5 (second) | - | Opus 4.8, Opus 5, Sonnet 5, Codex Sol | - |
+| C, Sonnet 4.6 | Sonnet 5 | - | Opus 5 |
+| D, Codex Astra | Codex Astra | Opus 4.8, Sonnet 5 | - |
+| E, Opus 4.8 | Sonnet 5 | Opus 4.8 | - |
+| F, Sonnet 5 (first) | - | Opus 4.8, Sonnet 5 | Codex Sol, Codex Astra |
+| G, Opus 5.5 (first) | Sonnet 5 | Opus 4.8, Opus 5, Opus 5.5 | - |
+| H, Codex Sol | Sonnet 5 | Opus 4.8, Codex Sol, Codex Astra | - |
+| I, Opus 5.5 (second) | Opus 5.5, Sonnet 5, Codex Sol | Opus 4.8, Opus 5, Codex Astra | - |
+
+- A and I had 3 best marks each, and I won on second marks, 3 against A's 1. The question was the owner's, and the owner rejected the three options built from the answers, as the last bullet records.
+- Sonnet 4.6 gave no marks for Q3 and wrote "My independent opinion for the owner" instead. In its words: no ARIA attribute says "interpret this text as a multi-value summary", so "The meaning must live entirely in the value text"; the trigger should not read every chosen item by default, since "Reading 74 names on every focus event is actively harmful"; one gap is confirmed, since with `createTriggerContentElFn` the value mirror "is unconditionally set to the library's own count-summary text"; it proposed a `triggerValueTextFn` setting and "3 of 74 selected" as the English default, since "Screen readers say 'slash' for `/`".
+- Both answers kept a count summary as the default and added one setting for the value a screen reader reads: A a `triggerValueStringFn` in both classes, reading item names by default under `hideChosenRows`; I a `triggerValueTextFn` for the multiple select component only, with "3 of 74 selected" as the new English default.
+- The convener offered the owner three options built from these answers. The owner rejected all three, for one reason: in the API, the responsibilities and the names of what is displayed, a text that must stay short, and of what is read out have no clear meaning. The question went to the second blind vote.
+
+### Q4, the header and footer slots and the prepended header: A, Opus 5
+
+| Proposal | Best | Second | Unacceptable |
+|---|---|---|---|
+| A, Opus 5 | Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5, Codex Sol | Opus 4.8 | - |
+| B, Sonnet 5 (second) | - | Sonnet 4.6 | Opus 5, Opus 5.5, Sonnet 5, Codex Sol |
+| C, Sonnet 4.6 | - | Opus 4.8, Opus 5, Sonnet 4.6, Sonnet 5, Codex Sol, Codex Astra | - |
+| D, Codex Astra | Codex Astra | Opus 4.8, Sonnet 4.6, Sonnet 5 | - |
+| E, Opus 4.8 | - | Opus 4.8, Opus 5, Sonnet 4.6, Sonnet 5, Codex Sol, Codex Astra | - |
+| F, Sonnet 5 (first) | Opus 4.8, Opus 5 | Sonnet 4.6, Sonnet 5, Codex Sol | - |
+| G, Opus 5.5 (first) | Opus 4.8, Sonnet 4.6 | Sonnet 5, Codex Sol | Opus 5 |
+| H, Codex Sol | - | Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5, Codex Sol, Codex Astra | - |
+| I, Opus 5.5 (second) | Sonnet 4.6, Sonnet 5 | Opus 4.8, Opus 5, Opus 5.5, Codex Sol, Codex Astra | - |
+
+- A won with 5 best marks.
+- Opus 4.8's second mark: the contract fix and the guard are strong, "but it adopts `role="dialog"` / `aria-haspopup="dialog"` blind; that change can regress NVDA/JAWS mode behavior and should not ship without the AT pass A itself says it needs."
+- Implemented under the delegation: while the filter is active the popup wrapper is a named, non-modal `dialog` that the trigger's `aria-haspopup="dialog"` and `aria-controls` point to; the prepend recipe states its condition everywhere; `open()` warns once per page about a Tab stop before the filter input. The assistive-technology pass is in `TODO.md`.
+- Raised in the members' combinations and not taken:
+  - Opus 5: drop `aria-haspopup` in the filter-active mode instead, since a `button` does not need it; that meets the requirement with no new role.
+  - G's catch, named in the combinations of Opus 4.8, Opus 5, Opus 5.5, Sonnet 5, Sonnet 4.6 and Codex Astra: demo 14.1 rewrites its "N of M shown" count from `onFilterQueryChange` with no live region, so screen-reader users never hear it; the element wants `role="status"`. Codex Sol: the live status "is separate from the slot-structure decision and could become noisy." Open as MEDIUM-774.
+
+## Second blind vote: the Q3 API and the Q1 names
+
+- Not delegated: both questions are API decisions, so the result goes to the owner, who decides.
+- The owner's requirement for Q3, from the rejection above: in the API, what is displayed, a text that must stay short, and what is read out must be separate in responsibility and in name.
+- Stage 1, at high effort, the level the owner chose for this vote, below the `max` that `CLAUDE.md` sets for the committee: a neutral brief gave the decided Q1 structure with its names left out, the owner's words, the current design and the W3C sources. Seven proposals: A Sonnet 5, B Opus 4.8, C Opus 5.5, D Opus 5, E Codex Astra, F Codex Sol, G Sonnet 4.6.
+- Stage 2, at high effort: the same seven members marked the anonymized proposals.
+
+### Q3, what the trigger shows and what assistive technology reads out: C, Opus 5.5
+
+| Proposal | Best | Second | Unacceptable |
+|---|---|---|---|
+| A, Sonnet 5 | Sonnet 5 | Opus 4.8, Opus 5, Sonnet 4.6 | Codex Astra |
+| B, Opus 4.8 | Sonnet 5 | Opus 4.8, Sonnet 4.6 | Codex Sol |
+| C, Opus 5.5 | Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6 | Sonnet 5, Codex Astra | Codex Sol |
+| D, Opus 5 | Opus 4.8, Opus 5, Sonnet 5 | Opus 5.5, Sonnet 4.6 | Codex Sol, Codex Astra |
+| E, Codex Astra | Codex Sol, Codex Astra | Opus 4.8, Sonnet 4.6, Sonnet 5 | - |
+| F, Codex Sol | - | Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5, Codex Sol, Codex Astra | - |
+| G, Sonnet 4.6 | - | - | Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5, Codex Sol, Codex Astra |
+
+- C won with 4 best marks; Codex Sol gave the one unacceptable mark.
+- C's design: "trigger content" is what the screen shows, in `triggerContentEl`, always `aria-hidden="true"`; "trigger value" is what assistive technology reads, in `triggerValueEl`, moved inside the role element and hidden visually by inline styles; the value text never reads the content. The pack key `triggerCountSummary` becomes `triggerContentCountText`, and two keys join it: `triggerValueCountText` ("3 of 74 selected") and `triggerValueItemsText` (the chosen texts, joined). The multiple select component gains the setting `chosenItemsToTriggerValueTextFn`; the protected `computeTriggerValueText()` and `commitTriggerValueTextToDom(valueText)` are new, and `commitTriggerContentToDom(content)` loses its `plainTextValue` parameter.
+- Codex Sol's unacceptable mark on C: "The API names are clear, but `triggerContentEl` remains inside the role element. The decided structure permits only value text and decorative content there." Sol marked B and D unacceptable for the same reason.
+- Codex Astra's unacceptable mark on D: "The default accessible formatter calls the display formatter, so changing visible count wording also changes accessible wording."
+- Every member marked G unacceptable: by default its read-out falls back to the displayed text, the coupling the owner rejected.
+- Status: awaits the owner, with C's five sub-decisions (the default read-out in count mode, the read-out beside custom content, a setting for the single select component, the rename of the displayed count key, the new default texts).
+
+### Q1, the names of the decided structure: D, Opus 5, after a further round
+
+Stage 2:
+
+| Proposal | Best | Second | Unacceptable |
+|---|---|---|---|
+| A, Sonnet 5 | Opus 4.8, Sonnet 4.6 | Opus 5.5, Sonnet 5 | Opus 5, Codex Sol, Codex Astra |
+| B, Opus 4.8 | - | Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5 | Codex Sol, Codex Astra |
+| C, Opus 5.5 | Opus 4.8, Opus 5, Opus 5.5 | Sonnet 4.6, Sonnet 5 | Codex Sol, Codex Astra |
+| D, Opus 5 | Opus 4.8, Sonnet 5, Codex Astra | Opus 5, Opus 5.5 | Sonnet 4.6, Codex Sol |
+| E, Codex Astra | Codex Sol | Opus 4.8, Opus 5, Sonnet 4.6, Sonnet 5 | Codex Astra |
+| F, Codex Sol | - | Opus 4.8, Sonnet 4.6, Sonnet 5 | Opus 5, Codex Sol, Codex Astra |
+| G, Sonnet 4.6 | - | Sonnet 5 | Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6, Codex Sol, Codex Astra |
+
+The further round, at high effort, showed C and D alone, relabelled X and Y, without the stage-2 marks:
+
+| Proposal | Best | Second | Unacceptable |
+|---|---|---|---|
+| X, Opus 5 (stage-2 D) | Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6, Sonnet 5, Codex Sol, Codex Astra | - | - |
+| Y, Opus 5.5 (stage-2 C) | - | Opus 4.8, Opus 5, Opus 5.5, Sonnet 4.6 | Sonnet 5, Codex Sol, Codex Astra |
+
+- In stage 2, C and D had the same best, second and unacceptable counts, so the committee voted again on the two; D won the further round with 7 best marks.
+- D's names: `triggerEl` names the wrapper, the box the user presses, which keeps the `data-*` state attributes and the listeners; `triggerFieldEl` names the role element; `triggerButtonsEl` names the strip of the clear button and the tag remove buttons, a `toolbar` in tags mode only; the pack key `triggerButtonsAriaLabel` defaults to "Selection actions"; `triggerFieldClass`, `triggerValueClass`, `triggerButtonsClass` and `triggerFieldId` are new; a public `focus()` is recommended, since `triggerEl.focus()` would otherwise do nothing, silently.
+- The two forks in the members' reasons. Which element `triggerEl` names: the wrapper keeps the themes, the positioner, `'match-trigger'` and the color-scheme selectors working, while the role element keeps `triggerEl.focus()` and the ARIA reads working. Whether "toolbar" may name an identifier: most members ruled it out by `DESIGN.md` "ARIA roles vs JS names" and the `onActiveOptionChange` ruling.
+- A combination that Opus 4.8, Opus 5.5, Sonnet 4.6 and Codex Sol named in the further round: keep `triggerEl` on the role element, name the box `triggerWrapperEl`, and take D's `triggerButtons*` names.
+- Status: awaits the owner, with D's sub-decisions (the three new names, the strip's English name, when the strip is a toolbar, the public `focus()`).
+
+## The post-fix reviews of the Q2 and Q4 commits
+
+The review panel (Fable 5, Opus 5, Opus 4.8, Codex Sol) checked the three commits at high effort, then the fixes at medium effort: the levels the owner asked for on routine reviews, below the `max` that `CLAUDE.md` sets for the panel. The findings were fixed within the work, except these:
+- Codex Sol asked to add the filter-active condition to the completed P1-a record in `TODO.md`. Declined: that entry records what the P1-a commit shipped; the current contract lives in `A11Y.md` and `DESIGN.md`.
+- Codex Sol asked the open-time warning to skip hidden, inert and non-rendered controls, since such a control "can produce a false warning and consume the page-wide guard". Declined: each of the three becomes a Tab stop as soon as it is shown, made non-inert or rendered, with no DOM move, so the warning counts every control that is or can become a Tab stop; only a negative `tabindex` opts out. The cost Sol named stays: a control that never becomes reachable uses up the guard, and `tabindex="-1"` on it silences the warning. Sol's other requests were taken: `summary` and editing hosts count, and the check runs after `onOpen`.
+- Fable 5 noted that the action-row builders overclaim "after every chosen change". Declined: the `fireChange` of both select components calls `replacePopupListActionRowElsInDom` after every change, so the claim holds.
+- Opus 5 noted a fix commit whose subject runs past 100 characters. Left as it is: the commits are not rewritten.
+- Opus 5 and Fable 5 asked that `CLAUDE.md` record the effort levels the owner uses for committees and reviews. That waits for the owner.

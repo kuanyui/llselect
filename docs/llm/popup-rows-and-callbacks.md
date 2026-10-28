@@ -33,7 +33,7 @@ The simplest way to see it:
 
 - An action row is a button. You press it, it does one thing. It has no state.
 - The choose-all row is a checkbox. It always shows how many items are chosen. It has three looks: none chosen, some chosen, all chosen. It has state.
-- A screen reader reads them differently. The choose-all row is announced with "selected" or "not selected". An action row is not.
+- A screen reader reads them differently. The choose-all row's `aria-selected` follows the selection, and its name carries the counts. An action row's `aria-selected` is always `false`.
 
 What it would take to make the choose-all row an action row:
 
@@ -51,7 +51,7 @@ Both behaviors are argued for in `A11Y.md` and pinned by `test/select-all.test.t
 The cost of this decision, stated plainly:
 
 - The position of the built-in row is fixed. No setting moves it. None of the eleven libraries surveyed lets an app move a built-in select-all row either; the two that let the app place one (TDesign, Fluent UI v8) put it inside the items array, which the typed items of this library rule out.
-- An app that wants "select all" somewhere else turns `chooseAllRow` off and writes an action row: text from `getUiTranslationPack().chooseAllRowText(chosen, total)`, counts from `getVisibleEnabledItems()`, `onActivate: () => sel.toggleAllVisible()`. That row has no `aria-selected` and no `data-chosen-state`, is never the initial active option, and does not disappear.
+- An app that wants "select all" somewhere else turns `chooseAllRow` off and writes an action row: text from `getUiTranslationPack().chooseAllRowText(chosen, total)`, counts from `getVisibleEnabledItems()`, `onActivate: () => sel.toggleAllVisible()`. That row's `aria-selected` is always `false`, it has no `data-chosen-state`, it is never the initial active option, and it does not disappear.
 - A subclass can add the missing state to its own row: override `createPopupListLeadingActionRowEl` or the trailing twin, call `super`, then set `aria-selected`, `data-chosen-state` and `chooseAllRowClass` on the returned element. The themes then draw the tri-state look. A subclass still cannot move the built-in row (the list assembly is private), cannot make its own row the initial active option (the ring focus methods are private), and cannot make it disappear.
 
 The one rule that explains every difference: the library owns the row that carries selection state; the app owns rows that run commands.

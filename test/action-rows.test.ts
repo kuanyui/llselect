@@ -116,6 +116,7 @@ test('a disabled row is skipped by the arrow keys, is not clickable, and is re-c
   fireKey(sel.triggerEl, 'ArrowUp'); assert.equal(activeText(sel), 'a') // A0 skipped
   const a0El = sel.popupListEl.querySelector(`#${sel.classIdMap.popupListId}-action-row-trailing0`) as HTMLElement
   assert.equal(a0El.getAttribute('aria-disabled'), 'true')
+  assert.equal(a0El.getAttribute('aria-selected'), 'false', 'a disabled command row carries the required state too')
   assert.ok(a0El.classList.contains(sel.classIdMap.popupListRowDisabledClass))
   a0El.click()
   assert.equal(a0.calls, 0)

@@ -382,10 +382,9 @@ test('no Tab stop above the filter input, or the filter inactive: no warning', (
     plain.setItems(['a'])
     plain.open()
     plain.close()
-    // Above the input, but out of the Tab order or disabled.
+    // Above the input, but opted out of the Tab order, or no control at all.
     for (const build of [
       () => { const b = document.createElement('button'); b.tabIndex = -1; return b },
-      () => { const b = document.createElement('button'); b.disabled = true; return b },
       () => document.createElement('span'),
     ]) {
       const sel = new HeaderFirst(mount(), { ariaLabel: 'x', filterable: true, createPopupHeaderContentElFn: headerWith(build) })
@@ -398,6 +397,105 @@ test('no Tab stop above the filter input, or the filter inactive: no warning', (
     inactive.setItems(['a'])
     inactive.open()
     inactive.close()
+  })
+  assert.deepEqual(warnings, [])
+})
+
+test('a control that is or can become a Tab stop warns: hidden, disabled, summary, editing host', () => {
+  const builds: Array<() => HTMLElement> = [
+    () => { const b = document.createElement('button'); b.hidden = true; return b },
+    () => { const b = document.createElement('button'); b.disabled = true; return b },
+    () => { const d = document.createElement('details'); d.append(document.createElement('summary')); return d },
+    () => { const e = document.createElement('div'); e.setAttribute('contenteditable', ''); return e },
+  ]
+  const warnings = captureWarnings(() => {
+    for (const build of builds) {
+      resetFocusableBeforeFilterInputWarning()
+      const sel = new HeaderFirst(mount(), { ariaLabel: 'x', filterable: true, createPopupHeaderContentElFn: headerWith(build) })
+      sel.setItems(['a'])
+      sel.open()
+      sel.close()
+    }
+  })
+  assert.equal(warnings.length, builds.length, 'each case warns once')
+})
+
+test('the check runs after onOpen, so a control that onOpen adds to the header is found', () => {
+  let header: HTMLElement | undefined
+  const warnings = captureWarnings(() => {
+    const host = mount()
+    const headerEl = document.createElement('div')
+    header = headerEl
+    const sel = new HeaderFirst(host, {
+      ariaLabel: 'x',
+      filterable: true,
+      createPopupHeaderContentElFn: () => headerEl,
+      onOpen: () => { if (headerEl.childElementCount === 0) { headerEl.append(document.createElement('button')) } },
+    })
+    sel.setItems(['a'])
+    sel.open()
+  })
+  assert.equal(warnings.length, 1)
+  assert.equal(warnings[0]![1], header?.firstElementChild)
+})
+
+test('a tabindex that is no integer counts as absent: a span stays silent, a button still warns', () => {
+  const quiet = captureWarnings(() => {
+    for (const value of ['', 'abc']) {
+      resetFocusableBeforeFilterInputWarning()
+      const sel = new HeaderFirst(mount(), {
+        ariaLabel: 'x',
+        filterable: true,
+        createPopupHeaderContentElFn: headerWith(() => { const e = document.createElement('span'); e.setAttribute('tabindex', value); return e }),
+      })
+      sel.setItems(['a'])
+      sel.open()
+      sel.close()
+    }
+  })
+  assert.deepEqual(quiet, [])
+  const loud = captureWarnings(() => {
+    const sel = new HeaderFirst(mount(), {
+      ariaLabel: 'x',
+      filterable: true,
+      createPopupHeaderContentElFn: headerWith(() => { const b = document.createElement('button'); b.setAttribute('tabindex', 'abc'); return b }),
+    })
+    sel.setItems(['a'])
+    sel.open()
+  })
+  assert.equal(loud.length, 1)
+})
+
+test('a hidden input is never a Tab stop, whatever its tabindex', () => {
+  const warnings = captureWarnings(() => {
+    for (const tabIndex of [0, 1]) {
+      resetFocusableBeforeFilterInputWarning()
+      const sel = new HeaderFirst(mount(), {
+        ariaLabel: 'x',
+        filterable: true,
+        createPopupHeaderContentElFn: headerWith(() => { const i = document.createElement('input'); i.type = 'hidden'; i.tabIndex = tabIndex; return i }),
+      })
+      sel.setItems(['a'])
+      sel.open()
+      sel.close()
+    }
+  })
+  assert.deepEqual(warnings, [])
+})
+
+test('a negative tabindex keeps a control out of the warning, whatever its value', () => {
+  const warnings = captureWarnings(() => {
+    for (const tabIndex of [-1, -2]) {
+      resetFocusableBeforeFilterInputWarning()
+      const sel = new HeaderFirst(mount(), {
+        ariaLabel: 'x',
+        filterable: true,
+        createPopupHeaderContentElFn: headerWith(() => { const b = document.createElement('button'); b.tabIndex = tabIndex; return b }),
+      })
+      sel.setItems(['a'])
+      sel.open()
+      sel.close()
+    }
   })
   assert.deepEqual(warnings, [])
 })

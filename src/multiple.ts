@@ -601,10 +601,13 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *   the trailing rows: count the chosen items with `isChosen`, write the
    *   text with `getUiTranslationPack().chooseAllRowText(chosen, total)`, and
    *   call `toggleAllVisible()` from `onActivate`.
-   * - Such a row is a command, not the built-in row. Its `aria-selected` is
-   *   always `false`, it has no `data-chosen-state`, the themes give it no tri-state look, it is
-   *   never the active option when the popup opens, and it stays rendered
-   *   when this list is empty. For those behaviors, use `chooseAllRow`.
+   * - Such a row is a command, not the built-in row:
+   *   - its `aria-selected` is always `false`;
+   *   - it has no `data-chosen-state`, so the themes give it no tri-state look;
+   *   - it is never the active option when the popup opens;
+   *   - it stays rendered when this list is empty.
+   * - For a row that follows the selection, looks tri-state, can be the
+   *   initial active option and hides itself, use `chooseAllRow`.
    * - Override it to change the subset. The tree-select demo narrows it to
    *   leaf nodes; the choose-all row and `toggleAllVisible()` follow the
    *   override.
@@ -912,12 +915,29 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * Build the choose-all row (`chooseAllRow` setting) as the listbox's
-   * leading `role="option"` row: `data-chosen-state="none|some|all"` (a CSS
-   * styling hook), `aria-selected` only when ALL visible
-   * enabled items are chosen, accessible name + visible text from
-   * `uiTranslationPack.chooseAllRowText(chosenCount, totalCount)` over the visible
-   * enabled subset. `null` when the setting is off or nothing is actionable.
+   * Build the choose-all row (`chooseAllRow` setting), the listbox's leading
+   * `role="option"` row.
+   * - The library calls it on every full list render (`renderPopupList`), and
+   *   when a toggle rebuilds the row in place (`replaceChooseAllRowElInDom`).
+   *   You never call it.
+   * - To change only what the row shows, do not override this: pass the
+   *   `createChooseAllRowContentElFn` setting.
+   * - To change the element itself, override it, call
+   *   `super.createPopupListChooseAllRowEl()`, and edit the returned element.
+   *   Keep the `id`, the `role` and `aria-selected`; put no focusable control
+   *   inside.
+   *   - `super` returns `null` in two cases; return `null` then too:
+   *     - the `chooseAllRow` setting is off;
+   *     - no visible item is enabled, so nothing is actionable.
+   * - `data-chosen-state` is `none`, `some` or `all`: a CSS styling hook.
+   * - `aria-selected` is `"true"` when every visible enabled item is chosen,
+   *   and `"false"` otherwise.
+   * - The accessible name and the visible text come from
+   *   `uiTranslationPack.chooseAllRowText(chosenCount, totalCount)`, counted
+   *   over the visible enabled subset.
+   * - `null` means no row.
+   * - After this returns, the library adds `aria-posinset` and
+   *   `aria-setsize`: the row is a non-item row, so its list always gets them.
    * @group Subclassing: rendering
    */
   protected override createPopupListChooseAllRowEl(): HTMLElement | null {

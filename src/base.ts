@@ -510,11 +510,21 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - To put it above the filter input, move it from a subclass constructor:
    *   `if (this.popupHeaderEl) { this.popupEl.prepend(this.popupHeaderEl) }`.
    *   The library never rewrites the popup's child list.
-   * - If `filterable` is not `false`, a header above the filter input must
-   *   hold no control that Tab reaches. While the filter is active, Tab from
-   *   the input skips such a control, and Shift+Tab enters it instead of
-   *   leaving the select component. `open()` warns once per page in the
-   *   console when it finds one.
+   * - While the filter is active, keep every control that Tab reaches out of
+   *   a header above the filter input. Tab from the input would skip such a
+   *   control, and Shift+Tab would enter it instead of leaving the select
+   *   component.
+   * - While the filter is active, `open()` warns once per page in the
+   *   console when such a control sits before the filter input.
+   *   - A control counts even while it is in one of these states, since Tab
+   *     reaches it once the state ends:
+   *     - hidden;
+   *     - disabled;
+   *     - inert;
+   *     - not rendered by CSS.
+   *   - An `input type="hidden"` never counts, whatever its `tabindex`, since
+   *     it can never be shown.
+   *   - A negative `tabindex` opts a control out.
    * - To offer a header control, keep the header below the filter input, or
    *   move the control to the footer.
    * - Pointer: a click inside keeps DOM focus on the combobox host (the popup
@@ -1171,15 +1181,17 @@ export interface LLSelectClassIdMap {
    */
   triggerValueId: string
   /**
-   * DOM `id` of `popupEl` (the outer popup wrapper). Unique across instances.
-   * Referenced by the trigger's `aria-controls` while the filter is active,
-   * when the wrapper is a `dialog`.
+   * DOM `id` of `popupEl`, the outer popup wrapper.
+   * - Unique across instances.
+   * - Referenced by the trigger's `aria-controls` while the filter is
+   *   active, when the wrapper is a `dialog`.
    */
   popupId: string
   /**
-   * DOM `id` of `popupListEl` (the inner listbox). Unique across instances.
-   * Referenced by the `aria-controls` of the combobox: the trigger while the
-   * filter is inactive, the filter input while it is active.
+   * DOM `id` of `popupListEl`, the inner listbox.
+   * - Unique across instances.
+   * - Referenced by the `aria-controls` of the combobox: the trigger's while
+   *   the filter is inactive, the filter input's while it is active.
    */
   popupListId: string
   /** Class on the filter input element inside the popup. */
@@ -1236,15 +1248,41 @@ export function resetFocusableBeforeFilterInputWarning(): void {
   warnedFocusableBeforeFilterInput = false
 }
 
-/**
- * Candidates for a Tab stop. A match counts only when it is not disabled and
- * its `tabIndex` is not negative. Rare Tab stops, such as a `contenteditable`
- * element without `tabindex`, are left out.
- */
-const TAB_STOP_SELECTOR = 'a[href], area[href], button, input:not([type="hidden"]), select, textarea, iframe, [tabindex]'
+/** Elements that are Tab stops without a `tabindex` (`canBeTabStop`). */
+const NATIVE_TAB_STOP_SELECTOR = 'a[href], area[href], button, input:not([type="hidden"]), select, textarea, iframe, summary, [contenteditable]:not([contenteditable="false"])'
 
-function isTabStop(el: Element): boolean {
-  return el.matches(TAB_STOP_SELECTOR) && !el.matches(':disabled') && (el as Element & HTMLOrSVGElement).tabIndex >= 0
+/** Elements that are, or can become, Tab stops (`canBeTabStop`). */
+const TAB_STOP_SELECTOR = `${NATIVE_TAB_STOP_SELECTOR}, [tabindex]`
+
+/**
+ * Whether Tab reaches `el` now, or once it is shown, enabled, made non-inert
+ * or rendered.
+ * - A control counts while it carries the `hidden` attribute, is disabled,
+ *   is inert, or is not rendered by CSS.
+ * - `input type="hidden"` never counts, whatever its `tabindex`: it can never
+ *   be shown.
+ * - Only a negative `tabindex` opts an element out.
+ * - A `tabindex` that is no integer counts as absent, as browsers treat it.
+ * - The check is structural, so it needs no layout.
+ */
+function canBeTabStop(el: Element): boolean {
+  if (!el.matches(TAB_STOP_SELECTOR) || el.matches('input[type="hidden"]')) { return false }
+  const tabindex = Number.parseInt(el.getAttribute('tabindex') ?? '', 10)
+  return Number.isNaN(tabindex) ? el.matches(NATIVE_TAB_STOP_SELECTOR) : tabindex >= 0
+}
+
+/** Write an attribute only when its value changes, so an unchanged value queues no mutation record; `null` removes it. */
+function setAttributeIfChanged(el: Element, name: string, value: string | null): void {
+  if (el.getAttribute(name) === value) { return }
+  if (value === null) { el.removeAttribute(name) } else { el.setAttribute(name, value) }
+}
+
+/** Copy the row position a full list render wrote onto the row that replaces `from` in place. */
+function copyRowPosition(from: HTMLElement, to: HTMLElement): void {
+  for (const name of ['aria-posinset', 'aria-setsize']) {
+    const value = from.getAttribute(name)
+    if (value !== null) { to.setAttribute(name, value) }
+  }
 }
 
 function createClassIdMap(prefix: string): LLSelectClassIdMap {
@@ -1343,7 +1381,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * events; carries `aria-expanded`, `aria-controls`, and
    * `data-state="open|closed"`. Its `role` depends on the filter mode: `combobox`
    * while the filter is inactive (it then also hosts `aria-activedescendant`) and
-   * `button` while a filterable popup is open (the filter input hosts
+   * `button` while the filter is active (the filter input then hosts
    * `aria-activedescendant`). See `docs/llm/A11Y.md`.
    * @group DOM elements
    */
@@ -1365,24 +1403,30 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   protected readonly triggerValueEl: HTMLElement
   /**
-   * The outer popup wrapper. It hosts the filter input, the header and
-   * footer slots, the no-results message and the inner `popupListEl`.
-   * Hidden via the `hidden` attribute when closed; positioned via inline
-   * styles by the positioner when open.
+   * The outer popup wrapper.
+   * - It holds the filter input, the header and footer slots, the no-results
+   *   message and the inner `popupListEl`.
+   * - It is hidden through the `hidden` attribute while closed. While open,
+   *   the positioner places it with inline styles.
    * - While the filter is active it is a `dialog` named like the field, and
-   *   the trigger's `aria-controls` points to it: the popup then holds a text
-   *   field besides the listbox.
-   * - While the filter is inactive it has no ARIA role.
+   *   the trigger's `aria-controls` points to it, because the popup then
+   *   holds a text field besides the listbox.
+   * - While the filter is inactive the library gives it no ARIA role.
    * @group DOM elements
    */
   public readonly popupEl: HTMLElement
   /**
-   * The inner element with `role="listbox"`, holding the item children.
-   * Sits inside `popupEl` so siblings (filter input, header, footer) can live
-   * beside it without violating ARIA's "listbox children must be options"
-   * rule. The combobox's `aria-controls` points to this element: the
-   * trigger's while the filter is inactive, the filter input's while it is
-   * active.
+   * The inner element with `role="listbox"`.
+   * - It sits inside `popupEl`, so the filter input, the header, the
+   *   no-results message and the footer sit beside it, never inside.
+   * - It holds only three kinds of child:
+   *   - option rows: the item rows, the choose-all row, the action rows;
+   *   - group containers, each holding its group label element and its item
+   *     rows;
+   *   - pinned-block wrappers, `role="presentation"`, each holding the rows
+   *     of its pinned block.
+   * - The combobox's `aria-controls` points to it: the trigger's while the
+   *   filter is inactive, the filter input's while it is active.
    * @group DOM elements
    */
   public readonly popupListEl: HTMLElement
@@ -1570,9 +1614,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private filterInputEl!: HTMLInputElement
   /**
    * No-results message element (`role="status"`). Always built (like the
-   * filter input), sits AFTER the listbox inside `popupEl` so the listbox
-   * keeps its options-only children contract; `hidden` while the visible
-   * list has entries.
+   * filter input), sits AFTER the listbox inside `popupEl`, so the listbox
+   * keeps holding only option rows, the group containers and the pinned-block
+   * wrappers; `hidden` while the visible list has entries.
    */
   private popupListNoResultsEl!: HTMLElement
 
@@ -1761,7 +1805,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       : null
     this.filterInputEl = this.createFilterInputEl()
     // input always built; non-filterable keeps it `hidden`. The filter box must
-    // sit above the listbox: listbox children must be options only.
+    // sit above the listbox, outside it: the listbox holds only option rows,
+    // group containers and pinned-block wrappers (popupListEl TSDoc).
     this.popupListNoResultsEl = this.createPopupListNoResultsEl()
     this.popupEl.append(this.filterInputEl, this.popupListEl, this.popupListNoResultsEl)
     // Pinned slots: built once, only when their content method returns an
@@ -1856,16 +1901,18 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   private syncFilterModeToDom(): void {
     const { popupId, popupListId } = this.classIdMap
-    this.triggerEl.setAttribute('role', this.filterActive ? 'button' : 'combobox')
     // Active: the popup holds a text field besides the listbox, so it is a
     // dialog, and aria-haspopup must match the role of the popup container
     // (WAI-ARIA 1.2). Inactive: the trigger is the combobox, and the active
-    // row must sit inside the element its aria-controls names (WAI-ARIA 1.2
-    // aria-activedescendant), so it names the listbox; a dialog cannot host
-    // aria-activedescendant.
-    this.triggerEl.setAttribute('aria-haspopup', this.filterActive ? 'dialog' : 'listbox')
-    this.triggerEl.setAttribute('aria-controls', this.filterActive ? popupId : popupListId)
-    if (this.filterActive) { this.popupEl.setAttribute('role', 'dialog') } else { this.popupEl.removeAttribute('role') }
+    // row must be an owned element of the element its aria-controls names
+    // (WAI-ARIA 1.2 aria-activedescendant), so that element is the listbox;
+    // a dialog does not support aria-activedescendant. Each attribute is
+    // written only when its value changes, so an open that keeps the mode
+    // queues no mutation record.
+    setAttributeIfChanged(this.triggerEl, 'role', this.filterActive ? 'button' : 'combobox')
+    setAttributeIfChanged(this.triggerEl, 'aria-haspopup', this.filterActive ? 'dialog' : 'listbox')
+    setAttributeIfChanged(this.triggerEl, 'aria-controls', this.filterActive ? popupId : popupListId)
+    setAttributeIfChanged(this.popupEl, 'role', this.filterActive ? 'dialog' : null)
     this.filterInputEl.hidden = !this.filterActive
     this.comboboxEl = this.filterActive ? this.filterInputEl : this.triggerEl
     this.syncFieldNameToDom()
@@ -1915,22 +1962,26 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Warn once per page when a Tab stop sits before the filter input in the
+   * Warn once per page when a control sits before the filter input in the
    * popup, which the prepend recipe of the header slot can cause (DESIGN.md
-   * "Popup header / footer slots"): Tab from the input skips that control,
-   * and Shift+Tab enters it instead of leaving the select component.
-   * - Runs on each `open()` while the filter is active, not at construction:
-   *   the recipe moves the header in a subclass constructor, after `super()`.
+   * "Popup header / footer slots"): while the filter is active, Tab from the
+   * input skips that control, and Shift+Tab enters it instead of leaving the
+   * select component.
+   * - Runs at the end of each `open()` while the filter is active, after
+   *   `onOpen`, which may add or enable a header control. Never at
+   *   construction: the recipe moves the header in a subclass constructor,
+   *   after `super()`.
+   * - A control counts when it is, or can become, a Tab stop (`canBeTabStop`).
    * - Walks only the popup children before the input, so the default order
    *   costs one sibling read.
    */
   private warnIfFocusableBeforeFilterInput(): void {
     if (warnedFocusableBeforeFilterInput) { return }
     for (let el = this.filterInputEl.previousElementSibling; el !== null; el = el.previousElementSibling) {
-      const offender = isTabStop(el) ? el : Array.from(el.querySelectorAll(TAB_STOP_SELECTOR)).find(isTabStop)
+      const offender = canBeTabStop(el) ? el : Array.from(el.querySelectorAll(TAB_STOP_SELECTOR)).find(canBeTabStop)
       if (offender === undefined) { continue }
       warnedFocusableBeforeFilterInput = true
-      console.warn('llselect: a focusable element sits before the filter input in the popup. Tab from the filter input skips it, and Shift+Tab enters it instead of leaving the select component. Keep the header after the filter input, move the control to the footer, or give it tabindex="-1". (warned once per page; first offender:)', offender)
+      console.warn('llselect: a control sits before the filter input in the popup. While the filter is active, Tab from the filter input skips it, and Shift+Tab enters it instead of leaving the select component. Keep the header after the filter input, move the control to the footer, or give it tabindex="-1". (warned once per page; first offender:)', offender)
       return
     }
   }
@@ -1964,7 +2015,6 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // depends on it (role, focus host, filtering).
     this.filterActive = this.computeFilterActive()
     this.syncFilterModeToDom()
-    if (this.filterActive) { this.warnIfFocusableBeforeFilterInput() }
     this.triggerEl.setAttribute('aria-expanded', 'true')
     this.triggerEl.setAttribute('data-state', 'open')
     this.rootEl.classList.add(this.classIdMap.openClass)
@@ -2032,6 +2082,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // A hook above may have closed the popup: nothing below is left to do.
     if (!this.opened) { restoreWindowScroll(); return }
     if (this.filterActive) {
+      this.warnIfFocusableBeforeFilterInput()
       this.filterInputEl.focus({ preventScroll: true })
     }
     restoreWindowScroll()
@@ -2795,7 +2846,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   rows) or of the trailing block counts within its block.
    * Without a non-item row nothing is written, so such lists pay nothing. An
    * in-place row rebuild copies the two attributes from the row it replaces
-   * (`copyPopupListRowPositionToDom`).
+   * (`copyRowPosition`).
    */
   private commitPopupListRowPositionsToDom(segments: PopupListSegment<T, GroupKey>[], leading: readonly HTMLElement[], trailing: readonly HTMLElement[]): void {
     const write = (els: readonly HTMLElement[]): void => {
@@ -2812,14 +2863,6 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     write(leading)
     write(ungrouped)
     write(trailing)
-  }
-
-  /** Carry the position the last full list render wrote over to the row that replaces `from` in place. */
-  private copyPopupListRowPositionToDom(from: HTMLElement, to: HTMLElement): void {
-    for (const name of ['aria-posinset', 'aria-setsize']) {
-      const value = from.getAttribute(name)
-      if (value !== null) { to.setAttribute(name, value) }
-    }
   }
 
   /**
@@ -2905,7 +2948,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const oldEl = this.itemEls[index]
     if (oldEl === undefined) { return }
     const newEl = this.createPopupListItemEl(list[index]!, index)
-    this.copyPopupListRowPositionToDom(oldEl, newEl)
+    copyRowPosition(oldEl, newEl)
     oldEl.replaceWith(newEl)
     this.itemEls[index] = newEl
     // Preserve focus visuals if the replaced element was the focused one.
@@ -2935,6 +2978,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Keep the `id` and `role` the base set. Do not put focusable controls
    *   inside the row. The row itself is the control.
    * - The element is rebuilt on every render. Do not keep a reference to it.
+   * - After this returns, the library adds `aria-posinset` and `aria-setsize`
+   *   to a row outside a group while the list holds a non-item row
+   *   (`docs/llm/A11Y.md` "Action rows").
    * - Internals: the base sets `id` (`<listbox id>-item<index>`, the target of
    *   `aria-activedescendant`), `role="option"`, the visible content from
    *   {@link createPopupListItemContentEl} (else `textContent` from {@link itemToString}),
@@ -3246,6 +3292,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `super.createPopupListLeadingActionRowEl(row, index)`, and edit the
    *   returned element. Keep the `id` and `role`; put no focusable control
    *   inside.
+   * - After this returns, the library adds `aria-posinset` and
+   *   `aria-setsize`, since a list with an action row always gets them.
    * - Internals: a `div` with `role="option"`, the id
    *   `<listbox id>-action-row-leading<index>`, `popupListRowClass` plus
    *   `popupListActionRowClass`, the visible content from
@@ -3277,6 +3325,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `super.createPopupListTrailingActionRowEl(row, index)`, and edit the
    *   returned element. Keep the `id` and `role`; put no focusable control
    *   inside.
+   * - After this returns, the library adds `aria-posinset` and
+   *   `aria-setsize`, since a list with an action row always gets them.
    * - Internals: identical to {@link createPopupListLeadingActionRowEl}
    *   except the id, `<listbox id>-action-row-trailing<index>`.
    * @param row - the entry, supplied by the library
@@ -3397,7 +3447,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   ): HTMLElement[] {
     return olds.map((old, i) => {
       const next = build(rows[i]!, i)
-      this.copyPopupListRowPositionToDom(old, next)
+      copyRowPosition(old, next)
       old.replaceWith(next)
       if (this.focusedEl === old) {
         next.classList.add(this.classIdMap.popupListRowFocusedClass)
@@ -3413,7 +3463,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * inside the arrow-key ring (ArrowUp from the first item reaches it, Home
    * lands on it, up-actions clamp there) but never inside `itemEls`, so the
    * `itemEls[i] <-> getVisibleItems()[i]` alignment is untouched. Rebuilt on
-   * every `renderPopupList`. Base default: `null` = no choose-all row.
+   * every `renderPopupList`, and in place by `replaceChooseAllRowElInDom`.
+   * Base default: `null` = no choose-all row.
    * `LLSelectMultiple` builds its choose-all row here (`chooseAllRow` setting).
    * @group Subclassing: rendering
    */
@@ -3536,7 +3587,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       return
     }
     const old = this.chooseAllRowEl
-    this.copyPopupListRowPositionToDom(old, next)
+    copyRowPosition(old, next)
     old.replaceWith(next)
     this.chooseAllRowEl = next
     if (this.focusedEl === old) {
@@ -3926,7 +3977,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     el.setAttribute('role', this.filterActive ? 'button' : 'combobox')
     el.setAttribute('tabindex', '0')
     // aria-controls and aria-haspopup follow the filter mode:
-    // syncFilterModeToDom, which runs right after construction.
+    // syncFilterModeToDom, which the constructor runs after building the
+    // trigger.
     el.setAttribute('aria-expanded', 'false')
     el.setAttribute('data-state', 'closed')
     el.setAttribute('data-disabled', 'false')
@@ -4338,9 +4390,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Build the no-results message element. `role="status"` announces its
-   * appearance politely; it lives OUTSIDE the listbox (options-only children)
-   * and its text comes from `uiTranslationPack.popupListNoResults`.
+   * Build the no-results message element.
+   * - `role="status"` announces its appearance politely.
+   * - It lives OUTSIDE the listbox, which holds only option rows, group
+   *   containers and pinned-block wrappers.
+   * - Its text comes from `uiTranslationPack.popupListNoResults`.
    */
   private createPopupListNoResultsEl(): HTMLElement {
     const el = document.createElement('div')

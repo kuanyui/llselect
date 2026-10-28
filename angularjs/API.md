@@ -362,7 +362,9 @@ vm.updateFooterCount = function () { footerEl.textContent = vm.langs.length + ' 
 - `onActivate` receives the select component instance as its first argument. Call it when the command must count as the user's own change: `onActivate: function (sel) { sel.setChosenItems([]) }` reaches `ng-model` through the same path as a click, so `ng-change` runs and the control turns dirty. A plain model write instead (`vm.langs = []`) stays a programmatic change: the view follows, but `ng-change` does not run and the control stays pristine. Pick one; doing both writes the value twice. The core's own descriptor passes no argument; this one is wrapper-only.
 - Like `ng-click`, `onActivate` is not awaited. After an `await`, digest yourself (`$applyAsync`, `$timeout`).
 - `textFn` / `disabledFn` / `createContentElFn` run outside any digest, per render, like [`ll-popup-list-item-content-fn`](#ll-popup-list-item-content-fn); they run again after every chosen change, so they may read live state.
-- Keyboard and screen-reader rules: core `docs/llm/A11Y.md`, "Action rows". A row is announced as an option with its text; it has no selected state.
+- Keyboard and screen-reader rules: core `docs/llm/A11Y.md`, "Action rows".
+- A screen reader announces a row as an option, with its text and its position within its block of rows.
+- A row is never marked selected.
 
 ### `ll-popup-list-trailing-action-rows`
 

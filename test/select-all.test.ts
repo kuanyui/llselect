@@ -321,3 +321,13 @@ test('the choose-all row alone is a block of one, and the item rows count among 
   assert.equal(row(sel)!.getAttribute('aria-posinset'), '1')
   assert.equal(row(sel)!.getAttribute('aria-setsize'), '1')
 })
+
+test('hideChosenRows: choosing an item recounts the item rows that stay', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { chooseAllRow: true, hideChosenRows: true })
+  sel.setItems(['a', 'b', 'c'])
+  sel.open()
+  sel.toggleItem('b') // hideChosenRows takes the full list render
+  const pos = [...sel.popupListEl.querySelectorAll<HTMLElement>(`[role="option"]:not(.${sel.classIdMap.chooseAllRowClass})`)]
+    .map(el => [el.textContent, el.getAttribute('aria-posinset'), el.getAttribute('aria-setsize')])
+  assert.deepEqual(pos, [['a', '1', '2'], ['c', '2', '2']])
+})
