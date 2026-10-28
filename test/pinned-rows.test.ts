@@ -285,3 +285,22 @@ test('data-edge-to-items: true while items are listed, false when the blocks tou
   input.dispatchEvent(new Event('input', { bubbles: true }))
   assert.equal(lead.getAttribute('data-edge-to-items'), 'true')
 })
+
+test('pinned blocks keep the positions: each block counts within itself, the items among the items', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    chooseAllRow: true,
+    popupListLeadingRowsPinned: true,
+    popupListTrailingRowsPinned: true,
+    popupListLeadingActionRows: [row('lead')],
+    popupListTrailingActionRows: [row('trail')],
+  })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  const pos = [...sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')]
+    .map(el => [el.textContent, el.getAttribute('aria-posinset'), el.getAttribute('aria-setsize')])
+  assert.deepEqual(pos, [
+    ['Select all (0 of 2)', '1', '2'], ['lead', '2', '2'],
+    ['a', '1', '2'], ['b', '2', '2'],
+    ['trail', '1', '1'],
+  ])
+})

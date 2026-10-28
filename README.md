@@ -587,6 +587,8 @@ const sel = new LLSelectMultiple(el, {
 
 A row is a command a keyboard user reaches with the arrow keys. It sits above or below the items and scrolls with them unless its block is pinned. For content nobody runs, use a header or footer instead.
 
+A screen reader announces a row as an option of the list, not as a button. If screen reader users must know a row is a command, use a button in a header or footer.
+
 ```js
 const DEFAULTS = ['Japan', 'Taiwan']
 const isSameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x))
@@ -609,7 +611,7 @@ sel = new LLSelectMultiple(el, {
 - `popupListLeadingRowsPinned: true` keeps the choose-all row and the leading rows in view while the items scroll. `popupListTrailingRowsPinned` does the same at the bottom. Pinning is per block: all the rows at one end, or none.
 - Inside these functions, and inside every other settings function, `this` is `undefined`. Reach the instance through the variable you assigned it to. The translation pack is the exception: its message functions are called on the pack.
 
-To put "select all" somewhere other than first, turn `chooseAllRow` off and write it as an action row. Such a row is a command. It has no selected state. It is never the active option when the popup opens. It stays listed when nothing is selectable.
+To put "select all" somewhere other than first, turn `chooseAllRow` off and write it as an action row. Such a row is a command. It is never marked as selected. It is never the active option when the popup opens. It stays listed when nothing is selectable.
 
 ```js
 let sel

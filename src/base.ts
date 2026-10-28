@@ -549,13 +549,17 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - Rows scroll with the items unless their block is pinned
    *   (`popupListLeadingRowsPinned`). For content that is not a command, use
    *   `createPopupHeaderContentElFn` / `createPopupFooterContentElFn`.
-   * - Assistive technology announces a row as an option with its text and a
-   *   positional count; it has no selected state. If the command changes the
-   *   selection, say so in the row text or a live region.
+   * - Assistive technology announces a row as an option, not as a button: its
+   *   text, its position within its block of rows, and possibly "not
+   *   selected", because the row carries `aria-selected="false"`.
+   * - If screen reader users must know that a row is a command, put a button
+   *   in a header or footer instead.
+   * - If the command changes the selection, say so in the row text or a live
+   *   region.
    * - A "select all" placed here is a command, not the choose-all row: call
    *   `toggleAllVisible()` from `onActivate` and count with
-   *   `getVisibleEnabledItems()` (both on `LLSelectMultiple`). It has no
-   *   selected state and is never the active option when the popup opens.
+   *   `getVisibleEnabledItems()` (both on `LLSelectMultiple`). It is never
+   *   marked selected and is never the active option when the popup opens.
    *   For a row with selection state, use `chooseAllRow`.
    * - Contract: `docs/llm/A11Y.md` "Action rows"; design: `docs/llm/DESIGN.md`.
    * @group Action rows
@@ -2681,6 +2685,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     )
     const leading = this.chooseAllRowEl ? [this.chooseAllRowEl, ...this.leadingActionRowEls] : this.leadingActionRowEls
     const trailing = this.trailingActionRowEls
+    if (leading.length > 0 || trailing.length > 0) { this.commitPopupListRowPositionsToDom(segments, leading, trailing) }
     const leadingWrap = this.popupListPinnedLeadingRowsEl
     const trailingWrap = this.popupListPinnedTrailingRowsEl
     // A wrapper's inner edge line belongs only where items follow / precede
@@ -2701,6 +2706,44 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       children.push(...trailing)
     }
     this.popupListEl.replaceChildren(...children)
+  }
+
+  /**
+   * Write `aria-posinset` / `aria-setsize` while the list holds a non-item
+   * row, so the position a screen reader announces ("3 of 16") does not count
+   * the choose-all row or the action rows. The browser's own count would.
+   * - An item row outside a group counts among the item rows outside groups.
+   * - An item row inside a group gets nothing: the browser counts the rows of
+   *   its group, which holds item rows only.
+   * - A row of the leading block (the choose-all row, then the leading action
+   *   rows) or of the trailing block counts within its block.
+   * Without a non-item row nothing is written, so such lists pay nothing. An
+   * in-place row rebuild copies the two attributes from the row it replaces
+   * (`copyPopupListRowPositionToDom`).
+   */
+  private commitPopupListRowPositionsToDom(segments: PopupListSegment<T, GroupKey>[], leading: readonly HTMLElement[], trailing: readonly HTMLElement[]): void {
+    const write = (els: readonly HTMLElement[]): void => {
+      const size = String(els.length)
+      els.forEach((el, i) => {
+        el.setAttribute('aria-posinset', String(i + 1))
+        el.setAttribute('aria-setsize', size)
+      })
+    }
+    const ungrouped: HTMLElement[] = []
+    for (const seg of segments) {
+      if (!seg.group) { ungrouped.push(seg.el) }
+    }
+    write(leading)
+    write(ungrouped)
+    write(trailing)
+  }
+
+  /** Carry the position the last full list render wrote over to the row that replaces `from` in place. */
+  private copyPopupListRowPositionToDom(from: HTMLElement, to: HTMLElement): void {
+    for (const name of ['aria-posinset', 'aria-setsize']) {
+      const value = from.getAttribute(name)
+      if (value !== null) { to.setAttribute(name, value) }
+    }
   }
 
   /**
@@ -2786,6 +2829,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const oldEl = this.itemEls[index]
     if (oldEl === undefined) { return }
     const newEl = this.createPopupListItemEl(list[index]!, index)
+    this.copyPopupListRowPositionToDom(oldEl, newEl)
     oldEl.replaceWith(newEl)
     this.itemEls[index] = newEl
     // Preserve focus visuals if the replaced element was the focused one.
@@ -3133,8 +3177,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `textFn`), `aria-label` = `textFn()` when the content is custom, and
    *   either `aria-disabled` plus the disabled class
    *   ({@link isPopupListActionRowDisabled}) or a click handler that focuses
-   *   the row, then runs {@link onPopupListActionRowActivated}. No
-   *   `aria-selected`: a command has no selected state.
+   *   the row, then runs {@link onPopupListActionRowActivated}.
+   *   `aria-selected="false"`: every option needs the attribute, and a
+   *   command is never selected.
    * @param row - the entry, supplied by the library
    * @param index - the entry's position in `popupListLeadingActionRows`, supplied by the library
    * @group Subclassing: rendering
@@ -3172,6 +3217,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     el.id = `${this.classIdMap.popupListId}-action-row-${position}${index}`
     el.className = `${this.classIdMap.popupListRowClass} ${this.classIdMap.popupListActionRowClass}`
     el.setAttribute('role', 'option')
+    // Required on every option (WAI-ARIA 1.2); a command is never selected.
+    el.setAttribute('aria-selected', 'false')
     const textFn = row.textFn
     const text = textFn()
     const content = this.createPopupListActionRowContentEl(row)
@@ -3274,6 +3321,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   ): HTMLElement[] {
     return olds.map((old, i) => {
       const next = build(rows[i]!, i)
+      this.copyPopupListRowPositionToDom(old, next)
       old.replaceWith(next)
       if (this.focusedEl === old) {
         next.classList.add(this.classIdMap.popupListRowFocusedClass)
@@ -3412,6 +3460,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       return
     }
     const old = this.chooseAllRowEl
+    this.copyPopupListRowPositionToDom(old, next)
     old.replaceWith(next)
     this.chooseAllRowEl = next
     if (this.focusedEl === old) {

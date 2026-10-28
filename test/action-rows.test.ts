@@ -54,7 +54,7 @@ test('rows render above / below the items in array order, as plain option rows',
     assert.equal(el.getAttribute('role'), 'option')
     assert.ok(el.classList.contains(m.popupListRowClass))
     assert.ok(el.classList.contains(m.popupListActionRowClass))
-    assert.equal(el.getAttribute('aria-selected'), null) // a command has no selected state
+    assert.equal(el.getAttribute('aria-selected'), 'false') // required on every option; a command is never selected
     assert.equal(el.getAttribute('aria-label'), null) // plain text: no aria-label needed
     assert.equal(el.getAttribute('tabindex'), null)
   }
@@ -404,4 +404,87 @@ test('setItems that swaps a chosen object for a compare-equal reload refreshes t
   selS.open()
   selS.setItems([{ id: 1, name: 'ONE' }, { id: 2, name: 'TWO' }])
   assert.equal(selS.popupListEl.querySelector(`.${selS.classIdMap.popupListActionRowClass}`)!.textContent, 'TWO')
+})
+
+// --- positions (aria-posinset / aria-setsize) --------------------------------
+
+function positions(sel: AnySel): Array<[string, string | null, string | null]> {
+  return [...sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')]
+    .map(el => [el.textContent ?? '', el.getAttribute('aria-posinset'), el.getAttribute('aria-setsize')])
+}
+
+test('with a non-item row, item rows count among the items and every other row within its block', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x',
+    chooseAllRow: true,
+    popupListLeadingActionRows: [row('B0'), row('B1')],
+    popupListTrailingActionRows: [row('A0')],
+  })
+  sel.setItems(['a', 'b', 'c'])
+  sel.open()
+  assert.deepEqual(positions(sel), [
+    ['Select all (0 of 3)', '1', '3'], ['B0', '2', '3'], ['B1', '3', '3'],
+    ['a', '1', '3'], ['b', '2', '3'], ['c', '3', '3'],
+    ['A0', '1', '1'],
+  ])
+})
+
+test('without a non-item row no position is written, so the browser counts', () => {
+  const single = new LLSelectSingle<string>(mount(), { ariaLabel: 'x' })
+  single.setItems(['a', 'b'])
+  single.open()
+  assert.deepEqual(positions(single), [['a', null, null], ['b', null, null]])
+  // chooseAllRow is on, but nothing is actionable: the row hides, and no other non-item row exists.
+  const multi = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', chooseAllRow: true, itemDisabledFn: () => true })
+  multi.setItems(['a', 'b'])
+  multi.open()
+  assert.deepEqual(positions(multi), [['a', null, null], ['b', null, null]])
+})
+
+test('item rows inside a group keep the browser count; item rows outside groups count among themselves', () => {
+  const sel = new LLSelectSingle<string>(mount(), {
+    ariaLabel: 'x',
+    itemToGroupKeyFn: i => (i.startsWith('g') ? 'G' : null),
+    popupListTrailingActionRows: [row('A0')],
+  })
+  sel.setItems(['x', 'g1', 'g2', 'y'])
+  sel.open()
+  assert.deepEqual(positions(sel), [
+    ['x', '1', '2'], ['g1', null, null], ['g2', null, null], ['y', '2', '2'],
+    ['A0', '1', '1'],
+  ])
+})
+
+test('positions follow the filter: a query recounts the item rows', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', filterable: true, popupListTrailingActionRows: [row('A0')] })
+  sel.setItems(['apple', 'apricot', 'banana'])
+  sel.open()
+  const input = sel.popupEl.querySelector('input')!
+  input.value = 'ap'
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  assert.deepEqual(positions(sel), [['apple', '1', '2'], ['apricot', '2', '2'], ['A0', '1', '1']])
+})
+
+test('an in-place row rebuild keeps the position of the row it replaces', () => {
+  const multi = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x',
+    chooseAllRow: true,
+    popupListTrailingActionRows: [row('A0')],
+  })
+  multi.setItems(['a', 'b', 'c'])
+  multi.open()
+  const oldB = multi.popupListEl.querySelector(`#${multi.classIdMap.popupListId}-item1`)
+  multi.toggleItem('b')
+  assert.notEqual(multi.popupListEl.querySelector(`#${multi.classIdMap.popupListId}-item1`), oldB, 'the row was rebuilt, not patched')
+  assert.deepEqual(positions(multi), [
+    ['Select all (1 of 3)', '1', '1'],
+    ['a', '1', '3'], ['b', '2', '3'], ['c', '3', '3'],
+    ['A0', '1', '1'],
+  ])
+  const single = new LLSelectSingle<string>(mount(), { ariaLabel: 'x', popupListLeadingActionRows: [row('B0')] })
+  single.setItems(['a', 'b'])
+  single.setChosenItem('a')
+  single.open()
+  single.setChosenItem('b') // rebuilds the rows of 'a' and 'b' and the action row in place
+  assert.deepEqual(positions(single), [['B0', '1', '1'], ['a', '1', '2'], ['b', '2', '2']])
 })

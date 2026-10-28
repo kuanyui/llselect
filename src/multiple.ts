@@ -601,8 +601,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *   the trailing rows: count the chosen items with `isChosen`, write the
    *   text with `getUiTranslationPack().chooseAllRowText(chosen, total)`, and
    *   call `toggleAllVisible()` from `onActivate`.
-   * - Such a row is a command, not the built-in row. It has no `aria-selected`
-   *   and no `data-chosen-state`, the themes give it no tri-state look, it is
+   * - Such a row is a command, not the built-in row. Its `aria-selected` is
+   *   always `false`, it has no `data-chosen-state`, the themes give it no tri-state look, it is
    *   never the active option when the popup opens, and it stays rendered
    *   when this list is empty. For those behaviors, use `chooseAllRow`.
    * - Override it to change the subset. The tree-select demo narrows it to
@@ -931,8 +931,10 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     el.className = `${this.classIdMap.popupListRowClass} ${this.classIdMap.chooseAllRowClass}`
     el.setAttribute('role', 'option')
     el.setAttribute('data-chosen-state', state)
-    // ARIA option has no `mixed`: the indeterminate state is conveyed by the
-    // visual (data-chosen-state) + the counting accessible name only.
+    // aria-selected has no `mixed`, and aria-checked, which has one, must not
+    // join aria-selected in one listbox (APG listbox pattern): the
+    // indeterminate state is conveyed by the visual (data-chosen-state) + the
+    // counting accessible name only.
     el.setAttribute('aria-selected', String(state === 'all'))
     const text = this.settings.uiTranslationPack.chooseAllRowText(chosenCount, actionable.length)
     const content = this.createChooseAllRowContentEl(state, chosenCount, actionable.length)

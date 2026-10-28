@@ -303,9 +303,21 @@ test('getVisibleEnabledItems() is public: an app-built select-all row acts on th
   assert.deepEqual([...sel.getVisibleEnabledItems()], ['apple', 'apricot'])
   const rowEl = sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListActionRowClass}`)!
   assert.equal(rowEl.textContent, 'Select all (0 of 2)')
-  assert.equal(rowEl.getAttribute('aria-selected'), null, 'a command row carries no selected state')
+  assert.equal(rowEl.getAttribute('aria-selected'), 'false', 'a command row is never selected')
   rowEl.click()
   assert.deepEqual([...sel.getChosenItems()], ['apple', 'apricot'])
   const rebuilt = sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListActionRowClass}`)!
   assert.equal(rebuilt.textContent, 'Select all (2 of 2)')
+})
+
+test('the choose-all row alone is a block of one, and the item rows count among themselves', () => {
+  const sel = new LLSelectMultiple<string>(mount(), { chooseAllRow: true })
+  sel.setItems(['a', 'b', 'c'])
+  sel.open()
+  const pos = [...sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')]
+    .map(el => [el.getAttribute('aria-posinset'), el.getAttribute('aria-setsize')])
+  assert.deepEqual(pos, [['1', '1'], ['1', '3'], ['2', '3'], ['3', '3']])
+  sel.toggleItem('a') // the choose-all row and the row of 'a' are rebuilt in place
+  assert.equal(row(sel)!.getAttribute('aria-posinset'), '1')
+  assert.equal(row(sel)!.getAttribute('aria-setsize'), '1')
 })
