@@ -1,0 +1,153 @@
+/* Method-name grammar guide (demo/method-grammar.js) on the core API page.
+   Page chrome uses the site tokens of scripts/build-site.mjs (--fg, --bg,
+   --muted, --line, --accent, ...); the code view keeps the site's dark
+   code-block colors in both color schemes, like every <pre>. */
+
+/* Entry points on the API page */
+.mg-callout { margin: 0.5rem 0 1.5rem; padding: 0.6rem 0.9rem; background: var(--accent-soft); border-radius: 6px; }
+.mg-open { margin-left: 0.25rem; padding: 0.2rem 0.8rem; font: inherit; font-weight: 600; color: var(--bg); background: var(--accent); border: 0; border-radius: 999px; cursor: pointer; }
+.mg-shape-button { margin-left: 0.5rem; padding: 0 0.55rem; font: 600 0.78rem/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; vertical-align: 0.05em; }
+.mg-open:hover, .mg-shape-button:hover { filter: brightness(1.08); }
+
+/* The modal */
+.mg-dialog { box-sizing: border-box; width: min(96rem, calc(100vw - 2rem)); max-width: none; height: calc(100vh - 2rem); max-height: none; padding: 0; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4); font: 15px/1.5 system-ui, sans-serif; }
+.mg-dialog[open] { display: flex; flex-direction: column; }
+.mg-dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+/* Name-shape colors. Text on the page uses --mg-<verb> (light and dark, like
+   the site tokens); marks in the dark code view use --mg-code. An element
+   with data-shape="<verb>" picks its shape's set. */
+.mg-dialog { --mg-create: #1a7f37; --mg-create-tint: rgba(26, 127, 55, 0.1); --mg-commit: #bc4c00; --mg-commit-tint: rgba(188, 76, 0, 0.1); --mg-sync: #0f766e; --mg-sync-tint: rgba(15, 118, 110, 0.1); --mg-replace: #8250df; --mg-replace-tint: rgba(130, 80, 223, 0.1); --mg-render: #bf3989; --mg-render-tint: rgba(191, 57, 137, 0.1); }
+@media (prefers-color-scheme: dark) { :root:not([data-color-scheme]) .mg-dialog { --mg-create: #3fb950; --mg-create-tint: rgba(63, 185, 80, 0.18); --mg-commit: #f0883e; --mg-commit-tint: rgba(240, 136, 62, 0.18); --mg-sync: #39c5cf; --mg-sync-tint: rgba(57, 197, 207, 0.18); --mg-replace: #a371f7; --mg-replace-tint: rgba(163, 113, 247, 0.2); --mg-render: #db61a2; --mg-render-tint: rgba(219, 97, 162, 0.18); } }
+:root[data-color-scheme="dark"] .mg-dialog { --mg-create: #3fb950; --mg-create-tint: rgba(63, 185, 80, 0.18); --mg-commit: #f0883e; --mg-commit-tint: rgba(240, 136, 62, 0.18); --mg-sync: #39c5cf; --mg-sync-tint: rgba(57, 197, 207, 0.18); --mg-replace: #a371f7; --mg-replace-tint: rgba(163, 113, 247, 0.2); --mg-render: #db61a2; --mg-render-tint: rgba(219, 97, 162, 0.18); }
+.mg-dialog [data-shape="create"] { --mg-shape: var(--mg-create); --mg-shape-tint: var(--mg-create-tint); --mg-code: #7ee787; --mg-code-tint: rgba(126, 231, 135, 0.24); }
+.mg-dialog [data-shape="commit"] { --mg-shape: var(--mg-commit); --mg-shape-tint: var(--mg-commit-tint); --mg-code: #ffa657; --mg-code-tint: rgba(255, 166, 87, 0.26); }
+.mg-dialog [data-shape="sync"] { --mg-shape: var(--mg-sync); --mg-shape-tint: var(--mg-sync-tint); --mg-code: #56d4dd; --mg-code-tint: rgba(86, 212, 221, 0.24); }
+.mg-dialog [data-shape="replace"] { --mg-shape: var(--mg-replace); --mg-shape-tint: var(--mg-replace-tint); --mg-code: #d2a8ff; --mg-code-tint: rgba(210, 168, 255, 0.26); }
+.mg-dialog [data-shape="render"] { --mg-shape: var(--mg-render); --mg-shape-tint: var(--mg-render-tint); --mg-code: #ff7eb6; --mg-code-tint: rgba(255, 126, 182, 0.24); }
+.mg-verb { font-weight: 700; color: var(--mg-shape, var(--fg)); }
+.mg-dialog h2, .mg-dialog h3 { margin: 0; padding: 0; border: 0; }
+.mg-dialog h2 { font-size: 1.25rem; }
+.mg-dialog h3 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg-muted); }
+.mg-head { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1rem 0.3rem; }
+.mg-close { margin-left: auto; display: inline-flex; padding: 0.3rem; color: var(--fg); background: none; border: 0; border-radius: 6px; cursor: pointer; }
+.mg-close:hover { background: var(--muted); }
+.mg-close svg { width: 1.4rem; height: 1.4rem; }
+.mg-lead { margin: 0 1rem 0.6rem; color: var(--fg-muted); }
+.mg-small.mg-params { margin: 0.35rem 1rem 0.7rem; }
+.mg-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(20rem, 30rem) minmax(0, 1fr); gap: 1.25rem; padding: 0 1rem 1rem; }
+.mg-left, .mg-right { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 0.55rem; }
+.mg-small { margin: 0; font-size: 0.8rem; color: var(--fg-muted); }
+
+/* The five name shapes, README's table as a strip of cards */
+.mg-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; margin: 0 1rem; }
+.mg-card { display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem; padding: 0.45rem 0.6rem; font: inherit; font-size: 0.8rem; line-height: 1.4; color: var(--fg); text-align: left; background: var(--bg); border: 1px solid var(--line); border-top: 4px solid var(--mg-shape); border-radius: 6px; cursor: pointer; }
+.mg-card:hover { background: var(--muted); }
+.mg-card[aria-pressed="true"] { background: var(--mg-shape-tint); border-color: var(--mg-shape); box-shadow: inset 0 0 0 1px var(--mg-shape); }
+.mg-card-shape { padding: 0; font-size: 0.95rem; color: var(--fg); background: none; }
+.mg-card-contact { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--fg-muted); }
+.mg-card-meaning code { font-size: 0.95em; }
+
+/* Left: the live select component, the recorded steps and their calls */
+.mg-stage { padding: 0.55rem 0.7rem; background: var(--muted); border-radius: 6px; }
+.mg-stage-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-top: 0.4rem; }
+.mg-replay { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.7rem; font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--accent); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; }
+.mg-replay svg { width: 1rem; height: 1rem; }
+.mg-steps { flex: none; display: flex; flex-direction: column; gap: 2px; max-height: 8rem; overflow-y: auto; padding: 0.25rem; border: 1px solid var(--line); border-radius: 6px; }
+.mg-step { flex: none; padding: 0.15rem 0.5rem; font: inherit; font-size: 0.8rem; color: var(--fg); text-align: left; background: none; border: 0; border-radius: 4px; cursor: pointer; overflow-wrap: anywhere; }
+.mg-step:hover { background: var(--muted); }
+.mg-step[aria-pressed="true"] { color: var(--bg); background: var(--accent); }
+.mg-trace { flex: 1 1 auto; min-height: 9rem; overflow: auto; padding: 0.3rem; border: 1px solid var(--line); border-radius: 6px; }
+.mg-calls { list-style: none; margin: 0; padding: 0; }
+.mg-calls .mg-calls { margin-left: 0.55rem; padding-left: 0.6rem; border-left: 1px solid var(--line); }
+.mg-calls li { display: grid; }
+.mg-call { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.1rem 0.4rem; font: inherit; font-size: 0.8rem; color: var(--fg); text-align: left; background: none; border: 0; border-radius: 4px; cursor: pointer; }
+.mg-call code { padding: 0; background: none; }
+.mg-dot { flex: none; align-self: center; width: 0.6rem; height: 0.6rem; border-radius: 2px; background: var(--mg-shape, transparent); box-shadow: inset 0 0 0 1px var(--mg-shape, var(--line)); }
+.mg-call .mg-verb, .mg-title .mg-verb, .mg-ref .mg-verb { padding: 0 2px; border-radius: 3px; background: var(--mg-shape-tint, transparent); }
+.mg-call:hover { background: var(--muted); }
+.mg-call[aria-pressed="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.mg-call-result { flex: none; margin-left: auto; font-size: 0.72rem; color: var(--fg-muted); white-space: nowrap; }
+
+/* Right: what the selected call did, then the DOM */
+.mg-detail { flex: none; max-height: 42%; overflow-y: auto; font-size: 0.9rem; }
+.mg-detail p { margin: 0.25rem 0; }
+.mg-detail ul { margin: 0.3rem 0; padding-left: 1.2rem; }
+.mg-title { font-size: 1.02rem; }
+.mg-title code, .mg-ref code { padding: 0; background: none; }
+.mg-shape { white-space: nowrap; }
+.mg-api { margin-left: 0.6rem; font-size: 0.85rem; }
+.mg-note { padding: 0.3rem 0.6rem; color: var(--note-fg); background: var(--note-bg); border-radius: 4px; }
+.mg-words, .mg-context { color: var(--fg-muted); }
+/* create*El: change with care (warning tone); create*ContentEl: safe to customize (tip tone) */
+.mg-detail .mg-advice { margin: 0.45rem 0; padding: 0.35rem 0.7rem; background: var(--muted); border-left: 4px solid var(--mg-advice); border-radius: 4px; }
+.mg-advice-el { --mg-advice: var(--alert-warning); }
+.mg-advice-content { --mg-advice: var(--alert-tip); }
+.mg-advice strong { color: var(--mg-advice); }
+.mg-ref { padding: 0; font: inherit; color: var(--link); text-decoration: underline; background: none; border: 0; cursor: pointer; }
+.mg-dom-head { display: flex; align-items: center; gap: 1rem; }
+.mg-dom-head h3 { font-size: 0.85rem; text-transform: none; letter-spacing: 0; color: var(--fg); }
+.mg-toggle { display: inline-flex; align-items: center; gap: 0.35rem; margin-left: auto; font-size: 0.8rem; cursor: pointer; }
+.mg-legend { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; margin: 0; font-size: 0.78rem; color: var(--fg-muted); }
+.mg-key::before { content: ""; display: inline-block; width: 0.85em; height: 0.85em; margin-right: 0.35em; vertical-align: -0.1em; border-radius: 2px; box-sizing: border-box; }
+.mg-key-prop::before { border: 2px solid #61afef; }
+.mg-key-builder::before { background: #7ee787; }
+.mg-key-hit::before { background: var(--muted); border: 1px solid var(--fg-muted); }
+.mg-key-ind::before { border: 1px dashed var(--fg-muted); }
+
+/* Code view: one line per tag; boxes sit under the text */
+.mg-dom, .mg-returned { color: #abb2bf; background: #282c34; border-radius: 6px; }
+.mg-dom { flex: 1 1 auto; min-height: 12rem; overflow: auto; }
+.mg-returned { flex: none; overflow: auto; box-shadow: inset 0 0 0 2px #7ee787; }
+.mg-returned[hidden] { display: none; }
+.mg-returned-title { margin: 0; padding: 0.4rem 0.75rem 0; font-size: 0.75rem; font-weight: 700; color: #7ee787; }
+.mg-code { display: flex; width: max-content; min-width: 100%; padding: 0.5rem 0; font: 12px/20px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.mg-gutter { position: sticky; left: 0; z-index: 2; flex: none; padding: 0 0.6rem 0 0.75rem; color: #61afef; text-align: right; background: #21252b; user-select: none; }
+.mg-gutter:empty { display: none; }
+.mg-gut { height: 20px; white-space: nowrap; }
+.mg-gut:not(:empty) { cursor: pointer; }
+.mg-gut-builder { color: #7ee787; }
+.mg-gut-hover { margin: 0 -4px; padding: 0 4px; background: rgba(255, 255, 255, 0.14); border-radius: 3px; }
+.mg-gut-on { margin: 0 -4px; padding: 0 4px; color: #1b1f27; background: #61afef; border-radius: 3px; }
+.mg-src-col { position: relative; flex: 1; padding: 0 1rem 0 0.75rem; }
+.mg-boxes { position: absolute; top: 0; left: 0.75rem; pointer-events: none; }
+.mg-box { position: absolute; box-sizing: border-box; border: 1px solid transparent; border-radius: 4px; }
+.mg-box-prop { border: 1px dashed rgba(97, 175, 239, 0.55); }
+.mg-box-hit { border: 2px solid var(--mg-code, #e6e6e6); background: var(--mg-code-tint, rgba(230, 230, 230, 0.1)); }
+.mg-box-ind { border: 1px dashed var(--mg-code, #e6e6e6); }
+.mg-box-on { border: 2px solid #61afef; background: rgba(97, 175, 239, 0.1); }
+.mg-box-hover { border: 1px solid rgba(255, 255, 255, 0.8); }
+/* Hover tip: the element's names, on the top-left corner of its box */
+.mg-name-tip { position: absolute; z-index: 3; padding: 0 6px; font-size: 11px; line-height: 16px; white-space: nowrap; color: #e6e6e6; background: #1b1f27; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 3px; }
+.mg-tip-prop { color: #61afef; }
+.mg-tip-builder { color: #7ee787; }
+.mg-tip-none { color: #abb2bf; }
+.mg-line-named { cursor: pointer; }
+/* 20px: LINE_PX in method-grammar.js places the boxes by it */
+.mg-line { position: relative; z-index: 1; height: 20px; white-space: pre; }
+.mg-dim { opacity: 0.55; }
+.mg-p { color: #abb2bf; }
+.mg-txt { color: #f8f8f2; }
+.mg-attr.mg-hit, .mg-txt.mg-hit { background: var(--mg-code-tint, rgba(230, 230, 230, 0.2)); border-radius: 2px; box-shadow: 0 0 0 1px var(--mg-code, #e6e6e6); }
+.mg-attr.mg-ind, .mg-txt.mg-ind { border-radius: 2px; outline: 1px dashed var(--mg-code, #e6e6e6); }
+.mg-cls-words { text-decoration: underline; text-decoration-color: #61afef; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) {
+  .mg-hit { animation: mg-flash 0.7s ease-out 1; }
+}
+@keyframes mg-flash { from { filter: brightness(1.9); } }
+
+/* Narrow screens: the modal fills the screen and scrolls as one column */
+@media (max-width: 72rem) {
+  .mg-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 56rem) {
+  .mg-dialog { width: 100vw; height: 100vh; border: 0; border-radius: 0; overflow-y: auto; }
+  .mg-dialog[open] { display: block; }
+  .mg-cards { grid-template-columns: minmax(0, 1fr); }
+  .mg-card { flex-direction: row; flex-wrap: wrap; column-gap: 0.6rem; }
+  .mg-body { display: block; }
+  .mg-left, .mg-right { margin-bottom: 1rem; }
+  .mg-trace { max-height: 22rem; }
+  .mg-steps { max-height: 9rem; }
+  .mg-detail { max-height: none; }
+  .mg-dom { max-height: 30rem; }
+}

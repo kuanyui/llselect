@@ -8,7 +8,8 @@
 //                 rendered from angularjs/API.md (hand-written reference)
 //   api/        - core API reference, rendered from the markdown typedoc
 //                 emits into .build/api-md (the `build:site` npm script runs
-//                 typedoc first)
+//                 typedoc first); the core page also loads the method-name
+//                 grammar guide (demo/method-grammar.js)
 // Relative README links are kept when they point at published content
 // (demo/, dist/, the directive files, the other rendered README); everything
 // else is a repo file that is not published, so it is rewritten to a GitLab
@@ -329,7 +330,8 @@ const COLOR_SCHEME_JS = readFileSync('demo/color-scheme.js', 'utf8').replace(/<\
 // The dark token set, printed twice (see the comment in the template CSS).
 const SITE_DARK_VARS = 'color-scheme: dark; --fg: #d8d8d8; --fg-muted: #9a9a9a; --bg: #1b1b1b; --muted: #262626; --line: #444444; --link: #6cb2ff; --accent: #7fb1f5; --accent-soft: #263344; --mark: rgba(187, 128, 9, 0.45); --alert-note: #4493f8; --alert-tip: #3fb950; --alert-important: #ab7df8; --alert-warning: #d29922; --alert-caution: #f85149; --note-bg: #3b321f; --note-fg: #e9d8b4;'
 
-function renderPage({ title, description, nav, body, toc, subnav = null }) {
+// head / bodyEnd: extra markup for one page, placed before </head> / </body>.
+function renderPage({ title, description, nav, body, toc, subnav = null, head = '', bodyEnd = '' }) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -507,7 +509,7 @@ main [data-binding]::before { content: attr(data-binding); float: right; margin-
 .back-to-top:hover { background: var(--accent-soft); }
 .back-to-top svg { width: 1em; height: 1em; }
 </style>
-</head>
+${head}</head>
 <body${toc ? ' class="with-toc"' : ''}>
 <nav>
 ${nav}
@@ -691,7 +693,7 @@ ${toc ? `<script>
   })
 }
 </script>` : ''}
-</body>
+${bodyEnd}</body>
 </html>
 `
 }
@@ -720,7 +722,7 @@ function wrapSections(body, tocIds) {
   return out
 }
 
-function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links, toc = false, subnav = null, kinds = null, kindsStrict = false }) {
+function renderMarkdownPage(mdPath, outPath, { title, description, prefix, current, links, toc = false, subnav = null, kinds = null, kindsStrict = false, head = '', bodyEnd = '' }) {
   slugCounts.clear()
   let body = marked.parse(readFileSync(mdPath, 'utf8'))
   body = links ? links(body) : rewriteLinks(body, posix.dirname(mdPath).replace(/^\.$/, ''))
@@ -731,7 +733,38 @@ function renderMarkdownPage(mdPath, outPath, { title, description, prefix, curre
     tocHtml = built.html
     body = wrapSections(body, built.ids)
   }
-  writeFileSync(outPath, renderPage({ title, description, nav: navHtml(prefix, current), body, toc: tocHtml, subnav }))
+  writeFileSync(outPath, renderPage({ title, description, nav: navHtml(prefix, current), body, toc: tocHtml, subnav, head, bodyEnd }))
+}
+
+// The method-name grammar guide (demo/method-grammar.js) on the core API page
+// shows README's "Method-name grammar" section: its table, the params note
+// under it and the no-suffix verbs bullet, embedded as JSON so the guide
+// never restates them. A README edit that changes their shape fails the
+// build instead of breaking the guide.
+function methodGrammarAssets() {
+  const lines = readFileSync('README.md', 'utf8').split('\n')
+  const start = lines.indexOf('### Method-name grammar')
+  if (start === -1) {
+    throw new Error('build:site: README lost its "### Method-name grammar" section, which the API page guide reads')
+  }
+  const end = lines.findIndex((l, i) => i > start && l.startsWith('#'))
+  const section = lines.slice(start + 1, end === -1 ? lines.length : end)
+  const shapes = section.filter((l) => l.startsWith('|')).slice(2).map((l) => {
+    const [shape, contact, meaning] = l.split('|').slice(1, -1).map((c) => c.trim())
+    return { shape: shape.replace(/`/g, ''), contact, meaningHtml: marked.parseInline(meaning) }
+  })
+  const note = section.find((l) => l.startsWith('> ('))
+  const noSuffix = section.find((l) => l.startsWith('- A few verbs touch the DOM'))
+  // The guide's script and styles branch on exactly these five shapes, in this order.
+  const names = shapes.map((s) => s.shape.replace(/\(.*$/, ''))
+  if (names.join() !== 'create*El,commit*ToDom,sync*ToDom,replace*ElInDom,render*' || shapes.some((s) => !/\([a-z.]*\)$/.test(s.shape)) || !note || !noSuffix) {
+    throw new Error('build:site: README "Method-name grammar" changed shape (the five rows create*El, commit*ToDom, sync*ToDom, replace*ElInDom and render*, the "> (" params note, the "- A few verbs touch the DOM" bullet); update demo/method-grammar.js and this reader together')
+  }
+  const data = { shapes, paramsNoteHtml: marked.parseInline(note.slice(2)), noSuffixHtml: marked.parseInline(noSuffix.slice(2)) }
+  return {
+    head: '<link rel="stylesheet" href="../demo/method-grammar.css">\n',
+    bodyEnd: `<script type="application/json" id="method-grammar-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>\n<script type="module" src="../demo/method-grammar.js"></script>\n`,
+  }
 }
 
 // The API pages come out of typedoc (markdown, one page per module, written to
@@ -802,6 +835,7 @@ for (const [md, out, title, toc] of API_PAGES) {
   }
   renderMarkdownPage(`.build/api-md/${md}`, `public/api/${out}`, {
     title, description: `API reference for ${pkg.name} - generated from the TypeScript declarations`, prefix: '../', current: 'API', links: makeApiLinkRewriter(posix.dirname(md).replace(/^\.$/, '')), toc, kinds,
+    ...(out === 'core.html' ? methodGrammarAssets() : {}),
   })
   // The categorization is total by design: an "Other" bucket means some public
   // export or member lost its @category (e.g. a helper inserted between a
