@@ -238,3 +238,20 @@ test('the positioner hears a scroll inside a shadow root on the anchor\'s path, 
   box.dispatchEvent(new Event('scroll'))
   assert.equal(hides, 1, 'no listener left after detach')
 })
+
+test('a scroll inside the floating element runs no reposition and no hidden check', () => {
+  setupDom('<!doctype html><html><body><div id="a"></div><div id="f"><div id="list"></div></div></body></html>')
+  withMockedRect(el('a'), { top: 10, bottom: 30, left: 10, right: 210, width: 200, height: 20 })
+  Object.defineProperty(el('f'), 'offsetHeight', { value: 100, configurable: true })
+  let hides = 0
+  const p = createPositioner(el('a'), el('f'), { onHide: () => { hides++ } })
+  const top = el('f').style.top
+  // Even with the anchor gone from view, the list's own scroll changes nothing.
+  withMockedRect(el('a'), { top: -100, bottom: -70, left: 10, right: 210, width: 200, height: 30 })
+  el('list').dispatchEvent(new Event('scroll'))
+  assert.equal(hides, 0)
+  assert.equal(el('f').style.top, top)
+  window.dispatchEvent(new Event('scroll'))
+  assert.equal(hides, 1, 'a scroll outside still runs the check')
+  p.detach()
+})

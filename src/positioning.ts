@@ -525,8 +525,13 @@ export function createPositioner(
   }
 
   // Scroll = the anchor moving through the viewport: honor onHide so a popup
-  // whose trigger scrolled away is dismissed.
-  const onScroll = (): void => reposition(true)
+  // whose trigger scrolled away is dismissed. A scroll inside the floating
+  // element (its list, a scroller in a slot) cannot move the anchor, so it
+  // needs neither a reposition nor the hidden check.
+  const onScroll = (ev: Event): void => {
+    if (ev.target instanceof Node && floating.contains(ev.target)) { return }
+    reposition(true)
+  }
   // Resize-class events (window resize, visualViewport resize from a virtual
   // keyboard / URL bar, element resize) change available space but do NOT mean
   // the user scrolled the trigger away. Reposition / re-clamp only, never close
