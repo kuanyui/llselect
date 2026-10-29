@@ -182,34 +182,122 @@ export function computePosition(input: PositionInput): PositionResult {
   return { top, left, width, maxHeight, placement }
 }
 
-// Walk ancestors and check whether any clipping ancestor (overflow != visible)
-// hides the anchor. Catches the "anchor scrolled out of a scroll container"
-// case that getBoundingClientRect alone misses, since the rect reports
-// viewport coords regardless of ancestor clipping.
+// The hidden-trigger check (DESIGN.md "Hidden-trigger check"): is the anchor
+// fully outside an ancestor's overflow clip that applies to it? The rect alone
+// misses this, since getBoundingClientRect reports viewport coordinates
+// whatever the ancestors clip.
 const CLIPPING_OVERFLOW = new Set(['hidden', 'auto', 'scroll', 'clip'])
 
+// Which ancestors can hold the containing block of the box the walk follows:
+// any ancestor for an in-flow box, a positioned ancestor or a containing-block
+// creator for an absolute box, a creator only for a fixed box.
+type ContainingBlockScheme = 'flow' | 'absolute' | 'fixed'
+
+function containingBlockScheme(position: string): ContainingBlockScheme {
+  if (position === 'fixed') { return 'fixed' }
+  if (position === 'absolute') { return 'absolute' }
+  return 'flow'
+}
+
+// A property the browser does not support reads as ''.
+function isSet(value: string): boolean {
+  return value !== '' && value !== 'none'
+}
+
+// jsdom reads a property that no rule sets as '', where a browser reports the
+// initial value.
+function orDefault(value: string, initial: string): string {
+  return value === '' ? initial : value
+}
+
+/**
+ * Package-internal (tests): whether the element has containment of any kind,
+ * from `contain` or from what `content-visibility` and `container-type` apply.
+ */
+export function hasContainment(s: CSSStyleDeclaration): boolean {
+  const visibility = s.getPropertyValue('content-visibility')
+  return isSet(s.getPropertyValue('contain')) || visibility === 'auto' || visibility === 'hidden' ||
+    /\b(size|inline-size)\b/.test(s.getPropertyValue('container-type'))
+}
+
+/**
+ * Package-internal (tests): whether an element with this computed style is
+ * the containing block of its fixed-position descendants, and so of its
+ * absolute ones as well. The list is the one DESIGN.md "Hidden-trigger check"
+ * keeps.
+ */
+export function createsContainingBlock(s: CSSStyleDeclaration): boolean {
+  for (const name of ['transform', 'translate', 'rotate', 'scale', 'perspective', 'filter', 'backdrop-filter']) {
+    if (isSet(s.getPropertyValue(name))) { return true }
+  }
+  const visibility = s.getPropertyValue('content-visibility')
+  return /\b(layout|paint|strict|content)\b/.test(s.getPropertyValue('contain')) ||
+    visibility === 'auto' || visibility === 'hidden' ||
+    /\b(size|inline-size)\b/.test(s.getPropertyValue('container-type')) ||
+    /\b(transform|translate|rotate|scale|perspective|filter)\b/.test(s.getPropertyValue('will-change'))
+}
+
+// A browser older than the selector throws, which reads as no match.
+function matchesSafely(el: Element, selector: string): boolean {
+  try { return el.matches(selector) } catch { return false }
+}
+
+// The top layer, which no ancestor clips: a modal dialog, a showing popover or
+// the fullscreen element. Where the selectors are missing, the fixed rule of
+// the walk still covers a modal dialog, which the UA style makes fixed.
+function isInTopLayer(el: Element): boolean {
+  if (el.ownerDocument.fullscreenElement === el) { return true }
+  if (el.localName === 'dialog' && matchesSafely(el, ':modal')) { return true }
+  return el.hasAttribute('popover') && matchesSafely(el, ':popover-open')
+}
+
+// The body's overflow applies to the viewport, not to the body's own box,
+// while the root's overflow is `visible` in both axes and neither element has
+// containment (CSS Overflow 3 "Overflow Viewport Propagation"; CSS
+// Containment 2, the `contain` property).
+function isBodyOverflowPropagated(doc: Document, bodyStyle: CSSStyleDeclaration): boolean {
+  const root = window.getComputedStyle(doc.documentElement)
+  return orDefault(root.overflowX, 'visible') === 'visible' && orDefault(root.overflowY, 'visible') === 'visible' &&
+    !hasContainment(root) && !hasContainment(bodyStyle)
+}
+
+// Each axis is tested only where its own overflow clips: `overflow-x: clip`
+// leaves `overflow-y: visible`.
+function clipsRect(el: Element, s: CSSStyleDeclaration, rect: DOMRect): boolean {
+  const clipsX = CLIPPING_OVERFLOW.has(s.overflowX)
+  const clipsY = CLIPPING_OVERFLOW.has(s.overflowY)
+  if (!clipsX && !clipsY) { return false }
+  const box = el.getBoundingClientRect()
+  return (clipsY && (rect.bottom < box.top || rect.top > box.bottom)) ||
+    (clipsX && (rect.right < box.left || rect.left > box.right))
+}
+
+// Walks up the anchor's containing-block chain: an ancestor's overflow clips
+// only the descendants whose containing block lies inside it (CSS 2.1
+// "overflow").
 function isClippedByAncestor(anchor: HTMLElement, anchorRect: DOMRect): boolean {
-  let p: HTMLElement | null = anchor.parentElement
-  while (p) {
-    const s = window.getComputedStyle(p)
-    if (CLIPPING_OVERFLOW.has(s.overflowX) || CLIPPING_OVERFLOW.has(s.overflowY)) {
-      const pRect = p.getBoundingClientRect()
-      if (
-        anchorRect.bottom < pRect.top ||
-        anchorRect.top > pRect.bottom ||
-        anchorRect.right < pRect.left ||
-        anchorRect.left > pRect.right
-      ) {
-        return true
-      }
+  const doc = anchor.ownerDocument
+  let scheme = containingBlockScheme(window.getComputedStyle(anchor).position)
+  for (let el = anchor.parentElement; el !== null; el = el.parentElement) {
+    // The root's overflow clips the viewport, which the caller tests, and
+    // never the root's own box.
+    if (el === doc.documentElement) { return false }
+    const s = window.getComputedStyle(el)
+    // No box: it neither clips nor holds a containing block.
+    if (s.display === 'contents') { continue }
+    const holdsContainingBlock = scheme === 'flow' || createsContainingBlock(s) || (scheme === 'absolute' && orDefault(s.position, 'static') !== 'static')
+    if (holdsContainingBlock) {
+      const overflowGoesToViewport = el === doc.body && isBodyOverflowPropagated(doc, s)
+      if (!overflowGoesToViewport && clipsRect(el, s, anchorRect)) { return true }
+      scheme = containingBlockScheme(s.position)
     }
-    p = p.parentElement
+    if (isInTopLayer(el)) { return false }
   }
   return false
 }
 
 // Anchor fully outside the LAYOUT viewport (window.innerWidth/Height, not the
-// visual viewport - see reposition) or clipped away by a scroll ancestor.
+// visual viewport - see reposition) or clipped away by an ancestor.
 // Strict comparisons so an unsized anchor at (0,0,0,0) - common in jsdom or
 // before first layout - reads as "in viewport, no rect yet", not "off-screen".
 function isAnchorHiddenForRect(anchor: HTMLElement, rect: DOMRect): boolean {
@@ -222,9 +310,10 @@ function isAnchorHiddenForRect(anchor: HTMLElement, rect: DOMRect): boolean {
 }
 
 /**
- * Whether `anchor` is currently hidden (scrolled out of the layout viewport or
- * clipped by a scrollable ancestor). Exposed so a caller can refuse to open a
- * popup against an off-screen trigger BEFORE building a positioner, rather than
+ * Whether `anchor` is currently hidden: fully outside the layout viewport, or
+ * fully outside an ancestor's overflow clip that applies to it (DESIGN.md
+ * "Hidden-trigger check"). Exposed so a caller can refuse to open a popup
+ * against an off-screen trigger BEFORE building a positioner, rather than
  * opening and then hiding re-entrantly.
  */
 export function isAnchorHidden(anchor: HTMLElement): boolean {
@@ -247,8 +336,9 @@ export interface Positioner {
 export interface PositionerOptions {
   /**
    * Called when the anchor becomes invisible (fully outside the layout
-   * viewport, or fully clipped by a scrollable ancestor). Typical use: close the
-   * floating element so it does not hang in space without a visible trigger.
+   * viewport, or fully clipped away by an ancestor; see `isAnchorHidden`).
+   * Typical use: close the floating element so it does not hang in space
+   * without a visible trigger.
    */
   onHide?: () => void
   /**
