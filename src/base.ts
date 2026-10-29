@@ -951,6 +951,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - Additive with the protected `onClosed` hook, like {@link onOpen}: both run.
    * - When focus leaving the select component closes the popup, this fires **before**
    *   {@link onBlur}.
+   * - While the popup is open, focus that arrives on the trigger buttons strip
+   *   from outside the select component closes the popup, and this fires
+   *   **before** {@link onFocus}.
    * - `null` (default) = no consumer listener.
    * @group Events
    */
@@ -973,8 +976,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - Does not fire for a move inside the select component, such as `open()` moving
    *   focus from the trigger to the filter input.
    * - While the popup is open, focus that arrives on the trigger buttons strip
-   *   from outside the select component closes the popup, and `onClose` runs
-   *   **before** this.
+   *   from outside the select component closes the popup, and {@link onClose}
+   *   runs **before** this.
    * - Has no link to the active row, the row the arrow keys move inside the
    *   popup; that row never holds DOM focus.
    * - `null` (default) = no consumer listener; no `focusin` listener is
@@ -4210,9 +4213,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // button is a Tab stop, so focus arrives here only by script or a screen
     // reader's cursor, from inside the root or outside it. The root's
     // focusout guard closes the popup in neither case: a move from inside
-    // fails its outside test, and a move from outside fires no focusout on
-    // the root. The popup belongs to the combobox, so close it here. close()
-    // re-syncs the stop.
+    // passes its inside test and returns early, and a move from outside fires
+    // no focusout on the root. The popup belongs to the combobox, so close it
+    // here. close() re-syncs the stop.
     el.addEventListener('focusin', () => {
       if (this.opened) { this.closeWithReason('trigger-buttons') } else { this.syncTriggerButtonsToDom() }
     })
