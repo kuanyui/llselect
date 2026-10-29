@@ -9,7 +9,7 @@ export const zhTW: LLSelectUiTranslationPack = {
   filterInputAriaLabel: '搜尋',
   filterInputPlaceholder: '篩選（按 Esc 清除）',
   popupListNoResults: '沒有符合的結果',
-  triggerButtonsAriaLabel: '已選項目操作',
+  triggerButtonsAriaLabel: '已選項目',
   triggerClearButtonAriaLabel: '清除選擇',
   tagRemoveButtonAriaLabel: (itemText) => `移除 ${itemText}`,
   triggerContentCountText: (chosenCount, totalCount) =>
