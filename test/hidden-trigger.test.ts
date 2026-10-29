@@ -175,3 +175,66 @@ test('the positioner keeps an anchor under a scroll lock open on scroll', () => 
   assert.equal(hides, 0)
   p.detach()
 })
+
+test('the walk leaves a shadow root through its host', () => {
+  setupDom('<!doctype html><html><body><div id="box" style="overflow-x:auto; overflow-y:auto"><div id="host"></div></div></body></html>')
+  const root = el('host').attachShadow({ mode: 'open' })
+  root.innerHTML = '<div id="a"></div>'
+  const a = root.getElementById('a')!
+  withMockedRect(el('box'), CARD)
+  withMockedRect(a, ON_SCREEN)
+  assert.equal(isAnchorHidden(a), true, 'outside the box around the host')
+  withMockedRect(a, { top: 10, bottom: 30, left: 10, right: 210, width: 200, height: 20 })
+  assert.equal(isAnchorHidden(a), false, 'inside that box')
+})
+
+test('a slotted element is clipped by the scroll wrapper around its slot', () => {
+  setupDom('<!doctype html><html><body><div id="host"><div id="a"></div></div></body></html>')
+  const root = el('host').attachShadow({ mode: 'open' })
+  root.innerHTML = '<div id="wrap" style="overflow-x:auto; overflow-y:auto"><slot></slot></div>'
+  withMockedRect(root.getElementById('wrap')!, CARD)
+  withMockedRect(el('a'), ON_SCREEN)
+  assert.equal(isAnchorHidden(el('a')), true)
+})
+
+test('a slotted element inside a fixed panel of the shadow tree escapes a clipping card around the host', () => {
+  setupDom('<!doctype html><html><body><div id="card" style="overflow-x:hidden; overflow-y:hidden"><div id="host"><div id="a"></div></div></div></body></html>')
+  const root = el('host').attachShadow({ mode: 'open' })
+  root.innerHTML = '<div id="panel" style="position:fixed"><slot></slot></div>'
+  withMockedRect(el('card'), CARD)
+  withMockedRect(root.getElementById('panel')!, ON_SCREEN)
+  withMockedRect(el('a'), ON_SCREEN)
+  assert.equal(isAnchorHidden(el('a')), false)
+})
+
+test('a slot inside a closed shadow root is not exposed, so the walk falls back to the light-DOM parent', () => {
+  setupDom('<!doctype html><html><body><div id="host"><div id="a"></div></div></body></html>')
+  const root = el('host').attachShadow({ mode: 'closed' })
+  root.innerHTML = '<div id="wrap" style="overflow-x:auto; overflow-y:auto"><slot></slot></div>'
+  withMockedRect(root.getElementById('wrap')!, CARD)
+  withMockedRect(el('a'), ON_SCREEN)
+  assert.equal(el('a').assignedSlot, null)
+  assert.equal(isAnchorHidden(el('a')), false)
+})
+
+test('the positioner hears a scroll inside a shadow root on the anchor\'s path, and stops after detach', () => {
+  setupDom('<!doctype html><html><body><div id="host"></div><div id="f"></div></body></html>')
+  const root = el('host').attachShadow({ mode: 'open' })
+  root.innerHTML = '<div id="box" style="overflow-x:auto; overflow-y:auto"><div id="a"></div></div>'
+  const box = root.getElementById('box')!
+  const a = root.getElementById('a')!
+  withMockedRect(box, CARD)
+  withMockedRect(a, { top: 10, bottom: 30, left: 10, right: 210, width: 200, height: 20 })
+  Object.defineProperty(el('f'), 'offsetHeight', { value: 100, configurable: true })
+  let hides = 0
+  const p = createPositioner(a, el('f'), { onHide: () => { hides++ } })
+  assert.equal(hides, 0)
+  // The anchor scrolled out of the box. The event is not composed, so it never
+  // reaches window.
+  withMockedRect(a, ON_SCREEN)
+  box.dispatchEvent(new Event('scroll'))
+  assert.equal(hides, 1)
+  p.detach()
+  box.dispatchEvent(new Event('scroll'))
+  assert.equal(hides, 1, 'no listener left after detach')
+})

@@ -272,13 +272,29 @@ function clipsRect(el: Element, s: CSSStyleDeclaration, rect: DOMRect): boolean 
     (clipsX && (rect.right < box.left || rect.left > box.right))
 }
 
-// Walks up the anchor's containing-block chain: an ancestor's overflow clips
-// only the descendants whose containing block lies inside it (CSS 2.1
-// "overflow").
+// By shape, so a shadow root from another realm counts too.
+function isShadowRoot(node: Node): node is ShadowRoot {
+  return node.nodeType === 11 && 'host' in node
+}
+
+// The parent in the flat tree, the tree CSS lays out: the slot the element is
+// assigned to, else its parent element, else the host of its shadow root. A
+// slot inside a closed shadow root is not exposed, so a light-DOM child of
+// that host falls back to its light-DOM parent.
+function flatTreeParent(el: Element): Element | null {
+  if (el.assignedSlot !== null) { return el.assignedSlot }
+  if (el.parentElement !== null) { return el.parentElement }
+  const parent = el.parentNode
+  return parent !== null && isShadowRoot(parent) ? parent.host : null
+}
+
+// Walks up the anchor's containing-block chain in the flat tree: an
+// ancestor's overflow clips only the descendants whose containing block lies
+// inside it (CSS 2.1 "overflow").
 function isClippedByAncestor(anchor: HTMLElement, anchorRect: DOMRect): boolean {
   const doc = anchor.ownerDocument
   let scheme = containingBlockScheme(window.getComputedStyle(anchor).position)
-  for (let el = anchor.parentElement; el !== null; el = el.parentElement) {
+  for (let el = flatTreeParent(anchor); el !== null; el = flatTreeParent(el)) {
     // The root's overflow clips the viewport, which the caller tests, and
     // never the root's own box.
     if (el === doc.documentElement) { return false }
@@ -294,6 +310,18 @@ function isClippedByAncestor(anchor: HTMLElement, anchorRect: DOMRect): boolean 
     if (isInTopLayer(el)) { return false }
   }
   return false
+}
+
+// The shadow roots that the anchor's flat-tree path passes through. The set is
+// read once per open cycle; a slot assignment that changes while the popup is
+// open is not followed.
+function shadowRootsOnPath(anchor: Element): ShadowRoot[] {
+  const roots: ShadowRoot[] = []
+  for (let el: Element | null = anchor; el !== null; el = flatTreeParent(el)) {
+    const root = el.getRootNode()
+    if (isShadowRoot(root) && !roots.includes(root)) { roots.push(root) }
+  }
+  return roots
 }
 
 // Anchor fully outside the LAYOUT viewport (window.innerWidth/Height, not the
@@ -505,8 +533,13 @@ export function createPositioner(
   // - otherwise opening the on-screen keyboard would instantly dismiss the popup.
   const onResize = (): void => reposition(false)
 
-  // Capture phase catches scrolls inside any ancestor scrollable container.
-  window.addEventListener('scroll', onScroll, { passive: true, capture: true })
+  // Capture phase catches scrolls inside any ancestor scrollable container. A
+  // scroll event never leaves its shadow root, so every shadow root on the
+  // anchor's flat-tree path listens too.
+  const scrollTargets: EventTarget[] = [window, ...shadowRootsOnPath(anchor)]
+  for (const target of scrollTargets) {
+    target.addEventListener('scroll', onScroll, { passive: true, capture: true })
+  }
   window.addEventListener('resize', onResize)
   // Mobile: URL bar showing/hiding and virtual keyboard appearing change the
   // visual viewport without firing window resize. Listen to visualViewport
@@ -535,7 +568,9 @@ export function createPositioner(
     reposition: () => reposition(false),
     detach(): void {
       attached = false
-      window.removeEventListener('scroll', onScroll, true)
+      for (const target of scrollTargets) {
+        target.removeEventListener('scroll', onScroll, true)
+      }
       window.removeEventListener('resize', onResize)
       vv?.removeEventListener('resize', onResize)
       ro?.disconnect()
