@@ -27,12 +27,13 @@
 //
 // TRANSLATION STATUS:
 // - user-vetted: zh-TW. Library source: en (src/i18n/en.ts).
+// - reviewed by a native speaker at the maintainer's request: nan-Latn-tailo.
 // - LLM-drafted, cross-reviewed by a second model, native sign-off pending:
 //   all remaining packs. Within those, LOWER CONFIDENCE (review first if you
 //   ship them prominently): ga, is, kk, mn, my, km, bn, ur, lt, lv, sw, ta,
 //   yue.
-// - nan-TW and nan-Latn-tailo are DRAFTS for the maintainer's own native
-//   vetting; do not treat them as shipped-quality until this flag is removed.
+// - nan-TW is a DRAFT for the maintainer's own native vetting; do not treat
+//   it as shipped-quality until this flag is removed.
 
 /**
  * All chrome strings of one select component.

@@ -2,7 +2,6 @@ import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
  * Taiwanese Hokkien pack (Tai-lo romanization; IANA variant subtag `tailo`).
- * DRAFT - see TRANSLATION STATUS: needs the maintainer's native vetting.
  * Same language as `nan-TW`, distinguished by script (`Latn`) + variant, not
  * by a separate language id.
  * @group Language packs
