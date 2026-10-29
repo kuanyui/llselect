@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { createPositioner, createsContainingBlock, hasContainment, isAnchorHidden, type AnchorRect } from '../src/positioning.js'
 import { LLSelectSingle } from '../src/single.js'
+import { resetHiddenTriggerWarning } from '../src/base.js'
 
 // The hidden-trigger check: DESIGN.md "Hidden-trigger check". jsdom does no
 // layout, so every rect is mocked. jsdom does not expand the `overflow`
@@ -254,4 +255,29 @@ test('a scroll inside the floating element runs no reposition and no hidden chec
   window.dispatchEvent(new Event('scroll'))
   assert.equal(hides, 1, 'a scroll outside still runs the check')
   p.detach()
+})
+
+test('open() on a hidden trigger warns once per page, naming the trigger wrapper', () => {
+  setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
+  resetHiddenTriggerWarning()
+  const warnings: unknown[][] = []
+  const forward = console.warn
+  console.warn = (...args: unknown[]): void => { warnings.push(args) }
+  try {
+    const sel = new LLSelectSingle<string>(el('mount'), { ariaLabel: 'x' })
+    sel.setItems(['a'])
+    withMockedRect(sel.triggerWrapperEl, { top: -100, bottom: -70, left: 10, right: 210, width: 200, height: 30 })
+    sel.open()
+    sel.open()
+    assert.equal(sel.isOpened(), false)
+    const hidden = warnings.filter((w) => typeof w[0] === 'string' && w[0].startsWith('llselect: open() did nothing'))
+    assert.equal(hidden.length, 1, 'once per page')
+    assert.equal(hidden[0]![1], sel.triggerWrapperEl)
+    withMockedRect(sel.triggerWrapperEl, ON_SCREEN)
+    sel.open()
+    assert.equal(sel.isOpened(), true)
+    resetHiddenTriggerWarning()
+  } finally {
+    console.warn = forward
+  }
 })

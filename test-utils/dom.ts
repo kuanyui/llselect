@@ -1,13 +1,16 @@
 import { JSDOM } from 'jsdom'
 
-// The core warns once per page when a select component has no accessible name. Fixtures
-// are unnamed on purpose and node:test runs every file in its own process, so
-// the warn would print once per file. Drop it here; every other warn passes.
-// Tests that assert on warnings replace console.warn themselves, bypassing this.
-const UNNAMED_WARN_PREFIX = 'llselect: this select component has no accessible name'
+// The core warns once per page when a select component has no accessible name,
+// and when open() refuses a hidden trigger. Fixtures are unnamed on purpose,
+// some tests refuse an open on purpose, and node:test runs every file in its own
+// process, so each warn would print once per file. Drop both here; every other
+// warn passes. Tests that assert on warnings replace console.warn themselves,
+// bypassing this.
+const DROPPED_WARN_PREFIXES = ['llselect: this select component has no accessible name', 'llselect: open() did nothing']
 const forwardWarn = console.warn
 console.warn = (...args: unknown[]): void => {
-  if (typeof args[0] === 'string' && args[0].startsWith(UNNAMED_WARN_PREFIX)) { return }
+  const first = args[0]
+  if (typeof first === 'string' && DROPPED_WARN_PREFIXES.some((prefix) => first.startsWith(prefix))) { return }
   forwardWarn(...args)
 }
 

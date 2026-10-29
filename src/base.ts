@@ -1281,6 +1281,14 @@ export function resetFocusableBeforeFilterInputWarning(): void {
   warnedFocusableBeforeFilterInput = false
 }
 
+/** Once-per-page guard for the warning when `open()` refuses a hidden trigger. */
+let warnedHiddenTrigger = false
+
+/** Package-internal test hook (not re-exported): reset the once-per-page hidden-trigger warning. */
+export function resetHiddenTriggerWarning(): void {
+  warnedHiddenTrigger = false
+}
+
 /** Elements that are Tab stops without a `tabindex` (`canBeTabStop`). */
 const NATIVE_TAB_STOP_SELECTOR = 'a[href], area[href], button, input:not([type="hidden"]), select, textarea, iframe, summary, [contenteditable]:not([contenteditable="false"])'
 
@@ -2094,6 +2102,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
+   * Warns once per page that `open()` refused a hidden trigger, naming the
+   * trigger wrapper. A refusal is otherwise silent: the click or the key does
+   * nothing (`FIXME.md` QUALITY-798).
+   */
+  private warnHiddenTriggerOnce(): void {
+    if (warnedHiddenTrigger) { return }
+    warnedHiddenTrigger = true
+    console.warn('llselect: open() did nothing, because the trigger is outside the viewport or clipped away by an ancestor, so the popup would have nowhere to show. Scroll the trigger into view, then open again. (warned once per page; the trigger wrapper:)', this.triggerWrapperEl)
+  }
+
+  /**
    * Warn once per page when a control sits before the filter input in the
    * popup, which the prepend recipe of the header slot can cause (DESIGN.md
    * "Popup header / footer slots"): while the filter is active, Tab from the
@@ -2119,11 +2138,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Open the popup. Builds item elements lazily, attaches the positioner
-   * (which auto-closes if the trigger is scrolled out of view), wires the
-   * outside-click handler, and moves keyboard focus into the item list.
-   * No-op if already open, and while `close()` is returning focus to the
-   * trigger: a focus handler that calls `open()` there is ignored.
+   * Open the popup.
+   * - Builds item elements lazily, attaches the positioner, wires the
+   *   outside-click handler, and moves keyboard focus into the item list.
+   * - The positioner closes the popup again, with the close reason
+   *   `'hidden'`, when a scroll moves the trigger out of view.
+   * - Does nothing while the popup is already open, while the select
+   *   component is disabled, and while `close()` is returning focus to the
+   *   trigger: a focus handler that calls `open()` there is ignored.
+   * - Does nothing while the trigger is hidden: fully outside the viewport,
+   *   or fully clipped away by an ancestor. The first such refusal on a page
+   *   logs a console warning.
    * @group Open & close
    */
   public open(): void {
@@ -2138,7 +2163,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // strand the outside-click / focusout / scroll / resize handlers with the
     // control already reporting itself closed (destroy() -> close() then early-
     // returns and cannot recover them).
-    if (isAnchorHidden(this.triggerWrapperEl)) { return }
+    if (isAnchorHidden(this.triggerWrapperEl)) {
+      this.warnHiddenTriggerOnce()
+      return
+    }
     this.syncColorScheme()
     const restoreWindowScroll = this.captureWindowScroll()
     this.opened = true
