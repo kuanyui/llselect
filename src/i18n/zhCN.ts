@@ -1,7 +1,7 @@
 import type { LLSelectUiTranslationPack } from '../i18n.js'
 
 /**
- * Simplified Chinese (mainland) pack.
+ * Simplified Chinese (China) pack.
  * @group Language packs
  */
 export const zhCN: LLSelectUiTranslationPack = {
