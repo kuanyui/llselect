@@ -145,7 +145,7 @@ test('while the select component is disabled, no button of the strip is a Tab st
   assert.deepEqual(tabStops(sel), ['Remove a'], 'the button holding focus is the stop')
 })
 
-test('focus entering the strip closes an open popup with the reason blur, and reports no onBlur', () => {
+test('focus entering the strip closes an open popup with the reason trigger-buttons, and reports no onBlur', () => {
   const closes: LLSelectCloseReason[] = []
   let blurs = 0
   const sel = tagsSelect(['a'], { onClose: (meta) => { closes.push(meta.reason) }, onBlur: () => { blurs++ } })
@@ -153,7 +153,7 @@ test('focus entering the strip closes an open popup with the reason blur, and re
   sel.open()
   buttons(sel)[0]!.focus()
   assert.equal(sel.isOpened(), false)
-  assert.deepEqual(closes, ['blur'])
+  assert.deepEqual(closes, ['trigger-buttons'])
   assert.equal(blurs, 0, 'focus stays inside the select component')
   assert.equal(document.activeElement, buttons(sel)[0], 'the close does not move focus back to the trigger')
 })

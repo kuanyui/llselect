@@ -109,8 +109,10 @@ export interface LLSelectOpenMeta {
  * - `'escape'`: Escape or Alt+ArrowUp on the trigger or the filter input,
  *   and Escape on a control the app placed in a header / footer slot.
  * - `'outside'`: a mousedown or click outside the select component.
- * - `'blur'`: DOM focus left the select component, or moved from the
- *   trigger or the popup into the trigger buttons strip.
+ * - `'blur'`: DOM focus left the select component.
+ * - `'trigger-buttons'`: DOM focus moved from the trigger or the popup into
+ *   the trigger buttons strip, by script or a screen reader's cursor. Focus
+ *   stays inside the select component, so `onBlur` does not fire.
  * - `'toggle'`: a click in the trigger wrapper, or a `toggle()` call.
  * - `'api'`: a `close()` call.
  * - `'disabled'`: `setDisabled(true)`.
@@ -119,7 +121,7 @@ export interface LLSelectOpenMeta {
  *   popup could not stay anchored.
  * @group Events
  */
-export type LLSelectCloseReason = 'choose' | 'escape' | 'outside' | 'blur' | 'toggle' | 'api' | 'disabled' | 'destroy' | 'hidden'
+export type LLSelectCloseReason = 'choose' | 'escape' | 'outside' | 'blur' | 'trigger-buttons' | 'toggle' | 'api' | 'disabled' | 'destroy' | 'hidden'
 
 /**
  * `onClose`'s argument.
@@ -1508,7 +1510,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - While the select component is disabled, none of its buttons is a Tab
    *   stop.
    * - It carries `hidden` while nothing is chosen, or while it is empty.
-   * - Focus that enters it while the popup is open closes the popup.
+   * - Focus that enters it while the popup is open closes the popup, with the
+   *   close reason `'trigger-buttons'`.
    * @group DOM elements
    */
   public readonly triggerButtonsEl: HTMLElement | null
@@ -4206,7 +4209,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // keeps the popup open, so close it here: the popup belongs to the
     // combobox, which focus just left. close() re-syncs the stop.
     el.addEventListener('focusin', () => {
-      if (this.opened) { this.closeWithReason('blur') } else { this.syncTriggerButtonsToDom() }
+      if (this.opened) { this.closeWithReason('trigger-buttons') } else { this.syncTriggerButtonsToDom() }
     })
     return el
   }

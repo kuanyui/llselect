@@ -68,7 +68,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 > No **before** counterpart: there is no `ll-on-before-close`.
 
-- `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the select component), `'blur'` (DOM focus left the select component), `'toggle'` (a click on the trigger, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed) or `'hidden'` (the trigger scrolled out of view or was clipped).
+- `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the select component), `'blur'` (DOM focus left the select component), `'trigger-buttons'` (DOM focus moved into the trigger buttons strip, the row of the clear button and the chips' remove buttons; no `ll-on-blur` follows), `'toggle'` (a click in the trigger wrapper, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed) or `'hidden'` (the trigger scrolled out of view or was clipped).
 - Same rules as [`ll-on-open`](#ll-on-open).
 - It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and AngularJS broadcasts `$destroy` before disabling the scope.
 - In that teardown case, writes to parent-owned state (`vm.*`, a service) persist; writes to the dying child scope itself are lost with it.
