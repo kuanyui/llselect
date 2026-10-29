@@ -113,7 +113,7 @@ test('multiple: a chip wraps its text in a span that carries the lang; the remov
   assert.equal(custom.rootEl.querySelector('b')!.getAttribute('lang'), 'de')
 })
 
-test('multiple: the count summary carries no lang', () => {
+test('multiple: the count text carries no lang', () => {
   const sel = new LLSelectMultiple<Lang>(mount(), { itemToStringFn: (l) => l.name, itemToLangFn: (l) => l.code })
   sel.setItems(LANGS)
   sel.setChosenItems([DE])

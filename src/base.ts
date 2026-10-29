@@ -110,9 +110,9 @@ export interface LLSelectOpenMeta {
  *   and Escape on a control the app placed in a header / footer slot.
  * - `'outside'`: a mousedown or click outside the select component.
  * - `'blur'`: DOM focus left the select component.
- * - `'trigger-buttons'`: DOM focus moved from the trigger or the popup into
- *   the trigger buttons strip, by script or a screen reader's cursor. Focus
- *   stays inside the select component, so `onBlur` does not fire.
+ * - `'trigger-buttons'`: DOM focus moved into the trigger buttons strip
+ *   while the popup was open, by script or a screen reader's cursor. The
+ *   strip is inside the select component, so `onBlur` does not fire.
  * - `'toggle'`: a click in the trigger wrapper, or a `toggle()` call.
  * - `'api'`: a `close()` call.
  * - `'disabled'`: `setDisabled(true)`.
@@ -962,8 +962,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *
    * - DOM focus is the element that receives keyboard input,
    *   `document.activeElement`. Inside the select component it can be the trigger, the
-   *   filter input, a chip's remove button, or a control the app placed in a
-   *   header / footer slot.
+   *   filter input, a button of the trigger buttons strip, or a control the app
+   *   placed in a header / footer slot.
    * - Fires once when focus comes from outside the select component or from nowhere:
    *   Tab onto the trigger, a click on the trigger or on the label, a
    *   programmatic `triggerEl.focus()`, an `open()` call on an unfocused
@@ -972,6 +972,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   button while the select component holds no focus, which focuses the trigger.
    * - Does not fire for a move inside the select component, such as `open()` moving
    *   focus from the trigger to the filter input.
+   * - While the popup is open, focus that arrives on the trigger buttons strip
+   *   from outside the select component closes the popup, and `onClose` runs
+   *   **before** this.
    * - Has no link to the active row, the row the arrow keys move inside the
    *   popup; that row never holds DOM focus.
    * - `null` (default) = no consumer listener; no `focusin` listener is
@@ -4205,9 +4208,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     el.addEventListener('keydown', (ev) => this.handleTriggerButtonsKeydown(ev))
     // The focused button becomes the Tab stop. While the popup is open no
     // button is a Tab stop, so focus arrives here only by script or a screen
-    // reader's cursor; the focusout guard sees a move inside the root and
-    // keeps the popup open, so close it here: the popup belongs to the
-    // combobox, which focus just left. close() re-syncs the stop.
+    // reader's cursor, from inside the root or outside it. The root's
+    // focusout guard closes the popup in neither case: a move from inside
+    // fails its outside test, and a move from outside fires no focusout on
+    // the root. The popup belongs to the combobox, so close it here. close()
+    // re-syncs the stop.
     el.addEventListener('focusin', () => {
       if (this.opened) { this.closeWithReason('trigger-buttons') } else { this.syncTriggerButtonsToDom() }
     })

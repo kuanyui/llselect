@@ -297,3 +297,12 @@ test('an empty strip is hidden even while items are chosen: tags mode with custo
   assert.equal(sel.triggerButtonsEl!.childElementCount, 0)
   assert.equal(sel.triggerButtonsEl!.hidden, true)
 })
+
+test('focus arriving on the strip from outside the select component while the popup is open: onClose runs before onFocus', () => {
+  const log: string[] = []
+  const sel = tagsSelect(['a'], { onClose: (meta) => { log.push(`close:${meta.reason}`) }, onFocus: () => { log.push('focus') } })
+  document.getElementById('after')!.focus()
+  sel.open()
+  buttons(sel)[0]!.focus()
+  assert.deepEqual(log, ['close:trigger-buttons', 'focus'])
+})

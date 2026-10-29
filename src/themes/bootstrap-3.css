@@ -20,9 +20,9 @@
   --llselect-focus-line: #66afe9; /* border of the trigger wrapper while focus is in it or the popup is open (vanilla: an outline, while focus is in it); outline of a focused trigger button */
   --llselect-filter-focus-line: #66afe9; /* border of the focused filter input */
   --llselect-focus-ring: rgba(102, 175, 233, 0.6); /* ring shadow of the trigger wrapper while focus is in it or the popup is open (vanilla: unused) */
-  --llselect-filter-focus-ring: rgba(102, 175, 233, 0.6); /* ring shadow of the focused filter input */
+  --llselect-filter-focus-ring: rgba(102, 175, 233, 0.6); /* ring shadow of the focused filter input (vanilla: unused) */
   --llselect-shadow: rgba(0, 0, 0, 0.175); /* color of the popup shadow */
-  --llselect-control-shadow: rgba(0, 0, 0, 0.075); /* color of the inset shadow of the trigger wrapper */
+  --llselect-control-shadow: rgba(0, 0, 0, 0.075); /* color of the inset shadow of the trigger wrapper (read by bootstrap-3 only) */
   --llselect-row-fg: var(--llselect-fg); /* text of a row */
   --llselect-row-hover-bg: #f5f5f5; /* surface of a hovered row */
   --llselect-row-hover-fg: #262626; /* text of a hovered row */

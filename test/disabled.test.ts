@@ -177,7 +177,7 @@ test('an already-chosen item that becomes disabled stays chosen', () => {
   disabled = true
   sel.rerender()
   assert.deepEqual([...sel.getChosenItems()], ['b']) // retained
-  assert.equal(sel.triggerContentEl.textContent?.trim(), '1 / 3 selected', 'the count summary counts the disabled chosen item')
+  assert.equal(sel.triggerContentEl.textContent?.trim(), '1 / 3 selected', 'the count text counts the disabled chosen item')
   sel.chooseAll() // preserves disabled-chosen 'b', adds enabled a, c
   assert.deepEqual([...sel.getChosenItems()], ['a', 'b', 'c'])
 })

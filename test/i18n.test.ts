@@ -84,7 +84,7 @@ test('a whole language pack applies to every chrome string (zhTW)', () => {
   assert.equal(noResults.textContent, zhTW.popupListNoResults)
 })
 
-test('the count summary comes from the pack (ja)', () => {
+test('the count text comes from the pack (ja)', () => {
   const sel = new LLSelectMultiple<string>(mount(), { uiTranslationPack: ja })
   sel.setItems(['a', 'b', 'c'])
   sel.setChosenItems(['a'])
@@ -169,7 +169,7 @@ test('setUiTranslationPack: filterInputPlaceholder null removes the attribute, a
   assert.equal(input.placeholder, zhTW.filterInputPlaceholder)
 })
 
-test('setUiTranslationPack while open re-renders the popup (no-results + count summary)', () => {
+test('setUiTranslationPack while open re-renders the popup (no-results + count text)', () => {
   const sel = new LLSelectMultiple<string>(mount(), { filterable: true })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a'])
