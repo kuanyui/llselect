@@ -220,21 +220,51 @@ export function hasContainment(s: CSSStyleDeclaration): boolean {
     /\b(size|inline-size)\b/.test(s.getPropertyValue('container-type'))
 }
 
+// WebKit 18 does not let `filter` hold fixed-position descendants, while
+// WebKit 26, Chromium and Firefox do (measured). A probe inside the anchor
+// answers once per page, the first time the walk meets a filter: a fixed child
+// of a filtered box lands on that box only where the filter holds it.
+let filterHoldsFixed: boolean | undefined
+
+function probeFilterHoldsFixed(anchor: HTMLElement): boolean {
+  if (filterHoldsFixed === undefined) {
+    const doc = anchor.ownerDocument
+    const box = doc.createElement('div')
+    box.style.cssText = 'position: absolute; left: 17px; top: 13px; width: 0; height: 0; visibility: hidden; filter: blur(0px)'
+    const child = doc.createElement('div')
+    child.style.cssText = 'position: fixed; left: 0; top: 0; width: 0; height: 0'
+    box.appendChild(child)
+    anchor.appendChild(box)
+    const outer = box.getBoundingClientRect()
+    const inner = child.getBoundingClientRect()
+    filterHoldsFixed = inner.left === outer.left && inner.top === outer.top
+    box.remove()
+  }
+  return filterHoldsFixed
+}
+
+/** Package-internal test hook: forget the measured `filter` behavior. */
+export function resetFilterProbe(): void {
+  filterHoldsFixed = undefined
+}
+
 /**
  * Package-internal (tests): whether an element with this computed style is
  * the containing block of its fixed-position descendants, and so of its
  * absolute ones as well. The list is the one DESIGN.md "Hidden-trigger check"
- * keeps.
+ * keeps. `filterHoldsFixed` answers for `filter`, the one property whose
+ * answer differs between engines; it runs only when `filter` is set.
  */
-export function createsContainingBlock(s: CSSStyleDeclaration): boolean {
-  for (const name of ['transform', 'translate', 'rotate', 'scale', 'perspective', 'filter', 'backdrop-filter']) {
+export function createsContainingBlock(s: CSSStyleDeclaration, filterHoldsFixed: () => boolean): boolean {
+  for (const name of ['transform', 'translate', 'rotate', 'scale', 'perspective', 'backdrop-filter']) {
     if (isSet(s.getPropertyValue(name))) { return true }
   }
   const visibility = s.getPropertyValue('content-visibility')
-  return /\b(layout|paint|strict|content)\b/.test(s.getPropertyValue('contain')) ||
-    visibility === 'auto' || visibility === 'hidden' ||
-    /\b(size|inline-size)\b/.test(s.getPropertyValue('container-type')) ||
-    /\b(transform|translate|rotate|scale|perspective|filter)\b/.test(s.getPropertyValue('will-change'))
+  if (/\b(layout|paint|strict|content)\b/.test(s.getPropertyValue('contain')) || visibility === 'auto' || visibility === 'hidden' ||
+    /\b(transform|translate|rotate|scale|perspective|filter)\b/.test(s.getPropertyValue('will-change'))) {
+    return true
+  }
+  return isSet(s.getPropertyValue('filter')) && filterHoldsFixed()
 }
 
 // A browser older than the selector throws, which reads as no match.
@@ -301,7 +331,8 @@ function isClippedByAncestor(anchor: HTMLElement, anchorRect: DOMRect): boolean 
     const s = window.getComputedStyle(el)
     // No box: it neither clips nor holds a containing block.
     if (s.display === 'contents') { continue }
-    const holdsContainingBlock = scheme === 'flow' || createsContainingBlock(s) || (scheme === 'absolute' && orDefault(s.position, 'static') !== 'static')
+    const holdsContainingBlock = scheme === 'flow' || createsContainingBlock(s, () => probeFilterHoldsFixed(anchor)) ||
+      (scheme === 'absolute' && orDefault(s.position, 'static') !== 'static')
     if (holdsContainingBlock) {
       const overflowGoesToViewport = el === doc.body && isBodyOverflowPropagated(doc, s)
       if (!overflowGoesToViewport && clipsRect(el, s, anchorRect)) { return true }

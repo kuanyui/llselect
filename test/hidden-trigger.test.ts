@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
-import { createPositioner, createsContainingBlock, hasContainment, isAnchorHidden, type AnchorRect } from '../src/positioning.js'
+import { createPositioner, createsContainingBlock, hasContainment, isAnchorHidden, resetFilterProbe, type AnchorRect } from '../src/positioning.js'
 import { LLSelectSingle } from '../src/single.js'
 import { resetHiddenTriggerWarning } from '../src/base.js'
 
@@ -132,15 +132,43 @@ test('a scroll container still clips its in-flow content', () => {
 
 test('createsContainingBlock: the properties that hold fixed-position descendants', () => {
   const style = (props: Record<string, string>): CSSStyleDeclaration => ({ getPropertyValue: (name: string) => props[name] ?? '' }) as unknown as CSSStyleDeclaration
-  assert.equal(createsContainingBlock(style({})), false, 'nothing set')
-  assert.equal(createsContainingBlock(style({ transform: 'none', filter: 'none', perspective: 'none', contain: 'none', 'will-change': 'auto' })), false, 'defaults')
-  const set: Array<[string, string]> = [['transform', 'matrix(1, 0, 0, 1, 0, 0)'], ['translate', '1px'], ['rotate', '1deg'], ['scale', '2'], ['perspective', '10px'], ['filter', 'blur(1px)'], ['backdrop-filter', 'blur(1px)'], ['contain', 'paint'], ['contain', 'layout'], ['contain', 'strict'], ['contain', 'content'], ['content-visibility', 'auto'], ['container-type', 'inline-size'], ['will-change', 'transform'], ['will-change', 'opacity, filter']]
+  const held = (): boolean => true
+  assert.equal(createsContainingBlock(style({}), held), false, 'nothing set')
+  assert.equal(createsContainingBlock(style({ transform: 'none', filter: 'none', perspective: 'none', contain: 'none', 'will-change': 'auto' }), held), false, 'defaults')
+  const set: Array<[string, string]> = [['transform', 'matrix(1, 0, 0, 1, 0, 0)'], ['translate', '1px'], ['rotate', '1deg'], ['scale', '2'], ['perspective', '10px'], ['backdrop-filter', 'blur(1px)'], ['contain', 'paint'], ['contain', 'layout'], ['contain', 'strict'], ['contain', 'content'], ['content-visibility', 'auto'], ['will-change', 'transform'], ['will-change', 'opacity, filter']]
   for (const [name, value] of set) {
-    assert.equal(createsContainingBlock(style({ [name]: value })), true, `${name}: ${value}`)
+    assert.equal(createsContainingBlock(style({ [name]: value }), () => false), true, `${name}: ${value}`)
   }
-  const unset: Array<[string, string]> = [['contain', 'style'], ['contain', 'size'], ['content-visibility', 'visible'], ['container-type', 'normal'], ['will-change', 'opacity']]
+  // Measured in every engine: container-type makes no containing block.
+  const unset: Array<[string, string]> = [['contain', 'style'], ['contain', 'size'], ['content-visibility', 'visible'], ['container-type', 'inline-size'], ['container-type', 'normal'], ['will-change', 'opacity']]
   for (const [name, value] of unset) {
-    assert.equal(createsContainingBlock(style({ [name]: value })), false, `${name}: ${value}`)
+    assert.equal(createsContainingBlock(style({ [name]: value }), held), false, `${name}: ${value}`)
+  }
+  assert.equal(createsContainingBlock(style({ filter: 'blur(1px)' }), held), true, 'filter, where the engine holds')
+  assert.equal(createsContainingBlock(style({ filter: 'blur(1px)' }), () => false), false, 'filter, where it does not')
+})
+
+test('filter holds a fixed element only where the probe measures it so, and the probe leaves nothing behind', () => {
+  setupDom('<!doctype html><html><body><div id="box" style="overflow-x:hidden; overflow-y:hidden; filter:blur(0px)"><div id="drawer" style="position:fixed"><div id="a"></div></div></div></body></html>')
+  withMockedRect(el('box'), CARD)
+  withMockedRect(el('drawer'), ON_SCREEN)
+  withMockedRect(el('a'), ON_SCREEN)
+  resetFilterProbe()
+  // jsdom lays nothing out, so the probe's two boxes both sit at 0: "held".
+  assert.equal(isAnchorHidden(el('a')), true, 'an engine where the filter holds the drawer')
+  assert.equal(el('a').children.length, 0)
+  resetFilterProbe()
+  // An engine where it does not: the probe's fixed child stays at the origin.
+  const original = window.HTMLElement.prototype.getBoundingClientRect
+  window.HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement): DOMRect {
+    const at = this.style.position === 'fixed' ? 0 : 17
+    return { top: at, left: at, right: at, bottom: at, width: 0, height: 0, x: at, y: at, toJSON() { return {} } } as DOMRect
+  }
+  try {
+    assert.equal(isAnchorHidden(el('a')), false, 'an engine where the filter does not hold it')
+  } finally {
+    window.HTMLElement.prototype.getBoundingClientRect = original
+    resetFilterProbe()
   }
 })
 

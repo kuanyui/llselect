@@ -186,7 +186,7 @@ The popup's PERSISTENT elements are built in the constructor and stay in the DOM
 
 Accepted costs - two classes, both solved by the planned top-layer enhancement (`TODO.md` "Popup top layer via Popover API"), neither fully by a body portal:
 
-- **Displacement**: an ancestor that creates a fixed-position containing block (`transform`, individual `translate` / `scale` / `rotate`, `filter`, `perspective`, `will-change: transform`, `contain: paint` / `layout` - including via `content-visibility`) re-scopes `position: fixed` to itself, so the positioner's viewport coordinates land displaced.
+- **Displacement**: an ancestor that creates a fixed-position containing block (`transform`, individual `translate` / `scale` / `rotate`, `filter`, `perspective`, `will-change: transform`, `contain: paint` / `layout` - including via `content-visibility`; the full list is in "Hidden-trigger check") re-scopes `position: fixed` to itself, so the positioner's viewport coordinates land displaced.
 - **Paint trapping**: the themes' `z-index: 1000` on the popup is local to whatever stacking context the ROOT sits in (any ancestor with `z-index` on a positioned element, `opacity < 1`, `mix-blend-mode`, `isolation`, ...). Overlapping content in a higher-ordered context - classic case: a sticky header with a root-level `z-index` painting over a popup that flipped upward out of a low-z-index card - covers the popup even though it is positioned correctly. This is the residual form of the append-to-body-era landmines: `position: fixed` already removed ancestor-overflow clipping and offsetParent coordinate math, the two big ones that forced absolute-positioned popup libraries (UI Bootstrap tooltips / dropdowns etc.) into blanket `appendToBody: true`, but paint order stays context-trapped.
 
 The fix is IMPLEMENTED as a feature-detected top-layer enhancement (constructor + `open()` / `close()` in `base.ts`): where the Popover API exists, the popup carries `popover="manual"` from construction and `open()` calls `showPopover()` - the top layer paints above ALL stacking contexts and has no fixed-position containing block, and the element does NOT move in the DOM, so every in-subtree invariant above keeps holding; the positioner keeps supplying the inline `position: fixed` coordinates unchanged. Browsers without the API run the plain `position: fixed` path unchanged - for them the two failure classes remain the accepted limitation (`TODO.md`). Details locked in:
@@ -196,6 +196,34 @@ The fix is IMPLEMENTED as a feature-detected top-layer enhancement (constructor 
 - Force-hide resilience: `dialog.showModal()` hides all popovers behind the library's back; the paired `hidePopover()` in `close()` then throws `InvalidStateError` and is caught - state resyncs there, and the next open recovers.
 
 A body portal, by contrast, fixes only displacement - a body-appended popup still loses paint order to root-context competitors above its own `z-index`, renders UNDER an open `<dialog>` and its `::backdrop`, and forfeits the invariants above - so it stays rejected.
+
+## Hidden-trigger check
+
+`open()` refuses, and the positioner closes the popup with the close reason `'hidden'`, while the trigger wrapper is hidden: fully outside the layout viewport, or fully outside an ancestor's overflow clip that applies to it (`isAnchorHidden`, `src/positioning.ts`). The scope is the owner's ruling (`FIXME.md` HIGH-796, MEDIUM-797, MEDIUM-801, QUALITY-798), after the review panel, Codex Astra and Opus 5.5 weighed the options.
+
+- Why it exists: a popup anchored to an invisible trigger hangs in space, and the positioner's first placement must agree with `open()`, or `onHide` closes the popup in the middle of `open()` (the comment in `open()`).
+- Which error costs more: a wrong "hidden" leaves the control dead, while a wrong "visible" leaves a popup open that the user can still close. Every rule below matches the browser or errs toward "visible", except the list of containing-block creators, whose errors go both ways.
+- The walk starts at the trigger wrapper and goes up the flat tree: the slot an element is assigned to, else its parent element, else the host of its shadow root.
+  - The root element is never a clip. Its `overflow` belongs to the viewport (CSS Overflow 3, "Overflow Viewport Propagation"), which the viewport test covers, so the walk ends there.
+  - The body is not a clip while its overflow is propagated: the root's overflow is `visible` in both axes, and neither the root nor the body has containment (CSS Containment 2, the `contain` property).
+  - An element with `display: contents` has no box, so it neither clips nor holds a containing block. A slot is `display: contents` by default.
+  - The walk follows the containing-block chain, since an overflow clip applies only to the descendants whose containing block lies inside the clipping element (CSS 2.1, "overflow"). After a `position: fixed` box, only a containing-block creator holds it. After a `position: absolute` box, a positioned ancestor or a creator holds it. Every ancestor holds any other box. A skipped ancestor neither clips nor changes the chain.
+  - A top-layer element ends the walk after its own clip is tested, since no ancestor clips the top layer, a transformed one included. The walk recognizes a modal dialog by `:modal`, a showing popover by `:popover-open`, and the fullscreen element. Each selector is tried inside a `try`, since a browser older than the selector throws; such a browser falls back to the fixed rule, which the UA style gives a modal dialog.
+  - Each axis is tested only where its own overflow clips, so `overflow-x: clip` with `overflow-y: visible` hides nothing above or below.
+  - The clip is the ancestor's border box from `getBoundingClientRect`, an approximation.
+- The containing-block creators, the one list (`createsContainingBlock`): `transform`, `translate`, `rotate`, `scale`, `perspective`, `backdrop-filter`; `contain` with `layout`, `paint`, `strict` or `content`; `content-visibility: auto` or `hidden`; `will-change` naming a transform, perspective or filter property; and `filter` where the engine makes it one. A property the browser does not support reads as `''` and counts as absent.
+  - Measured in Chromium 156, Firefox 153, WebKit 26.5 and WebKit 18.4: every entry holds a fixed-position child in all four engines, except `filter` in WebKit 18.4. `container-type` holds none in any of them, so it is not on the list, although it does stop the body's overflow propagation.
+  - For `filter`, a probe answers once per page, the first time the walk meets one: a fixed child of a filtered box, inside the trigger wrapper for the length of one measurement, lands on that box only where the filter holds it.
+- Scroll events: the positioner listens on `window`, and on every shadow root of the trigger's flat-tree path, since a scroll event never leaves its shadow root. A scroll whose target is inside the popup is ignored, since it cannot move the trigger (PERFORMANCE-799).
+- A refusal by `open()` logs one console warning per page, naming the trigger wrapper (QUALITY-798).
+- Known limits:
+  - Paint containment and `clip-path` clip without an overflow declaration, and the walk does not see them.
+  - The border box ignores borders, scrollbars, `overflow-clip-margin`, rotation and rounded corners.
+  - A top-layer element under a transformed ancestor, in a browser without `:modal` or `:popover-open`: the fixed rule tests the transformed ancestor, which can refuse wrongly.
+  - An engine that does not treat a listed property as a containing-block creator sees a clip that does not apply, which can refuse wrongly. The four engines measured agree on every entry; the floor browsers were not measured.
+  - A slot inside a closed shadow root is not exposed, so a light-DOM child of that host walks its light-DOM parents.
+  - The shadow roots for scroll events are read once per open cycle, so a slot assignment that changes while the popup is open is not followed.
+  - A trigger inside a `display: none` container has a zero rect, which reads as visible, so `open()` neither refuses nor warns.
 
 ## Prefix typeahead (Phase 7, revived)
 
