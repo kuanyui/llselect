@@ -12,10 +12,16 @@ export const es: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Acciones de la selección',
   triggerClearButtonAriaLabel: 'Borrar la selección',
   tagRemoveButtonAriaLabel: (itemText) => `Quitar ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) => {
+  triggerContentCountText: (chosenCount, totalCount) => {
     if (chosenCount === 1) { return `1 de ${totalCount} seleccionado` }
     if (chosenCount === totalCount) { return `Todos los ${chosenCount} seleccionados` }
     return `${chosenCount} de ${totalCount} seleccionados`
   },
+  triggerScreenReaderCountText: (chosenCount, totalCount) => {
+    if (chosenCount === 1) { return `1 de ${totalCount} seleccionado` }
+    if (chosenCount === totalCount) { return `Todos los ${chosenCount} seleccionados` }
+    return `${chosenCount} de ${totalCount} seleccionados`
+  },
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Seleccionar todo (${chosenCount} de ${totalCount})`,
 }

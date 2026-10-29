@@ -12,7 +12,10 @@ export const bn: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'নির্বাচনের কাজ',
   triggerClearButtonAriaLabel: 'নির্বাচন মুছুন',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} সরান`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `সব ${chosenCount}টি নির্বাচিত` : `${totalCount}টির মধ্যে ${chosenCount}টি নির্বাচিত`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `সব ${chosenCount}টি নির্বাচিত` : `${totalCount}টির মধ্যে ${chosenCount}টি নির্বাচিত`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `সব নির্বাচন করুন (${chosenCount} / ${totalCount})`,
 }

@@ -12,7 +12,10 @@ export const bg: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Действия с избора',
   triggerClearButtonAriaLabel: 'Изчистване на избора',
   tagRemoveButtonAriaLabel: (itemText) => `Премахване на ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Избрани: всички (${chosenCount})` : `Избрани: ${chosenCount} от ${totalCount}`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Избрани: всички (${chosenCount})` : `Избрани: ${chosenCount} от ${totalCount}`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Избери всички (${chosenCount} / ${totalCount})`,
 }

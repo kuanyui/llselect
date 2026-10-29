@@ -457,7 +457,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * (`uiTranslationPack: { ...zhTW, filterInputPlaceholder: '...' }`).
    * Key-by-key contract (incl. what `null` means where allowed):
    * {@link LLSelectUiTranslationPack}.
-   * - Copied **once** at construction, as a shallow merge over the English defaults: later changes to your object do nothing, and `setUiTranslationPack()` replaces the copy. The pack's functions, such as `triggerCountSummary`, run at each render that needs them.
+   * - Copied **once** at construction, as a shallow merge over the English defaults: later changes to your object do nothing, and `setUiTranslationPack()` replaces the copy. The pack's functions, such as `triggerContentCountText`, run at each render that needs them.
    * @group i18n
    */
   uiTranslationPack: LLSelectUiTranslationPack
@@ -664,7 +664,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   - Choosing another item replaces it, as in a native `<select>`.
    * - For an `LLSelectMultiple`:
    *   - `getChosenItems()` still includes the item.
-   *   - When `triggerDisplay` is `'count'`, the default, the count summary includes the item.
+   *   - When `triggerDisplay` is `'count'`, the default, the count text includes the item.
    *   - When `triggerDisplay` is `'tags'`:
    *     - The trigger shows a chip for the item.
    *     - The chip has `aria-disabled` set to true.
@@ -715,7 +715,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * Item -> display string, without subclassing.
    * - Called **every** time the library needs an item's text; nothing is kept for a later call:
    *   - for each item row on a full list render or in-place rebuild;
-   *   - on each trigger content render that shows item text: the single select component with a chosen item; the multiple select component in `'tags'` mode, unless `createTriggerContentElFn` returns an element, once per chosen item for the hidden value mirror, once more for the chip's remove-button name, and once more for the chip's text unless `createTagContentElFn` returns an element;
+   *   - on each trigger content render that shows item text: the single select component with a chosen item, once for the content unless `createTriggerContentElFn` returns an element, and once for the screen-reader text unless `triggerContextToScreenReaderTextFn` returns text; the multiple select component in `'tags'` mode, once per chosen item for the screen-reader text unless `triggerContextToScreenReaderTextFn` returns text, and, unless `createTriggerContentElFn` returns an element, once more for the chip's remove-button name and once more for the chip's text unless `createTagContentElFn` returns an element;
    *   - for each candidate on a recompute of the filtered list with the default filter;
    *   - on typeahead.
    * - `null` (default) = `String(item)`.
@@ -731,9 +731,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * the `lang` attribute. It is not a language name.
    * - Called **every** time the library writes an item's text; nothing is kept for a later call:
    *   - for each item row on a full list render or in-place rebuild;
-   *   - on each trigger content render of the single select component with a chosen item;
-   *   - for each chip in the multiple select component's `'tags'` mode, plus once for the hidden value mirror when exactly one chip shows and no custom trigger content replaces the chips;
-   *   - never for the count summary.
+   *   - on each trigger content render of the single select component with a chosen item, once for the content slot and once more for the screen-reader text while that text is the item's text;
+   *   - for each chip in the multiple select component's `'tags'` mode, plus once for the screen-reader text while it is exactly one chosen item's text;
+   *   - never for the count text.
    * - `null` (default) = the library writes no `lang` anywhere.
    * - A function returning `null` = the library writes no `lang` for that item;
    *   its own text then inherits the page's language, and your custom chip
@@ -754,15 +754,17 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   read in the English voice. With it, `<div role="option" lang="de">Deutsch</div>`.
    * - Written where the library shows that item's text:
    *   - the option row;
-   *   - the single select component's trigger content slot and its hidden
-   *     value mirror whenever an item is chosen; custom trigger content
-   *     inherits the slot's code, and its own `lang` wins;
+   *   - the single select component's trigger content slot whenever an
+   *     item is chosen, and its screen-reader text while that text is the
+   *     item's text; custom trigger content inherits the slot's code, and
+   *     its own `lang` wins;
    *   - a tag chip's text span, or its custom content.
    * - Not written on a chip's remove button, whose name mixes interface text
    *   with the item's text, nor on the multiple select component's count
    *   summary.
-   * - The multiple select component's value mirror carries the code only while
-   *   exactly one chip shows; the joined texts of several items carry none.
+   * - The multiple select component's screen-reader text carries the code
+   *   only while it is exactly one chosen item's text; the joined texts of
+   *   several items carry none.
    * - Read by the `itemToLang` method's default.
    * @group Items
    */
@@ -1087,6 +1089,17 @@ export interface LLSelectClassIdMap {
   triggerClass: string
   /** Class on `triggerContentEl`, the span inside the trigger that shows the value. */
   triggerContentClass: string
+  /**
+   * Class on the visually hidden span inside the trigger that holds the
+   * screen-reader text, the value assistive technology reads.
+   * - The span exists for screen readers only. The trigger is a `combobox`
+   *   while the filter is inactive, and WAI-ARIA 1.2 gives a combobox that
+   *   is not a text field the value of its descendant content. The span is
+   *   that descendant content, since `triggerContentEl` carries
+   *   `aria-hidden="true"`.
+   * - Inline styles hide it, so it needs no theme rule.
+   */
+  triggerScreenReaderTextClass: string
   /** Class on the span at the end of the trigger wrapper where the optional dropdown arrow lives. */
   triggerArrowClass: string
   /** Class on `triggerButtonsEl`, the strip that holds the clear button and the tag chips. */
@@ -1182,13 +1195,16 @@ export interface LLSelectClassIdMap {
   /** DOM `id` of the trigger content span. Unique across instances. */
   triggerContentId: string
   /**
-   * DOM `id` of the visually hidden plain-text value span inside the trigger.
+   * DOM `id` of the visually hidden span inside the trigger that holds the
+   * screen-reader text.
    * - Unique across instances.
-   * - Referenced by the trigger's `aria-labelledby` chain while the filter
-   *   is active, so the button's accessible name includes the current value
-   *   as plain text (see the `ariaLabel` / `ariaLabelledBy` settings).
+   * - While the filter is active, the trigger is a `button`. A button takes
+   *   its name from its content, which would leave out the field name, so
+   *   the library names it through `aria-labelledby`. That chain ends at
+   *   this id, so the button's name carries the value (see the `ariaLabel` /
+   *   `ariaLabelledBy` settings).
    */
-  triggerValueId: string
+  triggerScreenReaderTextId: string
   /**
    * DOM `id` of `popupEl`, the outer popup wrapper.
    * - Unique across instances.
@@ -1321,6 +1337,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     triggerWrapperClass: `${prefix}-trigger-wrapper`,
     triggerClass: `${prefix}-trigger`,
     triggerContentClass: `${prefix}-trigger-content`,
+    triggerScreenReaderTextClass: `${prefix}-trigger-screen-reader-text`,
     triggerArrowClass: `${prefix}-trigger-arrow`,
     triggerButtonsClass: `${prefix}-trigger-buttons`,
     triggerClearButtonClass: `${prefix}-trigger-clear-button`,
@@ -1347,7 +1364,7 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
     triggerId: `${uniq}-trigger`,
     labelId: `${uniq}-label`,
     triggerContentId: `${uniq}-trigger-content`,
-    triggerValueId: `${uniq}-trigger-value`,
+    triggerScreenReaderTextId: `${uniq}-trigger-screen-reader-text`,
     popupId: `${uniq}-popup`,
     popupListId: `${uniq}-popup-list`,
     filterInputClass: `${prefix}-filter-input`,
@@ -1432,12 +1449,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   hosts `aria-activedescendant`.
    * - It carries `aria-expanded`, `aria-controls`, `aria-haspopup` and the
    *   field name, and it receives the keydown events.
-   * - It holds text only: the visually hidden value text and
+   * - It holds text only: the visually hidden screen-reader text and
    *   `triggerContentEl`. WAI-ARIA 1.2 gives a combobox that is not a text
    *   field the value of its descendant content, so a control inside it
    *   would put its name into the value. The clear button and the tag chips
    *   therefore sit in {@link triggerButtonsEl}, beside it.
-   * - Its `textContent` includes the hidden value text. Read
+   * - Its `textContent` includes the screen-reader text. Read
    *   `triggerContentEl.textContent` for what the screen shows.
    * - See `docs/llm/A11Y.md`.
    * @group DOM elements
@@ -1445,9 +1462,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   public readonly triggerEl: HTMLElement
   /**
    * The span inside the trigger that shows the value: the placeholder, the
-   * chosen item's text, the count summary or custom trigger content.
-   * - It carries `aria-hidden="true"`. Assistive technology reads the hidden
-   *   value text beside it instead, so the value is not read twice.
+   * chosen item's text, the count text or custom trigger content.
+   * - It carries `aria-hidden="true"`. Assistive technology reads the
+   *   screen-reader text beside it instead, so the value is not read twice.
    * - Subclasses' `renderTriggerContent` writes here through
    *   `commitTriggerContentToDom`.
    * - In tags mode it stays empty while chips show: the chips sit in
@@ -1456,8 +1473,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   public readonly triggerContentEl: HTMLElement
   /**
-   * The visually hidden span inside the trigger that holds the value as
-   * plain text, for assistive technology.
+   * The visually hidden span inside the trigger that holds the screen-reader
+   * text: the value assistive technology reads, never shown.
    * - While the filter is inactive, the trigger is a `combobox`. WAI-ARIA 1.2
    *   gives a combobox that is not a text field the value of its descendant
    *   content, and `triggerContentEl` is `aria-hidden`, so this span is that
@@ -1467,10 +1484,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   value.
    * - Inline styles hide it, never `hidden` or `aria-hidden`: a hidden
    *   descendant adds nothing to the combobox value.
-   * - Kept in sync by `commitTriggerContentToDom`.
-   * @group DOM elements
+   * - The library writes it after every trigger content render, from
+   *   `computeTriggerScreenReaderText`.
    */
-  protected readonly triggerValueEl: HTMLElement
+  private readonly triggerScreenReaderTextEl: HTMLElement
   /**
    * The strip beside the trigger that holds the trigger's controls: the tag
    * chips in tags mode, then the clear button while `clearable` is on.
@@ -1637,6 +1654,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private triggerClearButtonEl: HTMLElement | null = null
   /** The tag-list container in the trigger buttons strip, or `null` while no chip shows; see `commitTagsElToDom`. */
   private tagsEl: HTMLElement | null = null
+  /** Counts full trigger renders, so `setItems` writes the screen-reader text once even when `onItemsChanged` ran `renderTrigger`. */
+  private triggerRenderCount = 0
   private positioner: Positioner | undefined
   /**
    * Whether the Popover API exists (feature-detected once per instance).
@@ -1870,13 +1889,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.syncColorScheme()
     }
 
-    // [wrapper: trigger (value text, content) | buttons strip | arrow]. The
+    // [wrapper: trigger (screen-reader text, content) | buttons strip | arrow]. The
     // strip sits outside the trigger: inside a combobox a control's name
     // would enter the value (triggerEl TSDoc).
     this.triggerWrapperEl = this.createTriggerWrapperEl()
     const trigger = this.createTriggerEl()
     this.triggerEl = trigger.el
-    this.triggerValueEl = trigger.valueEl
+    this.triggerScreenReaderTextEl = trigger.screenReaderTextEl
     this.triggerContentEl = trigger.contentEl
     this.triggerButtonsEl = this.settings.clearable || this.isTriggerDisplayTags() ? this.createTriggerButtonsEl() : null
     this.triggerArrowEl = document.createElement('span')
@@ -2023,10 +2042,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * the elements that carry it. Runs with `syncFilterModeToDom` (constructor +
    * every open) because the trigger's wiring depends on the mode:
    * - Trigger, filter inactive (`role="combobox"`): the name directly; the
-   *   combobox VALUE already comes from the hidden value span inside it.
+   *   combobox VALUE already comes from the screen-reader text inside it.
    * - Trigger, filter active (`role="button"`): a button's name would
    *   otherwise be its content (the current value) with no field name, so
-   *   `aria-labelledby` chains label + value span. With only `ariaLabel`
+   *   `aria-labelledby` chains label + screen-reader text. With only `ariaLabel`
    *   there is no label element to reference, so the chain starts at the
    *   trigger itself - the accname algorithm substitutes its `aria-label`.
    * - Filter input: the field name replaces the `uiTranslationPack.filterInputAriaLabel`
@@ -2041,14 +2060,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       if (label !== null) { el.setAttribute('aria-label', label) } else { el.removeAttribute('aria-label') }
     }
     const { ariaLabel, ariaLabelledBy } = this.settings
-    const { triggerId, triggerValueId } = this.classIdMap
+    const { triggerId, triggerScreenReaderTextId } = this.classIdMap
     if (ariaLabelledBy !== null) {
-      apply(this.triggerEl, this.filterActive ? `${ariaLabelledBy} ${triggerValueId}` : ariaLabelledBy, null)
+      apply(this.triggerEl, this.filterActive ? `${ariaLabelledBy} ${triggerScreenReaderTextId}` : ariaLabelledBy, null)
       apply(this.filterInputEl, ariaLabelledBy, null)
       apply(this.popupListEl, ariaLabelledBy, null)
       apply(this.popupEl, this.filterActive ? ariaLabelledBy : null, null)
     } else if (ariaLabel !== null) {
-      apply(this.triggerEl, this.filterActive ? `${triggerId} ${triggerValueId}` : null, ariaLabel)
+      apply(this.triggerEl, this.filterActive ? `${triggerId} ${triggerScreenReaderTextId}` : null, ariaLabel)
       apply(this.filterInputEl, null, ariaLabel)
       apply(this.popupListEl, null, ariaLabel)
       apply(this.popupEl, null, this.filterActive ? ariaLabel : null)
@@ -2470,7 +2489,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   constructor input.
    * - Takes effect immediately. Visible only while nothing is chosen - the
    *   placeholder never renders otherwise (the trigger is still re-rendered,
-   *   which also refreshes the hidden accessible-value mirror).
+   *   which also refreshes the screen-reader text).
    * @group Trigger
    */
   public setPlaceholder(placeholder: string | null): void {
@@ -2510,10 +2529,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.gatheredItems = undefined
     if (this.filterActive) { this.recomputeFilteredItems() }
     if (this.opened) { this.renderPopupList() }
+    const triggerRenderCount = this.triggerRenderCount
     this.onItemsChanged()
-    // The variants' onItemsChanged renders the trigger content without
-    // renderTrigger, so the chips may have changed.
-    this.syncTriggerButtonsToDom()
+    // The variants' onItemsChanged renders the trigger content alone, unless
+    // the chosen state changed, which runs renderTrigger whole.
+    if (this.triggerRenderCount === triggerRenderCount) {
+      this.syncTriggerButtonsToDom()
+      this.renderTriggerScreenReaderText()
+    }
     // The rows rendered above may have read chosen objects that the variant's
     // reconciliation just swapped for compare-equal reloads (no change fires).
     this.replacePopupListActionRowElsInDom()
@@ -2677,8 +2700,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Orchestrator: composes the clear-button rebuild + `renderTriggerContent` +
    * `renderTriggerArrow` to (re)build the whole trigger from state, then
    * brings the trigger buttons strip in line (its `hidden` flag and its Tab
-   * stop); touches no DOM directly. Subclasses normally override
-   * {@link renderTriggerContent}, not this.
+   * stop) and writes the screen-reader text from
+   * {@link computeTriggerScreenReaderText}; touches no DOM directly.
+   * Subclasses normally override {@link renderTriggerContent}, not this.
    * - Runs on every change of the chosen value, the placeholder or the pack.
    * - `rerender()` runs it too.
    * - While `clearable` is on, the first run builds the clear button and every
@@ -2715,33 +2739,81 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.renderTriggerContent()
     this.renderTriggerArrow()
     this.syncTriggerButtonsToDom()
+    this.renderTriggerScreenReaderText()
+    this.triggerRenderCount++
   }
 
   /**
    * Write the trigger's content slot (`triggerContentEl`), replacing whatever
    * was there. The single DOM-writing primitive behind every
    * `renderTriggerContent` path.
+   * - Called by `renderTriggerContent`: the base default and the
+   *   `LLSelectSingle` / `LLSelectMultiple` overrides.
    * - `string` -> set as `textContent` (plain text, NOT parsed as HTML). Used
-   *   for the default placeholder / `itemToString` text / count summary.
+   *   for the default placeholder / `itemToString` text / count text.
    * - `HTMLElement` -> inserted as-is via `replaceChildren`; caller owns the
    *   node. Used for whatever the `createTriggerContentElFn` setting returned.
-   * - Also writes the hidden `triggerValueEl`, the value assistive technology
-   *   reads: `plainTextValue` when given, else the string itself, else the
-   *   element's `textContent`.
-   * - Pass `plainTextValue` whenever the content shows other text than the
-   *   value, or none: icon-only content, or the empty content of tags mode,
-   *   whose chips sit in the trigger buttons strip.
-   * Called by `renderTriggerContent` - the base default and the `LLSelectSingle`
-   * / `LLSelectMultiple` overrides.
+   * - It writes what the screen shows only. Assistive technology reads the
+   *   screen-reader text, which the library writes after the content render
+   *   from {@link computeTriggerScreenReaderText}.
    * @group Subclassing: rendering
    */
-  protected commitTriggerContentToDom(content: HTMLElement | string, plainTextValue?: string): void {
+  protected commitTriggerContentToDom(content: HTMLElement | string): void {
     if (typeof content === 'string') {
       this.triggerContentEl.textContent = content
     } else {
       this.triggerContentEl.replaceChildren(content)
     }
-    this.triggerValueEl.textContent = plainTextValue ?? (typeof content === 'string' ? content : content.textContent)
+  }
+
+  /**
+   * The screen-reader text: the value assistive technology reads for the
+   * trigger, never shown.
+   * - The library calls it after every trigger content render: every full
+   *   trigger render (`renderTrigger`), plus every `setItems`. It writes the
+   *   result as plain text into a visually hidden span inside the trigger.
+   * - The span exists for screen readers. The trigger is a `combobox` while
+   *   the filter is inactive, and WAI-ARIA 1.2 gives a combobox that is not
+   *   a text field the value of its descendant content. The visible
+   *   `triggerContentEl` carries `aria-hidden="true"`, so this text is the
+   *   value.
+   * - While the filter is active, the trigger is a `button`, named through
+   *   `aria-labelledby`. The chain ends at the span, so the name carries
+   *   this text.
+   * - The usual override calls `super` and edits the returned string, or
+   *   returns its own plain text.
+   * - Base default: the placeholder. `LLSelectSingle` and `LLSelectMultiple`
+   *   first try their `triggerContextToScreenReaderTextFn` setting, then
+   *   read out the information the screen shows.
+   * @group Subclassing: semantics
+   */
+  protected computeTriggerScreenReaderText(): string {
+    return this.settings.placeholder
+  }
+
+  /**
+   * The `lang` of the screen-reader text, given the text
+   * `computeTriggerScreenReaderText` returned: an item's code while the text
+   * is exactly that item's text, else `null`, which writes none. Base: `null`.
+   * @internal
+   */
+  protected computeTriggerScreenReaderTextLang(_text: string): string | null {
+    return null
+  }
+
+  /**
+   * Write the screen-reader text and its `lang`. The base runs it after
+   * every trigger content render, so a `renderTriggerContent` override never
+   * has to.
+   */
+  private renderTriggerScreenReaderText(): void {
+    const text = this.computeTriggerScreenReaderText()
+    this.commitTriggerScreenReaderTextToDom(text, this.computeTriggerScreenReaderTextLang(text))
+  }
+
+  private commitTriggerScreenReaderTextToDom(text: string, lang: string | null): void {
+    this.triggerScreenReaderTextEl.textContent = text
+    this.commitLangToDom(this.triggerScreenReaderTextEl, lang)
   }
 
   /**
@@ -2771,7 +2843,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * display the chosen value(s); this base default commits the placeholder and
    * the empty flag. Always write via `commitTriggerContentToDom` (content) and
    * `syncEmptyStateToDom` (the `data-empty` flag), never `triggerContentEl`
-   * directly, so the hidden value text stays in step with what shows.
+   * directly.
    * @group Subclassing: rendering
    */
   protected renderTriggerContent(): void {
@@ -4083,7 +4155,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     return el
   }
 
-  private createTriggerEl(): { el: HTMLElement; valueEl: HTMLElement; contentEl: HTMLElement } {
+  private createTriggerEl(): { el: HTMLElement; screenReaderTextEl: HTMLElement; contentEl: HTMLElement } {
     const el = document.createElement('div')
     el.id = this.classIdMap.triggerId
     el.className = this.classIdMap.triggerClass
@@ -4095,15 +4167,16 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // syncFilterModeToDom, which the constructor runs after building the
     // trigger.
     el.setAttribute('aria-expanded', 'false')
-    const valueEl = document.createElement('span')
-    valueEl.id = this.classIdMap.triggerValueId
-    hideVisually(valueEl)
+    const screenReaderTextEl = document.createElement('span')
+    screenReaderTextEl.id = this.classIdMap.triggerScreenReaderTextId
+    screenReaderTextEl.className = this.classIdMap.triggerScreenReaderTextClass
+    hideVisually(screenReaderTextEl)
     const contentEl = document.createElement('span')
     contentEl.id = this.classIdMap.triggerContentId
     contentEl.className = this.classIdMap.triggerContentClass
     contentEl.setAttribute('aria-hidden', 'true')
-    el.append(valueEl, contentEl)
-    return { el, valueEl, contentEl }
+    el.append(screenReaderTextEl, contentEl)
+    return { el, screenReaderTextEl, contentEl }
   }
 
   /**

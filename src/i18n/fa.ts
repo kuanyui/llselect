@@ -12,7 +12,10 @@ export const fa: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'عملیات انتخاب',
   triggerClearButtonAriaLabel: 'پاک کردن انتخاب',
   tagRemoveButtonAriaLabel: (itemText) => `حذف ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `همه انتخاب شدند (${chosenCount})` : `${chosenCount} از ${totalCount} انتخاب شده`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `همه انتخاب شدند (${chosenCount})` : `${chosenCount} از ${totalCount} انتخاب شده`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join('، '),
   chooseAllRowText: (chosenCount, totalCount) => `انتخاب همه (${chosenCount} از ${totalCount})`,
 }

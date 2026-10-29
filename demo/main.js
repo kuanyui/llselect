@@ -1107,7 +1107,7 @@ function writeHeaderMatches() {
 }
 function writeHeaderState(chosenCount) {
   const pack = selHeaderCount.getUiTranslationPack()
-  headerCountEl.textContent = pack.triggerCountSummary(chosenCount, selHeaderCount.getItems().length)
+  headerCountEl.textContent = pack.triggerContentCountText(chosenCount, selHeaderCount.getItems().length)
   headerClearButton.setAttribute('aria-disabled', String(chosenCount === 0)) // styled by the demo CSS
 }
 selHeaderCount.setItems(COUNTRIES)

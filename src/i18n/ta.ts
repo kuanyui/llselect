@@ -13,10 +13,16 @@ export const ta: LLSelectUiTranslationPack = {
   triggerClearButtonAriaLabel: 'தேர்வை அழி',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} ஐ அகற்று`,
   // Tamil number agreement: neuter singular -athu for 1, plural -ana otherwise.
-  triggerCountSummary: (chosenCount, totalCount) => {
+  triggerContentCountText: (chosenCount, totalCount) => {
     if (chosenCount === 1) { return `${totalCount} இல் 1 தேர்ந்தெடுக்கப்பட்டது` }
     if (chosenCount === totalCount) { return `அனைத்தும் தேர்ந்தெடுக்கப்பட்டன (${chosenCount})` }
     return `${totalCount} இல் ${chosenCount} தேர்ந்தெடுக்கப்பட்டன`
   },
+  triggerScreenReaderCountText: (chosenCount, totalCount) => {
+    if (chosenCount === 1) { return `${totalCount} இல் 1 தேர்ந்தெடுக்கப்பட்டது` }
+    if (chosenCount === totalCount) { return `அனைத்தும் தேர்ந்தெடுக்கப்பட்டன (${chosenCount})` }
+    return `${totalCount} இல் ${chosenCount} தேர்ந்தெடுக்கப்பட்டன`
+  },
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `அனைத்தையும் தேர்ந்தெடு (${chosenCount} / ${totalCount})`,
 }

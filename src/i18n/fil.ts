@@ -12,7 +12,10 @@ export const fil: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Mga aksyon sa pinili',
   triggerClearButtonAriaLabel: 'Burahin ang pinili',
   tagRemoveButtonAriaLabel: (itemText) => `Alisin ang ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Napili lahat (${chosenCount})` : `${chosenCount} sa ${totalCount} ang napili`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Napili lahat (${chosenCount})` : `${chosenCount} sa ${totalCount} ang napili`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Piliin lahat (${chosenCount} / ${totalCount})`,
 }

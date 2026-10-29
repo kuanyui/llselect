@@ -474,6 +474,26 @@ test('ll-trigger-content-fn renders the trigger; null falls back to the default 
   assert.equal(a.$('.llselect-trigger b.custom-trigger'), null, 'null must fall back to the default rendering')
 })
 
+test('ll-trigger-context-to-screen-reader-text-fn sets what a screen reader reads; null falls back to the default', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.fruit" ll-trigger-context-to-screen-reader-text-fn="vm.readOut"
+        ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () {
+      this.fruits = FRUITS.slice()
+      this.fruit = 'Cherry'
+      this.readOut = function (ctx) { return ctx.chosenItem ? 'Fruit: ' + ctx.chosenItem : null }
+    },
+  })
+  assert.deepEqual(a.errors, [])
+  assert.equal(a.text('.llselect-trigger-screen-reader-text'), 'Fruit: Cherry')
+  assert.equal(a.text('.llselect-trigger-content'), 'Cherry', 'the screen keeps its own text')
+  a.scope.$apply(() => { a.scope.vm.fruit = null })
+  assert.equal(a.text('.llselect-trigger-screen-reader-text'), a.text('.llselect-trigger-content'), 'null: the default, the placeholder')
+})
+
 test('multiple tags: ll-tag-content-fn fills the chip; ll-tag-remove-button-content-fn swaps the x icon', () => {
   const a = boot({
     deps: ['llselect'],

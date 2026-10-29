@@ -14,7 +14,10 @@ export const tr: LLSelectUiTranslationPack = {
   // The case suffix lands on the carrier noun "oge" (item), never on the
   // interpolated label (Turkish suffixes vary with vowel harmony).
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} öğesini kaldır`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Tümü seçildi (${chosenCount})` : `${chosenCount} / ${totalCount} seçildi`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Tümü seçildi (${chosenCount})` : `${totalCount} öğeden ${chosenCount} öğe seçildi`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Tümünü seç (${chosenCount} / ${totalCount})`,
 }

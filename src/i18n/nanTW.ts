@@ -13,7 +13,10 @@ export const nanTW: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: '揀的操作',
   triggerClearButtonAriaLabel: '清掉揀的',
   tagRemoveButtonAriaLabel: (itemText) => `共 ${itemText} 提掉`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `全部 ${chosenCount} 項攏揀矣` : `${totalCount} 項揀 ${chosenCount} 項`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `全部 ${chosenCount} 項攏揀矣` : `${totalCount} 項揀 ${chosenCount} 項`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join('、'),
   chooseAllRowText: (chosenCount, totalCount) => `攏總揀（${chosenCount} / ${totalCount}）`,
 }

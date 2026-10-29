@@ -210,6 +210,8 @@
     if (groupKeyToLangFn) { settings.groupKeyToLangFn = groupKeyToLangFn }
     var triggerContentFn = evalFnAttr(scope, attrs, 'llTriggerContentFn')
     if (triggerContentFn) { settings.createTriggerContentElFn = triggerContentFn }
+    var triggerScreenReaderTextFn = evalFnAttr(scope, attrs, 'llTriggerContextToScreenReaderTextFn')
+    if (triggerScreenReaderTextFn) { settings.triggerContextToScreenReaderTextFn = triggerScreenReaderTextFn }
     // Popup header / footer slots. The core calls each fn exactly ONCE, in its
     // constructor - so right here at link time, inside the link digest, unlike
     // the row / trigger content fns it calls per render outside any digest -

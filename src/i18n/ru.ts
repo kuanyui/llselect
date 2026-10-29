@@ -12,7 +12,10 @@ export const ru: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Действия с выбором',
   triggerClearButtonAriaLabel: 'Очистить выбор',
   tagRemoveButtonAriaLabel: (itemText) => `Удалить ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Выбраны все (${chosenCount})` : `Выбрано ${chosenCount} из ${totalCount}`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Выбраны все (${chosenCount})` : `Выбрано ${chosenCount} из ${totalCount}`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Выбрать все (${chosenCount} из ${totalCount})`,
 }

@@ -12,7 +12,10 @@ export const zhCN: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: '已选项目操作',
   triggerClearButtonAriaLabel: '清除选择',
   tagRemoveButtonAriaLabel: (itemText) => `移除 ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `已选全部 ${chosenCount} 项` : `已选 ${chosenCount} / ${totalCount} 项`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `已选全部 ${chosenCount} 项` : `已选 ${chosenCount} 项，共 ${totalCount} 项`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join('、'),
   chooseAllRowText: (chosenCount, totalCount) => `全选（${chosenCount} / ${totalCount}）`,
 }

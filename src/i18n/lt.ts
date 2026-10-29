@@ -12,7 +12,10 @@ export const lt: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Pasirinkimo veiksmai',
   triggerClearButtonAriaLabel: 'Išvalyti pasirinkimą',
   tagRemoveButtonAriaLabel: (itemText) => `Pašalinti ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Pasirinkta viskas (${chosenCount})` : `Pasirinkta ${chosenCount} iš ${totalCount}`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Pasirinkta viskas (${chosenCount})` : `Pasirinkta ${chosenCount} iš ${totalCount}`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Pasirinkti viską (${chosenCount} / ${totalCount})`,
 }

@@ -12,7 +12,10 @@ export const ar: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'إجراءات التحديد',
   triggerClearButtonAriaLabel: 'مسح التحديد',
   tagRemoveButtonAriaLabel: (itemText) => `إزالة ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `تم اختيار الكل (${chosenCount})` : `تم اختيار ${chosenCount} من ${totalCount}`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `تم اختيار الكل (${chosenCount})` : `تم اختيار ${chosenCount} من ${totalCount}`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join('، '),
   chooseAllRowText: (chosenCount, totalCount) => `تحديد الكل (${chosenCount} من ${totalCount})`,
 }

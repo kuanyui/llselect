@@ -15,7 +15,10 @@ export const yue: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: '揀咗嘅嘢嘅操作',
   triggerClearButtonAriaLabel: '清走揀咗嘅嘢',
   tagRemoveButtonAriaLabel: (itemText) => `移走 ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `全部 ${chosenCount} 項都揀咗` : `${totalCount} 項揀咗 ${chosenCount} 項`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `全部 ${chosenCount} 項都揀咗` : `${totalCount} 項揀咗 ${chosenCount} 項`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join('、'),
   chooseAllRowText: (chosenCount, totalCount) => `全部揀晒（${chosenCount} / ${totalCount}）`,
 }

@@ -12,7 +12,10 @@ export const et: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Valiku toimingud',
   triggerClearButtonAriaLabel: 'Tühjenda valik',
   tagRemoveButtonAriaLabel: (itemText) => `Eemalda ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Kõik valitud (${chosenCount})` : `Valitud ${chosenCount} / ${totalCount}`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Kõik valitud (${chosenCount})` : `Valitud ${chosenCount}, kokku ${totalCount}`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Vali kõik (${chosenCount} / ${totalCount})`,
 }

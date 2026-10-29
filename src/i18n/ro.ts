@@ -12,10 +12,16 @@ export const ro: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Acțiuni pentru selecție',
   triggerClearButtonAriaLabel: 'Golește selecția',
   tagRemoveButtonAriaLabel: (itemText) => `Elimină ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) => {
+  triggerContentCountText: (chosenCount, totalCount) => {
     if (chosenCount === 1) { return `1 din ${totalCount} selectat` }
     if (chosenCount === totalCount) { return `Toate cele ${chosenCount} selectate` }
     return `${chosenCount} din ${totalCount} selectate`
   },
+  triggerScreenReaderCountText: (chosenCount, totalCount) => {
+    if (chosenCount === 1) { return `1 din ${totalCount} selectat` }
+    if (chosenCount === totalCount) { return `Toate cele ${chosenCount} selectate` }
+    return `${chosenCount} din ${totalCount} selectate`
+  },
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Selectează tot (${chosenCount} / ${totalCount})`,
 }

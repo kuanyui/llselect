@@ -90,10 +90,31 @@ export interface LLSelectUiTranslationPack {
    */
   tagRemoveButtonAriaLabel: (itemText: string) => string
   /**
-   * Count summary shown in the multi trigger. Called only when
-   * `chosenCount > 0` (an empty selection shows `placeholder` instead).
+   * Count text shown in the trigger of the multiple select component in
+   * `'count'` mode, for the screen only.
+   * - Called only when `chosenCount > 0`: an empty selection shows the
+   *   placeholder instead.
+   * - It may stay short, such as "3 / 74 selected", to keep the trigger
+   *   narrow: a screen reader reads `triggerScreenReaderCountText` instead.
    */
-  triggerCountSummary: (chosenCount: number, totalCount: number) => string
+  triggerContentCountText: (chosenCount: number, totalCount: number) => string
+  /**
+   * Count text a screen reader reads as the trigger's value in `'count'`
+   * mode, never shown.
+   * - Called only when `chosenCount > 0`.
+   * - Write it in words, such as "3 of 74 selected": a screen reader says a
+   *   slash as "slash".
+   * - To show this wording on the screen too, reuse it for
+   *   `triggerContentCountText`.
+   */
+  triggerScreenReaderCountText: (chosenCount: number, totalCount: number) => string
+  /**
+   * The chosen items' texts, joined, that a screen reader reads as the
+   * trigger's value in `'tags'` mode, never shown.
+   * - Called only when at least one item is chosen.
+   * - `itemTexts` are already `itemToString`-resolved, in the chosen order.
+   */
+  triggerScreenReaderItemsText: (itemTexts: readonly string[]) => string
   /**
    * Text of the multi choose-all row (`chooseAllRow` setting): both the
    * visible text and the accessible name. Counts refer to the subset the

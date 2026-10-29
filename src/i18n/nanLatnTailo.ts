@@ -15,7 +15,10 @@ export const nanLatnTailo: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Kíng--ê ê tshau-tsok',
   triggerClearButtonAriaLabel: 'Tshing-tiāu kíng--ê',
   tagRemoveButtonAriaLabel: (itemText) => `Kā ${itemText} the̍h-tiāu`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Tsuân-pōo ${chosenCount} hāng lóng kíng--ah` : `${totalCount} hāng kíng ${chosenCount} hāng`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Tsuân-pōo ${chosenCount} hāng lóng kíng--ah` : `${totalCount} hāng kíng ${chosenCount} hāng`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Lóng-tsóng kíng (${chosenCount} / ${totalCount})`,
 }

@@ -35,7 +35,8 @@ export type LLSelectChosenState = 'none' | 'some' | 'all'
 export type LLSelectChosenItemsOrder = 'as-chosen' | 'as-listed'
 
 /**
- * Context passed to {@link LLSelectMultipleSettings.createTriggerContentElFn}.
+ * Context passed to {@link LLSelectMultipleSettings.createTriggerContentElFn}
+ * and {@link LLSelectMultipleSettings.triggerContextToScreenReaderTextFn}.
  * @group Settings
  * @category Multiple
  */
@@ -127,15 +128,43 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * + items (same convention as `createPopupListItemContentElFn`):
    * - Called on **every** trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`); nothing is kept for a later call.
    * - `HTMLElement` - inserted into the trigger as-is; you own it. Use this for
-   *   real markup such as tag chips.
-   * - fn returns `null` - use the default for this render (count summary / tags).
+   *   real markup such as icons beside the text.
+   * - fn returns `null` - use the default for this render (count text / tags).
    * - setting is `null` (default) - always use that default rendering.
+   * - The element is for the screen only: the content slot carries
+   *   `aria-hidden="true"`, and a screen reader reads the text of
+   *   `triggerContextToScreenReaderTextFn` instead. Put no control in it.
    * The DEFAULT `renderTriggerContent` checks it first; a subclass override
    * replaces that default entirely and may ignore the setting - override
    * wins, per DESIGN.md "Customization model".
    * @group Trigger
    */
   createTriggerContentElFn: ((ctx: LLSelectMultipleTriggerContext<T>) => HTMLElement | null) | null
+  /**
+   * The text a screen reader reads as the trigger's value, never shown.
+   * - Called on **every** trigger content render (`renderTriggerContent`:
+   *   every full trigger render, plus every `setItems`), once, after that
+   *   render, through `computeTriggerScreenReaderText`; nothing is kept for a
+   *   later call.
+   * - Why a separate text: the trigger has `role="combobox"`, and WAI-ARIA
+   *   1.2 gives a combobox that is not a text field the value of its
+   *   descendant content. The library hides the visible content from
+   *   assistive technology with `aria-hidden="true"` and puts this text in a
+   *   visually hidden span inside the trigger, so the screen reader reads
+   *   this text and nothing that only decorates the screen.
+   * - Return a string, and the library writes it as plain text.
+   * - `null`, returned or as the setting (the default), and a blank string
+   *   mean the default, which reads out what the screen shows:
+   *   - in `'count'` mode, `uiTranslationPack.triggerScreenReaderCountText`,
+   *     English "3 of 74 selected";
+   *   - in `'tags'` mode, `uiTranslationPack.triggerScreenReaderItemsText`
+   *     with the chosen items' `itemToString` texts, English "TypeScript, Rust";
+   *   - the placeholder while nothing is chosen.
+   * - `createTriggerContentElFn` never changes this text: the library never
+   *   reads custom content, and the default of the current mode applies.
+   * @group Trigger
+   */
+  triggerContextToScreenReaderTextFn: ((ctx: LLSelectMultipleTriggerContext<T>) => string | null) | null
   /**
    * Trigger display mode.
    * - `'count'` (default): a summary like "3 / 10 selected".
@@ -156,7 +185,7 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    * - The library sets `aria-hidden="true"` on the element you return. The
    *   chip sits in the trigger buttons strip, a toolbar in which only the
    *   buttons speak. The item reaches assistive technology through the
-   *   trigger's value text and through the remove button's name, from
+   *   trigger's screen-reader text and through the remove button's name, from
    *   `itemToTagRemoveButtonAriaLabel` (default `Remove <itemToString>`).
    * - So put no control in the element, and no text meant only for screen
    *   readers. See `docs/llm/A11Y.md` "Tags".
@@ -270,9 +299,10 @@ export type LLSelectMultipleSettingsInput<T, GroupKey = string> = LLSelectSettin
  * `aria-selected="true|false"`; the popup list gets
  * `aria-multiselectable="true"`.
  *
- * Default trigger display is a count summary ("3 / 10 selected" / "All N
- * selected" / placeholder when empty). Pass `createTriggerContentElFn` (or
- * subclass `renderTriggerContent`) to customise (e.g. tag chips).
+ * Default trigger display is a count text ("3 / 10 selected" / "All N
+ * selected" / placeholder when empty). Set `triggerDisplay: 'tags'` for chips,
+ * or pass `createTriggerContentElFn` (or subclass `renderTriggerContent`) for
+ * custom markup.
  *
  * @typeParam T - item type.
  * @typeParam GroupKey - group key type of `itemToGroupKeyFn`; see
@@ -290,6 +320,8 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   // REPLACE the array (the invariant both `chosenSetCache` and `visibleItemsCache`
   // rely on - a reference change is how they invalidate).
   protected chosenItems: readonly T[] = []
+  /** The item whose text the default screen-reader text is, for its `lang`; set by `computeTriggerScreenReaderText`. */
+  private screenReaderTextSource: { text: string; item: T } | null = null
 
   /**
    * Build the control inside `targetEl`.
@@ -313,6 +345,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       onChange: settings?.onChange ?? null,
       onBeforeChange: settings?.onBeforeChange ?? null,
       createTriggerContentElFn: settings?.createTriggerContentElFn ?? null,
+      triggerContextToScreenReaderTextFn: settings?.triggerContextToScreenReaderTextFn ?? null,
       triggerDisplay: settings?.triggerDisplay ?? 'count',
       createTagContentElFn: settings?.createTagContentElFn ?? null,
       createTagRemoveButtonContentElFn: settings?.createTagRemoveButtonContentElFn ?? null,
@@ -664,44 +697,77 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   /**
    * Orchestrator: composes `syncEmptyStateToDom` + `commitTriggerContentToDom`
    * + `commitTagsElToDom` to (re)build the trigger from state; touches no DOM
-   * directly. Default text is a count summary; override (or pass the
+   * directly. Default text is a count text; override (or pass the
    * `createTriggerContentElFn` setting) to display custom markup.
    *
    * - If 0 items are chosen, the text is `placeholder`.
-   * - If n > 0, the text is `uiTranslationPack.triggerCountSummary(n, total)`
+   * - If n > 0, the text is `uiTranslationPack.triggerContentCountText(n, total)`
    *   (English default: `"n / total selected"`, or `"All n selected"` when
    *   all are chosen).
    * - In `'tags'` mode the chips from `createTagsEl` go into the trigger
    *   buttons strip, and the content slot stays empty while they show.
+   * - What a screen reader reads comes from `computeTriggerScreenReaderText`,
+   *   which the library calls after this render.
    * @group Subclassing: rendering
    */
   protected override renderTriggerContent(): void {
     this.syncEmptyStateToDom()
     const chosenCount = this.chosenItems.length
-    const countValue = chosenCount === 0
-      ? this.settings.placeholder
-      : this.settings.uiTranslationPack.triggerCountSummary(chosenCount, this.items.length)
     const fn = this.settings.createTriggerContentElFn
     const custom = fn?.({ chosenItems: this.getChosenItems(), items: this.getItems() }) ?? null
-    // The value mirror carries the one chosen item's language while it shows
-    // exactly that item's text (tags mode, one chip); joined texts and the
-    // count summary are mixed or pack language and carry none.
-    const mirrorLang = custom === null && this.settings.triggerDisplay === 'tags' && chosenCount === 1 ? this.itemToLang(this.chosenItems[0]!) : null
-    this.commitLangToDom(this.triggerValueEl, mirrorLang)
     if (custom !== null) {
       this.commitTagsElToDom(null)
-      this.commitTriggerContentToDom(custom, countValue)
+      this.commitTriggerContentToDom(custom)
       return
     }
     if (this.settings.triggerDisplay === 'tags' && chosenCount > 0) {
-      // Accessible value = the item texts themselves; the chips sit in the
-      // strip, whose remove buttons must not name the field.
       this.commitTagsElToDom(this.createTagsEl())
-      this.commitTriggerContentToDom('', this.chosenItems.map((item) => this.itemToString(item)).join(', '))
+      this.commitTriggerContentToDom('')
       return
     }
     this.commitTagsElToDom(null)
-    this.commitTriggerContentToDom(countValue)
+    this.commitTriggerContentToDom(chosenCount === 0
+      ? this.settings.placeholder
+      : this.settings.uiTranslationPack.triggerContentCountText(chosenCount, this.items.length))
+  }
+
+  /**
+   * The screen-reader text: the value assistive technology reads for the
+   * trigger, never shown. See the base method for why it exists.
+   * - The library calls it after every trigger content render.
+   * - Default: the text of `triggerContextToScreenReaderTextFn`; when that
+   *   gives `null` or a blank string, the text of the current mode, the same
+   *   with custom trigger content:
+   *   - in `'count'` mode, `uiTranslationPack.triggerScreenReaderCountText`;
+   *   - in `'tags'` mode, `uiTranslationPack.triggerScreenReaderItemsText`
+   *     with the chosen items' `itemToString` texts, in the chosen order;
+   *   - the placeholder while nothing is chosen.
+   * @group Subclassing: semantics
+   */
+  protected override computeTriggerScreenReaderText(): string {
+    this.screenReaderTextSource = null
+    const fn = this.settings.triggerContextToScreenReaderTextFn
+    const custom = fn?.({ chosenItems: this.getChosenItems(), items: this.getItems() }) ?? null
+    if (custom !== null && custom.trim() !== '') { return custom }
+    const chosenCount = this.chosenItems.length
+    if (chosenCount === 0) { return this.settings.placeholder }
+    const pack = this.settings.uiTranslationPack
+    if (this.settings.triggerDisplay !== 'tags') { return pack.triggerScreenReaderCountText(chosenCount, this.items.length) }
+    const texts = this.chosenItems.map((item) => this.itemToString(item))
+    const text = pack.triggerScreenReaderItemsText(texts)
+    // One item whose text the pack passed through unchanged: its lang applies.
+    if (chosenCount === 1 && text === texts[0]) { this.screenReaderTextSource = { text, item: this.chosenItems[0]! } }
+    return text
+  }
+
+  /**
+   * The chosen item's `lang` while the screen-reader text is exactly that
+   * item's text: one chip; joined texts and the count text carry none.
+   * @internal
+   */
+  protected override computeTriggerScreenReaderTextLang(text: string): string | null {
+    const source = this.screenReaderTextSource
+    return source !== null && source.text === text ? this.itemToLang(source.item) : null
   }
 
   /**
@@ -1066,7 +1132,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    *   to the list's object. A reference swap is not a logical change, so it
    *   does not fire `onChange`.
    * - The trigger content re-renders after every `setItems`, swap or not.
-   * - Why: the count summary shows the list total, and a custom
+   * - Why: the count text shows the list total, and a custom
    *   `createTriggerContentElFn` receives `items`.
    * - The arrow re-renders only when a chosen entry is dropped, because that
    *   runs the whole trigger.
@@ -1104,7 +1170,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       return
     }
     if (swapped) { this.chosenItems = ordered }
-    // The count summary reads the list total and a custom trigger receives
+    // The count text reads the list total and a custom trigger receives
     // `items`, so every list change refreshes the content; the arrow does not
     // depend on the list.
     this.renderTriggerContent()

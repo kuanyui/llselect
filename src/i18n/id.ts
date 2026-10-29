@@ -12,7 +12,10 @@ export const id: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Tindakan pilihan',
   triggerClearButtonAriaLabel: 'Hapus pilihan',
   tagRemoveButtonAriaLabel: (itemText) => `Hapus ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Semua dipilih (${chosenCount})` : `${chosenCount} dari ${totalCount} dipilih`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Semua dipilih (${chosenCount})` : `${chosenCount} dari ${totalCount} dipilih`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Pilih semua (${chosenCount} / ${totalCount})`,
 }

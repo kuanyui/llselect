@@ -12,7 +12,10 @@ export const ja: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: '選択の操作',
   triggerClearButtonAriaLabel: '選択をクリア',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText}を削除`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `全${chosenCount}件を選択中` : `${totalCount}件中${chosenCount}件を選択中`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `全${chosenCount}件を選択中` : `${totalCount}件中${chosenCount}件を選択中`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join('、'),
   chooseAllRowText: (chosenCount, totalCount) => `すべて選択（${chosenCount} / ${totalCount}）`,
 }

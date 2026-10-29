@@ -12,7 +12,10 @@ export const vi: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Thao tác với lựa chọn',
   triggerClearButtonAriaLabel: 'Xóa lựa chọn',
   tagRemoveButtonAriaLabel: (itemText) => `Bỏ ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Đã chọn tất cả ${chosenCount}` : `Đã chọn ${chosenCount} / ${totalCount}`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Đã chọn tất cả ${chosenCount}` : `Đã chọn ${chosenCount} trong số ${totalCount}`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Chọn tất cả (${chosenCount} / ${totalCount})`,
 }

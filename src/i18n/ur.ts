@@ -12,7 +12,10 @@ export const ur: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'انتخاب کے اقدامات',
   triggerClearButtonAriaLabel: 'انتخاب صاف کریں',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} ہٹائیں`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `سب منتخب (${chosenCount})` : `${totalCount} میں سے ${chosenCount} منتخب`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `سب منتخب (${chosenCount})` : `${totalCount} میں سے ${chosenCount} منتخب`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join('، '),
   chooseAllRowText: (chosenCount, totalCount) => `سب منتخب کریں (${chosenCount} / ${totalCount})`,
 }

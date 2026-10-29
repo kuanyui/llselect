@@ -14,10 +14,16 @@ export const he: LLSelectUiTranslationPack = {
   tagRemoveButtonAriaLabel: (itemText) => `הסר ${itemText}`,
   // Hebrew number agreement: singular past (nivchar) for 1, plural (nivcheru)
   // otherwise; the all-chosen form needs the noun (kol X ha-pritim).
-  triggerCountSummary: (chosenCount, totalCount) => {
+  triggerContentCountText: (chosenCount, totalCount) => {
     if (chosenCount === 1) { return `נבחר פריט אחד מתוך ${totalCount}` }
     if (chosenCount === totalCount) { return `נבחרו כל ${totalCount} הפריטים` }
     return `נבחרו ${chosenCount} מתוך ${totalCount}`
   },
+  triggerScreenReaderCountText: (chosenCount, totalCount) => {
+    if (chosenCount === 1) { return `נבחר פריט אחד מתוך ${totalCount}` }
+    if (chosenCount === totalCount) { return `נבחרו כל ${totalCount} הפריטים` }
+    return `נבחרו ${chosenCount} מתוך ${totalCount}`
+  },
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `בחר הכל (${chosenCount} מתוך ${totalCount})`,
 }

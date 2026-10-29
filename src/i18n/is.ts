@@ -12,7 +12,10 @@ export const is: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Aðgerðir fyrir val',
   triggerClearButtonAriaLabel: 'Hreinsa val',
   tagRemoveButtonAriaLabel: (itemText) => `Fjarlægja ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Allt valið (${chosenCount})` : `${chosenCount} af ${totalCount} valið`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Allt valið (${chosenCount})` : `${chosenCount} af ${totalCount} valið`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Velja allt (${chosenCount} / ${totalCount})`,
 }

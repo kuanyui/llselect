@@ -12,7 +12,10 @@ export const sl: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Dejanja za izbor',
   triggerClearButtonAriaLabel: 'Počisti izbor',
   tagRemoveButtonAriaLabel: (itemText) => `Odstrani ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Izbrano vse (${chosenCount})` : `Izbrano ${chosenCount} od ${totalCount}`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Izbrano vse (${chosenCount})` : `Izbrano ${chosenCount} od ${totalCount}`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Izberi vse (${chosenCount} / ${totalCount})`,
 }

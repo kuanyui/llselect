@@ -12,7 +12,10 @@ export const fi: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Valinnan toiminnot',
   triggerClearButtonAriaLabel: 'Tyhjennä valinta',
   tagRemoveButtonAriaLabel: (itemText) => `Poista ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Kaikki ${chosenCount} valittu` : `${chosenCount} / ${totalCount} valittu`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Kaikki ${chosenCount} valittu` : `Valittu ${chosenCount}, yhteensä ${totalCount}`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Valitse kaikki (${chosenCount} / ${totalCount})`,
 }

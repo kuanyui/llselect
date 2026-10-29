@@ -12,7 +12,10 @@ export const th: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'การดำเนินการกับรายการที่เลือก',
   triggerClearButtonAriaLabel: 'ล้างการเลือก',
   tagRemoveButtonAriaLabel: (itemText) => `นำ ${itemText} ออก`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `เลือกแล้วทั้งหมด (${chosenCount})` : `เลือกแล้ว ${chosenCount} จาก ${totalCount}`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `เลือกแล้วทั้งหมด (${chosenCount})` : `เลือกแล้ว ${chosenCount} จาก ${totalCount}`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `เลือกทั้งหมด (${chosenCount} / ${totalCount})`,
 }

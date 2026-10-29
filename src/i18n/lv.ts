@@ -12,7 +12,10 @@ export const lv: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Izvēles darbības',
   triggerClearButtonAriaLabel: 'Notīrīt izvēli',
   tagRemoveButtonAriaLabel: (itemText) => `Noņemt ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Izvēlēts: viss (${chosenCount})` : `Izvēlēts: ${chosenCount} no ${totalCount}`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Izvēlēts: viss (${chosenCount})` : `Izvēlēts: ${chosenCount} no ${totalCount}`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Izvēlēties visu (${chosenCount} / ${totalCount})`,
 }

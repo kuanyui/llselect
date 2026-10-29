@@ -12,7 +12,10 @@ export const pl: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Działania na wyborze',
   triggerClearButtonAriaLabel: 'Wyczyść wybór',
   tagRemoveButtonAriaLabel: (itemText) => `Usuń ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Wybrano wszystkie (${chosenCount})` : `Wybrano ${chosenCount} z ${totalCount}`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Wybrano wszystkie (${chosenCount})` : `Wybrano ${chosenCount} z ${totalCount}`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Zaznacz wszystko (${chosenCount} / ${totalCount})`,
 }

@@ -268,14 +268,14 @@
       vm.headerCountEl = function (ctx) {
         var header = document.createElement('div')
         header.className = 'popup-header-row'
-        headerCountEl.textContent = ctx.uiTranslationPack.triggerCountSummary(vm.countriesHeader.length, COUNTRIES.length)
+        headerCountEl.textContent = ctx.uiTranslationPack.triggerContentCountText(vm.countriesHeader.length, COUNTRIES.length)
         headerClearButton.setAttribute('aria-disabled', String(vm.countriesHeader.length === 0))
         header.append(headerCountEl, headerMatchesEl, headerClearButton)
         return header
       }
       vm.writeHeaderCount = function () {
         var sel = vm.headerCountApi.instance()
-        headerCountEl.textContent = sel.getUiTranslationPack().triggerCountSummary(vm.countriesHeader.length, sel.getItems().length)
+        headerCountEl.textContent = sel.getUiTranslationPack().triggerContentCountText(vm.countriesHeader.length, sel.getItems().length)
         headerClearButton.setAttribute('aria-disabled', String(vm.countriesHeader.length === 0))
       }
       vm.writeHeaderMatches = function () {

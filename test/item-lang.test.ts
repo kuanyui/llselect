@@ -22,14 +22,14 @@ function mount(): HTMLElement {
   return document.getElementById('mount')!
 }
 
-type AnySel = { popupListEl: HTMLElement; triggerEl: HTMLElement; triggerContentEl: HTMLElement; classIdMap: { triggerValueId: string; tagClass: string; tagTextClass: string; tagRemoveButtonClass: string } }
+type AnySel = { popupListEl: HTMLElement; triggerEl: HTMLElement; triggerContentEl: HTMLElement; classIdMap: { triggerScreenReaderTextId: string; tagClass: string; tagTextClass: string; tagRemoveButtonClass: string } }
 
 function rows(sel: AnySel): HTMLElement[] {
   return [...sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')]
 }
 
-function mirror(sel: AnySel): HTMLElement {
-  return document.getElementById(sel.classIdMap.triggerValueId)!
+function screenReaderText(sel: AnySel): HTMLElement {
+  return document.getElementById(sel.classIdMap.triggerScreenReaderTextId)!
 }
 
 test('default: the library writes no lang anywhere', () => {
@@ -39,10 +39,10 @@ test('default: the library writes no lang anywhere', () => {
   sel.open()
   assert.ok(rows(sel).every(r => !r.hasAttribute('lang')))
   assert.equal(sel.triggerContentEl.hasAttribute('lang'), false)
-  assert.equal(mirror(sel).hasAttribute('lang'), false)
+  assert.equal(screenReaderText(sel).hasAttribute('lang'), false)
 })
 
-test('single: rows carry the item lang in both content branches; the chosen item moves it onto the trigger text and the value mirror', () => {
+test('single: rows carry the item lang in both content branches; the chosen item moves it onto the trigger text and the screen-reader text', () => {
   for (const custom of [false, true]) {
     const sel = new LLSelectSingle<Lang>(mount(), {
       itemToStringFn: (l) => l.name,
@@ -54,18 +54,18 @@ test('single: rows carry the item lang in both content branches; the chosen item
     assert.deepEqual(rows(sel).map(r => r.getAttribute('lang')), ['en', 'de', null], `custom content: ${custom}`)
     sel.setChosenItem(DE)
     assert.equal(sel.triggerContentEl.getAttribute('lang'), 'de')
-    assert.equal(mirror(sel).getAttribute('lang'), 'de')
+    assert.equal(screenReaderText(sel).getAttribute('lang'), 'de')
     sel.setChosenItem(UNKNOWN) // a null code: no attribute, the page language applies
     assert.equal(sel.triggerContentEl.hasAttribute('lang'), false)
-    assert.equal(mirror(sel).hasAttribute('lang'), false)
+    assert.equal(screenReaderText(sel).hasAttribute('lang'), false)
     sel.setChosenItem(EN)
     sel.setChosenItem(undefined) // the placeholder is interface text
     assert.equal(sel.triggerContentEl.hasAttribute('lang'), false)
-    assert.equal(mirror(sel).hasAttribute('lang'), false)
+    assert.equal(screenReaderText(sel).hasAttribute('lang'), false)
   }
 })
 
-test('single: with custom trigger content the slot and the mirror carry the lang; the app element is untouched and its own lang wins', () => {
+test('single: with custom trigger content the slot and the screen-reader text carry the lang; the app element is untouched and its own lang wins', () => {
   const sel = new LLSelectSingle<Lang>(mount(), {
     itemToStringFn: (l) => l.name,
     itemToLangFn: (l) => l.code,
@@ -74,7 +74,7 @@ test('single: with custom trigger content the slot and the mirror carry the lang
   sel.setItems(LANGS)
   sel.setChosenItem(DE)
   assert.equal(sel.triggerContentEl.getAttribute('lang'), 'de', 'the library-owned slot carries the code')
-  assert.equal(mirror(sel).getAttribute('lang'), 'de')
+  assert.equal(screenReaderText(sel).getAttribute('lang'), 'de')
   assert.equal(sel.triggerContentEl.querySelector('span')!.getAttribute('lang'), 'xx', 'never touched, and nearer, so it wins')
 })
 
@@ -85,7 +85,7 @@ test('an empty string writes lang="", HTML\'s language unknown', () => {
   assert.equal(rows(sel)[0]!.getAttribute('lang'), '')
 })
 
-test('multiple: a chip wraps its text in a span that carries the lang; the remove button and the value mirror do not; custom chip content carries it', () => {
+test('multiple: a chip wraps its text in a span that carries the lang; the remove button and the screen-reader text do not; custom chip content carries it', () => {
   const sel = new LLSelectMultiple<Lang>(mount(), {
     triggerDisplay: 'tags',
     itemToStringFn: (l) => l.name,
@@ -101,7 +101,7 @@ test('multiple: a chip wraps its text in a span that carries the lang; the remov
   assert.equal(text(chips[2]!).hasAttribute('lang'), false)
   assert.equal(chips[1]!.hasAttribute('lang'), false, 'the chip itself carries none, so the remove button inherits the page language')
   assert.equal(chips[1]!.querySelector(`.${sel.classIdMap.tagRemoveButtonClass}`)!.hasAttribute('lang'), false)
-  assert.equal(mirror(sel).hasAttribute('lang'), false, 'the joined texts are mixed language')
+  assert.equal(screenReaderText(sel).hasAttribute('lang'), false, 'the joined texts are mixed language')
   const custom = new LLSelectMultiple<Lang>(mount(), {
     triggerDisplay: 'tags',
     itemToStringFn: (l) => l.name,
@@ -118,7 +118,7 @@ test('multiple: the count summary carries no lang', () => {
   sel.setItems(LANGS)
   sel.setChosenItems([DE])
   assert.equal(sel.triggerContentEl.hasAttribute('lang'), false)
-  assert.equal(mirror(sel).hasAttribute('lang'), false)
+  assert.equal(screenReaderText(sel).hasAttribute('lang'), false)
 })
 
 test('default settings never strip a lang the app set on its own chip content', () => {
@@ -162,7 +162,7 @@ test('a changed answer for the same item shows after rerender(): no stale lang o
   single.rerender()
   assert.ok(rows(single).every(r => !r.hasAttribute('lang')))
   assert.equal(single.triggerContentEl.hasAttribute('lang'), false)
-  assert.equal(mirror(single).hasAttribute('lang'), false)
+  assert.equal(screenReaderText(single).hasAttribute('lang'), false)
   active = true
   const multi = new LLSelectMultiple<Lang>(mount(), { triggerDisplay: 'tags', itemToStringFn: (l) => l.name, itemToLangFn: (l) => active ? l.code : null })
   multi.setItems(LANGS)
@@ -212,17 +212,17 @@ test('custom chip content: the item code overwrites a lang the app set, and a me
   assert.equal(sel.rootEl.querySelector('b')!.getAttribute('lang'), 'de', 'accepted limit: the library never removes from app-owned content')
 })
 
-test('multiple tags mode: the value mirror carries the code only while exactly one chip shows', () => {
+test('multiple tags mode: the screen-reader text carries the code only while it is exactly one chosen item\'s text', () => {
   const sel = new LLSelectMultiple<Lang>(mount(), { triggerDisplay: 'tags', itemToStringFn: (l) => l.name, itemToLangFn: (l) => l.code })
   sel.setItems(LANGS)
   sel.setChosenItems([DE])
-  assert.equal(mirror(sel).getAttribute('lang'), 'de')
+  assert.equal(screenReaderText(sel).getAttribute('lang'), 'de')
   sel.setChosenItems([DE, EN])
-  assert.equal(mirror(sel).hasAttribute('lang'), false, 'joined texts are mixed-language')
+  assert.equal(screenReaderText(sel).hasAttribute('lang'), false, 'joined texts are mixed-language')
   sel.setChosenItems([UNKNOWN])
-  assert.equal(mirror(sel).hasAttribute('lang'), false, 'a null code writes nothing')
+  assert.equal(screenReaderText(sel).hasAttribute('lang'), false, 'a null code writes nothing')
   sel.setChosenItems([])
-  assert.equal(mirror(sel).hasAttribute('lang'), false)
+  assert.equal(screenReaderText(sel).hasAttribute('lang'), false)
   const custom = new LLSelectMultiple<Lang>(mount(), {
     triggerDisplay: 'tags',
     itemToStringFn: (l) => l.name,
@@ -231,5 +231,16 @@ test('multiple tags mode: the value mirror carries the code only while exactly o
   })
   custom.setItems(LANGS)
   custom.setChosenItems([DE])
-  assert.equal(mirror(custom).hasAttribute('lang'), false, 'custom trigger content: the mirror holds the count summary')
+  assert.equal(screenReaderText(custom).textContent, 'Deutsch', 'custom trigger content: the default of the mode still applies')
+  assert.equal(screenReaderText(custom).getAttribute('lang'), 'de')
+  const own = new LLSelectMultiple<Lang>(mount(), {
+    triggerDisplay: 'tags',
+    itemToStringFn: (l) => l.name,
+    itemToLangFn: (l) => l.code,
+    triggerContextToScreenReaderTextFn: (ctx) => `${ctx.chosenItems.length} languages`,
+  })
+  own.setItems(LANGS)
+  own.setChosenItems([DE])
+  assert.equal(screenReaderText(own).textContent, '1 languages')
+  assert.equal(screenReaderText(own).hasAttribute('lang'), false, 'app text is not the item\'s text')
 })

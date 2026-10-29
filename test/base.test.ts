@@ -120,7 +120,7 @@ test('the trigger wrapper and the popup are the children of rootEl, in order', (
   // (docs/llm/A11Y.md "Accessible name"), then the visible content.
   const inside = Array.from(inst.triggerEl.children) as HTMLElement[]
   assert.equal(inside.length, 2)
-  assert.equal(inside[0]!.id, inst.classIdMap.triggerValueId)
+  assert.equal(inside[0]!.id, inst.classIdMap.triggerScreenReaderTextId)
   assert.equal(inside[1], inst.triggerContentEl)
 })
 

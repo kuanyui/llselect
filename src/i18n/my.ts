@@ -12,7 +12,10 @@ export const my: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'ရွေးချယ်မှု လုပ်ဆောင်ချက်များ',
   triggerClearButtonAriaLabel: 'ရွေးချယ်မှု ရှင်းလင်းရန်',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} ကို ဖယ်ရှားရန်`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `အားလုံး ရွေးထားသည် (${chosenCount})` : `${totalCount} ခုအနက် ${chosenCount} ခု ရွေးထားသည်`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `အားလုံး ရွေးထားသည် (${chosenCount})` : `${totalCount} ခုအနက် ${chosenCount} ခု ရွေးထားသည်`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join('၊ '),
   chooseAllRowText: (chosenCount, totalCount) => `အားလုံး ရွေးရန် (${chosenCount} / ${totalCount})`,
 }

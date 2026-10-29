@@ -57,7 +57,7 @@ test('neither set: no name on trigger/listbox; filter input keeps the pack fallb
 test('filterable + ariaLabelledBy: trigger button name chains label ids + hidden value span', () => {
   const sel = new LLSelectSingle<string>(mount(), { filterable: true, ariaLabelledBy: 'field-label' })
   sel.setItems(['a', 'b'])
-  const valueId = sel.classIdMap.triggerValueId
+  const valueId = sel.classIdMap.triggerScreenReaderTextId
   assert.equal(sel.triggerEl.getAttribute('aria-labelledby'), `field-label ${valueId}`)
   // The value span the chain points at sits inside the trigger, is hidden
   // visually only (a combobox takes its value from its content), and mirrors
@@ -79,9 +79,9 @@ test('filterable + ariaLabelledBy: trigger button name chains label ids + hidden
 test('filterable + ariaLabel: trigger keeps aria-label and self-references it in the chain', () => {
   const sel = new LLSelectSingle<string>(mount(), { filterable: true, ariaLabel: 'Country' })
   sel.setItems(['a', 'b'])
-  const { triggerId, triggerValueId } = sel.classIdMap
+  const { triggerId, triggerScreenReaderTextId } = sel.classIdMap
   assert.equal(sel.triggerEl.getAttribute('aria-label'), 'Country')
-  assert.equal(sel.triggerEl.getAttribute('aria-labelledby'), `${triggerId} ${triggerValueId}`)
+  assert.equal(sel.triggerEl.getAttribute('aria-labelledby'), `${triggerId} ${triggerScreenReaderTextId}`)
   // Field name replaces the generic "Search" fallback on the input.
   assert.equal(searchInput(sel).getAttribute('aria-label'), 'Country')
   assert.equal(listbox(sel).getAttribute('aria-label'), 'Country')
@@ -102,7 +102,7 @@ test('predicate filterable: name wiring re-syncs per open cycle', () => {
   // Active cycle: button wiring, chain includes the hidden value span.
   assert.equal(
     sel.triggerEl.getAttribute('aria-labelledby'),
-    `field-label ${sel.classIdMap.triggerValueId}`,
+    `field-label ${sel.classIdMap.triggerScreenReaderTextId}`,
   )
   sel.close()
 })
@@ -141,14 +141,14 @@ test('tags mode: hidden value span carries plain labels, not remove-button names
   })
   sel.setItems(['Apple', 'Banana', 'Cherry'])
   sel.setChosenItems(['Apple', 'Banana'])
-  const valueEl = document.getElementById(sel.classIdMap.triggerValueId)!
+  const valueEl = document.getElementById(sel.classIdMap.triggerScreenReaderTextId)!
   // Plain labels only - the chips' "Remove <label>" button names must not
   // reach the trigger's name or value: the chips sit in the trigger buttons
   // strip, outside the trigger.
   assert.equal(valueEl.textContent, 'Apple, Banana')
   assert.equal(
     sel.triggerEl.getAttribute('aria-labelledby'),
-    `field-label ${sel.classIdMap.triggerValueId}`,
+    `field-label ${sel.classIdMap.triggerScreenReaderTextId}`,
   )
   assert.equal(sel.triggerEl.querySelectorAll('button').length, 0)
   assert.equal(sel.triggerContentEl.textContent, '', 'the content slot stays empty while chips show')

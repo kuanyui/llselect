@@ -9,7 +9,8 @@ import {
 } from './base.js'
 
 /**
- * Context passed to {@link LLSelectSingleSettings.createTriggerContentElFn}.
+ * Context passed to {@link LLSelectSingleSettings.createTriggerContentElFn}
+ * and {@link LLSelectSingleSettings.triggerContextToScreenReaderTextFn}.
  * @group Settings
  * @category Single
  */
@@ -101,6 +102,27 @@ export interface LLSelectSingleSettings<T, GroupKey = string> extends LLSelectBa
    * @group Trigger
    */
   createTriggerContentElFn: ((ctx: LLSelectSingleTriggerContext<T>) => HTMLElement | null) | null
+  /**
+   * The text a screen reader reads as the trigger's value, never shown.
+   * - Called on **every** trigger content render (`renderTriggerContent`:
+   *   every full trigger render, plus every `setItems`), once, after that
+   *   render, through `computeTriggerScreenReaderText`; nothing is kept for a
+   *   later call.
+   * - Why a separate text: the trigger has `role="combobox"`, and WAI-ARIA
+   *   1.2 gives a combobox that is not a text field the value of its
+   *   descendant content. The library hides the visible content from
+   *   assistive technology with `aria-hidden="true"` and puts this text in a
+   *   visually hidden span inside the trigger, so the screen reader reads
+   *   this text and nothing that only decorates the screen.
+   * - Return a string, and the library writes it as plain text.
+   * - `null`, returned or as the setting (the default), and a blank string
+   *   mean the default: the chosen item's `itemToString`, or the placeholder
+   *   when nothing is chosen.
+   * - `createTriggerContentElFn` never changes this text: the library never
+   *   reads custom content.
+   * @group Trigger
+   */
+  triggerContextToScreenReaderTextFn: ((ctx: LLSelectSingleTriggerContext<T>) => string | null) | null
 }
 
 /**
@@ -129,6 +151,8 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
    * @group State (protected)
    */
   protected chosenItem: T | undefined = undefined
+  /** The item whose text the default screen-reader text is, for its `lang`; set by `computeTriggerScreenReaderText`. */
+  private screenReaderTextSource: { text: string; item: T } | null = null
 
   /**
    * Build the control inside `targetEl`.
@@ -152,6 +176,7 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
       onChange: settings?.onChange ?? null,
       onBeforeChange: settings?.onBeforeChange ?? null,
       createTriggerContentElFn: settings?.createTriggerContentElFn ?? null,
+      triggerContextToScreenReaderTextFn: settings?.triggerContextToScreenReaderTextFn ?? null,
     } satisfies Omit<LLSelectSingleSettings<T, GroupKey>, keyof LLSelectBaseSettings<T, GroupKey>>
     // Cast mirrored from the base constructor: TS cannot prove "own extras +
     // Omit<S, own keys>" reassembles a generic S's extras. Own extras stay
@@ -203,22 +228,47 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
    */
   protected override renderTriggerContent(): void {
     this.syncEmptyStateToDom()
-    const plainValue = this.chosenItem === undefined ? this.settings.placeholder : this.itemToString(this.chosenItem!)
-    // The chosen item's language rides on the value mirror and on the content
-    // slot, custom content included: AT reads the slot while the filter is
-    // inactive and the mirror while it is active, and an app's own lang on its
-    // element wins, being nearer. The placeholder is interface text, so an
-    // empty selection carries none.
+    // The chosen item's language rides on the content slot, custom content
+    // included, and an app's own lang on its element wins, being nearer. The
+    // placeholder is interface text, so an empty selection carries none.
     const lang = this.chosenItem === undefined ? null : this.itemToLang(this.chosenItem!)
-    this.commitLangToDom(this.triggerValueEl, lang)
     this.commitLangToDom(this.triggerContentEl, lang)
     const fn = this.settings.createTriggerContentElFn
     const custom = fn?.({ chosenItem: this.chosenItem, items: this.getItems() }) ?? null
     if (custom !== null) {
-      this.commitTriggerContentToDom(custom, plainValue)
+      this.commitTriggerContentToDom(custom)
       return
     }
-    this.commitTriggerContentToDom(plainValue)
+    this.commitTriggerContentToDom(this.chosenItem === undefined ? this.settings.placeholder : this.itemToString(this.chosenItem!))
+  }
+
+  /**
+   * The screen-reader text: the value assistive technology reads for the
+   * trigger, never shown. See the base method for why it exists.
+   * - The library calls it after every trigger content render.
+   * - Default: the text of `triggerContextToScreenReaderTextFn`; when that
+   *   gives `null` or a blank string, the chosen item's `itemToString`, or
+   *   the placeholder while nothing is chosen.
+   * @group Subclassing: semantics
+   */
+  protected override computeTriggerScreenReaderText(): string {
+    this.screenReaderTextSource = null
+    const fn = this.settings.triggerContextToScreenReaderTextFn
+    const custom = fn?.({ chosenItem: this.chosenItem, items: this.getItems() }) ?? null
+    if (custom !== null && custom.trim() !== '') { return custom }
+    if (this.chosenItem === undefined) { return this.settings.placeholder }
+    const text = this.itemToString(this.chosenItem!)
+    this.screenReaderTextSource = { text, item: this.chosenItem! }
+    return text
+  }
+
+  /**
+   * The chosen item's `lang` while the screen-reader text is that item's text.
+   * @internal
+   */
+  protected override computeTriggerScreenReaderTextLang(text: string): string | null {
+    const source = this.screenReaderTextSource
+    return source !== null && source.text === text ? this.itemToLang(source.item) : null
   }
 
   /**

@@ -39,14 +39,21 @@ test('every pack: strings non-empty, message functions total over count shapes',
     assert.ok(pack.filterInputAriaLabel.length > 0, `${tag} filterInputAriaLabel`)
     assert.ok((pack.filterInputPlaceholder ?? '').length > 0, `${tag} filterInputPlaceholder`)
     assert.ok(pack.popupListNoResults.length > 0, `${tag} popupListNoResults`)
+    assert.ok(pack.triggerButtonsAriaLabel.length > 0, `${tag} triggerButtonsAriaLabel`)
     assert.ok(pack.triggerClearButtonAriaLabel.length > 0, `${tag} triggerClearButtonAriaLabel`)
     assert.ok(pack.tagRemoveButtonAriaLabel('XQ').includes('XQ'), `${tag} tagRemoveButtonAriaLabel embeds the label`)
     // Singular / partial / all / degenerate single-item shapes all render.
     for (const [chosen, total] of [[1, 5], [3, 5], [5, 5], [1, 1]] as const) {
-      assert.ok(pack.triggerCountSummary(chosen, total).length > 0, `${tag} triggerCountSummary(${chosen}, ${total})`)
+      assert.ok(pack.triggerContentCountText(chosen, total).length > 0, `${tag} triggerContentCountText(${chosen}, ${total})`)
+      assert.ok(pack.triggerScreenReaderCountText(chosen, total).length > 0, `${tag} triggerScreenReaderCountText(${chosen}, ${total})`)
       assert.ok(pack.chooseAllRowText(chosen, total).length > 0, `${tag} chooseAllRowText(${chosen}, ${total})`)
     }
-    assert.notEqual(pack.triggerCountSummary(3, 5), pack.triggerCountSummary(5, 5), `${tag} partial vs all differ`)
+    assert.notEqual(pack.triggerContentCountText(3, 5), pack.triggerContentCountText(5, 5), `${tag} partial vs all differ`)
+    assert.notEqual(pack.triggerScreenReaderCountText(3, 5), pack.triggerScreenReaderCountText(5, 5), `${tag} partial vs all differ, read out`)
+    // A screen reader says a slash as "slash": the read-out count uses words.
+    assert.ok(!pack.triggerScreenReaderCountText(3, 5).includes('/'), `${tag} triggerScreenReaderCountText has no slash`)
+    const items = pack.triggerScreenReaderItemsText(['XQ', 'YZ'])
+    assert.ok(items.includes('XQ') && items.includes('YZ') && items.indexOf('XQ') < items.indexOf('YZ'), `${tag} triggerScreenReaderItemsText keeps every text, in order`)
   }
 })
 
@@ -81,9 +88,9 @@ test('the count summary comes from the pack (ja)', () => {
   const sel = new LLSelectMultiple<string>(mount(), { uiTranslationPack: ja })
   sel.setItems(['a', 'b', 'c'])
   sel.setChosenItems(['a'])
-  assert.equal(sel.triggerContentEl.textContent, ja.triggerCountSummary(1, 3))
+  assert.equal(sel.triggerContentEl.textContent, ja.triggerContentCountText(1, 3))
   sel.setChosenItems(['a', 'b', 'c'])
-  assert.equal(sel.triggerContentEl.textContent, ja.triggerCountSummary(3, 3))
+  assert.equal(sel.triggerContentEl.textContent, ja.triggerContentCountText(3, 3))
 })
 
 test('an explicit placeholder setting (app copy) wins over the pack default', () => {
@@ -166,7 +173,7 @@ test('setUiTranslationPack while open re-renders the popup (no-results + count s
   const sel = new LLSelectMultiple<string>(mount(), { filterable: true })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a'])
-  assert.equal(sel.triggerContentEl.textContent, en.triggerCountSummary(1, 2))
+  assert.equal(sel.triggerContentEl.textContent, en.triggerContentCountText(1, 2))
   sel.open()
   const input = sel.popupEl.querySelector('input')!
   input.value = 'zzz'
@@ -175,5 +182,5 @@ test('setUiTranslationPack while open re-renders the popup (no-results + count s
   assert.equal(noResults.textContent, en.popupListNoResults)
   sel.setUiTranslationPack(ja)
   assert.equal(noResults.textContent, ja.popupListNoResults)
-  assert.equal(sel.triggerContentEl.textContent, ja.triggerCountSummary(1, 2))
+  assert.equal(sel.triggerContentEl.textContent, ja.triggerContentCountText(1, 2))
 })

@@ -14,7 +14,10 @@ export const sw: LLSelectUiTranslationPack = {
   tagRemoveButtonAriaLabel: (itemText) => `Ondoa ${itemText}`,
   // Personal-subject frame ("you have selected"): the passive would need
   // noun-class agreement with an unknown item class.
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Umechagua zote (${chosenCount})` : `Umechagua ${chosenCount} kati ya ${totalCount}`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Umechagua zote (${chosenCount})` : `Umechagua ${chosenCount} kati ya ${totalCount}`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Chagua zote (${chosenCount} / ${totalCount})`,
 }

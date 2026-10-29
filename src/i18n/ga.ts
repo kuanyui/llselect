@@ -12,7 +12,10 @@ export const ga: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'Gníomhartha an rogha',
   triggerClearButtonAriaLabel: 'Glan an rogha',
   tagRemoveButtonAriaLabel: (itemText) => `Bain ${itemText}`,
-  triggerCountSummary: (chosenCount, totalCount) =>
+  triggerContentCountText: (chosenCount, totalCount) =>
     chosenCount === totalCount ? `Gach ceann roghnaithe (${chosenCount})` : `${chosenCount} as ${totalCount} roghnaithe`,
+  triggerScreenReaderCountText: (chosenCount, totalCount) =>
+    chosenCount === totalCount ? `Gach ceann roghnaithe (${chosenCount})` : `${chosenCount} as ${totalCount} roghnaithe`,
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `Roghnaigh uile (${chosenCount} / ${totalCount})`,
 }

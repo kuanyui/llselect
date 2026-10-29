@@ -12,10 +12,16 @@ export const hi: LLSelectUiTranslationPack = {
   triggerButtonsAriaLabel: 'चयन क्रियाएँ',
   triggerClearButtonAriaLabel: 'चयन साफ़ करें',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} हटाएँ`,
-  triggerCountSummary: (chosenCount, totalCount) => {
+  triggerContentCountText: (chosenCount, totalCount) => {
     if (chosenCount === 1) { return `${totalCount} में से 1 चुना गया` }
     if (chosenCount === totalCount) { return `सभी ${chosenCount} चुने गए` }
     return `${totalCount} में से ${chosenCount} चुने गए`
   },
+  triggerScreenReaderCountText: (chosenCount, totalCount) => {
+    if (chosenCount === 1) { return `${totalCount} में से 1 चुना गया` }
+    if (chosenCount === totalCount) { return `सभी ${chosenCount} चुने गए` }
+    return `${totalCount} में से ${chosenCount} चुने गए`
+  },
+  triggerScreenReaderItemsText: (itemTexts) => itemTexts.join(', '),
   chooseAllRowText: (chosenCount, totalCount) => `सभी चुनें (${chosenCount} / ${totalCount})`,
 }
