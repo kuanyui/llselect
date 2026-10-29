@@ -239,7 +239,7 @@
 
     <article>
       <h3>4.4 CSS-only triangle (no JS arrow)</h3>
-      <p class="hint">Pure CSS pseudo-element on <code>.llselect-trigger</code>. data-state drives rotation.</p>
+      <p class="hint">Pure CSS pseudo-element on <code>.llselect-trigger-wrapper</code>. data-state drives rotation.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-ind-css"></div>
@@ -405,8 +405,8 @@
       Trigger width is your CSS's job; chosen text in it ellipsizes. The popup
       defaults to <code>popupWidthPolicy: 'fit-content'</code> (grows to its
       content, never narrower than the trigger, viewport-clamped - native
-      select behavior); <code>'match-trigger'</code> pins it to the trigger
-      width.
+      select behavior); <code>'match-trigger-wrapper'</code> pins it to the
+      trigger wrapper's width.
     </p>
 
     <article>
@@ -442,11 +442,11 @@
     </article>
 
     <article>
-      <h3>6.3 <code>'match-trigger'</code>: item text wraps</h3>
+      <h3>6.3 <code>'match-trigger-wrapper'</code>: item text wraps</h3>
       <p class="hint">
         Same <code>18rem</code> constraint, opt-in
-        <code>'match-trigger'</code>: popup pinned to the trigger width, long
-        item text wraps.
+        <code>'match-trigger-wrapper'</code>: popup pinned to the trigger
+        wrapper's width, long item text wraps.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -461,7 +461,7 @@
       <h3>6.4 Label ellipsis + title tooltip (subclass)</h3>
       <p class="hint">
         Demo CSS adds <code>text-overflow: ellipsis</code> on the items
-        (needs <code>'match-trigger'</code> - a fit-content popup never
+        (needs <code>'match-trigger-wrapper'</code> - a fit-content popup never
         truncates); a <code>createPopupListItemEl</code> subclass sets
         <code>el.title</code>. The subclass IS required for this exact
         effect: no setting reaches the option element itself, so a content fn
@@ -783,7 +783,7 @@
         What <code>&lt;option style="background-color"&gt;</code> does on a
         native select (Chromium only): every row tinted from its icon color,
         and the chosen item's colors cover the whole trigger
-        (<code>onChange</code> paints the public <code>triggerEl</code>).
+        (<code>onChange</code> paints the public <code>triggerWrapperEl</code>).
         The tint is translucent, so hover / keyboard-focus stay visible.
         The checkmark is <code>createCheckmarkSvgEl</code>; rows re-render
         on chosen changes, so it never goes stale. All inline styles, plus

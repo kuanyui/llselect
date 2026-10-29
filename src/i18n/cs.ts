@@ -9,6 +9,7 @@ export const cs: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Hledat',
   filterInputPlaceholder: 'Filtr (Esc pro vymazání)',
   popupListNoResults: 'Žádné výsledky',
+  triggerButtonsAriaLabel: 'Akce s výběrem',
   triggerClearButtonAriaLabel: 'Vymazat výběr',
   tagRemoveButtonAriaLabel: (itemText) => `Odebrat ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

@@ -9,6 +9,7 @@ export const el: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Αναζήτηση',
   filterInputPlaceholder: 'Φίλτρο (Esc για καθαρισμό)',
   popupListNoResults: 'Κανένα αποτέλεσμα',
+  triggerButtonsAriaLabel: 'Ενέργειες επιλογής',
   triggerClearButtonAriaLabel: 'Καθαρισμός επιλογής',
   tagRemoveButtonAriaLabel: (itemText) => `Αφαίρεση ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) => {

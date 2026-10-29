@@ -9,6 +9,7 @@ export const sr: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Претрага',
   filterInputPlaceholder: 'Филтер (Esc за брисање)',
   popupListNoResults: 'Нема резултата',
+  triggerButtonsAriaLabel: 'Радње са избором',
   triggerClearButtonAriaLabel: 'Обриши избор',
   tagRemoveButtonAriaLabel: (itemText) => `Уклони ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

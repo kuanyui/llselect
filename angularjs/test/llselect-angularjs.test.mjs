@@ -69,7 +69,7 @@ test('group by and disable when reach llselect', () => {
 })
 
 // QUALITY-69: an enum literal that drops its inner quotes must warn (never throw).
-// ll-trigger-display="tags" $evals to undefined; ll-popup-width-policy="match-trigger"
+// ll-trigger-display="tags" $evals to undefined; ll-popup-width-policy="match-trigger-wrapper"
 // $evals to 0 (AngularJS reads the `-` as subtraction), so the guard must reject any
 // non-string, not just undefined. ll-aria-label names the field so the unrelated
 // warning about an unnamed select component stays out of the captured list.
@@ -98,10 +98,10 @@ test('QUALITY-69: ll-trigger-display="tags" (evals to undefined) warns', () => {
   assert.ok(w.some(m => m.includes('ll-trigger-display')), 'a missing-quotes ll-trigger-display must warn')
 })
 
-test('QUALITY-69: ll-popup-width-policy="match-trigger" (evals to 0) warns', () => {
-  const w = bridgeWarnings('ll-popup-width-policy="match-trigger"')
+test('QUALITY-69: ll-popup-width-policy="match-trigger-wrapper" (evals to 0) warns', () => {
+  const w = bridgeWarnings('ll-popup-width-policy="match-trigger-wrapper"')
   assert.ok(w.some(m => m.includes('ll-popup-width-policy')),
-    'll-popup-width-policy="match-trigger" $evals to 0, not undefined, and must still warn')
+    'll-popup-width-policy="match-trigger-wrapper" $evals to 0, not undefined, and must still warn')
 })
 
 test('QUALITY-69: a correctly-quoted enum literal does NOT warn', () => {
@@ -143,10 +143,10 @@ test('ll-disabled maps to setDisabled()', () => {
   })
   // llselect writes data-disabled="false" when enabled (it does not omit it),
   // and only adds aria-disabled once actually disabled.
-  assert.equal(a.$('.llselect-trigger').getAttribute('data-disabled'), 'false')
+  assert.equal(a.$('.llselect-trigger-wrapper').getAttribute('data-disabled'), 'false')
   assert.equal(a.$('.llselect-trigger').getAttribute('aria-disabled'), null)
   a.scope.$apply(() => { a.scope.vm.locked = true })
-  assert.equal(a.$('.llselect-trigger').getAttribute('data-disabled'), 'true')
+  assert.equal(a.$('.llselect-trigger-wrapper').getAttribute('data-disabled'), 'true')
   assert.equal(a.$('.llselect-trigger').getAttribute('aria-disabled'), 'true')
 })
 
@@ -537,13 +537,13 @@ test('an app policy directive reaches the instance via require and stays safe on
   })
   assert.deepEqual(a.errors, [])
   a.scope.$apply(() => { a.scope.vm.canEdit = false })
-  const triggers = a.$$('.llselect-trigger')
-  assert.equal(triggers[0].getAttribute('data-disabled'), 'true', 'single not disabled through instance()')
-  assert.equal(triggers[1].getAttribute('data-disabled'), 'true', 'multiple not disabled through instance()')
-  assert.equal(triggers[2].getAttribute('data-disabled'), 'true', 'ui-llselect not disabled through instance()')
+  const wrappers = a.$$('.llselect-trigger-wrapper')
+  assert.equal(wrappers[0].getAttribute('data-disabled'), 'true', 'single not disabled through instance()')
+  assert.equal(wrappers[1].getAttribute('data-disabled'), 'true', 'multiple not disabled through instance()')
+  assert.equal(wrappers[2].getAttribute('data-disabled'), 'true', 'ui-llselect not disabled through instance()')
   assert.equal(a.$('input[own-disabled]').disabled, true, 'native input branch broken')
   a.scope.$apply(() => { a.scope.vm.canEdit = true })
-  assert.equal(a.$$('.llselect-trigger')[0].getAttribute('data-disabled'), 'false', 'must re-enable')
+  assert.equal(a.$$('.llselect-trigger-wrapper')[0].getAttribute('data-disabled'), 'false', 'must re-enable')
 })
 
 test('the i18n recipe: same-name directives re-pack live select components from $translate', () => {

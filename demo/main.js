@@ -341,7 +341,7 @@ selRichMulti.setItems(PROGRAMMING_LANGUAGES)
 //#endregion
 
 //#region 6.3
-// Opt-in 'match-trigger': popup pinned to the trigger's width (the
+// Opt-in 'match-trigger-wrapper': popup pinned to the trigger wrapper's width (the
 // select2-style edge-aligned look), so long item text wraps inside it.
 const outLongWrap = document.getElementById('out-long-wrap')
 const selLongWrap = new LLSelectSingle(
@@ -349,7 +349,7 @@ const selLongWrap = new LLSelectSingle(
   {
   ariaLabel: 'Pick a country',
     placeholder: 'Pick a country',
-    popupWidthPolicy: 'match-trigger',
+    popupWidthPolicy: 'match-trigger-wrapper',
     onChange: (v) => { outLongWrap.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
@@ -358,7 +358,7 @@ selLongWrap.setChosenItem(LONG_NAMES[0])  // preselect the longest entry so trig
 //#endregion
 
 //#region 6.4
-// Builds on 6.3 ('match-trigger', constrained trigger - ellipsis needs a
+// Builds on 6.3 ('match-trigger-wrapper', constrained trigger - ellipsis needs a
 // bounded popup width), plus:
 //  - scoped CSS in demo/style.css gives this instance ellipsis on items.
 //  - a subclass adds `title` so hover reveals the full text. (The library
@@ -377,7 +377,7 @@ const selLongEllipsis = new EllipsisSingle(
   {
   ariaLabel: 'Pick a country',
     placeholder: 'Pick a country',
-    popupWidthPolicy: 'match-trigger',
+    popupWidthPolicy: 'match-trigger-wrapper',
     onChange: (v) => { outLongEllipsis.textContent = 'chosen: ' + JSON.stringify(v) },
   }
 )
@@ -918,7 +918,7 @@ selUserHints.setItems(USERS)
 // changes, even while the popup is open (setChosenItem replaces the
 // affected rows; see createPopupListItemContentElFn's docstring). The chosen tint
 // covers the WHOLE trigger, like the native control: onChange paints the
-// public triggerEl - background from the tint, text + border from the
+// public triggerWrapperEl - background from the tint, text + border from the
 // darkened same-hue shade. The mirrored trigger row itself stays untinted
 // (11.1's renderer) - stacking two alpha tints would show as a darker
 // patch.
@@ -975,7 +975,7 @@ const selLangTinted = new LLSelectSingle(
     createPopupListItemContentElFn: createTintedLanguageRowEl,
     createTriggerContentElFn: (ctx) => ctx.chosenItem ? createLanguageRowEl(ctx.chosenItem) : null,
     onChange: (v) => {
-      const t = selLangTinted.triggerEl
+      const t = selLangTinted.triggerWrapperEl
       t.style.background = v ? languageTint(v) : ''
       t.style.borderColor = v ? languageShade(v) : ''
       t.style.color = v ? languageShade(v) : ''

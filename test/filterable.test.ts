@@ -91,7 +91,7 @@ test('uiTranslationPack.filterInputAriaLabel / filterInputPlaceholder are applie
   assert.equal(input.getAttribute('aria-label'), 'Find a country')
   assert.equal(input.placeholder, 'Type to filter')
   // Partial pack merge: unspecified keys fall back to the English defaults.
-  const clearBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  const clearBtn = sel.rootEl.querySelector(`.${sel.classIdMap.triggerClearButtonClass}`)!
   assert.equal(clearBtn.getAttribute('aria-label'), 'Clear selection')
 })
 

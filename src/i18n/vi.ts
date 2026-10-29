@@ -9,6 +9,7 @@ export const vi: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Tìm kiếm',
   filterInputPlaceholder: 'Lọc (Esc để xóa)',
   popupListNoResults: 'Không có kết quả',
+  triggerButtonsAriaLabel: 'Thao tác với lựa chọn',
   triggerClearButtonAriaLabel: 'Xóa lựa chọn',
   tagRemoveButtonAriaLabel: (itemText) => `Bỏ ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

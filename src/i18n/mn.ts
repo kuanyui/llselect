@@ -9,6 +9,7 @@ export const mn: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Хайх',
   filterInputPlaceholder: 'Шүүлтүүр (цэвэрлэхийн тулд Esc)',
   popupListNoResults: 'Илэрц олдсонгүй',
+  triggerButtonsAriaLabel: 'Сонголтын үйлдлүүд',
   triggerClearButtonAriaLabel: 'Сонголтыг арилгах',
   // Label-colon frame: Mongolian case suffixes vary with the stem (vowel
   // harmony), so nothing is suffixed onto the interpolated label.

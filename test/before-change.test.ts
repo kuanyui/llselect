@@ -17,7 +17,7 @@ function fireKey(target: HTMLElement, key: string): void {
   target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
 }
 
-type AnySel = { popupListEl: HTMLElement; triggerEl: HTMLElement; classIdMap: { popupListRowClass: string; chooseAllRowClass: string; popupListActionRowClass: string; triggerClearButtonClass: string } }
+type AnySel = { rootEl: HTMLElement; popupListEl: HTMLElement; triggerEl: HTMLElement; classIdMap: { popupListRowClass: string; chooseAllRowClass: string; popupListActionRowClass: string; triggerClearButtonClass: string } }
 
 function itemRow(sel: AnySel, index: number): HTMLElement {
   const rows = sel.popupListEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.popupListRowClass}:not(.${sel.classIdMap.chooseAllRowClass}):not(.${sel.classIdMap.popupListActionRowClass})`)
@@ -25,7 +25,7 @@ function itemRow(sel: AnySel, index: number): HTMLElement {
 }
 
 function clearButton(sel: AnySel): HTMLElement {
-  return sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  return sel.rootEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
 }
 
 function describe<T>(event: LLSelectBeforeChangeEvent<T>): string {
@@ -109,7 +109,7 @@ test('multiple: every user path asks once with its reason and item; a veto leave
   sel.setItems(['a', 'b', 'c'])
   sel.open()
   const chooseAllRow = () => sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.chooseAllRowClass}`)!
-  const tagRemove = () => sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!
+  const tagRemove = () => sel.rootEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!
   itemRow(sel, 0).click() // choose a
   veto = true
   itemRow(sel, 1).click() // choose b: vetoed
@@ -246,7 +246,7 @@ test('disabled paths return before the hook: a disabled item, a disabled control
   sel.setChosenItems(['b']) // a disabled chosen item: its chip is inert
   sel.open()
   itemRow(sel, 1).click() // disabled row: no click handler
-  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
+  sel.rootEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
   sel.close()
   sel.setDisabled(true)
   clearButton(sel).click()
@@ -294,7 +294,7 @@ test('single: a vetoed clear while the popup is open leaves the value, the popup
   assert.equal(sel.getChosenItem(), 'a')
   assert.equal(sel.isOpened(), true, 'a vetoed clear does not close')
   assert.equal(document.activeElement, sel.triggerEl, 'focus stays where it was')
-  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'false')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-empty'), 'false')
 })
 
 test('single: a NaN value picks and clears normally, and re-picking the chosen NaN is a no-op that still closes', () => {

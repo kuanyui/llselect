@@ -9,6 +9,7 @@ export const fa: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'جستجو',
   filterInputPlaceholder: 'فیلتر (Esc برای پاک کردن)',
   popupListNoResults: 'نتیجه‌ای یافت نشد',
+  triggerButtonsAriaLabel: 'عملیات انتخاب',
   triggerClearButtonAriaLabel: 'پاک کردن انتخاب',
   tagRemoveButtonAriaLabel: (itemText) => `حذف ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

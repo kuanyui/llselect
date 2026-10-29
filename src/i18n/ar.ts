@@ -9,6 +9,7 @@ export const ar: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'بحث',
   filterInputPlaceholder: 'تصفية (Esc للمسح)',
   popupListNoResults: 'لا توجد نتائج',
+  triggerButtonsAriaLabel: 'إجراءات التحديد',
   triggerClearButtonAriaLabel: 'مسح التحديد',
   tagRemoveButtonAriaLabel: (itemText) => `إزالة ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

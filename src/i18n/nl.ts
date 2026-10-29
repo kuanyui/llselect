@@ -9,6 +9,7 @@ export const nl: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Zoeken',
   filterInputPlaceholder: 'Filteren (Esc om te wissen)',
   popupListNoResults: 'Geen resultaten',
+  triggerButtonsAriaLabel: 'Selectieacties',
   triggerClearButtonAriaLabel: 'Selectie wissen',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} verwijderen`,
   triggerCountSummary: (chosenCount, totalCount) =>

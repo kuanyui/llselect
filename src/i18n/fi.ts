@@ -9,6 +9,7 @@ export const fi: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Haku',
   filterInputPlaceholder: 'Suodata (Esc tyhjentää)',
   popupListNoResults: 'Ei tuloksia',
+  triggerButtonsAriaLabel: 'Valinnan toiminnot',
   triggerClearButtonAriaLabel: 'Tyhjennä valinta',
   tagRemoveButtonAriaLabel: (itemText) => `Poista ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

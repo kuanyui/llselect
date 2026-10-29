@@ -494,7 +494,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 /* #region 4.4 */
 /* CSS-only arrow: bypass the arrow slot entirely, draw a triangle on a
    pseudo-element; [data-state] drives the rotation. */
-#mount-ind-css .llselect-trigger::after {
+#mount-ind-css .llselect-trigger-wrapper::after {
   content: '';
   display: inline-block;
   width: 0;
@@ -503,11 +503,11 @@ article { margin: 1.5rem 0 2rem 1rem; }
   border-right: 5px solid transparent;
   border-top: 5px solid currentColor;
   transition: transform 0.15s;
-  color: var(--llselect-fg-muted); /* inside the trigger: the theme's palette */
+  color: var(--llselect-fg-muted); /* inside the trigger wrapper: the theme's palette */
   margin-inline-start: 0.4rem;
 }
 
-#mount-ind-css .llselect-trigger[data-state='open']::after {
+#mount-ind-css .llselect-trigger-wrapper[data-state='open']::after {
   transform: rotate(180deg);
 }
 /* #endregion */
@@ -913,8 +913,8 @@ section, main h3 { scroll-margin-top: 4.5rem; } /* clear the sticky theme bar */
   --llselect-fg-muted: #a78bfa;
   --llselect-bg: #2e1065;
   --llselect-bg-muted: #3b0764;
-  --llselect-trigger-line: #7c3aed;
-  --llselect-trigger-hover-line: #a78bfa;
+  --llselect-trigger-wrapper-line: #7c3aed;
+  --llselect-trigger-wrapper-hover-line: #a78bfa;
   --llselect-popup-line: #7c3aed;
   --llselect-filter-line: #7c3aed;
   --llselect-divider: rgba(255, 255, 255, 0.15);

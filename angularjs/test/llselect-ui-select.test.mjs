@@ -153,24 +153,24 @@ test('disabled aligns with ui-select: ng-disabled, static literal, and interpola
   // (select.js:1135, "thanks to ng-disabled ... a boolean instead of a
   // string"); the bridge mirrors that mechanism, string quirks included.
   const a = app('ng-disabled="vm.locked"')
-  assert.equal(a.$('.llselect-trigger').getAttribute('data-disabled'), 'false')
+  assert.equal(a.$('.llselect-trigger-wrapper').getAttribute('data-disabled'), 'false')
   a.scope.$apply(() => { a.scope.vm.locked = true })
-  assert.equal(a.$('.llselect-trigger').getAttribute('data-disabled'), 'true', 'ng-disabled did not reach setDisabled')
+  assert.equal(a.$('.llselect-trigger-wrapper').getAttribute('data-disabled'), 'true', 'ng-disabled did not reach setDisabled')
   a.$('.llselect-trigger').click()
   assert.equal(a.$$('.llselect-popup-list-row').length, 0, 'a disabled select component of the bridge must not open')
   a.scope.$apply(() => { a.scope.vm.locked = false })
-  assert.equal(a.$('.llselect-trigger').getAttribute('data-disabled'), 'false', 'must re-enable')
+  assert.equal(a.$('.llselect-trigger-wrapper').getAttribute('data-disabled'), 'false', 'must re-enable')
 
   // Static literal: real ui-select treats the truthy string as disabled.
   const b = app('disabled="disabled"')
   b.scope.$digest()
-  assert.equal(b.$('.llselect-trigger').getAttribute('data-disabled'), 'true', 'static disabled="disabled" must disable, like ui-select')
+  assert.equal(b.$('.llselect-trigger-wrapper').getAttribute('data-disabled'), 'true', 'static disabled="disabled" must disable, like ui-select')
 
   // Interpolated: the value arrives as a STRING, so "false" is truthy - the
   // same trap real ui-select has; the bridge is faithful to it on purpose.
   const c = app('disabled="{{vm.locked}}"')
   c.scope.$apply(() => { c.scope.vm.locked = false })
-  assert.equal(c.$('.llselect-trigger').getAttribute('data-disabled'), 'true', 'interpolated "false" is a truthy string - ui-select parity')
+  assert.equal(c.$('.llselect-trigger-wrapper').getAttribute('data-disabled'), 'true', 'interpolated "false" is a truthy string - ui-select parity')
 })
 
 test('uib-tooltip still shows on hover while the select component of the bridge is disabled', async () => {
@@ -197,7 +197,7 @@ test('uib-tooltip still shows on hover while the select component of the bridge 
     },
   })
   assert.deepEqual(a.errors, [])
-  assert.equal(a.$('.llselect-trigger').getAttribute('data-disabled'), 'true', 'fixture must be disabled')
+  assert.equal(a.$('.llselect-trigger-wrapper').getAttribute('data-disabled'), 'true', 'fixture must be disabled')
 
   const host = a.$('ui-llselect')
   // jqLite has no native mouseenter: it maps it onto mouseover with a
@@ -781,12 +781,12 @@ test('config: <ui-llselect> takes popupWidthPolicy, and NOT arrow / filterable /
       </div>`,
     controller: function () { this.users = USERS; this.person = undefined },
     config: ['llselectConfigProvider', function (llselectConfigProvider) {
-      llselectConfigProvider.defaults({ arrow: 'triangle', filterable: false, highlight: true, popupWidthPolicy: 'match-trigger' })
+      llselectConfigProvider.defaults({ arrow: 'triangle', filterable: false, highlight: true, popupWidthPolicy: 'match-trigger-wrapper' })
     }],
   })
   assert.deepEqual(a.errors, [])
   const sel = a.ng.element(a.$('ui-llselect')).controller('uiLlselect').instance()
-  assert.equal(sel.settings.popupWidthPolicy, 'match-trigger', 'popupWidthPolicy is house style: the bridge must take it')
+  assert.equal(sel.settings.popupWidthPolicy, 'match-trigger-wrapper', 'popupWidthPolicy is house style: the bridge must take it')
   const chevron = a.window.llselect.createChevronDownSvgEl().querySelector('path').getAttribute('d')
   assert.equal(a.$('ui-llselect .llselect-trigger-arrow path').getAttribute('d'), chevron, 'every ui-select theme has a caret: config arrow must not change it')
   a.$('ui-llselect .llselect-trigger').click()

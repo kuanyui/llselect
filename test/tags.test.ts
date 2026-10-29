@@ -11,12 +11,12 @@ function mount(): HTMLElement {
   return document.getElementById('mount')!
 }
 
-function tags(sel: { triggerEl: HTMLElement; classIdMap: { tagClass: string } }): HTMLElement[] {
-  return Array.from(sel.triggerEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`))
+function tags(sel: { rootEl: HTMLElement; classIdMap: { tagClass: string } }): HTMLElement[] {
+  return Array.from(sel.rootEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`))
 }
 
-function removeBtn(sel: { triggerEl: HTMLElement; classIdMap: { tagRemoveButtonClass: string } }): HTMLButtonElement {
-  return sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!
+function removeBtn(sel: { rootEl: HTMLElement; classIdMap: { tagRemoveButtonClass: string } }): HTMLButtonElement {
+  return sel.rootEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!
 }
 
 test('triggerDisplay tags renders one chip per chosen item', () => {
@@ -29,14 +29,15 @@ test('triggerDisplay tags renders one chip per chosen item', () => {
   assert.ok(chips[1]!.textContent!.includes('c'))
 })
 
-test('each chip has a remove button: <button>, tabindex=-1, aria-label from itemToString', () => {
+test('each chip has a remove button: <button>, aria-label from itemToString, the first one the strip\'s Tab stop', () => {
   const sel = new LLSelectMultiple<string>(mount(), { triggerDisplay: 'tags' })
   sel.setItems(['a', 'b'])
-  sel.setChosenItems(['a'])
+  sel.setChosenItems(['a', 'b'])
   const btn = removeBtn(sel)
   assert.equal(btn.tagName, 'BUTTON')
   assert.equal(btn.getAttribute('type'), 'button')
-  assert.equal(btn.getAttribute('tabindex'), '-1')
+  assert.equal(btn.getAttribute('tabindex'), '0')
+  assert.equal(tags(sel)[1]!.querySelector('button')!.getAttribute('tabindex'), '-1', 'only one button of the strip is a Tab stop')
   assert.equal(btn.getAttribute('aria-label'), 'Remove a')
 })
 
@@ -102,7 +103,7 @@ test('createTagRemoveButtonContentElFn fills the remove-button icon; library sti
   const btn = removeBtn(sel) // first chip ('a')
   assert.ok(btn.querySelector('.x-a')) // icon filled, receives the item
   assert.equal(btn.getAttribute('aria-label'), 'Remove a') // aria still library-owned
-  assert.equal(btn.getAttribute('tabindex'), '-1')
+  assert.equal(btn.getAttribute('tabindex'), '0')
   btn.click() // still removes via toggleItem
   assert.deepEqual([...sel.getChosenItems()], ['b'])
 })
@@ -160,7 +161,7 @@ test('tags mode with an empty selection shows the placeholder, not chips', () =>
   const sel = new LLSelectMultiple<string>(mount(), { triggerDisplay: 'tags', placeholder: 'Pick' })
   sel.setItems(['a', 'b'])
   assert.equal(tags(sel).length, 0)
-  assert.ok(sel.triggerEl.textContent!.includes('Pick'))
+  assert.ok(sel.triggerContentEl.textContent!.includes('Pick'))
 })
 
 test('default triggerDisplay is count (no chips)', () => {
@@ -168,7 +169,7 @@ test('default triggerDisplay is count (no chips)', () => {
   sel.setItems(['a', 'b', 'c'])
   sel.setChosenItems(['a', 'b'])
   assert.equal(tags(sel).length, 0)
-  assert.ok(sel.triggerEl.textContent!.includes('2 / 3 selected'))
+  assert.ok(sel.triggerContentEl.textContent!.includes('2 / 3 selected'))
 })
 
 test('createTriggerContentElFn wins over tags mode (full control)', () => {

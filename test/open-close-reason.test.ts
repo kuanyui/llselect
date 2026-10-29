@@ -109,11 +109,11 @@ test('close reason: escape on a control inside a slot, outside under block, and 
   outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
   outside.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
   // The positioner closes a popup whose trigger scrolled out of the viewport;
-  // jsdom lays nothing out, so the trigger's rect is mocked, as in
+  // jsdom lays nothing out, so the trigger wrapper's rect is mocked, as in
   // test/positioning.test.ts.
-  mockRect(sel.triggerEl, { top: 100, bottom: 130 })
+  mockRect(sel.triggerWrapperEl, { top: 100, bottom: 130 })
   sel.open()
-  mockRect(sel.triggerEl, { top: -100, bottom: -70 })
+  mockRect(sel.triggerWrapperEl, { top: -100, bottom: -70 })
   window.dispatchEvent(new Event('scroll'))
   assert.deepEqual(closes, ['escape', 'outside', 'hidden'])
 })

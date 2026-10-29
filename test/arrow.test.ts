@@ -12,29 +12,29 @@ function mount(): HTMLElement {
 
 test('trigger starts with data-state="closed"', () => {
   const sel = new LLSelectSingle<string>(mount())
-  assert.equal(sel.triggerEl.getAttribute('data-state'), 'closed')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-state'), 'closed')
 })
 
 test('trigger data-state toggles open/closed', () => {
   const sel = new LLSelectSingle<string>(mount())
   sel.setItems(['a'])
   sel.open()
-  assert.equal(sel.triggerEl.getAttribute('data-state'), 'open')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-state'), 'open')
   sel.close()
-  assert.equal(sel.triggerEl.getAttribute('data-state'), 'closed')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-state'), 'closed')
 })
 
 test('trigger has content + arrow slots', () => {
   const sel = new LLSelectSingle<string>(mount())
   assert.ok(sel.triggerContentEl)
   assert.ok(sel.triggerContentEl.classList.contains('llselect-trigger-content'))
-  const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')
+  const arrow = sel.triggerWrapperEl.querySelector('.llselect-trigger-arrow')
   assert.ok(arrow)
 })
 
 test('createTriggerArrowContentElFn default null: arrow slot is empty', () => {
   const sel = new LLSelectSingle<string>(mount())
-  const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')
+  const arrow = sel.triggerWrapperEl.querySelector('.llselect-trigger-arrow')
   assert.ok(arrow)
   assert.equal(arrow.children.length, 0)
 })
@@ -48,7 +48,7 @@ test('createTriggerArrowContentElFn returning an element appends it to the arrow
       return el
     },
   })
-  const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')
+  const arrow = sel.triggerWrapperEl.querySelector('.llselect-trigger-arrow')
   assert.ok(arrow)
   assert.equal(arrow.children.length, 1)
   assert.equal(arrow.querySelector('#my-arrow')?.textContent, '▼')
@@ -78,7 +78,7 @@ test('createTriggerArrowContentElFn returning null leaves the slot empty', () =>
       return returnNull ? null : document.createElement('span')
     },
   })
-  const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')!
+  const arrow = sel.triggerWrapperEl.querySelector('.llselect-trigger-arrow')!
   assert.equal(arrow.children.length, 0)
   returnNull = false
   sel.setItems(['a'])
@@ -101,7 +101,7 @@ test('a subclass createTriggerArrowContentEl override replaces the setting (over
       return el
     },
   })
-  const arrow = sel.triggerEl.querySelector('.llselect-trigger-arrow')!
+  const arrow = sel.triggerWrapperEl.querySelector('.llselect-trigger-arrow')!
   assert.ok(arrow.querySelector('.derived-arrow')) // override wins
   assert.equal(arrow.querySelector('.fn-arrow'), null)
 })
@@ -119,5 +119,5 @@ test('triggerContentEl receives placeholder/chosen text (arrow slot preserved)',
   sel.setChosenItem('a')
   assert.equal(sel.triggerContentEl.textContent, 'a')
   // Arrow slot must still be present after the content change.
-  assert.ok(sel.triggerEl.querySelector('.survive'))
+  assert.ok(sel.triggerWrapperEl.querySelector('.survive'))
 })

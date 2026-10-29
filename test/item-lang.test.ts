@@ -93,7 +93,7 @@ test('multiple: a chip wraps its text in a span that carries the lang; the remov
   })
   sel.setItems(LANGS)
   sel.setChosenItems([EN, DE, UNKNOWN])
-  const chips = [...sel.triggerEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`)]
+  const chips = [...sel.rootEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`)]
   assert.equal(chips.length, 3)
   const text = (chip: HTMLElement) => chip.querySelector<HTMLElement>(`.${sel.classIdMap.tagTextClass}`)!
   assert.equal(text(chips[1]!).textContent, 'Deutsch')
@@ -110,7 +110,7 @@ test('multiple: a chip wraps its text in a span that carries the lang; the remov
   })
   custom.setItems(LANGS)
   custom.setChosenItems([DE])
-  assert.equal(custom.triggerEl.querySelector('b')!.getAttribute('lang'), 'de')
+  assert.equal(custom.rootEl.querySelector('b')!.getAttribute('lang'), 'de')
 })
 
 test('multiple: the count summary carries no lang', () => {
@@ -129,7 +129,7 @@ test('default settings never strip a lang the app set on its own chip content', 
   })
   sel.setItems(LANGS)
   sel.setChosenItems([DE])
-  assert.equal(sel.triggerEl.querySelector('b')!.getAttribute('lang'), 'xx')
+  assert.equal(sel.rootEl.querySelector('b')!.getAttribute('lang'), 'xx')
 })
 
 test('single: custom trigger content for one state and library text for another: the slot regains and loses the lang', () => {
@@ -167,7 +167,7 @@ test('a changed answer for the same item shows after rerender(): no stale lang o
   const multi = new LLSelectMultiple<Lang>(mount(), { triggerDisplay: 'tags', itemToStringFn: (l) => l.name, itemToLangFn: (l) => active ? l.code : null })
   multi.setItems(LANGS)
   multi.setChosenItems([DE])
-  const chipText = () => multi.triggerEl.querySelector<HTMLElement>(`.${multi.classIdMap.tagTextClass}`)!
+  const chipText = () => multi.rootEl.querySelector<HTMLElement>(`.${multi.classIdMap.tagTextClass}`)!
   assert.equal(chipText().getAttribute('lang'), 'de')
   active = false
   multi.rerender()
@@ -206,10 +206,10 @@ test('custom chip content: the item code overwrites a lang the app set, and a me
   })
   sel.setItems(LANGS)
   sel.setChosenItems([DE])
-  assert.equal(sel.triggerEl.querySelector('b')!.getAttribute('lang'), 'de', 'the item code overwrites the app value')
+  assert.equal(sel.rootEl.querySelector('b')!.getAttribute('lang'), 'de', 'the item code overwrites the app value')
   active = false
   sel.rerender()
-  assert.equal(sel.triggerEl.querySelector('b')!.getAttribute('lang'), 'de', 'accepted limit: the library never removes from app-owned content')
+  assert.equal(sel.rootEl.querySelector('b')!.getAttribute('lang'), 'de', 'accepted limit: the library never removes from app-owned content')
 })
 
 test('multiple tags mode: the value mirror carries the code only while exactly one chip shows', () => {

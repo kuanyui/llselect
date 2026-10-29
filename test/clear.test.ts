@@ -13,8 +13,8 @@ function mount(): HTMLElement {
   return document.getElementById('mount')!
 }
 
-function clearBtn(sel: { triggerEl: HTMLElement; classIdMap: { triggerClearButtonClass: string } }): HTMLButtonElement | null {
-  return sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)
+function clearBtn(sel: { rootEl: HTMLElement; classIdMap: { triggerClearButtonClass: string } }): HTMLButtonElement | null {
+  return sel.rootEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)
 }
 
 test('clearable builds a clear button; default off builds none', () => {
@@ -23,13 +23,19 @@ test('clearable builds a clear button; default off builds none', () => {
   const btn = clearBtn(on)!
   assert.equal(btn.tagName, 'BUTTON')
   assert.equal(btn.getAttribute('type'), 'button')
-  assert.equal(btn.getAttribute('tabindex'), '-1')
+  assert.equal(btn.getAttribute('tabindex'), '-1', 'not a Tab stop while the strip is hidden')
   assert.equal(btn.getAttribute('aria-label'), 'Clear selection')
+  on.setItems(['a'])
+  on.setChosenItem('a')
+  assert.equal(clearBtn(on)!.getAttribute('tabindex'), '0', 'the lone button is the strip\'s Tab stop')
 })
 
-test('clear button is a direct child of the trigger (own slot, not inside content)', () => {
+test('the clear button is the last child of the trigger buttons strip, outside the trigger', () => {
   const sel = new LLSelectSingle<string>(mount(), { clearable: true })
-  assert.equal(clearBtn(sel)!.parentElement, sel.triggerEl)
+  assert.equal(clearBtn(sel)!.parentElement, sel.triggerButtonsEl)
+  assert.equal(sel.triggerButtonsEl!.lastElementChild, clearBtn(sel))
+  assert.equal(sel.triggerEl.contains(clearBtn(sel)), false)
+  assert.equal(sel.triggerButtonsEl!.parentElement, sel.triggerWrapperEl)
 })
 
 test('clicking clear empties single selection to undefined and fires onChange', () => {
@@ -145,10 +151,9 @@ test('QUALITY-89: rerender() rebuilds the clear button through createTriggerClea
   const rebuilt = clearBtn(sel)!
   assert.notEqual(rebuilt, first)
   assert.equal(rebuilt.getAttribute('data-icon'), 'X', 'rerender() re-runs the override with the field present')
-  // Still in its own slot, between content and arrow, and still wired.
-  const children = [...sel.triggerEl.children]
-  assert.equal(children.length, 3)
-  assert.equal(children.indexOf(rebuilt), 1)
+  // Still the last button of the strip, and still wired.
+  assert.equal(sel.triggerButtonsEl!.lastElementChild, rebuilt)
+  assert.equal(sel.triggerButtonsEl!.children.length, 1)
   sel.setItems(['a'])
   sel.setChosenItem('a')
   clearBtn(sel)!.click()
@@ -174,18 +179,19 @@ test('QUALITY-89: without clearable, rerender() adds no clear button', () => {
   assert.equal(clearBtn(sel), null)
 })
 
-test('QUALITY-89: rerender() with the popup open and the clear button focused keeps the popup open', () => {
+test('QUALITY-89: focus on the clear button closes an open popup, and a rerender() then keeps focus on the rebuilt button with no blur', () => {
   // jsdom fires no focusout when a focused element is removed, so this pins
   // the intended state only; the real-browser check is in TODO.md.
-  const sel = new LLSelectSingle<string>(mount(), { clearable: true, ariaLabel: 'x' })
+  let blurs = 0
+  const sel = new LLSelectSingle<string>(mount(), { clearable: true, ariaLabel: 'x', onBlur: () => { blurs++ } })
   sel.setItems(['a', 'b'])
   sel.setChosenItem('a')
   sel.open()
-  const before = clearBtn(sel)!
-  before.focus()
+  clearBtn(sel)!.focus()
+  assert.equal(sel.isOpened(), false, 'focus entering the trigger buttons strip closes the popup')
   sel.rerender()
-  assert.equal(sel.isOpened(), true, 'the rebuild must not read as focus leaving the select component')
   assert.equal(document.activeElement, clearBtn(sel))
+  assert.equal(blurs, 0, 'the rebuild must not read as focus leaving the select component')
 })
 
 test('QUALITY-89: every trigger render rebuilds the clear button - a single value change and a multiple clear click each yield a fresh, working button', () => {
@@ -240,7 +246,7 @@ test('QUALITY-89: construction builds the clear button exactly once (the first t
   })
   assert.equal(builds, 1, 'the base constructor no longer pre-builds a throwaway button')
   assert.ok(clearBtn(sel), 'the button exists right after new')
-  assert.equal([...sel.triggerEl.children].indexOf(clearBtn(sel)!), 1, 'content | clear | arrow')
+  assert.equal(sel.triggerButtonsEl!.lastElementChild, clearBtn(sel), 'the last button of the strip')
   sel.setItems(['a'])
   sel.setChosenItems(['a'])
   assert.equal(builds, 2, 'one rebuild for the value change')
@@ -307,8 +313,8 @@ test('QUALITY-89: a createTriggerClearButtonEl override that returns the same el
   const first = clearBtn(sel)!
   sel.setItems(['a'])
   sel.setChosenItem('a')
-  assert.equal(clearBtn(sel), first, 'the same element stays in the trigger')
-  assert.equal([...sel.triggerEl.children].indexOf(first), 1)
+  assert.equal(clearBtn(sel), first, 'the same element stays in the strip')
+  assert.equal(sel.triggerButtonsEl!.lastElementChild, first)
   sel.rerender()
   assert.equal(clearBtn(sel), first)
   first.click()
@@ -323,7 +329,7 @@ test('QUALITY-89: a direct LLSelectBase subclass gets its clear button on its fi
   assert.equal(clearBtn(sel), null, 'no render yet, no button (the trigger content is unrendered too)')
   sel.paint()
   assert.ok(clearBtn(sel))
-  assert.equal([...sel.triggerEl.children].indexOf(clearBtn(sel)!), 1)
+  assert.equal(sel.triggerButtonsEl!.lastElementChild, clearBtn(sel))
 })
 
 test('QUALITY-89: with a builder that returns the same element, a render hands focus back to the icon that held it', () => {
@@ -467,7 +473,7 @@ test('QUALITY-89: a builder override that returns a non-focusable element keeps 
   // The first (construction) render already installed the span; give the
   // trigger a focusable stand-in for "the old button held focus" by focusing
   // the span's predecessor state: use the base button first, via rerender().
-  const old = sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  const old = clearBtn(sel)!
   old.tabIndex = -1 // make THIS instance focusable so the scenario is reachable
   old.focus()
   assert.equal(document.activeElement, old)

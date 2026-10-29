@@ -22,7 +22,7 @@ export type LLSelectPlacement = 'below' | 'above'
  * (`popupWidthPolicy` field) for the user-facing contract.
  * @group Positioning
  */
-export type LLSelectWidthPolicy = 'fit-content' | 'match-trigger'
+export type LLSelectWidthPolicy = 'fit-content' | 'match-trigger-wrapper'
 
 /** Input to the pure positioning calculation. */
 export interface PositionInput {
@@ -52,7 +52,7 @@ export interface PositionInput {
    * Writing direction of the anchor's context. Only consulted when
    * `widthPolicy === 'fit-content'`: `'rtl'` right-aligns the floating element
    * to the anchor and grows LEFTWARD (the mirror of ltr). Default `'ltr'`.
-   * `'match-trigger'` is position-identical in both directions.
+   * `'match-trigger-wrapper'` is position-identical in both directions.
    */
   direction?: 'ltr' | 'rtl'
   /**
@@ -98,7 +98,7 @@ const VIEWPORT_PADDING = 8
  * `[viewportLeft, viewportLeft + viewportWidth]` x
  * `[viewportTop, viewportTop + viewportHeight]`. The offsets are 0 except
  * under pinch zoom (see {@link PositionInput.viewportLeft}).
- * `widthPolicy === 'match-trigger'` returns `width = anchor.width` and
+ * `widthPolicy === 'match-trigger-wrapper'` returns `width = anchor.width` and
  * `left = anchor.left` (no collision handling - popup is the same width as
  * trigger; direction-independent).
  */
@@ -149,7 +149,7 @@ export function computePosition(input: PositionInput): PositionResult {
 
   let width: number
   let left: number
-  if (widthPolicy === 'match-trigger') {
+  if (widthPolicy === 'match-trigger-wrapper') {
     width = anchorRect.width
     left = anchorRect.left
   } else {

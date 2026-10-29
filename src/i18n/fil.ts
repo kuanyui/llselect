@@ -9,6 +9,7 @@ export const fil: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Maghanap',
   filterInputPlaceholder: 'Salain (Esc para burahin)',
   popupListNoResults: 'Walang resulta',
+  triggerButtonsAriaLabel: 'Mga aksyon sa pinili',
   triggerClearButtonAriaLabel: 'Burahin ang pinili',
   tagRemoveButtonAriaLabel: (itemText) => `Alisin ang ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

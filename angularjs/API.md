@@ -178,7 +178,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 Disabling must go through llselect's own `setDisabled()`:
 
-- The state belongs on the inner TRIGGER element: `setDisabled()` sets `aria-disabled` / `data-disabled` (and manages `tabindex`) on the focusable combobox itself. A `disabled="true"` attribute would sit on this host element - not a form control, so the browser ignores it completely.
+- The state belongs on the elements llselect builds: `setDisabled()` sets `aria-disabled` and manages `tabindex` on the focusable trigger, and sets `data-disabled` on the trigger wrapper around it. A `disabled="true"` attribute would sit on this host element - not a form control, so the browser ignores it completely.
 - Hover must survive: llselect never uses the native `disabled` attribute, which suppresses pointer events. A disabled trigger stays hoverable (and focusable via the core `focusableWhenDisabled` setting), so a tooltip can still explain WHY it is disabled.
 
 `ng-disabled` is the same trap one level up: it is one `$watch` whose only action is toggling that inert host attribute (`angular.js:24530`), so the markup looks applied while the select component stays fully interactive. See [Not supported](#not-supported).
@@ -225,7 +225,7 @@ $scope.ifaceMatch = function (i, query) {
 
 ### `ll-popup-width-policy`
 
-**Expression** -> `popupWidthPolicy`. `'fit-content'` (llselect's default) / `'match-trigger'`.
+**Expression** -> `popupWidthPolicy`. `'fit-content'` (llselect's default) / `'match-trigger-wrapper'`.
 
 ### `ll-color-scheme`
 
@@ -478,7 +478,7 @@ angular.module('app', ['llselect'])
       arrow: 'chevron',          // 'chevron' | 'triangle' | 'none' | null (null = the chevron default)
       filterable: true,          // boolean, or a predicate (items) => boolean
       highlight: true,           // wrap filter matches in the default item text in <mark>
-      popupWidthPolicy: 'match-trigger',  // llselect's own default is 'fit-content'
+      popupWidthPolicy: 'match-trigger-wrapper',  // llselect's own default is 'fit-content'
       colorScheme: 'auto',       // 'auto' | 'light' | 'dark'; llselect's own default is 'auto'
       uiTranslationPack: llselectI18n.zhTW,  // an llselect language pack
     })
@@ -503,7 +503,7 @@ Boolean. The app-wide default behind [`ll-highlight`](#ll-highlight): wrap each 
 
 #### `popupWidthPolicy`
 
-`'fit-content'` (llselect's own default) / `'match-trigger'`. The app-wide default behind [`ll-popup-width-policy`](#ll-popup-width-policy).
+`'fit-content'` (llselect's own default) / `'match-trigger-wrapper'`. The app-wide default behind [`ll-popup-width-policy`](#ll-popup-width-policy).
 
 #### `colorScheme`
 

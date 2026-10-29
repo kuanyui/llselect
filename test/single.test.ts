@@ -12,7 +12,7 @@ function mount(): HTMLElement {
 
 test('initial state shows placeholder in trigger', () => {
   const sel = new LLSelectSingle<string>(mount(), { placeholder: 'Pick one' })
-  assert.equal(sel.triggerEl.textContent, 'Pick one')
+  assert.equal(sel.triggerContentEl.textContent, 'Pick one')
   assert.equal(sel.getChosenItem(), undefined)
 })
 
@@ -22,19 +22,19 @@ test('setChosenItem updates state, trigger label, and fires onChange', () => {
   sel.setItems(['a', 'b', 'c'])
   sel.setChosenItem('b')
   assert.equal(sel.getChosenItem(), 'b')
-  assert.equal(sel.triggerEl.textContent, 'b')
+  assert.equal(sel.triggerContentEl.textContent, 'b')
   assert.deepEqual(fired, ['b'])
 })
 
 test('data-empty attribute toggles between placeholder and chosen state (single)', () => {
   const sel = new LLSelectSingle<string>(mount())
   // Nothing chosen on construction -> placeholder shown -> data-empty='true'.
-  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'true')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-empty'), 'true')
   sel.setItems(['a', 'b'])
   sel.setChosenItem('a')
-  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'false')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-empty'), 'false')
   sel.setChosenItem(undefined)
-  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'true')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-empty'), 'true')
 })
 
 test('setChosenItem with same value does not fire onChange', () => {
@@ -76,7 +76,7 @@ test('clicking option selects it, closes popup, fires onChange', () => {
   assert.ok(second)
   second.click()
   assert.equal(sel.getChosenItem(), 'b')
-  assert.equal(sel.triggerEl.textContent, 'b')
+  assert.equal(sel.triggerContentEl.textContent, 'b')
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
   assert.deepEqual(fired, ['b'])
 })
@@ -88,7 +88,7 @@ test('setItems drops chosen if no longer present, fires onChange(undefined)', ()
   sel.setChosenItem('a')
   sel.setItems(['b', 'c'])
   assert.equal(sel.getChosenItem(), undefined)
-  assert.equal(sel.triggerEl.textContent, 'Please select')
+  assert.equal(sel.triggerContentEl.textContent, 'Please select')
   assert.deepEqual(fired, ['a', undefined])
 })
 
@@ -107,7 +107,7 @@ test('setItems swaps the chosen reference to a compareFn-equal new object; trigg
   const alicia = { id: 1, name: 'Alicia' }
   sel.setItems([alicia])
   assert.equal(sel.getChosenItem(), alicia, 'the chosen reference must be the new list object')
-  assert.equal(sel.triggerEl.textContent?.includes('Alicia'), true, 'the trigger must show the fresh fields')
+  assert.equal(sel.triggerContentEl.textContent?.includes('Alicia'), true, 'the trigger must show the fresh fields')
   assert.deepEqual(fired, [], 'a reference swap must not fire onChange')
 })
 
@@ -175,6 +175,6 @@ test('setChosenItem with undefined clears selection', () => {
   sel.setChosenItem('a')
   sel.setChosenItem(undefined)
   assert.equal(sel.getChosenItem(), undefined)
-  assert.equal(sel.triggerEl.textContent, 'Please select')
+  assert.equal(sel.triggerContentEl.textContent, 'Please select')
   assert.deepEqual(fired, ['a', undefined])
 })

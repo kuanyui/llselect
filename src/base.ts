@@ -85,7 +85,7 @@ export type LLSelectChangeReason = 'choose' | 'unchoose' | 'clear' | 'set' | 'it
 
 /**
  * Why the popup opened: the value of `meta.reason` in {@link LLSelectOpenMeta}.
- * - `'toggle'`: a click on the trigger, or a `toggle()` call.
+ * - `'toggle'`: a click in the trigger wrapper, or a `toggle()` call.
  * - `'keyboard'`: ArrowDown, ArrowUp, Enter or Space on the closed trigger.
  * - `'typeahead'`: a printable character typed on the closed trigger.
  * - `'api'`: an `open()` call.
@@ -109,8 +109,9 @@ export interface LLSelectOpenMeta {
  * - `'escape'`: Escape or Alt+ArrowUp on the trigger or the filter input,
  *   and Escape on a control the app placed in a header / footer slot.
  * - `'outside'`: a mousedown or click outside the select component.
- * - `'blur'`: DOM focus left the select component.
- * - `'toggle'`: a click on the trigger, or a `toggle()` call.
+ * - `'blur'`: DOM focus left the select component, or moved from the
+ *   trigger or the popup into the trigger buttons strip.
+ * - `'toggle'`: a click in the trigger wrapper, or a `toggle()` call.
  * - `'api'`: a `close()` call.
  * - `'disabled'`: `setDisabled(true)`.
  * - `'destroy'`: `destroy()`.
@@ -419,10 +420,11 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - "Clear" means back to empty and the placeholder, never "back to some
    *   default option". If you want a default instead, set it yourself in
    *   `onChange`.
-   * - The button sits in its OWN trigger slot (like the arrow, so it never
-   *   collides with `createTriggerContentElFn`), is `tabindex="-1"`, and
-   *   carries an `aria-label`. The theme hides it via `data-empty` while
-   *   nothing is selected.
+   * - The button sits in the trigger buttons strip, `triggerButtonsEl`,
+   *   beside the trigger, so it never collides with `createTriggerContentElFn`
+   *   and its name never enters the trigger's value.
+   * - It carries an `aria-label`, and the strip makes it a Tab stop.
+   * - The library hides the strip while nothing is selected.
    * @group Trigger
    */
   clearable: boolean
@@ -626,18 +628,20 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    */
   popupListTrailingRowsPinned: boolean
   /**
-   * How the popup decides its width. Does NOT affect the trigger - trigger
-   * width is always whatever your CSS says.
+   * How the popup decides its width. Does NOT affect the trigger - the width
+   * of the trigger wrapper is always whatever your CSS says.
    *
    * - `'fit-content'` (default): popup width grows to its own content (items,
-   *   filter input, ...) and never shrinks below the trigger's width - the
-   *   native `<select>` dropdown behavior, minus its viewport overflow:
+   *   filter input, ...) and never shrinks below the trigger wrapper's width -
+   *   the native `<select>` dropdown behavior, minus its viewport overflow:
    *   auto-shifts and width-clamps when the natural width would not fit.
    *   Direction-aware: in an RTL context
-   *   (`getComputedStyle(trigger).direction === 'rtl'`, read once per open)
-   *   it right-aligns to the trigger and grows LEFTWARD, the mirror of LTR.
-   * - `'match-trigger'`: popup width equals trigger width; long item text wraps
-   *   inside the popup.
+   *   (`getComputedStyle(triggerWrapperEl).direction === 'rtl'`, read once per
+   *   open) it right-aligns to the trigger wrapper and grows LEFTWARD, the
+   *   mirror of LTR.
+   * - `'match-trigger-wrapper'`: popup width equals the width of
+   *   `triggerWrapperEl`, the box the themes draw; long item text wraps inside
+   *   the popup.
    * @group Popup
    */
   popupWidthPolicy: LLSelectWidthPolicy
@@ -683,9 +687,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   - The row has `aria-selected` and `aria-disabled` set to true.
    *   - Clicking the row does nothing.
    * - When `clearable` is on and the control is enabled:
-   *   - Clicking the trigger's clear button clears the selection.
+   *   - Clicking the clear button clears the selection.
    *   - That also removes the disabled chosen item.
-   * - When `clearable` is on, pressing Tab does not reach the clear button.
+   * - When `clearable` is on, Tab reaches the clear button, so a keyboard user can clear too.
    * - A native `<select>` behaves the same way: a selected `<option>` keeps its selection when it is disabled.
    * - Removing the selected `<option>` removes that option from a native select's selection. `setItems()` with a list that excludes the chosen item removes the item here the same way.
    * - After the selected option is removed:
@@ -702,6 +706,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * stays in the tab order (`tabindex="0"`). `false` (default) takes it out
    * (`-1`). Set `true` so keyboard / AT users can focus the disabled control to
    * read a "why disabled" tooltip.
+   * - The buttons of the trigger buttons strip leave the tab order either way:
+   *   they do nothing while the control is disabled.
    * @group Disabling
    */
   focusableWhenDisabled: boolean
@@ -1071,17 +1077,21 @@ export type LLSelectBaseSettingsInput<T, GroupKey = string> = LLSelectSettingsIn
 export interface LLSelectClassIdMap {
   /** Class on `rootEl` (the caller-passed mount element). */
   rootClass: string
+  /** Class on `triggerWrapperEl`, the box around the trigger, the trigger buttons strip and the arrow. */
+  triggerWrapperClass: string
   /**
-   * Class on `triggerEl` (the interactive trigger). Its `role` is
-   * `combobox` while the filter is inactive and `button` while a filterable popup
-   * is open; see `docs/llm/A11Y.md`.
+   * Class on `triggerEl`, the element that takes focus and carries the field's role.
+   * - Its `role` is `combobox` while the filter is inactive and `button` while it is active.
+   * - See `docs/llm/A11Y.md`.
    */
   triggerClass: string
-  /** Class on the inner span where content (text/tags) is rendered. */
+  /** Class on `triggerContentEl`, the span inside the trigger that shows the value. */
   triggerContentClass: string
-  /** Class on the inner span where the optional dropdown arrow lives. */
+  /** Class on the span at the end of the trigger wrapper where the optional dropdown arrow lives. */
   triggerArrowClass: string
-  /** Class on the clear (x) button slot in the trigger (`clearable`). */
+  /** Class on `triggerButtonsEl`, the strip that holds the clear button and the tag chips. */
+  triggerButtonsClass: string
+  /** Class on the clear (x) button, the last child of the trigger buttons strip (`clearable`). */
   triggerClearButtonClass: string
   /** Class on `popupEl`: the outer popup wrapper, a `dialog` while the filter is active and without an ARIA role otherwise. */
   popupClass: string
@@ -1141,13 +1151,13 @@ export interface LLSelectClassIdMap {
    * container above its items. A hook for styling / sticky labels.
    */
   groupLabelClass: string
-  /** Class on the tag-list container in `triggerDisplay: 'tags'` mode (multi). */
+  /** Class on the tag-list container in `triggerDisplay: 'tags'` mode (multi), inside the trigger buttons strip. */
   tagsClass: string
   /** Class on one tag chip (`triggerDisplay: 'tags'`). */
   tagClass: string
-  /** Class on a tag's remove (x) button; `aria-label` names the item, `tabindex="-1"`. */
+  /** Class on a tag's remove (x) button; its `aria-label` names the item. */
   tagRemoveButtonClass: string
-  /** Class on a tag's default text span (built when `createTagContentElFn` is unset or returns `null`); it carries the item's `lang` from `itemToLangFn`. */
+  /** Class on a tag's default text span (built when `createTagContentElFn` is unset or returns `null`); it carries the item's `lang` from `itemToLangFn` and `aria-hidden="true"`. */
   tagTextClass: string
   /**
    * Class on a tag chip whose item is effectively disabled (which also carries
@@ -1158,7 +1168,7 @@ export interface LLSelectClassIdMap {
   /**
    * Class added to `rootEl` while the popup is open. Use it as a CSS hook
    * for open-state styling (also available as `[data-state='open']` on the
-   * trigger).
+   * trigger wrapper).
    */
   openClass: string
   /** DOM `id` of `triggerEl`. Unique across instances. */
@@ -1172,12 +1182,11 @@ export interface LLSelectClassIdMap {
   /** DOM `id` of the trigger content span. Unique across instances. */
   triggerContentId: string
   /**
-   * DOM `id` of the hidden plain-text value span (root-level sibling of the
-   * trigger). Unique across instances. Referenced by the filterable-mode
-   * trigger's `aria-labelledby` chain so the closed button's accessible name
-   * includes the current value as PLAIN TEXT - rich trigger content (tag
-   * chips with labelled remove buttons) must not leak control names into the
-   * field name (see the `ariaLabel` / `ariaLabelledBy` settings).
+   * DOM `id` of the visually hidden plain-text value span inside the trigger.
+   * - Unique across instances.
+   * - Referenced by the trigger's `aria-labelledby` chain while the filter
+   *   is active, so the button's accessible name includes the current value
+   *   as plain text (see the `ariaLabel` / `ariaLabelledBy` settings).
    */
   triggerValueId: string
   /**
@@ -1271,6 +1280,26 @@ function canBeTabStop(el: Element): boolean {
   return Number.isNaN(tabindex) ? el.matches(NATIVE_TAB_STOP_SELECTOR) : tabindex >= 0
 }
 
+/**
+ * Hide `el` from the screen while keeping its text in the accessibility tree:
+ * `hidden` or `aria-hidden` would drop it from the value a combobox takes
+ * from its content. The common visually-hidden recipe, written inline so an
+ * unthemed select component behaves the same.
+ */
+function hideVisually(el: HTMLElement): void {
+  const s = el.style
+  s.position = 'absolute'
+  s.width = '1px'
+  s.height = '1px'
+  s.margin = '-1px'
+  s.padding = '0'
+  s.border = '0'
+  s.overflow = 'hidden'
+  s.whiteSpace = 'nowrap'
+  s.clip = 'rect(0 0 0 0)'
+  s.clipPath = 'inset(50%)'
+}
+
 /** Write an attribute only when its value changes, so an unchanged value queues no mutation record; `null` removes it. */
 function setAttributeIfChanged(el: Element, name: string, value: string | null): void {
   if (el.getAttribute(name) === value) { return }
@@ -1289,9 +1318,11 @@ function createClassIdMap(prefix: string): LLSelectClassIdMap {
   const uniq = `${prefix}${++instanceCounter}`
   return {
     rootClass: `${prefix}-root`,
+    triggerWrapperClass: `${prefix}-trigger-wrapper`,
     triggerClass: `${prefix}-trigger`,
     triggerContentClass: `${prefix}-trigger-content`,
     triggerArrowClass: `${prefix}-trigger-arrow`,
+    triggerButtonsClass: `${prefix}-trigger-buttons`,
     triggerClearButtonClass: `${prefix}-trigger-clear-button`,
     popupClass: `${prefix}-popup`,
     popupListClass: `${prefix}-popup-list`,
@@ -1377,31 +1408,90 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   public readonly rootEl: HTMLElement
   /**
-   * The interactive trigger element. Receives focus, click, and keydown
-   * events; carries `aria-expanded`, `aria-controls`, and
-   * `data-state="open|closed"`. Its `role` depends on the filter mode: `combobox`
-   * while the filter is inactive (it then also hosts `aria-activedescendant`) and
-   * `button` while the filter is active (the filter input then hosts
-   * `aria-activedescendant`). See `docs/llm/A11Y.md`.
+   * The box around the trigger, the element the themes draw as the field.
+   * - It holds `triggerEl`, then `triggerButtonsEl` when that strip exists,
+   *   then the arrow slot.
+   * - It carries the CSS hooks `data-state="open|closed"`, `data-empty` and
+   *   `data-disabled`.
+   * - A click anywhere in it toggles the popup, except a click on a button of
+   *   the strip.
+   * - A mousedown in it outside the trigger and the strip's buttons moves
+   *   focus to the trigger, as a press on a native select does.
+   * - The popup is placed against it, and `popupWidthPolicy:
+   *   'match-trigger-wrapper'` copies its width.
+   * - It has no ARIA role.
+   * @group DOM elements
+   */
+  public readonly triggerWrapperEl: HTMLElement
+  /**
+   * The trigger: the element that takes focus and represents the field to
+   * assistive technology.
+   * - While the filter is inactive it has `role="combobox"` and hosts
+   *   `aria-activedescendant`.
+   * - While the filter is active it has `role="button"`, and the filter input
+   *   hosts `aria-activedescendant`.
+   * - It carries `aria-expanded`, `aria-controls`, `aria-haspopup` and the
+   *   field name, and it receives the keydown events.
+   * - It holds text only: the visually hidden value text and
+   *   `triggerContentEl`. WAI-ARIA 1.2 gives a combobox that is not a text
+   *   field the value of its descendant content, so a control inside it
+   *   would put its name into the value. The clear button and the tag chips
+   *   therefore sit in {@link triggerButtonsEl}, beside it.
+   * - Its `textContent` includes the hidden value text. Read
+   *   `triggerContentEl.textContent` for what the screen shows.
+   * - See `docs/llm/A11Y.md`.
    * @group DOM elements
    */
   public readonly triggerEl: HTMLElement
   /**
-   * Inner span inside the trigger where text/tags are written.
-   * Subclasses' `renderTriggerContent` writes here so the sibling arrow slot
-   * is preserved across re-renders.
+   * The span inside the trigger that shows the value: the placeholder, the
+   * chosen item's text, the count summary or custom trigger content.
+   * - It carries `aria-hidden="true"`. Assistive technology reads the hidden
+   *   value text beside it instead, so the value is not read twice.
+   * - Subclasses' `renderTriggerContent` writes here through
+   *   `commitTriggerContentToDom`.
+   * - In tags mode it stays empty while chips show: the chips sit in
+   *   {@link triggerButtonsEl}.
    * @group DOM elements
    */
   public readonly triggerContentEl: HTMLElement
   /**
-   * Hidden root-level span (sibling of the trigger) mirroring the current
-   * value as plain text. Kept in sync by `commitTriggerContentToDom`;
-   * referenced by the filterable-mode `aria-labelledby` chain (see
-   * `classIdMap.triggerValueId`). Outside the trigger so
-   * `triggerEl.textContent` stays exactly the visible content.
+   * The visually hidden span inside the trigger that holds the value as
+   * plain text, for assistive technology.
+   * - While the filter is inactive, the trigger is a `combobox`. WAI-ARIA 1.2
+   *   gives a combobox that is not a text field the value of its descendant
+   *   content, and `triggerContentEl` is `aria-hidden`, so this span is that
+   *   value.
+   * - While the filter is active, the trigger is a `button`, named through
+   *   `aria-labelledby`. The chain ends at this span, so the name carries the
+   *   value.
+   * - Inline styles hide it, never `hidden` or `aria-hidden`: a hidden
+   *   descendant adds nothing to the combobox value.
+   * - Kept in sync by `commitTriggerContentToDom`.
    * @group DOM elements
    */
   protected readonly triggerValueEl: HTMLElement
+  /**
+   * The strip beside the trigger that holds the trigger's controls: the tag
+   * chips in tags mode, then the clear button while `clearable` is on.
+   * - `null` when neither setting asks for a control. Both settings are
+   *   frozen at construction, so whether the strip exists never changes.
+   * - The controls sit here, not inside the trigger. Inside a `combobox`
+   *   their names would enter the value, and a `button` gives its children
+   *   no roles.
+   * - In tags mode it has `role="toolbar"`, named by
+   *   `uiTranslationPack.triggerButtonsAriaLabel`. A lone clear button needs
+   *   no toolbar, so the strip has no role otherwise.
+   * - Only one of its buttons is a Tab stop, so Tab enters the strip once.
+   *   Left and Right Arrow, Home and End move focus between the buttons. In
+   *   right-to-left text, Left and Right swap.
+   * - While the select component is disabled, none of its buttons is a Tab
+   *   stop.
+   * - It carries `hidden` while nothing is chosen.
+   * - Focus entering it closes an open popup.
+   * @group DOM elements
+   */
+  public readonly triggerButtonsEl: HTMLElement | null
   /**
    * The outer popup wrapper.
    * - It holds the filter input, the header and footer slots, the no-results
@@ -1545,6 +1635,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private triggerArrowEl: HTMLElement
   /** The clear button once a trigger render has built it (`clearable` only), else `null`; every later trigger render swaps it through `createTriggerClearButtonEl` (or keeps it, if that override returns the same element). */
   private triggerClearButtonEl: HTMLElement | null = null
+  /** The tag-list container in the trigger buttons strip, or `null` while no chip shows; see `commitTagsElToDom`. */
+  private tagsEl: HTMLElement | null = null
   private positioner: Positioner | undefined
   /**
    * Whether the Popover API exists (feature-detected once per instance).
@@ -1778,19 +1870,23 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.syncColorScheme()
     }
 
-    this.triggerEl = this.createTriggerEl()
-    this.triggerContentEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerContentClass}`) as HTMLElement
-    this.triggerArrowEl = this.triggerEl.querySelector(`.${this.classIdMap.triggerArrowClass}`) as HTMLElement
-    // Hidden plain-text mirror of the current value, kept in sync by
-    // commitTriggerContentToDom. The filterable-mode aria-labelledby chain
-    // references THIS span (not the content span) so labelled controls in rich
-    // content (tag remove buttons) never enter the field's accessible name.
-    // A root-level sibling, NOT inside triggerEl: hidden-but-referenced text
-    // still names the field, while `triggerEl.textContent` stays exactly the
-    // visible content (no doubled text for consumers reading it).
-    this.triggerValueEl = document.createElement('span')
-    this.triggerValueEl.id = this.classIdMap.triggerValueId
-    this.triggerValueEl.hidden = true
+    // [wrapper: trigger (value text, content) | buttons strip | arrow]. The
+    // strip sits outside the trigger: inside a combobox a control's name
+    // would enter the value (triggerEl TSDoc).
+    this.triggerWrapperEl = this.createTriggerWrapperEl()
+    const trigger = this.createTriggerEl()
+    this.triggerEl = trigger.el
+    this.triggerValueEl = trigger.valueEl
+    this.triggerContentEl = trigger.contentEl
+    this.triggerButtonsEl = this.settings.clearable || this.isTriggerDisplayTags() ? this.createTriggerButtonsEl() : null
+    this.triggerArrowEl = document.createElement('span')
+    this.triggerArrowEl.className = this.classIdMap.triggerArrowClass
+    this.triggerWrapperEl.append(this.triggerEl)
+    if (this.triggerButtonsEl !== null) {
+      this.triggerWrapperEl.append(this.triggerButtonsEl)
+      this.syncTriggerButtonsNameToDom()
+    }
+    this.triggerWrapperEl.append(this.triggerArrowEl)
 
     this.popupEl = this.createPopupEl()
     this.popupListEl = this.createPopupListEl()
@@ -1851,9 +1947,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.popoverSupported = typeof this.popupEl.showPopover === 'function'
     if (this.popoverSupported) { this.popupEl.setAttribute('popover', 'manual') }
 
-    this.rootEl.append(this.triggerEl, this.triggerValueEl, this.popupEl)
+    this.rootEl.append(this.triggerWrapperEl, this.popupEl)
 
-    this.triggerEl.addEventListener('click', () => this.toggle())
+    // A press anywhere in the box toggles the popup; the strip's buttons stop
+    // their own clicks.
+    this.triggerWrapperEl.addEventListener('click', () => this.toggle())
+    this.triggerWrapperEl.addEventListener('mousedown', (ev) => this.handleTriggerWrapperMousedown(ev))
     this.triggerEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
     this.attachFocusListeners()
     // Hold DOM focus on the combobox host: a mousedown anywhere in the popup - an
@@ -1924,10 +2023,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * the elements that carry it. Runs with `syncFilterModeToDom` (constructor +
    * every open) because the trigger's wiring depends on the mode:
    * - Trigger, filter inactive (`role="combobox"`): the name directly; the
-   *   combobox VALUE already comes from the trigger content.
+   *   combobox VALUE already comes from the hidden value span inside it.
    * - Trigger, filter active (`role="button"`): a button's name would
    *   otherwise be its content (the current value) with no field name, so
-   *   `aria-labelledby` chains label + content span. With only `ariaLabel`
+   *   `aria-labelledby` chains label + value span. With only `ariaLabel`
    *   there is no label element to reference, so the chain starts at the
    *   trigger itself - the accname algorithm substitutes its `aria-label`.
    * - Filter input: the field name replaces the `uiTranslationPack.filterInputAriaLabel`
@@ -2006,7 +2105,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // strand the outside-click / focusout / scroll / resize handlers with the
     // control already reporting itself closed (destroy() -> close() then early-
     // returns and cannot recover them).
-    if (isAnchorHidden(this.triggerEl)) { return }
+    if (isAnchorHidden(this.triggerWrapperEl)) { return }
     this.syncColorScheme()
     const restoreWindowScroll = this.captureWindowScroll()
     this.opened = true
@@ -2016,7 +2115,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.filterActive = this.computeFilterActive()
     this.syncFilterModeToDom()
     this.triggerEl.setAttribute('aria-expanded', 'true')
-    this.triggerEl.setAttribute('data-state', 'open')
+    this.triggerWrapperEl.setAttribute('data-state', 'open')
     this.rootEl.classList.add(this.classIdMap.openClass)
     if (this.filterActive) {
       this.query = ''
@@ -2066,7 +2165,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.activeItemReportSuspendDepth++
     try {
       this.renderPopupList()
-      this.positioner = createPositioner(this.triggerEl, this.popupEl, {
+      this.positioner = createPositioner(this.triggerWrapperEl, this.popupEl, {
         onHide: () => this.closeWithReason('hidden'),
         widthPolicy: this.settings.popupWidthPolicy,
         innerScrollEl: this.popupListEl,
@@ -2115,7 +2214,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.opened = false
     this.transitionGeneration++
     this.triggerEl.setAttribute('aria-expanded', 'false')
-    this.triggerEl.setAttribute('data-state', 'closed')
+    this.triggerWrapperEl.setAttribute('data-state', 'closed')
     this.syncTriggerTabindex()
     if (shouldReturnFocus) {
       // A focus handler on the trigger may call open(); refuse it until the
@@ -2293,8 +2392,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Whether the popup is currently open.
    * - Read through a method, like `isDisabled()`.
    * - The same state is mirrored on the DOM as CSS hooks:
-   *   `data-state="open|closed"` on the trigger, `classIdMap.openClass` on
-   *   the root.
+   *   `data-state="open|closed"` on the trigger wrapper,
+   *   `classIdMap.openClass` on the root.
    * @group Open & close
    */
   public isOpened(): boolean {
@@ -2352,6 +2451,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.settings.placeholder = this.explicitPlaceholder ?? pack.triggerPlaceholder
     // Pack-owned attributes rerender() cannot reach:
     this.syncFieldNameToDom()
+    this.syncTriggerButtonsNameToDom()
     if (pack.filterInputPlaceholder !== null) {
       this.filterInputEl.placeholder = pack.filterInputPlaceholder
     } else {
@@ -2411,6 +2511,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (this.filterActive) { this.recomputeFilteredItems() }
     if (this.opened) { this.renderPopupList() }
     this.onItemsChanged()
+    // The variants' onItemsChanged renders the trigger content without
+    // renderTrigger, so the chips may have changed.
+    this.syncTriggerButtonsToDom()
     // The rows rendered above may have read chosen objects that the variant's
     // reconciliation just swapped for compare-equal reloads (no change fires).
     this.replacePopupListActionRowElsInDom()
@@ -2433,10 +2536,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Enable or disable the whole control. Disabled: the trigger gets
-   * `aria-disabled` + `data-disabled` (never the native `disabled` attribute,
-   * which would suppress the hover / focus events a tooltip needs), opening is
-   * blocked, an open popup closes, and the trigger leaves the tab order unless
-   * `focusableWhenDisabled` is set. Stored as state, mirroring `setItems` /
+   * `aria-disabled` and the trigger wrapper `data-disabled` (never the native
+   * `disabled` attribute, which would suppress the hover / focus events a
+   * tooltip needs), opening is blocked, an open popup closes, the trigger
+   * leaves the tab order unless `focusableWhenDisabled` is set, and no button
+   * of the trigger buttons strip is a Tab stop. Stored as state, mirroring `setItems` /
    * `setChosenItems` (this design keeps mutable state out of settings).
    * @group Disabling
    */
@@ -2506,16 +2610,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (this.rootEl.getAttribute(COLOR_SCHEME_ATTRIBUTE) !== scheme) { this.rootEl.setAttribute(COLOR_SCHEME_ATTRIBUTE, scheme) }
   }
 
-  /** Reflect `this.disabled` onto the trigger's ARIA / data / tabindex. */
+  /** Reflect `this.disabled` onto the trigger's ARIA and tabindex, the wrapper's `data-disabled` and the strip's Tab stop. */
   private syncDisabledStateToDom(): void {
     if (this.disabled) {
       this.triggerEl.setAttribute('aria-disabled', 'true')
-      this.triggerEl.setAttribute('data-disabled', 'true')
+      this.triggerWrapperEl.setAttribute('data-disabled', 'true')
     } else {
       this.triggerEl.removeAttribute('aria-disabled')
-      this.triggerEl.setAttribute('data-disabled', 'false')
+      this.triggerWrapperEl.setAttribute('data-disabled', 'false')
     }
     this.syncTriggerTabindex()
+    this.syncTriggerButtonsToDom()
   }
 
   /**
@@ -2570,9 +2675,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Orchestrator: composes the clear-button rebuild + `renderTriggerContent` +
-   * `renderTriggerArrow` to (re)build the whole trigger from state; touches no
-   * DOM directly. Subclasses normally override {@link renderTriggerContent},
-   * not this.
+   * `renderTriggerArrow` to (re)build the whole trigger from state, then
+   * brings the trigger buttons strip in line (its `hidden` flag and its Tab
+   * stop); touches no DOM directly. Subclasses normally override
+   * {@link renderTriggerContent}, not this.
    * - Runs on every change of the chosen value, the placeholder or the pack.
    * - `rerender()` runs it too.
    * - While `clearable` is on, the first run builds the clear button and every
@@ -2608,21 +2714,23 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.replaceTriggerClearButtonElInDom()
     this.renderTriggerContent()
     this.renderTriggerArrow()
+    this.syncTriggerButtonsToDom()
   }
 
   /**
    * Write the trigger's content slot (`triggerContentEl`), replacing whatever
-   * was there; the sibling arrow slot is untouched. The single DOM-writing
-   * primitive behind every `renderTriggerContent` path.
+   * was there. The single DOM-writing primitive behind every
+   * `renderTriggerContent` path.
    * - `string` -> set as `textContent` (plain text, NOT parsed as HTML). Used
    *   for the default placeholder / `itemToString` text / count summary.
    * - `HTMLElement` -> inserted as-is via `replaceChildren`; caller owns the
    *   node. Used for whatever the `createTriggerContentElFn` setting returned.
-   * - Also mirrors the value into the hidden `triggerValueEl` (the accessible
-   *   name source): the string itself, else `plainTextValue`, else the
-   *   element's `textContent`. Pass `plainTextValue` whenever the element
-   *   contains labelled controls (tag remove buttons) or icon-only content -
-   *   the mirror is what AT announces as the field's value.
+   * - Also writes the hidden `triggerValueEl`, the value assistive technology
+   *   reads: `plainTextValue` when given, else the string itself, else the
+   *   element's `textContent`.
+   * - Pass `plainTextValue` whenever the content shows other text than the
+   *   value, or none: icon-only content, or the empty content of tags mode,
+   *   whose chips sit in the trigger buttons strip.
    * Called by `renderTriggerContent` - the base default and the `LLSelectSingle`
    * / `LLSelectMultiple` overrides.
    * @group Subclassing: rendering
@@ -2630,22 +2738,21 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected commitTriggerContentToDom(content: HTMLElement | string, plainTextValue?: string): void {
     if (typeof content === 'string') {
       this.triggerContentEl.textContent = content
-      this.triggerValueEl.textContent = content
     } else {
       this.triggerContentEl.replaceChildren(content)
-      this.triggerValueEl.textContent = plainTextValue ?? content.textContent
     }
+    this.triggerValueEl.textContent = plainTextValue ?? (typeof content === 'string' ? content : content.textContent)
   }
 
   /**
-   * Mirror the empty/filled state onto the trigger's `data-empty` attribute
-   * (`"true"` when `isEmpty()`, else `"false"`). A CSS / AT styling hook,
-   * independent of the rendered content. Called by the subclass
+   * Mirror the empty/filled state onto the trigger wrapper's `data-empty`
+   * attribute (`"true"` when `isEmpty()`, else `"false"`). A CSS styling
+   * hook, independent of the rendered content. Called by the subclass
    * `renderTriggerContent` overrides.
    * @group Subclassing: rendering
    */
   protected syncEmptyStateToDom(): void {
-    this.triggerEl.setAttribute('data-empty', this.isEmpty() ? 'true' : 'false')
+    this.triggerWrapperEl.setAttribute('data-empty', this.isEmpty() ? 'true' : 'false')
   }
 
   /**
@@ -2664,7 +2771,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * display the chosen value(s); this base default commits the placeholder and
    * the empty flag. Always write via `commitTriggerContentToDom` (content) and
    * `syncEmptyStateToDom` (the `data-empty` flag), never `triggerContentEl`
-   * directly, so the sibling arrow slot is always preserved.
+   * directly, so the hidden value text stays in step with what shows.
    * @group Subclassing: rendering
    */
   protected renderTriggerContent(): void {
@@ -3968,7 +4075,15 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     return -1
   }
 
-  private createTriggerEl(): HTMLElement {
+  private createTriggerWrapperEl(): HTMLElement {
+    const el = document.createElement('div')
+    el.className = this.classIdMap.triggerWrapperClass
+    el.setAttribute('data-state', 'closed')
+    el.setAttribute('data-disabled', 'false')
+    return el
+  }
+
+  private createTriggerEl(): { el: HTMLElement; valueEl: HTMLElement; contentEl: HTMLElement } {
     const el = document.createElement('div')
     el.id = this.classIdMap.triggerId
     el.className = this.classIdMap.triggerClass
@@ -3980,32 +4095,175 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // syncFilterModeToDom, which the constructor runs after building the
     // trigger.
     el.setAttribute('aria-expanded', 'false')
-    el.setAttribute('data-state', 'closed')
-    el.setAttribute('data-disabled', 'false')
-    // Child slots: content (text/tags), optional clear button, arrow. Clear and
-    // arrow are own slots so they never collide with createTriggerContentElFn.
-    const content = document.createElement('span')
-    content.id = this.classIdMap.triggerContentId
-    content.className = this.classIdMap.triggerContentClass
-    el.append(content)
-    // The clear button is not built here: the first trigger render builds it
-    // (replaceTriggerClearButtonElInDom), so it is built once, not once here
-    // and again at that render.
-    const arrow = document.createElement('span')
-    arrow.className = this.classIdMap.triggerArrowClass
-    el.append(arrow)
-    return el
+    const valueEl = document.createElement('span')
+    valueEl.id = this.classIdMap.triggerValueId
+    hideVisually(valueEl)
+    const contentEl = document.createElement('span')
+    contentEl.id = this.classIdMap.triggerContentId
+    contentEl.className = this.classIdMap.triggerContentClass
+    contentEl.setAttribute('aria-hidden', 'true')
+    el.append(valueEl, contentEl)
+    return { el, valueEl, contentEl }
   }
 
   /**
-   * Build the clear (x) button for the `clearable` trigger slot.
+   * The trigger buttons strip, empty: the first trigger render builds the
+   * clear button (`replaceTriggerClearButtonElInDom`), and each trigger
+   * content render of tags mode builds the chips (`commitTagsElToDom`).
+   */
+  private createTriggerButtonsEl(): HTMLElement {
+    const el = document.createElement('div')
+    el.className = this.classIdMap.triggerButtonsClass
+    // Tags mode only: a lone clear button needs no toolbar. Static, since
+    // triggerDisplay is frozen; a role swap at runtime confuses assistive
+    // technology.
+    if (this.isTriggerDisplayTags()) { el.setAttribute('role', 'toolbar') }
+    el.hidden = true
+    el.addEventListener('keydown', (ev) => this.handleTriggerButtonsKeydown(ev))
+    // Tab from the trigger or Shift+Tab from the filter input lands here,
+    // inside the root, so the focusout guard keeps the popup open; the
+    // popup belongs to the combobox, which focus just left.
+    el.addEventListener('focusin', () => { if (this.opened) { this.closeWithReason('blur') } })
+    return el
+  }
+
+  /** The strip's `aria-label`, while it is a toolbar. Pack text: the constructor and `setUiTranslationPack` run it. */
+  private syncTriggerButtonsNameToDom(): void {
+    const el = this.triggerButtonsEl
+    if (el === null || !this.isTriggerDisplayTags()) { return }
+    el.setAttribute('aria-label', this.settings.uiTranslationPack.triggerButtonsAriaLabel)
+  }
+
+  /**
+   * Whether the trigger shows one chip per chosen item: the multiple select
+   * component's `triggerDisplay: 'tags'`.
+   * - The base constructor calls it to decide whether the trigger buttons
+   *   strip exists and whether it is a toolbar.
+   * - Base default `false`; `LLSelectMultiple` reads its setting.
+   * @internal
+   */
+  protected isTriggerDisplayTags(): boolean {
+    return false
+  }
+
+  /** The buttons of the trigger buttons strip, in DOM order: the chips' remove buttons, then the clear button. */
+  private getTriggerButtonEls(): HTMLElement[] {
+    return this.triggerButtonsEl === null ? [] : Array.from(this.triggerButtonsEl.querySelectorAll<HTMLElement>('button'))
+  }
+
+  /**
+   * Bring the trigger buttons strip in line with the state, after each change
+   * of its buttons, of the chosen state or of the disabled state.
+   * - It carries `hidden` while nothing is chosen or no button is in it.
+   *   Before hiding it, focus inside it moves to the trigger: hiding a
+   *   focused element drops focus to `<body>`.
+   * - One button is the Tab stop: the one holding focus, else the first
+   *   that is not `aria-disabled`, else the first. While the strip is hidden
+   *   or the select component is disabled, none is.
+   */
+  private syncTriggerButtonsToDom(): void {
+    const strip = this.triggerButtonsEl
+    if (strip === null) { return }
+    const buttons = this.getTriggerButtonEls()
+    const hide = this.isEmpty() || buttons.length === 0
+    if (hide && this.isFocused(strip)) { this.triggerEl.focus({ preventScroll: true }) }
+    strip.hidden = hide
+    const focused = this.focusedElementIn(strip)
+    const stop = buttons.find((b) => focused !== null && b.contains(focused))
+      ?? buttons.find((b) => b.getAttribute('aria-disabled') !== 'true')
+      ?? buttons[0]
+    for (const b of buttons) { b.tabIndex = !hide && !this.disabled && b === stop ? 0 : -1 }
+  }
+
+  /**
+   * Left / Right Arrow, Home and End inside the trigger buttons strip: move
+   * focus to the previous, next, first or last button and make it the Tab
+   * stop. Clamps at both ends. Left and Right swap in right-to-left text.
+   * Keys with Alt, Ctrl or Meta stay with the browser.
+   */
+  private handleTriggerButtonsKeydown(ev: KeyboardEvent): void {
+    if (isImeKeydown(ev) || ev.altKey || ev.ctrlKey || ev.metaKey || this.disabled) { return }
+    const buttons = this.getTriggerButtonEls()
+    const t = this.eventTargetNode(ev)
+    const at = buttons.findIndex((b) => t instanceof Node && b.contains(t))
+    if (at < 0) { return }
+    const rtl = window.getComputedStyle(this.triggerButtonsEl!).direction === 'rtl'
+    let next: number
+    switch (ev.key) {
+      case 'ArrowLeft': next = rtl ? at + 1 : at - 1; break
+      case 'ArrowRight': next = rtl ? at - 1 : at + 1; break
+      case 'Home': next = 0; break
+      case 'End': next = buttons.length - 1; break
+      default: return
+    }
+    ev.preventDefault()
+    const target = buttons[Math.max(0, Math.min(buttons.length - 1, next))]!
+    for (const b of buttons) { b.tabIndex = b === target ? 0 : -1 }
+    target.focus({ preventScroll: true })
+  }
+
+  /**
+   * Focus the trigger for a mousedown in the trigger wrapper outside the
+   * trigger: the wrapper is not focusable, so the press would move focus to
+   * `<body>`, and the focusout guard would close an open popup.
+   * - A press on the trigger itself takes focus natively.
+   * - A mousedown already prevented is left alone. The strip's buttons
+   *   prevent theirs to keep focus where it is.
+   */
+  private handleTriggerWrapperMousedown(ev: MouseEvent): void {
+    const t = this.eventTargetNode(ev)
+    if (ev.defaultPrevented || !(t instanceof Node) || this.triggerEl.contains(t)) { return }
+    ev.preventDefault()
+    this.triggerEl.focus({ preventScroll: true })
+  }
+
+  /**
+   * Put the tag-list container into the trigger buttons strip, before the
+   * clear button, in place of the previous one; `null` removes it.
+   * - Called by `LLSelectMultiple`'s `renderTriggerContent` on every trigger
+   *   content render.
+   * - If a remove button of the previous container held focus, the remove
+   *   button at the same position in the new one gets it, else the last one,
+   *   else the trigger. So removing a chip by keyboard focuses the next
+   *   chip's button, and removing the last chip focuses the trigger.
+   * - If focus sat elsewhere in the previous container, the trigger gets it.
+   * - Focus moves before the previous container leaves the DOM: removing a
+   *   focused element first drops focus to `<body>`, which the focusout
+   *   guard reads as focus leaving the select component.
+   * @internal
+   */
+  protected commitTagsElToDom(el: HTMLElement | null): void {
+    const strip = this.triggerButtonsEl
+    if (strip === null) { return }
+    const old = this.tagsEl
+    const focused = old === null ? null : this.focusedElementIn(old)
+    if (el !== null) {
+      if (old !== null) { old.before(el) } else { strip.prepend(el) }
+    }
+    this.tagsEl = el
+    if (old !== null && focused !== null) {
+      const at = Array.from(old.querySelectorAll('button')).findIndex((b) => b.contains(focused))
+      const buttons = el === null ? [] : Array.from(el.querySelectorAll<HTMLElement>('button'))
+      const target = (at < 0 ? undefined : buttons[Math.min(at, buttons.length - 1)]) ?? this.triggerEl
+      target.focus({ preventScroll: true })
+    }
+    old?.remove()
+  }
+
+  /**
+   * Build the clear (x) button, the last button of the trigger buttons strip
+   * (`clearable`).
    * - The library owns the button, its click (stops propagation so it never
    *   toggles the popup, then `clearSelection`; a no-op while the control is
    *   disabled) and its `aria-label` (text from
    *   `uiTranslationPack.triggerClearButtonAriaLabel`).
+   * - A click while focus is in the strip moves focus to the trigger first,
+   *   so a clear by keyboard leaves focus on the trigger.
+   * - The strip owns its `tabindex`: one button of the strip is the Tab stop.
    * - `createTriggerClearButtonContentElFn` optionally fills the icon; else the
    *   theme's CSS glyph draws it.
-   * - The theme hides the button via `data-empty` while nothing is chosen.
+   * - The library hides the strip, and with it the button, while nothing is
+   *   chosen.
    * - It runs on every trigger render (`renderTrigger`).
    * - The first run builds the button.
    * - For `LLSelectSingle` / `LLSelectMultiple` and their subclasses, that
@@ -4036,10 +4294,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     btn.setAttribute('aria-label', this.settings.uiTranslationPack.triggerClearButtonAriaLabel)
     const icon = this.createTriggerClearButtonContentEl()
     if (icon !== null) { btn.appendChild(icon) }
-    // Keep DOM focus where it is, as the chip's remove button does: a
-    // mousedown would focus the button, the click rebuilds it with the focus
-    // handed over, and the theme then hides it (`data-empty`), dropping focus
-    // to <body> and reporting a blur for a click inside the select component.
+    // Keep DOM focus where it is, as the chip's remove button does: a pointer
+    // press leaves focus on the trigger or the filter input. A mousedown would
+    // focus the button, and focus entering the trigger buttons strip closes an
+    // open popup.
     btn.addEventListener('mousedown', (ev) => { ev.preventDefault() })
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
@@ -4047,7 +4305,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // setters still work), and the clear button is
       // reachable while closed - open() and keydown are already guarded.
       if (this.isDisabled()) { return }
-      this.focusTriggerIfUnfocused()
+      if (this.triggerButtonsEl !== null && this.isFocused(this.triggerButtonsEl)) {
+        this.triggerEl.focus({ preventScroll: true })
+      } else {
+        this.focusTriggerIfUnfocused()
+      }
       // The focus may run onFocus; a listener that disabled or destroyed the
       // control leaves nothing for this click to clear. One that opened the
       // popup or loaded items does not change what a clear means.
@@ -4187,7 +4449,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const next = this.createTriggerClearButtonEl()
     this.triggerClearButtonEl = next
     if (old === null) {
-      this.triggerArrowEl.before(next)
+      // clearable guarantees the strip.
+      this.triggerButtonsEl!.append(next)
       return
     }
     if (next === old) {

@@ -27,18 +27,17 @@ function app() {
 
 test('an on-screen trigger opens and renders rows', () => {
   const a = app()
-  const trigger = a.$('.llselect-trigger')
-  withRect(trigger, { top: 10, left: 10, bottom: 40, right: 210 })
-  trigger.click()
+  // The positioner measures the trigger wrapper, the box the themes draw.
+  withRect(a.$('.llselect-trigger-wrapper'), { top: 10, left: 10, bottom: 40, right: 210 })
+  a.$('.llselect-trigger').click()
   assert.equal(a.$$('.llselect-popup-list-row').length, 2)
 })
 
 test('an off-screen trigger does NOT open - the trap the benchmark stage fell into', () => {
   const a = app()
-  const trigger = a.$('.llselect-trigger')
   // What `position: absolute; left: -9999px` actually produces.
-  withRect(trigger, { top: 0, left: -9999, bottom: 30, right: -9699 })
-  trigger.click()
+  withRect(a.$('.llselect-trigger-wrapper'), { top: 0, left: -9999, bottom: 30, right: -9699 })
+  a.$('.llselect-trigger').click()
   assert.equal(a.$$('.llselect-popup-list-row').length, 0,
     'llselect opened an off-screen trigger; if this changed, the benchmark stage rules can relax')
 })

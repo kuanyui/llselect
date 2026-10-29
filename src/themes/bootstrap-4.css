@@ -10,19 +10,19 @@
   --llselect-control-fg: #495057; /* text of the trigger and of the filter input */
   --llselect-fg-soft: #6c757d; /* the arrow and the group labels */
   --llselect-fg-muted: #6c757d; /* the placeholder, the no-results text, the clear button at rest */
-  --llselect-bg: #fff; /* surface of the trigger, the popup, the filter input, the pinned rows */
+  --llselect-bg: #fff; /* surface of the trigger wrapper, the popup, the filter input, the pinned rows */
   --llselect-bg-muted: #f8f9fa; /* surface of the group labels */
-  --llselect-trigger-line: #ced4da; /* border of the trigger */
-  --llselect-trigger-hover-line: var(--llselect-trigger-line); /* border of the hovered trigger */
+  --llselect-trigger-wrapper-line: #ced4da; /* border of the trigger wrapper */
+  --llselect-trigger-wrapper-hover-line: var(--llselect-trigger-wrapper-line); /* border of the hovered trigger wrapper */
   --llselect-popup-line: rgba(0, 0, 0, 0.15); /* border of the popup */
   --llselect-filter-line: #ced4da; /* border of the filter input */
   --llselect-divider: rgba(0, 0, 0, 0.12); /* dividers before and after action rows and the choose-all row; header, footer and pinned-row edges */
-  --llselect-focus-line: #80bdff; /* border (vanilla: outline) of the focused or open trigger */
+  --llselect-focus-line: #80bdff; /* border (vanilla: outline) of the trigger wrapper while focus is in it or the popup is open; outline of a focused trigger button */
   --llselect-filter-focus-line: #80bdff; /* border of the focused filter input */
-  --llselect-focus-ring: rgba(0, 123, 255, 0.25); /* ring shadow of the focused or open trigger */
+  --llselect-focus-ring: rgba(0, 123, 255, 0.25); /* ring shadow of the trigger wrapper while focus is in it or the popup is open */
   --llselect-filter-focus-ring: rgba(0, 123, 255, 0.25); /* ring shadow of the focused filter input */
   --llselect-shadow: rgba(0, 0, 0, 0.175); /* color of the popup shadow */
-  --llselect-control-shadow: transparent; /* color of the inset shadow of the trigger */
+  --llselect-control-shadow: transparent; /* color of the inset shadow of the trigger wrapper */
   --llselect-row-fg: var(--llselect-fg); /* text of a row */
   --llselect-row-hover-bg: #e9ecef; /* surface of a hovered row */
   --llselect-row-hover-fg: #16181b; /* text of a hovered row */
@@ -61,13 +61,11 @@
 
 /* --- trigger (matches BS4 .form-control look) ---------------- */
 
-.llselect-trigger {
+.llselect-trigger-wrapper {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
   padding: 0.375rem 0.75rem;
-  border: 1px solid var(--llselect-trigger-line);
+  border: 1px solid var(--llselect-trigger-wrapper-line);
   border-radius: 0.25rem;
   background-color: var(--llselect-bg);
   color: var(--llselect-control-fg);
@@ -78,12 +76,18 @@
     box-shadow 0.15s ease-in-out;
 }
 
-.llselect-trigger:focus,
-.llselect-trigger:focus-visible,
-.llselect-trigger[data-state='open'] {
-  outline: 0;
+.llselect-trigger-wrapper:focus-within,
+.llselect-trigger-wrapper[data-state='open'] {
   border-color: var(--llselect-focus-line);
   box-shadow: 0 0 0 0.2rem var(--llselect-focus-ring);
+}
+
+/* The trigger takes focus; the wrapper draws the focus ring. */
+.llselect-trigger {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  outline: 0;
 }
 
 .llselect-trigger-content {
@@ -94,20 +98,21 @@
   white-space: nowrap;
 }
 
-.llselect-trigger[data-empty='true'] .llselect-trigger-content {
+.llselect-trigger-wrapper[data-empty='true'] .llselect-trigger-content {
   color: var(--llselect-fg-muted);
 }
 
 .llselect-trigger-arrow {
   display: inline-flex;
   align-items: center;
+  margin-inline-start: 0.5rem;
   color: var(--llselect-fg-soft);
   transition: transform 0.15s ease-in-out;
 }
 
 .llselect-trigger-arrow:empty { display: none; }
 
-.llselect-trigger[data-state='open'] .llselect-trigger-arrow {
+.llselect-trigger-wrapper[data-state='open'] .llselect-trigger-arrow {
   transform: rotate(180deg);
 }
 
@@ -265,14 +270,14 @@
 /* aria-disabled + data-disabled, never native `disabled`. Keep pointer
    events alive (no `pointer-events: none`) so hover/focus tooltips work. */
 
-.llselect-trigger[data-disabled='true'] {
+.llselect-trigger-wrapper[data-disabled='true'] {
   opacity: 0.55;
   cursor: not-allowed;
 }
 /* Embedded buttons are inert while the control is disabled: show not-allowed,
    not the pointer cursor their own rule sets. */
-.llselect-trigger[data-disabled='true'] .llselect-tag-remove-button,
-.llselect-trigger[data-disabled='true'] .llselect-trigger-clear-button {
+.llselect-trigger-wrapper[data-disabled='true'] .llselect-tag-remove-button,
+.llselect-trigger-wrapper[data-disabled='true'] .llselect-trigger-clear-button {
   cursor: not-allowed;
 }
 
@@ -285,16 +290,38 @@
   background: none;
 }
 
-/* --- tags (triggerDisplay: 'tags') --------------------------- */
-/* :has lets the trigger content wrap for chips (nowrap+ellipsis otherwise). */
+/* --- trigger buttons strip (clearable, triggerDisplay: 'tags') ---- */
+/* Beside the trigger, before the arrow. The library sets `hidden` on it
+   while nothing is chosen. */
 
-.llselect-trigger-content:has(.llselect-tags) {
-  white-space: normal;
-  overflow: visible;
+.llselect-trigger-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: 0.5rem;
 }
+
+.llselect-trigger-buttons[hidden] { display: none; }
+
+/* Tags mode, where the strip is a toolbar: the trigger is empty while chips
+   show, so the chips take the free space and start where the text would.
+   The large growth factor leaves the empty trigger next to nothing. */
+.llselect-trigger-buttons[role='toolbar'] {
+  flex: 9999 1 auto;
+  margin-inline-start: 0;
+}
+
+/* A pointer press never focuses these buttons, so :focus is keyboard focus. */
+.llselect-trigger-buttons button:focus {
+  outline: 2px solid var(--llselect-focus-line);
+  outline-offset: 1px;
+}
+
+/* --- tags (triggerDisplay: 'tags') --------------------------- */
 
 .llselect-tags {
   display: flex;
+  flex: 1 1 auto;
   flex-wrap: wrap;
   gap: 0.25rem;
 }
@@ -369,8 +396,6 @@
 
 .llselect-trigger-clear-button:hover { color: var(--llselect-clear-hover-fg); background-color: var(--llselect-clear-hover-bg); }
 
-.llselect-trigger[data-empty='true'] .llselect-trigger-clear-button { display: none; }
-
 /* --- dark color scheme ----------------------------------------------------- */
 /* The library resolves the scheme and writes data-llselect-color-scheme on the
    root (DESIGN.md "Color scheme (light / dark) in the themes"); hosts never
@@ -383,7 +408,7 @@
   --llselect-fg-muted: #adb5bd;
   --llselect-bg: #343a40;
   --llselect-bg-muted: #3d444b;
-  --llselect-trigger-line: #868e96;
+  --llselect-trigger-wrapper-line: #868e96;
   --llselect-popup-line: rgba(255, 255, 255, 0.4);
   --llselect-filter-line: #868e96;
   --llselect-divider: rgba(255, 255, 255, 0.12);
@@ -406,11 +431,11 @@
    on .llselect-root: the resolver reads the computed color-scheme there. The
    child combinator keeps an outer select component's scheme off the trigger
    and the popup of a select component nested in it. */
-.llselect-root[data-llselect-color-scheme='light'] > .llselect-trigger,
+.llselect-root[data-llselect-color-scheme='light'] > .llselect-trigger-wrapper,
 .llselect-root[data-llselect-color-scheme='light'] > .llselect-popup {
   color-scheme: light;
 }
-.llselect-root[data-llselect-color-scheme='dark'] > .llselect-trigger,
+.llselect-root[data-llselect-color-scheme='dark'] > .llselect-trigger-wrapper,
 .llselect-root[data-llselect-color-scheme='dark'] > .llselect-popup {
   color-scheme: dark;
 }

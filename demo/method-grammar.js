@@ -580,7 +580,7 @@ function runStory() {
 function describePointer(target) {
   const row = target.closest('[role="option"]')
   if (row !== null) { return `Click on the row "${row.textContent}"` }
-  if (target.closest('.llselect-trigger') !== null) { return 'Click on the trigger' }
+  if (target.closest('.llselect-trigger-wrapper') !== null) { return 'Click on the trigger' }
   return 'Click inside the select component'
 }
 

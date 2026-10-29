@@ -495,10 +495,10 @@ test("the shared pass: a select component replaced inside another root's write k
 // --- the themes' color-scheme rules on nested select components --------------
 
 // jsdom inherits no color-scheme, but it applies a stylesheet's rules to the
-// elements they match: enough to see which root's rule reaches the trigger
+// elements they match: enough to see which root's rule reaches the trigger wrapper
 // and the popup of a select component nested in another select component's
 // popup.
-test("every theme gives a nested select component's trigger and popup the scheme of its own root", () => {
+test("every theme gives a nested select component's trigger wrapper and popup the scheme of its own root", () => {
   for (const theme of ['vanilla', 'bootstrap-3', 'bootstrap-4', 'bootstrap-5', 'tailwind']) {
     setupDom()
     const style = document.createElement('style')
@@ -513,18 +513,18 @@ test("every theme gives a nested select component's trigger and popup the scheme
       const inner = new LLSelectSingle<string>(innerEl, { colorScheme: innerScheme })
       const where = `${theme}, ${innerScheme} inside ${outerScheme}`
       assert.ok(outer.popupEl.contains(innerEl), `${where}: the inner root sits in the outer popup`)
-      assert.equal(scheme(outer.triggerEl), outerScheme, `${where}: the outer trigger`)
+      assert.equal(scheme(outer.triggerWrapperEl), outerScheme, `${where}: the outer trigger wrapper`)
       assert.equal(scheme(outer.popupEl), outerScheme, `${where}: the outer popup`)
-      assert.equal(scheme(inner.triggerEl), innerScheme, `${where}: the inner trigger takes its own root's scheme`)
+      assert.equal(scheme(inner.triggerWrapperEl), innerScheme, `${where}: the inner trigger wrapper takes its own root's scheme`)
       assert.equal(scheme(inner.popupEl), innerScheme, `${where}: the inner popup takes its own root's scheme`)
     }
   }
 })
 
 // The computed values above hide a descendant light rule behind the dark rule,
-// which every theme writes later. Matching each rule against every trigger and
+// which every theme writes later. Matching each rule against every trigger wrapper and
 // popup pins both child combinators, whatever their order.
-test("every theme's color-scheme rules match a trigger or a popup only through its own root", () => {
+test("every theme's color-scheme rules match a trigger wrapper or a popup only through its own root", () => {
   for (const theme of ['vanilla', 'bootstrap-3', 'bootstrap-4', 'bootstrap-5', 'tailwind']) {
     setupDom()
     const style = document.createElement('style')
@@ -557,8 +557,8 @@ test("every theme's color-scheme rules match a trigger or a popup only through i
       const value = rule.style.getPropertyValue('color-scheme')
       for (const select of selects) {
         const own = select.rootEl.getAttribute(COLOR_SCHEME_ATTRIBUTE)
-        for (const el of [select.triggerEl, select.popupEl]) {
-          assert.equal(el.matches(rule.selectorText), own === value, `${theme}: "${rule.selectorText}" against a ${el === select.triggerEl ? 'trigger' : 'popup'} whose root is ${own ?? 'unset'}`)
+        for (const el of [select.triggerWrapperEl, select.popupEl]) {
+          assert.equal(el.matches(rule.selectorText), own === value, `${theme}: "${rule.selectorText}" against a ${el === select.triggerWrapperEl ? 'trigger wrapper' : 'popup'} whose root is ${own ?? 'unset'}`)
         }
       }
     }

@@ -104,16 +104,24 @@ test('popup contains the (hidden) filter input, the popup list, and the no-resul
   assert.equal(popupChildren[2]!.hidden, true)
 })
 
-test('trigger, hidden value span, and popup are children of rootEl in order', () => {
+test('the trigger wrapper and the popup are the children of rootEl, in order', () => {
   const inst = new TestSelect<string>(mount())
   const children = Array.from(inst.rootEl.children) as HTMLElement[]
-  assert.equal(children.length, 3)
-  assert.equal(children[0], inst.triggerEl)
-  // The accessible-name value mirror (docs/llm/A11Y.md "Accessible name"): root
-  // level so triggerEl.textContent stays the visible content only.
-  assert.equal(children[1]!.id, inst.classIdMap.triggerValueId)
-  assert.equal(children[1]!.hidden, true)
-  assert.equal(children[2], inst.popupEl)
+  assert.equal(children.length, 2)
+  assert.equal(children[0], inst.triggerWrapperEl)
+  assert.equal(children[1], inst.popupEl)
+  // [trigger, arrow]: no trigger buttons strip without clearable or tags mode.
+  const wrapped = Array.from(inst.triggerWrapperEl.children) as HTMLElement[]
+  assert.equal(wrapped.length, 2)
+  assert.equal(wrapped[0], inst.triggerEl)
+  assert.ok(wrapped[1]!.classList.contains(inst.classIdMap.triggerArrowClass))
+  assert.equal(inst.triggerButtonsEl, null)
+  // The trigger holds text only: the value text for assistive technology
+  // (docs/llm/A11Y.md "Accessible name"), then the visible content.
+  const inside = Array.from(inst.triggerEl.children) as HTMLElement[]
+  assert.equal(inside.length, 2)
+  assert.equal(inside[0]!.id, inst.classIdMap.triggerValueId)
+  assert.equal(inside[1], inst.triggerContentEl)
 })
 
 test('item elements do NOT carry a `title` attribute by default (avoids fighting third-party tooltip libs)', () => {
@@ -177,10 +185,10 @@ test('isOpened() reflects open/close/toggle and stays false on a disabled no-op 
   assert.equal(inst.isOpened(), false)
   inst.open()
   assert.equal(inst.isOpened(), true)
-  assert.equal(inst.triggerEl.getAttribute('data-state'), 'open')
+  assert.equal(inst.triggerWrapperEl.getAttribute('data-state'), 'open')
   inst.toggle()
   assert.equal(inst.isOpened(), false)
-  assert.equal(inst.triggerEl.getAttribute('data-state'), 'closed')
+  assert.equal(inst.triggerWrapperEl.getAttribute('data-state'), 'closed')
   inst.setDisabled(true)
   inst.open()
   assert.equal(inst.isOpened(), false)

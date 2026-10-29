@@ -9,6 +9,7 @@ export const he: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'חיפוש',
   filterInputPlaceholder: 'סינון (Esc לניקוי)',
   popupListNoResults: 'לא נמצאו תוצאות',
+  triggerButtonsAriaLabel: 'פעולות בחירה',
   triggerClearButtonAriaLabel: 'נקה בחירה',
   tagRemoveButtonAriaLabel: (itemText) => `הסר ${itemText}`,
   // Hebrew number agreement: singular past (nivchar) for 1, plural (nivcheru)

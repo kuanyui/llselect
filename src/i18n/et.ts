@@ -9,6 +9,7 @@ export const et: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Otsi',
   filterInputPlaceholder: 'Filtreeri (Esc tühjendab)',
   popupListNoResults: 'Tulemusi pole',
+  triggerButtonsAriaLabel: 'Valiku toimingud',
   triggerClearButtonAriaLabel: 'Tühjenda valik',
   tagRemoveButtonAriaLabel: (itemText) => `Eemalda ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

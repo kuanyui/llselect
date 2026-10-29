@@ -463,12 +463,12 @@ test('typeahead: a refused open empties the buffer', () => {
   // make the buffer "ba" and land on banana, the fix lands on apple.
   const sel = mountSelect(['zebra', 'apple', 'banana'])
   // Trigger parked above the viewport: open() refuses (hidden-anchor guard).
-  const rect = sel.triggerEl.getBoundingClientRect
-  sel.triggerEl.getBoundingClientRect = () =>
+  const rect = sel.triggerWrapperEl.getBoundingClientRect
+  sel.triggerWrapperEl.getBoundingClientRect = () =>
     ({ top: -100, left: 50, right: 250, bottom: -70, width: 200, height: 30, x: 50, y: -100, toJSON: () => ({}) }) as DOMRect
   fireKey(sel.triggerEl, 'b')
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
-  sel.triggerEl.getBoundingClientRect = rect
+  sel.triggerWrapperEl.getBoundingClientRect = rect
   fireKey(sel.triggerEl, 'a')
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
   assert.equal(focusedLabel(sel), 'apple')

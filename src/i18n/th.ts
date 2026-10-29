@@ -9,6 +9,7 @@ export const th: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'ค้นหา',
   filterInputPlaceholder: 'กรอง (กด Esc เพื่อล้าง)',
   popupListNoResults: 'ไม่พบผลลัพธ์',
+  triggerButtonsAriaLabel: 'การดำเนินการกับรายการที่เลือก',
   triggerClearButtonAriaLabel: 'ล้างการเลือก',
   tagRemoveButtonAriaLabel: (itemText) => `นำ ${itemText} ออก`,
   triggerCountSummary: (chosenCount, totalCount) =>

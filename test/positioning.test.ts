@@ -186,16 +186,16 @@ test('fit-content: omitted direction defaults to ltr (left edges aligned)', () =
   assert.equal(r.left, 700)
 })
 
-test('match-trigger (opt-in): width pinned to anchor, no horizontal shift', () => {
-  // Anchor near right edge with `match-trigger` should NOT shift left;
+test('match-trigger-wrapper (opt-in): width pinned to anchor, no horizontal shift', () => {
+  // Anchor near right edge with `match-trigger-wrapper` should NOT shift left;
   // popup stays the same width as the trigger.
   const r = computePosition({
     anchorRect: { top: 100, bottom: 130, left: 900, right: 1000, width: 100, height: 30 },
     viewportWidth: 1024,
     viewportHeight: 768,
     floatingHeight: 200,
-    widthPolicy: 'match-trigger',
-    floatingNaturalWidth: 999,  // ignored for match-trigger
+    widthPolicy: 'match-trigger-wrapper',
+    floatingNaturalWidth: 999,  // ignored for match-trigger-wrapper
   })
   assert.equal(r.width, 100)
   assert.equal(r.left, 900)
@@ -311,7 +311,7 @@ test('LLSelectSingle.open() applies positioner; close() removes it', () => {
   const mount = document.getElementById('mount')!
   const sel = new LLSelectSingle<string>(mount)
   sel.setItems(['a', 'b'])
-  withMockedRect(sel.triggerEl, { top: 0, left: 0, right: 200, bottom: 30, width: 200, height: 30 })
+  withMockedRect(sel.triggerWrapperEl, { top: 0, left: 0, right: 200, bottom: 30, width: 200, height: 30 })
 
   sel.open()
   assert.equal(sel.popupEl.hidden, false)
@@ -486,12 +486,12 @@ test('LLSelectSingle auto-closes when trigger is scrolled out of its scroll cont
 
   const sel = new LLSelectSingle<string>(mount)
   sel.setItems(['a', 'b'])
-  withMockedRect(sel.triggerEl, { top: 150, left: 0, right: 200, bottom: 180, width: 200, height: 30 })
+  withMockedRect(sel.triggerWrapperEl, { top: 150, left: 0, right: 200, bottom: 180, width: 200, height: 30 })
   sel.open()
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
 
   // Combobox is scrolled above the container's visible area.
-  withMockedRect(sel.triggerEl, { top: 50, left: 0, right: 200, bottom: 80, width: 200, height: 30 })
+  withMockedRect(sel.triggerWrapperEl, { top: 50, left: 0, right: 200, bottom: 80, width: 200, height: 30 })
   window.dispatchEvent(new Event('scroll'))
 
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
@@ -503,12 +503,12 @@ test('LLSelectSingle auto-closes when trigger scrolls fully out of viewport', ()
   const sel = new LLSelectSingle<string>(mount)
   sel.setItems(['a', 'b'])
 
-  withMockedRect(sel.triggerEl, { top: 100, left: 0, right: 200, bottom: 130, width: 200, height: 30 })
+  withMockedRect(sel.triggerWrapperEl, { top: 100, left: 0, right: 200, bottom: 130, width: 200, height: 30 })
   sel.open()
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
 
   // Anchor moves fully above the viewport (e.g. user scrolled it out of view).
-  withMockedRect(sel.triggerEl, { top: -100, left: 0, right: 200, bottom: -70, width: 200, height: 30 })
+  withMockedRect(sel.triggerWrapperEl, { top: -100, left: 0, right: 200, bottom: -70, width: 200, height: 30 })
   window.dispatchEvent(new Event('scroll'))
 
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
@@ -659,7 +659,7 @@ test('open() on an out-of-view trigger is a no-op and attaches no listeners', ()
   sel.setItems(['a', 'b'])
   // Trigger fully above the viewport (bottom < 0): the positioner's initial
   // placement would have hidden it re-entrantly under the old code.
-  sel.triggerEl.getBoundingClientRect = () =>
+  sel.triggerWrapperEl.getBoundingClientRect = () =>
     ({ top: -100, left: 50, right: 250, bottom: -70, width: 200, height: 30, x: 50, y: -100, toJSON: () => ({}) }) as DOMRect
   sel.open()
   // Clean no-op: never reported open, fired no callbacks, popup stays hidden.

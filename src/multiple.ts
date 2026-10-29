@@ -153,12 +153,13 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
    *   the library still owns the chip container + the remove (x) button + aria.
    * - `null` (setting default, or returned for an item) = plain text from
    *   `itemToString`.
-   * - The remove button's accessible name comes from
-   *   `itemToTagRemoveButtonAriaLabel` (default `Remove <itemToString>`) -
-   *   that is what AT is guaranteed to announce. The chip is a generic `<span>` (ARIA prohibits naming it), so
-   *   for icon-only content include your own (visually hidden) text if the
-   *   chip should be announced as more than its remove button. See
-   *   `docs/llm/A11Y.md` "Tags".
+   * - The library sets `aria-hidden="true"` on the element you return. The
+   *   chip sits in the trigger buttons strip, a toolbar in which only the
+   *   buttons speak. The item reaches assistive technology through the
+   *   trigger's value text and through the remove button's name, from
+   *   `itemToTagRemoveButtonAriaLabel` (default `Remove <itemToString>`).
+   * - So put no control in the element, and no text meant only for screen
+   *   readers. See `docs/llm/A11Y.md` "Tags".
    * - The library sets the item's `lang` from `itemToLangFn` on the element
    *   you return, overwriting yours, when that function returns a code; it
    *   never removes the attribute.
@@ -168,8 +169,9 @@ export interface LLSelectMultipleSettings<T, GroupKey = string> extends LLSelect
   /**
    * Icon ELEMENT of each tag's remove (x) button in `'tags'` mode, mirroring
    * `createTriggerClearButtonContentElFn` (the clear button's icon hook). The library always owns the
-   * button, its click (removes the item + `stopPropagation`), `tabindex="-1"`, and
-   * the `aria-label` accessible name (from `itemToTagRemoveButtonAriaLabel`);
+   * button, its click (removes the item + `stopPropagation`), its `tabindex`
+   * (one button of the trigger buttons strip is the Tab stop), and the
+   * `aria-label` accessible name (from `itemToTagRemoveButtonAriaLabel`);
    * this only fills the decorative icon.
    * - Called once per chosen item on **every** trigger content render (`renderTriggerContent`: every full trigger render, plus every `setItems`) while `triggerDisplay` is `'tags'`, unless `createTriggerContentElFn` returns an element; nothing is kept for a later call.
    * - Return an `HTMLElement` / `SVGElement`: appended inside the button as its icon.
@@ -661,14 +663,16 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
 
   /**
    * Orchestrator: composes `syncEmptyStateToDom` + `commitTriggerContentToDom`
-   * to (re)build the trigger from state; touches no DOM directly. Default text
-   * is a count summary; override (or pass the `createTriggerContentElFn`
-   * setting) to display tags / custom markup / etc.
+   * + `commitTagsElToDom` to (re)build the trigger from state; touches no DOM
+   * directly. Default text is a count summary; override (or pass the
+   * `createTriggerContentElFn` setting) to display custom markup.
    *
    * - If 0 items are chosen, the text is `placeholder`.
    * - If n > 0, the text is `uiTranslationPack.triggerCountSummary(n, total)`
    *   (English default: `"n / total selected"`, or `"All n selected"` when
    *   all are chosen).
+   * - In `'tags'` mode the chips from `createTagsEl` go into the trigger
+   *   buttons strip, and the content slot stays empty while they show.
    * @group Subclassing: rendering
    */
   protected override renderTriggerContent(): void {
@@ -685,22 +689,36 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     const mirrorLang = custom === null && this.settings.triggerDisplay === 'tags' && chosenCount === 1 ? this.itemToLang(this.chosenItems[0]!) : null
     this.commitLangToDom(this.triggerValueEl, mirrorLang)
     if (custom !== null) {
+      this.commitTagsElToDom(null)
       this.commitTriggerContentToDom(custom, countValue)
       return
     }
     if (this.settings.triggerDisplay === 'tags' && chosenCount > 0) {
-      // Accessible value = the item texts themselves; the chips (with their
-      // labelled remove buttons) must not name the field.
-      this.commitTriggerContentToDom(this.createTagsEl(), this.chosenItems.map((item) => this.itemToString(item)).join(', '))
+      // Accessible value = the item texts themselves; the chips sit in the
+      // strip, whose remove buttons must not name the field.
+      this.commitTagsElToDom(this.createTagsEl())
+      this.commitTriggerContentToDom('', this.chosenItems.map((item) => this.itemToString(item)).join(', '))
       return
     }
+    this.commitTagsElToDom(null)
     this.commitTriggerContentToDom(countValue)
   }
 
   /**
+   * Whether the trigger shows chips: `triggerDisplay: 'tags'`.
+   * @internal
+   */
+  protected override isTriggerDisplayTags(): boolean {
+    return this.settings.triggerDisplay === 'tags'
+  }
+
+  /**
    * Build the tag-list element for `'tags'` mode: one chip per chosen item.
-   * Override for full control of the chip strip (the trigger-level equivalent
-   * of overriding `createPopupListItemEl`).
+   * - The library puts it into the trigger buttons strip, before the clear
+   *   button.
+   * - The arrow keys of the strip move between its `button` elements.
+   * - Override for full control of the chip list (the trigger-level
+   *   equivalent of overriding `createPopupListItemEl`).
    * @group Subclassing: rendering
    */
   protected createTagsEl(): HTMLElement {
@@ -717,10 +735,15 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * plain `itemToString` in a span of its own) plus its remove (x) button (from
    * `createTagRemoveButtonEl`). The content element carries the item's `lang`
    * from `itemToLang` when it returns one; the button never does.
-   * A chip whose item is effectively disabled gets `aria-disabled="true"` +
-   * `tagDisabledClass`, and its x turns inert - mirroring a disabled option row.
-   * Override for full control of the chip container; override the two sub-parts
-   * for content-only / remove-button-only changes.
+   * - The content element gets `aria-hidden="true"`. The chip sits in the
+   *   trigger buttons strip, a toolbar, where only the buttons speak: the
+   *   item text already reaches assistive technology through the trigger's
+   *   value and through the remove button's name.
+   * - A chip whose item is effectively disabled gets `aria-disabled="true"` +
+   *   `tagDisabledClass`, and its x turns inert - mirroring a disabled option
+   *   row.
+   * - Override for full control of the chip container; override the two
+   *   sub-parts for content-only / remove-button-only changes.
    * @group Subclassing: rendering
    */
   protected createTagEl(item: T): HTMLElement {
@@ -735,12 +758,14 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
       const text = document.createElement('span')
       text.className = this.classIdMap.tagTextClass
       text.textContent = this.itemToString(item)
+      text.setAttribute('aria-hidden', 'true')
       this.commitLangToDom(text, lang)
       tag.appendChild(text)
     } else {
       // App-owned content: the library sets or overwrites the attribute when the
       // function returns a code, and never removes it.
       if (lang !== null) { this.commitLangToDom(content, lang) }
+      content.setAttribute('aria-hidden', 'true')
       tag.appendChild(content)
     }
     if (this.isItemEffectivelyDisabled(item)) {
@@ -757,12 +782,17 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * Build one chip's remove (x) button. The library owns the button + its click
    * (`stopPropagation` so it never toggles the popup, then the gated toggle,
    * which `onChosenChanging` and `onBeforeChange` may stop, else `toggleItem`; a no-op
-   * while the whole control OR the item itself is disabled) + `tabindex="-1"` +
+   * while the whole control OR the item itself is disabled) +
    * `aria-label` (from `itemToTagRemoveButtonAriaLabel`). An effectively-disabled
    * item's button also gets `aria-disabled="true"`.
-   * `createTagRemoveButtonContentElFn` optionally fills the icon, else the theme's CSS glyph.
-   * Mirrors the clear button's `createTriggerClearButtonEl`. Override for full control of
-   * the button element.
+   * - The trigger buttons strip owns its `tabindex`: one button of the strip
+   *   is the Tab stop.
+   * - After a removal by keyboard, focus moves to the next chip's button, or
+   *   to the trigger when no chip is left (`commitTagsElToDom`).
+   * - `createTagRemoveButtonContentElFn` optionally fills the icon, else the
+   *   theme's CSS glyph.
+   * - Mirrors the clear button's `createTriggerClearButtonEl`. Override for
+   *   full control of the button element.
    * @group Subclassing: rendering
    */
   protected createTagRemoveButtonEl(item: T): HTMLElement {
@@ -774,18 +804,16 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
     if (this.isItemEffectivelyDisabled(item)) { btn.setAttribute('aria-disabled', 'true') }
     const icon = this.createTagRemoveButtonContentEl(item)
     if (icon !== null) { btn.appendChild(icon) }
-    // Keep DOM focus where it is. A mousedown would focus the button (a
-    // tabindex="-1" button is still click-focusable), and the click then
-    // rebuilds the chip strip and destroys it: focus drops to <body>, and
-    // engines differ on whether a focusout fires (TODO.md). Either way is
-    // wrong - a silent drop strands an open popup without its focus host and
-    // skips onBlur; a fired focusout closes the popup and reports a blur for a
-    // click inside the select component. Same rule as the popup's mousedown (A11Y.md).
+    // Keep DOM focus where it is: a pointer press leaves focus on the trigger
+    // or the filter input. A mousedown would focus the button, and focus
+    // entering the trigger buttons strip closes an open popup, so the click
+    // would close the popup it was used beside. Same rule as the popup's
+    // mousedown (A11Y.md).
     btn.addEventListener('mousedown', (ev) => { ev.preventDefault() })
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation()
-      // Tag chips sit in the trigger, reachable while the whole control or the
-      // item itself is disabled. Both block removal (A11Y.md: only user
+      // Tag chips sit in the trigger buttons strip, reachable while the whole
+      // control or the item itself is disabled. Both block removal (A11Y.md: only user
       // re-toggling is blocked; the item stays chosen). toggleItem stays
       // disabled-blind so the programmatic channel matches native <select>.
       if (this.isDisabled()) { return }
@@ -846,7 +874,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * No selection iff the chosen set is empty. Drives the trigger's `data-empty`.
+   * No selection iff the chosen set is empty. Drives the trigger wrapper's `data-empty`.
    * @group Subclassing: semantics
    */
   protected override isEmpty(): boolean {

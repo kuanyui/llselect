@@ -12,7 +12,7 @@ function mount(): HTMLElement {
 }
 
 function tagTexts(sel: LLSelectMultiple<string>): string[] {
-  return Array.from(sel.triggerEl.querySelectorAll(`.${sel.classIdMap.tagClass}`)).map((el) => (el.textContent ?? '').trim())
+  return Array.from(sel.rootEl.querySelectorAll(`.${sel.classIdMap.tagClass}`)).map((el) => (el.textContent ?? '').trim())
 }
 
 test('as-chosen (default): toggles append; setChosenItems keeps the caller order', () => {

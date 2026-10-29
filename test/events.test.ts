@@ -133,9 +133,9 @@ test('onChange meta.source (multiple): every built-in interaction reports user, 
   sel.open()
   const itemRow = () => sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListRowClass}:not(.${sel.classIdMap.chooseAllRowClass})`)!
   itemRow().click() // toggle 'a' on
-  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click() // tag x removes 'a'
+  sel.rootEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click() // tag x removes 'a'
   sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.chooseAllRowClass}`)!.click() // choose-all
-  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click() // clear button
+  sel.rootEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click() // clear button
   sel.toggleItem('a')
   sel.setChosenItems(['b'])
   sel.chooseAll()
@@ -172,7 +172,7 @@ test('onChange meta.reason and meta.item (single): choose with the item, clear, 
   sel.setChosenItem('a')
   sel.open()
   sel.popupListEl.querySelectorAll<HTMLElement>('[role="option"]')[1]!.click() // picks 'b', closes
-  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
+  sel.rootEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
   sel.setChosenItem('b')
   sel.setChosenItem(undefined)
   sel.setChosenItem('a')
@@ -202,13 +202,13 @@ test('onChange meta.reason and meta.item (multiple): one toggled item names itse
   const itemRow = () => sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.popupListRowClass}:not(.${sel.classIdMap.chooseAllRowClass})`)!
   const chooseAllRow = () => sel.popupListEl.querySelector<HTMLElement>(`.${sel.classIdMap.chooseAllRowClass}`)!
   itemRow().click() // 'a' on
-  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click() // chip x removes 'a'
+  sel.rootEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click() // chip x removes 'a'
   chooseAllRow().click() // nothing chosen -> all three
   chooseAllRow().click() // all chosen -> none left: an empty write is a clear
   sel.toggleItem('a')
   sel.toggleItem('a')
   sel.setChosenItems(['b', 'c'])
-  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
+  sel.rootEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
   sel.chooseAll()
   sel.unchooseAll()
   sel.setChosenItems(['a'])

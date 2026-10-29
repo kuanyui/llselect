@@ -9,6 +9,7 @@ export const uk: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Пошук',
   filterInputPlaceholder: 'Фільтр (Esc, щоб очистити)',
   popupListNoResults: 'Нічого не знайдено',
+  triggerButtonsAriaLabel: 'Дії з вибором',
   triggerClearButtonAriaLabel: 'Очистити вибір',
   tagRemoveButtonAriaLabel: (itemText) => `Вилучити ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

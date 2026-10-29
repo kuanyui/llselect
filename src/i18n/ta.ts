@@ -9,6 +9,7 @@ export const ta: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'தேடல்',
   filterInputPlaceholder: 'வடிகட்டு (அழிக்க Esc)',
   popupListNoResults: 'முடிவுகள் இல்லை',
+  triggerButtonsAriaLabel: 'தேர்வு செயல்கள்',
   triggerClearButtonAriaLabel: 'தேர்வை அழி',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} ஐ அகற்று`,
   // Tamil number agreement: neuter singular -athu for 1, plural -ana otherwise.

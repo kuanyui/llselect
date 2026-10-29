@@ -12,6 +12,7 @@ export const yue: LLSelectUiTranslationPack = {
   filterInputAriaLabel: '搜尋',
   filterInputPlaceholder: '篩選（撳 Esc 清走）',
   popupListNoResults: '搵唔到結果',
+  triggerButtonsAriaLabel: '揀咗嘅嘢嘅操作',
   triggerClearButtonAriaLabel: '清走揀咗嘅嘢',
   tagRemoveButtonAriaLabel: (itemText) => `移走 ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

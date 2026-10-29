@@ -149,7 +149,7 @@
    * The value is meant to be a QUOTED string literal ("'tags'"); the classic typo
    * drops the inner quotes. A valid enum value is always a string, so anything else
    * is a typo: "tags" reads a non-existent scope property (undefined), while a
-   * dashed literal like "match-trigger" / "fit-content" $evals as subtraction to 0.
+   * dashed literal like "match-trigger-wrapper" / "fit-content" $evals as subtraction to 0.
    * Warn on any non-string (naming the attribute and re-quoting the given value as
    * the fix); never throw - the default is still a working control.
    * @returns the evaluated value (a valid string, or the non-string that warned).
@@ -444,7 +444,7 @@
         filterable: null,
         /** boolean | null. true = wrap each filter-query match in the default item text in a <mark> (core createHighlightedTextEl). */
         highlight: null,
-        /** 'match-trigger' | 'fit-content' | null. null = llselect's own default. */
+        /** 'match-trigger-wrapper' | 'fit-content' | null. null = llselect's own default. */
         popupWidthPolicy: null,
         /** 'auto' | 'light' | 'dark' | null. null = llselect's own default ('auto': decided from the page). */
         colorScheme: null,

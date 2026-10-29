@@ -9,6 +9,7 @@ export const hu: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Keresés',
   filterInputPlaceholder: 'Szűrés (Esc: törlés)',
   popupListNoResults: 'Nincs találat',
+  triggerButtonsAriaLabel: 'Kijelölési műveletek',
   triggerClearButtonAriaLabel: 'Kijelölés törlése',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} eltávolítása`,
   triggerCountSummary: (chosenCount, totalCount) =>

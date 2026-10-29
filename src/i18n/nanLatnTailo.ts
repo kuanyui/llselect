@@ -12,6 +12,7 @@ export const nanLatnTailo: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Tshiau-tshuē',
   filterInputPlaceholder: 'Kuè-lī (tshi̍h Esc tshing-tiāu)',
   popupListNoResults: 'Tshuē bô kiat-kó',
+  triggerButtonsAriaLabel: 'Kíng--ê ê tshau-tsok',
   triggerClearButtonAriaLabel: 'Tshing-tiāu kíng--ê',
   tagRemoveButtonAriaLabel: (itemText) => `Kā ${itemText} the̍h-tiāu`,
   triggerCountSummary: (chosenCount, totalCount) =>

@@ -222,7 +222,7 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   }
 
   /**
-   * No selection iff `chosenItem` is unset. Drives the trigger's `data-empty`.
+   * No selection iff `chosenItem` is unset. Drives the trigger wrapper's `data-empty`.
    * @group Subclassing: semantics
    */
   protected override isEmpty(): boolean {

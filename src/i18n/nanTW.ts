@@ -10,6 +10,7 @@ export const nanTW: LLSelectUiTranslationPack = {
   filterInputAriaLabel: '搜揣',
   filterInputPlaceholder: '過濾（揤 Esc 清掉）',
   popupListNoResults: '揣無結果',
+  triggerButtonsAriaLabel: '揀的操作',
   triggerClearButtonAriaLabel: '清掉揀的',
   tagRemoveButtonAriaLabel: (itemText) => `共 ${itemText} 提掉`,
   triggerCountSummary: (chosenCount, totalCount) =>

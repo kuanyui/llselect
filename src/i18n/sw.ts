@@ -9,6 +9,7 @@ export const sw: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Tafuta',
   filterInputPlaceholder: 'Chuja (Esc kufuta)',
   popupListNoResults: 'Hakuna matokeo',
+  triggerButtonsAriaLabel: 'Vitendo vya uteuzi',
   triggerClearButtonAriaLabel: 'Futa uteuzi',
   tagRemoveButtonAriaLabel: (itemText) => `Ondoa ${itemText}`,
   // Personal-subject frame ("you have selected"): the passive would need

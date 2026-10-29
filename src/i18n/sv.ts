@@ -9,6 +9,7 @@ export const sv: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Sök',
   filterInputPlaceholder: 'Filtrera (Esc för att rensa)',
   popupListNoResults: 'Inga resultat',
+  triggerButtonsAriaLabel: 'Åtgärder för valet',
   triggerClearButtonAriaLabel: 'Rensa valet',
   tagRemoveButtonAriaLabel: (itemText) => `Ta bort ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) => {

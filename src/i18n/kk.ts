@@ -9,6 +9,7 @@ export const kk: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Іздеу',
   filterInputPlaceholder: 'Сүзгі (тазарту үшін Esc)',
   popupListNoResults: 'Нәтиже табылмады',
+  triggerButtonsAriaLabel: 'Таңдау әрекеттері',
   triggerClearButtonAriaLabel: 'Таңдауды тазарту',
   // Label-colon frames: Kazakh case suffixes vary with the stem, so nothing
   // is suffixed onto the interpolated label or numerals.

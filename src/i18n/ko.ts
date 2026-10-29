@@ -9,6 +9,7 @@ export const ko: LLSelectUiTranslationPack = {
   filterInputAriaLabel: '검색',
   filterInputPlaceholder: '필터 (Esc로 지우기)',
   popupListNoResults: '결과가 없습니다',
+  triggerButtonsAriaLabel: '선택 작업',
   triggerClearButtonAriaLabel: '선택 지우기',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} 제거`,
   triggerCountSummary: (chosenCount, totalCount) =>

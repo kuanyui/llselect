@@ -175,7 +175,7 @@
         require: 'llselectSingle',
         link: function (scope, element, attrs, api) {
           scope.$watch(attrs.demoTintTrigger, function (lang) {
-            var t = api.instance().triggerEl
+            var t = api.instance().triggerWrapperEl
             t.style.background = lang ? langTint(lang) : ''
             t.style.borderColor = lang ? langShade(lang) : ''
             t.style.color = lang ? langShade(lang) : ''

@@ -9,6 +9,7 @@ export const lt: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Paieška',
   filterInputPlaceholder: 'Filtras (Esc išvalyti)',
   popupListNoResults: 'Rezultatų nerasta',
+  triggerButtonsAriaLabel: 'Pasirinkimo veiksmai',
   triggerClearButtonAriaLabel: 'Išvalyti pasirinkimą',
   tagRemoveButtonAriaLabel: (itemText) => `Pašalinti ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

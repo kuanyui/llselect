@@ -29,8 +29,8 @@ test('open/close never mutates DOM structure outside the popup (host sibling-saf
   const groupChildren = [...group.children]
   const bodyCount = document.body.childElementCount
   const rootChildren = [...mount.children]
-  // all library-built root children exist from construction: trigger + value mirror + popup
-  assert.equal(rootChildren.length, 3)
+  // all library-built root children exist from construction: trigger wrapper + popup
+  assert.equal(rootChildren.length, 2)
 
   sel.open()
   assertChildrenUnchanged(group, groupChildren)

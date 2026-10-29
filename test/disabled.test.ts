@@ -30,11 +30,11 @@ function focusedText(sel: { popupListEl: HTMLElement; classIdMap: { popupListRow
 test('setDisabled toggles aria-disabled / data-disabled / tabindex and isDisabled()', () => {
   const sel = new LLSelectSingle<string>(mount())
   assert.equal(sel.isDisabled(), false)
-  assert.equal(sel.triggerEl.getAttribute('data-disabled'), 'false')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-disabled'), 'false')
   sel.setDisabled(true)
   assert.equal(sel.isDisabled(), true)
   assert.equal(sel.triggerEl.getAttribute('aria-disabled'), 'true')
-  assert.equal(sel.triggerEl.getAttribute('data-disabled'), 'true')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-disabled'), 'true')
   assert.equal(sel.triggerEl.getAttribute('tabindex'), '-1')
   sel.setDisabled(false)
   assert.equal(sel.isDisabled(), false)
@@ -177,7 +177,7 @@ test('an already-chosen item that becomes disabled stays chosen', () => {
   disabled = true
   sel.rerender()
   assert.deepEqual([...sel.getChosenItems()], ['b']) // retained
-  assert.equal(sel.triggerEl.textContent?.trim(), '1 / 3 selected', 'the count summary counts the disabled chosen item')
+  assert.equal(sel.triggerContentEl.textContent?.trim(), '1 / 3 selected', 'the count summary counts the disabled chosen item')
   sel.chooseAll() // preserves disabled-chosen 'b', adds enabled a, c
   assert.deepEqual([...sel.getChosenItems()], ['a', 'b', 'c'])
 })
@@ -190,7 +190,7 @@ test('single: an already-chosen item that becomes disabled stays chosen and the 
   disabled = true
   sel.rerender()
   assert.equal(sel.getChosenItem(), 'b')
-  assert.equal(sel.triggerEl.textContent?.trim(), 'b')
+  assert.equal(sel.triggerContentEl.textContent?.trim(), 'b')
   sel.open()
   const row = options(sel).find((o) => o.textContent === 'b')
   assert.ok(row)
@@ -212,7 +212,7 @@ test('the clear button drops a disabled chosen item, in both classes', () => {
   single.open()
   assert.equal(options(single).find((o) => o.textContent === 'b')?.getAttribute('aria-disabled'), 'true', 'the chosen item is disabled at click time')
   single.close()
-  single.triggerEl.querySelector<HTMLElement>(`.${single.classIdMap.triggerClearButtonClass}`)!.click()
+  single.rootEl.querySelector<HTMLElement>(`.${single.classIdMap.triggerClearButtonClass}`)!.click()
   assert.equal(single.getChosenItem(), undefined)
   const multiple = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', clearable: true, itemDisabledFn: i => disabled && i === 'b' })
   multiple.setItems(['a', 'b', 'c'])
@@ -222,7 +222,7 @@ test('the clear button drops a disabled chosen item, in both classes', () => {
   multiple.open()
   assert.equal(options(multiple).find((o) => o.textContent === 'b')?.getAttribute('aria-disabled'), 'true', 'the chosen item is disabled at click time')
   multiple.close()
-  multiple.triggerEl.querySelector<HTMLElement>(`.${multiple.classIdMap.triggerClearButtonClass}`)!.click()
+  multiple.rootEl.querySelector<HTMLElement>(`.${multiple.classIdMap.triggerClearButtonClass}`)!.click()
   assert.deepEqual([...multiple.getChosenItems()], [])
 })
 
@@ -241,7 +241,7 @@ test('setItems() drops a disabled chosen item that the new list no longer contai
   assert.deepEqual(changes, ['single'], 'disabling and rerendering fired nothing')
   single.setItems(['a', 'c'])
   assert.equal(single.getChosenItem(), undefined)
-  assert.equal(single.triggerEl.textContent?.trim(), 'Pick one', 'the trigger shows the placeholder, where a native single select would pick its first enabled option')
+  assert.equal(single.triggerContentEl.textContent?.trim(), 'Pick one', 'the trigger shows the placeholder, where a native single select would pick its first enabled option')
   assert.deepEqual(changes, ['single', 'single'], 'the removal fired onChange once')
   disabled = false
   const multiple = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x', itemDisabledFn: i => disabled && i === 'b', onChange: () => { changes.push('multiple') } })
@@ -259,27 +259,28 @@ test('setItems() drops a disabled chosen item that the new list no longer contai
   assert.deepEqual(changes, ['single', 'single', 'multiple', 'multiple'], 'the removal fired onChange once')
 })
 
-test('Enter or Space on the focused clear button goes to the trigger: the keydown is cancelled, the popup opens, the selection stays', () => {
+test('Enter or Space on the focused clear button stays with the button: the trigger never sees the key, and the click clears and focuses the trigger', () => {
   const sel = new LLSelectSingle<string>(mount(), { clearable: true })
   sel.setItems(['a', 'b', 'c'])
   sel.setChosenItem('b')
+  const clearButton = (): HTMLElement => sel.rootEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
   for (const key of ['Enter', ' ']) {
-    const button = sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
+    const button = clearButton()
     button.focus()
     assert.equal(document.activeElement, button, 'the button holds focus')
     const ev = fireKey(button, key)
-    assert.equal(ev.defaultPrevented, true, 'the trigger cancelled the keydown, so a browser synthesizes no click')
-    assert.equal(sel.getChosenItem(), 'b', 'the key did not clear')
-    assert.equal(sel.isOpened(), true, 'the trigger handled the key as Open')
-    sel.close()
+    assert.equal(ev.defaultPrevented, false, 'nothing cancels the keydown, so a browser synthesizes the button\'s click')
+    assert.equal(sel.isOpened(), false, 'the button sits outside the trigger, whose keydown handler never runs')
+    assert.equal(sel.getChosenItem(), 'b', 'jsdom synthesizes no click')
   }
-  // a disabled control: the trigger ignores the key without cancelling it (a browser then synthesizes the button's click, which the button ignores)
+  clearButton().click() // the click a browser synthesizes after the key
+  assert.equal(sel.getChosenItem(), undefined)
+  assert.equal(document.activeElement, sel.triggerEl, 'a clear from the strip returns focus to the trigger')
+  // a disabled control: the button is no Tab stop, and its click does nothing
+  sel.setChosenItem('b')
   sel.setDisabled(true)
-  const button = sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
-  button.focus()
-  assert.equal(document.activeElement, button, 'the button holds focus on the disabled control')
-  const ev = fireKey(button, 'Enter')
-  assert.equal(ev.defaultPrevented, false, 'a disabled control does not cancel the keydown')
+  assert.equal(clearButton().getAttribute('tabindex'), '-1')
+  clearButton().click()
   assert.equal(sel.getChosenItem(), 'b')
   assert.equal(sel.isOpened(), false)
 })
@@ -343,12 +344,12 @@ test('disabled: the clear button and tag remove buttons do nothing', () => {
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a'])
   sel.setDisabled(true)
-  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
+  sel.rootEl.querySelector<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
   assert.deepEqual([...sel.getChosenItems()], ['a'], 'tag x must not remove while disabled')
-  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
+  sel.rootEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
   assert.deepEqual([...sel.getChosenItems()], ['a'], 'clear must not clear while disabled')
   sel.setDisabled(false)
-  sel.triggerEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
+  sel.rootEl.querySelector<HTMLElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
   assert.deepEqual([...sel.getChosenItems()], [], 're-enabled clear must work')
 })
 
@@ -373,7 +374,7 @@ test('a rerender moves focus off a row that BECAME disabled in place', () => {
 // --- item-disabled + tags: the chip x is inert and marked --------------------
 
 function tagRemoveButtons(sel: LLSelectMultiple<string>): HTMLElement[] {
-  return Array.from(sel.triggerEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`))
+  return Array.from(sel.rootEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagRemoveButtonClass}`))
 }
 
 test('item-disabled: the tag x does not remove the item, but an enabled chip still does', () => {
@@ -407,7 +408,7 @@ test('item-disabled: the chip and its x carry aria-disabled + the disabled class
   })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a', 'b'])
-  const tags = Array.from(sel.triggerEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`))
+  const tags = Array.from(sel.rootEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`))
   assert.equal(tags[0]!.getAttribute('aria-disabled'), 'true', 'the disabled chip is marked')
   assert.ok(tags[0]!.classList.contains(sel.classIdMap.tagDisabledClass), 'the disabled chip carries the class')
   assert.equal(tags[1]!.hasAttribute('aria-disabled'), false, 'the enabled chip is not marked')
@@ -439,7 +440,7 @@ test('group-disabled: the chip and its x carry aria-disabled + the disabled clas
   })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a', 'b'])
-  const tags = Array.from(sel.triggerEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`))
+  const tags = Array.from(sel.rootEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`))
   assert.equal(tags[0]!.getAttribute('aria-disabled'), 'true', 'the group-disabled chip is marked')
   assert.ok(tags[0]!.classList.contains(sel.classIdMap.tagDisabledClass), 'the group-disabled chip carries the class')
   assert.equal(tagRemoveButtons(sel)[0]!.getAttribute('aria-disabled'), 'true', 'the group-disabled chip x is marked')

@@ -64,9 +64,9 @@ test('a whole language pack applies to every chrome string (zhTW)', () => {
   const input = sel.popupEl.querySelector('input')!
   assert.equal(input.getAttribute('aria-label'), zhTW.filterInputAriaLabel)
   assert.equal(input.placeholder, zhTW.filterInputPlaceholder)
-  const clearBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  const clearBtn = sel.rootEl.querySelector(`.${sel.classIdMap.triggerClearButtonClass}`)!
   assert.equal(clearBtn.getAttribute('aria-label'), zhTW.triggerClearButtonAriaLabel)
-  const removeBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.tagRemoveButtonClass}`)!
+  const removeBtn = sel.rootEl.querySelector(`.${sel.classIdMap.tagRemoveButtonClass}`)!
   assert.equal(removeBtn.getAttribute('aria-label'), zhTW.tagRemoveButtonAriaLabel('a'))
   const noResults = sel.popupEl.querySelector(`.${sel.classIdMap.popupListNoResultsClass}`)!
   // The message fills lazily when the empty state shows (it is query-aware):
@@ -129,11 +129,11 @@ test('setUiTranslationPack switches every chrome string at runtime (en -> zhTW)'
   const input = sel.popupEl.querySelector('input')!
   assert.equal(input.getAttribute('aria-label'), zhTW.filterInputAriaLabel)
   assert.equal(input.placeholder, zhTW.filterInputPlaceholder)
-  const clearBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  const clearBtn = sel.rootEl.querySelector(`.${sel.classIdMap.triggerClearButtonClass}`)!
   assert.equal(clearBtn.getAttribute('aria-label'), zhTW.triggerClearButtonAriaLabel)
   // Chips rebuild through the normal trigger render.
   sel.setChosenItems(['a'])
-  const removeBtn = sel.triggerEl.querySelector(`.${sel.classIdMap.tagRemoveButtonClass}`)!
+  const removeBtn = sel.rootEl.querySelector(`.${sel.classIdMap.tagRemoveButtonClass}`)!
   assert.equal(removeBtn.getAttribute('aria-label'), zhTW.tagRemoveButtonAriaLabel('a'))
 })
 

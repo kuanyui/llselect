@@ -9,6 +9,7 @@ export const ja: LLSelectUiTranslationPack = {
   filterInputAriaLabel: '検索',
   filterInputPlaceholder: '絞り込み（Escでクリア）',
   popupListNoResults: '該当する結果はありません',
+  triggerButtonsAriaLabel: '選択の操作',
   triggerClearButtonAriaLabel: '選択をクリア',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText}を削除`,
   triggerCountSummary: (chosenCount, totalCount) =>

@@ -146,9 +146,9 @@ test('data-empty reflects selection even when createTriggerContentElFn is used',
     },
   })
   sel.setItems(['a'])
-  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'true') // nothing chosen
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-empty'), 'true') // nothing chosen
   sel.setChosenItem('a')
-  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'false')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-empty'), 'false')
 })
 
 test('a subclass renderTriggerContent override replaces the setting (override wins)', () => {

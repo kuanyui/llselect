@@ -241,7 +241,7 @@ test('toggleAllVisible() preserves chosen items outside the current item list, e
   sel.setItems(['a', 'b', 'locked'])
   sel.setChosenItems(['locked', 'y', 'z']) // 'y' enabled and 'z' disabled, both outside the list
   assert.deepEqual([...sel.getChosenItems()], ['locked', 'y', 'z'])
-  const chips = Array.from(sel.triggerEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`))
+  const chips = Array.from(sel.rootEl.querySelectorAll<HTMLElement>(`.${sel.classIdMap.tagClass}`))
   assert.equal(chips.find((c) => c.textContent === 'z')?.getAttribute('aria-disabled'), 'true', 'the unlisted z counts as disabled')
   assert.equal(chips.find((c) => c.textContent === 'y')?.hasAttribute('aria-disabled'), false, 'the unlisted y counts as enabled')
   sel.toggleAllVisible()

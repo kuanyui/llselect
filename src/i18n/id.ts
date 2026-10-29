@@ -9,6 +9,7 @@ export const id: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Cari',
   filterInputPlaceholder: 'Saring (Esc untuk menghapus)',
   popupListNoResults: 'Tidak ada hasil',
+  triggerButtonsAriaLabel: 'Tindakan pilihan',
   triggerClearButtonAriaLabel: 'Hapus pilihan',
   tagRemoveButtonAriaLabel: (itemText) => `Hapus ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

@@ -9,6 +9,7 @@ export const lv: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Meklēt',
   filterInputPlaceholder: 'Filtrs (Esc notīra)',
   popupListNoResults: 'Nav rezultātu',
+  triggerButtonsAriaLabel: 'Izvēles darbības',
   triggerClearButtonAriaLabel: 'Notīrīt izvēli',
   tagRemoveButtonAriaLabel: (itemText) => `Noņemt ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

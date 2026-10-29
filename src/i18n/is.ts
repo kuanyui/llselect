@@ -9,6 +9,7 @@ export const is: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Leita',
   filterInputPlaceholder: 'Sía (Esc til að hreinsa)',
   popupListNoResults: 'Engar niðurstöður',
+  triggerButtonsAriaLabel: 'Aðgerðir fyrir val',
   triggerClearButtonAriaLabel: 'Hreinsa val',
   tagRemoveButtonAriaLabel: (itemText) => `Fjarlægja ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

@@ -188,7 +188,7 @@ test('a mouse clear on an unfocused select component focuses the trigger and rep
   })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a'])
-  const clearButton = (): HTMLButtonElement => sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  const clearButton = (): HTMLButtonElement => sel.rootEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
   const md = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
   clearButton().dispatchEvent(md)
   assert.equal(md.defaultPrevented, true, 'the mousedown moves no focus')
@@ -220,7 +220,7 @@ test('tags: a mousedown on a chip remove button is default-prevented; the remova
   sel.setChosenItems(['a'])
   sel.triggerEl.focus()
   sel.open()
-  const btn = sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!
+  const btn = sel.rootEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!
   const md = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
   btn.dispatchEvent(md)
   assert.equal(md.defaultPrevented, true)
@@ -236,7 +236,7 @@ test('an onFocus listener that disables the control during a clear click stops t
   const sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', clearable: true, onFocus: () => { sel.setDisabled(true) } })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a'])
-  sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
+  sel.rootEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
   assert.deepEqual(sel.getChosenItems(), ['a'], 'the control the listener disabled kept its value')
   assert.equal(document.activeElement, sel.triggerEl)
 })
@@ -246,7 +246,7 @@ test('an onFocus listener that opens the popup or loads items does not cancel th
   const sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', clearable: true, onFocus: () => { sel.open(); sel.setItems(['a', 'b', 'c']) } })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a'])
-  sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
+  sel.rootEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!.click()
   assert.deepEqual(sel.getChosenItems(), [], 'the clear still means empty')
   assert.equal(sel.isOpened(), true)
 })
@@ -264,8 +264,8 @@ test('an onFocus listener that destroys the select component stops the clear and
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a']) // reports one change: the setup
   changes.length = 0
-  const clearButton = sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
-  const removeButton = sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!
+  const clearButton = sel.rootEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.triggerClearButtonClass}`)!
+  const removeButton = sel.rootEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!
   clearButton.click()
   assert.deepEqual(changes, [])
   assert.deepEqual(sel.getChosenItems(), ['a'])
@@ -287,7 +287,7 @@ test('tags: an onFocus listener that reloads the chosen item as a disabled objec
   })
   sel.setItems([{ id: 1, name: 'a', bad: false }, { id: 2, name: 'b', bad: false }])
   sel.setChosenItems([{ id: 1, name: 'a', bad: false }])
-  sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
+  sel.rootEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
   assert.deepEqual(sel.getChosenItems().map(i => i.id), [1], 'the reloaded, now disabled, item stays chosen')
 })
 
@@ -296,7 +296,7 @@ test('tags: the x of a chip whose item is itself undefined still removes it', ()
   const sel = new LLSelectMultiple<string | undefined>(el, { ariaLabel: 'x', triggerDisplay: 'tags', itemToStringFn: (i) => i ?? 'nothing' })
   sel.setItems([undefined, 'b'])
   sel.setChosenItems([undefined])
-  sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
+  sel.rootEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
   assert.deepEqual(sel.getChosenItems(), [])
 })
 
@@ -305,7 +305,7 @@ test('tags: an onFocus listener that removed the item leaves the x with nothing 
   const sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', triggerDisplay: 'tags', onFocus: () => { sel.setChosenItems([]) } })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a'])
-  sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
+  sel.rootEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
   assert.deepEqual(sel.getChosenItems(), [])
 })
 
@@ -315,7 +315,7 @@ test('tags: a chip removal on an unfocused select component focuses the trigger 
   const sel = new LLSelectMultiple<string>(el, { ariaLabel: 'x', triggerDisplay: 'tags', onFocus: () => { log.push('focus') } })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a'])
-  sel.triggerEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
+  sel.rootEl.querySelector<HTMLButtonElement>(`.${sel.classIdMap.tagRemoveButtonClass}`)!.click()
   assert.deepEqual(sel.getChosenItems(), [])
   assert.equal(document.activeElement, sel.triggerEl)
   assert.deepEqual(log, ['focus'])

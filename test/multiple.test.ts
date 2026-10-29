@@ -40,12 +40,12 @@ test('PERFORMANCE-72: a custom compareFn still resolves isChosen by value (linea
 
 test('data-empty attribute toggles between placeholder and chosen state (multi)', () => {
   const sel = new LLSelectMultiple<string>(mount())
-  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'true')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-empty'), 'true')
   sel.setItems(['a', 'b'])
   sel.toggleItem('a')
-  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'false')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-empty'), 'false')
   sel.toggleItem('a')
-  assert.equal(sel.triggerEl.getAttribute('data-empty'), 'true')
+  assert.equal(sel.triggerWrapperEl.getAttribute('data-empty'), 'true')
 })
 
 test('popup list has aria-multiselectable="true"', () => {
@@ -236,7 +236,7 @@ test('setItems swaps chosen references to compareFn-equal new objects; tags refr
   const alicia = { id: 1, name: 'Alicia' }
   sel.setItems([alicia, { id: 2, name: 'Bob' }])
   assert.equal(sel.getChosenItems()[0], alicia, 'the chosen reference must be the new list object')
-  assert.equal(sel.triggerEl.textContent?.includes('Alicia'), true, 'the tag must show the fresh fields')
+  assert.equal(sel.triggerButtonsEl!.textContent?.includes('Alicia'), true, 'the tag must show the fresh fields')
   assert.deepEqual(fired, [], 'a reference swap must not fire onChange')
 })
 
@@ -251,9 +251,9 @@ test('MEDIUM-93: setItems refreshes the trigger - the count total, and custom co
   const sel = new LLSelectMultiple<string>(mount(), { ariaLabel: 'x' })
   sel.setItems(['a', 'b'])
   sel.setChosenItems(['a'])
-  assert.equal(sel.triggerEl.textContent, '1 / 2 selected')
+  assert.equal(sel.triggerContentEl.textContent, '1 / 2 selected')
   sel.setItems(['a', 'b', 'c'])
-  assert.equal(sel.triggerEl.textContent, '1 / 3 selected', 'the total follows the new list')
+  assert.equal(sel.triggerContentEl.textContent, '1 / 3 selected', 'the total follows the new list')
 
   let contentRenders = 0
   let arrowRenders = 0
@@ -270,10 +270,10 @@ test('MEDIUM-93: setItems refreshes the trigger - the count total, and custom co
   const contentBefore = contentRenders
   const arrowBefore = arrowRenders
   custom.setItems(['a', 'b'])
-  assert.equal(custom.triggerEl.textContent, '0 of 2')
+  assert.equal(custom.triggerContentEl.textContent, '0 of 2')
   assert.equal(contentRenders, contentBefore + 1, 'exactly one content render for the first setItems')
   custom.setItems(['a', 'b', 'c'])
-  assert.equal(custom.triggerEl.textContent, '0 of 3', 'custom content sees the new list even with nothing chosen')
+  assert.equal(custom.triggerContentEl.textContent, '0 of 3', 'custom content sees the new list even with nothing chosen')
   assert.equal(contentRenders, contentBefore + 2, 'exactly one content render for the second setItems')
   assert.equal(arrowRenders, arrowBefore, 'setItems without a dropped chosen entry does not re-render the arrow')
 })

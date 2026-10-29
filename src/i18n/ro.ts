@@ -9,6 +9,7 @@ export const ro: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Căutare',
   filterInputPlaceholder: 'Filtrare (Esc pentru golire)',
   popupListNoResults: 'Niciun rezultat',
+  triggerButtonsAriaLabel: 'Acțiuni pentru selecție',
   triggerClearButtonAriaLabel: 'Golește selecția',
   tagRemoveButtonAriaLabel: (itemText) => `Elimină ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) => {

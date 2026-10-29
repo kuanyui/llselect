@@ -9,6 +9,7 @@ export const hi: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'खोजें',
   filterInputPlaceholder: 'फ़िल्टर (साफ़ करने के लिए Esc)',
   popupListNoResults: 'कोई परिणाम नहीं मिला',
+  triggerButtonsAriaLabel: 'चयन क्रियाएँ',
   triggerClearButtonAriaLabel: 'चयन साफ़ करें',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} हटाएँ`,
   triggerCountSummary: (chosenCount, totalCount) => {

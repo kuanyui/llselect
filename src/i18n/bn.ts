@@ -9,6 +9,7 @@ export const bn: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'অনুসন্ধান',
   filterInputPlaceholder: 'ফিল্টার (মুছতে Esc)',
   popupListNoResults: 'কোনো ফলাফল পাওয়া যায়নি',
+  triggerButtonsAriaLabel: 'নির্বাচনের কাজ',
   triggerClearButtonAriaLabel: 'নির্বাচন মুছুন',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} সরান`,
   triggerCountSummary: (chosenCount, totalCount) =>

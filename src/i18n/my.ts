@@ -9,6 +9,7 @@ export const my: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'ရှာဖွေရန်',
   filterInputPlaceholder: 'စစ်ထုတ်ရန် (ရှင်းရန် Esc)',
   popupListNoResults: 'ရလဒ် မရှိပါ',
+  triggerButtonsAriaLabel: 'ရွေးချယ်မှု လုပ်ဆောင်ချက်များ',
   triggerClearButtonAriaLabel: 'ရွေးချယ်မှု ရှင်းလင်းရန်',
   tagRemoveButtonAriaLabel: (itemText) => `${itemText} ကို ဖယ်ရှားရန်`,
   triggerCountSummary: (chosenCount, totalCount) =>

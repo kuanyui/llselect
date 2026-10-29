@@ -74,6 +74,14 @@ export interface LLSelectUiTranslationPack {
    * list is empty - a filter matched nothing, or there are no items at all.
    */
   popupListNoResults: string
+  /**
+   * Accessible name (`aria-label`) of the trigger buttons strip while it is a
+   * toolbar.
+   * - The strip is a toolbar in the multiple select component's `'tags'`
+   *   mode, where it holds the chips' remove buttons and the clear button.
+   * - A screen reader says the name when focus enters the strip.
+   */
+  triggerButtonsAriaLabel: string
   /** Accessible name (`aria-label`) of the trigger's clear (x) button (`clearable`). */
   triggerClearButtonAriaLabel: string
   /**

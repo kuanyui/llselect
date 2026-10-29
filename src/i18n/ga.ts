@@ -9,6 +9,7 @@ export const ga: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Cuardaigh',
   filterInputPlaceholder: 'Scag (Esc le glanadh)',
   popupListNoResults: 'Gan torthaí',
+  triggerButtonsAriaLabel: 'Gníomhartha an rogha',
   triggerClearButtonAriaLabel: 'Glan an rogha',
   tagRemoveButtonAriaLabel: (itemText) => `Bain ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) =>

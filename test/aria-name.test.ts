@@ -59,12 +59,16 @@ test('filterable + ariaLabelledBy: trigger button name chains label ids + hidden
   sel.setItems(['a', 'b'])
   const valueId = sel.classIdMap.triggerValueId
   assert.equal(sel.triggerEl.getAttribute('aria-labelledby'), `field-label ${valueId}`)
-  // The value span the chain points at exists (root level, outside the
-  // trigger so triggerEl.textContent stays clean), is hidden, and mirrors
-  // the value.
+  // The value span the chain points at sits inside the trigger, is hidden
+  // visually only (a combobox takes its value from its content), and mirrors
+  // the value; the visible content span is hidden from assistive technology.
   const valueEl = document.getElementById(valueId)!
-  assert.ok(!sel.triggerEl.contains(valueEl))
-  assert.ok(valueEl.hidden)
+  assert.equal(valueEl.parentElement, sel.triggerEl)
+  assert.equal(valueEl.hidden, false)
+  assert.equal(valueEl.getAttribute('aria-hidden'), null)
+  assert.equal(valueEl.style.position, 'absolute')
+  assert.equal(valueEl.style.clipPath, 'inset(50%)')
+  assert.equal(sel.triggerContentEl.getAttribute('aria-hidden'), 'true')
   sel.setChosenItem('b')
   assert.equal(valueEl.textContent, 'b')
   assert.equal(searchInput(sel).getAttribute('aria-labelledby'), 'field-label')
@@ -139,15 +143,17 @@ test('tags mode: hidden value span carries plain labels, not remove-button names
   sel.setChosenItems(['Apple', 'Banana'])
   const valueEl = document.getElementById(sel.classIdMap.triggerValueId)!
   // Plain labels only - the chips' "Remove <label>" button names must not
-  // reach the accessible-name chain (they live in the content span, which the
-  // chain no longer references).
+  // reach the trigger's name or value: the chips sit in the trigger buttons
+  // strip, outside the trigger.
   assert.equal(valueEl.textContent, 'Apple, Banana')
   assert.equal(
     sel.triggerEl.getAttribute('aria-labelledby'),
     `field-label ${sel.classIdMap.triggerValueId}`,
   )
+  assert.equal(sel.triggerEl.querySelectorAll('button').length, 0)
+  assert.equal(sel.triggerContentEl.textContent, '', 'the content slot stays empty while chips show')
   // The visible chips are still there, remove buttons intact.
-  assert.equal(sel.triggerContentEl.querySelectorAll('button').length, 2)
+  assert.equal(sel.triggerButtonsEl!.querySelectorAll('button').length, 2)
 })
 
 test('an unnamed select component warns once per page; any name-ladder rung stays silent', () => {

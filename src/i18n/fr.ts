@@ -9,6 +9,7 @@ export const fr: LLSelectUiTranslationPack = {
   filterInputAriaLabel: 'Rechercher',
   filterInputPlaceholder: 'Filtrer (Échap pour effacer)',
   popupListNoResults: 'Aucun résultat',
+  triggerButtonsAriaLabel: 'Actions sur la sélection',
   triggerClearButtonAriaLabel: 'Effacer la sélection',
   tagRemoveButtonAriaLabel: (itemText) => `Retirer ${itemText}`,
   triggerCountSummary: (chosenCount, totalCount) => {
