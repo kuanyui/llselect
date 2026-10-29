@@ -149,6 +149,28 @@ The further round, at high effort, showed C and D alone, relabelled X and Y, wit
 - A combination that Opus 4.8, Opus 5.5, Sonnet 4.6 and Codex Sol named in the further round: keep `triggerEl` on the role element, name the box `triggerWrapperEl`, and take D's `triggerButtons*` names.
 - Status: awaits the owner, with D's sub-decisions (the three new names, the strip's English name, when the strip is a toolbar, the public `focus()`).
 
+### The owner's rulings on Q3
+
+After the second vote, the owner asked for names that leave no guess about which text is read out and never shown, and ruled the API below, the more reasonable design winning over compatibility because the API is not declared stable.
+
+- The word is `ScreenReader`. It carries no `Aria`: the `*AriaLabel` pack keys name the `aria-label` attribute they fill, while the read-out text fills a visually hidden element, since a combobox supports no `aria-valuetext` and its `aria-label` holds the field name.
+- One API: the setting `triggerContextToScreenReaderTextFn`, in both `LLSelectSingleSettings` and `LLSelectMultipleSettings`, in the `<source>To<target>Fn` shape of `naming-conventions.md` section 3, with defaults from the language pack. `null`, as the setting or as a return value, and a blank return mean the default.
+- The default is the information the screen shows. In count mode the multiple select component reads `triggerScreenReaderCountText(chosenCount, totalCount)`, English "3 of 74 selected"; in tags mode it reads `triggerScreenReaderItemsText(itemTexts)`, English "TypeScript, Rust"; the single select component reads `itemToString`; an empty selection reads the placeholder. The owner asked how established libraries do it: bootstrap-select, Angular Material and Select2 read what they show, and react-select announces every chosen item through a live region when focus arrives.
+- With custom content from `createTriggerContentElFn`, the default of the current mode applies; the library never reads the custom element.
+- `triggerCountSummary` is renamed `triggerContentCountText` and serves the screen only. The screen keeps its short slash form ("3 / 74 selected"), which keeps the trigger narrow; the read-out text uses words. An app can show the read-out wording by reusing the read-out key for the display key.
+- `triggerValueEl` becomes the private `triggerScreenReaderTextEl`, moved inside the role element and hidden only by CSS; the method that writes it is private too, and the library calls it after every trigger content render. `computeTriggerScreenReaderText()` stays protected, as the customization model gives every setting an overridable method. `classIdMap.triggerValueId` becomes `triggerScreenReaderTextId`, `triggerScreenReaderTextClass` is new, and `commitTriggerContentToDom` loses its `plainTextValue` parameter.
+- The popup gets no new API: its states are standard ARIA semantics, and a screen reader words them itself.
+
+### The owner's rulings on the Q1 names
+
+The owner asked whether the case against C was only the cost of changing existing code. It was: the themes, the color-scheme selectors, `'match-trigger'` and the CSS variable names are migration costs, and so is D's silent `triggerEl.focus()` break. Judged on reasonableness alone, the convener recommended the combination four members had named in the further round, and the owner ruled it:
+
+- `triggerEl` keeps naming the role element: the `combobox`, or the `button` while the filter is active, which carries the focus and the ARIA state. Radix's `SelectTrigger` is that element too, and Ark UI keeps `trigger` and the outer `control` as separate parts.
+- The generic box around it is `triggerWrapperEl` (class `triggerWrapperClass`), a word `DESIGN.md` already uses for `popupEl`. D's `triggerFieldEl` was not taken: in design systems "field" names the outer form field, and llselect's "field name" spans several elements.
+- The strip of the clear button and the tag remove buttons is `triggerButtonsEl` (class `triggerButtonsClass`), not `triggerToolbarEl`, which would put the ARIA role word into a JS name (`DESIGN.md` "ARIA roles vs JS names"). Its accessible name is the pack key `triggerButtonsAriaLabel`, English "Selection actions".
+- What follows the wrapper, one word for one concept: the class `.llselect-trigger` stays on the role element and the themes move the box styles to `.llselect-trigger-wrapper`; `data-state`, `data-empty` and `data-disabled` move to the wrapper; the positioner measures the wrapper, and `'match-trigger'` becomes `'match-trigger-wrapper'`; the CSS variables `--llselect-trigger-line` and `--llselect-trigger-hover-line` become `--llselect-trigger-wrapper-line` and `--llselect-trigger-wrapper-hover-line`. No public `focus()` is added: `triggerEl.focus()` keeps working.
+- The read-out element's class is `.llselect-trigger-screen-reader-text`, the name WordPress uses for its visually hidden text. The visible side keeps the `triggerContent*` names, since every `*Content*` name in llselect means what an element shows.
+
 ## The post-fix reviews of the Q2 and Q4 commits
 
 The review panel (Fable 5, Opus 5, Opus 4.8, Codex Sol) checked the three commits at high effort, then the fixes at medium effort: the levels the owner asked for on routine reviews, below the `max` that `CLAUDE.md` sets for the panel. The findings were fixed within the work, except these:
