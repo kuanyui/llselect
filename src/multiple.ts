@@ -320,7 +320,7 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   // REPLACE the array (the invariant both `chosenSetCache` and `visibleItemsCache`
   // rely on - a reference change is how they invalidate).
   protected chosenItems: readonly T[] = []
-  /** The item whose text the default screen-reader text is, for its `lang`; set by `computeTriggerScreenReaderText`. */
+  /** The item whose text the default screen-reader text is, for its `lang`; set by `computeTriggerScreenReaderText`, read once by `computeTriggerScreenReaderTextLang`. */
   private screenReaderTextSource: { text: string; item: T } | null = null
 
   /**
@@ -766,7 +766,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * @internal
    */
   protected override computeTriggerScreenReaderTextLang(text: string): string | null {
+    // Read once: an override that skips super must not inherit a stale item.
     const source = this.screenReaderTextSource
+    this.screenReaderTextSource = null
     return source !== null && source.text === text ? this.itemToLang(source.item) : null
   }
 
@@ -853,8 +855,11 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * item's button also gets `aria-disabled="true"`.
    * - The trigger buttons strip owns its `tabindex`: one button of the strip
    *   is the Tab stop.
-   * - After a removal by keyboard, focus moves to the next chip's button, or
-   *   to the trigger when no chip is left (`commitTagsElToDom`).
+   * - An override returns a `button` element: the strip's Tab stop and arrow
+   *   keys reach `button` elements only.
+   * - After a removal by keyboard, focus moves to the next chip's button, else
+   *   to the previous one, else to the trigger when no chip is left
+   *   (`commitTagsElToDom`).
    * - `createTagRemoveButtonContentElFn` optionally fills the icon, else the
    *   theme's CSS glyph.
    * - Mirrors the clear button's `createTriggerClearButtonEl`. Override for

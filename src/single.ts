@@ -151,7 +151,7 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
    * @group State (protected)
    */
   protected chosenItem: T | undefined = undefined
-  /** The item whose text the default screen-reader text is, for its `lang`; set by `computeTriggerScreenReaderText`. */
+  /** The item whose text the default screen-reader text is, for its `lang`; set by `computeTriggerScreenReaderText`, read once by `computeTriggerScreenReaderTextLang`. */
   private screenReaderTextSource: { text: string; item: T } | null = null
 
   /**
@@ -267,7 +267,9 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
    * @internal
    */
   protected override computeTriggerScreenReaderTextLang(text: string): string | null {
+    // Read once: an override that skips super must not inherit a stale item.
     const source = this.screenReaderTextSource
+    this.screenReaderTextSource = null
     return source !== null && source.text === text ? this.itemToLang(source.item) : null
   }
 

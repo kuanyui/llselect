@@ -276,6 +276,8 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Search box + custom matching         | `filterable` (bool or predicate), `filterFn`                                                                             |
 | Typing to jump (prefix typeahead)    | always on while the filter is off - no setting; matches the text `itemToStringFn` returns; see Typing to jump            |
 | Accessible field naming (required)   | `ariaLabel` / `ariaLabelledBy` / `labelEl` (visible label element: name + label-click-to-focus)                          |
+| What a screen reader reads for the trigger | `triggerContextToScreenReaderTextFn` - see the section of the same name                                         |
+| Clear button and tag chips            | `clearable`, `triggerDisplay: 'tags'` - beside the trigger; Tab reaches them while the popup is closed, and the arrow keys move between them |
 | Disabling - whole control / per item | `setDisabled()`, `focusableWhenDisabled`, `itemDisabledFn`                                                               |
 | Grouping (optgroup)                  | `itemToGroupKeyFn`, `groupKeyToStringFn`, `groupDisabledFn`                                                               |
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `chooseAllRow`, `hideChosenRows`, `chosenItemsOrder: 'as-chosen' \| 'as-listed'`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
@@ -523,7 +525,8 @@ A complete worked subclass, in TypeScript with typed subclass settings (the clas
 | You want to customize            | Setting                         |
 |----------------------------------|---------------------------------|
 | Item display text                | `itemToStringFn`                |
-| Trigger content (e.g. tag chips) | `createTriggerContentElFn`      |
+| Trigger content (e.g. icon + text) | `createTriggerContentElFn`    |
+| What a screen reader reads for the trigger | `triggerContextToScreenReaderTextFn` |
 | Disable individual items         | `itemDisabledFn`                |
 | Search matching                  | `filterFn`                      |
 | Highlight filter matches in rows | `createPopupListItemContentElFn` + the `createHighlightedTextEl` helper |
@@ -563,6 +566,32 @@ sel = new LLSelectSingle(el, {
 - Matching mirrors the built-in filter: case-insensitive substring. If you set a custom `filterFn`, mark your own matches instead.
 - Screen readers are unaffected: the option's accessible name comes from `itemToString`, not from the rendered content.
 - A third argument replaces the default `<mark>`: `(matchedText) => HTMLElement`, inserted as-is.
+
+#### What a screen reader reads for the trigger
+
+A screen reader reads its own text for the trigger, so the text on the screen can stay short.
+
+- The library hides the visible trigger content from screen readers.
+- The library writes the read-out text into a hidden span inside the trigger.
+- By default the read-out text says in words what the screen shows.
+- In count mode, English reads "3 of 74 selected" while the screen shows "3 / 74 selected".
+- In tags mode, the read-out text lists the chosen texts, such as "TypeScript, Rust".
+
+To read out other words, return them from `triggerContextToScreenReaderTextFn`:
+
+```js
+const sel = new LLSelectMultiple(el, {
+  triggerContextToScreenReaderTextFn: (ctx) => `${ctx.chosenItems.length} countries chosen`,
+})
+```
+
+To show the read-out wording on the screen too, use its pack key for the screen's count text:
+
+```js
+const sel = new LLSelectMultiple(el, {
+  uiTranslationPack: { ...zhTW, triggerContentCountText: zhTW.triggerScreenReaderCountText },
+})
+```
 
 #### Popup header / footer
 

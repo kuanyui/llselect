@@ -16,9 +16,9 @@
   --llselect-popup-line: #888; /* border of the popup */
   --llselect-filter-line: #ccc; /* border of the filter input */
   --llselect-divider: rgba(0, 0, 0, 0.12); /* dividers before and after action rows and the choose-all row; header, footer and pinned-row edges */
-  --llselect-focus-line: #4a90e2; /* border (vanilla: outline) of the trigger wrapper while focus is in it or the popup is open; outline of a focused trigger button */
+  --llselect-focus-line: #4a90e2; /* border of the trigger wrapper while focus is in it or the popup is open (vanilla: an outline, while focus is in it); outline of a focused trigger button */
   --llselect-filter-focus-line: #4a90e2; /* border of the focused filter input */
-  --llselect-focus-ring: transparent; /* ring shadow of the trigger wrapper while focus is in it or the popup is open */
+  --llselect-focus-ring: transparent; /* ring shadow of the trigger wrapper while focus is in it or the popup is open (vanilla: unused) */
   --llselect-filter-focus-ring: transparent; /* ring shadow of the focused filter input */
   --llselect-shadow: rgba(0, 0, 0, 0.08); /* color of the popup shadow */
   --llselect-control-shadow: transparent; /* color of the inset shadow of the trigger wrapper */

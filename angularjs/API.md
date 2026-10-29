@@ -220,6 +220,7 @@ $scope.ifaceMatch = function (i, query) {
 
 **Expression** -> `clearable`. Shows the trigger's clear (x) button.
 
+- The button sits beside the trigger. While the popup is closed, Tab reaches it, and Enter or Space clears.
 - Clearing writes the empty value into `ng-model`: `null` (single) / `[]` (multiple), through the normal `ng-change` pipeline.
 - If the model must stay a plain `string`, add a real "none" item to `ll-options` instead of enabling this - the same pattern as a native `<select>` placeholder option.
 
@@ -290,7 +291,7 @@ $scope.renderRow = function (fruit) {
 
 - Evaluated once at link time to a function `(item) => string | null`. The string is a BCP 47 code such as `'de'` or `'zh-TW'`, not a language name.
 - `null` (for one item, or no attribute at all) = no `lang` for that item; its text inherits the page's language.
-- Written on the option row, on the single select component's trigger text and on a tag chip's text. Not on a chip's remove button, nor on the count summary.
+- Written on the option row, on the single select component's trigger text, on a tag chip's text, and on the trigger's screen-reader text while it is one item's text. Not on a chip's remove button, nor on the count text.
 - Why: a screen reader that switches voices by language reads an option in the voice of the `lang` in effect on its row. Without it, a language picker on an English page is read in the English voice.
 
 ```js
@@ -324,8 +325,27 @@ $scope.groupLang = function (key) { return key === 'other' ? null : key } // 'de
 **Expression** -> `createTriggerContentElFn`. Custom visible content for the trigger, under the same rules as [`ll-popup-list-item-content-fn`](#ll-popup-list-item-content-fn) (outside any digest, never `$compile`'d).
 
 - `<llselect-single>`: the function receives `{ chosenItem, items }`; `null` = the default rendering (the chosen item's text, or the placeholder).
-- `<llselect-multiple>`: receives `{ chosenItems, items }`; `null` = the count summary / tags. A returned element overrides both display modes.
+- `<llselect-multiple>`: receives `{ chosenItems, items }`; `null` = the count text / tags. A returned element overrides both display modes.
 - The trigger does not mirror rich rows by itself - feeding this the same renderer as `ll-popup-list-item-content-fn` is what does that (demo 7).
+- The element is for the screen only: the library hides it from screen readers, so put no control in it. A screen reader reads the text of [`ll-trigger-context-to-screen-reader-text-fn`](#ll-trigger-context-to-screen-reader-text-fn) instead.
+
+### `ll-trigger-context-to-screen-reader-text-fn`
+
+**Expression** -> `triggerContextToScreenReaderTextFn`. The text a screen reader reads as the trigger's value, never shown.
+
+- Evaluated once at link time to a function. The library calls it after every render of the trigger's content, which includes every change of `ll-options`. It runs outside any digest, like [`ll-trigger-content-fn`](#ll-trigger-content-fn).
+- `<llselect-single>`: the function receives `{ chosenItem, items }`. `<llselect-multiple>`: it receives `{ chosenItems, items }`.
+- Return a string. `null` or a blank string = the default, which says in words what the screen shows.
+- Why: the trigger's visible content is hidden from screen readers. A screen reader reads this text instead, so a short screen text such as "3 / 74 selected" is read as "3 of 74 selected".
+
+```js
+$scope.readOut = function (ctx) { return ctx.chosenItems.length + ' countries chosen' }
+```
+
+```html
+<llselect-multiple ng-model="countries" ll-trigger-context-to-screen-reader-text-fn="readOut"
+  ll-options="c for c in allCountries"></llselect-multiple>
+```
 
 ### `ll-popup-header-content-fn`
 
@@ -428,7 +448,7 @@ vm.langRows = [{
 
 - A function `(item) => HTMLElement | null`; `null` = the plain item text.
 - The library still owns the chip container, the remove (x) button, and the button's `aria-label` (`Remove <label>`).
-- The chip itself is a generic `<span>` that ARIA prohibits naming - for icon-only content include your own visually hidden text if the chip should be announced as more than its remove button.
+- The library hides the element from screen readers: put no control in it, and no text meant only for screen readers. A screen reader learns the item from the trigger's read-out text and from the remove button's name.
 
 ### `ll-tag-remove-button-content-fn`
 

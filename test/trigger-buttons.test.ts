@@ -235,3 +235,65 @@ test('the trigger keydown handler never sees keys from the strip', () => {
   assert.equal(fireKey(ra, 'ArrowDown').defaultPrevented, false)
   assert.equal(sel.isOpened(), false)
 })
+
+test('while the popup is open, no strip button is a Tab stop, so Tab from the open popup reaches its slot controls; the stop comes back on close', () => {
+  for (const filterable of [false, true]) {
+    const footerButton = document.createElement('button')
+    const sel = new LLSelectMultiple<string>(mount(), {
+      ariaLabel: 'x', clearable: true, triggerDisplay: 'tags', filterable,
+      createPopupFooterContentElFn: () => { footerButton.textContent = 'Footer'; return footerButton },
+    })
+    sel.setItems(['a', 'b'])
+    sel.setChosenItems(['a'])
+    buttons(sel)[1]!.focus() // the clear button becomes the remembered stop
+    sel.triggerEl.focus()
+    sel.open()
+    assert.deepEqual(tabStops(sel), [], `filterable ${filterable}: no stop while open`)
+    sel.close()
+    assert.deepEqual(tabStops(sel), ['Clear selection'], `filterable ${filterable}: the remembered stop comes back`)
+  }
+})
+
+test('filter active: focus entering the strip closes the popup, keeps focus where it went, and gives the trigger its Tab stop back', () => {
+  const sel = tagsSelect(['a'], { filterable: true })
+  sel.triggerEl.focus()
+  sel.open()
+  assert.equal(document.activeElement, sel.popupEl.querySelector('input'))
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '-1')
+  const ra = buttons(sel)[0]!
+  ra.focus() // script focus: the strip is no Tab stop while open
+  assert.equal(sel.isOpened(), false)
+  assert.equal(document.activeElement, ra)
+  assert.equal(sel.triggerEl.getAttribute('tabindex'), '0')
+  assert.deepEqual(tabStops(sel), ['Remove a'])
+})
+
+test('a setItems that keeps the chosen items leaves exactly one Tab stop in the strip', () => {
+  const sel = tagsSelect(['a', 'b', 'c'])
+  sel.setItems(['c', 'b', 'a'])
+  assert.deepEqual([...sel.getChosenItems()], ['a', 'b', 'c'])
+  assert.equal(buttons(sel).filter((b) => b.tabIndex === 0).length, 1)
+})
+
+test('focus on a focusable element inside a chip that is not its remove button moves to the trigger when the chips are rebuilt', () => {
+  const sel = tagsSelect(['a', 'b'], {
+    createTagContentElFn: (item) => Object.assign(document.createElement('span'), { textContent: item, tabIndex: -1 }),
+  })
+  const chipContent = sel.triggerButtonsEl!.querySelector<HTMLElement>(`.${sel.classIdMap.tagClass} span`)!
+  chipContent.focus()
+  assert.equal(document.activeElement, chipContent)
+  sel.rerender()
+  assert.equal(document.activeElement, sel.triggerEl)
+})
+
+test('an empty strip is hidden even while items are chosen: tags mode with custom trigger content and no clear button', () => {
+  const sel = new LLSelectMultiple<string>(mount(), {
+    ariaLabel: 'x',
+    triggerDisplay: 'tags',
+    createTriggerContentElFn: () => Object.assign(document.createElement('i'), { textContent: 'custom' }),
+  })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a'])
+  assert.equal(sel.triggerButtonsEl!.childElementCount, 0)
+  assert.equal(sel.triggerButtonsEl!.hidden, true)
+})

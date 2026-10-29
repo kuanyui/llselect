@@ -85,9 +85,11 @@
     <article>
       <h3>1.3 Clearable (x button)</h3>
       <p class="hint">
-        <code>clearable: true</code> adds an x in its own trigger slot. Click
-        it: value clears to <code>undefined</code>, <code>onChange</code>
-        fires. Custom icon: <code>createTriggerClearButtonContentElFn</code>.
+        <code>clearable: true</code> adds an x beside the trigger. Click it,
+        or, while the popup is closed, Tab to it and press Enter: value clears
+        to <code>undefined</code>,
+        <code>onChange</code> fires. Custom icon:
+        <code>createTriggerClearButtonContentElFn</code>.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -271,7 +273,7 @@
     </p>
 
     <article>
-      <h3>5.1 Basic (count summary)</h3>
+      <h3>5.1 Basic (count text)</h3>
       <p class="hint">Default trigger content - "n / m selected" / "All n selected" / placeholder.</p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -304,7 +306,9 @@
       <p class="hint">
         <code>triggerDisplay: 'tags'</code> - one removable chip per chosen
         item; the library owns the chip, its x button and
-        <code>aria-label</code>. Custom chip content / x icon: see 11.4.
+        <code>aria-label</code>. While the popup is closed, Tab from the
+        trigger reaches the x buttons, and Left / Right move between them. Custom chip content / x icon: see
+        11.4.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -1136,7 +1140,7 @@
       <p class="hint">
         Switch the pack - <code>setUiTranslationPack</code> re-renders in
         place, chosen values survive. Placeholders, filter input, clear x,
-        tag remove buttons and the count summary all translate.
+        tag remove buttons and the count text all translate.
         <code>ar</code> / <code>he</code> also set <code>dir="rtl"</code> on
         the mounts (direction is inherited - there is no RTL setting): arrows
         and x buttons mirror LEFT, chips flow right-to-left.
@@ -1158,7 +1162,7 @@
           <div id="mount-i18n-tags" style="margin-top:0.7rem"></div>
           <div class="out">^ multi, <code>triggerDisplay: 'tags'</code> - translated remove x per chip</div>
           <div id="mount-i18n-count" style="margin-top:0.7rem"></div>
-          <div class="out">^ multi, default <code>'count'</code> - translated count summary</div>
+          <div class="out">^ multi, default <code>'count'</code> - translated count text</div>
           <div class="out" id="out-i18n">chosen: </div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="17.1"><code></code></pre></details>

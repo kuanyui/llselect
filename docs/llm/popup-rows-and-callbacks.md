@@ -82,7 +82,7 @@ Every content function receives exactly the state that makes the library call it
 
 ### 4.4 The rule could not be uniform anyway
 
-- The translation pack's functions (`chooseAllRowText`, `triggerCountSummary`, `tagRemoveButtonAriaLabel`) take numbers and strings only. The i18n bundle is built without the select component.
+- The translation pack's functions (`chooseAllRowText`, `triggerContentCountText`, `tagRemoveButtonAriaLabel`) take numbers and strings only. The i18n bundle is built without the select component.
 - The exported pure helper `gatherItemsByGroupKey` shares the grouping function types. It would need a wrapper or a second type.
 - The six construction-time functions would need a "not yet" rule. The exceptions would move from the signatures into prose.
 

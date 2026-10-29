@@ -4,6 +4,10 @@ Agent-facing log of llselect's own runtime performance: measurements, regression
 
 Status marks: `[ ]` open, `[~]` in progress, `[x]` done. Newest entry on top. No dates: `git log` owns the when; a measurement is identified by the commit the tree was at. Every measurement records the machine's power profile: a run without it is not comparable with the README (the lesson of the resolved entry below).
 
+## The trigger wrapper adds elements to every select component
+
+- [ ] **Not yet measured: the trigger structure of the ARIA blind votes adds DOM to every instance.** Every select component gains one element, the trigger wrapper; the screen-reader span moved inside the trigger and is not new. An instance with `clearable` or tags mode gains a second, the trigger buttons strip. The README's benchmark tables predate the change; a re-run on the next benchmark pass records whether mass instantiation moved (`DESIGN.md` "Trigger structure").
+
 ## The fit-content width measure stays at its prior cost
 
 - [x] **`measureNaturalWidth` reads the computed `width` and `offsetWidth` instead of `offsetWidth` alone (the half-pixel fix, MEDIUM-704).** Measured in headless Chromium 153 in this devcontainer (a four-core share of an i9-13900HX; the host's power profile is unknown) on an open popup, 2000 calls each with a forced layout per call: the old read 5 microseconds, every candidate 5 to 6. The forced layout is the cost; the extra read is not. The candidates and the numbers: `popup-width-committee.md`.

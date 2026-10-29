@@ -158,3 +158,51 @@ test('while the filter is active, the trigger button\'s name chain ends at the s
   assert.equal(sel.triggerEl.getAttribute('aria-labelledby'), `lbl ${sel.classIdMap.triggerScreenReaderTextId}`)
   assert.equal(srText(sel).textContent, 'a, b')
 })
+
+test('single: a setItems that keeps the chosen item calls the setting once', () => {
+  let calls = 0
+  const sel = new LLSelectSingle<string>(mount(), { ariaLabel: 'x', triggerContextToScreenReaderTextFn: () => { calls++; return null } })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItem('a')
+  calls = 0
+  sel.setItems(['a', 'b', 'c'])
+  assert.equal(calls, 1)
+  calls = 0
+  sel.setItems(['b', 'c'])
+  assert.equal(srText(sel).textContent, 'Please select', 'the dropped item leaves the placeholder')
+  assert.equal(calls, 1, 'once for a setItems that drops the chosen item, which renders the whole trigger')
+})
+
+test('an override that skips super never inherits the lang of an earlier default text', () => {
+  let own: string | null = null
+  class Fixed extends LLSelectSingle<string> {
+    protected override computeTriggerScreenReaderText(): string {
+      return own ?? super.computeTriggerScreenReaderText()
+    }
+  }
+  const sel = new Fixed(mount(), { ariaLabel: 'x', itemToLangFn: () => 'de' })
+  sel.setItems(['Deutsch', 'English'])
+  sel.setChosenItem('Deutsch')
+  assert.equal(srText(sel).getAttribute('lang'), 'de')
+  own = 'Deutsch' // the same text, but not the default's
+  sel.setChosenItem('English')
+  assert.equal(srText(sel).textContent, 'Deutsch')
+  assert.equal(srText(sel).hasAttribute('lang'), false)
+})
+
+test('multiple: an override that skips super never inherits the lang of an earlier one-chip text', () => {
+  let own: string | null = null
+  class Fixed extends LLSelectMultiple<string> {
+    protected override computeTriggerScreenReaderText(): string {
+      return own ?? super.computeTriggerScreenReaderText()
+    }
+  }
+  const sel = new Fixed(mount(), { ariaLabel: 'x', triggerDisplay: 'tags', itemToLangFn: (item) => (item === 'Deutsch' ? 'de' : 'en') })
+  sel.setItems(['Deutsch', 'English'])
+  sel.setChosenItems(['Deutsch'])
+  assert.equal(srText(sel).getAttribute('lang'), 'de')
+  own = 'Deutsch' // the same text, but not the default's
+  sel.setChosenItems(['English'])
+  assert.equal(srText(sel).textContent, 'Deutsch')
+  assert.equal(srText(sel).hasAttribute('lang'), false)
+})

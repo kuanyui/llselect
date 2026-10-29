@@ -2,6 +2,53 @@
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (the trigger structure and the screen-reader text)
+
+Process: the review panel (Fable 5, Opus 5, Opus 4.8, Codex Sol) checked the structure commit, the screen-reader text commit and the last unreviewed fix of the round below, at medium effort, the level the owner asked for on routine reviews, and answered one design question first: the trigger buttons strip against the slot-control contract. All four chose to take the strip out of the tab order while the popup is open. A post-fix round on the fixes, the docs and this record found doc lines that missed the empty-strip hide or the closed-popup condition, two missing tests and two attributions; they were fixed. `aria-committee.md` records the positions and the one declined finding.
+
+- [x] **[MEDIUM-776] - While the popup was open, a tab stop on the trigger buttons strip hid the popup's slot controls from Tab**
+  - Symptom: with the filter inactive and something chosen, Tab from the trigger reached a strip button before any slot control, and focus entering the strip closed the popup, so a header or footer control could not be reached by Tab; with the filter active, Shift+Tab from the filter input landed on the strip instead of leaving the select component (the brief's question; all four members).
+  - Cause: the strip precedes the popup in DOM order, and structure H's rule "Tab from an open popup closes the popup before entering the toolbar" never met the slot-control contract (`A11Y.md` "Focus").
+  - Fix: no strip button is a tab stop while the popup is open; `syncTriggerButtonsToDom` runs on open and close and remembers the last stop, so Tab returns to the button that last held focus. Focus that enters the strip by script or a screen reader's cursor still closes the popup.
+  - Verified: `test/trigger-buttons.test.ts`; Tab and Shift+Tab with a footer button in headless Chromium and Firefox, in both filter modes.
+  - Q: Why take the strip out of the tab order, not keep H's wording and document the gap, nor drop the stop only when the popup holds a slot control?
+    - A: Because the gap fails WCAG 2.1.1 for an app whose only command sits in a slot (Opus 5), it breaks the documented slot-control contract (all four), and the condition would make the tab order depend on slot content that can change while the popup is open (all four). The strip acts on the chosen items, which the popup already reaches.
+
+- [ ] **[QUALITY-777] - The close reason `'blur'` now also names focus moving into the trigger buttons strip**
+  - Symptom: `LLSelectCloseReason` (`src/base.ts:122`) widens `'blur'` to a move inside the select component, where no `onBlur` fires; an `onClose` handler that reads `'blur'` as "the user left the field" runs while the user is in the strip (all four members; `test/trigger-buttons.test.ts` asserts `'blur'` with no `onBlur`).
+  - Fix: open. The panel asks for a separate value, each member with `'trigger-buttons'` as the example spelling; a new value is public API and waits for the owner.
+
+- [x] **[DOCUMENTATION-778] - The strip's docs missed when it hides and which elements its keys reach**
+  - Symptom: the `triggerButtonsEl` TSDoc said the strip hides while nothing is chosen, and the code hid it also while it held no `button`; no docstring said that the tab stop and the arrow keys reach `button` elements only (Opus 5).
+  - Fix: the TSDoc and `createTagRemoveButtonEl` state the button-only rule. Fixing the hide rule showed that it hid a `createTriggerClearButtonEl` override that returns another element, so the strip now hides while it is empty, not while it holds no button.
+  - Verified: `test/clear.test.ts` (an override's non-button clear element still shows).
+
+- [x] **[QUALITY-779] - A `computeTriggerScreenReaderText` override that skips `super` could inherit a stale `lang`**
+  - Symptom: the default recorded the item its text came from, and an override that never called it left the record of an earlier render, so a later text equal to that item's text took its code (Opus 5).
+  - Fix: `computeTriggerScreenReaderTextLang` reads the record once and clears it.
+  - Verified: `test/screen-reader-text.test.ts`.
+
+- [x] **[DOCUMENTATION-780] - The rewritten focus-line comment claimed a vanilla outline while the popup is open**
+  - Symptom: the comment on `--llselect-focus-line` said "while focus is in it or the popup is open", but vanilla draws its outline only while focus is in the wrapper (Fable 5).
+  - Fix: the comment, in all five themes and in `DESIGN.md`, says vanilla's outline shows only while focus is in the wrapper.
+
+- [x] **[DOCUMENTATION-781] - Docs and the manual-pass list still described the trigger before the change**
+  - Symptom: the `CLAUDE.md` support-floor list named the removed `:has()` and `:focus-visible` rules; `TODO.md` named `'match-trigger'` and described Enter on the clear button as opening the popup; no manual pass covered the toolbar, the screen-reader text, the themes' new box or RTL arrow keys (Opus 5, Fable 5, Codex Sol).
+  - Fix: the docs commit after the fixes: `CLAUDE.md`, `TODO.md` (a new trigger structure pass), `A11Y.md`, `DESIGN.md`, `README.md`, `naming-conventions.md`, `angularjs/API.md` and the demo hints.
+
+- [x] **[QUALITY-782] - Tests did not cover the strip with an open popup, the `setItems` path of its tab stop, or two edge branches**
+  - Symptom: no test combined a slot control or an active filter with the strip; none checked the strip's single tab stop after a `setItems` that keeps the chosen items, the branch that moves focus to the trigger when it sat on a chip's other focusable element, or the single select component's `setItems` call count of the new setting (Opus 5, Fable 5).
+  - Fix: tests for each.
+  - Verified: `test/trigger-buttons.test.ts`, `test/screen-reader-text.test.ts`.
+
+- [ ] **[QUALITY-783] - A control inside the trigger's `aria-hidden` content slot gets no warning**
+  - Symptom: `createTriggerContentElFn` content sits inside `triggerContentEl`, which carries `aria-hidden="true"`; a focusable control there is focusable inside an `aria-hidden` subtree, an ARIA conformance error (Opus 5, not blocking).
+  - Fix: open. The settings docstrings say "Put no control in it"; a once-per-page console warning like the one for a control before the filter input is the proposed fix.
+
+- [ ] **[MEDIUM-784] - The choose-all row's count reads a slash aloud in most packs**
+  - Symptom: `chooseAllRowText` (`src/i18n/*.ts`) uses "3 / 74" in most packs, and the row's text is also its accessible name, so a screen reader says "slash": the problem the Q3 rulings fixed for the trigger (Opus 5, an observation outside the reviewed commits).
+  - Fix: open.
+
 ## review (the ARIA findings and the two blind votes)
 
 Process: the owner relayed Codex Astra's audit of the shipped library, the owner's own TalkBack test and one suspicion of the owner's; the committee answered in two blind votes, recorded in `aria-committee.md` with every member's marks and the decisive reasons. The owner delegated the first vote's Q1, Q2 and Q4; the second vote, on the Q3 API and the Q1 names, goes to the owner. The review panel (Fable 5, Opus 5, Opus 4.8, Codex Sol) checked the Q2 and Q4 commits at high effort and the fixes at medium effort; its findings were fixed, declined or left open within that work, and `aria-committee.md` records every finding it declined or left open.
@@ -32,13 +79,15 @@ Process: the owner relayed Codex Astra's audit of the shipped library, the owner
   - Fix: every place states the condition: while the filter is active, Tab from the filter input skips a control in such a header, and Shift+Tab enters it instead of leaving the select component. At the end of `open()`, after `onOpen`, the library warns once per page when such a control precedes the input.
   - Verified: `test/popup-slots.test.ts`; Tab and Shift+Tab in headless Chromium, in both filter modes.
 
-- [ ] **[MEDIUM-772] - The clear button and the tag remove buttons sit inside the trigger, so their names leak into the combobox value**
-  - Symptom: demo 1.3 reads "Value: Japan Clear selection" and demo 11.4 "TypeScript Remove TypeScript Rust Remove Rust" (Codex Astra). While the filter is active, the buttons sit inside a `button`, whose children are presentational. The trigger is built by `createTriggerEl` (`src/base.ts:3950`), the clear button by `createTriggerClearButtonEl` (`src/base.ts:4010`), a remove button by `createTagRemoveButtonEl` (`src/multiple.ts:768`).
-  - Fix: open. The first blind vote decided the structure under the owner's delegation (Codex Sol's proposal); the names are an API decision, and the second blind vote's result awaits the owner.
+- [x] **[MEDIUM-772] - The clear button and the tag remove buttons sit inside the trigger, so their names leak into the combobox value**
+  - Symptom: demo 1.3 reads "Value: Japan Clear selection" and demo 11.4 "TypeScript Remove TypeScript Rust Remove Rust" (Codex Astra). While the filter is active, the buttons sit inside a `button`, whose children are presentational. The trigger is built by `createTriggerEl` (`src/base.ts`), the clear button by `createTriggerClearButtonEl` (`src/base.ts`), a remove button by `createTagRemoveButtonEl` (`src/multiple.ts`).
+  - Fix: the first blind vote's structure H, with the owner's names. A generic `triggerWrapperEl` holds the trigger, which holds text only, then `triggerButtonsEl`, the strip of the clear button and the chips, a `toolbar` in tags mode with one roving tab stop, then the arrow. `'match-trigger'` became `'match-trigger-wrapper'`, and the trigger CSS variables `--llselect-trigger-wrapper-*`. `DESIGN.md` "Trigger structure", `A11Y.md` "Trigger buttons strip".
+  - Verified: `test/trigger-buttons.test.ts`, `test/aria-name.test.ts`, `test/clear.test.ts`, `test/tags.test.ts`; the accessibility tree in headless Chromium, read through the DevTools protocol (the combobox values carry no button name), and the keyboard walk, layout and Tab order in headless Chromium and Firefox.
 
-- [ ] **[MEDIUM-773] - What the trigger shows and what assistive technology reads out come from one pack message**
-  - Symptom: `uiTranslationPack.triggerCountSummary` (`src/i18n/en.ts:14`) feeds both the visible count and the read-out value, and with `createTriggerContentElFn` the read-out keeps the count summary while the filter is active (`renderTriggerContent`, `src/multiple.ts:688`; the owner's TalkBack test).
-  - Fix: open. The owner rejected the first vote's answers because their API did not separate the two in responsibility and in name; the second blind vote's result awaits the owner.
+- [x] **[MEDIUM-773] - What the trigger shows and what assistive technology reads out come from one pack message**
+  - Symptom: `uiTranslationPack.triggerCountSummary` (`src/i18n/en.ts`) feeds both the visible count and the read-out value, and with `createTriggerContentElFn` the read-out keeps the count summary while the filter is active (`renderTriggerContent`, `src/multiple.ts`; the owner's TalkBack test).
+  - Fix: the owner's Q3 rulings. The screen side is `triggerContentEl`, `aria-hidden="true"`, and the pack key `triggerContentCountText`, renamed from `triggerCountSummary`; the read-out side is a visually hidden span inside the trigger, written after every trigger content render from the protected `computeTriggerScreenReaderText()`, whose default first tries the new setting `triggerContextToScreenReaderTextFn`, then the pack keys `triggerScreenReaderCountText` (English "3 of 74 selected") and `triggerScreenReaderItemsText`. All 54 packs carry the keys. `DESIGN.md` "Screen-reader text of the trigger".
+  - Verified: `test/screen-reader-text.test.ts`, `test/i18n.test.ts`, `test/item-lang.test.ts`, the AngularJS test of `ll-trigger-context-to-screen-reader-text-fn`; in headless Chromium the multiple select component's value reads "3 of 4 selected" while the screen shows "3 / 4 selected".
 
 - [ ] **[MEDIUM-774] - Demo 14.1 rewrites its "N of M shown" count with no live region**
   - Symptom: the header count changes from `onFilterQueryChange` (`demo/main.js:1102`), and screen-reader users never hear it (Opus 5.5's first proposal in the first blind vote; six members named it in their combinations).

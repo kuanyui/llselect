@@ -1483,7 +1483,7 @@ selSchemeMultiple.setChosenItems(['Japan', 'Brazil', 'Canada'])
 // change comes from the pack alone. Three instances: a single (localized
 // placeholder + chosen text in the trigger), and two multis because their
 // displays are exclusive - 'tags' shows the translated remove buttons,
-// default 'count' the translated count summary.
+// default 'count' the translated count text.
 const I18N_PACKS = { en, ja, zhTW, ar, he }
 const RTL_PACKS = new Set(['ar', 'he'])
 const outI18n = document.getElementById('out-i18n')

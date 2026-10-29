@@ -470,6 +470,9 @@ test('QUALITY-89: a builder override that returns a non-focusable element keeps 
     }
   }
   const sel = new Plain(mount(), { clearable: true, ariaLabel: 'x' })
+  sel.setItems(['a'])
+  sel.setChosenItem('a') // the strip shows only while something is chosen
+  assert.equal(sel.triggerButtonsEl!.hidden, false, 'a clear element that is no button still shows')
   // The first (construction) render already installed the span; give the
   // trigger a focusable stand-in for "the old button held focus" by focusing
   // the span's predecessor state: use the base button first, via rerender().

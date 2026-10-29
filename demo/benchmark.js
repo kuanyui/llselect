@@ -62,7 +62,7 @@ function tuneCellTitle(key, phase, multi) {
       removeTag: 'The removed tag has a built-in 100 ms delay that is skipped so only work is timed.',
     },
     llselect: {
-      choose: multi ? 'Renders a tag per chosen item to match the competitors (its lighter count summary would be less work).' : null,
+      choose: multi ? 'Renders a tag per chosen item to match the competitors (its lighter count text would be less work).' : null,
     },
   }
   return (T[key] && T[key][phase]) || null
@@ -155,7 +155,7 @@ const ADAPTERS = {
       const o = { filterable: true, ariaLabel: 'Benchmark select component' }
       // Match the competitors: their multi-select components render each
       // chosen item as a tag, so llselect renders tags too (not the lighter
-      // count summary), otherwise it would be doing less per-selection work
+      // count text), otherwise it would be doing less per-selection work
       // than they do.
       if (opts.multi) { o.triggerDisplay = 'tags' }
       if (opts.custom) {

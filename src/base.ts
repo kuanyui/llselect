@@ -1502,10 +1502,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Only one of its buttons is a Tab stop, so Tab enters the strip once.
    *   Left and Right Arrow, Home and End move focus between the buttons. In
    *   right-to-left text, Left and Right swap.
+   * - Only `button` elements take part in the Tab stop and the arrow keys.
+   * - While the popup is open, none of its buttons is a Tab stop: Tab from
+   *   the open popup reaches the popup's slot controls, then leaves.
    * - While the select component is disabled, none of its buttons is a Tab
    *   stop.
-   * - It carries `hidden` while nothing is chosen.
-   * - Focus entering it closes an open popup.
+   * - It carries `hidden` while nothing is chosen, or while it is empty.
+   * - Focus that enters it while the popup is open closes the popup.
    * @group DOM elements
    */
   public readonly triggerButtonsEl: HTMLElement | null
@@ -1654,6 +1657,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private triggerClearButtonEl: HTMLElement | null = null
   /** The tag-list container in the trigger buttons strip, or `null` while no chip shows; see `commitTagsElToDom`. */
   private tagsEl: HTMLElement | null = null
+  /** The strip's last Tab stop, kept while it stays in the strip, so Tab returns to the button that last held focus. */
+  private triggerButtonsTabStopEl: HTMLElement | null = null
   /** Counts full trigger renders, so `setItems` writes the screen-reader text once even when `onItemsChanged` ran `renderTrigger`. */
   private triggerRenderCount = 0
   private positioner: Positioner | undefined
@@ -2133,6 +2138,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // depends on it (role, focus host, filtering).
     this.filterActive = this.computeFilterActive()
     this.syncFilterModeToDom()
+    this.syncTriggerButtonsToDom()
     this.triggerEl.setAttribute('aria-expanded', 'true')
     this.triggerWrapperEl.setAttribute('data-state', 'open')
     this.rootEl.classList.add(this.classIdMap.openClass)
@@ -2235,6 +2241,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.triggerEl.setAttribute('aria-expanded', 'false')
     this.triggerWrapperEl.setAttribute('data-state', 'closed')
     this.syncTriggerTabindex()
+    this.syncTriggerButtonsToDom()
     if (shouldReturnFocus) {
       // A focus handler on the trigger may call open(); refuse it until the
       // teardown below is done, or it would set up a popup this close()
@@ -4193,10 +4200,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (this.isTriggerDisplayTags()) { el.setAttribute('role', 'toolbar') }
     el.hidden = true
     el.addEventListener('keydown', (ev) => this.handleTriggerButtonsKeydown(ev))
-    // Tab from the trigger or Shift+Tab from the filter input lands here,
-    // inside the root, so the focusout guard keeps the popup open; the
-    // popup belongs to the combobox, which focus just left.
-    el.addEventListener('focusin', () => { if (this.opened) { this.closeWithReason('blur') } })
+    // The focused button becomes the Tab stop. While the popup is open no
+    // button is a Tab stop, so focus arrives here only by script or a screen
+    // reader's cursor; the focusout guard sees a move inside the root and
+    // keeps the popup open, so close it here: the popup belongs to the
+    // combobox, which focus just left. close() re-syncs the stop.
+    el.addEventListener('focusin', () => {
+      if (this.opened) { this.closeWithReason('blur') } else { this.syncTriggerButtonsToDom() }
+    })
     return el
   }
 
@@ -4226,26 +4237,36 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Bring the trigger buttons strip in line with the state, after each change
-   * of its buttons, of the chosen state or of the disabled state.
-   * - It carries `hidden` while nothing is chosen or no button is in it.
+   * of its buttons, of the chosen state, of the disabled state, and on open
+   * and close.
+   * - It carries `hidden` while nothing is chosen or it is empty.
    *   Before hiding it, focus inside it moves to the trigger: hiding a
    *   focused element drops focus to `<body>`.
-   * - One button is the Tab stop: the one holding focus, else the first
-   *   that is not `aria-disabled`, else the first. While the strip is hidden
-   *   or the select component is disabled, none is.
+   * - One button is the Tab stop: the one holding focus, else the previous
+   *   stop while it is still in the strip, else the first that is not
+   *   `aria-disabled`, else the first.
+   * - None is while the strip is hidden, while the select component is
+   *   disabled, or while the popup is open. The strip precedes the popup in
+   *   DOM order, so a stop there would take Tab from the open popup's host
+   *   before the slot controls, and focus entering the strip closes the
+   *   popup (A11Y.md "Trigger buttons strip").
    */
   private syncTriggerButtonsToDom(): void {
     const strip = this.triggerButtonsEl
     if (strip === null) { return }
     const buttons = this.getTriggerButtonEls()
-    const hide = this.isEmpty() || buttons.length === 0
+    const hide = this.isEmpty() || strip.childElementCount === 0
     if (hide && this.isFocused(strip)) { this.triggerEl.focus({ preventScroll: true }) }
     strip.hidden = hide
     const focused = this.focusedElementIn(strip)
+    const previous = this.triggerButtonsTabStopEl
     const stop = buttons.find((b) => focused !== null && b.contains(focused))
+      ?? buttons.find((b) => b === previous)
       ?? buttons.find((b) => b.getAttribute('aria-disabled') !== 'true')
       ?? buttons[0]
-    for (const b of buttons) { b.tabIndex = !hide && !this.disabled && b === stop ? 0 : -1 }
+    this.triggerButtonsTabStopEl = stop ?? null
+    const tabbable = !hide && !this.disabled && !this.opened
+    for (const b of buttons) { b.tabIndex = tabbable && b === stop ? 0 : -1 }
   }
 
   /**
@@ -4271,6 +4292,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     }
     ev.preventDefault()
     const target = buttons[Math.max(0, Math.min(buttons.length - 1, next))]!
+    this.triggerButtonsTabStopEl = target
     for (const b of buttons) { b.tabIndex = b === target ? 0 : -1 }
     target.focus({ preventScroll: true })
   }
@@ -4333,6 +4355,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - A click while focus is in the strip moves focus to the trigger first,
    *   so a clear by keyboard leaves focus on the trigger.
    * - The strip owns its `tabindex`: one button of the strip is the Tab stop.
+   * - An override returns a `button` element: the strip's Tab stop and arrow
+   *   keys reach `button` elements only.
    * - `createTriggerClearButtonContentElFn` optionally fills the icon; else the
    *   theme's CSS glyph draws it.
    * - The library hides the strip, and with it the button, while nothing is
