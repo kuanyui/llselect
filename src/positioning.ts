@@ -220,26 +220,43 @@ export function hasContainment(s: CSSStyleDeclaration): boolean {
     /\b(size|inline-size)\b/.test(s.getPropertyValue('container-type'))
 }
 
-// WebKit 18 does not let `filter` hold fixed-position descendants, while
-// WebKit 26, Chromium and Firefox do (measured). A probe inside the anchor
-// answers once per page, the first time the walk meets a filter: a fixed child
-// of a filtered box lands on that box only where the filter holds it.
+// WebKit 18.4 does not let `filter` hold fixed-position descendants, while
+// WebKit 26.5, Chromium 156 and Firefox 153 do (measured). A probe inside the
+// anchor answers, the first time the walk meets a filter: a fixed child of a
+// filtered box lands on that box only where the filter holds it. A conclusive
+// answer is kept for the page.
 let filterHoldsFixed: boolean | undefined
 
 function probeFilterHoldsFixed(anchor: HTMLElement): boolean {
-  if (filterHoldsFixed === undefined) {
-    const doc = anchor.ownerDocument
-    const box = doc.createElement('div')
-    box.style.cssText = 'position: absolute; left: 17px; top: 13px; width: 0; height: 0; visibility: hidden; filter: blur(0px)'
-    const child = doc.createElement('div')
-    child.style.cssText = 'position: fixed; left: 0; top: 0; width: 0; height: 0'
-    box.appendChild(child)
-    anchor.appendChild(box)
-    const outer = box.getBoundingClientRect()
-    const inner = child.getBoundingClientRect()
-    filterHoldsFixed = inner.left === outer.left && inner.top === outer.top
-    box.remove()
-  }
+  if (filterHoldsFixed !== undefined) { return filterHoldsFixed }
+  const doc = anchor.ownerDocument
+  // `all: initial !important` first, so no page rule can change the position
+  // or size of either element, whether it sets a margin, a translate or
+  // `display: none`. `all` spares only `direction`, `unicode-bidi` and custom
+  // properties: the probe uses no `var()`, and the other two do not move a
+  // box placed by `left` and `top`. Every later declaration needs
+  // `!important`, or the reset wins over it.
+  const box = doc.createElement('div')
+  box.style.cssText = 'all: initial !important; display: block !important; position: absolute !important; left: 17px !important; top: 13px !important; width: 0 !important; height: 0 !important; visibility: hidden !important; filter: blur(0px) !important'
+  const child = doc.createElement('div')
+  child.style.cssText = 'all: initial !important; display: block !important; position: fixed !important; left: 0 !important; top: 0 !important; width: 0 !important; height: 0 !important; visibility: hidden !important'
+  box.appendChild(child)
+  anchor.appendChild(box)
+  // A user style marked `!important` outranks these. The guard catches one
+  // that makes the box a creator through another property, where the filter
+  // is not what holds the child. One that changes the position or size of
+  // either element, such as moving the child, removing the child's layout box
+  // with `display: none`, or putting a border on the box, can still decide
+  // the answer (DESIGN.md "Hidden-trigger check", its known limits).
+  const heldOtherwise = createsContainingBlock(window.getComputedStyle(box), () => false)
+  const outer = box.getBoundingClientRect()
+  const inner = child.getBoundingClientRect()
+  box.remove()
+  // The box at the viewport origin decides nothing: it has no layout box (a
+  // `display: none` subtree), or a scroll cancels its offset. Answer "does
+  // not hold", which can only miss a clip, and probe again next time.
+  if (heldOtherwise || (outer.left === 0 && outer.top === 0)) { return false }
+  filterHoldsFixed = inner.left === outer.left && inner.top === outer.top
   return filterHoldsFixed
 }
 
@@ -248,23 +265,37 @@ export function resetFilterProbe(): void {
   filterHoldsFixed = undefined
 }
 
+// The `will-change` names that make a containing block, matched whole:
+// `transform-origin` names no transform.
+const WILL_CHANGE_CONTAINING_BLOCK = new Set(['transform', 'translate', 'rotate', 'scale', 'perspective', 'filter', 'backdrop-filter', 'contain', 'offset-path'])
+
 /**
  * Package-internal (tests): whether an element with this computed style is
  * the containing block of its fixed-position descendants, and so of its
  * absolute ones as well. The list is the one DESIGN.md "Hidden-trigger check"
- * keeps. `filterHoldsFixed` answers for `filter`, the one property whose
- * answer differs between engines; it runs only when `filter` is set.
+ * keeps. `filterHoldsFixedFn` answers for `filter`, the one counted property
+ * whose answer differs between engines; it runs only when `filter` is set.
  */
-export function createsContainingBlock(s: CSSStyleDeclaration, filterHoldsFixed: () => boolean): boolean {
+export function createsContainingBlock(s: CSSStyleDeclaration, filterHoldsFixedFn: () => boolean): boolean {
+  // A non-replaced inline box takes no transform and no containment; measured,
+  // `backdrop-filter` and the probed `filter` hold a fixed child there. This
+  // can miss a clip in two cases: an inline `<svg>`, which is replaced and
+  // takes a transform, and `will-change: filter` or
+  // `will-change: backdrop-filter`, which hold there in Chromium and Firefox
+  // only.
+  if (orDefault(s.display, 'inline') === 'inline') {
+    return isSet(s.getPropertyValue('backdrop-filter')) || (isSet(s.getPropertyValue('filter')) && filterHoldsFixedFn())
+  }
   for (const name of ['transform', 'translate', 'rotate', 'scale', 'perspective', 'backdrop-filter']) {
     if (isSet(s.getPropertyValue(name))) { return true }
   }
   const visibility = s.getPropertyValue('content-visibility')
-  if (/\b(layout|paint|strict|content)\b/.test(s.getPropertyValue('contain')) || visibility === 'auto' || visibility === 'hidden' ||
-    /\b(transform|translate|rotate|scale|perspective|filter)\b/.test(s.getPropertyValue('will-change'))) {
+  if (s.getPropertyValue('transform-style') === 'preserve-3d' ||
+    /\b(layout|paint|strict|content)\b/.test(s.getPropertyValue('contain')) || visibility === 'auto' || visibility === 'hidden' ||
+    s.getPropertyValue('will-change').split(',').some((name) => WILL_CHANGE_CONTAINING_BLOCK.has(name.trim()))) {
     return true
   }
-  return isSet(s.getPropertyValue('filter')) && filterHoldsFixed()
+  return isSet(s.getPropertyValue('filter')) && filterHoldsFixedFn()
 }
 
 // A browser older than the selector throws, which reads as no match.
@@ -273,10 +304,15 @@ function matchesSafely(el: Element, selector: string): boolean {
 }
 
 // The top layer, which no ancestor clips: a modal dialog, a showing popover or
-// the fullscreen element. Where the selectors are missing, the fixed rule of
-// the walk still covers a modal dialog, which the UA style makes fixed.
+// a fullscreen element. A fullscreen element is the one
+// `document.fullscreenElement` names, or, since that property names the
+// shadow host of an element fullscreened inside a shadow tree, one that
+// matches `:fullscreen` while the property is set. Where the selectors are
+// missing, the fixed rule of the walk still covers a modal dialog, which the
+// UA style makes fixed.
 function isInTopLayer(el: Element): boolean {
-  if (el.ownerDocument.fullscreenElement === el) { return true }
+  const fullscreen = el.ownerDocument.fullscreenElement
+  if (fullscreen !== null && fullscreen !== undefined && (fullscreen === el || matchesSafely(el, ':fullscreen'))) { return true }
   if (el.localName === 'dialog' && matchesSafely(el, ':modal')) { return true }
   return el.hasAttribute('popover') && matchesSafely(el, ':popover-open')
 }
@@ -291,9 +327,15 @@ function isBodyOverflowPropagated(doc: Document, bodyStyle: CSSStyleDeclaration)
     !hasContainment(root) && !hasContainment(bodyStyle)
 }
 
+// Overflow applies to block, flex and grid containers, never to an inline box
+// or a table track (measured: an `overflow: hidden` span or table row clips
+// nothing).
+const NO_OVERFLOW_DISPLAY = new Set(['inline', 'table-row', 'table-row-group', 'table-header-group', 'table-footer-group', 'table-column', 'table-column-group'])
+
 // Each axis is tested only where its own overflow clips: `overflow-x: clip`
 // leaves `overflow-y: visible`.
 function clipsRect(el: Element, s: CSSStyleDeclaration, rect: DOMRect): boolean {
+  if (NO_OVERFLOW_DISPLAY.has(orDefault(s.display, 'inline'))) { return false }
   const clipsX = CLIPPING_OVERFLOW.has(s.overflowX)
   const clipsY = CLIPPING_OVERFLOW.has(s.overflowY)
   if (!clipsX && !clipsY) { return false }
@@ -394,10 +436,13 @@ export interface Positioner {
 /** Options passed to {@link createPositioner}. */
 export interface PositionerOptions {
   /**
-   * Called when the anchor becomes invisible (fully outside the layout
-   * viewport, or fully clipped away by an ancestor; see `isAnchorHidden`).
-   * Typical use: close the floating element so it does not hang in space
-   * without a visible trigger.
+   * Called when the anchor is found hidden: fully outside the layout
+   * viewport, or fully clipped away by an ancestor (see `isAnchorHidden`).
+   * - The check runs at the first placement and after every scroll outside
+   *   the floating element.
+   * - A resize and the public `reposition()` never run it.
+   * - Typical use: close the floating element so it does not hang in space
+   *   without a visible trigger.
    */
   onHide?: () => void
   /**
@@ -468,13 +513,19 @@ function getVisibleViewport(): { left: number; top: number; width: number; heigh
 /**
  * Attach a positioner that keeps `floating` placed relative to `anchor`.
  *
- * Behavior: sets `floating` to `position: fixed`, listens to window scroll
- * (capture phase, so any ancestor scroll is caught), window resize, and
- * `ResizeObserver` on both elements. On every reposition: if the anchor is
- * outside the layout viewport or clipped by a scrollable ancestor and `onHide` is
- * provided, calls `onHide` and skips style updates. Otherwise applies the
- * coordinates from {@link computePosition} and sets `data-placement` on
- * `floating` for CSS hooks.
+ * - Sets `floating` to `position: fixed`.
+ * - Listens for `scroll` in the capture phase, on `window` and on every
+ *   shadow root of the anchor's flat-tree path. The shadow roots are read
+ *   once, at attach.
+ * - Listens for `resize` on `window` and on `visualViewport`, and watches
+ *   both elements with a `ResizeObserver`.
+ * - Ignores a scroll inside `floating`, which cannot move the anchor.
+ * - At the first placement and after every scroll outside `floating`,
+ *   checks whether the anchor is hidden (`isAnchorHidden`). If it is and
+ *   `onHide` is provided, calls `onHide` and skips the style updates.
+ * - Otherwise, and on every resize, applies the coordinates from
+ *   {@link computePosition} and sets `data-placement` on `floating` for CSS
+ *   hooks.
  *
  * Caller is responsible for calling `detach()` when the floating element is
  * dismissed; otherwise listeners leak.

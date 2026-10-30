@@ -462,7 +462,7 @@ test('typeahead: a refused open empties the buffer', () => {
   // zebra first: no typeahead at all would park on zebra, a kept "b" would
   // make the buffer "ba" and land on banana, the fix lands on apple.
   const sel = mountSelect(['zebra', 'apple', 'banana'])
-  // Trigger parked above the viewport: open() refuses (hidden-anchor guard).
+  // Trigger parked above the viewport: open() refuses (hidden-trigger check).
   const rect = sel.triggerWrapperEl.getBoundingClientRect
   sel.triggerWrapperEl.getBoundingClientRect = () =>
     ({ top: -100, left: 50, right: 250, bottom: -70, width: 200, height: 30, x: 50, y: -100, toJSON: () => ({}) }) as DOMRect

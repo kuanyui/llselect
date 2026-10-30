@@ -27,16 +27,19 @@ if (!existsSync(LLSELECT_UMD)) {
   )
 }
 
-// The core warns once per page when a select component has no accessible name. Every
-// boot() is a new page and fixtures are unnamed on purpose, so the warn would
-// print once per test. Drop it; every other console call still forwards.
-const UNNAMED_WARN_PREFIX = 'llselect: this select component has no accessible name'
+// The core warns once per page when a select component has no accessible name,
+// and when open() refuses a hidden trigger. Every boot() is a new page,
+// fixtures are unnamed on purpose and some tests refuse an open on purpose, so
+// each warn would print once per test. Drop both; every other console call
+// still forwards.
+const DROPPED_WARN_PREFIXES = ['llselect: this select component has no accessible name', 'llselect: open() did nothing']
 function quietConsole() {
   const vc = new VirtualConsole()
   vc.sendTo(console)
   vc.removeAllListeners('warn')
   vc.on('warn', (...args) => {
-    if (typeof args[0] === 'string' && args[0].startsWith(UNNAMED_WARN_PREFIX)) { return }
+    const first = args[0]
+    if (typeof first === 'string' && DROPPED_WARN_PREFIXES.some((prefix) => first.startsWith(prefix))) { return }
     console.warn(...args)
   })
   return vc

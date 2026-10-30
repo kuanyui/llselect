@@ -929,9 +929,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *
    * - `meta.reason` says why: `'toggle'`, `'keyboard'`, `'typeahead'` or
    *   `'api'`. See {@link LLSelectOpenReason}.
-   * - An `open()` call that does not actually open the popup (already open, a
-   *   disabled control, or a trigger scrolled out of view or clipped) does
-   *   not fire it.
+   * - An `open()` call that does nothing does not fire it. The `open()`
+   *   docstring lists those cases.
    * - Fires in ADDITION to the protected `onOpened` hook: the setting is for
    *   consumers, the hook for subclasses, both run.
    * - `null` (default) = no consumer listener.
@@ -2139,16 +2138,25 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Open the popup.
-   * - Builds item elements lazily, attaches the positioner, wires the
-   *   outside-click handler, and moves keyboard focus into the item list.
+   * - Does nothing in each of these cases:
+   *   - the popup is already open;
+   *   - the select component is disabled;
+   *   - `close()` is returning focus to the trigger, so a focus handler that
+   *     calls `open()` there is ignored;
+   *   - the trigger is hidden: fully outside the viewport, or fully clipped
+   *     away by an ancestor.
+   * - The first refusal for a hidden trigger on a page logs a console
+   *   warning.
+   * - Sets an initial active row, if an enabled item row exists.
+   * - An action row is never the initial active row.
+   * - While the filter is active, DOM focus moves to the filter input.
    * - The positioner closes the popup again, with the close reason
-   *   `'hidden'`, when a scroll moves the trigger out of view.
-   * - Does nothing while the popup is already open, while the select
-   *   component is disabled, and while `close()` is returning focus to the
-   *   trigger: a focus handler that calls `open()` there is ignored.
-   * - Does nothing while the trigger is hidden: fully outside the viewport,
-   *   or fully clipped away by an ancestor. The first such refusal on a page
-   *   logs a console warning.
+   *   `'hidden'`, when a scroll outside the popup finds the trigger hidden.
+   * - Builds the item elements, which exist only while the popup is open.
+   * - Attaches the positioner.
+   * - Attaches the outside-click handler.
+   * - The initial active row comes from `focusInitial`, which a subclass can
+   *   override.
    * @group Open & close
    */
   public open(): void {
@@ -3745,11 +3753,22 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected onChooseAllRowActivated(): void {}
 
   /**
-   * Decide which item to focus when the popup opens. Default focuses the
-   * first item (or no-op if the list is empty). Override to focus the
-   * currently chosen item, last-used item, etc. "Focus" here means the
-   * active row (`aria-activedescendant`), not DOM focus, which the open
-   * moves to the filter input or keeps on the trigger.
+   * Decide which item to focus when the popup opens.
+   * - The library calls it inside `open()`, once per open, after the rows
+   *   are built. You never call it.
+   * - To pick another row, such as the row of the chosen item or of the
+   *   last-used item, override it and set the row with `setFocusedIndex` or
+   *   `focusChooseAllRow`.
+   * - To fall back to the default, call `super.focusInitial()`, but only when
+   *   the override set no row.
+   * - "Focus" here means the active row (`aria-activedescendant`), not DOM
+   *   focus, which the open moves to the filter input or keeps on the
+   *   trigger.
+   * - `open()` clears the active row before the call, so the popup opens
+   *   with no active row unless this method sets one.
+   * - The default makes the first enabled item the active row, replacing any
+   *   row set before it runs.
+   * - The default does nothing when no item is enabled.
    * @group Subclassing: focus
    */
   protected focusInitial(): void {
@@ -4155,7 +4174,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const openedByThisKey = !this.opened
     if (openedByThisKey) {
       this.openWithReason('typeahead')
-      // open() can refuse (hidden anchor): nothing to move focus in, and the
+      // open() can refuse (hidden trigger): nothing to move focus in, and the
       // buffer must not survive into a later successful open.
       if (!this.opened) { this.typeaheadBuffer = ''; return true }
     }

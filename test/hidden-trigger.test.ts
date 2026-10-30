@@ -7,9 +7,7 @@ import { resetHiddenTriggerWarning } from '../src/base.js'
 
 // The hidden-trigger check: DESIGN.md "Hidden-trigger check". jsdom does no
 // layout, so every rect is mocked. jsdom does not expand the `overflow`
-// shorthand, so the fixtures set both longhands; and it keeps
-// `overflow-y: visible` next to `overflow-x: hidden`, where a browser
-// computes `auto`.
+// shorthand, so the fixtures set both longhands.
 
 function withMockedRect(el: Element, rect: Partial<AnchorRect>): void {
   const full: AnchorRect = { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, ...rect }
@@ -88,7 +86,7 @@ test('an absolute element escapes a static clipping wrapper, but not its positio
 })
 
 test('each axis is tested only where its own overflow clips', () => {
-  setupDom('<!doctype html><html><body><div id="strip" style="overflow-x:hidden; overflow-y:visible"><div id="a"></div></div></body></html>')
+  setupDom('<!doctype html><html><body><div id="strip" style="overflow-x:clip; overflow-y:visible"><div id="a"></div></div></body></html>')
   withMockedRect(el('strip'), CARD)
   withMockedRect(el('a'), ON_SCREEN)
   assert.equal(isAnchorHidden(el('a')), false, 'below a box that clips horizontally only')
@@ -135,12 +133,15 @@ test('createsContainingBlock: the properties that hold fixed-position descendant
   const held = (): boolean => true
   assert.equal(createsContainingBlock(style({}), held), false, 'nothing set')
   assert.equal(createsContainingBlock(style({ transform: 'none', filter: 'none', perspective: 'none', contain: 'none', 'will-change': 'auto' }), held), false, 'defaults')
-  const set: Array<[string, string]> = [['transform', 'matrix(1, 0, 0, 1, 0, 0)'], ['translate', '1px'], ['rotate', '1deg'], ['scale', '2'], ['perspective', '10px'], ['backdrop-filter', 'blur(1px)'], ['contain', 'paint'], ['contain', 'layout'], ['contain', 'strict'], ['contain', 'content'], ['content-visibility', 'auto'], ['will-change', 'transform'], ['will-change', 'opacity, filter']]
+  const set: Array<[string, string]> = [['transform', 'matrix(1, 0, 0, 1, 0, 0)'], ['translate', '1px'], ['rotate', '1deg'], ['scale', '2'], ['perspective', '10px'], ['backdrop-filter', 'blur(1px)'], ['transform-style', 'preserve-3d'], ['contain', 'paint'], ['contain', 'layout'], ['contain', 'strict'], ['contain', 'content'], ['content-visibility', 'auto'], ['will-change', 'transform'], ['will-change', 'opacity, filter'], ['will-change', 'contain'], ['will-change', 'offset-path'], ['will-change', 'translate']]
   for (const [name, value] of set) {
     assert.equal(createsContainingBlock(style({ [name]: value }), () => false), true, `${name}: ${value}`)
   }
-  // Measured in every engine: container-type makes no containing block.
-  const unset: Array<[string, string]> = [['contain', 'style'], ['contain', 'size'], ['content-visibility', 'visible'], ['container-type', 'inline-size'], ['container-type', 'normal'], ['will-change', 'opacity']]
+  // None of these makes a containing block. Measured in four engines
+  // (DESIGN.md): `container-type` `size` and `inline-size`, and the
+  // `will-change` names `transform-origin`, `perspective-origin` and
+  // `content-visibility`. The rest are initial values or spec rules.
+  const unset: Array<[string, string]> = [['contain', 'style'], ['contain', 'size'], ['content-visibility', 'visible'], ['container-type', 'inline-size'], ['container-type', 'size'], ['container-type', 'normal'], ['transform-style', 'flat'], ['will-change', 'opacity'], ['will-change', 'transform-origin'], ['will-change', 'perspective-origin'], ['will-change', 'content-visibility']]
   for (const [name, value] of unset) {
     assert.equal(createsContainingBlock(style({ [name]: value }), held), false, `${name}: ${value}`)
   }
@@ -148,28 +149,78 @@ test('createsContainingBlock: the properties that hold fixed-position descendant
   assert.equal(createsContainingBlock(style({ filter: 'blur(1px)' }), () => false), false, 'filter, where it does not')
 })
 
-test('filter holds a fixed element only where the probe measures it so, and the probe leaves nothing behind', () => {
+test('filter holds a fixed element only where the probe measures it so; an inconclusive probe is not kept', () => {
   setupDom('<!doctype html><html><body><div id="box" style="overflow-x:hidden; overflow-y:hidden; filter:blur(0px)"><div id="drawer" style="position:fixed"><div id="a"></div></div></div></body></html>')
   withMockedRect(el('box'), CARD)
   withMockedRect(el('drawer'), ON_SCREEN)
   withMockedRect(el('a'), ON_SCREEN)
   resetFilterProbe()
-  // jsdom lays nothing out, so the probe's two boxes both sit at 0: "held".
-  assert.equal(isAnchorHidden(el('a')), true, 'an engine where the filter holds the drawer')
-  assert.equal(el('a').children.length, 0)
-  resetFilterProbe()
-  // An engine where it does not: the probe's fixed child stays at the origin.
+  // jsdom lays nothing out, so the probe's box sits at the origin: inconclusive.
+  // The walk answers "does not hold", and keeps no answer.
+  assert.equal(isAnchorHidden(el('a')), false, 'inconclusive')
+  assert.equal(el('a').children.length, 0, 'the probe leaves nothing behind')
+  // The probe's own boxes: the filtered box at (17, 13); the fixed child on it
+  // where the filter holds it, at the origin where it does not.
   const original = window.HTMLElement.prototype.getBoundingClientRect
-  window.HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement): DOMRect {
-    const at = this.style.position === 'fixed' ? 0 : 17
-    return { top: at, left: at, right: at, bottom: at, width: 0, height: 0, x: at, y: at, toJSON() { return {} } } as DOMRect
+  const probeRects = (held: boolean): void => {
+    window.HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement): DOMRect {
+      const onBox = this.style.position !== 'fixed' || held
+      const left = onBox ? 17 : 0
+      const top = onBox ? 13 : 0
+      return { top, left, right: left, bottom: top, width: 0, height: 0, x: left, y: top, toJSON() { return {} } } as DOMRect
+    }
   }
   try {
+    probeRects(true)
+    assert.equal(isAnchorHidden(el('a')), true, 'an engine where the filter holds the drawer')
+    probeRects(false)
+    assert.equal(isAnchorHidden(el('a')), true, 'a conclusive answer is kept for the page')
+    resetFilterProbe()
     assert.equal(isAnchorHidden(el('a')), false, 'an engine where the filter does not hold it')
   } finally {
     window.HTMLElement.prototype.getBoundingClientRect = original
     resetFilterProbe()
   }
+})
+
+test('containment on the root also stops the body overflow propagation', () => {
+  setupDom('<!doctype html><html style="contain:layout"><body style="overflow-x:hidden; overflow-y:hidden"><div id="a"></div></body></html>')
+  withMockedRect(document.body, SHORT_BOX)
+  withMockedRect(el('a'), ON_SCREEN)
+  assert.equal(isAnchorHidden(el('a')), true)
+})
+
+test('a showing popover and a fullscreen element end the walk like a modal dialog', () => {
+  setupDom('<!doctype html><html><body><div id="card" style="overflow-x:hidden; overflow-y:hidden; transform:translateZ(0)"><div id="pop" popover="manual" style="position:fixed"><div id="a"></div></div></div></body></html>')
+  withMockedRect(el('card'), CARD)
+  withMockedRect(el('pop'), ON_SCREEN)
+  withMockedRect(el('a'), ON_SCREEN)
+  assert.equal(isAnchorHidden(el('a')), true, 'without :popover-open support')
+  Object.defineProperty(el('pop'), 'matches', { value: (selector: string) => selector === ':popover-open', configurable: true })
+  assert.equal(isAnchorHidden(el('a')), false, 'a showing popover')
+  el('pop').removeAttribute('popover')
+  assert.equal(isAnchorHidden(el('a')), true, 'no popover attribute, so not asked')
+  // document.fullscreenElement names another element here, the card, as it
+  // names the host of an element fullscreened inside a shadow tree, so the
+  // walk asks :fullscreen of the element itself.
+  Object.defineProperty(document, 'fullscreenElement', { value: el('card'), configurable: true })
+  Object.defineProperty(el('pop'), 'matches', { value: (selector: string) => selector === ':fullscreen', configurable: true })
+  assert.equal(isAnchorHidden(el('a')), false, 'a fullscreen element')
+})
+
+test('a transformed static ancestor holds an absolute element, and clips it', () => {
+  setupDom('<!doctype html><html><body><div id="card" style="overflow-x:hidden; overflow-y:hidden; transform:translateZ(0)"><div id="abs" style="position:absolute"><div id="a"></div></div></div></body></html>')
+  withMockedRect(el('card'), CARD)
+  withMockedRect(el('abs'), ON_SCREEN)
+  withMockedRect(el('a'), ON_SCREEN)
+  assert.equal(isAnchorHidden(el('a')), true)
+})
+
+test('overflow does not apply to an inline box', () => {
+  setupDom('<!doctype html><html><body><span id="s" style="display:inline; overflow-x:hidden; overflow-y:hidden"><div id="a"></div></span></body></html>')
+  withMockedRect(el('s'), CARD)
+  withMockedRect(el('a'), ON_SCREEN)
+  assert.equal(isAnchorHidden(el('a')), false)
 })
 
 test('hasContainment: any containment stops the body overflow propagation', () => {
@@ -308,4 +359,93 @@ test('open() on a hidden trigger warns once per page, naming the trigger wrapper
   } finally {
     console.warn = forward
   }
+})
+
+test('an inline box takes no transform or containment, so it holds no fixed element', () => {
+  setupDom('<!doctype html><html><body><div id="card" style="overflow-x:hidden; overflow-y:hidden"><span id="s" style="display:inline; transform:translateZ(0); contain:paint"><div id="drawer" style="position:fixed"><div id="a"></div></div></span></div></body></html>')
+  withMockedRect(el('card'), CARD)
+  withMockedRect(el('drawer'), ON_SCREEN)
+  withMockedRect(el('a'), ON_SCREEN)
+  assert.equal(isAnchorHidden(el('a')), false)
+})
+
+test('createsContainingBlock: on an inline box only a backdrop filter or a holding filter counts', () => {
+  const style = (props: Record<string, string>): CSSStyleDeclaration => ({ getPropertyValue: (name: string) => props[name] ?? '', display: props.display ?? '' }) as unknown as CSSStyleDeclaration
+  const held = (): boolean => true
+  assert.equal(createsContainingBlock(style({ display: 'inline', 'backdrop-filter': 'blur(1px)' }), () => false), true, 'backdrop-filter')
+  assert.equal(createsContainingBlock(style({ display: 'inline', filter: 'blur(1px)' }), held), true, 'filter, where the engine holds')
+  assert.equal(createsContainingBlock(style({ display: 'inline', filter: 'blur(1px)' }), () => false), false, 'filter, where it does not')
+  for (const [name, value] of [['transform', 'matrix(1, 0, 0, 1, 0, 0)'], ['perspective', '10px'], ['contain', 'paint'], ['content-visibility', 'auto'], ['transform-style', 'preserve-3d'], ['will-change', 'transform'], ['will-change', 'filter']] as Array<[string, string]>) {
+    assert.equal(createsContainingBlock(style({ display: 'inline', [name]: value }), held), false, `${name}: ${value}`)
+  }
+  assert.equal(createsContainingBlock(style({ display: 'inline-block', transform: 'matrix(1, 0, 0, 1, 0, 0)' }), held), true, 'an inline-block takes a transform')
+})
+
+test('overflow does not apply to a table row', () => {
+  setupDom('<!doctype html><html><body><table><tr id="row" style="display:table-row; overflow-x:hidden; overflow-y:hidden"><td><div id="a"></div></td></tr></table></body></html>')
+  withMockedRect(el('row'), CARD)
+  withMockedRect(el('a'), ON_SCREEN)
+  assert.equal(isAnchorHidden(el('a')), false)
+})
+
+test('a style that outranks the probe and makes its box a creator leaves the probe inconclusive', () => {
+  // jsdom does not expand `all: initial`, so this page rule reaches the probe
+  // box. In a browser, only a user style marked `!important` can.
+  setupDom('<!doctype html><html><head><style id="rule">#a > div { will-change: transform }</style></head><body><div id="box" style="overflow-x:hidden; overflow-y:hidden; filter:blur(0px)"><div id="drawer" style="position:fixed"><div id="a"></div></div></div></body></html>')
+  withMockedRect(el('box'), CARD)
+  withMockedRect(el('drawer'), ON_SCREEN)
+  withMockedRect(el('a'), ON_SCREEN)
+  resetFilterProbe()
+  // Decisive rects that read "held": the probe's fixed child lands on its box.
+  const original = window.HTMLElement.prototype.getBoundingClientRect
+  window.HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement): DOMRect {
+    return { top: 13, left: 17, right: 17, bottom: 13, width: 0, height: 0, x: 17, y: 13, toJSON() { return {} } } as DOMRect
+  }
+  try {
+    assert.equal(isAnchorHidden(el('a')), false, 'the rule, not the filter, holds the child: inconclusive')
+    el('rule').remove()
+    assert.equal(isAnchorHidden(el('a')), true, 'without the rule the probe decides, so nothing was kept before')
+  } finally {
+    window.HTMLElement.prototype.getBoundingClientRect = original
+    resetFilterProbe()
+  }
+})
+
+test('both probe elements start with all: initial !important and mark every declaration !important', () => {
+  // jsdom does not expand `all`, so only the declarations are checked here;
+  // the browser pass measured page rules on both probe elements.
+  setupDom('<!doctype html><html><body><div id="box" style="overflow-x:hidden; overflow-y:hidden; filter:blur(0px)"><div id="drawer" style="position:fixed"><div id="a"></div></div></div></body></html>')
+  withMockedRect(el('box'), CARD)
+  withMockedRect(el('drawer'), ON_SCREEN)
+  withMockedRect(el('a'), ON_SCREEN)
+  resetFilterProbe()
+  const probed: HTMLElement[] = []
+  const original = window.HTMLElement.prototype.getBoundingClientRect
+  window.HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement): DOMRect {
+    if (el('a').contains(this) && this !== el('a')) { probed.push(this) }
+    return original.call(this)
+  }
+  try {
+    isAnchorHidden(el('a'))
+  } finally {
+    window.HTMLElement.prototype.getBoundingClientRect = original
+    resetFilterProbe()
+  }
+  assert.equal(probed.length, 2, 'the box and its child')
+  for (const probe of probed) {
+    assert.equal(probe.style.item(0), 'all')
+    assert.equal(probe.style.getPropertyValue('all'), 'initial')
+    // Without `!important`, a later declaration loses to the reset.
+    for (let i = 0; i < probe.style.length; i++) {
+      assert.equal(probe.style.getPropertyPriority(probe.style.item(i)), 'important', probe.style.item(i))
+    }
+  }
+})
+
+test('a positioned inline box still holds an absolute element', () => {
+  setupDom('<!doctype html><html><body><div id="card" style="overflow-x:hidden; overflow-y:hidden"><span id="s" style="display:inline; position:relative"><div id="abs" style="position:absolute"><div id="a"></div></div></span></div></body></html>')
+  withMockedRect(el('card'), CARD)
+  withMockedRect(el('abs'), ON_SCREEN)
+  withMockedRect(el('a'), ON_SCREEN)
+  assert.equal(isAnchorHidden(el('a')), true)
 })

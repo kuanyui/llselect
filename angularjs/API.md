@@ -58,7 +58,12 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 > No **before** counterpart: there is no `ll-on-before-open`.
 
 - `$reason` is one of `'toggle'` (a click on the trigger, or `instance().toggle()`), `'keyboard'` (ArrowDown, ArrowUp, Enter or Space on the closed trigger), `'typeahead'` (a character typed on the closed trigger) or `'api'` (`instance().open()`).
-- Fires on every open that actually happens, user-driven or programmatic (`instance().open()`). A call that does not actually open the popup - already open, disabled, or the trigger scrolled out of view / clipped - does not fire.
+- Fires on every open that actually happens, user-driven or programmatic (`instance().open()`).
+- Does not fire when a call does not open the popup. That happens in each of these cases:
+  - the popup is already open;
+  - the select component is disabled;
+  - the call is made while a close returns focus to the trigger;
+  - the trigger is fully outside the viewport, or fully clipped away by an ancestor.
 - An error thrown by the expression goes to `$exceptionHandler`, like `ng-click`; it never aborts the open.
 - This is the only way to observe opening from the directive: the core `onOpen` setting is construction-frozen and the directive owns it.
 
