@@ -1182,12 +1182,26 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
   }
 
   /**
-   * On open, focus the first chosen item (if present and enabled). Otherwise
-   * the FIRST OPTION - which is the choose-all row when rendered (A11Y.md:
-   * activedescendant points at the first chosen option, else the first
-   * option; the row is the topmost option), so keyboard users discover it
-   * immediately. Else the first enabled item. Indices are into
-   * `getVisibleItems()`.
+   * Decide which row is active when the popup opens.
+   * - The library calls it inside `open()`, once per open, after the rows
+   *   are built. You never call it.
+   * - To pick another row, override it and set the row with
+   *   `setFocusedIndex`, which takes an index into `getVisibleItems()`, the
+   *   rendered list, or with `focusChooseAllRow`.
+   * - To fall back to this method's choice, call `super.focusInitial()`, but
+   *   only when the override set no row.
+   * - Makes the row of the first chosen item active, if that item is visible
+   *   and enabled.
+   * - Otherwise makes the choose-all row active, when it is rendered. The
+   *   choose-all row is the first `role="option"` row of the listbox, and
+   *   making it active lets a keyboard user meet it at once.
+   * - Otherwise makes the first enabled item the active row.
+   * - The order is the one `docs/llm/A11Y.md` rules: `aria-activedescendant`
+   *   points to the first chosen option, else the choose-all row, else the
+   *   first enabled option, never an action row.
+   * - Each step replaces any row set before this method runs.
+   * - Does nothing when no item is enabled, since the choose-all row is
+   *   rendered only while a visible item is enabled.
    * @group Subclassing: focus
    */
   protected override focusInitial(): void {

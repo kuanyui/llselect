@@ -352,8 +352,19 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
   }
 
   /**
-   * On open, focus the chosen item (if present and enabled), else the first
-   * enabled item. Indices are into `getVisibleItems()` (the rendered list).
+   * Decide which row is active when the popup opens.
+   * - The library calls it inside `open()`, once per open, after the rows
+   *   are built. You never call it.
+   * - To pick another row, override it and set the row with
+   *   `setFocusedIndex`, which takes an index into `getVisibleItems()`, the
+   *   rendered list.
+   * - To fall back to this method's choice, call `super.focusInitial()`, but
+   *   only when the override set no row.
+   * - Makes the row of the chosen item active, if the chosen item is visible
+   *   and enabled.
+   * - Otherwise makes the first enabled item the active row.
+   * - Either step replaces any row set before this method runs.
+   * - Does nothing when no item is enabled.
    * @group Subclassing: focus
    */
   protected override focusInitial(): void {

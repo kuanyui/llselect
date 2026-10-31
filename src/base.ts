@@ -3753,7 +3753,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected onChooseAllRowActivated(): void {}
 
   /**
-   * Decide which item to focus when the popup opens.
+   * Decide which row is active when the popup opens.
    * - The library calls it inside `open()`, once per open, after the rows
    *   are built. You never call it.
    * - To pick another row, such as the row of the chosen item or of the
