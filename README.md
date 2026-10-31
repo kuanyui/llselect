@@ -608,7 +608,7 @@ const sel = new LLSelectMultiple(el, {
 
 - The library never rebuilds the node. Update it from `onChange` or `onOpen`.
 - The function runs while the instance is being built. It receives `classIdMap` and the translation pack, and should read nothing else.
-- A button in a slot works with the mouse and keeps keyboard input on the combobox. Give it `type="button"` and an accessible name.
+- A button in a slot works with the mouse, and a click on it does not move focus. Give it `type="button"` and an accessible name.
 - A text field in a slot must stop its own `mousedown` from bubbling, or it cannot take focus.
 - To put the header above the filter input, move it from a subclass constructor: `if (this.popupHeaderEl) { this.popupEl.prepend(this.popupHeaderEl) }`.
 - While the filter is active, keep every control that Tab reaches out of a header above the filter input.

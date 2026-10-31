@@ -93,32 +93,112 @@ test('detached mount: open() skips showPopover instead of throwing', () => {
   sel.close()
 })
 
-test('a focus listener that closes the popup inside showPopover() stops the open there', () => {
-  const root = mount()
-  const page = document.createElement('button')
-  document.body.appendChild(page)
+// The popover focusing steps: showPopover() focuses an `autofocus` descendant.
+// Like Chromium, Firefox and WebKit 26.5, it throws on a second show during a show.
+function mockAutofocusPopover(): void {
   const proto = window.HTMLElement.prototype as unknown as {
     showPopover?: () => void
     hidePopover?: () => void
   }
-  // The browser's popover focusing steps focus an `autofocus` descendant.
-  proto.showPopover = function (this: HTMLElement) { this.querySelector<HTMLElement>('[autofocus]')?.focus() }
+  let showing = false
+  proto.showPopover = function (this: HTMLElement) {
+    if (showing) { throw new DOMException('a show during a show', 'InvalidStateError') }
+    showing = true
+    try {
+      this.querySelector<HTMLElement>('[autofocus]')?.focus()
+    } finally {
+      showing = false
+    }
+  }
   proto.hidePopover = function () {}
+}
+
+function autofocusButton(): HTMLElement {
+  const b = document.createElement('button')
+  b.setAttribute('autofocus', '')
+  return b
+}
+
+function focusPageButton(): void {
+  const page = document.createElement('button')
+  document.body.appendChild(page)
+  page.focus()
+}
+
+test('a focus listener that closes the popup inside showPopover() stops the open there', () => {
+  const root = mount()
+  mockAutofocusPopover()
   const events: string[] = []
   const sel: LLSelectSingle<string> = new LLSelectSingle<string>(root, {
-    createPopupHeaderContentElFn: () => {
-      const b = document.createElement('button')
-      b.setAttribute('autofocus', '')
-      return b
-    },
+    createPopupHeaderContentElFn: autofocusButton,
     onFocus: () => { events.push('focus'); sel.close() },
     onOpen: () => { events.push('open') },
     onClose: () => { events.push('close') },
   })
   sel.setItems(['a', 'b'])
-  page.focus()
+  focusPageButton()
   sel.open()
   assert.deepEqual(events, ['focus', 'close'])
   assert.equal(sel.isOpened(), false)
   assert.equal(sel.popupListEl.children.length, 0)
+})
+
+test('a focus listener that closes and reopens the popup inside showPopover() has its reopen ignored', () => {
+  const root = mount()
+  mockAutofocusPopover()
+  const events: string[] = []
+  const sel: LLSelectSingle<string> = new LLSelectSingle<string>(root, {
+    createPopupHeaderContentElFn: autofocusButton,
+    onFocus: () => { events.push('focus'); sel.close(); sel.open() },
+    onOpen: () => { events.push('open') },
+    onClose: () => { events.push('close') },
+  })
+  sel.setItems(['a', 'b'])
+  focusPageButton()
+  sel.open()
+  assert.deepEqual(events, ['focus', 'close'])
+  assert.equal(sel.isOpened(), false)
+  // Nothing was left half done: a later open completes.
+  sel.open()
+  assert.deepEqual(events, ['focus', 'close', 'open'])
+  assert.equal(sel.isOpened(), true)
+  assert.equal(sel.popupListEl.querySelectorAll('[role="option"]').length, 2)
+})
+
+test('a focus listener that re-renders inside showPopover() does not stop the open', () => {
+  const root = mount()
+  mockAutofocusPopover()
+  const events: string[] = []
+  const sel: LLSelectSingle<string> = new LLSelectSingle<string>(root, {
+    createPopupHeaderContentElFn: autofocusButton,
+    onFocus: () => { events.push('focus'); sel.rerender() },
+    onOpen: () => { events.push('open') },
+  })
+  sel.setItems(['a', 'b'])
+  focusPageButton()
+  sel.open()
+  assert.deepEqual(events, ['focus', 'open'])
+  assert.equal(sel.isOpened(), true)
+  assert.equal(sel.popupListEl.querySelectorAll('[role="option"]').length, 2)
+})
+
+class ActiveRowProbe extends LLSelectSingle<string> {
+  public setIndex(index: number): void { this.setFocusedIndex(index) }
+}
+
+test('a re-render inside showPopover() reports no stale active row before onOpen', () => {
+  const root = mount()
+  mockAutofocusPopover()
+  const events: string[] = []
+  const sel: ActiveRowProbe = new ActiveRowProbe(root, {
+    createPopupHeaderContentElFn: autofocusButton,
+    onFocus: () => { events.push('focus'); sel.rerender() },
+    onOpen: () => { events.push('open') },
+    onActiveItemChange: (item) => { events.push(`active ${item}`) },
+  })
+  sel.setItems(['a', 'b', 'c'])
+  sel.setIndex(2)
+  focusPageButton()
+  sel.open()
+  assert.deepEqual(events, ['focus', 'open', 'active a'])
 })

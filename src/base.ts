@@ -538,8 +538,11 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   rule), so a button works without stealing keyboard input. A text field
    *   inside must call `stopPropagation` on its own `mousedown`.
    * - If a control in the header has the `autofocus` attribute, a browser
-   *   with the Popover API focuses that control at every open. While the
-   *   filter is inactive, DOM focus then stays on that control.
+   *   with the Popover API focuses that control at every open.
+   *   - While the filter is active, the library then moves DOM focus on to
+   *     the filter input.
+   *   - While the filter is inactive, DOM focus stays on that control, and
+   *     the arrow keys stay with it instead of moving the active row.
    * - Keep it compact: a long unwrapped line widens a `'fit-content'` popup,
    *   and a tall slot squeezes the list, the only child that flexes.
    * - Contract: `docs/llm/DESIGN.md` "Popup header / footer slots";
@@ -937,6 +940,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   `'api'`. See {@link LLSelectOpenReason}.
    * - An `open()` call that does nothing does not fire it. The `open()`
    *   docstring lists those cases.
+   * - If a listener closes the select component while `open()` runs
+   *   `showPopover()`, as an `onFocus` can after the `autofocus` move of the
+   *   Popover API, this does not fire, while {@link onClose} does. The
+   *   `open()` docstring describes that path.
    * - Fires in ADDITION to the protected `onOpened` hook: the setting is for
    *   consumers, the hook for subclasses, both run.
    * - `null` (default) = no consumer listener.
@@ -959,6 +966,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - While the popup is open, focus that arrives on the trigger buttons strip
    *   from outside the select component closes the popup, and this fires
    *   **before** {@link onFocus}.
+   * - If a listener closes the select component while `open()` runs
+   *   `showPopover()`, as an `onFocus` can after the `autofocus` move of the
+   *   Popover API, this fires with no {@link onOpen} **before** it. The
+   *   `open()` docstring describes that path.
    * - `null` (default) = no consumer listener.
    * @group Events
    */
@@ -973,16 +984,17 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   filter input, a button of the trigger buttons strip, or a control the app
    *   placed in a header / footer slot.
    * - Fires once when focus comes from outside the select component or from nowhere:
-   *   Tab onto the trigger, a click on the trigger or on the label, a
-   *   programmatic `triggerEl.focus()`, an `open()` call on an unfocused
-   *   select component whose filter is active and whose slots hold no
-   *   `autofocus` control, which moves focus to the filter input
-   *   **after** `onOpen`, or a click on the clear button or on a chip's remove
-   *   button while the select component holds no focus, which focuses the trigger.
-   * - If a control in a header or footer slot has the `autofocus` attribute,
-   *   an `open()` call on an unfocused select component fires this
-   *   **before** `onOpen` instead, in either filter mode: a browser with the
-   *   Popover API focuses that control while the popup shows.
+   *   - Tab onto the trigger, a click on the trigger or on the label, or a
+   *     programmatic `triggerEl.focus()`;
+   *   - an `open()` call on an unfocused select component whose filter is
+   *     active, which moves focus to the filter input **after** `onOpen`,
+   *     when no `autofocus` control took focus first;
+   *   - a click on the clear button or on a chip's remove button while the
+   *     select component holds no focus, which focuses the trigger.
+   * - If the browser has the Popover API and a control in a header or footer
+   *   slot has the `autofocus` attribute, an `open()` call on an unfocused
+   *   select component fires this **before** `onOpen`, in either filter
+   *   mode: the browser focuses that control while the popup shows.
    * - Does not fire for a move inside the select component, such as `open()` moving
    *   focus from the trigger to the filter input.
    * - While the popup is open, focus that arrives on the trigger buttons strip
@@ -1640,6 +1652,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private opened = false
   /** True while `close()` returns focus to the trigger; `open()` refuses during that call. */
   private closing = false
+  /** True while `open()` runs `showPopover()`; `open()` refuses during that call, since Chromium, Firefox and WebKit 26.5 throw on a second show during a show. */
+  private opening = false
   /**
    * Position in `getVisibleItems()` (the rendered list, not `items`) of the
    * currently keyboard-focused item, or `-1` when no item is focused.
@@ -1650,9 +1664,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *     no enabled visible item, or after an open that finds no enabled
    *     visible item;
    *   - the choose-all row or an action row is the active row.
-   * - `open()` and `close()` set the value to `-1`. A `setFocusedIndex` call
-   *   made while the popup is closed can set it again; `open()` resets it
-   *   before `focusInitial` runs.
+   * - `close()` sets the value to `-1`.
+   * - While the popup is closed, a `setFocusedIndex` call can store another
+   *   value.
+   * - `open()` sets the value to `-1` again before `focusInitial` places the
+   *   initial row.
    * @group State (protected)
    */
   protected focusedIndex = -1
@@ -2015,11 +2031,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.triggerWrapperEl.addEventListener('mousedown', (ev) => this.handleTriggerWrapperMousedown(ev))
     this.triggerEl.addEventListener('keydown', (ev) => this.handleKeydown(ev))
     this.attachFocusListeners()
-    // Hold DOM focus on the combobox host: a mousedown anywhere in the popup - an
+    // Hold DOM focus where it is, normally the combobox host: a mousedown anywhere in the popup - an
     // option, the no-results message, a header / footer slot, popup padding, or
-    // the list element itself (tabindex="-1", so click-focusable) - would move focus off the host and
+    // the list element itself (tabindex="-1", so click-focusable) - would move focus off it and
     // silently kill keyboard input (e.g. multi + filterable: mouse-toggle an item,
-    // then typing goes nowhere; or a padding/no-results mousedown blurs the host and
+    // then typing goes nowhere; or a padding/no-results mousedown blurs it and
     // focusout closes the popup). preventDefault keeps focus put; `click` still fires
     // (it does not depend on the mousedown default), so selection is unaffected. The
     // listener is on popupEl (not popupListEl) so it also covers the no-results
@@ -2163,6 +2179,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   - the select component is disabled;
    *   - `close()` is returning focus to the trigger, so a focus handler that
    *     calls `open()` there is ignored;
+   *   - `showPopover()` is running, so a focus handler that calls `open()`
+   *     there is ignored, since Chromium, Firefox and WebKit 26.5 throw on a
+   *     second show during a show;
    *   - the trigger is hidden: fully outside the viewport, or fully clipped
    *     away by an ancestor.
    * - The first refusal for a hidden trigger on a page logs a console
@@ -2171,13 +2190,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - An action row is never the initial active row.
    * - While the filter is active, DOM focus moves to the filter input.
    * - In a browser with the Popover API, the popup shows through
-   *   `showPopover()`, and the browser then focuses a control in a header or
-   *   footer slot that has the `autofocus` attribute. This happens before the
-   *   filter input takes DOM focus.
+   *   `showPopover()`.
+   *   - The browser then focuses a control in a header or footer slot that
+   *     has the `autofocus` attribute.
+   *   - While the filter is active, the filter input takes DOM focus after
+   *     that.
    * - If a listener closes the select component while `showPopover()` runs,
    *   such as an `onFocus` that the `autofocus` move fires, the open stops
    *   there, attaches no positioner and no outside-click handler, and fires
    *   no `onOpen`.
+   *   - A reopen from that listener is ignored, as the list above says.
+   *   - A listener that only re-renders does not stop the open.
    * - The positioner closes the popup again, with the close reason
    *   `'hidden'`, when a scroll outside the popup finds the trigger hidden.
    * - Builds the item elements, which exist only while the popup is open.
@@ -2190,7 +2213,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   public open(): void {
     const reason = this.pendingOpenReason
     this.pendingOpenReason = 'api'
-    if (this.opened || this.disabled || this.closing) { return }
+    if (this.opened || this.disabled || this.closing || this.opening) { return }
     // A trigger already scrolled out of view / clipped by an ancestor when
     // open() runs cannot host a visible popup, so opening is a no-op (mirrors
     // the disabled guard). This also prevents the positioner's initial
@@ -2206,7 +2229,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.syncColorScheme()
     const restoreWindowScroll = this.captureWindowScroll()
     this.opened = true
-    const generation = ++this.transitionGeneration
+    this.transitionGeneration++
     // Filter mode is (re)evaluated once per open cycle, before anything that
     // depends on it (role, focus host, filtering).
     this.filterActive = this.computeFilterActive()
@@ -2221,6 +2244,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.filterInputEl.setAttribute('aria-expanded', 'true')
       this.recomputeFilteredItems()
     }
+    // Start from no active row, before `showPopover()` can run a listener
+    // that re-renders: a `setFocusedIndex` made while closed must not be
+    // reported as the initial row before `focusInitial` places it; the
+    // report itself waits for the tail of this method.
+    this.focusedRow = null
+    this.focusedIndex = -1
     // `position: fixed` MUST be set before `hidden = false`. Otherwise the
     // popup is briefly an in-flow `display: flex` block while `renderPopupList`
     // appends its items, which inflates document height by the popup's
@@ -2249,20 +2278,20 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // Chromium and Firefox. (isConnected: showPopover()
       // throws on a disconnected element; a detached select component is invisible
       // either way.)
-      this.popupEl.showPopover()
+      this.opening = true
+      try {
+        this.popupEl.showPopover()
+      } finally {
+        this.opening = false
+      }
       // The popover focusing steps can focus an `autofocus` slot control, and
-      // a focus listener may close or reopen the select component there.
-      if (this.transitionGeneration !== generation) { restoreWindowScroll(); return }
+      // a focus listener may close the select component there.
+      if (!this.opened) { restoreWindowScroll(); return }
       this.popupEl.style.right = 'auto'
       this.popupEl.style.bottom = 'auto'
       this.popupEl.style.height = 'auto'
     }
     this.renderTriggerArrow()
-    // Start from no active row: a `setFocusedIndex` made while closed must
-    // not be reported as the initial row before `focusInitial` places it;
-    // the report itself waits for the tail of this method.
-    this.focusedRow = null
-    this.focusedIndex = -1
     this.activeItemReportSuspendDepth++
     try {
       this.renderPopupList()
@@ -2756,6 +2785,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Subclass hook: called once **after** the popup finishes closing. The `onClose` setting fires alongside this (both run).
    *
    * > No **before** counterpart: there is no `onClosing`.
+   *
+   * - If a listener closes the select component while `open()` runs
+   *   `showPopover()`, this runs with no {@link onOpened} **before** it.
    * @group Subclassing: reactions
    */
   protected onClosed(): void {}

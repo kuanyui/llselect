@@ -58,12 +58,14 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 > No **before** counterpart: there is no `ll-on-before-open`.
 
 - `$reason` is one of `'toggle'` (a click on the trigger, or `instance().toggle()`), `'keyboard'` (ArrowDown, ArrowUp, Enter or Space on the closed trigger), `'typeahead'` (a character typed on the closed trigger) or `'api'` (`instance().open()`).
-- Fires on every open that actually happens, user-driven or programmatic (`instance().open()`).
+- Fires on every open that completes, user-driven or programmatic (`instance().open()`).
 - Does not fire when a call does not open the popup. That happens in each of these cases:
   - the popup is already open;
   - the select component is disabled;
   - the call is made while a close returns focus to the trigger;
+  - the call is made while `showPopover()` is still showing the popup, as a reopen from an [`ll-on-focus`](#ll-on-focus) expression is;
   - the trigger is fully outside the viewport, or fully clipped away by an ancestor.
+- It does not fire either when a listener closes the select component while `showPopover()` shows the popup, as an [`ll-on-focus`](#ll-on-focus) expression can after the `autofocus` move of the Popover API. [`ll-on-close`](#ll-on-close) fires then, with no `ll-on-open` **before** it.
 - An error thrown by the expression goes to `$exceptionHandler`, like `ng-click`; it never aborts the open.
 - This is the only way to observe opening from the directive: the core `onOpen` setting is construction-frozen and the directive owns it.
 
@@ -74,7 +76,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 > No **before** counterpart: there is no `ll-on-before-close`.
 
 - `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the select component), `'blur'` (DOM focus left the select component), `'trigger-buttons'` (DOM focus moved into the trigger buttons strip, the row of the clear button and the chips' remove buttons; no `ll-on-blur` follows), `'toggle'` (a click in the trigger wrapper, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed) or `'hidden'` (the trigger scrolled out of view or was clipped).
-- Same rules as [`ll-on-open`](#ll-on-open).
+- Same rules as [`ll-on-open`](#ll-on-open), except that `ll-on-close` fires when a listener closes the select component while `showPopover()` shows the popup.
 - It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and AngularJS broadcasts `$destroy` before disabling the scope.
 - In that teardown case, writes to parent-owned state (`vm.*`, a service) persist; writes to the dying child scope itself are lost with it.
 
@@ -84,7 +86,11 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 > No **before** counterpart: there is no `ll-on-before-focus`, and the `focusin` / `focusout` events the library observes are not cancelable, so none could stop the move.
 
-- Fires when focus comes from outside the select component or from nowhere: Tab onto the trigger, a click on the trigger or on its label, a programmatic `instance().triggerEl.focus()`, an `instance().open()` on an unfocused select component whose filter is active, which moves focus to the filter input **after** [`ll-on-open`](#ll-on-open), or a click on the clear button or on a chip's remove button while the select component holds no focus, which focuses the trigger.
+- Fires when focus comes from outside the select component or from nowhere:
+  - Tab onto the trigger, a click on the trigger or on its label, or a programmatic `instance().triggerEl.focus()`;
+  - an `instance().open()` on an unfocused select component whose filter is active, which moves focus to the filter input **after** [`ll-on-open`](#ll-on-open), when no `autofocus` control took focus first;
+  - a click on the clear button or on a chip's remove button while the select component holds no focus, which focuses the trigger.
+- If the browser has the Popover API and a control in a header or footer slot has the `autofocus` attribute, an `instance().open()` on an unfocused select component fires `ll-on-focus` **before** [`ll-on-open`](#ll-on-open), in either filter mode: the browser focuses that control while the popup shows.
 - Does not fire for a focus move inside the select component, such as the open moving focus from the trigger to the filter input.
 - It is about DOM focus only. The row the arrow keys move inside the popup is the active row; that row never holds DOM focus.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
@@ -362,8 +368,9 @@ $scope.readOut = function (ctx) { return ctx.chosenItems.length + ' countries ch
 - Evaluated once at link time to a function `(ctx) => HTMLElement | null`. `ctx` is the core's `LLSelectConstructionContext`: `classIdMap` and the resolved translation pack, the two things that are safe to read while the select component is being built. A function that ignores `ctx` works too. That function runs ONCE, right then, at link time - inside whatever digest is compiling the element, if any; do not rely on one. The returned node lives until the element is destroyed.
 - llselect never rebuilds the node. Update it yourself, for example from `ng-change`.
 - `null` (returned, or no attribute) = no header element at all.
-- Not `$compile`d: build plain DOM. A button inside works with the mouse and keeps keyboard input on the combobox; a text field inside must stop its own `mousedown` from bubbling.
-- Keyboard and focus rules for controls inside: core `docs/llm/A11Y.md`, "Slot controls". The contract: core `docs/llm/DESIGN.md`, "Popup header / footer slots".
+- Not `$compile`d: build plain DOM. A button inside works with the mouse, and a click on it does not move focus; a text field inside must stop its own `mousedown` from bubbling.
+- In a browser with the Popover API, a control inside with the `autofocus` attribute takes DOM focus at every open; [`ll-on-focus`](#ll-on-focus) gives the event order.
+- Keyboard and focus rules for controls inside: core `docs/llm/A11Y.md`, "Slot controls" and "Focus". The contract: core `docs/llm/DESIGN.md`, "Popup header / footer slots".
 
 ### `ll-popup-footer-content-fn`
 
