@@ -1186,22 +1186,38 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    * - The library calls it inside `open()`, once per open, after the rows
    *   are built. You never call it.
    * - To pick another row, override it and set the row with
-   *   `setFocusedIndex`, which takes an index into `getVisibleItems()`, the
-   *   rendered list, or with `focusChooseAllRow`.
+   *   `setFocusedIndex` or `focusChooseAllRow`.
+   * - `setFocusedIndex` takes an index into `getVisibleItems()`, which
+   *   counts item rows only; the choose-all row and the action rows have no
+   *   index.
    * - To fall back to this method's choice, call `super.focusInitial()`, but
    *   only when the override set no row.
-   * - Makes the row of the first chosen item active, if that item is visible
-   *   and enabled.
-   * - Otherwise makes the choose-all row active, when it is rendered. The
-   *   choose-all row is the first `role="option"` row of the listbox, and
-   *   making it active lets a keyboard user meet it at once.
-   * - Otherwise makes the first enabled item the active row.
-   * - The order is the one `docs/llm/A11Y.md` rules: `aria-activedescendant`
-   *   points to the first chosen option, else the choose-all row, else the
-   *   first enabled option, never an action row.
+   * - The active row is the `role="option"` row that `aria-activedescendant`
+   *   names on the `role="combobox"` element: the trigger, or the filter
+   *   input while the filter is active.
+   * - "Focus" in the names `focusInitial`, `setFocusedIndex` and
+   *   `focusChooseAllRow` means the active row, not DOM focus.
+   * - DOM focus never moves to the active row. While the filter is active,
+   *   the open moves DOM focus to the filter input.
+   * - `open()` clears the active row before the call, so the popup opens
+   *   with no active row unless this method sets one.
+   * - Visible items are the items in `getVisibleItems()`, the items that
+   *   have a row in the list.
+   *   - While `hideChosenRows` is on, a chosen item is not visible.
+   * - Makes the row of the first entry of `getChosenItems()` active, if that
+   *   item is visible and enabled.
+   *   - `getChosenItems()` follows `chosenItemsOrder`, not the order of the
+   *     rows, so its first entry need not be the topmost chosen row.
+   * - Otherwise makes the choose-all row active, when it is rendered.
+   *   - The choose-all row is the first `role="option"` row of the listbox,
+   *     so making it active at open lets a keyboard user find it without
+   *     pressing an arrow key.
+   * - Otherwise makes the first enabled visible item the active row.
+   * - This order is the one `docs/llm/A11Y.md` rules, and an action row is
+   *   never the active row at open.
    * - Each step replaces any row set before this method runs.
-   * - Does nothing when no item is enabled, since the choose-all row is
-   *   rendered only while a visible item is enabled.
+   * - Does nothing when no visible item is enabled.
+   *   - The choose-all row is rendered only while a visible item is enabled.
    * @group Subclassing: focus
    */
   protected override focusInitial(): void {

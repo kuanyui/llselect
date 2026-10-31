@@ -3761,14 +3761,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `focusChooseAllRow`.
    * - To fall back to the default, call `super.focusInitial()`, but only when
    *   the override set no row.
-   * - "Focus" here means the active row (`aria-activedescendant`), not DOM
-   *   focus, which the open moves to the filter input or keeps on the
-   *   trigger.
+   * - "Focus" here means the active row, the row that `aria-activedescendant`
+   *   names, not DOM focus.
+   * - DOM focus never moves to the active row. While the filter is active,
+   *   the open moves DOM focus to the filter input.
    * - `open()` clears the active row before the call, so the popup opens
    *   with no active row unless this method sets one.
-   * - The default makes the first enabled item the active row, replacing any
-   *   row set before it runs.
-   * - The default does nothing when no item is enabled.
+   * - Visible items are the items in `getVisibleItems()`, the items that
+   *   have a row in the list.
+   * - The default makes the first enabled visible item the active row,
+   *   replacing any row set before it runs.
+   * - The default does nothing when no visible item is enabled.
    * @group Subclassing: focus
    */
   protected focusInitial(): void {

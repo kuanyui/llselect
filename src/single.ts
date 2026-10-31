@@ -356,15 +356,27 @@ export class LLSelectSingle<T = unknown, GroupKey = string, S extends LLSelectSi
    * - The library calls it inside `open()`, once per open, after the rows
    *   are built. You never call it.
    * - To pick another row, override it and set the row with
-   *   `setFocusedIndex`, which takes an index into `getVisibleItems()`, the
-   *   rendered list.
+   *   `setFocusedIndex`.
+   * - `setFocusedIndex` takes an index into `getVisibleItems()`, which
+   *   counts item rows only; action rows have no index.
    * - To fall back to this method's choice, call `super.focusInitial()`, but
    *   only when the override set no row.
+   * - The active row is the `role="option"` row that `aria-activedescendant`
+   *   names on the `role="combobox"` element: the trigger, or the filter
+   *   input while the filter is active.
+   * - "Focus" in the names `focusInitial` and `setFocusedIndex` means the
+   *   active row, not DOM focus.
+   * - DOM focus never moves to the active row. While the filter is active,
+   *   the open moves DOM focus to the filter input.
+   * - `open()` clears the active row before the call, so the popup opens
+   *   with no active row unless this method sets one.
+   * - Visible items are the items in `getVisibleItems()`, the items that
+   *   have a row in the list.
    * - Makes the row of the chosen item active, if the chosen item is visible
    *   and enabled.
-   * - Otherwise makes the first enabled item the active row.
+   * - Otherwise makes the first enabled visible item the active row.
    * - Either step replaces any row set before this method runs.
-   * - Does nothing when no item is enabled.
+   * - Does nothing when no visible item is enabled.
    * @group Subclassing: focus
    */
   protected override focusInitial(): void {
