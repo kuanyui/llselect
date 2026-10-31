@@ -92,3 +92,33 @@ test('detached mount: open() skips showPopover instead of throwing', () => {
   assert.equal(log.shown, 0)
   sel.close()
 })
+
+test('a focus listener that closes the popup inside showPopover() stops the open there', () => {
+  const root = mount()
+  const page = document.createElement('button')
+  document.body.appendChild(page)
+  const proto = window.HTMLElement.prototype as unknown as {
+    showPopover?: () => void
+    hidePopover?: () => void
+  }
+  // The browser's popover focusing steps focus an `autofocus` descendant.
+  proto.showPopover = function (this: HTMLElement) { this.querySelector<HTMLElement>('[autofocus]')?.focus() }
+  proto.hidePopover = function () {}
+  const events: string[] = []
+  const sel: LLSelectSingle<string> = new LLSelectSingle<string>(root, {
+    createPopupHeaderContentElFn: () => {
+      const b = document.createElement('button')
+      b.setAttribute('autofocus', '')
+      return b
+    },
+    onFocus: () => { events.push('focus'); sel.close() },
+    onOpen: () => { events.push('open') },
+    onClose: () => { events.push('close') },
+  })
+  sel.setItems(['a', 'b'])
+  page.focus()
+  sel.open()
+  assert.deepEqual(events, ['focus', 'close'])
+  assert.equal(sel.isOpened(), false)
+  assert.equal(sel.popupListEl.children.length, 0)
+})

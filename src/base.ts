@@ -448,7 +448,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - The value evaluated at an open sets the ARIA mode for that open cycle.
    *   - While the filter is active, the trigger has `role="button"`, and the open moves DOM focus to the filter input.
    *   - While the filter is inactive, the select component behaves as with `filterable: false`: the trigger keeps `role="combobox"`, and the library moves no DOM focus at the open.
-   *   - When the popup shows, a browser with the Popover API focuses a control in a header or footer slot that has the `autofocus` attribute. While the filter is active, the library then moves DOM focus on to the filter input.
+   * - In either mode, when the popup shows, a browser with the Popover API focuses a control in a header or footer slot that has the `autofocus` attribute.
+   *   - While the filter is active, the library then moves DOM focus on to the filter input.
+   *   - While the filter is inactive, DOM focus stays on that control.
    * - See `docs/llm/A11Y.md` and `docs/llm/DESIGN.md`.
    * @group Filtering
    */
@@ -532,9 +534,12 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   - A negative `tabindex` opts a control out.
    * - To offer a header control, keep the header below the filter input, or
    *   move the control to the footer.
-   * - Pointer: a click inside keeps DOM focus on the combobox host (the popup
-   *   `mousedown` rule), so a button works without stealing keyboard input. A
-   *   text field inside must call `stopPropagation` on its own `mousedown`.
+   * - Pointer: a click inside does not move DOM focus (the popup `mousedown`
+   *   rule), so a button works without stealing keyboard input. A text field
+   *   inside must call `stopPropagation` on its own `mousedown`.
+   * - If a control in the header has the `autofocus` attribute, a browser
+   *   with the Popover API focuses that control at every open. While the
+   *   filter is inactive, DOM focus then stays on that control.
    * - Keep it compact: a long unwrapped line widens a `'fit-content'` popup,
    *   and a tall slot squeezes the list, the only child that flexes.
    * - Contract: `docs/llm/DESIGN.md` "Popup header / footer slots";
@@ -970,9 +975,14 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - Fires once when focus comes from outside the select component or from nowhere:
    *   Tab onto the trigger, a click on the trigger or on the label, a
    *   programmatic `triggerEl.focus()`, an `open()` call on an unfocused
-   *   select component whose filter is active, which moves focus to the filter input
+   *   select component whose filter is active and whose slots hold no
+   *   `autofocus` control, which moves focus to the filter input
    *   **after** `onOpen`, or a click on the clear button or on a chip's remove
    *   button while the select component holds no focus, which focuses the trigger.
+   * - If a control in a header or footer slot has the `autofocus` attribute,
+   *   an `open()` call on an unfocused select component fires this
+   *   **before** `onOpen` instead, in either filter mode: a browser with the
+   *   Popover API focuses that control while the popup shows.
    * - Does not fire for a move inside the select component, such as `open()` moving
    *   focus from the trigger to the filter input.
    * - While the popup is open, focus that arrives on the trigger buttons strip
@@ -1016,10 +1026,11 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   and that `aria-activedescendant` points to. It never holds DOM focus;
    *   {@link onFocus} reports DOM focus.
    * - `item` is the item of the new active row, or `undefined` when no item
-   *   row is active: while the popup is closed, while the popup is open with
-   *   no active row, as after an open or a filter keystroke that leaves no
-   *   enabled visible item, and while the choose-all row or an action row is
-   *   the active row.
+   *   row is active:
+   *   - the popup is closed;
+   *   - the popup is open with no active row, for example after a filter
+   *     keystroke that leaves no enabled visible item;
+   *   - the choose-all row or an action row is the active row.
    * - Fires on open with the initial row, **after** {@link onOpen}; on every
    *   arrow, page, Home / End and typeahead move; on a click, **before** the
    *   change it requests; when a filter keystroke, `setItems()`, `rerender()`
@@ -1631,12 +1642,17 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private closing = false
   /**
    * Position in `getVisibleItems()` (the rendered list, not `items`) of the
-   * currently keyboard-focused item, or `-1` when no item is focused. The
-   * value is `-1` while the popup is closed, while the popup is open with no
-   * active row, as after an open or a filter keystroke that leaves no enabled
-   * visible item, and while the choose-all row or an action row is the
-   * active row. "Focused" here means the active row, the row
-   * `aria-activedescendant` points to, not DOM focus.
+   * currently keyboard-focused item, or `-1` when no item is focused.
+   * - "Focused" here means the active row, the row `aria-activedescendant`
+   *   points to, not DOM focus.
+   * - While the popup is open, the value is `-1` in two cases:
+   *   - no row is active, for example after a filter keystroke that leaves
+   *     no enabled visible item, or after an open that finds no enabled
+   *     visible item;
+   *   - the choose-all row or an action row is the active row.
+   * - `open()` and `close()` set the value to `-1`. A `setFocusedIndex` call
+   *   made while the popup is closed can set it again; `open()` resets it
+   *   before `focusInitial` runs.
    * @group State (protected)
    */
   protected focusedIndex = -1
@@ -2154,6 +2170,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Sets an initial active row, if an enabled item row exists.
    * - An action row is never the initial active row.
    * - While the filter is active, DOM focus moves to the filter input.
+   * - In a browser with the Popover API, the popup shows through
+   *   `showPopover()`, and the browser then focuses a control in a header or
+   *   footer slot that has the `autofocus` attribute. This happens before the
+   *   filter input takes DOM focus.
+   * - If a listener closes the select component while `showPopover()` runs,
+   *   such as an `onFocus` that the `autofocus` move fires, the open stops
+   *   there, attaches no positioner and no outside-click handler, and fires
+   *   no `onOpen`.
    * - The positioner closes the popup again, with the close reason
    *   `'hidden'`, when a scroll outside the popup finds the trigger hidden.
    * - Builds the item elements, which exist only while the popup is open.
@@ -2182,7 +2206,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.syncColorScheme()
     const restoreWindowScroll = this.captureWindowScroll()
     this.opened = true
-    this.transitionGeneration++
+    const generation = ++this.transitionGeneration
     // Filter mode is (re)evaluated once per open cycle, before anything that
     // depends on it (role, focus host, filtering).
     this.filterActive = this.computeFilterActive()
@@ -2226,6 +2250,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // throws on a disconnected element; a detached select component is invisible
       // either way.)
       this.popupEl.showPopover()
+      // The popover focusing steps can focus an `autofocus` slot control, and
+      // a focus listener may close or reopen the select component there.
+      if (this.transitionGeneration !== generation) { restoreWindowScroll(); return }
       this.popupEl.style.right = 'auto'
       this.popupEl.style.bottom = 'auto'
       this.popupEl.style.height = 'auto'

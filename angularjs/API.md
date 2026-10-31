@@ -109,7 +109,10 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 > No **before** counterpart: there is no `ll-on-before-active-item-change`.
 
 - The active row is the row of the popup list that the arrow keys move and that `aria-activedescendant` points to. It never holds DOM focus; [`ll-on-focus`](#ll-on-focus) is about DOM focus.
-- `$item` is the item from the [`ll-options`](#ll-options) collection, not the `select as` value. It is `undefined` while the popup is closed, when no item matches the filter, and when the active row is the choose-all row or an action row.
+- `$item` is the item from the [`ll-options`](#ll-options) collection, not the `select as` value. It is `undefined` in three cases:
+  - the popup is closed;
+  - the popup is open with no active row, for example after a filter keystroke that leaves no enabled visible item;
+  - the active row is the choose-all row or an action row.
 - Fires on open with the initial row, **after** [`ll-on-open`](#ll-on-open); on every keyboard move; on a click, **before** the change it requests; when a filter keystroke or a data reload moves the row; and on close with `undefined`, **after** [`ll-on-close`](#ll-on-close).
 - Fires only when the item changed, compared with the `track by` rule of [`ll-options`](#ll-options), or by identity without a `track by` clause, so a data reload of equal-valued objects fires then. A row redrawn for the same item is silent. A mouse hover never fires: hovering does not move the active row.
 - ui-select's name for this event is `on-highlight`. [`<ui-llselect>`](#ui-llselect) maps it, and the note there says why llselect does not use that word for the active row.
