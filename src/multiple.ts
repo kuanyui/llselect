@@ -1222,8 +1222,9 @@ export class LLSelectMultiple<T = unknown, GroupKey = string, S extends LLSelect
    */
   protected override focusInitial(): void {
     const list = this.getVisibleItems()
-    const firstChosen = this.chosenItems[0]
-    if (firstChosen !== undefined) {
+    // By length: a chosen item may itself be `undefined`.
+    if (this.chosenItems.length > 0) {
+      const firstChosen = this.chosenItems[0] as T
       const compareFn = this.settings.compareFn
       const idx = list.findIndex(i => compareFn(i, firstChosen))
       if (idx >= 0 && !this.isItemEffectivelyDisabled(list[idx]!)) {

@@ -179,6 +179,27 @@ test('focusInitial on open with empty chosen focuses first item', () => {
   assert.equal(focused?.textContent, 'x')
 })
 
+test('focusInitial on open focuses a first chosen item that is itself undefined', () => {
+  const sel = new LLSelectMultiple<string | undefined>(mount(), { itemToStringFn: (i) => i ?? 'nothing' })
+  sel.setItems(['a', undefined])
+  sel.setChosenItems([undefined])
+  sel.open()
+  const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.popupListRowFocusedClass}`)
+  assert.equal(focused?.textContent, 'nothing')
+})
+
+test('focusInitial on open skips a first chosen item that is itself undefined and disabled', () => {
+  const sel = new LLSelectMultiple<string | undefined>(mount(), {
+    itemToStringFn: (i) => i ?? 'nothing',
+    itemDisabledFn: (i) => i === undefined,
+  })
+  sel.setItems(['a', undefined])
+  sel.setChosenItems([undefined])
+  sel.open()
+  const focused = sel.popupListEl.querySelector(`.${sel.classIdMap.popupListRowFocusedClass}`)
+  assert.equal(focused?.textContent, 'a')
+})
+
 test('toggleItem re-renders only the toggled item element, not the whole list', () => {
   const sel = new LLSelectMultiple<string>(mount())
   sel.setItems(['a', 'b', 'c'])

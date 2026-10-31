@@ -445,10 +445,11 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * - Predicate `(items) => boolean`: conditional. E.g. `filterable: (items) => items.length > 10`.
    *   - Called **once** at construction with the empty item list (`setItems` has not run yet), and at **every** open with the current full item list; never mid-open, so a `setItems` crossing the threshold applies on the next open.
    *   - A printable key pressed while closed also calls it, read-only, to decide whether prefix typeahead may take the key; keep it cheap and side-effect free.
-   * The ARIA mode follows the evaluated value per open cycle: active =
-   * trigger `role="button"`, focus moves to the input; inactive = exactly
-   * like `filterable: false` (trigger stays `role="combobox"`, focus stays on
-   * the trigger). See `docs/llm/A11Y.md` and `docs/llm/DESIGN.md`.
+   * - The value evaluated at an open sets the ARIA mode for that open cycle.
+   *   - While the filter is active, the trigger has `role="button"`, and the open moves DOM focus to the filter input.
+   *   - While the filter is inactive, the select component behaves as with `filterable: false`: the trigger keeps `role="combobox"`, and the library moves no DOM focus at the open.
+   *   - When the popup shows, a browser with the Popover API focuses a control in a header or footer slot that has the `autofocus` attribute. While the filter is active, the library then moves DOM focus on to the filter input.
+   * - See `docs/llm/A11Y.md` and `docs/llm/DESIGN.md`.
    * @group Filtering
    */
   filterable: boolean | ((items: readonly T[]) => boolean)
@@ -1015,8 +1016,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   and that `aria-activedescendant` points to. It never holds DOM focus;
    *   {@link onFocus} reports DOM focus.
    * - `item` is the item of the new active row, or `undefined` when no item
-   *   row is active: the popup is closed, no item matches the filter, or the
-   *   active row is the choose-all row or an action row.
+   *   row is active: while the popup is closed, while the popup is open with
+   *   no active row, as after an open or a filter keystroke that leaves no
+   *   enabled visible item, and while the choose-all row or an action row is
+   *   the active row.
    * - Fires on open with the initial row, **after** {@link onOpen}; on every
    *   arrow, page, Home / End and typeahead move; on a click, **before** the
    *   change it requests; when a filter keystroke, `setItems()`, `rerender()`
@@ -1628,11 +1631,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private closing = false
   /**
    * Position in `getVisibleItems()` (the rendered list, not `items`) of the
-   * currently keyboard-focused item, or `-1` when no item is focused: the
-   * popup is closed, no item is rendered, or the choose-all row or an action
-   * row is the active row. "Focused" here means the active row, the row
-   * `aria-activedescendant` points to; DOM focus stays on the trigger or the
-   * filter input.
+   * currently keyboard-focused item, or `-1` when no item is focused. The
+   * value is `-1` while the popup is closed, while the popup is open with no
+   * active row, as after an open or a filter keystroke that leaves no enabled
+   * visible item, and while the choose-all row or an action row is the
+   * active row. "Focused" here means the active row, the row
+   * `aria-activedescendant` points to, not DOM focus.
    * @group State (protected)
    */
   protected focusedIndex = -1
@@ -3761,8 +3765,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `focusChooseAllRow`.
    * - To fall back to the default, call `super.focusInitial()`, but only when
    *   the override set no row.
-   * - "Focus" here means the active row, the row that `aria-activedescendant`
-   *   names, not DOM focus.
+   * - The active row is the `role="option"` row that `aria-activedescendant`
+   *   names on the `role="combobox"` element: the trigger, or the filter
+   *   input while the filter is active.
+   * - "Focus" in the names `focusInitial`, `setFocusedIndex` and
+   *   `focusChooseAllRow` means the active row, not DOM focus.
    * - DOM focus never moves to the active row. While the filter is active,
    *   the open moves DOM focus to the filter input.
    * - `open()` clears the active row before the call, so the popup opens
@@ -3783,9 +3790,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Move keyboard focus to the item at `index`. The value is clamped to
    * `[-1, getVisibleItems().length - 1]`; pass `-1` to clear focus. Updates the focused
    * class, `aria-activedescendant`, and scrolls the item into view. No-op
-   * if the clamped value equals the current focused index. "Keyboard
-   * focus" here means the active row, not DOM focus, which stays on the
-   * trigger or the filter input.
+   * if the clamped value equals the current focused index while no
+   * choose-all row or action row is active. "Keyboard focus" here means the
+   * active row; this method never moves DOM focus.
    * @group Subclassing: focus
    */
   protected setFocusedIndex(index: number): void {
@@ -3801,7 +3808,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Move keyboard focus onto the choose-all row. Returns whether the row is now
    * focused (`false` = none is rendered, nothing changed). The item focus is
    * cleared (`focusedIndex` becomes -1). "Keyboard focus" here means the
-   * active row, not DOM focus, which stays on the trigger or the filter input. Protected so a subclass can wire its
+   * active row; this method never moves DOM focus. Protected so a subclass can wire its
    * choose-all row's click to focus-then-activate (mirroring how item clicks
    * call `setFocusedIndex` before `onPopupListItemActivated`) and use it in
    * `focusInitial` (the choose-all row is the listbox's FIRST option).
