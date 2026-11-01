@@ -1126,7 +1126,59 @@
   </section>
 
   <section>
-    <h2>17. i18n (language packs) + RTL</h2>
+    <h2>17. Behaviors and platform simulation</h2>
+    <p class="hint">
+      A behavior setting decides how the select component reacts to the
+      user. A preset from <code>@llselect/core/behavior-presets</code> copies
+      the native select of one browser on one operating system.
+    </p>
+
+    <article>
+      <h3>17.1 Wheel and touch: the default and two presets, next to this browser's native select</h3>
+      <p class="hint">Open a select component. Then turn the mouse wheel, or drag with one finger, inside the popup, on the trigger and elsewhere on the page. The two presets copy the native select of Firefox and of Chromium on Windows 11. The line under each select component names its last close.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div class="gesture-row">
+            <div>
+              <div class="gesture-label">default</div>
+              <div id="mount-gesture-default"></div>
+              <div class="out" id="out-gesture-default">last close: (none)</div>
+            </div>
+            <div>
+              <div class="gesture-label"><code>behaviorPresetsOfFirefoxOnWindows</code></div>
+              <div id="mount-gesture-firefox"></div>
+              <div class="out" id="out-gesture-firefox">last close: (none)</div>
+            </div>
+            <div>
+              <div class="gesture-label"><code>behaviorPresetsOfChromiumOnWindows</code></div>
+              <div id="mount-gesture-chromium"></div>
+              <div class="out" id="out-gesture-chromium">last close: (none)</div>
+            </div>
+            <div>
+              <label class="gesture-label" for="native-gesture">native select of this browser</label>
+              <select id="native-gesture"></select>
+            </div>
+          </div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="17.1"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>17.2 Wheel and touch: your own function, with each gesture and its answer</h3>
+      <p class="hint">This function closes the popup at any gesture outside the popup. A wheel that the list can still scroll never reaches the function.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div id="mount-gesture-own"></div>
+          <div class="out" id="out-gesture-own">last gesture: (none)</div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="17.2"><code></code></pre></details>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h2>18. i18n (language packs) + RTL</h2>
     <p class="hint">
       All chrome strings live in the <code>uiTranslationPack</code> setting;
       packs from <code>@llselect/core/i18n</code> fill it whole, per-key
@@ -1135,7 +1187,7 @@
     </p>
 
     <article>
-      <h3>17.1 Pack switcher (incl. RTL)</h3>
+      <h3>18.1 Pack switcher (incl. RTL)</h3>
       <p class="hint">
         Switch the pack - <code>setUiTranslationPack</code> re-renders in
         place, chosen values survive. Placeholders, filter input, clear x,
@@ -1164,12 +1216,12 @@
           <div class="out">^ multi, default <code>'count'</code> - translated count text</div>
           <div class="out" id="out-i18n">chosen: </div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="17.1"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="18.1"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>17.2 RTL + checkbox rows (auto-mirroring)</h3>
+      <h3>18.2 RTL + checkbox rows (auto-mirroring)</h3>
       <p class="hint">
         <code>dir="rtl"</code> on the mount is ALL the wiring - there is no
         RTL API. Flex rows and logical margins mirror by themselves: the
@@ -1181,19 +1233,19 @@
           <div id="mount-rtl-checkboxes" dir="rtl"></div>
           <div class="out" id="out-rtl-checkboxes">chosen: 0 items</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="17.2"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="18.2"><code></code></pre></details>
       </div>
     </article>
 
     <article>
-      <h3>17.3 Every language pack</h3>
+      <h3>18.3 Every language pack</h3>
       <p class="hint">
         One instance per entry in <code>uiTranslationPackByLocale</code> - the
         grid grows with the library. Each trigger shows its pack's own
         placeholder; RTL packs set <code>dir="rtl"</code>.
       </p>
       <div id="i18n-all-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0.8rem"></div>
-      <details class="code-toggle"><summary>code</summary><pre data-demo="17.3"><code></code></pre></details>
+      <details class="code-toggle"><summary>code</summary><pre data-demo="18.3"><code></code></pre></details>
     </article>
   </section>
   </main>

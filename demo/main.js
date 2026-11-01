@@ -1,4 +1,5 @@
-import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createOutlinedCheckboxSvgEl, createFilledCheckboxSvgEl, createCheckmarkSvgEl, createHighlightedTextEl } from '../dist/index.mjs'
+import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createOutlinedCheckboxSvgEl, createFilledCheckboxSvgEl, createCheckmarkSvgEl, createHighlightedTextEl, defaultScrollGestureToBehavior } from '../dist/index.mjs'
+import { behaviorPresetsOfChromiumOnWindows, behaviorPresetsOfFirefoxOnWindows } from '../dist/behavior-presets.mjs'
 import { ar, en, he, ja, zhTW, uiTranslationPackByLocale } from '../dist/i18n.mjs'
 import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS, MIXED_DIRECTION_COUNTRIES } from './data.js'
 import { highlightJs } from './highlight.js'
@@ -1472,6 +1473,47 @@ selSchemeMultiple.setChosenItems(['Japan', 'Brazil', 'Canada'])
 //#endregion
 
 //#region 17.1
+// The presets come from their own entry point (imported at the top:
+// `import { behaviorPresetsOfFirefoxOnWindows, behaviorPresetsOfChromiumOnWindows }
+// from '@llselect/core/behavior-presets'`). Spread one into the settings.
+for (const [key, name, preset] of [
+  ['default', 'default', {}],
+  ['firefox', 'Firefox on Windows preset', behaviorPresetsOfFirefoxOnWindows],
+  ['chromium', 'Chromium on Windows preset', behaviorPresetsOfChromiumOnWindows],
+]) {
+  const out = document.getElementById(`out-gesture-${key}`)
+  const sel = new LLSelectSingle(document.getElementById(`mount-gesture-${key}`), {
+    ariaLabel: name,
+    placeholder: name,
+    ...preset,
+    onClose: (meta) => {
+      const gesture = meta.scrollGesture
+      out.textContent = gesture ? `last close: ${meta.reason}, ${gesture.kind} on ${gesture.zone}` : `last close: ${meta.reason}`
+    },
+  })
+  sel.setItems(COUNTRIES)
+}
+const nativeGesture = document.getElementById('native-gesture')
+for (const country of COUNTRIES) { nativeGesture.add(new Option(country)) }
+//#endregion
+
+//#region 17.2
+const outGestureOwn = document.getElementById('out-gesture-own')
+const selGestureOwn = new LLSelectSingle(document.getElementById('mount-gesture-own'), {
+  ariaLabel: 'own scroll gesture function',
+  placeholder: 'own function',
+  scrollGestureToBehaviorFn: (gesture) => {
+    const behavior = gesture.zone === 'outside'
+      ? 'close-popup-and-allow-page-scroll'
+      : defaultScrollGestureToBehavior(gesture)
+    outGestureOwn.textContent = `last gesture: ${gesture.kind} on ${gesture.zone} -> ${behavior}`
+    return behavior
+  },
+})
+selGestureOwn.setItems(COUNTRIES)
+//#endregion
+
+//#region 18.1
 // Language packs (imported at the top: `import { en, ja, zhTW } from
 // '@llselect/core/i18n'`) fill the `uiTranslationPack` setting whole; per-key
 // overrides spread on top (`uiTranslationPack: { ...zhTW, ... }`). The three
@@ -1528,7 +1570,7 @@ i18nPackSelect.addEventListener('change', () => applyI18nPack(i18nPackSelect.val
 applyI18nPack(i18nPackSelect.value)
 //#endregion
 
-//#region 17.2
+//#region 18.2
 // RTL needs no API: the mount's dir="rtl" is inherited like on a native
 // element, and flex rows / logical margins mirror on their own. Same
 // checkbox pattern as 5.5, with the ar pack.
@@ -1558,7 +1600,7 @@ selRtlCheckboxes = new LLSelectMultiple(
 selRtlCheckboxes.setItems(MIXED_DIRECTION_COUNTRIES)
 //#endregion
 
-//#region 17.3
+//#region 18.3
 // Every pack, straight out of `uiTranslationPackByLocale` (BCP 47 keys), so new packs
 // appear here without demo edits. One single per pack: closed it shows the
 // pack's `triggerPlaceholder`, open it the search placeholder / clear x /

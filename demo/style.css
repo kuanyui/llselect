@@ -312,6 +312,20 @@ article { margin: 1.5rem 0 2rem 1rem; }
   margin-bottom: 0.25rem;
 }
 
+.gesture-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.gesture-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  margin-bottom: 0.25rem;
+}
+
 /* Direct child only: a descendant selector also styles the buttons llselect
    builds inside its own trigger (the clear x), which the select component's
    theme owns. */
@@ -439,7 +453,7 @@ article { margin: 1.5rem 0 2rem 1rem; }
 }
 /* #endregion */
 
-/* Icon + text rows for rich item content (core 5.4-5.6, 11.x, 16.7, 17.2;
+/* Icon + text rows for rich item content (core 5.4-5.6, 11.x, 16.7, 18.2;
    angularjs 8). */
 .lang-row {
   display: inline-flex;
