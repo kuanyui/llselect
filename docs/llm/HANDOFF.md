@@ -6,10 +6,11 @@ Agent-facing state of the work in progress, so that a session after a context co
 
 1. NEEDS-VERIFICATION-840 (which chosen item becomes active at open, and the enabled condition) and NEEDS-VERIFICATION-850 (an `open()` call made while DOM focus is elsewhere, with the filter inactive): the owner was told they can wait.
 2. The squash trial: the owner asked to see the effect of squashing `master..dev` before any decision, and fears losing the record of the original states, of the reasons and of the discussions. Two branches show it, and `dev` is untouched:
-   - `dev-squash-docs` merges only contiguous commits labeled `docs:` that touch no test, within one topic: 136 commits became 87;
-   - `dev-squash-rounds` also merges the review-round fixes of each topic, keeping each feature and each first fix of a topic as its own commit: 136 commits became 40;
+   - `dev-squash-docs` merges only contiguous commits labeled `docs:` that touch no test, within one topic: 151 commits became 94;
+   - `dev-squash-rounds` also merges the review-round fixes of each topic, keeping each feature and each first fix of a topic as its own commit: 151 commits became 41;
    - `$S/squash-build.py docs` and `$S/squash-build.py rounds` built them with `git commit-tree`; each squash keeps the tree of its last commit and the newest author and committer time of its range, as the owner asked, and its body lists the commits it replaces, a deliberate exception to the one-line rule of `CLAUDE.md` that the owner has not ruled on;
-   - both final trees equal the tree of `f09603b`, so the commits after it are not in them; when the owner decides, delete both branches with `git branch -D` and run the script again;
+   - both final trees equal the tree of `3146d71`, so a later commit is not in them; when the owner decides, delete both branches with `git branch -D` and run the script again;
+   - both give `43f25b9` the subject `fix: [src/i18n] update translations`, as the owner asked; `dev` keeps the old subject, since rewording it there would change the hash of every later commit;
    - if the owner adopts a squash, the current history must stay on a backup branch, since the commit hashes that `FIXME.md` and `aria-committee.md` cite, and the step-by-step diffs, exist only there;
    - Codex Sol's round-ten finding, that the subjects of `9be64f5`, `f05bdd9` and `f09603b` describe mechanism or list sub-parts, waits for the same decision; both trial forms keep the summary of `9be64f5`, after its scope; Codex Sol made the same finding on `496b60b` in round twelve, and in round thirteen found that the subject of `5d6f70a` names the review round instead of the change.
 3. Optional, from Fable 5 in the round on the owner's cost criterion: one sentence for the `popupEl` docstring that names `close()` inside `onOpen` as the supported way to stop an open, MEDIUM-862. It recommends an API pattern, so it waits for the owner.
