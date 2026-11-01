@@ -78,7 +78,8 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 > No **before** counterpart: there is no `ll-on-before-close`.
 
-- `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the select component), `'blur'` (DOM focus left the select component), `'trigger-buttons'` (DOM focus moved into the trigger buttons strip, the row of the clear button and the chips' remove buttons; no `ll-on-blur` follows), `'toggle'` (a click in the trigger wrapper, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed) or `'hidden'` (the trigger scrolled out of view or was clipped).
+- `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the select component), `'blur'` (DOM focus left the select component), `'trigger-buttons'` (DOM focus moved into the trigger buttons strip, the row of the clear button and the chips' remove buttons; no `ll-on-blur` follows), `'toggle'` (a click in the trigger wrapper, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed), `'hidden'` (the trigger scrolled out of view or was clipped) or `'scroll-gesture'` (a wheel or a touch for which [`ll-scroll-gesture-to-behavior-fn`](#ll-scroll-gesture-to-behavior-fn) picked a behavior that closes the popup).
+- `$scrollGesture` holds the gesture that closed the popup, `{ kind, zone }`, when `$reason` is `'scroll-gesture'`. For every other reason, it is `undefined`.
 - Same rules as [`ll-on-open`](#ll-on-open), except that `ll-on-close` fires when a listener closes the select component while `showPopover()` shows the popup.
 - It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and AngularJS broadcasts `$destroy` before disabling the scope.
 - In that teardown case, writes to parent-owned state (`vm.*`, a service) persist; writes to the dying child scope itself are lost with it.
@@ -259,6 +260,27 @@ $scope.ifaceMatch = function (i, query) {
 - For the full rules, see the core setting `colorScheme` under `LLSelectBaseSettings` in the API reference.
 - `'light'` or `'dark'`: the select component shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables; see the core README section "Dark color scheme".
 - The select component's root element receives `data-llselect-color-scheme="light"` or `data-llselect-color-scheme="dark"`. The themes apply their dark colors when the value is `dark`.
+
+### `ll-scroll-gesture-to-behavior-fn`
+
+**Expression** -> `scrollGestureToBehaviorFn`. Decides what a wheel or a touch does while the popup is open.
+
+- Evaluated once at link time to a function `(gesture) => behavior`.
+- llselect calls it on every wheel and every one-finger touch while the popup is open, outside any digest.
+- Without it, a wheel or a drag inside the popup does not scroll the page. Outside the popup, the page scrolls and the popup stays open.
+- When a gesture closes the popup, [`ll-on-close`](#ll-on-close) gets `$reason` `'scroll-gesture'` and the gesture in `$scrollGesture`.
+- For the gesture, the four behaviors and the cases llselect leaves alone, see the core setting `scrollGestureToBehaviorFn` under `LLSelectBaseSettings` in the API reference.
+
+To copy the native select of one browser, load `behavior-presets.umd.js`, which sets `window.llselectBehaviorPresets`, and hand a preset's function to the attribute:
+
+```js
+$scope.scrollGestureToBehavior = llselectBehaviorPresets.behaviorPresetsOfFirefoxOnWindows.scrollGestureToBehaviorFn
+```
+
+```html
+<llselect-single ng-model="picked" ll-scroll-gesture-to-behavior-fn="scrollGestureToBehavior"
+  ll-options="f for f in fruits"></llselect-single>
+```
 
 ### `ll-arrow`
 

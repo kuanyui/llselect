@@ -804,7 +804,7 @@ const NG_KINDS = new Map(Object.entries({
   'ng-model': 'attribute', 'ng-change': 'attribute', 'll-options': 'attribute', name: 'attribute', required: 'attribute',
   'll-on-open': 'attribute', 'll-on-close': 'attribute', 'll-on-focus': 'attribute', 'll-on-blur': 'attribute', 'll-on-active-item-change': 'attribute', 'll-on-filter-query-change': 'attribute', 'll-on-before-change': 'attribute',
   'll-disabled': 'attribute', 'll-placeholder': 'attribute', 'll-filterable': 'attribute', 'll-filter-fn': 'attribute',
-  'll-clearable': 'attribute', 'll-popup-width-policy': 'attribute', 'll-color-scheme': 'attribute', 'll-arrow': 'attribute', 'll-highlight': 'attribute',
+  'll-clearable': 'attribute', 'll-popup-width-policy': 'attribute', 'll-color-scheme': 'attribute', 'll-scroll-gesture-to-behavior-fn': 'attribute', 'll-arrow': 'attribute', 'll-highlight': 'attribute',
   'll-popup-list-item-content-fn': 'attribute', 'll-trigger-content-fn': 'attribute', 'll-trigger-context-to-screen-reader-text-fn': 'attribute',
   'll-item-to-lang-fn': 'attribute', 'll-group-key-to-lang-fn': 'attribute',
   'll-popup-header-content-fn': 'attribute', 'll-popup-footer-content-fn': 'attribute',
