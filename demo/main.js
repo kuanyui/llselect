@@ -1070,8 +1070,8 @@ await initTreeSelect().catch(() => {
 // button state. The count text is the library's own pack message, so a
 // language switch (setUiTranslationPack) localizes it too. The match count
 // is rewritten from onOpen and onFilterQueryChange. The button is a
-// slot control (A11Y.md "Slot controls"): a click keeps DOM focus on the
-// combobox, Tab reaches it while the popup is open, Esc on it closes.
+// slot control (A11Y.md "Slot controls"): a click does not move DOM focus,
+// Tab reaches it while the popup is open, Esc on it closes.
 const headerCountEl = document.createElement('span')
 const headerMatchesEl = document.createElement('span')
 const headerClearButton = document.createElement('button')
@@ -1158,9 +1158,9 @@ selHeaderColumns.setItems(USERS)
 //#endregion
 
 //#region 14.3
-// A pinned footer link. Clicking it keeps DOM focus on the combobox (the
-// popup's mousedown rule); Tab reaches it while the popup is open; Esc on it
-// closes and returns focus to the trigger (A11Y.md "Slot controls").
+// A pinned footer link. Clicking it does not move DOM focus (the popup's
+// mousedown rule); Tab reaches it while the popup is open; Esc on it closes
+// and returns focus to the trigger (A11Y.md "Slot controls").
 const outFooterLink = document.getElementById('out-footer-link')
 const selFooterLink = new LLSelectMultiple(
   document.getElementById('mount-footer-link'),
@@ -1187,9 +1187,9 @@ selFooterLink.setItems(COUNTRIES)
 // The 15.1 commands as pinned header rows, for comparison. Each command is a
 // real <button> (keyboard and AT semantics for free) wearing the theme's item
 // class, so every theme paints it like a list row; the demo CSS zeroes the
-// header padding and resets the button chrome. Slot controls: a click keeps
-// DOM focus on the combobox, Tab reaches them while the popup is open, Esc on
-// them closes - but they are outside the arrow-key ring and are not announced
+// header padding and resets the button chrome. Slot controls: a click does not
+// move DOM focus, Tab reaches them while the popup is open, Esc on them
+// closes - but they are outside the arrow-key ring and are not announced
 // as options. The counting text is the library's own chooseAllRowText.
 const HEADER_DEFAULTS = ['Japan', 'Taiwan']
 const outHeaderCommands = document.getElementById('out-header-commands')

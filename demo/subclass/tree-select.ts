@@ -241,9 +241,9 @@ export class LLTreeMultipleSelect extends LLSelectMultiple<LLTreeNode, string, L
       const caret = document.createElement('i')
       caret.className = 'tree-caret mdi mdi-chevron-right'
       caret.setAttribute('aria-hidden', 'true')
-      // The row's mousedown is default-prevented by the library (focus
-      // stays on the combobox host), but click still fires. Stop it here so
-      // the caret only expands / collapses, never toggles the subtree.
+      // The row's mousedown is default-prevented by the library (focus does
+      // not move), but click still fires. Stop it here so the caret only
+      // expands / collapses, never toggles the subtree.
       caret.addEventListener('click', (ev) => {
         ev.stopPropagation()
         this.toggleExpanded(node)

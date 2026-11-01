@@ -308,7 +308,7 @@
         return head
       }
 
-      /** 12c: a pinned footer link. The click keeps DOM focus on the combobox; the app closes and navigates (here: a note on the scope, applied from the native listener). */
+      /** 12c: a pinned footer link. The click does not move DOM focus; the app closes and navigates (here: a note on the scope, applied from the native listener). */
       vm.countriesFooterLink = []
       vm.footerLinkApi = null // set by demo-publish-api
       vm.footerNote = '(nothing happened yet)'

@@ -63,7 +63,10 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
   - the popup is already open;
   - the select component is disabled;
   - the call is made while a close returns focus to the trigger;
-  - the call is made while `showPopover()` is still showing the popup, as a reopen from an [`ll-on-focus`](#ll-on-focus) expression is;
+  - the call is made while the select component's own `showPopover()` is still showing its popup, for example a reopen from an [`ll-on-focus`](#ll-on-focus) expression;
+  - the call is made while an open undoes a show that the browser refused, for example from an [`ll-on-active-item-change`](#ll-on-active-item-change) expression that the undo runs;
+  - the browser refuses the show, as Chromium 156, Firefox 153 and WebKit 26.5 do while another popover of the page is in the middle of its show or hide;
+    - `instance().open()` then throws the browser's error;
   - the trigger is fully outside the viewport, or fully clipped away by an ancestor.
 - It does not fire either when a listener closes the select component while `showPopover()` shows the popup, as an [`ll-on-focus`](#ll-on-focus) expression can after the `autofocus` move of the Popover API. [`ll-on-close`](#ll-on-close) fires then, with no `ll-on-open` **before** it.
 - An error thrown by the expression goes to `$exceptionHandler`, like `ng-click`; it never aborts the open.
@@ -90,7 +93,8 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
   - Tab onto the trigger, a click on the trigger or on its label, or a programmatic `instance().triggerEl.focus()`;
   - an `instance().open()` on an unfocused select component whose filter is active, which moves focus to the filter input **after** [`ll-on-open`](#ll-on-open), when no `autofocus` control took focus first;
   - a click on the clear button or on a chip's remove button while the select component holds no focus, which focuses the trigger.
-- If the browser has the Popover API and a control in a header or footer slot has the `autofocus` attribute, an `instance().open()` on an unfocused select component fires `ll-on-focus` **before** [`ll-on-open`](#ll-on-open), in either filter mode: the browser focuses that control while the popup shows.
+- If the browser has the Popover API and a control in a header or footer slot has the `autofocus` attribute, an `instance().open()` on an unfocused select component fires `ll-on-focus` **before** [`ll-on-open`](#ll-on-open), in either filter mode: the browser focuses that control while the open runs `showPopover()`.
+  - In that case, to open another select component from this expression, call its `instance().open()` inside a `$timeout` callback. `$evalAsync` is not enough: it runs in the same digest, still inside the show.
 - Does not fire for a focus move inside the select component, such as the open moving focus from the trigger to the filter input.
 - It is about DOM focus only. The row the arrow keys move inside the popup is the active row; that row never holds DOM focus.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
@@ -120,6 +124,9 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
   - the popup is open with no active row, for example after a filter keystroke that leaves no enabled visible item;
   - the active row is the choose-all row or an action row.
 - Fires on open with the initial row, **after** [`ll-on-open`](#ll-on-open); on every keyboard move; on a click, **before** the change it requests; when a filter keystroke or a data reload moves the row; and on close with `undefined`, **after** [`ll-on-close`](#ll-on-close).
+- If the browser refuses to show the popup at an open, as [`ll-on-open`](#ll-on-open) describes:
+  - the close that undoes the open fires no [`ll-on-close`](#ll-on-close);
+  - `ll-on-active-item-change` runs there with `undefined` only if a listener inside the refused show had moved the active row to an item.
 - Fires only when the item changed, compared with the `track by` rule of [`ll-options`](#ll-options), or by identity without a `track by` clause, so a data reload of equal-valued objects fires then. A row redrawn for the same item is silent. A mouse hover never fires: hovering does not move the active row.
 - ui-select's name for this event is `on-highlight`. [`<ui-llselect>`](#ui-llselect) maps it, and the note there says why llselect does not use that word for the active row.
 - Errors go to `$exceptionHandler`, like [`ll-on-open`](#ll-on-open).
