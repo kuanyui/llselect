@@ -703,7 +703,7 @@ The `scrollGestureToBehaviorFn` setting decides what a wheel or a touch does whi
 
 By default, a wheel or a drag inside the popup does not scroll the page behind it. Outside the popup, the page scrolls and the popup stays open.
 
-To copy the native select of one browser, spread a preset into the settings:
+To copy the native select of one browser on one operating system, spread a preset into the settings:
 
 ```js
 import { LLSelectSingle } from '@llselect/core'
@@ -712,7 +712,7 @@ import { behaviorPresetsOfFirefoxOnWindows } from '@llselect/core/behavior-prese
 const sel = new LLSelectSingle(el, { ...behaviorPresetsOfFirefoxOnWindows })
 ```
 
-- With `behaviorPresetsOfFirefoxOnWindows`, a wheel outside the popup scrolls nothing. A touch outside the popup closes the popup.
+- With `behaviorPresetsOfFirefoxOnWindows`, a wheel outside the popup scrolls nothing. A touch outside the popup closes the popup, and the rest of that touch scrolls nothing.
 - With `behaviorPresetsOfChromiumOnWindows`, a wheel or a touch outside the popup closes the popup. The page scrolls as usual.
 - The library does not detect the browser. Your app picks the preset.
 
@@ -729,8 +729,8 @@ const sel = new LLSelectSingle(el, {
 ```
 
 - When a gesture closes the popup, `onClose` gets the reason `'scroll-gesture'`.
-- Ctrl+wheel, a pinch and a two-finger touch stay untouched, so the user can still zoom the page.
-- A preset or your own function makes the library listen on the whole page while the popup is open. Every scroll of the page then waits for that listener.
+- So that the user can still zoom the page, the library leaves Ctrl+wheel alone. The library also leaves a touch alone from the moment a second finger lands.
+- Either preset above, or your own function, makes the library listen on the whole page. Every scroll of the page then waits for that listener while the popup is open.
 
 ### Subclassing (extending the library)
 

@@ -398,14 +398,20 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *     the protected `shouldListenForScrollGesturesOutside` returns `true`.
    *     By default, that is while this setting is not
    *     `defaultScrollGestureToBehavior`.
-   *   - The function is never called for a `wheel` with `ctrlKey`, for a
-   *     touch from the moment a second finger lands, or while the page is
-   *     pinch-zoomed. Those gestures zoom or pan, and the library leaves
-   *     them alone, so that a user who needs a larger page can still zoom
-   *     it.
+   *   - So that a user who needs a larger page can still zoom it and move
+   *     around it, the function is never called for a `wheel` with
+   *     `ctrlKey`, for a touch from the moment a second finger lands, or
+   *     while the page is pinch-zoomed.
+   *   - Firefox before 91 on the desktop has no `visualViewport`, so the
+   *     library cannot tell that the page is pinch-zoomed there.
    *   - A pinch starts with one finger, so the function sees the touch-down
    *     of that finger. A preset that closes at a touch-down closes the
    *     popup there, as the native select does.
+   *   - In a closed shadow root around the select component, the document
+   *     sees no deeper than the shadow host. While the library listens
+   *     outside, a gesture inside the select component then first reaches
+   *     the function as `'outside'`, so a preset that closes outside closes
+   *     the popup at every touch-down inside it.
    * - `gesture` says what the gesture is and where it happens. See
    *   {@link LLSelectScrollGesture}.
    * - The answer is one of four behaviors. See
@@ -421,8 +427,8 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *     cannot stop it.
    *   - The property asks the browser not to pass that scroll on to the page
    *     when the list reaches its end.
-   *   - Over the list, a scroll that the function allows still stops at the
-   *     end of the list.
+   *   - Over the list, the browser may still stop a scroll that the
+   *     function allows, at the end of the list.
    *   - Safari supports the property from version 16.
    * @group Popup
    */
@@ -2291,8 +2297,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *     that.
    * - If a listener closes the select component while `showPopover()` runs,
    *   such as an `onFocus` that the `autofocus` move fires, the open stops
-   *   there, attaches no positioner, no outside-click handler and no
-   *   scroll-gesture listener, and fires no `onOpen`.
+   *   there.
+   *   - It attaches no positioner, no outside-click handler and no
+   *     scroll-gesture listener.
+   *   - It fires no `onOpen`.
    *   - A reopen from that listener is ignored, as the list above says.
    *   - A listener that only re-renders does not stop the open.
    * - If another popover of the same document is in the middle of its show
@@ -2460,9 +2468,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Close the popup. Detaches the positioner, the outside-click listener and
-   * the scroll-gesture listeners, clears the item DOM, and resets
-   * focused-item state. No-op if already closed.
+   * Close the popup. No-op if already closed.
+   * - Detaches the positioner, the outside-click listener and the
+   *   scroll-gesture listeners.
+   * - Clears the item DOM.
+   * - Resets the focused-item state.
    *
    * Focus return is decided automatically: when DOM focus is still inside
    * the popup at the moment of close - the filter input (Esc on an empty
@@ -2636,9 +2646,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         this.pendingScrollGesture = gesture
         this.closeWithReason('scroll-gesture')
       },
-      clickToggles: (path) => path.includes(this.triggerWrapperEl) && (this.triggerButtonsEl === null || !path.includes(this.triggerButtonsEl)),
+      // A chip's text and the padding of the strip toggle like the rest of
+      // the wrapper; only the strip's buttons stop their own clicks.
+      clickToggles: (path) => path.includes(this.triggerWrapperEl) && !this.getTriggerButtonEls().some((button) => path.includes(button)),
       swallowsOutsideClick: this.settings.outsideClickBehavior === 'block',
       holdStarted: (release) => { this.releaseTouchHold = release },
+      holdEnded: (release) => {
+        if (this.releaseTouchHold === release) { this.releaseTouchHold = undefined }
+      },
     }, this.shouldListenForScrollGesturesOutside())
   }
 
@@ -2686,10 +2701,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - REQUIRED before discarding an instance whose popup might be open; a
    *   framework wrapper calls it on unmount. Skipping it there leaks the
    *   outside-click, scroll-gesture, focusout, scroll and resize listeners.
-   * - Stops the library's handling of a touch whose touch-down closed the
-   *   popup, which blocks the moves of that touch or swallows its click.
-   *   Without `destroy()`, the handling lasts until the finger lifts, and
-   *   the wait for the click up to a second longer.
+   * - Ends the library's handling of a touch whose touch-down closed the
+   *   popup.
+   *   - That handling blocks the moves of the touch or swallows its click.
+   *   - Without `destroy()`, the handling lasts until the finger lifts, and
+   *     the wait for the click up to a second longer.
    * - Discarding a CLOSED instance without `destroy()` leaks nothing: only
    *   its mount element and `labelEl` retain it, through its own DOM
    *   listeners. Once those elements leave the document and the application

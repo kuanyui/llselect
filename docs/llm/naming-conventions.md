@@ -321,7 +321,7 @@ The word is `ScreenReader`, with no `Aria`: the `*AriaLabel` pack keys name the 
 
 ### 4k. Scroll-gesture behaviors
 
-From the owner's rulings on MEDIUM-795 (`FIXME.md`; design: `DESIGN.md` "Scroll gestures while the popup is open").
+From the owner's rulings on MEDIUM-795 (`FIXME.md`; design: `DESIGN.md` "Scroll gestures while the popup is open"). The AngularJS row is the agent's plain mapping of the core names, not a ruling.
 
 | Vis       | Name                                   | Signature / value                                   | Convention                                                          |
 | --------- | -------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------- |

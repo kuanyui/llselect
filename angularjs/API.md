@@ -266,12 +266,14 @@ $scope.ifaceMatch = function (i, query) {
 **Expression** -> `scrollGestureToBehaviorFn`. Decides what a wheel or a touch does while the popup is open.
 
 - Evaluated once at link time to a function `(gesture) => behavior`.
-- llselect calls it on every wheel and every one-finger touch while the popup is open, outside any digest.
+- llselect calls it outside any digest, on the wheels and the one-finger touches that the core setting `scrollGestureToBehaviorFn` lists, while the popup is open.
+- When the attribute holds a function other than the default, llselect listens on the whole page while the popup is open, so every scroll of the page waits for that listener.
 - Without it, a wheel or a drag inside the popup does not scroll the page. Outside the popup, the page scrolls and the popup stays open.
 - When a gesture closes the popup, [`ll-on-close`](#ll-on-close) gets `$reason` `'scroll-gesture'` and the gesture in `$scrollGesture`.
 - For the gesture, the four behaviors and the cases llselect leaves alone, see the core setting `scrollGestureToBehaviorFn` under `LLSelectBaseSettings` in the API reference.
+- The Firefox and Chromium presets copy the native select of one browser on one operating system.
 
-To copy the native select of one browser, load `behavior-presets.umd.js`, which sets `window.llselectBehaviorPresets`, and hand a preset's function to the attribute:
+To copy the native select of one browser on one operating system, load `behavior-presets.umd.js`, which sets `window.llselectBehaviorPresets`, and hand a preset's function to the attribute:
 
 ```js
 $scope.scrollGestureToBehavior = llselectBehaviorPresets.behaviorPresetsOfFirefoxOnWindows.scrollGestureToBehaviorFn

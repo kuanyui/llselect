@@ -1,6 +1,6 @@
 # Native select: scrolling and dragging while the popup is open
 
-Agent-facing record of the owner's hand tests of the browser's native `<select>`: what the native control does with a mouse wheel, with a touch swipe and with a mouse drag while its popup is open. It is the reference for an open design question: how llselect's popup should treat scrolling and drags. `FIXME.md` has the entry, MEDIUM-795, with the owner's position; the owner has not yet decided the design.
+Agent-facing record of the owner's hand tests of the browser's native `<select>`: what the native control does with a mouse wheel, with a touch swipe and with a mouse drag while its popup is open. It is the evidence behind the scroll gesture behavior that the owner ruled and the agent implemented, MEDIUM-795 in `FIXME.md`: the presets `behaviorPresetsOfFirefoxOnWindows` and `behaviorPresetsOfChromiumOnWindows` follow its rows on the wheel and on a touch outside the popup, and `DESIGN.md` "Scroll gestures while the popup is open" holds the contract. Its rows on a drag inside the popup, which neither preset covers, feed the later drag behaviors in `TODO.md`.
 
 How to read this record:
 

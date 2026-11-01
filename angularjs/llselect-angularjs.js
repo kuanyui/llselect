@@ -129,10 +129,11 @@
   }
 
   /**
-   * $eval an ll-*-fn attribute into a render-time DOM factory: called by
-   * llselect outside any digest, and the returned element is NOT $compile'd.
-   * Angular templates per row are the <ui-llselect> trade, deliberately not
-   * this one. A non-function value is reported loudly.
+   * $eval an ll-*-fn attribute into a function that llselect calls outside any
+   * digest: a render-time DOM factory, whose returned element is NOT
+   * $compile'd, or a plain mapping such as ll-filter-fn. Angular templates per
+   * row are the <ui-llselect> trade, deliberately not this one. A non-function
+   * value is reported loudly.
    * @returns {Function | null}
    */
   function evalFnAttr(scope, attrs, name) {

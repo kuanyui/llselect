@@ -858,7 +858,7 @@ writeFileSync('public/api/index.html', renderPage({
 <ul>
 <li><a href="core.html"><code>@llselect/core</code></a> - the library itself: <code>LLSelectSingle</code> / <code>LLSelectMultiple</code>, every setting, the subclassing surface, and the SVG icon helpers.</li>
 <li><a href="i18n.html"><code>@llselect/core/i18n</code></a> - the UI-translation pack contract and every shipped language pack.</li>
-<li><a href="behavior-presets.html"><code>@llselect/core/behavior-presets</code></a> - the behavior presets, such as the scroll behavior of one browser's native select, to spread into the settings.</li>
+<li><a href="behavior-presets.html"><code>@llselect/core/behavior-presets</code></a> - the behavior presets, such as the scroll behavior of the native select of one browser on one operating system, to spread into the settings.</li>
 <li><a href="../angularjs/api.html"><code>@llselect/angularjs</code></a> - the AngularJS 1.x directives: hand-written attribute reference (markup is not a TypeScript surface).</li>
 </ul>
 `,

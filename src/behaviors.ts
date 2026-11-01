@@ -31,9 +31,10 @@ export type LLSelectScrollGestureZone = 'popup' | 'trigger' | 'outside'
 /**
  * One scroll gesture while the popup is open, as `scrollGestureToBehaviorFn`
  * receives it.
- * - A touch gesture counts only while one finger touches. From the moment a
- *   second finger lands, the touch is a zoom or a pan, which the library
- *   leaves alone, so that a user who needs a larger page can still zoom it.
+ * - So that a user who needs a larger page can still zoom it, the library
+ *   leaves a touch alone from the moment a second finger lands: the touch is
+ *   then a zoom or a pan. A touch gesture counts only while one finger
+ *   touches.
  * - A pinch starts with one finger, so the touch-down of that finger is a
  *   gesture like any other.
  * - A touch keeps the zone where it touched down, wherever it moves later.
@@ -50,9 +51,9 @@ export interface LLSelectScrollGesture {
  * What the select component does with one scroll gesture: keep the popup
  * open or close it, and let the page scroll or block it.
  * - `'leave-popup-open-and-allow-page-scroll'`: nothing happens; the browser
- *   scrolls as it would without the select component. Over the popup list, a
- *   scroll still stops at the end of the list, which has the CSS property
- *   `overscroll-behavior: contain`.
+ *   scrolls as it would without the select component. Over the popup list,
+ *   the browser may still stop such a scroll at the end of the list, which
+ *   has the CSS property `overscroll-behavior: contain`.
  * - `'leave-popup-open-and-block-page-scroll'`: the popup stays open, and
  *   the gesture scrolls nothing.
  * - `'close-popup-and-allow-page-scroll'`: the popup closes, with the close
@@ -64,8 +65,17 @@ export interface LLSelectScrollGesture {
  *   touch, until a second finger lands. While the popup stays open, each move
  *   of the touch asks again, as a `'touch-drag'`.
  * - A close picked for a `'touch-drag'` blocks that one move at most. The
- *   library sees no later move of that touch, so the browser scrolls the rest
- *   of the drag as usual.
+ *   library sees no later move of that touch and blocks none of them.
+ * - When a touch-down closes the popup, the click of that tap would reopen
+ *   the popup, or land on what the popup covered. So the library swallows
+ *   that click when the touch-down was:
+ *   - on the trigger, except on a button of the trigger buttons strip, whose
+ *     click does that button's action;
+ *   - inside the popup;
+ *   - outside the select component, while `outsideClickBehavior` is
+ *     `'block'`.
+ * - Only a click near the touch-down, within one second of the lift, counts
+ *   as the tap's click.
  * @group Behaviors
  */
 export type LLSelectScrollGestureBehavior =
@@ -104,17 +114,19 @@ export interface ScrollGestureHost {
   behaviorFor(gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior
   /** Closes the popup with the close reason `'scroll-gesture'`. */
   closeFor(gesture: LLSelectScrollGesture): void
-  /** Whether a click with this composed path would toggle the popup: a click on the trigger wrapper, outside the trigger buttons strip. */
+  /** Whether a click with this composed path would toggle the popup: a click on the trigger wrapper, outside the buttons of the trigger buttons strip. */
   clickToggles(path: readonly EventTarget[]): boolean
   /** Whether a click outside the select component is swallowed while the popup is open: `outsideClickBehavior: 'block'`. */
   readonly swallowsOutsideClick: boolean
   /** Takes the function that ends a touch hold early, for `destroy()`. */
   holdStarted(release: () => void): void
+  /** Told when that hold has ended, so the select component drops `release`. */
+  holdEnded(release: () => void): void
 }
 
 // A touch that moves farther than this from its touch-down, in CSS pixels, is
-// taken for a drag that gives no click. Kept above the tap limits of the
-// browsers, which the real-device pass in docs/llm/TODO.md checks.
+// taken for a drag that gives no click. Chosen to stay above the browsers' own
+// tap limits, which the real-device pass in docs/llm/TODO.md checks.
 const TAP_SLOP = 16
 // How long after the touch lifts a tap's click may still come. Browsers can
 // hold it back by about 300 ms on a page without a mobile viewport.
@@ -146,10 +158,10 @@ function blocks(behavior: LLSelectScrollGestureBehavior): boolean {
   return behavior === 'leave-popup-open-and-block-page-scroll' || behavior === 'close-popup-and-block-page-scroll'
 }
 
-// While the page is pinch-zoomed, a gesture pans the visual viewport; it is
-// left alone, so that a user who needs a larger page can move around it.
-// Firefox before 91 on the desktop has no `visualViewport`, so a zoomed page
-// reads as unzoomed there.
+// So that a user who needs a larger page can move around it, a gesture is left
+// alone while the page is pinch-zoomed: it pans the visual viewport. Firefox
+// before 91 on the desktop has no `visualViewport`, so a zoomed page reads as
+// unzoomed there.
 function isZoomed(): boolean {
   const viewport = window.visualViewport
   return viewport !== null && viewport !== undefined && viewport.scale > 1
@@ -196,35 +208,55 @@ function canScrollWithin(path: readonly EventTarget[], boundary: Element, dx: nu
   return false
 }
 
+// What a touch hold does with the compatibility `mousedown` of its tap.
+// - `'leave'`: nothing; the trigger's own `mousedown` handler keeps DOM focus right.
+// - `'prevent-default'`: the contract of an outside press under `outsideClickBehavior: 'block'`.
+// - `'swallow'`: the page under the closed popup was never touched on purpose.
+type TouchHoldMousedown = 'leave' | 'prevent-default' | 'swallow'
+
+interface TouchHoldOptions {
+  /** Whether the moves of the touch scroll nothing. */
+  readonly block: boolean
+  /** Whether the click of the tap is swallowed. */
+  readonly swallowClick: boolean
+  /** What happens to the compatibility `mousedown`, while the click is swallowed. */
+  readonly mousedown: TouchHoldMousedown
+  /** Called once, when the hold ends by itself or through the returned function. */
+  readonly ended: () => void
+}
+
 /**
- * The rest of a touch whose touch-down closed the popup; returns the function
- * that ends the hold early.
+ * Holds the rest of a touch whose touch-down closed the popup.
+ * - Returns the function that ends the hold early.
  * - The listeners of the touch sit on its own target, which gets every later
  *   event of the touch, even after the close removed that node from the
  *   document.
- * - Its moves scroll nothing while `block` is set, until a second finger
- *   lands: a pinch is left alone.
+ * - Its moves scroll nothing while `block` is set.
  * - When `swallowClick` is set, its click is swallowed: the first click near
- *   the touch-down, within one second of the lift. With `swallowMousedown`,
- *   the compatibility `mousedown` before it too.
+ *   the touch-down, within one second of the lift.
  * - The hold ends when the touch is over and its click came or cannot come,
- *   and at the next touch, which shows that the held touch is over.
+ *   and at any later touch-down: a second finger makes a pinch, which gives
+ *   no click, and a new touch shows that the held one is over.
  */
-function holdRestOfTouch(target: EventTarget, start: Touch, block: boolean, swallowClick: boolean, swallowMousedown: boolean): () => void {
-  let blocking = block
+function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOptions): () => void {
+  const { block, swallowClick, mousedown } = options
   let moved = false
   let timer: ReturnType<typeof setTimeout> | undefined
   let touchDone = false
   let clickDone = !swallowClick
+  let ended = false
   const moveOptions: AddEventListenerOptions = { passive: !block }
   const near = (x: number, y: number, limit: number): boolean => Math.hypot(x - start.clientX, y - start.clientY) <= limit
   const onMove = (ev: Event): void => {
     if (!isTouchEvent(ev)) { return }
-    if (ev.touches.length > 1) { blocking = false }
+    if (ev.touches.length > 1) {
+      release()
+      return
+    }
     const t = findTouch(ev.changedTouches, start.identifier)
     if (t === null) { return }
     if (!near(t.clientX, t.clientY, TAP_SLOP)) { moved = true }
-    if (blocking && ev.cancelable) { ev.preventDefault() }
+    if (block && ev.cancelable) { ev.preventDefault() }
   }
   const onEnd = (ev: Event): void => {
     if (!isTouchEvent(ev) || findTouch(ev.changedTouches, start.identifier) === null) { return }
@@ -232,17 +264,13 @@ function holdRestOfTouch(target: EventTarget, start: Touch, block: boolean, swal
     if (moved || ev.type === 'touchcancel') { endClick(); return }
     if (!clickDone) { timer = setTimeout(endClick, CLICK_WAIT_MS) }
   }
-  const onNextTouchStart = (ev: TouchEvent): void => {
-    if (ev.touches.length > 1) {
-      blocking = false
-      return
-    }
-    release()
-  }
+  const onNextTouchStart = (): void => { release() }
   // A click far from the touch-down came from something else, such as a mouse.
   const isTapClick = (ev: MouseEvent): boolean => near(ev.clientX, ev.clientY, 2 * TAP_SLOP)
   const onMousedown = (ev: MouseEvent): void => {
-    if (isTapClick(ev)) { ev.preventDefault() }
+    if (!isTapClick(ev)) { return }
+    ev.preventDefault()
+    if (mousedown === 'swallow') { ev.stopPropagation() }
   }
   const onClick = (ev: MouseEvent): void => {
     if (!isTapClick(ev)) { return }
@@ -251,7 +279,10 @@ function holdRestOfTouch(target: EventTarget, start: Touch, block: boolean, swal
     endClick()
   }
   const finish = (): void => {
-    if (touchDone && clickDone) { document.removeEventListener('touchstart', onNextTouchStart, CAPTURE_PASSIVE) }
+    if (!touchDone || !clickDone || ended) { return }
+    ended = true
+    document.removeEventListener('touchstart', onNextTouchStart, CAPTURE_PASSIVE)
+    options.ended()
   }
   const endTouch = (): void => {
     if (touchDone) { return }
@@ -272,14 +303,13 @@ function holdRestOfTouch(target: EventTarget, start: Touch, block: boolean, swal
   const release = (): void => {
     endTouch()
     endClick()
-    document.removeEventListener('touchstart', onNextTouchStart, CAPTURE_PASSIVE)
   }
   target.addEventListener('touchmove', onMove, moveOptions)
   target.addEventListener('touchend', onEnd, PASSIVE)
   target.addEventListener('touchcancel', onEnd, PASSIVE)
   document.addEventListener('touchstart', onNextTouchStart, CAPTURE_PASSIVE)
   if (swallowClick) {
-    if (swallowMousedown) { document.addEventListener('mousedown', onMousedown, true) }
+    if (mousedown !== 'leave') { document.addEventListener('mousedown', onMousedown, true) }
     document.addEventListener('click', onClick, true)
   }
   return release
@@ -354,10 +384,19 @@ export function attachScrollGestureListeners(host: ScrollGestureHost, listenOuts
     if (!closes(behavior)) { return }
     touch = null
     // The click of the tap would reopen the popup on the trigger, and reach
-    // the page under the closed popup inside it. The trigger buttons strip
-    // keeps its click: the strip's buttons toggle nothing.
+    // the page under the closed popup inside it. A button of the trigger
+    // buttons strip keeps its click: those buttons toggle nothing.
     const swallowClick = zone === 'popup' || (zone === 'trigger' && host.clickToggles(path)) || (zone === 'outside' && host.swallowsOutsideClick)
-    host.holdStarted(holdRestOfTouch(target, t, blocks(behavior), swallowClick, zone !== 'trigger'))
+    const block = blocks(behavior)
+    if (block || swallowClick) {
+      const release = holdRestOfTouch(target, t, {
+        block,
+        swallowClick,
+        mousedown: zone === 'trigger' ? 'leave' : zone === 'outside' ? 'prevent-default' : 'swallow',
+        ended: () => { host.holdEnded(release) },
+      })
+      host.holdStarted(release)
+    }
     host.closeFor(gesture)
   }
   const onTouchMove = (ev: TouchEvent): void => {

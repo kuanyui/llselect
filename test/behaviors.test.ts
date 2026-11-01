@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle, type LLSelectSingleSettingsInput } from '../src/single.js'
+import { LLSelectMultiple } from '../src/multiple.js'
 import type { LLSelectCloseMeta } from '../src/base.js'
 import type { LLSelectScrollGesture, LLSelectScrollGestureBehavior, LLSelectScrollGestureKind, LLSelectScrollGestureZone } from '../src/behaviors.js'
 import {
@@ -450,13 +451,22 @@ test('when one of two fingers lifts, the other one stays ignored', () => {
 })
 
 test('with the Chromium preset, the rest of a touch that closed the popup scrolls as usual, through a passive listener', (t) => {
-  const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows })
+  const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, outsideClickBehavior: 'block' })
   const spy = t.mock.method(outside, 'addEventListener')
   sel.open()
   touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
   assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 40 }]).defaultPrevented, false)
   const moveOptions = spy.mock.calls.find((call) => call.arguments[0] === 'touchmove')?.arguments[2]
   assert.deepEqual(moveOptions, { passive: true })
+})
+
+test('a touch that closed the popup gets no listener when nothing is blocked or swallowed', (t) => {
+  const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows })
+  const spy = t.mock.method(outside, 'addEventListener')
+  sel.open()
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
+  assert.equal(sel.isOpened(), false)
+  assert.deepEqual(spy.mock.calls.map((call) => call.arguments[0]), [])
 })
 
 test('the rest of a touch whose node the close removed still ends, so a later touch is not blocked', () => {
@@ -558,4 +568,115 @@ test('destroy() ends the rest of a touch that closed the popup', () => {
   touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
   sel.destroy()
   assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 40 }]).defaultPrevented, false)
+})
+
+test('with a preset, a tap on a chip\'s text closes the popup and its click does not reopen it', () => {
+  setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
+  const el = document.getElementById('mount')
+  assert.ok(el)
+  const sel = new LLSelectMultiple<string>(el, { ...behaviorPresetsOfChromiumOnWindows, triggerDisplay: 'tags' })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItems(['a'])
+  sel.open()
+  const chipText = sel.triggerButtonsEl?.querySelector(`.${sel.classIdMap.tagTextClass}`)
+  assert.ok(chipText)
+  touch('touchstart', chipText, [{ id: 1, x: 5, y: 5 }])
+  assert.equal(sel.isOpened(), false)
+  touch('touchend', chipText, [{ id: 1, x: 5, y: 5 }])
+  clickAt(chipText, 5, 5)
+  assert.equal(sel.isOpened(), false)
+})
+
+test('a second finger ends the rest of a touch that closed the popup, so a pinch is not blocked and no click is swallowed', () => {
+  const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows, outsideClickBehavior: 'block' })
+  let clicks = 0
+  outside.addEventListener('click', () => { clicks++ })
+  sel.open()
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }, { id: 2, x: 50, y: 100 }], [{ id: 2, x: 50, y: 100 }])
+  touch('touchend', outside, [], [{ id: 2, x: 50, y: 100 }], [{ id: 1, x: 0, y: 100 }])
+  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 60 }]).defaultPrevented, false)
+  touch('touchend', outside, [{ id: 1, x: 0, y: 60 }])
+  clickAt(outside, 0, 100)
+  assert.equal(clicks, 1)
+})
+
+test('a close from inside the popup stops the compatibility mousedown before it reaches the page under the popup', () => {
+  const { sel, outside } = mount({ scrollGestureToBehaviorFn: () => 'close-popup-and-allow-page-scroll' })
+  let pressed = 0
+  outside.addEventListener('mousedown', () => { pressed++ })
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  touch('touchstart', row, [{ id: 1, x: 10, y: 10 }])
+  touch('touchend', row, [{ id: 1, x: 10, y: 10 }])
+  const mousedown = new window.MouseEvent('mousedown', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 })
+  outside.dispatchEvent(mousedown)
+  assert.equal(mousedown.defaultPrevented, true)
+  assert.equal(pressed, 0)
+})
+
+test('a close from the trigger leaves the compatibility mousedown to the trigger, which keeps DOM focus right', () => {
+  const { sel } = mount({ ...behaviorPresetsOfChromiumOnWindows })
+  sel.open()
+  touch('touchstart', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
+  touch('touchend', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
+  const mousedown = new window.MouseEvent('mousedown', { bubbles: true, cancelable: true, clientX: 5, clientY: 5 })
+  sel.triggerEl.dispatchEvent(mousedown)
+  assert.equal(mousedown.defaultPrevented, false)
+})
+
+test('destroy() also ends the wait for the tap\'s click', () => {
+  const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, outsideClickBehavior: 'block' })
+  let clicks = 0
+  outside.addEventListener('click', () => { clicks++ })
+  sel.open()
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 0 }])
+  sel.destroy()
+  touch('touchend', outside, [{ id: 1, x: 0, y: 0 }])
+  clickAt(outside, 0, 0)
+  assert.equal(clicks, 1)
+})
+
+test('the tap limit is 16 px: a move of 16 px still gives a click, a move of 17 px does not', () => {
+  for (const [distance, swallowed] of [[16, true], [17, false]] as const) {
+    const { sel } = mount({ ...behaviorPresetsOfChromiumOnWindows })
+    sel.open()
+    touch('touchstart', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
+    touch('touchmove', sel.triggerEl, [{ id: 1, x: 5, y: 5 + distance }])
+    touch('touchend', sel.triggerEl, [{ id: 1, x: 5, y: 5 + distance }])
+    clickAt(sel.triggerEl, 5, 5)
+    assert.equal(sel.isOpened(), !swallowed, `${distance} px`)
+  }
+})
+
+test('the tap\'s click lands within 32 px of the touch-down; a click 33 px away is someone else\'s', () => {
+  for (const [distance, swallowed] of [[32, true], [33, false]] as const) {
+    const { sel } = mount({ ...behaviorPresetsOfChromiumOnWindows })
+    sel.open()
+    touch('touchstart', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
+    touch('touchend', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
+    clickAt(sel.triggerEl, 5 + distance, 5)
+    assert.equal(sel.isOpened(), !swallowed, `${distance} px`)
+  }
+})
+
+test('a close picked for a touch-drag blocks that one move only', () => {
+  const closeAtDragOutside = (gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior =>
+    gesture.kind === 'touch-drag' && gesture.zone === 'outside' ? 'close-popup-and-block-page-scroll' : 'leave-popup-open-and-allow-page-scroll'
+  const { sel, outside } = mount({ scrollGestureToBehaviorFn: closeAtDragOutside })
+  sel.open()
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
+  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 80 }]).defaultPrevented, true)
+  assert.equal(sel.isOpened(), false)
+  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 60 }]).defaultPrevented, false)
+})
+
+test('a page that gets pinch-zoomed during a touch leaves the rest of that touch alone', () => {
+  const { sel } = mount()
+  sel.open()
+  touch('touchstart', sel.popupListEl, [{ id: 1, x: 10, y: 50 }])
+  Object.defineProperty(window, 'visualViewport', { value: { scale: 2 }, configurable: true })
+  assert.equal(touch('touchmove', sel.popupListEl, [{ id: 1, x: 10, y: 20 }]).defaultPrevented, false)
+  assert.deepEqual(sel.seen, [{ kind: 'touch-start', zone: 'popup' }])
 })
