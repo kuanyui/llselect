@@ -51,6 +51,11 @@ export type {
   LLSelectScrollGestureKind,
   LLSelectScrollGestureZone,
 } from './behaviors.js'
+/**
+ * The default of the `scrollGestureToBehaviorFn` setting. The presets
+ * entry point exports it too.
+ * @group Behaviors
+ */
 export { defaultScrollGestureToBehavior } from './behavior-presets.js'
 
 export { LLSelectSingle } from './single.js'

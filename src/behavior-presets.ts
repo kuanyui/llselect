@@ -10,7 +10,7 @@
  * - Nothing here detects the browser: the app picks the preset.
  * @module @llselect/core/behavior-presets
  */
-import type { LLSelectBehaviorPreset, LLSelectScrollGesture, LLSelectScrollGestureBehavior } from './behaviors.js'
+import { DEFAULT_SCROLL_GESTURE_TO_BEHAVIOR_MARK, type LLSelectBehaviorPreset, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior } from './behaviors.js'
 
 export type {
   LLSelectBehaviorPreset,
@@ -29,12 +29,16 @@ export type {
  *   trigger leaves the view, the popup closes with the close reason
  *   `'hidden'`.
  * - A touch-down changes nothing anywhere.
+ * - `@llselect/core` and `@llselect/core/behavior-presets` each export a
+ *   copy of this function. Either copy counts as the default, so neither
+ *   makes the library listen outside the select component.
  * @group Behaviors
  */
 export function defaultScrollGestureToBehavior(gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior {
   if (gesture.zone === 'popup' && gesture.kind !== 'touch-start') { return 'leave-popup-open-and-block-page-scroll' }
   return 'leave-popup-open-and-allow-page-scroll'
 }
+Object.defineProperty(defaultScrollGestureToBehavior, DEFAULT_SCROLL_GESTURE_TO_BEHAVIOR_MARK, { value: true })
 
 /**
  * llselect's own behavior, the one a select component has when no preset is

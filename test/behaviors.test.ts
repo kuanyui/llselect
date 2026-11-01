@@ -102,18 +102,39 @@ function wheel(target: EventTarget, init: WheelEventInit = { deltaY: 3 }): Wheel
   return ev
 }
 
+type Point = { id: number; x: number; y: number }
+
 // jsdom has no Touch constructor, so the touch lists are plain look-alikes.
-function touch(type: string, target: EventTarget, points: Array<{ id: number; x: number; y: number }>, changed = points): Event {
-  const list = (ps: typeof points): TouchList => {
+// A lift keeps `remaining` down; every other event has `points` down.
+function touch(type: string, target: EventTarget, points: Point[], changed = points, remaining: Point[] = []): Event {
+  const list = (ps: Point[]): TouchList => {
     const items = ps.map((p) => ({ identifier: p.id, clientX: p.x, clientY: p.y, target }))
     return { length: items.length, item: (i: number) => items[i] ?? null } as unknown as TouchList
   }
   const ev = new window.Event(type, { bubbles: true, cancelable: true, composed: true })
   const lifted = type === 'touchend' || type === 'touchcancel'
-  Object.defineProperty(ev, 'touches', { value: list(lifted ? [] : points) })
+  Object.defineProperty(ev, 'touches', { value: list(lifted ? remaining : points) })
   Object.defineProperty(ev, 'changedTouches', { value: list(changed) })
   target.dispatchEvent(ev)
   return ev
+}
+
+function clickAt(target: EventTarget, x: number, y: number): MouseEvent {
+  const ev = new window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: x, clientY: y })
+  target.dispatchEvent(ev)
+  return ev
+}
+
+// A list that overflows by 100 px on the given axis.
+function makeScrollable(el: HTMLElement, axis: 'x' | 'y'): void {
+  if (axis === 'y') {
+    Object.defineProperty(el, 'scrollHeight', { value: 200 })
+    Object.defineProperty(el, 'clientHeight', { value: 100 })
+  } else {
+    el.style.overflowX = 'auto'
+    Object.defineProperty(el, 'scrollWidth', { value: 200 })
+    Object.defineProperty(el, 'clientWidth', { value: 100 })
+  }
 }
 
 test('a wheel inside the popup that the popup cannot scroll is blocked, and the popup stays open', () => {
@@ -314,4 +335,227 @@ test('a touch-down outside that closes swallows its click under outsideClickBeha
     outside.click()
     assert.equal(clicks, outsideClickBehavior === 'block' ? 0 : 1, outsideClickBehavior)
   }
+})
+
+test('a copy of the default function, as the presets bundle holds, counts as the default', () => {
+  // The two bundles share no code, so each holds its own copy, with the mark.
+  const copy = (gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior => defaultScrollGestureToBehavior(gesture)
+  Object.defineProperty(copy, Symbol.for('llselect.defaultScrollGestureToBehavior'), { value: true })
+  const { sel, outside } = mount({ scrollGestureToBehaviorFn: copy })
+  sel.open()
+  wheel(outside)
+  assert.deepEqual(sel.seen, [])
+})
+
+test('a second open attaches the listeners once', () => {
+  const { sel } = mount()
+  sel.open()
+  sel.close()
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  wheel(row)
+  assert.deepEqual(sel.seen, [{ kind: 'wheel', zone: 'popup' }])
+})
+
+test('while the library listens outside, a gesture inside the select component reaches the function once', () => {
+  const { sel } = mount({}, OutsideProbe)
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  wheel(row)
+  wheel(sel.triggerEl)
+  assert.deepEqual(sel.seen, [{ kind: 'wheel', zone: 'popup' }, { kind: 'wheel', zone: 'trigger' }])
+})
+
+test('the popup list has overscroll-behavior: contain', () => {
+  const { sel } = mount()
+  assert.equal(sel.popupListEl.style.overscrollBehavior, 'contain')
+})
+
+test('a wheel at the bottom of the list, within a pixel of the end, is blocked', () => {
+  const { sel } = mount()
+  sel.open()
+  makeScrollable(sel.popupListEl, 'y')
+  Object.defineProperty(sel.popupListEl, 'scrollTop', { value: 99.5 })
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  assert.equal(wheel(row, { deltaY: 3 }).defaultPrevented, true)
+  assert.equal(wheel(row, { deltaY: -3 }).defaultPrevented, false)
+})
+
+test('a scrollable element around the select component does not count as part of the popup', () => {
+  const { sel } = mount()
+  const page = document.getElementById('mount')?.parentElement
+  assert.ok(page)
+  page.style.overflowY = 'auto'
+  makeScrollable(page, 'y')
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  assert.equal(wheel(row).defaultPrevented, true)
+})
+
+test('a sideways wheel goes to a list that scrolls sideways, left to right and right to left', () => {
+  for (const direction of ['ltr', 'rtl'] as const) {
+    const { sel } = mount()
+    sel.open()
+    makeScrollable(sel.popupListEl, 'x')
+    sel.popupListEl.style.direction = direction
+    // At the start edge: the left one, or the right one, where scrollLeft is 0.
+    const row = sel.popupListEl.firstElementChild
+    assert.ok(row)
+    const towardEnd = direction === 'ltr' ? 3 : -3
+    assert.equal(wheel(row, { deltaX: towardEnd }).defaultPrevented, false, direction)
+    assert.equal(wheel(row, { deltaX: -towardEnd }).defaultPrevented, true, direction)
+    // At the end edge, where a right-to-left box counts scrollLeft negative.
+    Object.defineProperty(sel.popupListEl, 'scrollLeft', { value: direction === 'ltr' ? 100 : -100 })
+    assert.equal(wheel(row, { deltaX: towardEnd }).defaultPrevented, true, direction)
+    assert.equal(wheel(row, { deltaX: -towardEnd }).defaultPrevented, false, direction)
+  }
+})
+
+test('a gesture inside an open shadow root in the popup counts as the popup', () => {
+  let inner: HTMLElement | undefined
+  const { sel } = mount({
+    createPopupHeaderContentElFn: () => {
+      const host = document.createElement('div')
+      inner = document.createElement('span')
+      host.attachShadow({ mode: 'open' }).appendChild(inner)
+      return host
+    },
+  })
+  sel.open()
+  assert.ok(inner)
+  assert.equal(wheel(inner).defaultPrevented, true)
+  assert.deepEqual(sel.seen, [{ kind: 'wheel', zone: 'popup' }])
+})
+
+test('once a second finger lands where no listener saw it, the touch stays ignored', () => {
+  const { sel } = mount()
+  sel.open()
+  touch('touchstart', sel.popupListEl, [{ id: 1, x: 10, y: 50 }])
+  touch('touchmove', sel.popupListEl, [{ id: 1, x: 10, y: 40 }, { id: 2, x: 300, y: 300 }])
+  assert.equal(touch('touchmove', sel.popupListEl, [{ id: 1, x: 10, y: 20 }]).defaultPrevented, false)
+  assert.deepEqual(sel.seen, [{ kind: 'touch-start', zone: 'popup' }])
+})
+
+test('when one of two fingers lifts, the other one stays ignored', () => {
+  const { sel } = mount()
+  sel.open()
+  touch('touchstart', sel.popupListEl, [{ id: 1, x: 10, y: 50 }])
+  touch('touchstart', sel.popupListEl, [{ id: 1, x: 10, y: 50 }, { id: 2, x: 40, y: 50 }], [{ id: 2, x: 40, y: 50 }])
+  touch('touchend', sel.popupListEl, [], [{ id: 2, x: 40, y: 50 }], [{ id: 1, x: 10, y: 50 }])
+  assert.equal(touch('touchmove', sel.popupListEl, [{ id: 1, x: 10, y: 20 }]).defaultPrevented, false)
+})
+
+test('with the Chromium preset, the rest of a touch that closed the popup scrolls as usual, through a passive listener', (t) => {
+  const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows })
+  const spy = t.mock.method(outside, 'addEventListener')
+  sel.open()
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
+  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 40 }]).defaultPrevented, false)
+  const moveOptions = spy.mock.calls.find((call) => call.arguments[0] === 'touchmove')?.arguments[2]
+  assert.deepEqual(moveOptions, { passive: true })
+})
+
+test('the rest of a touch whose node the close removed still ends, so a later touch is not blocked', () => {
+  // The close rebuilds the arrow, so a touch on the arrow loses its node.
+  const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows, createTriggerArrowContentElFn: () => document.createElement('i') })
+  sel.open()
+  const arrow = sel.triggerEl.parentElement?.querySelector('i')
+  assert.ok(arrow)
+  touch('touchstart', arrow, [{ id: 1, x: 5, y: 5 }])
+  assert.equal(sel.isOpened(), false)
+  assert.equal(arrow.isConnected, false)
+  // The browser sends the rest of the touch to the removed node.
+  assert.equal(touch('touchmove', arrow, [{ id: 1, x: 5, y: 60 }]).defaultPrevented, true)
+  touch('touchend', arrow, [{ id: 1, x: 5, y: 60 }])
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
+  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 40 }]).defaultPrevented, false)
+})
+
+test('after a touch-down that closed the popup with a blocking behavior, a pinch is left alone', () => {
+  const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows })
+  sel.open()
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }, { id: 2, x: 50, y: 100 }], [{ id: 2, x: 50, y: 100 }])
+  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 80 }, { id: 2, x: 50, y: 130 }], [{ id: 1, x: 0, y: 80 }]).defaultPrevented, false)
+})
+
+test('with a preset, a tap on the clear button closes the popup and still clears', () => {
+  const { sel } = mount({ ...behaviorPresetsOfChromiumOnWindows, clearable: true })
+  sel.setChosenItem('a')
+  sel.open()
+  const clear = sel.triggerButtonsEl?.querySelector(`.${sel.classIdMap.triggerClearButtonClass}`)
+  assert.ok(clear)
+  touch('touchstart', clear, [{ id: 1, x: 5, y: 5 }])
+  assert.equal(sel.isOpened(), false)
+  touch('touchend', clear, [{ id: 1, x: 5, y: 5 }])
+  clickAt(clear, 5, 5)
+  assert.equal(sel.getChosenItem(), undefined)
+})
+
+test('a touch-down that closes the popup from inside it swallows the click that would reach the page under it', () => {
+  const { sel, outside } = mount({ scrollGestureToBehaviorFn: () => 'close-popup-and-allow-page-scroll' })
+  let clicks = 0
+  outside.addEventListener('click', () => { clicks++ })
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  touch('touchstart', row, [{ id: 1, x: 10, y: 10 }])
+  assert.equal(sel.isOpened(), false)
+  touch('touchend', row, [{ id: 1, x: 10, y: 10 }])
+  clickAt(outside, 10, 10)
+  assert.equal(clicks, 0)
+})
+
+test('a click far from the touch-down is not the tap\'s click, so it is not swallowed', () => {
+  const { sel } = mount({ ...behaviorPresetsOfChromiumOnWindows })
+  sel.open()
+  touch('touchstart', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
+  touch('touchend', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
+  clickAt(sel.triggerEl, 300, 5)
+  assert.equal(sel.isOpened(), true)
+})
+
+test('a touch that moved diagonally past the tap limit gives no click, so a later click is the user\'s own', () => {
+  const { sel } = mount({ ...behaviorPresetsOfChromiumOnWindows })
+  sel.open()
+  touch('touchstart', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
+  // 12 px on each axis is 17 px away, past the 16 px limit.
+  touch('touchmove', sel.triggerEl, [{ id: 1, x: 17, y: 17 }])
+  touch('touchend', sel.triggerEl, [{ id: 1, x: 17, y: 17 }])
+  clickAt(sel.triggerEl, 5, 5)
+  assert.equal(sel.isOpened(), true)
+})
+
+test('a canceled touch gives no click, so a later click is the user\'s own', () => {
+  const { sel } = mount({ ...behaviorPresetsOfChromiumOnWindows })
+  sel.open()
+  touch('touchstart', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
+  touch('touchcancel', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
+  clickAt(sel.triggerEl, 5, 5)
+  assert.equal(sel.isOpened(), true)
+})
+
+test('the next touch ends the wait for a tap\'s click that never came', () => {
+  // The blocked move of a wobbling tap can keep the browser from sending the click.
+  const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows })
+  sel.open()
+  touch('touchstart', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
+  touch('touchmove', sel.triggerEl, [{ id: 1, x: 7, y: 7 }])
+  touch('touchend', sel.triggerEl, [{ id: 1, x: 7, y: 7 }])
+  touch('touchstart', outside, [{ id: 2, x: 5, y: 5 }])
+  touch('touchend', outside, [{ id: 2, x: 5, y: 5 }])
+  clickAt(sel.triggerEl, 5, 5)
+  assert.equal(sel.isOpened(), true)
+})
+
+test('destroy() ends the rest of a touch that closed the popup', () => {
+  const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows })
+  sel.open()
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
+  sel.destroy()
+  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 40 }]).defaultPrevented, false)
 })
