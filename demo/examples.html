@@ -1135,7 +1135,7 @@
 
     <article>
       <h3>17.1 Wheel and touch: the default and two presets, next to this browser's native select</h3>
-      <p class="hint">Open a select component. Then turn the mouse wheel, or drag with one finger, inside the popup, on the trigger and elsewhere on the page. The two presets copy the native select of Firefox and of Chromium on Windows 11. The line under each select component names its last close.</p>
+      <p class="hint">Open a select component. Then turn the mouse wheel, or drag with one finger. Try it inside the popup, on the trigger and elsewhere on the page. The two presets copy the native select of Firefox and of Chromium on Windows 11. The line under each select component names its last close.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div class="gesture-row">
@@ -1165,14 +1165,46 @@
     </article>
 
     <article>
-      <h3>17.2 Wheel and touch: your own function, with each gesture and its answer</h3>
-      <p class="hint">This function closes the popup at any gesture outside the popup. A wheel that the list can still scroll never reaches the function.</p>
+      <h3>17.2 With the filter on, as on a phone: the default, two presets, and touch kept on the default</h3>
+      <p class="hint">On a phone, the filter input takes focus at open, and the on-screen keyboard may cover the input. Then drag the page outside the popup, to bring the select component back into view. The two presets close the popup at that touch. The default and the fourth select component keep it open. The fourth select component uses the Chromium preset for the mouse wheel only.</p>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div class="gesture-row">
+            <div>
+              <div class="gesture-label">default</div>
+              <div id="mount-gesture-filter-default"></div>
+              <div class="out" id="out-gesture-filter-default">last close: (none)</div>
+            </div>
+            <div>
+              <div class="gesture-label"><code>behaviorPresetsOfFirefoxOnWindows</code></div>
+              <div id="mount-gesture-filter-firefox"></div>
+              <div class="out" id="out-gesture-filter-firefox">last close: (none)</div>
+            </div>
+            <div>
+              <div class="gesture-label"><code>behaviorPresetsOfChromiumOnWindows</code></div>
+              <div id="mount-gesture-filter-chromium"></div>
+              <div class="out" id="out-gesture-filter-chromium">last close: (none)</div>
+            </div>
+            <div>
+              <div class="gesture-label">Chromium preset for the wheel, default for touch</div>
+              <div id="mount-gesture-filter-wheel-only"></div>
+              <div class="out" id="out-gesture-filter-wheel-only">last close: (none)</div>
+            </div>
+          </div>
+        </div>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="17.2"><code></code></pre></details>
+      </div>
+    </article>
+
+    <article>
+      <h3>17.3 Wheel and touch: your own function, with each gesture and its answer</h3>
+      <p class="hint">This function closes the popup at every gesture outside the select component that reaches the function. A wheel or a drag that the list can still scroll never reaches the function.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-gesture-own"></div>
           <div class="out" id="out-gesture-own">last gesture: (none)</div>
         </div>
-        <details class="code-toggle"><summary>code</summary><pre data-demo="17.2"><code></code></pre></details>
+        <details class="code-toggle"><summary>code</summary><pre data-demo="17.3"><code></code></pre></details>
       </div>
     </article>
   </section>
