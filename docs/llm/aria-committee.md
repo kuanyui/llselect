@@ -1,5 +1,7 @@
 # Committee: the ARIA findings and the two blind votes
 
+The commit hashes that this record cites name commits from before the squash of `dev`; the branch `backup/dev-before-squash` keeps them.
+
 Agent-facing record of the committee's blind votes on the accessibility findings the owner relayed. `FIXME.md` has the entries (MEDIUM-768 to DOCUMENTATION-775); `DESIGN.md` "Popup header / footer slots" and "Action rows (commands inside the list)" point here; `A11Y.md` holds the contract that came out of the votes. The blind-vote procedure is the one `CLAUDE.md` records.
 
 ## The report

@@ -770,12 +770,13 @@ function methodGrammarAssets() {
 
 // The API pages come out of typedoc (markdown, one page per module, written to
 // .build/api-md by the `build:site` npm script BEFORE this script runs). Their
-// only non-anchor links are the three inter-page ones; map them onto the
+// only non-anchor links are the inter-page ones; map them onto the
 // published names. Everything else (source links) is already absolute.
 const API_PAGES = [
   ['README.md', 'index.html', 'llselect API reference', false],
   ['@llselect/core.md', 'core.html', '@llselect/core API', true],
   ['@llselect/core/i18n.md', 'i18n.html', '@llselect/core/i18n API', true],
+  ['@llselect/core/behavior-presets.md', 'behavior-presets.html', '@llselect/core/behavior-presets API', true],
 ]
 function makeApiLinkRewriter(mdDir) {
   return (body) => body.replace(/href="(?!https?:|#|mailto:)([^"]+)"/g, (_m, target) => {
@@ -857,6 +858,7 @@ writeFileSync('public/api/index.html', renderPage({
 <ul>
 <li><a href="core.html"><code>@llselect/core</code></a> - the library itself: <code>LLSelectSingle</code> / <code>LLSelectMultiple</code>, every setting, the subclassing surface, and the SVG icon helpers.</li>
 <li><a href="i18n.html"><code>@llselect/core/i18n</code></a> - the UI-translation pack contract and every shipped language pack.</li>
+<li><a href="behavior-presets.html"><code>@llselect/core/behavior-presets</code></a> - the behavior presets, such as the scroll behavior of one browser's native select, to spread into the settings.</li>
 <li><a href="../angularjs/api.html"><code>@llselect/angularjs</code></a> - the AngularJS 1.x directives: hand-written attribute reference (markup is not a TypeScript surface).</li>
 </ul>
 `,

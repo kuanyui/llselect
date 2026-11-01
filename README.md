@@ -190,6 +190,9 @@ Everything in `dist/` is served by both CDNs; pin at least the major version (`@
 <!-- language packs (optional): window.llselectI18n -->
 <script src="https://cdn.jsdelivr.net/npm/@llselect/core@0/dist/i18n.umd.js"></script>
 
+<!-- behavior presets (optional): window.llselectBehaviorPresets -->
+<script src="https://cdn.jsdelivr.net/npm/@llselect/core@0/dist/behavior-presets.umd.js"></script>
+
 <!-- a theme (optional): vanilla / tailwind / bootstrap-3 / bootstrap-4 / bootstrap-5 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@llselect/core@0/dist/themes/vanilla.css">
 ```
@@ -282,6 +285,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Grouping (optgroup)                  | `itemToGroupKeyFn`, `groupKeyToStringFn`, `groupDisabledFn`                                                               |
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `chooseAllRow`, `hideChosenRows`, `chosenItemsOrder: 'as-chosen' \| 'as-listed'`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
 | Popup width                          | `popupWidthPolicy: 'fit-content' \| 'match-trigger-wrapper'` (default `'fit-content'` - grows to content like a native select)   |
+| Wheel and touch while the popup is open | `scrollGestureToBehaviorFn` + the presets of `@llselect/core/behavior-presets`; see Wheel and touch while the popup is open |
 | Rich rendering without subclassing   | `createPopupListItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
 | Action rows: commands in the list    | `popupListLeadingActionRows`, `popupListTrailingActionRows` - option rows in the arrow-key ring; see Action rows |
 | Pinned rows                          | `popupListLeadingRowsPinned`, `popupListTrailingRowsPinned` - the choose-all row and the command rows stay in view while the items scroll |
@@ -532,6 +536,7 @@ A complete worked subclass, in TypeScript with typed subclass settings (the clas
 | Highlight filter matches in rows | `createPopupListItemContentElFn` + the `createHighlightedTextEl` helper |
 | Equality for object items        | `compareFn`                     |
 | Dropdown arrow                   | `createTriggerArrowContentElFn` |
+| What a wheel or a touch does while the popup is open | `scrollGestureToBehaviorFn` |
 | Events                           | `onChange`, `onBeforeChange`, `onOpen`, `onClose`, `onFocus`, `onBlur`, `onActiveItemChange`, `onFilterQueryChange` |
 
 ```js
@@ -691,6 +696,41 @@ sel = new LLSelectSingle(el, {
 - Programmatic setters never ask. Guard your own calls in your own code.
 - A setter called inside the handler wins; the pending change is dropped.
 - A rule that never allows an item belongs in `itemDisabledFn`. `onBeforeChange` is for a decision that depends on the moment.
+
+#### Wheel and touch while the popup is open
+
+The `scrollGestureToBehaviorFn` setting decides what a wheel or a touch does while the popup is open. The native select of each browser does this in its own way.
+
+By default, a wheel or a drag inside the popup does not scroll the page behind it. Outside the popup, the page scrolls and the popup stays open.
+
+To copy the native select of one browser, spread a preset into the settings:
+
+```js
+import { LLSelectSingle } from '@llselect/core'
+import { behaviorPresetsOfFirefoxOnWindows } from '@llselect/core/behavior-presets'
+
+const sel = new LLSelectSingle(el, { ...behaviorPresetsOfFirefoxOnWindows })
+```
+
+- With `behaviorPresetsOfFirefoxOnWindows`, a wheel outside the popup scrolls nothing. A touch outside the popup closes the popup.
+- With `behaviorPresetsOfChromiumOnWindows`, a wheel or a touch outside the popup closes the popup. The page scrolls as usual.
+- The library does not detect the browser. Your app picks the preset.
+
+To write your own rule, pass a function. The function gets the gesture and returns one of four behaviors:
+
+```js
+const sel = new LLSelectSingle(el, {
+  // gesture.kind: 'wheel', 'touch-start' or 'touch-drag'
+  // gesture.zone: 'popup', 'trigger' or 'outside'
+  scrollGestureToBehaviorFn: (gesture) => gesture.zone === 'popup'
+    ? 'leave-popup-open-and-block-page-scroll'
+    : 'close-popup-and-allow-page-scroll',
+})
+```
+
+- When a gesture closes the popup, `onClose` gets the reason `'scroll-gesture'`.
+- Ctrl+wheel, a pinch and a two-finger touch stay untouched, so the user can still zoom the page.
+- A preset or your own function makes the library listen on the whole page while the popup is open. Every scroll of the page then waits for that listener.
 
 ### Subclassing (extending the library)
 

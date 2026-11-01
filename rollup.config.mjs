@@ -43,10 +43,11 @@ function copyThemes() {
 }
 
 /**
-* Two independent bundles (config array): the library, and the language packs
-* (`@llselect/core/i18n`). i18n never imports base.ts, so importing
-* a pack never drags in the library - and vice versa the main bundle carries
-* only the English defaults.
+* Three independent bundles (config array): the library, the language packs
+* (`@llselect/core/i18n`) and the behavior presets
+* (`@llselect/core/behavior-presets`). Neither subpath imports base.ts, so
+* importing a pack or a preset never drags in the library - and vice versa the
+* main bundle carries only the English defaults and the default behavior.
 * https://rollupjs.org/command-line-interface/#config-intellisense
 * @type {import('rollup').RollupOptions[]}
 */
@@ -79,6 +80,27 @@ const options = [
         file: 'dist/i18n.umd.js',
         format: 'umd',
         name: 'llselectI18n',
+        exports: 'named',
+        sourcemap: true,
+        plugins: [terser()]
+      }
+    ],
+    plugins: [
+      typescript({
+        tsconfig: './tsconfig.json',
+        compilerOptions: { declaration: false, declarationMap: false, sourceMap: true }
+      })
+    ]
+  },
+  {
+    input: 'src/behavior-presets.ts',
+    output: [
+      { file: 'dist/behavior-presets.mjs', format: 'es', sourcemap: true },
+      { file: 'dist/behavior-presets.cjs', format: 'cjs', exports: 'named', sourcemap: true },
+      {
+        file: 'dist/behavior-presets.umd.js',
+        format: 'umd',
+        name: 'llselectBehaviorPresets',
         exports: 'named',
         sourcemap: true,
         plugins: [terser()]

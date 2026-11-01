@@ -22,6 +22,11 @@
       "import": "./dist/i18n.mjs",
       "require": "./dist/i18n.cjs"
     },
+    "./behavior-presets": {
+      "types": "./dist/behavior-presets.d.ts",
+      "import": "./dist/behavior-presets.mjs",
+      "require": "./dist/behavior-presets.cjs"
+    },
     "./themes/*.css": "./dist/themes/*.css",
     "./package.json": "./package.json"
   },

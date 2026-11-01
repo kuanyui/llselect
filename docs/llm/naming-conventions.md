@@ -33,6 +33,7 @@ NOTE: `render*` is NOT on that list. Under (ii) render* are pure orchestrators -
 | `on*`                                                                    | settings event OR subclass hook ONLY                                    |
 | `itemTo*`                                                                | pure item->string mapping, no DOM: `itemToString`                       |
 | `is*`/`are*`/`matches*`/`fire*`/`focus*`/`measure*`/`capture*`/`ensure*` | auxiliaries                                                             |
+| `should*`                                                                | protected predicate that decides whether the library does something: `shouldListenForScrollGesturesOutside` |
 | `choose*`/`unchoose*`/`toggle*` / `open`/`close`/`toggle`                | domain ops                                                              |
 
 Banned: `apply*`, `build*`, `make*`, and any `*ToDom` on a `render*` (render* are DOM-free now).
@@ -317,6 +318,24 @@ From the two ARIA blind votes and the owner's rulings (`aria-committee.md`; desi
 | value     | `'match-trigger-wrapper'`              | `LLSelectWidthPolicy`                               | names the element whose width it copies                             |
 
 The word is `ScreenReader`, with no `Aria`: the `*AriaLabel` pack keys name the attribute they fill, while the screen-reader text fills a visually hidden span.
+
+### 4k. Scroll-gesture behaviors
+
+From the owner's rulings on MEDIUM-795 (`FIXME.md`; design: `DESIGN.md` "Scroll gestures while the popup is open").
+
+| Vis       | Name                                   | Signature / value                                   | Convention                                                          |
+| --------- | -------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------- |
+| setting   | `scrollGestureToBehaviorFn`            | `(gesture: LLSelectScrollGesture) => LLSelectScrollGestureBehavior` | `<source>To<target>Fn` (s3)                         |
+| protected | `scrollGestureToBehavior`              | `(gesture: LLSelectScrollGesture) => LLSelectScrollGestureBehavior` | the setting's override point, its name without `Fn` |
+| protected | `shouldListenForScrollGesturesOutside` | `() => boolean`                                     | `should*` - named for what it decides; the owner read the proposed `isScrollGestureObservedOutside` as "found that the gesture happened" |
+| function  | `defaultScrollGestureToBehavior`       | `(gesture: LLSelectScrollGesture) => LLSelectScrollGestureBehavior` | `default<Setting>` without `Fn`, exported from `@llselect/core` |
+| type      | `LLSelectScrollGesture`                | `{ kind: LLSelectScrollGestureKind; zone: LLSelectScrollGestureZone }` | the gesture; the owner found `kind` a generic word and took it for now |
+| type      | `LLSelectScrollGestureKind` / `LLSelectScrollGestureZone` | `'wheel' \| 'touch-start' \| 'touch-drag' \| 'touch-end'` / `'popup' \| 'trigger' \| 'outside'` | value aliases (s3) |
+| type      | `LLSelectScrollGestureBehavior`        | `'leave-popup-open-and-allow-page-scroll' \| 'leave-popup-open-and-block-page-scroll' \| 'close-popup-and-allow-page-scroll' \| 'close-popup-and-block-page-scroll'` | a behavior, not an action; a string union, not an enum; every value names the popup |
+| type      | `LLSelectBehaviorPreset`               | `{ scrollGestureToBehaviorFn }`                     | one object of behavior settings                                     |
+| const     | `behaviorPresetsOfLLSelectDefault` / `behaviorPresetsOf<Browser>On<OS>` | `LLSelectBehaviorPreset`     | in `@llselect/core/behavior-presets`, which the owner renamed from `native-select-presets`, since a preset need not copy a native select |
+| value     | `'scroll-gesture'`                     | `LLSelectCloseReason`                               | the close reason; the gesture rides in `meta.scrollGesture`         |
+| AngularJS | `ll-scroll-gesture-to-behavior-fn` / `$scrollGesture` | attribute / `ll-on-close` local      | the setting's kebab name; the meta field with `$`                   |
 
 ## 5. Decisions log
 

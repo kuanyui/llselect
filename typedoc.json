@@ -1,7 +1,7 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "name": "@llselect/core",
-  "entryPoints": ["src/index.ts", "src/i18n.ts"],
+  "entryPoints": ["src/index.ts", "src/i18n.ts", "src/behavior-presets.ts"],
   "plugin": ["typedoc-plugin-markdown"],
   "outputFileStrategy": "modules",
   "json": ".build/api.json",
@@ -19,7 +19,7 @@
   "groupOrder": [
     "Select component classes", "Settings", "Pack contract", "Language packs", "Icons", "Positioning", "CSS & DOM",
     "Selection", "Items", "Open & close",
-    "Accessible name", "Events", "Trigger", "Filtering", "Grouping", "Choose-all", "Popup", "Disabling", "Color scheme", "i18n", "CSS",
+    "Accessible name", "Events", "Trigger", "Filtering", "Grouping", "Choose-all", "Popup", "Behaviors", "Disabling", "Color scheme", "i18n", "CSS",
     "Lifecycle", "DOM elements",
     "Subclassing: reactions", "Subclassing: rendering", "Subclassing: semantics", "Subclassing: focus",
     "State (protected)", "Metadata", "*"

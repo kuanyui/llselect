@@ -15,6 +15,8 @@ import {
   isImeKeydown,
 } from './keyboard.js'
 import { en as DEFAULT_UI_TRANSLATION_PACK } from './i18n/en.js'
+import { attachScrollGestureListeners, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior } from './behaviors.js'
+import { behaviorPresetsOfLLSelectDefault, defaultScrollGestureToBehavior } from './behavior-presets.js'
 import type { LLSelectUiTranslationPack } from './i18n.js'
 import {
   COLOR_SCHEME_ATTRIBUTE,
@@ -119,9 +121,13 @@ export interface LLSelectOpenMeta {
  * - `'destroy'`: `destroy()`.
  * - `'hidden'`: the trigger scrolled out of view or was clipped, so the
  *   popup could not stay anchored.
+ * - `'scroll-gesture'`: a wheel or a touch while the popup was open, for
+ *   which `scrollGestureToBehaviorFn` picked a behavior that closes the
+ *   popup, or an override of the protected `scrollGestureToBehavior` did.
+ *   `meta.scrollGesture` holds the gesture.
  * @group Events
  */
-export type LLSelectCloseReason = 'choose' | 'escape' | 'outside' | 'blur' | 'trigger-buttons' | 'toggle' | 'api' | 'disabled' | 'destroy' | 'hidden'
+export type LLSelectCloseReason = 'choose' | 'escape' | 'outside' | 'blur' | 'trigger-buttons' | 'toggle' | 'api' | 'disabled' | 'destroy' | 'hidden' | 'scroll-gesture'
 
 /**
  * `onClose`'s argument.
@@ -130,6 +136,11 @@ export type LLSelectCloseReason = 'choose' | 'escape' | 'outside' | 'blur' | 'tr
 export interface LLSelectCloseMeta {
   /** Why the popup closed. See {@link LLSelectCloseReason}. */
   reason: LLSelectCloseReason
+  /**
+   * The gesture that closed the popup, when `reason` is `'scroll-gesture'`.
+   * - `undefined` for every other reason.
+   */
+  scrollGesture?: LLSelectScrollGesture
 }
 
 /**
@@ -372,6 +383,41 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * @group Popup
    */
   outsideClickBehavior: LLSelectOutsideClickBehavior
+  /**
+   * Decides what the select component does with a scroll gesture, a wheel or
+   * a touch, while the popup is open.
+   * - Called on **every** scroll gesture while the popup is open, through
+   *   the protected `scrollGestureToBehavior`; nothing is kept for a later
+   *   call. A scroll gesture is each `wheel` event, and each `touchstart`
+   *   and `touchmove` of a one-finger touch.
+   *   - Inside the popup, a gesture that an element of the popup can still
+   *     scroll is left to the browser, and the function is not called.
+   *   - Outside the select component, the function is called only while
+   *     the protected `shouldListenForScrollGesturesOutside` returns `true`.
+   *     By default, that is while this setting is not
+   *     `defaultScrollGestureToBehavior`.
+   *   - The function is never called for a `wheel` with `ctrlKey`, for a
+   *     touch of more than one finger, or while the page is pinch-zoomed.
+   *     Those gestures zoom or pan, and the library leaves them alone.
+   * - `gesture` says what the gesture is and where it happens. See
+   *   {@link LLSelectScrollGesture}.
+   * - The answer is one of four behaviors. See
+   *   {@link LLSelectScrollGestureBehavior}.
+   * - The default is `defaultScrollGestureToBehavior`. Inside the popup, the
+   *   page behind does not scroll. Everywhere else, the page scrolls as it
+   *   would without the select component, and the popup stays open.
+   * - `@llselect/core/behavior-presets` holds other functions, as presets
+   *   to spread into the settings, such as `behaviorPresetsOfFirefoxOnWindows`.
+   * - The popup list also has the CSS property `overscroll-behavior: contain`.
+   *   - It covers a touch scroll that has already started in the list. The
+   *     browser no longer lets a script cancel such a touch, so the function
+   *     cannot stop it.
+   *   - The property asks the browser not to pass that scroll on to the page
+   *     when the list reaches its end.
+   *   - Safari supports the property from version 16.
+   * @group Popup
+   */
+  scrollGestureToBehaviorFn: (gesture: LLSelectScrollGesture) => LLSelectScrollGestureBehavior
   /**
    * Which color scheme the select component shows: light or dark.
    * - `'auto'`, the default: the library chooses the scheme from the two CSS sources below.
@@ -1785,6 +1831,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    */
   private pendingOpenReason: LLSelectOpenReason = 'api'
   private pendingCloseReason: LLSelectCloseReason = 'api'
+  /** The gesture of a `'scroll-gesture'` close, for `meta.scrollGesture`; see `pendingCloseReason`. */
+  private pendingScrollGesture: LLSelectScrollGesture | undefined = undefined
+  /** Detaches the scroll-gesture listeners of the open cycle; set while the popup is open. */
+  private detachScrollGestures: (() => void) | undefined = undefined
   /** The whole-life focus listeners on `rootEl`; see `attachFocusListeners`. */
   private focusInHandler: ((ev: FocusEvent) => void) | undefined
   private focusOutHandler: ((ev: FocusEvent) => void) | undefined
@@ -1887,6 +1937,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       labelEl,
       compareFn: settings?.compareFn ?? defaultCompareFn,
       outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
+      scrollGestureToBehaviorFn: settings?.scrollGestureToBehaviorFn ?? behaviorPresetsOfLLSelectDefault.scrollGestureToBehaviorFn,
       colorScheme: settings?.colorScheme ?? 'auto',
       createTriggerArrowContentElFn: settings?.createTriggerArrowContentElFn ?? null,
       clearable: settings?.clearable ?? false,
@@ -2037,6 +2088,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.popupListEl.style.flex = '1'
     this.popupListEl.style.minHeight = '0'
     this.popupListEl.style.overflowY = 'auto'
+    // For a touch scroll that reaches the end of the list: once the list has
+    // started to scroll, its `touchmove` can no longer be canceled.
+    this.popupListEl.style.overscrollBehavior = 'contain'
 
     // Top layer via the Popover API where it exists: while open the popup
     // paints above every stacking context and ignores containing-block
@@ -2372,6 +2426,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         innerScrollEl: this.popupListEl,
       })
       this.attachOutsideClick()
+      this.attachScrollGestures()
       this.focusInitial()
     } finally {
       this.activeItemReportSuspendDepth--
@@ -2415,6 +2470,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   public close(): void {
     const reason = this.pendingCloseReason
     this.pendingCloseReason = 'api'
+    const scrollGesture = this.pendingScrollGesture
+    this.pendingScrollGesture = undefined
     if (!this.opened) { return }
     const shouldReturnFocus = this.isFocused(this.popupEl)
     this.opened = false
@@ -2444,6 +2501,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.positioner?.detach()
     this.positioner = undefined
     this.detachOutsideClick()
+    this.detachScrollGestures?.()
+    this.detachScrollGestures = undefined
     this.popupListEl.replaceChildren()
     // The no-results region hides with the popup; reset so a reopen with a
     // still-empty list counts as a fresh appearance and re-announces.
@@ -2487,7 +2546,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     if (!this.undoingOpen) {
       this.onClosed()
       const onClose = this.settings.onClose
-      onClose?.({ reason })
+      onClose?.(scrollGesture !== undefined ? { reason, scrollGesture } : { reason })
     }
     // Last, so a listener that reopens the select component does so after this close
     // completed, with no step above left to run on an open popup.
@@ -2508,6 +2567,62 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected closeWithReason(reason: LLSelectCloseReason): void {
     this.pendingCloseReason = reason
     this.close()
+  }
+
+  /**
+   * Picks what the select component does with one scroll gesture while the
+   * popup is open.
+   * - The library's scroll-gesture listeners call this method on every
+   *   gesture that `scrollGestureToBehaviorFn` describes.
+   * - The listeners fill `gesture`: what the gesture is and where it
+   *   happens. See {@link LLSelectScrollGesture}.
+   * - The default returns `scrollGestureToBehaviorFn(gesture)`.
+   * - Configure via `scrollGestureToBehaviorFn` (no subclass needed).
+   * - An override replaces the setting, and
+   *   `super.scrollGestureToBehavior(gesture)` still reaches the setting.
+   * - An override that answers gestures outside the select component also
+   *   overrides {@link shouldListenForScrollGesturesOutside}. By default the
+   *   library listens there only while the setting is not
+   *   `defaultScrollGestureToBehavior`.
+   * @group Subclassing: semantics
+   */
+  protected scrollGestureToBehavior(gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior {
+    return this.settings.scrollGestureToBehaviorFn(gesture)
+  }
+
+  /**
+   * Whether the select component listens for scroll gestures outside
+   * itself, on the document, while the popup is open.
+   * - `open()` calls this method once per open, right after it attaches the
+   *   outside-click listeners.
+   * - The default returns `true` when `scrollGestureToBehaviorFn` is not
+   *   `defaultScrollGestureToBehavior`.
+   *   - The default function leaves every gesture outside the select
+   *     component alone, so the library does not listen there for it.
+   * - A subclass whose `scrollGestureToBehavior` answers gestures outside
+   *   the select component overrides this method to return `true`.
+   * - Listening there has a cost. A non-passive `wheel` or `touchmove`
+   *   listener on the document makes every scroll of the page wait for
+   *   script while the popup is open.
+   * @group Subclassing: semantics
+   */
+  protected shouldListenForScrollGesturesOutside(): boolean {
+    return this.settings.scrollGestureToBehaviorFn !== defaultScrollGestureToBehavior
+  }
+
+  /** Attaches the scroll-gesture listeners for this open cycle; `close()` detaches them. */
+  private attachScrollGestures(): void {
+    this.detachScrollGestures = attachScrollGestureListeners({
+      rootEl: this.rootEl,
+      popupEl: this.popupEl,
+      targetOf: (ev) => this.eventTargetNode(ev),
+      behaviorFor: (gesture) => this.scrollGestureToBehavior(gesture),
+      closeFor: (gesture) => {
+        this.pendingScrollGesture = gesture
+        this.closeWithReason('scroll-gesture')
+      },
+      swallowsOutsideClick: this.settings.outsideClickBehavior === 'block',
+    }, this.shouldListenForScrollGesturesOutside())
   }
 
   /**

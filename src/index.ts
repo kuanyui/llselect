@@ -1,6 +1,7 @@
 /**
  * The package entry: the two select component classes, their settings types,
- * and the SVG icon builders. Language packs live in `@llselect/core/i18n`.
+ * and the SVG icon builders. Language packs live in `@llselect/core/i18n`, and
+ * behavior presets in `@llselect/core/behavior-presets`.
  * @module @llselect/core
  */
 export { LLSelectBase } from './base.js'
@@ -37,6 +38,20 @@ export type { LLSelectColorScheme } from './color-scheme.js'
  * @group Pack contract
  */
 export type { LLSelectUiTranslationPack } from './i18n.js'
+
+/**
+ * The types of the `scrollGestureToBehaviorFn` setting, and its default. The
+ * other presets live under the `@llselect/core/behavior-presets` subpath.
+ * @group Behaviors
+ */
+export type {
+  LLSelectBehaviorPreset,
+  LLSelectScrollGesture,
+  LLSelectScrollGestureBehavior,
+  LLSelectScrollGestureKind,
+  LLSelectScrollGestureZone,
+} from './behaviors.js'
+export { defaultScrollGestureToBehavior } from './behavior-presets.js'
 
 export { LLSelectSingle } from './single.js'
 export type {
