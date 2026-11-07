@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
+import { assertEveryListenerRemoved, isRemovalOf } from '../test-utils/listeners.js'
 import { computePosition, createPositioner, type AnchorRect } from '../src/positioning.js'
 import { LLSelectSingle } from '../src/single.js'
 
@@ -201,6 +202,17 @@ test('match-trigger-wrapper (opt-in): width pinned to anchor, no horizontal shif
   assert.equal(r.left, 900)
 })
 
+// jsdom has no ResizeObserver; this one records what the positioner does with it.
+class RecordingResizeObserver implements ResizeObserver {
+  static last: RecordingResizeObserver | undefined
+  readonly observed: Element[] = []
+  disconnects = 0
+  constructor(readonly callback: ResizeObserverCallback) { RecordingResizeObserver.last = this }
+  observe(target: Element): void { this.observed.push(target) }
+  unobserve(): void {}
+  disconnect(): void { this.disconnects++ }
+}
+
 function withMockedRect(el: HTMLElement, rect: Partial<AnchorRect>): void {
   const full: AnchorRect = {
     top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, ...rect,
@@ -391,6 +403,56 @@ test('positioner does NOT call onHide when a virtual keyboard shrinks only the v
   p.detach()
 })
 
+test('a pan of the visual viewport re-clamps the popup both ways, and never closes it (on-screen keyboard)', (t) => {
+  const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  // The keyboard leaves a 400 px visual viewport, which a swipe pans inside
+  // the 768 px layout viewport without a document scroll.
+  const vv = Object.assign(new dom.window.EventTarget(), { width: 1024, height: 400, offsetLeft: 0, offsetTop: 0 })
+  Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
+  const added = t.mock.method(vv, 'addEventListener')
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  withMockedRect(anchor, { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 300, configurable: true })
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  const first = parseFloat(floating.style.maxHeight)
+  vv.offsetTop = 200
+  vv.dispatchEvent(new dom.window.Event('scroll'))
+  assert.equal(parseFloat(floating.style.maxHeight), first + 200)
+  vv.offsetTop = 0
+  vv.dispatchEvent(new dom.window.Event('scroll'))
+  assert.equal(parseFloat(floating.style.maxHeight), first)
+  // Even with the trigger out of the layout viewport, a pan runs no hidden check.
+  withMockedRect(anchor, { top: 900, left: 50, right: 250, bottom: 930, width: 200, height: 30 })
+  vv.dispatchEvent(new dom.window.Event('scroll'))
+  assert.equal(calls, 0)
+  const panAdd = added.mock.calls.find((call) => call.arguments[0] === 'scroll')
+  assert.ok(panAdd)
+  const removed = t.mock.method(vv, 'removeEventListener')
+  p.detach()
+  assert.ok(removed.mock.calls.some((call) => isRemovalOf(panAdd.arguments, call.arguments)))
+})
+
+test('a pan of the visual viewport moves a popup above the trigger, not only its height', () => {
+  const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const vv = Object.assign(new dom.window.EventTarget(), { width: 1024, height: 400, offsetLeft: 0, offsetTop: 0 })
+  Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  withMockedRect(anchor, { top: 350, left: 50, right: 250, bottom: 380, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 300, configurable: true })
+  const p = createPositioner(anchor, floating)
+  assert.equal(floating.getAttribute('data-placement'), 'above')
+  assert.equal(floating.style.top, '46px')
+  vv.offsetTop = 100
+  vv.dispatchEvent(new dom.window.Event('scroll'))
+  assert.equal(floating.getAttribute('data-placement'), 'above')
+  assert.equal(floating.style.top, '108px')
+  assert.equal(floating.style.maxHeight, '238px')
+  p.detach()
+})
+
 test('positioner auto-closes on scroll but NOT on resize (virtual keyboard)', () => {
   const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
   const anchor = document.getElementById('a')!
@@ -412,6 +474,77 @@ test('positioner auto-closes on scroll but NOT on resize (virtual keyboard)', ()
   dom.window.dispatchEvent(new dom.window.Event('scroll'))
   assert.equal(calls, 1)
   p.detach()
+})
+
+test('a scroll of an element that does not hold the anchor still runs the hidden check', () => {
+  const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div><div id="side"></div></body></html>')
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  const side = document.getElementById('side')!
+  withMockedRect(anchor, { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  assert.equal(calls, 0)
+  withMockedRect(anchor, { top: 900, left: 50, right: 250, bottom: 930, width: 200, height: 30 })
+  side.dispatchEvent(new dom.window.Event('scroll'))
+  assert.equal(calls, 1)
+  p.detach()
+})
+
+test('a size change the ResizeObserver reports re-places the popup without the hidden check, and detach disconnects it', () => {
+  setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const original = globalThis.ResizeObserver
+  globalThis.ResizeObserver = RecordingResizeObserver
+  try {
+    const anchor = document.getElementById('a')!
+    const floating = document.getElementById('b')!
+    withMockedRect(anchor, { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 })
+    Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+    let calls = 0
+    const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+    const ro = RecordingResizeObserver.last
+    assert.ok(ro)
+    assert.deepEqual(ro.observed, [anchor, floating])
+    assert.equal(floating.getAttribute('data-placement'), 'below')
+    // Even with the trigger out of the layout viewport, a size change only re-places.
+    withMockedRect(anchor, { top: 900, left: 50, right: 250, bottom: 930, width: 200, height: 30 })
+    ro.callback([], ro)
+    assert.equal(calls, 0)
+    assert.equal(floating.getAttribute('data-placement'), 'above')
+    p.detach()
+    assert.equal(ro.disconnects, 1)
+  } finally {
+    globalThis.ResizeObserver = original
+  }
+})
+
+test('detach removes every listener the positioner added, with the same function and capture flag', (t) => {
+  const dom = setupDom('<!doctype html><html><body><div id="host"></div><div id="b"></div></body></html>')
+  const vv = Object.assign(new dom.window.EventTarget(), { width: 1024, height: 768, offsetLeft: 0, offsetTop: 0 })
+  Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
+  // The anchor sits in a shadow root, which then gets a scroll listener too.
+  const shadow = document.getElementById('host')!.attachShadow({ mode: 'open' })
+  const anchor = document.createElement('div')
+  shadow.appendChild(anchor)
+  const floating = document.getElementById('b')!
+  withMockedRect(anchor, { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 })
+  const windowAdd = t.mock.method(dom.window, 'addEventListener')
+  const vvAdd = t.mock.method(vv, 'addEventListener')
+  const shadowAdd = t.mock.method(shadow, 'addEventListener')
+  const p = createPositioner(anchor, floating)
+  const windowRemove = t.mock.method(dom.window, 'removeEventListener')
+  const vvRemove = t.mock.method(vv, 'removeEventListener')
+  const shadowRemove = t.mock.method(shadow, 'removeEventListener')
+  p.detach()
+  const cases = [
+    { where: 'window', adds: windowAdd.mock.calls, removes: windowRemove.mock.calls, types: ['resize', 'scroll'] },
+    { where: 'visualViewport', adds: vvAdd.mock.calls, removes: vvRemove.mock.calls, types: ['resize', 'scroll'] },
+    { where: 'shadow root', adds: shadowAdd.mock.calls, removes: shadowRemove.mock.calls, types: ['scroll'] },
+  ]
+  for (const { where, adds, removes, types } of cases) {
+    assertEveryListenerRemoved(where, adds, removes, types)
+  }
 })
 
 test('public reposition() never auto-closes, even when the anchor is out of view', () => {

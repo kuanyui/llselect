@@ -409,9 +409,17 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *     popup there, as the native select does.
    *   - In a closed shadow root around the select component, the document
    *     sees no deeper than the shadow host. While the library listens
-   *     outside, a gesture inside the select component then first reaches
-   *     the function as `'outside'`, so a preset that closes outside closes
-   *     the popup at every touch-down inside it.
+   *     outside, a gesture inside the select component then reaches the
+   *     function as `'outside'` before the listeners inside see it.
+   *   - A preset may then close the popup at a touch-down or a wheel inside
+   *     the select component, and block a wheel that the list could scroll.
+   *   - If `outsideClickBehavior` is `'pass-through'`, the default, the click
+   *     of a tap whose touch-down closed the popup then gets through. A tap on
+   *     the trigger then reopens the popup, and the click of a tap inside the
+   *     popup may reach the page under the closed popup.
+   *   - If it is `'block'`, that click is swallowed, as for any outside
+   *     press.
+   *   - An open shadow root does not have this limit.
    * - `gesture` says what the gesture is and where it happens. See
    *   {@link LLSelectScrollGesture}.
    * - The answer is one of four behaviors. See
@@ -2468,9 +2476,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Close the popup. No-op if already closed.
+   * Close the popup.
+   * - If the popup is already closed, does nothing.
    * - Detaches the positioner, the outside-click listener and the
    *   scroll-gesture listeners.
+   * - If the library blocks the moves of a touch whose touch-down closed
+   *   the popup, or swallows its click, that touch keeps its own listeners.
+   *   - They go when the touch and its click are over, or when a second
+   *     finger or a new touch lands.
    * - Clears the item DOM.
    * - Resets the focused-item state.
    *
@@ -2687,8 +2700,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   /**
    * Tear down the instance.
-   * - Closes the popup, which removes every document and window listener and
-   *   stops the popup positioning.
+   * - Closes the popup, which removes the document and window listeners of
+   *   the open popup and stops the popup positioning.
    * - Removes the click listener from `labelEl`, and removes an id the
    *   library minted on it.
    * - Removes the library's class, its inline styles and the
@@ -2704,8 +2717,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Ends the library's handling of a touch whose touch-down closed the
    *   popup.
    *   - That handling blocks the moves of the touch or swallows its click.
-   *   - Without `destroy()`, the handling lasts until the finger lifts, and
-   *     the wait for the click up to a second longer.
+   *   - Without `destroy()`, the handling lasts until the finger lifts, a
+   *     second finger lands or a new touch starts, and the wait for the
+   *     click up to a second after the lift.
    * - Discarding a CLOSED instance without `destroy()` leaks nothing: only
    *   its mount element and `labelEl` retain it, through its own DOM
    *   listeners. Once those elements leave the document and the application

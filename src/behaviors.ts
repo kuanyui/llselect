@@ -209,7 +209,9 @@ function canScrollWithin(path: readonly EventTarget[], boundary: Element, dx: nu
 }
 
 // What a touch hold does with the compatibility `mousedown` of its tap.
-// - `'leave'`: nothing; the trigger's own `mousedown` handler keeps DOM focus right.
+// - `'leave'`: nothing; a press on the trigger focuses it natively, and
+//   `handleTriggerWrapperMousedown` focuses it for a press elsewhere in the
+//   trigger wrapper, unless the `mousedown` was prevented.
 // - `'prevent-default'`: the contract of an outside press under `outsideClickBehavior: 'block'`.
 // - `'swallow'`: the page under the closed popup was never touched on purpose.
 type TouchHoldMousedown = 'leave' | 'prevent-default' | 'swallow'
@@ -231,12 +233,19 @@ interface TouchHoldOptions {
  * - The listeners of the touch sit on its own target, which gets every later
  *   event of the touch, even after the close removed that node from the
  *   document.
+ * - In a closed shadow root around the select component, the document's
+ *   listeners see no deeper than the shadow host:
+ *   - A hold that the document's listeners start sits on the shadow host,
+ *     not on the touch's own target.
+ *   - If the close removed the node that the touch started on, the shadow
+ *     host may miss the rest of the touch, as inferred from the code.
  * - Its moves scroll nothing while `block` is set.
  * - When `swallowClick` is set, its click is swallowed: the first click near
  *   the touch-down, within one second of the lift.
  * - The hold ends when the touch is over and its click came or cannot come,
- *   and at any later touch-down: a second finger makes a pinch, which gives
- *   no click, and a new touch shows that the held one is over.
+ *   at any later touch-down, and at a move with two touches. A second finger
+ *   makes a pinch, which most likely gives no click, and a new touch shows
+ *   that the held one is over.
  */
 function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOptions): () => void {
   const { block, swallowClick, mousedown } = options
@@ -249,6 +258,7 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
   const near = (x: number, y: number, limit: number): boolean => Math.hypot(x - start.clientX, y - start.clientY) <= limit
   const onMove = (ev: Event): void => {
     if (!isTouchEvent(ev)) { return }
+    // A second finger whose touch-down no listener saw.
     if (ev.touches.length > 1) {
       release()
       return
@@ -333,10 +343,17 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
  *   scroll is left to the browser and does not reach `behaviorFor`. A
  *   touch-down always reaches it, since it has no direction yet.
  * - A `wheel` with `ctrlKey`, a touch from the moment a second finger lands,
- *   and any gesture while the page is pinch-zoomed are left alone.
+ *   and any gesture while the page is pinch-zoomed are left alone. Firefox
+ *   before 91 on the desktop has no `visualViewport`, so a zoomed page reads
+ *   as unzoomed there.
  * - In a closed shadow root around the select component, the document sees
- *   no deeper than the shadow host, so every gesture there reads as
- *   `'outside'` to the document's listeners.
+ *   no deeper than the shadow host:
+ *   - The document's listeners read every gesture there as `'outside'`,
+ *     before the listeners inside see it.
+ *   - A hold that the document's listeners start sits on the shadow host.
+ *   - If the close removed the node that the touch started on, the shadow
+ *     host may miss the rest of the touch, as inferred from the code.
+ *   - The next touch-down still ends the hold.
  * @internal
  */
 export function attachScrollGestureListeners(host: ScrollGestureHost, listenOutside: boolean): () => void {

@@ -31,10 +31,13 @@ export interface PositionInput {
   viewportHeight: number
   /**
    * Origin of the VISIBLE viewport in layout-viewport (client) coordinates.
-   * `0` except under pinch zoom, where the visual viewport shrinks AND pans
-   * (`visualViewport.offsetLeft/offsetTop`); anchor rects stay in client
-   * coordinates, so clamping against `[0, viewportWidth]` alone would drag
-   * the floating element toward the layout origin. Default `0`.
+   * - `0` unless the visual viewport is panned inside the layout viewport,
+   *   under pinch zoom or while the on-screen keyboard shrinks it
+   *   (`visualViewport.offsetLeft/offsetTop`).
+   * - Anchor rects stay in client coordinates, so clamping against
+   *   `[0, viewportWidth]` alone would drag the floating element toward the
+   *   layout origin.
+   * - Default `0`.
    */
   viewportLeft?: number
   /** See {@link PositionInput.viewportLeft}. Default `0`. */
@@ -96,8 +99,8 @@ const VIEWPORT_PADDING = 8
  *
  * The "viewport" here is the VISIBLE window in client coordinates:
  * `[viewportLeft, viewportLeft + viewportWidth]` x
- * `[viewportTop, viewportTop + viewportHeight]`. The offsets are 0 except
- * under pinch zoom (see {@link PositionInput.viewportLeft}).
+ * `[viewportTop, viewportTop + viewportHeight]`. The offsets are 0 unless the
+ * visual viewport is panned (see {@link PositionInput.viewportLeft}).
  * `widthPolicy === 'match-trigger-wrapper'` returns `width = anchor.width` and
  * `left = anchor.left` (no collision handling - popup is the same width as
  * trigger; direction-independent).
@@ -438,9 +441,12 @@ export interface PositionerOptions {
   /**
    * Called when the anchor is found hidden: fully outside the layout
    * viewport, or fully clipped away by an ancestor (see `isAnchorHidden`).
-   * - The check runs at the first placement and after every scroll outside
-   *   the floating element.
-   * - A resize and the public `reposition()` never run it.
+   * - The check runs at the first placement and after every `scroll` event
+   *   outside the floating element that the capture listeners see: of the
+   *   document, of any element in it, or inside a shadow root on the
+   *   anchor's path.
+   * - A resize, a pan of the visual viewport and the public `reposition()`
+   *   never run it.
    * - Typical use: close the floating element so it does not hang in space
    *   without a visible trigger.
    */
@@ -495,17 +501,19 @@ function measureNaturalWidth(el: HTMLElement): number {
 }
 
 /**
- * Return the currently visible viewport size. On mobile, `window.innerHeight`
- * reports the layout viewport (often larger than the actually-visible area
- * when a URL bar or virtual keyboard takes part of the screen). Using
- * `visualViewport` when present gives the real visible area, so the popup's
- * `maxHeight` clamps to what the user can actually see.
+ * Return the origin and the size of the currently visible viewport.
+ * - On mobile, `window.innerHeight` reports the layout viewport.
+ * - The layout viewport is often larger than the visible area while a URL
+ *   bar or the on-screen keyboard takes part of the screen.
+ * - `visualViewport`, when present, gives the visible area, so the popup's
+ *   `maxHeight` clamps to what the user can actually see.
  */
 function getVisibleViewport(): { left: number; top: number; width: number; height: number } {
   const vv = window.visualViewport
-  // The offsets matter under pinch zoom: the visual viewport pans inside the
-  // layout viewport, while anchor rects and `position: fixed` stay in layout
-  // (client) coordinates. Both are 0 without zoom.
+  // The offsets matter whenever the visual viewport pans inside the layout
+  // viewport, under pinch zoom or while the on-screen keyboard shrinks it.
+  // Anchor rects and `position: fixed` stay in layout (client) coordinates.
+  // Both offsets are 0 otherwise.
   if (vv) { return { left: vv.offsetLeft, top: vv.offsetTop, width: vv.width, height: vv.height } }
   return { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight }
 }
@@ -517,15 +525,17 @@ function getVisibleViewport(): { left: number; top: number; width: number; heigh
  * - Listens for `scroll` in the capture phase, on `window` and on every
  *   shadow root of the anchor's flat-tree path. The shadow roots are read
  *   once, at attach.
- * - Listens for `resize` on `window` and on `visualViewport`, and watches
- *   both elements with a `ResizeObserver`.
+ * - Listens for `resize` on `window` and on `visualViewport`, for `scroll`
+ *   on `visualViewport`, and watches both elements with a `ResizeObserver`.
  * - Ignores a scroll inside `floating`, which cannot move the anchor.
- * - At the first placement and after every scroll outside `floating`,
- *   checks whether the anchor is hidden (`isAnchorHidden`). If it is and
- *   `onHide` is provided, calls `onHide` and skips the style updates.
- * - Otherwise, and on every resize, applies the coordinates from
- *   {@link computePosition} and sets `data-placement` on `floating` for CSS
- *   hooks.
+ * - At the first placement and after every `scroll` event outside
+ *   `floating` that the capture listeners see, checks whether the anchor is
+ *   hidden (`isAnchorHidden`). If it is and `onHide` is provided, calls
+ *   `onHide` and skips the style updates.
+ * - Otherwise, and on every resize and every pan of the visual viewport,
+ *   applies the coordinates from {@link computePosition} and sets
+ *   `data-placement` on `floating` for CSS hooks.
+ * - A pan of the visual viewport never runs the hidden check.
  *
  * Caller is responsible for calling `detach()` when the floating element is
  * dismissed; otherwise listeners leak.
@@ -546,8 +556,9 @@ export function createPositioner(
   let lastPlacement: LLSelectPlacement | undefined
 
   // `allowHide`: whether this reposition may invoke `onHide` (auto-close).
-  // Only scroll-driven repositions (and the initial placement) close the popup
-  // when the anchor leaves view; resize-driven ones never do - see onResize.
+  // Only repositions driven by a document or element scroll (and the initial
+  // placement) close the popup when the anchor leaves view; those driven by a
+  // resize or a pan of the visual viewport never do - see onResize.
   function reposition(allowHide: boolean): void {
     if (!attached) { return }
     const rect = anchor.getBoundingClientRect()
@@ -606,18 +617,18 @@ export function createPositioner(
     floating.setAttribute('data-placement', result.placement)
   }
 
-  // Scroll = the anchor moving through the viewport: honor onHide so a popup
-  // whose trigger scrolled away is dismissed. A scroll inside the floating
-  // element (its list, a scroller in a slot) cannot move the anchor, so it
-  // needs neither a reposition nor the hidden check.
+  // A scroll outside the floating element may move the anchor, so it honors
+  // onHide: a popup whose trigger scrolled away is dismissed. A scroll inside
+  // the floating element (its list, a scroller in a slot) cannot move the
+  // anchor, so it needs neither a reposition nor the hidden check.
   const onScroll = (ev: Event): void => {
     if (ev.target instanceof Node && floating.contains(ev.target)) { return }
     reposition(true)
   }
-  // Resize-class events (window resize, visualViewport resize from a virtual
-  // keyboard / URL bar, element resize) change available space but do NOT mean
-  // the user scrolled the trigger away. Reposition / re-clamp only, never close
-  // - otherwise opening the on-screen keyboard would instantly dismiss the popup.
+  // A resize of the window, of the visual viewport or of an element, and a pan
+  // of the visual viewport, re-place the popup without the hidden check: none
+  // of them means that the user scrolled the trigger away. Closing here would
+  // dismiss the popup the instant the on-screen keyboard opens.
   const onResize = (): void => reposition(false)
 
   // Capture phase catches scrolls inside any ancestor scrollable container. A
@@ -628,16 +639,16 @@ export function createPositioner(
     target.addEventListener('scroll', onScroll, { passive: true, capture: true })
   }
   window.addEventListener('resize', onResize)
-  // Mobile: URL bar showing/hiding and virtual keyboard appearing change the
-  // visual viewport without firing window resize. Listen to visualViewport
-  // RESIZE only so we re-clamp maxHeight to the actually-visible area. We
-  // deliberately do NOT listen to `visualViewport.scroll`: that fires during
-  // pinch-pan and during the URL-bar collapse animation. The popup is
-  // `position: fixed` (layout-viewport-anchored) so the trigger and the popup
-  // pan together and no reposition is needed; listening would just cause the
-  // popup to bounce during the URL-bar animation (observed on Firefox Android).
+  // Mobile: the URL bar and the on-screen keyboard resize the visual viewport
+  // without a window resize, and a swipe can then pan the visual viewport
+  // without a document scroll. Both move the visible edges that clamp
+  // maxHeight and pick the side, so both re-place the popup, never closing it.
+  // Skipping the pan left the clamp stale while the keyboard was up
+  // (MEDIUM-902); listening to it was once seen to bounce the popup during the
+  // URL-bar animation on Firefox Android, which the device pass rechecks.
   const vv = window.visualViewport
   vv?.addEventListener('resize', onResize)
+  vv?.addEventListener('scroll', onResize)
 
   let ro: ResizeObserver | undefined
   if (typeof ResizeObserver !== 'undefined') {
@@ -651,7 +662,8 @@ export function createPositioner(
   return {
     // Public re-place: never auto-closes. Called after list re-renders (incl.
     // every filter keystroke), where dismissing would be wrong - especially on
-    // mobile with the keyboard open. Dismissal is a scroll-only decision.
+    // mobile with the keyboard open. Only the first placement and document
+    // and element scrolls may dismiss.
     reposition: () => reposition(false),
     detach(): void {
       attached = false
@@ -660,6 +672,7 @@ export function createPositioner(
       }
       window.removeEventListener('resize', onResize)
       vv?.removeEventListener('resize', onResize)
+      vv?.removeEventListener('scroll', onResize)
       ro?.disconnect()
       floating.style.position = ''
       floating.style.top = ''

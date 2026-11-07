@@ -1,10 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
+import { assertEveryListenerRemoved } from '../test-utils/listeners.js'
 import { LLSelectSingle, type LLSelectSingleSettingsInput } from '../src/single.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 import type { LLSelectCloseMeta } from '../src/base.js'
-import type { LLSelectScrollGesture, LLSelectScrollGestureBehavior, LLSelectScrollGestureKind, LLSelectScrollGestureZone } from '../src/behaviors.js'
+import { attachScrollGestureListeners, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior, type LLSelectScrollGestureKind, type LLSelectScrollGestureZone } from '../src/behaviors.js'
 import {
   behaviorPresetsOfChromiumOnWindows,
   behaviorPresetsOfFirefoxOnWindows,
@@ -325,16 +326,48 @@ test('a touch-down outside that closes swallows its click under outsideClickBeha
   for (const outsideClickBehavior of ['block', 'pass-through'] as const) {
     const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, outsideClickBehavior })
     let clicks = 0
+    let presses = 0
     outside.addEventListener('click', () => { clicks++ })
+    outside.addEventListener('mousedown', () => { presses++ })
     sel.open()
     touch('touchstart', outside, [{ id: 1, x: 0, y: 0 }])
     touch('touchend', outside, [{ id: 1, x: 0, y: 0 }])
-    // The browser follows a tap with a mousedown, then the click.
+    // The browser follows a tap with a mousedown, then the click. Under
+    // 'block' the mousedown still reaches the page, as a blocked mouse press does.
     const mousedown = new window.MouseEvent('mousedown', { bubbles: true, cancelable: true })
     outside.dispatchEvent(mousedown)
     assert.equal(mousedown.defaultPrevented, outsideClickBehavior === 'block', outsideClickBehavior)
-    outside.click()
+    assert.equal(presses, 1, outsideClickBehavior)
+    const click = clickAt(outside, 0, 0)
+    assert.equal(click.defaultPrevented, outsideClickBehavior === 'block', outsideClickBehavior)
     assert.equal(clicks, outsideClickBehavior === 'block' ? 0 : 1, outsideClickBehavior)
+    // Under 'block' the tap's click ends the hold, and under 'pass-through'
+    // there is no hold, so a later press is the user's own.
+    const later = new window.MouseEvent('mousedown', { bubbles: true, cancelable: true })
+    outside.dispatchEvent(later)
+    assert.equal(later.defaultPrevented, false, outsideClickBehavior)
+  }
+})
+
+test('a hold that ends removes every listener it added, with the same function and capture flag', (t) => {
+  const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, outsideClickBehavior: 'block' })
+  sel.open()
+  // Spied after open(), so the added listeners recorded here are only the
+  // hold's, not the listeners that open() adds to the document.
+  const documentAdd = t.mock.method(document, 'addEventListener')
+  const outsideAdd = t.mock.method(outside, 'addEventListener')
+  const documentRemove = t.mock.method(document, 'removeEventListener')
+  const outsideRemove = t.mock.method(outside, 'removeEventListener')
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 0 }])
+  assert.equal(sel.isOpened(), false)
+  touch('touchend', outside, [{ id: 1, x: 0, y: 0 }])
+  clickAt(outside, 0, 0)
+  const cases = [
+    { where: 'document', adds: documentAdd.mock.calls, removes: documentRemove.mock.calls, types: ['click', 'mousedown', 'touchstart'] },
+    { where: 'touched node', adds: outsideAdd.mock.calls, removes: outsideRemove.mock.calls, types: ['touchcancel', 'touchend', 'touchmove'] },
+  ]
+  for (const { where, adds, removes, types } of cases) {
+    assertEveryListenerRemoved(where, adds, removes, types)
   }
 })
 
@@ -432,6 +465,35 @@ test('a gesture inside an open shadow root in the popup counts as the popup', ()
   assert.deepEqual(sel.seen, [{ kind: 'wheel', zone: 'popup' }])
 })
 
+test('in a closed shadow root, a touch-down inside the popup reaches the function as outside, so its click is swallowed under block only', (t) => {
+  for (const outsideClickBehavior of ['block', 'pass-through'] as const) {
+    setupDom('<!doctype html><html><body><div id="host"></div><p id="outside">page</p></body></html>')
+    const host = document.getElementById('host')
+    const outside = document.getElementById('outside')
+    assert.ok(host && outside)
+    const el = document.createElement('div')
+    host.attachShadow({ mode: 'closed' }).appendChild(el)
+    const sel = new Probe(el, { scrollGestureToBehaviorFn: () => 'close-popup-and-allow-page-scroll', outsideClickBehavior })
+    sel.setItems(['a', 'b', 'c'])
+    let clicks = 0
+    outside.addEventListener('click', () => { clicks++ })
+    sel.open()
+    const row = sel.popupListEl.firstElementChild
+    assert.ok(row)
+    const hostAdd = t.mock.method(host, 'addEventListener')
+    touch('touchstart', row, [{ id: 1, x: 10, y: 10 }])
+    assert.deepEqual(sel.seen, [{ kind: 'touch-start', zone: 'outside' }], outsideClickBehavior)
+    assert.equal(sel.isOpened(), false, outsideClickBehavior)
+    // Only a hold that swallows the click is attached, and it sits on the shadow host.
+    const held = outsideClickBehavior === 'block' ? ['touchcancel', 'touchend', 'touchmove'] : []
+    assert.deepEqual(hostAdd.mock.calls.map((call) => call.arguments[0]).sort(), held, outsideClickBehavior)
+    touch('touchend', row, [{ id: 1, x: 10, y: 10 }])
+    const click = clickAt(outside, 10, 10)
+    assert.equal(click.defaultPrevented, outsideClickBehavior === 'block', outsideClickBehavior)
+    assert.equal(clicks, outsideClickBehavior === 'block' ? 0 : 1, outsideClickBehavior)
+  }
+})
+
 test('once a second finger lands where no listener saw it, the touch stays ignored', () => {
   const { sel } = mount()
   sel.open()
@@ -516,7 +578,7 @@ test('a touch-down that closes the popup from inside it swallows the click that 
   touch('touchstart', row, [{ id: 1, x: 10, y: 10 }])
   assert.equal(sel.isOpened(), false)
   touch('touchend', row, [{ id: 1, x: 10, y: 10 }])
-  clickAt(outside, 10, 10)
+  assert.equal(clickAt(outside, 10, 10).defaultPrevented, true)
   assert.equal(clicks, 0)
 })
 
@@ -595,10 +657,85 @@ test('a second finger ends the rest of a touch that closed the popup, so a pinch
   touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
   touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }, { id: 2, x: 50, y: 100 }], [{ id: 2, x: 50, y: 100 }])
   touch('touchend', outside, [], [{ id: 2, x: 50, y: 100 }], [{ id: 1, x: 0, y: 100 }])
-  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 60 }]).defaultPrevented, false)
-  touch('touchend', outside, [{ id: 1, x: 0, y: 60 }])
+  // Within the tap limit, so that only the end of the hold lets the click through.
+  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 95 }]).defaultPrevented, false)
+  touch('touchend', outside, [{ id: 1, x: 0, y: 95 }])
   clickAt(outside, 0, 100)
   assert.equal(clicks, 1)
+})
+
+test('a move with two touches, whose second touch-down no listener saw, also ends the hold', () => {
+  const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows, outsideClickBehavior: 'block' })
+  let clicks = 0
+  outside.addEventListener('click', () => { clicks++ })
+  sel.open()
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
+  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 98 }, { id: 2, x: 50, y: 100 }]).defaultPrevented, false)
+  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 95 }]).defaultPrevented, false)
+  touch('touchend', outside, [{ id: 1, x: 0, y: 95 }])
+  clickAt(outside, 0, 100)
+  assert.equal(clicks, 1)
+})
+
+test('the function that attachScrollGestureListeners returns removes every gesture listener, with the same function and capture flag', (t) => {
+  setupDom('<!doctype html><html><body><div id="root"><div id="popup"></div></div></body></html>')
+  const rootEl = document.getElementById('root')
+  const popupEl = document.getElementById('popup')
+  assert.ok(rootEl && popupEl)
+  const popupAdd = t.mock.method(popupEl, 'addEventListener')
+  const rootAdd = t.mock.method(rootEl, 'addEventListener')
+  const documentAdd = t.mock.method(document, 'addEventListener')
+  const detach = attachScrollGestureListeners({
+    rootEl,
+    popupEl,
+    behaviorFor: () => 'leave-popup-open-and-allow-page-scroll',
+    closeFor: () => {},
+    clickToggles: () => false,
+    swallowsOutsideClick: false,
+    holdStarted: () => {},
+    holdEnded: () => {},
+  }, true)
+  const popupRemove = t.mock.method(popupEl, 'removeEventListener')
+  const rootRemove = t.mock.method(rootEl, 'removeEventListener')
+  const documentRemove = t.mock.method(document, 'removeEventListener')
+  detach()
+  const types = ['touchcancel', 'touchend', 'touchmove', 'touchstart', 'wheel']
+  const cases = [
+    { where: 'popup', adds: popupAdd.mock.calls, removes: popupRemove.mock.calls },
+    { where: 'root element', adds: rootAdd.mock.calls, removes: rootRemove.mock.calls },
+    { where: 'document', adds: documentAdd.mock.calls, removes: documentRemove.mock.calls },
+  ]
+  for (const { where, adds, removes } of cases) {
+    assertEveryListenerRemoved(where, adds, removes, types)
+  }
+})
+
+test('a hold that ends by itself reports its end with the function that started it', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  setupDom('<!doctype html><html><body><div id="root"><div id="popup"></div><span id="trigger">t</span></div></body></html>')
+  const rootEl = document.getElementById('root')
+  const popupEl = document.getElementById('popup')
+  const trigger = document.getElementById('trigger')
+  assert.ok(rootEl && popupEl && trigger)
+  const started: Array<() => void> = []
+  const ended: Array<() => void> = []
+  const detach = attachScrollGestureListeners({
+    rootEl,
+    popupEl,
+    behaviorFor: () => 'close-popup-and-allow-page-scroll',
+    closeFor: () => {},
+    clickToggles: () => true,
+    swallowsOutsideClick: false,
+    holdStarted: (release) => { started.push(release) },
+    holdEnded: (release) => { ended.push(release) },
+  }, false)
+  touch('touchstart', trigger, [{ id: 1, x: 5, y: 5 }])
+  touch('touchend', trigger, [{ id: 1, x: 5, y: 5 }])
+  assert.deepEqual(ended, [])
+  t.mock.timers.tick(1000)
+  assert.equal(started.length, 1)
+  assert.deepEqual(ended, started)
+  detach()
 })
 
 test('a close from inside the popup stops the compatibility mousedown before it reaches the page under the popup', () => {
@@ -616,7 +753,7 @@ test('a close from inside the popup stops the compatibility mousedown before it 
   assert.equal(pressed, 0)
 })
 
-test('a close from the trigger leaves the compatibility mousedown to the trigger, which keeps DOM focus right', () => {
+test('a close from the trigger leaves the compatibility mousedown unprevented, so the trigger still takes focus', () => {
   const { sel } = mount({ ...behaviorPresetsOfChromiumOnWindows })
   sel.open()
   touch('touchstart', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
