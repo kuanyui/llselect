@@ -83,36 +83,38 @@ const VIEWPORT_PADDING = 8
 
 /**
  * Compute where to place the floating element relative to the anchor.
- *
- * Vertical: prefers placing below; flips above when it does not fit below and
- * either fits above or has more room above. When neither side fits, picks the
- * side with more space and clamps `maxHeight` accordingly. A
- * `currentPlacement` that still fits is kept (stickiness) - re-preferring
- * "below" on every content change would make the popup jump sides whenever
- * the list shrinks and regrows.
- *
- * The floating element stays inside the visible window, even when the anchor
- * is outside it:
- * - If the anchor sits below the visible window, as under the on-screen
- *   keyboard, a floating element above it ends at the visible bottom.
- * - If the anchor sits above the visible window, a floating element below it
- *   starts at the visible top.
- * - In both cases the floating element no longer touches the anchor, as the
- *   horizontal clamp below does sideways.
- *
- * Horizontal: `widthPolicy === 'fit-content'` (default) returns
- * `width = max(anchor.width, floatingNaturalWidth)`, clamps to
- * `viewport - 2 * VIEWPORT_PADDING`, and keeps the popup inside the viewport
- * margins. Growth direction follows `direction`: ltr aligns left edges and
- * grows rightward; rtl aligns RIGHT edges and grows leftward (the mirror).
- *
- * The "viewport" here is the VISIBLE window in client coordinates:
- * `[viewportLeft, viewportLeft + viewportWidth]` x
- * `[viewportTop, viewportTop + viewportHeight]`. The offsets are 0 unless the
- * visual viewport is panned (see {@link PositionInput.viewportLeft}).
- * `widthPolicy === 'match-trigger-wrapper'` returns `width = anchor.width` and
- * `left = anchor.left` (no collision handling - popup is the same width as
- * trigger; direction-independent).
+ * - The window here is the visible window, in client coordinates.
+ * - Across, it spans `[viewportLeft, viewportLeft + viewportWidth]`.
+ * - Down, it spans `[viewportTop, viewportTop + viewportHeight]`.
+ * - Both offsets are 0 unless the visual viewport is panned. See
+ *   {@link PositionInput.viewportLeft}.
+ * - Vertically, the floating element goes below the anchor if it fits there.
+ * - Otherwise it goes above the anchor, if it fits there.
+ * - If it fits on neither side, it takes the side with more room.
+ * - `maxHeight` limits it to the room on its side.
+ * - A `currentPlacement` that still fits is kept. A list that shrinks and
+ *   regrows then does not make the popup jump sides.
+ * - The floating element keeps a gap of 4 px from the anchor.
+ * - Below the anchor, it keeps a margin of 8 px from the bottom of the window.
+ * - Above the anchor, it keeps a margin of 8 px from the top of the window.
+ * - It also stays inside the window vertically when the anchor is outside it:
+ *   - If the anchor's top lies below the window, as under the on-screen
+ *     keyboard, the bottom of the window stands in for that top.
+ *   - If the anchor's bottom lies above the window, the top of the window
+ *     stands in for that bottom.
+ *   - The floating element then no longer touches the anchor.
+ * - While the anchor's edge next to the floating element is inside the
+ *   window, the placement is the one without the rule above.
+ * - If the chosen side has no room at all, `maxHeight` is 0. `top` is then
+ *   kept inside the window, even next to a visible anchor edge.
+ * - Horizontally, `widthPolicy === 'fit-content'`, the default, makes `width`
+ *   the larger of the anchor's width and `floatingNaturalWidth`.
+ * - That width is at most the window's width minus two side margins of 8 px.
+ * - The floating element then stays inside those side margins.
+ * - In ltr, the left edges align, and the floating element grows rightward.
+ * - In rtl, the right edges align, and it grows leftward.
+ * - `widthPolicy === 'match-trigger-wrapper'` copies the anchor's `width` and
+ *   `left`, in either direction, with no horizontal clamp.
  */
 export function computePosition(input: PositionInput): PositionResult {
   const {
@@ -129,11 +131,11 @@ export function computePosition(input: PositionInput): PositionResult {
   } = input
 
   const viewportBottom = viewportTop + viewportHeight
-  // Where a popup below the anchor starts, and where one above it ends, both
-  // kept inside the visible window: an anchor under the on-screen keyboard
-  // still counts as visible, since the hidden check reads the layout viewport.
-  const belowStart = Math.max(anchorRect.bottom + GAP, viewportTop + VIEWPORT_PADDING)
-  const aboveEnd = Math.min(anchorRect.top - GAP, viewportBottom - VIEWPORT_PADDING)
+  // A visible edge stands in for an anchor edge beyond it: an anchor under the
+  // on-screen keyboard still counts as visible, since the hidden check reads
+  // the layout viewport.
+  const belowStart = Math.max(anchorRect.bottom, viewportTop) + GAP
+  const aboveEnd = Math.min(anchorRect.top, viewportBottom) - GAP
   const spaceBelow = viewportBottom - VIEWPORT_PADDING - belowStart
   const spaceAbove = aboveEnd - viewportTop - VIEWPORT_PADDING
 
@@ -163,6 +165,8 @@ export function computePosition(input: PositionInput): PositionResult {
     maxHeight = Math.max(0, spaceAbove)
     top = aboveEnd - Math.min(floatingHeight, maxHeight)
   }
+  // Only a side with no room at all can put `top` outside the visible window.
+  top = Math.min(Math.max(top, viewportTop), viewportBottom)
 
   let width: number
   let left: number

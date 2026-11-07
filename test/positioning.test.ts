@@ -424,6 +424,16 @@ test('a pan of the visual viewport re-clamps the popup both ways, and never clos
   vv.offsetTop = 0
   vv.dispatchEvent(new dom.window.Event('scroll'))
   assert.equal(parseFloat(floating.style.maxHeight), first)
+  // A pan that leaves the trigger above the visible area: the popup starts
+  // 4 px below the visible top, then follows the trigger again.
+  vv.offsetTop = 200
+  vv.dispatchEvent(new dom.window.Event('scroll'))
+  assert.equal(floating.style.top, '204px')
+  assert.equal(floating.style.maxHeight, '388px')
+  vv.offsetTop = 0
+  vv.dispatchEvent(new dom.window.Event('scroll'))
+  assert.equal(floating.style.top, '134px')
+  assert.equal(parseFloat(floating.style.maxHeight), first)
   // Even with the trigger out of the layout viewport, a pan runs no hidden check.
   withMockedRect(anchor, { top: 900, left: 50, right: 250, bottom: 930, width: 200, height: 30 })
   vv.dispatchEvent(new dom.window.Event('scroll'))
@@ -454,7 +464,7 @@ test('with the on-screen keyboard up, a page scroll that moves the trigger under
   assert.equal(floating.getAttribute('data-placement'), 'above')
   const top = parseFloat(floating.style.top)
   const bottom = top + Math.min(200, parseFloat(floating.style.maxHeight))
-  assert.equal(bottom, 400 - 8)
+  assert.equal(bottom, 400 - 4)
   p.detach()
 })
 
@@ -756,8 +766,8 @@ test('pinch-zoom offsets: the right-edge clamp happens at the VISIBLE right edge
 
 test('pinch-zoom offsets: vertical space measures against the visible window', () => {
   // Visible window [300, 1068]; the anchor sits above it, so only "below"
-  // has room. The popup starts at the VISIBLE top, not under the anchor, and
-  // maxHeight runs to the VISIBLE bottom.
+  // has room. The popup starts 4 px below the VISIBLE top, not under the
+  // anchor, and maxHeight runs to 8 px above the VISIBLE bottom.
   const r = computePosition({
     anchorRect: ANCHOR_AT_TOP,
     viewportWidth: 1024,
@@ -767,23 +777,110 @@ test('pinch-zoom offsets: vertical space measures against the visible window', (
     floatingHeight: 200,
   })
   assert.equal(r.placement, 'below')
-  assert.equal(r.top, 300 + 8)
-  assert.equal(r.maxHeight, 300 + 768 - 8 - (300 + 8))
+  assert.equal(r.top, 300 + 4)
+  assert.equal(r.maxHeight, 300 + 768 - 8 - (300 + 4))
 })
 
 test('a trigger below the visible window keeps the popup above it inside the window (on-screen keyboard)', () => {
   // The keyboard leaves a visible window [0, 400]; the anchor at 500 sits
   // under the keyboard but inside the layout viewport, so it counts as
-  // visible. The popup ends at the VISIBLE bottom, not at the anchor's top.
+  // visible. The popup ends 4 px above the VISIBLE bottom, not at the
+  // anchor's top.
   const anchorRect = { top: 500, left: 50, right: 250, bottom: 530, width: 200, height: 30 }
   const r = computePosition({ anchorRect, viewportWidth: 1024, viewportHeight: 400, floatingHeight: 300 })
   assert.equal(r.placement, 'above')
-  assert.equal(r.maxHeight, 400 - 8 - 8)
-  assert.equal(r.top, 400 - 8 - 300)
+  assert.equal(r.maxHeight, 400 - 4 - 8)
+  assert.equal(r.top, 400 - 4 - 300)
   // A popup taller than the window fills it, and no more.
   const tall = computePosition({ anchorRect, viewportWidth: 1024, viewportHeight: 400, floatingHeight: 600 })
   assert.equal(tall.top, 8)
-  assert.equal(tall.maxHeight, 400 - 8 - 8)
+  assert.equal(tall.maxHeight, 400 - 4 - 8)
+})
+
+test('a visible trigger next to an edge of the visible window keeps the popup against it', () => {
+  // Short triggers flush with the top and with the bottom of [0, 400].
+  const atTop = computePosition({
+    anchorRect: { top: 0, left: 50, right: 250, bottom: 1, width: 200, height: 1 },
+    viewportWidth: 1024, viewportHeight: 400, floatingHeight: 100,
+  })
+  assert.equal(atTop.placement, 'below')
+  assert.equal(atTop.top, 1 + 4)
+  assert.equal(atTop.maxHeight, 400 - 8 - (1 + 4))
+  const atBottom = computePosition({
+    anchorRect: { top: 398, left: 50, right: 250, bottom: 400, width: 200, height: 2 },
+    viewportWidth: 1024, viewportHeight: 400, floatingHeight: 100,
+  })
+  assert.equal(atBottom.placement, 'above')
+  assert.equal(atBottom.top, 398 - 4 - 100)
+  assert.equal(atBottom.maxHeight, 398 - 4 - 8)
+  // Edges exactly on the window's edges, 0 and 400.
+  const onTop = computePosition({
+    anchorRect: { top: -10, left: 50, right: 250, bottom: 0, width: 200, height: 10 },
+    viewportWidth: 1024, viewportHeight: 400, floatingHeight: 100,
+  })
+  assert.equal(onTop.placement, 'below')
+  assert.equal(onTop.top, 0 + 4)
+  assert.equal(onTop.maxHeight, 400 - 8 - 4)
+  const onBottom = computePosition({
+    anchorRect: { top: 400, left: 50, right: 250, bottom: 410, width: 200, height: 10 },
+    viewportWidth: 1024, viewportHeight: 400, floatingHeight: 100,
+  })
+  assert.equal(onBottom.placement, 'above')
+  assert.equal(onBottom.top, 400 - 4 - 100)
+  assert.equal(onBottom.maxHeight, 400 - 4 - 8)
+})
+
+test('a trigger that crosses one edge of the visible window keeps the popup against its visible edge', () => {
+  // Visible window [300, 700]; the trigger crosses its top.
+  const top = computePosition({
+    anchorRect: { top: 290, left: 50, right: 250, bottom: 320, width: 200, height: 30 },
+    viewportWidth: 1024, viewportHeight: 400, viewportTop: 300, floatingHeight: 100,
+  })
+  assert.equal(top.placement, 'below')
+  assert.equal(top.top, 320 + 4)
+  // Visible window [0, 400]; the trigger crosses its bottom.
+  const bottom = computePosition({
+    anchorRect: { top: 390, left: 50, right: 250, bottom: 420, width: 200, height: 30 },
+    viewportWidth: 1024, viewportHeight: 400, floatingHeight: 100,
+  })
+  assert.equal(bottom.placement, 'above')
+  assert.equal(bottom.top, 390 - 4 - 100)
+  assert.equal(bottom.maxHeight, 390 - 4 - 8)
+})
+
+test('a side with no room at all gives maxHeight 0 and keeps top inside the visible window', () => {
+  // Above: a 2 px window [0, 2] over a trigger below it; top would be -2.
+  const above = computePosition({
+    anchorRect: { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 },
+    viewportWidth: 1024, viewportHeight: 2, floatingHeight: 200,
+  })
+  assert.equal(above.placement, 'above')
+  assert.equal(above.maxHeight, 0)
+  assert.equal(above.top, 0)
+  // Below: an 8 px window [200, 208] under a trigger above it.
+  const below = computePosition({
+    anchorRect: { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 },
+    viewportWidth: 1024, viewportHeight: 8, viewportTop: 200, floatingHeight: 200,
+  })
+  assert.equal(below.placement, 'below')
+  assert.equal(below.maxHeight, 0)
+  assert.equal(below.top, 200 + 4)
+  // A trigger that covers the whole window [100, 120]; top would be 134.
+  const covered = computePosition({
+    anchorRect: { top: 90, left: 50, right: 250, bottom: 130, width: 200, height: 40 },
+    viewportWidth: 1024, viewportHeight: 20, viewportTop: 100, floatingHeight: 200,
+  })
+  assert.equal(covered.maxHeight, 0)
+  assert.equal(covered.top, 120)
+  // Even next to a visible trigger edge: in the window [0, 20], the trigger's
+  // bottom at 18 is visible, and top would be 22.
+  const visibleEdge = computePosition({
+    anchorRect: { top: 0, left: 50, right: 250, bottom: 18, width: 200, height: 18 },
+    viewportWidth: 1024, viewportHeight: 20, floatingHeight: 200,
+  })
+  assert.equal(visibleEdge.placement, 'below')
+  assert.equal(visibleEdge.maxHeight, 0)
+  assert.equal(visibleEdge.top, 20)
 })
 
 test('zero offsets reproduce the unshifted math exactly', () => {

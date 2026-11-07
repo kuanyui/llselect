@@ -1498,16 +1498,11 @@ for (const country of COUNTRIES) { nativeGesture.add(new Option(country)) }
 //#endregion
 
 //#region 17.2
-// With the filter on, the filter input takes focus at open. The fourth select
-// component tells a wheel from a touch by `gesture.kind`.
-const chromiumForWheelOnly = (gesture) => gesture.kind === 'wheel'
-  ? behaviorPresetsOfChromiumOnWindows.scrollGestureToBehaviorFn(gesture)
-  : defaultScrollGestureToBehavior(gesture)
+// With the filter on, the filter input takes focus at open.
 for (const [key, name, preset] of [
   ['filter-default', 'default, filter on', {}],
   ['filter-firefox', 'Firefox on Windows preset, filter on', behaviorPresetsOfFirefoxOnWindows],
   ['filter-chromium', 'Chromium on Windows preset, filter on', behaviorPresetsOfChromiumOnWindows],
-  ['filter-wheel-only', 'Chromium preset for the wheel only, filter on', { scrollGestureToBehaviorFn: chromiumForWheelOnly }],
 ]) {
   const out = document.getElementById(`out-gesture-${key}`)
   const sel = new LLSelectSingle(document.getElementById(`mount-gesture-${key}`), {
