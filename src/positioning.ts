@@ -85,7 +85,8 @@ const VIEWPORT_PADDING = 8
 /**
  * Compute where to place the floating element relative to the anchor.
  * - The window here is the visible window, in layout-viewport coordinates,
- *   those of `position: fixed`. The anchor rect and the result use them too.
+ *   those of `position: fixed`.
+ * - The anchor rect and the result use the same coordinates.
  * - Across, it spans `[viewportLeft, viewportLeft + viewportWidth]`.
  * - Down, it spans `[viewportTop, viewportTop + viewportHeight]`.
  * - Both offsets are 0 unless the visual viewport is panned. See
@@ -463,7 +464,8 @@ function isAnchorHiddenForRect(anchor: HTMLElement, rect: DOMRect, origin: Clien
  * fully outside an ancestor's overflow clip that applies to it (DESIGN.md
  * "Hidden-trigger check"). Exposed so a caller can refuse to open a popup
  * against an off-screen trigger BEFORE building a positioner, rather than
- * opening and then hiding re-entrantly.
+ * opening and then hiding re-entrantly. The layout viewport here is the
+ * client box of the root element, which leaves out the scrollbars.
  */
 export function isAnchorHidden(anchor: HTMLElement): boolean {
   return isAnchorHiddenForRect(anchor, anchor.getBoundingClientRect(), getLayoutViewportClientOrigin())
@@ -486,6 +488,8 @@ export interface PositionerOptions {
   /**
    * Called when the anchor is found hidden: fully outside the layout
    * viewport, or fully clipped away by an ancestor (see `isAnchorHidden`).
+   * - The layout viewport here is the client box of the root element, which
+   *   leaves out the scrollbars.
    * - The check runs at the first placement and after every `scroll` event
    *   outside the floating element that the capture listeners see: of the
    *   document, of any element in it, or inside a shadow root on the
@@ -580,10 +584,13 @@ interface ClientPoint {
  * - In WebKit, client coordinates start at the visual viewport, the area the
  *   user sees. While the page is pinch-zoomed, the point is then
  *   (-visualViewport.offsetLeft, -visualViewport.offsetTop) (HIGH-942).
- * - The point is measured, not picked by engine. The layout viewport's corner
- *   in document coordinates is `pageLeft - offsetLeft`, and `<html>`, whose
- *   border box starts at its margin in document coordinates, shows where the
- *   client origin is.
+ * - The point is measured, not picked by engine.
+ * - The layout viewport's corner in document coordinates is
+ *   `pageLeft - offsetLeft` and `pageTop - offsetTop`.
+ * - The client origin in document coordinates follows from `<html>`: its
+ *   `offsetLeft` and `offsetTop` give its place in the document, margins and
+ *   relative positioning included, and its client rect gives the same place
+ *   in client coordinates.
  */
 function getLayoutViewportClientOrigin(): ClientPoint {
   const vv = window.visualViewport
@@ -591,10 +598,9 @@ function getLayoutViewportClientOrigin(): ClientPoint {
   if (!vv || (!vv.offsetLeft && !vv.offsetTop)) { return { x: 0, y: 0 } }
   const html = document.documentElement
   const rect = html.getBoundingClientRect()
-  const style = window.getComputedStyle(html)
   return {
-    x: vv.pageLeft - vv.offsetLeft - (parseFloat(style.marginLeft) || 0) + rect.left,
-    y: vv.pageTop - vv.offsetTop - (parseFloat(style.marginTop) || 0) + rect.top,
+    x: vv.pageLeft - vv.offsetLeft - html.offsetLeft + rect.left,
+    y: vv.pageTop - vv.offsetTop - html.offsetTop + rect.top,
   }
 }
 

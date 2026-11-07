@@ -1,6 +1,6 @@
 # Native select: scrolling and dragging while the popup is open
 
-Agent-facing record of the owner's hand tests of the browser's native `<select>`: what the native control does with a mouse wheel, with a touch swipe, with a mouse drag and with a two-finger zoom while its popup is open. It is the evidence behind the scroll gesture behavior that the owner ruled and the agent implemented, MEDIUM-795 in `FIXME.md`: the presets `behaviorPresetsOfFirefoxOnWindows` and `behaviorPresetsOfChromiumOnWindows` follow its rows on the wheel and on a touch outside the popup, and `DESIGN.md` "Scroll gestures while the popup is open" holds the contract. Its rows on a drag inside the popup, which the presets follow only in blocking the page scroll, feed the later drag behaviors in `TODO.md`. Its rows on a two-finger zoom are the owner's spec for the presets, still to be built, "Two-finger zoom in the presets" in `TODO.md`.
+Agent-facing record of the owner's hand tests of the browser's native `<select>`: what the native control does with a mouse wheel, with a touch swipe, with a mouse drag and with a two-finger zoom while its popup is open. It is the evidence behind the scroll gesture behavior that the owner ruled and the agent implemented, MEDIUM-795 in `FIXME.md`: the presets `behaviorPresetsOfFirefoxOnWindows`, `behaviorPresetsOfChromiumOnWindows` and `behaviorPresetsOfSafariOnMac` follow its rows on the wheel and on a touch outside the popup, and `DESIGN.md` "Scroll gestures while the popup is open" holds the contract. Its rows on a drag inside the popup, which the presets follow only in blocking the page scroll, feed the later drag behaviors in `TODO.md`. Its rows on a two-finger zoom are the owner's spec for the zoom answers of the presets, which `DESIGN.md` "Zoom gestures while the popup is open" holds.
 
 How to read this record:
 
@@ -165,9 +165,9 @@ The owner reported, in the owner's words, translated from Chinese: "in macOS Saf
 ## Gaps, noted by the agent
 
 - No observation covers Android or iOS. For macOS, the record holds Safari only: the wheel and the touchpad scroll inside the popup, outside it and on the `<select>` element, and the two-finger zoom.
-- For the mouse wheel inside the popup, the record holds only the owner's first report, which named no operating system and no browser.
+- For the mouse wheel inside the popup, the record holds the owner's first report, which named no operating system and no browser, and the Safari row on macOS.
 - The owner stated the test of the `<select>` element itself as one notch of the mouse wheel. For the Windows touchscreen the owner named only the behavior the result matches, a swipe outside the popup, so the gesture on the `<select>` element there is the agent's reading.
-- The test of the `<select>` element itself names Chromium and Firefox only, so it holds no WebKit result.
+- The test of the `<select>` element itself names Chromium and Firefox on Linux and on Windows, and Safari on macOS; it holds no result for WebKit on Linux.
 - That test names Windows without a version, while the earlier tests name Windows 11.
 - The record does not say whether the earlier tests used the same browser versions, and it names no WebKit version.
 - The mouse-drag tests name Linux without Wayland or X11, give no browser versions, and hold no WebKit result and no Windows result.

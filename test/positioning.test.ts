@@ -529,6 +529,54 @@ test('a pinch-zoomed page places the popup under its trigger, whether client rec
   }
 })
 
+test('the layout viewport corner holds on a scrolled page and with a margined or positioned html element, in both engine models', () => {
+  const cases = [
+    { scrollX: 0, scrollY: 0, htmlLeft: 0, htmlTop: 0 },
+    { scrollX: 0, scrollY: 500, htmlLeft: 10, htmlTop: 10 },
+    // A right-to-left page scrolled to the left, with `<html>` moved by `position: relative`.
+    { scrollX: -300, scrollY: 500, htmlLeft: 0, htmlTop: 40 },
+  ]
+  for (const model of ['chromium', 'webkit'] as const) {
+    for (const c of cases) {
+      const label = `${model} ${JSON.stringify(c)}`
+      const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+      const vv = Object.assign(new dom.window.EventTarget(), { width: 512, height: 384, offsetLeft: 300, offsetTop: 200, pageLeft: c.scrollX + 300, pageTop: c.scrollY + 200 })
+      Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
+      // The client origin in document coordinates: the layout viewport's corner
+      // in Chromium, the visual viewport's in WebKit.
+      const origin = model === 'webkit' ? { x: vv.pageLeft, y: vv.pageTop } : { x: c.scrollX, y: c.scrollY }
+      const html = document.documentElement
+      Object.defineProperty(html, 'offsetLeft', { configurable: true, value: c.htmlLeft })
+      Object.defineProperty(html, 'offsetTop', { configurable: true, value: c.htmlTop })
+      withMockedRect(html, { top: c.htmlTop - origin.y, left: c.htmlLeft - origin.x, right: c.htmlLeft - origin.x + 1024, bottom: c.htmlTop - origin.y + 768, width: 1024, height: 768 })
+      // The anchor at (350, 250) to (450, 280) in layout-viewport coordinates.
+      const shift = { x: origin.x - c.scrollX, y: origin.y - c.scrollY }
+      const anchor = document.getElementById('a')!
+      const floating = document.getElementById('b')!
+      withMockedRect(anchor, { top: 250 - shift.y, left: 350 - shift.x, right: 450 - shift.x, bottom: 280 - shift.y, width: 100, height: 30 })
+      Object.defineProperty(floating, 'offsetHeight', { value: 100, configurable: true })
+      const p = createPositioner(anchor, floating, { widthPolicy: 'match-trigger-wrapper' })
+      assert.equal(floating.style.top, '284px', label)
+      assert.equal(floating.style.left, '350px', label)
+      p.detach()
+    }
+  }
+})
+
+test('the hidden check leaves out the scrollbars, which the client box of the root element does not hold', () => {
+  setupDom('<!doctype html><html><body><div id="a"></div></body></html>')
+  // A 15 px scrollbar on each axis of a 1024 by 768 px window.
+  Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 1009 })
+  Object.defineProperty(document.documentElement, 'clientHeight', { configurable: true, value: 753 })
+  const anchor = document.getElementById('a')!
+  withMockedRect(anchor, { top: 760, left: 50, right: 250, bottom: 790, width: 200, height: 30 })
+  assert.equal(isAnchorHidden(anchor), true)
+  withMockedRect(anchor, { top: 100, left: 1015, right: 1215, bottom: 130, width: 200, height: 30 })
+  assert.equal(isAnchorHidden(anchor), true)
+  withMockedRect(anchor, { top: 740, left: 1000, right: 1200, bottom: 770, width: 200, height: 30 })
+  assert.equal(isAnchorHidden(anchor), false)
+})
+
 test('in WebKit, a trigger inside the layout viewport but above the visual viewport does not count as hidden', () => {
   const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
   const vv = pannableViewport(dom, { width: 512, height: 384 })
@@ -589,6 +637,10 @@ test('in quirks mode, the layout viewport is the client box of the body, not tha
   assert.equal(isAnchorHidden(anchor), true)
   withMockedRect(anchor, { top: 700, left: 50, right: 250, bottom: 730, width: 200, height: 30 })
   assert.equal(isAnchorHidden(anchor), false)
+  // Across too: `<html>` reports the document's width, the body the window's.
+  Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 3000 })
+  withMockedRect(anchor, { top: 100, left: 1100, right: 1300, bottom: 130, width: 200, height: 30 })
+  assert.equal(isAnchorHidden(anchor), true)
 })
 
 test('positioner auto-closes on scroll but NOT on resize (virtual keyboard)', () => {
