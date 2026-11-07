@@ -8,7 +8,7 @@ Agent-facing state of the work in progress, so that a session after a context co
 - The stop rule for post-fix loops is the owner's newest one in `CLAUDE.md`: when every finding of a round can be fixed by changing documentation only, fix that round's findings, start no further round, and report.
 - The system once ran out of disk space during a long review loop and went down; the restart cleared `/tmp`. Watch `df -h /` before long runs.
 - While a review runs, the tree stays frozen: no commit, and no edit to a file the reviewers may read.
-- Every brief tells the members not to start any other model or CLI. In the consultation on the zoom API, Codex Sol read the genuine-fork rule of `CLAUDE.md` and tried to start Fable 5, Opus 5, Opus 4.8, Opus 5.5 and another Codex Sol from inside its sandbox; the sandbox blocked the network, so none of them reached its API.
+- Every brief tells the members to answer alone and to start no model, CLI or subagent, the owner's ruling in `CLAUDE.md`. In the consultation on the zoom API, Codex Sol read the genuine-fork rule of `CLAUDE.md` and tried to start Fable 5, Opus 5, Opus 4.8, Opus 5.5 and another Codex Sol from inside its sandbox; the sandbox blocked the network, so none of them reached its API.
 
 ## Waiting for the owner
 
@@ -21,8 +21,6 @@ Agent-facing state of the work in progress, so that a session after a context co
 4. MEDIUM-894: in Firefox, a wheel over the popup list soon after a page scroll still scrolls the page, likely Firefox's wheel transaction; the entry lists the options and the panel's views. MEDIUM-893, an older outside-press case in open shadow roots, is open too.
 5. NEEDS-VERIFICATION-840 (which chosen item becomes active at open, and the enabled condition) and NEEDS-VERIFICATION-850 (an `open()` call made while DOM focus is elsewhere, with the filter inactive): the owner was told they can wait.
 6. Optional, from Fable 5 in the round on the owner's cost criterion: one sentence for the `popupEl` docstring that names `close()` inside `onOpen` as the supported way to stop an open, MEDIUM-862. It recommends an API pattern, so it waits for the owner.
-7. A `CLAUDE.md` rule that the agent proposed after Codex Sol tried to start other models in the zoom consultation: a member of a review or a committee never starts other models itself, and every brief says so.
-
 ## Next steps, in order
 
 1. Once the owner picks the zone's name, build shape B in the presets and the default, with tests and docs: `DESIGN.md` "Scroll gestures while the popup is open", the README section "Wheel and touch while the popup is open", the setting's TSDoc, `src/index.ts` and the presets bundle; under B, also an AngularJS attribute in the shape of `ll-scroll-gesture-to-behavior-fn` and its entry in `angularjs/API.md`. Then run ONE post-fix review with Codex Sol and Codex Astra that covers the zoom and every commit that no review has read yet, `git log 3b4a5ac..HEAD`: the round-four fixes of MEDIUM-929, `db40325` to `cbf6e56`; MEDIUM-939, `fa62816` and `85e9883`, with its record corrected in `60eafe7`; and the record of the consultation, `aa9afc8`.
