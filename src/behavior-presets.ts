@@ -77,10 +77,12 @@ export const behaviorPresetsOfLLSelectDefault: LLSelectBehaviorPreset = {
  * - A touch-down outside the popup, on the trigger or elsewhere, closes the
  *   popup, and the rest of that touch scrolls nothing.
  * - A wheel or a drag inside the popup does not scroll the page.
- * - A two-finger zoom, anywhere, does not zoom the page, and the popup stays
- *   open. So does a `wheel` with `ctrlKey`.
+ * - While the popup is open, a two-finger zoom does not zoom the page,
+ *   anywhere, and the popup stays open.
+ * - A `wheel` with `ctrlKey` counts as such a zoom.
  * - On a touchscreen, the first finger of a zoom that lands outside the
- *   popup closes it at its touch-down, as above, before the zoom begins.
+ *   popup closes it at its touch-down, as above.
+ * - The zoom that follows then zooms the page, since the popup is closed.
  * - This preset does not cover one Firefox behavior: Firefox closes the
  *   popup when a drag that started inside the popup moves beyond the popup.
  * - This preset follows the mouse wheel, not the touchpad: Firefox closes
@@ -102,9 +104,10 @@ export const behaviorPresetsOfFirefoxOnWindows: LLSelectBehaviorPreset = {
  * - A wheel or a touch-down outside the popup, on the trigger or elsewhere,
  *   closes the popup, and the gesture scrolls the page as usual.
  * - A wheel or a drag inside the popup does not scroll the page.
- * - A two-finger zoom inside the popup does not zoom the page. On the
- *   trigger or elsewhere, it closes the popup and zooms the page. A `wheel`
- *   with `ctrlKey` does the same.
+ * - A two-finger zoom inside the popup does not zoom the page.
+ * - On the trigger or elsewhere, a two-finger zoom closes the popup and
+ *   zooms the page.
+ * - A `wheel` with `ctrlKey` counts as such a zoom.
  * - This preset does not cover Chromium's touch selection: a drag inside
  *   the popup moves the active row, and a lift there chooses that row.
  * @group Behaviors
@@ -127,7 +130,8 @@ export const behaviorPresetsOfChromiumOnWindows: LLSelectBehaviorPreset = {
  * - A two-finger scroll on the touchpad counts as a wheel.
  * - A wheel inside the popup does not scroll the page.
  * - A two-finger zoom, anywhere, does not zoom the page, and the popup stays
- *   open. So does a `wheel` with `ctrlKey`.
+ *   open.
+ * - A `wheel` with `ctrlKey` counts as such a zoom.
  * - A Mac has no touchscreen, so every touch gets llselect's own behavior,
  *   {@link defaultScrollGestureToBehavior}.
  * @group Behaviors

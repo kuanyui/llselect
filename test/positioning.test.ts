@@ -235,6 +235,14 @@ function pannableViewport(dom: ReturnType<typeof setupDom>, size: { width: numbe
   return vv as typeof vv & { readonly pageLeft: number; readonly pageTop: number }
 }
 
+// The scroll position that the window reports: in Chromium and Firefox the
+// layout viewport's, in WebKit the visual viewport's, the corner that each
+// engine's client rects start at.
+function setWindowScroll(dom: ReturnType<typeof setupDom>, x: number, y: number): void {
+  Object.defineProperty(dom.window, 'scrollX', { configurable: true, value: x })
+  Object.defineProperty(dom.window, 'scrollY', { configurable: true, value: y })
+}
+
 test('createPositioner sets fixed positioning styles and data-placement', () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
   const anchor = document.getElementById('a')!
@@ -509,7 +517,7 @@ function zoomedScene(model: 'chromium' | 'webkit'): { floating: HTMLElement; det
   vv.offsetTop = 200
   Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
   const shift = model === 'webkit' ? { x: 300, y: 200 } : { x: 0, y: 0 }
-  withMockedRect(document.documentElement, { top: -shift.y, left: -shift.x, right: 1024 - shift.x, bottom: 768 - shift.y, width: 1024, height: 768 })
+  setWindowScroll(dom, shift.x, shift.y)
   const anchor = document.getElementById('a')!
   const floating = document.getElementById('b')!
   withMockedRect(anchor, { top: 250 - shift.y, left: 350 - shift.x, right: 450 - shift.x, bottom: 280 - shift.y, width: 100, height: 30 })
@@ -529,12 +537,12 @@ test('a pinch-zoomed page places the popup under its trigger, whether client rec
   }
 })
 
-test('the layout viewport corner holds on a scrolled page and with a margined or positioned html element, in both engine models', () => {
+test('the layout viewport corner comes from the scroll position, so a scrolled page and a margined, positioned or transformed html element change nothing, in both engine models', () => {
   const cases = [
-    { scrollX: 0, scrollY: 0, htmlLeft: 0, htmlTop: 0 },
-    { scrollX: 0, scrollY: 500, htmlLeft: 10, htmlTop: 10 },
-    // A right-to-left page scrolled to the left, with `<html>` moved by `position: relative`.
-    { scrollX: -300, scrollY: 500, htmlLeft: 0, htmlTop: 40 },
+    { scrollX: 0, scrollY: 0 },
+    { scrollX: 0, scrollY: 500 },
+    // A right-to-left page scrolled to the left.
+    { scrollX: -300, scrollY: 500 },
   ]
   for (const model of ['chromium', 'webkit'] as const) {
     for (const c of cases) {
@@ -545,10 +553,12 @@ test('the layout viewport corner holds on a scrolled page and with a margined or
       // The client origin in document coordinates: the layout viewport's corner
       // in Chromium, the visual viewport's in WebKit.
       const origin = model === 'webkit' ? { x: vv.pageLeft, y: vv.pageTop } : { x: c.scrollX, y: c.scrollY }
+      setWindowScroll(dom, origin.x, origin.y)
+      // A margined, positioned and transformed `<html>`, which the corner ignores.
       const html = document.documentElement
-      Object.defineProperty(html, 'offsetLeft', { configurable: true, value: c.htmlLeft })
-      Object.defineProperty(html, 'offsetTop', { configurable: true, value: c.htmlTop })
-      withMockedRect(html, { top: c.htmlTop - origin.y, left: c.htmlLeft - origin.x, right: c.htmlLeft - origin.x + 1024, bottom: c.htmlTop - origin.y + 768, width: 1024, height: 768 })
+      Object.defineProperty(html, 'offsetLeft', { configurable: true, value: 10 })
+      Object.defineProperty(html, 'offsetTop', { configurable: true, value: 50 })
+      withMockedRect(html, { top: 90 - origin.y, left: 10 - origin.x, right: 1034 - origin.x, bottom: 858 - origin.y, width: 1024, height: 768 })
       // The anchor at (350, 250) to (450, 280) in layout-viewport coordinates.
       const shift = { x: origin.x - c.scrollX, y: origin.y - c.scrollY }
       const anchor = document.getElementById('a')!
@@ -561,6 +571,47 @@ test('the layout viewport corner holds on a scrolled page and with a margined or
       p.detach()
     }
   }
+})
+
+test('the layout viewport corner keeps a fractional scroll exact, and WebKit\'s whole-number scrollX leaves an error below one pixel', () => {
+  // The visual viewport at (300.5, 700.75) in the document, panned 300.5 by
+  // 200.25 px inside a layout viewport scrolled 500.5 px down.
+  const cases = [
+    // A scroll position that matches the client origin exactly, as Chromium's does.
+    { label: 'exact', scroll: { x: 0, y: 500.5 }, clientOrigin: { x: 0, y: 500.5 }, top: '284px', left: '350px' },
+    // WebKit: client rects from the visual viewport, and `scrollX` / `scrollY` as whole numbers.
+    { label: 'webkit', scroll: { x: 300, y: 700 }, clientOrigin: { x: 300.5, y: 700.75 }, top: '283.25px', left: '349.5px' },
+  ]
+  for (const c of cases) {
+    const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+    const vv = Object.assign(new dom.window.EventTarget(), { width: 512, height: 384, offsetLeft: 300.5, offsetTop: 200.25, pageLeft: 300.5, pageTop: 700.75 })
+    Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
+    setWindowScroll(dom, c.scroll.x, c.scroll.y)
+    // The anchor at (350, 250) to (450, 280) in layout-viewport coordinates.
+    const shift = { x: c.clientOrigin.x, y: c.clientOrigin.y - 500.5 }
+    const anchor = document.getElementById('a')!
+    const floating = document.getElementById('b')!
+    withMockedRect(anchor, { top: 250 - shift.y, left: 350 - shift.x, right: 450 - shift.x, bottom: 280 - shift.y, width: 100, height: 30 })
+    Object.defineProperty(floating, 'offsetHeight', { value: 100, configurable: true })
+    const p = createPositioner(anchor, floating, { widthPolicy: 'match-trigger-wrapper' })
+    assert.equal(floating.style.top, c.top, c.label)
+    assert.equal(floating.style.left, c.left, c.label)
+    p.detach()
+  }
+})
+
+test('without visualViewport, a page scrolled on both axes places the popup by the client rect', () => {
+  const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  assert.equal(dom.window.visualViewport, undefined)
+  setWindowScroll(dom, 300, 500)
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  withMockedRect(anchor, { top: 250, left: 350, right: 450, bottom: 280, width: 100, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 100, configurable: true })
+  const p = createPositioner(anchor, floating, { widthPolicy: 'match-trigger-wrapper' })
+  assert.equal(floating.style.top, '284px')
+  assert.equal(floating.style.left, '350px')
+  p.detach()
 })
 
 test('the hidden check leaves out the scrollbars, which the client box of the root element does not hold', () => {
@@ -583,7 +634,7 @@ test('in WebKit, a trigger inside the layout viewport but above the visual viewp
   vv.offsetTop = 200
   Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
   // WebKit: client rects start at the visual viewport, 200 px down the layout viewport.
-  withMockedRect(document.documentElement, { top: -200, left: 0, right: 1024, bottom: 568, width: 1024, height: 768 })
+  setWindowScroll(dom, 0, 200)
   const anchor = document.getElementById('a')!
   const floating = document.getElementById('b')!
   // 50 px down the layout viewport, so 150 px above the visible area.
@@ -609,7 +660,7 @@ test('in WebKit at a high zoom, where innerWidth and innerHeight shrink to the v
   Object.defineProperty(dom.window, 'innerHeight', { configurable: true, value: 256 })
   Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 1024 })
   Object.defineProperty(document.documentElement, 'clientHeight', { configurable: true, value: 768 })
-  withMockedRect(document.documentElement, { top: -400, left: -600, right: 424, bottom: 368, width: 1024, height: 768 })
+  setWindowScroll(dom, 600, 400)
   const anchor = document.getElementById('a')!
   const floating = document.getElementById('b')!
   // At (650, 450) in the layout viewport, 50 px inside the visible area.
@@ -640,6 +691,35 @@ test('in quirks mode, the layout viewport is the client box of the body, not tha
   // Across too: `<html>` reports the document's width, the body the window's.
   Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 3000 })
   withMockedRect(anchor, { top: 100, left: 1100, right: 1300, bottom: 130, width: 200, height: 30 })
+  assert.equal(isAnchorHidden(anchor), true)
+})
+
+test('in quirks mode, a panned page places the popup and checks both axes against the client box of the body', () => {
+  const dom = setupDom('<html><body><div id="a"></div><div id="b"></div></body></html>')
+  assert.equal(document.compatMode, 'BackCompat')
+  const vv = pannableViewport(dom, { width: 512, height: 384 })
+  vv.offsetLeft = 300
+  vv.offsetTop = 200
+  Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
+  // WebKit: the window's scroll position is the visual viewport's corner.
+  setWindowScroll(dom, 300, 200)
+  Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 3000 })
+  Object.defineProperty(document.documentElement, 'clientHeight', { configurable: true, value: 5000 })
+  Object.defineProperty(document.body, 'clientWidth', { configurable: true, value: 1024 })
+  Object.defineProperty(document.body, 'clientHeight', { configurable: true, value: 768 })
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  // At (350, 250) in the layout viewport.
+  withMockedRect(anchor, { top: 50, left: 50, right: 150, bottom: 80, width: 100, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 100, configurable: true })
+  const p = createPositioner(anchor, floating, { widthPolicy: 'match-trigger-wrapper' })
+  assert.equal(floating.style.top, '284px')
+  assert.equal(floating.style.left, '350px')
+  p.detach()
+  // Past the body's box on either axis, though inside the html element's.
+  withMockedRect(anchor, { top: 600, left: 50, right: 150, bottom: 630, width: 100, height: 30 })
+  assert.equal(isAnchorHidden(anchor), true)
+  withMockedRect(anchor, { top: 50, left: 750, right: 850, bottom: 80, width: 100, height: 30 })
   assert.equal(isAnchorHidden(anchor), true)
 })
 

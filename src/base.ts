@@ -477,8 +477,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   page, and the popup stays open.
    * - Even with the default, the `touchstart` listeners on the popup and the
    *   root element are not passive, so that a zoom can cancel the touch-down
-   *   of a further finger. A touch scroll that starts on the select component
-   *   then waits for those listeners.
+   *   of a further finger.
+   * - A touch scroll that starts on the select component therefore waits for
+   *   those listeners.
    * - `@llselect/core/behavior-presets` holds other functions, as presets
    *   to spread into the settings, such as `behaviorPresetsOfFirefoxOnWindows`.
    * @group Behaviors
@@ -2716,8 +2717,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   `super.zoomGestureToBehavior(gesture)` still reaches the setting.
    * - An override that may block or close a zoom also overrides
    *   {@link shouldListenForZoomGesturesOutside}, since a finger of a pinch
-   *   may land outside the select component. By default the library listens
-   *   there only while the setting is not `defaultZoomGestureToBehavior`.
+   *   may land outside the select component.
+   * - By default the library listens there only while the setting is not
+   *   `defaultZoomGestureToBehavior`.
    * @group Subclassing: semantics
    */
   protected zoomGestureToBehavior(gesture: LLSelectZoomGesture): LLSelectZoomGestureBehavior {

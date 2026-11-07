@@ -462,10 +462,12 @@ function isAnchorHiddenForRect(anchor: HTMLElement, rect: DOMRect, origin: Clien
 /**
  * Whether `anchor` is currently hidden: fully outside the layout viewport, or
  * fully outside an ancestor's overflow clip that applies to it (DESIGN.md
- * "Hidden-trigger check"). Exposed so a caller can refuse to open a popup
- * against an off-screen trigger BEFORE building a positioner, rather than
- * opening and then hiding re-entrantly. The layout viewport here is the
- * client box of the root element, which leaves out the scrollbars.
+ * "Hidden-trigger check").
+ * - Exposed so a caller can refuse to open a popup against an off-screen
+ *   trigger BEFORE building a positioner, rather than opening and then
+ *   hiding re-entrantly.
+ * - The layout viewport here is the client box of `<html>`, or of `<body>`
+ *   in quirks mode, which leaves out the scrollbars.
  */
 export function isAnchorHidden(anchor: HTMLElement): boolean {
   return isAnchorHiddenForRect(anchor, anchor.getBoundingClientRect(), getLayoutViewportClientOrigin())
@@ -488,8 +490,8 @@ export interface PositionerOptions {
   /**
    * Called when the anchor is found hidden: fully outside the layout
    * viewport, or fully clipped away by an ancestor (see `isAnchorHidden`).
-   * - The layout viewport here is the client box of the root element, which
-   *   leaves out the scrollbars.
+   * - The layout viewport here is the client box of `<html>`, or of `<body>`
+   *   in quirks mode, which leaves out the scrollbars.
    * - The check runs at the first placement and after every `scroll` event
    *   outside the floating element that the capture listeners see: of the
    *   document, of any element in it, or inside a shadow root on the
@@ -587,20 +589,26 @@ interface ClientPoint {
  * - The point is measured, not picked by engine.
  * - The layout viewport's corner in document coordinates is
  *   `pageLeft - offsetLeft` and `pageTop - offsetTop`.
- * - The client origin in document coordinates follows from `<html>`: its
- *   `offsetLeft` and `offsetTop` give its place in the document, margins and
- *   relative positioning included, and its client rect gives the same place
- *   in client coordinates.
+ * - The client origin in document coordinates is `window.scrollX` and
+ *   `scrollY`: each engine reports its scroll position from the corner that
+ *   its client rects start at (MEDIUM-955).
+ * - No element takes part, so a margin, a position or a transform on
+ *   `<html>` changes nothing.
+ * - WebKit returns `scrollX` and `scrollY` as whole numbers, so the point
+ *   can be off by less than one pixel there.
+ * - One known exception: WebKit's site-specific quirk
+ *   `ShouldUseLayoutViewportForClientRectsQuirk` starts client rects at the
+ *   layout viewport while `scrollX` stays at the visual viewport. It applies
+ *   on the iOS family only, to `*.chatgpt.com` and `*.discord.com`, where
+ *   the point comes out wrong (MEDIUM-959).
  */
 function getLayoutViewportClientOrigin(): ClientPoint {
   const vv = window.visualViewport
   // Without an offset, both viewports share their corner in every engine.
   if (!vv || (!vv.offsetLeft && !vv.offsetTop)) { return { x: 0, y: 0 } }
-  const html = document.documentElement
-  const rect = html.getBoundingClientRect()
   return {
-    x: vv.pageLeft - vv.offsetLeft - html.offsetLeft + rect.left,
-    y: vv.pageTop - vv.offsetTop - html.offsetTop + rect.top,
+    x: vv.pageLeft - vv.offsetLeft - window.scrollX,
+    y: vv.pageTop - vv.offsetTop - window.scrollY,
   }
 }
 
