@@ -761,7 +761,9 @@ const sel = new LLSelectSingle(el, {
 - A touch counts as a zoom from the moment a second finger lands. A wheel with Ctrl held counts as a zoom too.
 - In Chromium, a touchpad pinch reaches the page as a wheel with Ctrl held.
 - A preset that blocks a zoom stops the user from zooming while the popup is open. Closing the popup lifts that block for the next zoom.
-- Your own function may close the popup and block the zoom. That zoom then stays blocked until every finger lifts.
+- Your own function may close the popup and block the zoom:
+  - On a touchscreen, that zoom then stays blocked until every finger lifts, or until `destroy()` runs.
+  - For a wheel with Ctrl held, the block covers that one wheel event.
 - Any preset above, or your own function, makes the library listen on the whole page. Every scroll of the page then waits for that listener while the popup is open.
 
 ### Subclassing (extending the library)

@@ -579,6 +579,8 @@ test('the layout viewport corner keeps a fractional scroll exact, and WebKit\'s 
   const cases = [
     // A scroll position that matches the client origin exactly, as Chromium's does.
     { label: 'exact', scroll: { x: 0, y: 500.5 }, clientOrigin: { x: 0, y: 500.5 }, top: '284px', left: '350px' },
+    // A fractional scroll at a client origin that starts at the visual viewport.
+    { label: 'fractional', scroll: { x: 300.5, y: 700.75 }, clientOrigin: { x: 300.5, y: 700.75 }, top: '284px', left: '350px' },
     // WebKit: client rects from the visual viewport, and `scrollX` / `scrollY` as whole numbers.
     { label: 'webkit', scroll: { x: 300, y: 700 }, clientOrigin: { x: 300.5, y: 700.75 }, top: '283.25px', left: '349.5px' },
   ]

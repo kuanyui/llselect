@@ -973,6 +973,60 @@ test('an older zoom hold takes in a finger that lands while it lasts, and ends a
   assert.equal(touch('touchmove', outside, [{ id: 4, x: 0, y: 0 }, { id: 5, x: 50, y: 0 }]).defaultPrevented, false)
 })
 
+test('an older zoom hold follows a later finger inside an open shadow root, whose target the document sees as the host', () => {
+  setupDom('<!doctype html><html><body><div id="host"></div><p id="outside">page</p></body></html>')
+  const shadowHost = document.getElementById('host')
+  const outside = document.getElementById('outside')
+  assert.ok(shadowHost && outside)
+  const el = document.createElement('div')
+  shadowHost.attachShadow({ mode: 'open' }).appendChild(el)
+  const sel = new Probe(el, { zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  sel.setItems(['a', 'b', 'c'])
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  const a = { id: 1, x: 10, y: 50, target: row }
+  const b = { id: 2, x: 60, y: 50, target: row }
+  touch('touchstart', row, [a, b])
+  assert.equal(sel.isOpened(), false)
+  // Reopened while both fingers stay down; a third finger closes it again.
+  sel.open()
+  const rowC = sel.popupListEl.firstElementChild
+  assert.ok(rowC)
+  // At the document, the new finger's target is the shadow host.
+  const c = { id: 3, x: 100, y: 50, target: shadowHost }
+  touch('touchstart', rowC, [a, b, c], [c])
+  assert.equal(rowC.isConnected, false)
+  touch('touchend', row, [], [a, b], [{ ...c, target: rowC }])
+  touch('touchend', rowC, [], [{ ...c, target: rowC }], [])
+  assert.equal(touch('touchmove', outside, [{ id: 4, x: 0, y: 0 }, { id: 5, x: 50, y: 0 }]).defaultPrevented, false)
+})
+
+test('a zoom hold removes every listener it added, also on a target that two later fingers shared', (t) => {
+  const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  const a = { id: 1, x: 10, y: 50, target: row }
+  const b = { id: 2, x: 60, y: 50, target: row }
+  touch('touchstart', row, [a, b])
+  touch('touchend', row, [], [b], [a])
+  const add = t.mock.method(outside, 'addEventListener')
+  const remove = t.mock.method(outside, 'removeEventListener')
+  // Two later fingers land and lift on the same element, one after the other.
+  const c = { id: 3, x: 0, y: 0, target: outside }
+  touch('touchstart', outside, [a, c], [c])
+  touch('touchend', outside, [], [c], [a])
+  const d = { id: 4, x: 5, y: 0, target: outside }
+  touch('touchstart', outside, [a, d], [d])
+  touch('touchend', outside, [], [d], [a])
+  // The last lift ends the hold.
+  touch('touchend', row, [], [a], [])
+  assert.equal(add.mock.calls.length, 3)
+  assertEveryListenerRemoved('the shared target', add.mock.calls, remove.mock.calls, ['touchcancel', 'touchend', 'touchmove'])
+  assert.equal(touch('touchmove', outside, [{ id: 5, x: 0, y: 0 }, { id: 6, x: 50, y: 0 }]).defaultPrevented, false)
+})
+
 test('a zoom hold keeps blocking after a partial touchcancel, and ends at the last one', () => {
   const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
   sel.open()

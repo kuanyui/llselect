@@ -598,9 +598,11 @@ interface ClientPoint {
  *   can be off by less than one pixel there.
  * - One known exception: WebKit's site-specific quirk
  *   `ShouldUseLayoutViewportForClientRectsQuirk` starts client rects at the
- *   layout viewport while `scrollX` stays at the visual viewport. It applies
- *   on the iOS family only, to `*.chatgpt.com` and `*.discord.com`, where
- *   the point comes out wrong (MEDIUM-959).
+ *   layout viewport, while `scrollX` stays at the visual viewport
+ *   (MEDIUM-959).
+ * - That quirk exists on the iOS family only.
+ * - It applies to `*.chatgpt.com` and `*.discord.com`.
+ * - There, the point comes out wrong.
  */
 function getLayoutViewportClientOrigin(): ClientPoint {
   const vv = window.visualViewport

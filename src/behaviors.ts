@@ -401,12 +401,17 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
  * blocks the zoom, until every finger lifts.
  * - Returns the function that ends the hold early.
  * - `initialTargets` are the targets of the fingers that touch when the hold
- *   starts. Each target keeps getting its finger's events after the close,
- *   even when the close removed it from the document, as it removes the rows
- *   of the list.
+ *   starts.
+ * - A target keeps getting the events of every finger that started on it
+ *   after the close, even when the close removed it from the document, as it
+ *   removes the rows of the list.
  * - Also listens on the document, for a finger that lands later.
  * - Such a finger's target joins the hold at its touch-down, in the capture
  *   phase, before a later close can remove it.
+ * - The document sees the target of a finger inside a shadow root as the
+ *   shadow host.
+ * - So the original dispatch target, `composedPath()[0]`, joins too.
+ * - In an open shadow root, that target is the finger's real one.
  * - Blocks the touch-down of a further finger, and every move with two or
  *   more touches.
  * - A finger left alone after the others lifted pans as usual.
@@ -429,6 +434,8 @@ function holdZoomTouch(initialTargets: Iterable<EventTarget>, ended: () => void)
   }
   const onStart = (ev: Event): void => {
     if (!isTouchEvent(ev)) { return }
+    const own = ev.composedPath()[0]
+    if (own !== undefined) { track(own) }
     for (let i = 0; i < ev.changedTouches.length; i++) {
       const t = ev.changedTouches.item(i)
       if (t !== null) { track(t.target) }
