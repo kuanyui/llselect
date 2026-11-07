@@ -1,5 +1,5 @@
 import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createOutlinedCheckboxSvgEl, createFilledCheckboxSvgEl, createCheckmarkSvgEl, createHighlightedTextEl, defaultScrollGestureToBehavior } from '../dist/index.mjs'
-import { behaviorPresetsOfChromiumOnWindows, behaviorPresetsOfFirefoxOnWindows } from '../dist/behavior-presets.mjs'
+import { behaviorPresetsOfChromiumOnWindows, behaviorPresetsOfFirefoxOnWindows, behaviorPresetsOfSafariOnMac } from '../dist/behavior-presets.mjs'
 import { ar, en, he, ja, zhTW, uiTranslationPackByLocale } from '../dist/i18n.mjs'
 import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS, MIXED_DIRECTION_COUNTRIES } from './data.js'
 import { highlightJs } from './highlight.js'
@@ -1474,12 +1474,14 @@ selSchemeMultiple.setChosenItems(['Japan', 'Brazil', 'Canada'])
 
 //#region 17.1
 // The presets come from their own entry point (imported at the top:
-// `import { behaviorPresetsOfFirefoxOnWindows, behaviorPresetsOfChromiumOnWindows }
-// from '@llselect/core/behavior-presets'`). Spread one into the settings.
+// `import { behaviorPresetsOfFirefoxOnWindows, behaviorPresetsOfChromiumOnWindows,
+// behaviorPresetsOfSafariOnMac } from '@llselect/core/behavior-presets'`).
+// Spread one into the settings.
 for (const [key, name, preset] of [
   ['default', 'default', {}],
   ['firefox', 'Firefox on Windows preset', behaviorPresetsOfFirefoxOnWindows],
   ['chromium', 'Chromium on Windows preset', behaviorPresetsOfChromiumOnWindows],
+  ['safari', 'Safari on Mac preset', behaviorPresetsOfSafariOnMac],
 ]) {
   const out = document.getElementById(`out-gesture-${key}`)
   const sel = new LLSelectSingle(document.getElementById(`mount-gesture-${key}`), {

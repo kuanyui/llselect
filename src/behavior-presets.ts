@@ -81,6 +81,9 @@ export const behaviorPresetsOfLLSelectDefault: LLSelectBehaviorPreset = {
  *   open. So does a `wheel` with `ctrlKey`.
  * - This preset does not cover one Firefox behavior: Firefox closes the
  *   popup when a drag that started inside the popup moves beyond the popup.
+ * - This preset follows the mouse wheel, not the touchpad: Firefox closes
+ *   its popup at a two-finger scroll on the touchpad outside it, and the
+ *   page cannot tell that scroll from a mouse wheel.
  * @group Behaviors
  */
 export const behaviorPresetsOfFirefoxOnWindows: LLSelectBehaviorPreset = {
@@ -113,4 +116,24 @@ export const behaviorPresetsOfChromiumOnWindows: LLSelectBehaviorPreset = {
     if (gesture.zone === 'popup') { return 'leave-popup-open-and-block-page-zoom' }
     return 'close-popup-and-allow-page-zoom'
   },
+}
+
+/**
+ * The native `<select>` of Safari on macOS, with a mouse or a touchpad.
+ * - A wheel outside the popup, on the trigger or elsewhere, scrolls
+ *   nothing, and the popup stays open. A two-finger scroll on the touchpad
+ *   gives a wheel too.
+ * - A wheel inside the popup does not scroll the page.
+ * - A two-finger zoom, anywhere, does not zoom the page, and the popup stays
+ *   open. So does a `wheel` with `ctrlKey`.
+ * - A Mac has no touchscreen, so every touch gets llselect's own behavior,
+ *   {@link defaultScrollGestureToBehavior}.
+ * @group Behaviors
+ */
+export const behaviorPresetsOfSafariOnMac: LLSelectBehaviorPreset = {
+  scrollGestureToBehaviorFn: (gesture) => {
+    if (gesture.kind === 'wheel') { return 'leave-popup-open-and-block-page-scroll' }
+    return defaultScrollGestureToBehavior(gesture)
+  },
+  zoomGestureToBehaviorFn: () => 'leave-popup-open-and-block-page-zoom',
 }

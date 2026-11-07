@@ -714,6 +714,7 @@ const sel = new LLSelectSingle(el, { ...behaviorPresetsOfFirefoxOnWindows })
 
 - With `behaviorPresetsOfFirefoxOnWindows`, a wheel outside the popup scrolls nothing. A touch outside the popup closes the popup, and the rest of that touch scrolls nothing. A two-finger zoom never zooms the page, and the popup stays open.
 - With `behaviorPresetsOfChromiumOnWindows`, a wheel or a touch outside the popup closes the popup. The page scrolls as usual. A two-finger zoom inside the popup does not zoom the page. Elsewhere, it closes the popup and zooms the page.
+- With `behaviorPresetsOfSafariOnMac`, a wheel outside the popup scrolls nothing. A two-finger zoom never zooms the page. The popup stays open.
 - The library does not detect the browser. Your app picks the preset.
 
 To write your own rule, pass a function. The function gets the gesture and returns one of four behaviors:

@@ -1134,8 +1134,8 @@
     </p>
 
     <article>
-      <h3>17.1 Wheel and touch: the default and two presets, next to this browser's native select</h3>
-      <p class="hint">Open a select component. Then turn the mouse wheel, drag with one finger, or zoom with two fingers. Try it inside the popup, on the trigger and elsewhere on the page. The two presets copy the native select of Firefox and of Chromium on Windows 11. The line under each select component names its last close.</p>
+      <h3>17.1 Wheel, touch and zoom: the default and three presets, next to this browser's native select</h3>
+      <p class="hint">Open a select component. Then turn the mouse wheel, drag with one finger, or zoom with two fingers. Try it inside the popup, on the trigger and elsewhere on the page. The presets copy the native select of Firefox and of Chromium on Windows 11, and of Safari on macOS. The line under each select component names its last close.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div class="gesture-row">
@@ -1155,6 +1155,11 @@
               <div class="out" id="out-gesture-chromium">last close: (none)</div>
             </div>
             <div>
+              <div class="gesture-label"><code>behaviorPresetsOfSafariOnMac</code></div>
+              <div id="mount-gesture-safari"></div>
+              <div class="out" id="out-gesture-safari">last close: (none)</div>
+            </div>
+            <div>
               <label class="gesture-label" for="native-gesture">native select of this browser</label>
               <select id="native-gesture"></select>
             </div>
@@ -1165,8 +1170,8 @@
     </article>
 
     <article>
-      <h3>17.2 With the filter on, as on a phone: the default and two presets</h3>
-      <p class="hint">On a phone, the filter input takes focus at open, and the on-screen keyboard comes up. The popup stays above the keyboard, also while the page scrolls. A touch-down outside the popup closes it under either preset. The default leaves it open.</p>
+      <h3>17.2 With the filter on, on a touch device with an on-screen keyboard: the default and two presets</h3>
+      <p class="hint">On a touch device, Windows included, the filter input takes focus at open, and most browsers then bring up the on-screen keyboard. The popup stays above the keyboard, also while the page scrolls. A touch-down outside the popup closes it under either preset. The default leaves it open.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div class="gesture-row">

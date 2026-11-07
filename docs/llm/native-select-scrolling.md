@@ -14,6 +14,12 @@ How to read this record:
 
 - The owner's first report, which named no operating system and no browser: while the popup of a native `<select>` is open, wheeling inside the popup never scrolls the page, however hard the wheel turns.
 
+### macOS, Safari
+
+The owner tested Safari on macOS with a mouse wheel and with a two-finger scroll on the touchpad, and answered the agent's multiple-choice questions; the results of the two were the same.
+
+- With the options long enough that the popup scrolls, the owner scrolled inside the popup to the top or the bottom of the list, and picked the answer, translated from Chinese: "the page does not move: after the list reaches its end, the page still does not move at all".
+
 ## Mouse wheel outside the popup
 
 The owner found that the native control differs here by operating system; the owner's rows also differ by browser.
@@ -30,6 +36,16 @@ The owner found that the native control differs here by operating system; the ow
 
 - Firefox blocks the page from scrolling by mouse wheel completely, and the popup stays open.
 - Chromium closes the popup the moment the wheel turns outside the popup, and at that moment the page scrolls in the wheel's direction.
+
+### Windows 11, with a touchpad
+
+The owner found that Firefox treats a two-finger scroll on the touchpad differently from its mouse wheel, in the owner's words, translated from Chinese: "wow, I just found a super subtle difference: with the popup open, outside the popup, a touchpad scroll and a mouse scroll behave differently in Firefox for Windows... but I think we treat this one as LOW PRIORITY? Otherwise, can a web API even detect this kind of difference..."
+
+- Firefox closes the popup at a two-finger scroll on the touchpad outside the popup, and at that moment the page does not scroll. The owner picked this among the agent's options, translated: "closes, the page does not move: the popup closes at once, but the page does not scroll this time".
+
+### macOS, Safari
+
+- From the owner's answers to the agent's multiple-choice questions, with a mouse wheel and with a two-finger scroll on the touchpad alike: the owner picked, translated from Chinese, "does not close, the page does not move: the popup stays open, and the page does not scroll at all".
 
 ## Touch swipe
 
@@ -80,6 +96,10 @@ The owner's later test: one notch of the mouse wheel on the native `<select>` el
 
 - Chromium behaves the same as for a swipe outside the popup.
 - Firefox behaves the same as for a swipe outside the popup.
+
+### macOS, Safari
+
+- With the pointer on the `<select>` element itself, by mouse wheel and by a two-finger scroll on the touchpad alike, the owner picked the same answer as outside the popup: the popup stays open, and the page does not scroll at all.
 
 ## Mouse drag inside the popup
 
@@ -144,7 +164,7 @@ The owner reported, in the owner's words, translated from Chinese: "in macOS Saf
 
 ## Gaps, noted by the agent
 
-- No observation covers macOS, Android or iOS.
+- No observation covers Android or iOS. For macOS, the record holds Safari only: the wheel and the touchpad scroll inside the popup, outside it and on the `<select>` element, and the two-finger zoom.
 - For the mouse wheel inside the popup, the record holds only the owner's first report, which named no operating system and no browser.
 - The owner stated the test of the `<select>` element itself as one notch of the mouse wheel. For the Windows touchscreen the owner named only the behavior the result matches, a swipe outside the popup, so the gesture on the `<select>` element there is the agent's reading.
 - The test of the `<select>` element itself names Chromium and Firefox only, so it holds no WebKit result.
@@ -155,5 +175,6 @@ The owner reported, in the owner's words, translated from Chinese: "in macOS Saf
 - The two-finger zoom test gives no browser versions and no Windows version.
 - For two fingers on the `<select>` element, the record holds Chromium on Linux with a touchpad only, and does not say whether the page then zooms.
 - The two-finger zoom test does not say whether a page that was already zoomed behaves differently.
-- The Safari test gives no Safari or macOS version, and does not say whether a touchpad or a mouse was used.
+- The Safari tests give no Safari or macOS version. The wheel answers were picked from the agent's options, not described freely.
+- The touchpad row on Windows names Firefox only, outside the popup only, and gives no version.
 - No test says whether the native select treats a wheel or a one-finger touch differently on a pinch-zoomed page. The owner's ruling of MEDIUM-939 expects it to act the same.

@@ -272,7 +272,7 @@ $scope.ifaceMatch = function (i, query) {
 - Without it, a wheel or a drag inside the popup does not scroll the page. Outside the popup, the page scrolls and the popup stays open.
 - When a gesture closes the popup, [`ll-on-close`](#ll-on-close) gets `$reason` `'scroll-gesture'` and the gesture in `$scrollGesture`.
 - For the gesture, the four behaviors and the cases llselect leaves alone, see the core setting `scrollGestureToBehaviorFn` under `LLSelectBaseSettings` in the API reference.
-- The Firefox and Chromium presets copy the native select of one browser on one operating system.
+- The Firefox, Chromium and Safari presets copy the native select of one browser on one operating system.
 - A preset also holds a function for two-finger zooms; see [`ll-zoom-gesture-to-behavior-fn`](#ll-zoom-gesture-to-behavior-fn).
 
 To copy the native select of one browser on one operating system, load `behavior-presets.umd.js`, which sets `window.llselectBehaviorPresets`, and hand a preset's function to the attribute:

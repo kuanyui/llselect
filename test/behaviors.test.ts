@@ -10,6 +10,7 @@ import {
   behaviorPresetsOfChromiumOnWindows,
   behaviorPresetsOfFirefoxOnWindows,
   behaviorPresetsOfLLSelectDefault,
+  behaviorPresetsOfSafariOnMac,
   defaultScrollGestureToBehavior,
   defaultZoomGestureToBehavior,
 } from '../src/behavior-presets.js'
@@ -92,6 +93,25 @@ test('the zoom answers: the default allows every zoom, Firefox blocks every zoom
     popup: 'leave-popup-open-and-block-page-zoom',
     trigger: 'close-popup-and-allow-page-zoom',
     outside: 'close-popup-and-allow-page-zoom',
+  })
+})
+
+test('the Safari-on-Mac preset blocks every wheel and every zoom, and leaves every touch to the default', () => {
+  assert.deepEqual(table(behaviorPresetsOfSafariOnMac.scrollGestureToBehaviorFn), {
+    'wheel popup': 'leave-popup-open-and-block-page-scroll',
+    'wheel trigger': 'leave-popup-open-and-block-page-scroll',
+    'wheel outside': 'leave-popup-open-and-block-page-scroll',
+    'touch-start popup': 'leave-popup-open-and-allow-page-scroll',
+    'touch-start trigger': 'leave-popup-open-and-allow-page-scroll',
+    'touch-start outside': 'leave-popup-open-and-allow-page-scroll',
+    'touch-drag popup': 'leave-popup-open-and-block-page-scroll',
+    'touch-drag trigger': 'leave-popup-open-and-allow-page-scroll',
+    'touch-drag outside': 'leave-popup-open-and-allow-page-scroll',
+  })
+  assert.deepEqual(zoomTable(behaviorPresetsOfSafariOnMac.zoomGestureToBehaviorFn), {
+    popup: 'leave-popup-open-and-block-page-zoom',
+    trigger: 'leave-popup-open-and-block-page-zoom',
+    outside: 'leave-popup-open-and-block-page-zoom',
   })
 })
 
@@ -248,6 +268,17 @@ test('with the Chromium preset, a wheel with ctrlKey is blocked inside the popup
   assert.equal(wheel(outside, { deltaY: 3, ctrlKey: true }).defaultPrevented, false)
   assert.equal(sel.isOpened(), false)
   assert.deepEqual(closes, [{ reason: 'zoom-gesture', zoomGesture: { zone: 'outside' } }])
+})
+
+test('with the Safari-on-Mac preset, a wheel outside or on the trigger is blocked, and the popup stays open', () => {
+  const { sel, outside } = mount({ ...behaviorPresetsOfSafariOnMac })
+  sel.open()
+  assert.equal(wheel(outside).defaultPrevented, true)
+  assert.equal(wheel(sel.triggerEl).defaultPrevented, true)
+  assert.equal(wheel(outside, { deltaY: 3, ctrlKey: true }).defaultPrevented, true)
+  // A touch-down outside changes nothing, as under the default.
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 0 }])
+  assert.equal(sel.isOpened(), true)
 })
 
 test('outside the select component, a group that does not listen there hears nothing, while the other group listens', () => {
