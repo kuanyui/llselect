@@ -400,24 +400,40 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
  * Blocks the rest of a touchscreen zoom whose answer closed the popup and
  * blocks the zoom, until every finger lifts.
  * - Returns the function that ends the hold early.
- * - `targets` are the targets of the fingers that touch when the hold
+ * - `initialTargets` are the targets of the fingers that touch when the hold
  *   starts. Each target keeps getting its finger's events after the close,
  *   even when the close removed it from the document, as it removes the rows
  *   of the list.
  * - Also listens on the document, for a finger that lands later.
+ * - Such a finger's target joins the hold at its touch-down, in the capture
+ *   phase, before a later close can remove it.
  * - Blocks the touch-down of a further finger, and every move with two or
- *   more touches. A finger left alone after the others lifted pans as usual.
+ *   more touches.
+ * - A finger left alone after the others lifted pans as usual.
  */
-function holdZoomTouch(targets: ReadonlySet<EventTarget>, ended: () => void): () => void {
+function holdZoomTouch(initialTargets: Iterable<EventTarget>, ended: () => void): () => void {
   let done = false
-  const onStart = (ev: Event): void => {
-    if (isTouchEvent(ev) && ev.touches.length > 1 && ev.cancelable) { ev.preventDefault() }
-  }
+  const targets = new Set<EventTarget>()
   const onMove = (ev: Event): void => {
     if (isTouchEvent(ev) && ev.touches.length > 1 && ev.cancelable) { ev.preventDefault() }
   }
   const onEnd = (ev: Event): void => {
     if (isTouchEvent(ev) && ev.touches.length === 0) { release() }
+  }
+  const track = (target: EventTarget): void => {
+    if (targets.has(target)) { return }
+    targets.add(target)
+    target.addEventListener('touchmove', onMove, NON_PASSIVE)
+    target.addEventListener('touchend', onEnd, PASSIVE)
+    target.addEventListener('touchcancel', onEnd, PASSIVE)
+  }
+  const onStart = (ev: Event): void => {
+    if (!isTouchEvent(ev)) { return }
+    for (let i = 0; i < ev.changedTouches.length; i++) {
+      const t = ev.changedTouches.item(i)
+      if (t !== null) { track(t.target) }
+    }
+    if (ev.touches.length > 1 && ev.cancelable) { ev.preventDefault() }
   }
   const release = (): void => {
     if (done) { return }
@@ -433,11 +449,7 @@ function holdZoomTouch(targets: ReadonlySet<EventTarget>, ended: () => void): ()
     document.removeEventListener('touchcancel', onEnd, CAPTURE_PASSIVE)
     ended()
   }
-  for (const target of targets) {
-    target.addEventListener('touchmove', onMove, NON_PASSIVE)
-    target.addEventListener('touchend', onEnd, PASSIVE)
-    target.addEventListener('touchcancel', onEnd, PASSIVE)
-  }
+  for (const target of initialTargets) { track(target) }
   document.addEventListener('touchstart', onStart, CAPTURE_NON_PASSIVE)
   document.addEventListener('touchmove', onMove, CAPTURE_NON_PASSIVE)
   document.addEventListener('touchend', onEnd, CAPTURE_PASSIVE)
@@ -515,7 +527,11 @@ export function attachGestureListeners(host: GestureHost): () => void {
   }
   // The zone of the first finger of a zoom. A touch keeps its target, so a
   // finger whose touch-down no listener saw, such as one outside while the
-  // library does not listen there, still shows where it landed.
+  // library does not listen there, still shows where it landed. The state of
+  // one open cycle is all there is: a finger that touched down before the
+  // popup opened gets the zone where its target sits now, `'outside'` once a
+  // close removed it, and among several such fingers the first in `touches`
+  // stands in for the first to land (MEDIUM-954).
   const firstFingerZone = (ev: TouchEvent): Zone => {
     if (touch !== null) { return touch.zone }
     for (let i = 0; i < ev.touches.length; i++) {

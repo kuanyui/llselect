@@ -949,6 +949,59 @@ test('destroy() ends every touch hold, also one that started before the popup wa
   assert.equal(sel.isOpened(), false)
   sel.destroy()
   assert.equal(touch('touchmove', outside, [{ ...a, target: outside }, { ...c, target: outside }]).defaultPrevented, false)
+  assert.equal(touch('touchstart', outside, [{ ...a, target: outside }, { id: 4, x: 0, y: 0 }], [{ id: 4, x: 0, y: 0 }]).defaultPrevented, false)
+})
+
+test('an older zoom hold takes in a finger that lands while it lasts, and ends at that finger\'s lift on its removed row', () => {
+  const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  const a = { id: 1, x: 10, y: 50, target: row }
+  const b = { id: 2, x: 60, y: 50, target: row }
+  touch('touchstart', row, [a, b])
+  // Reopened while both fingers stay down; a third finger closes it again.
+  sel.open()
+  const rowC = sel.popupListEl.firstElementChild
+  assert.ok(rowC)
+  const c = { id: 3, x: 100, y: 50, target: rowC }
+  touch('touchstart', rowC, [a, b, c], [c])
+  assert.equal(rowC.isConnected, false)
+  touch('touchend', row, [], [a, b], [c])
+  touch('touchend', rowC, [], [c], [])
+  // Both holds have ended, so a later pinch on the page is not blocked.
+  assert.equal(touch('touchmove', outside, [{ id: 4, x: 0, y: 0 }, { id: 5, x: 50, y: 0 }]).defaultPrevented, false)
+})
+
+test('a zoom hold keeps blocking after a partial touchcancel, and ends at the last one', () => {
+  const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  const a = { id: 1, x: 10, y: 50, target: row }
+  const b = { id: 2, x: 60, y: 50, target: row }
+  const c = { id: 3, x: 90, y: 50, target: row }
+  touch('touchstart', row, [a, b, c])
+  touch('touchcancel', row, [], [c], [a, b])
+  assert.equal(touch('touchmove', row, [a, b]).defaultPrevented, true)
+  touch('touchcancel', row, [], [a, b], [])
+  assert.equal(touch('touchmove', outside, [{ id: 4, x: 0, y: 0 }, { id: 5, x: 50, y: 0 }]).defaultPrevented, false)
+})
+
+test('an unseen first finger inside a shadow root within the popup gives the zoom the zone popup', () => {
+  const { sel } = mount()
+  sel.open()
+  const host = document.createElement('div')
+  sel.popupEl.appendChild(host)
+  const inner = document.createElement('span')
+  host.attachShadow({ mode: 'open' }).appendChild(inner)
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  // The first finger touched down before any listener could see it.
+  const a = { id: 1, x: 0, y: 0, target: inner }
+  const b = { id: 2, x: 10, y: 10, target: row }
+  touch('touchstart', row, [a, b], [b])
+  assert.deepEqual(sel.zooms, [{ zone: 'popup' }])
 })
 
 test('destroy() ends the hold of a zoom that closed the popup and blocks the zoom', () => {
