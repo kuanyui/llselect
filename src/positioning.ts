@@ -92,29 +92,36 @@ const VIEWPORT_PADDING = 8
  * - Otherwise it goes above the anchor, if it fits there.
  * - If it fits on neither side, it takes the side with more room.
  * - `maxHeight` limits it to the room on its side.
- * - A `currentPlacement` that still fits is kept. A list that shrinks and
- *   regrows then does not make the popup jump sides.
+ * - A `currentPlacement` that still fits is kept.
+ * - Keeping it means that a list that shrinks and regrows does not make the
+ *   popup jump sides.
  * - The floating element keeps a gap of 4 px from the anchor.
  * - Below the anchor, it keeps a margin of 8 px from the bottom of the window.
  * - Above the anchor, it keeps a margin of 8 px from the top of the window.
  * - It also stays inside the window vertically when the anchor is outside it:
- *   - If the anchor's top lies below the window, as under the on-screen
- *     keyboard, the bottom of the window stands in for that top.
+ *   - If the anchor's top lies below the window, the bottom of the window
+ *     stands in for that top.
+ *   - An anchor under the on-screen keyboard is such a case.
  *   - If the anchor's bottom lies above the window, the top of the window
  *     stands in for that bottom.
  *   - The floating element then no longer touches the anchor.
  * - While the anchor's edge next to the floating element is inside the
- *   window, the placement is the one without the rule above.
- * - If the chosen side has no room at all, `maxHeight` is 0. `top` is then
- *   kept inside the window, even next to a visible anchor edge.
+ *   window, the placement is exactly the one without the rule above.
+ * - If the chosen side has no room at all, `maxHeight` is 0.
+ * - If, in addition, the anchor's edge next to the floating element lies
+ *   outside the window, `top` is kept inside the window.
  * - Horizontally, `widthPolicy === 'fit-content'`, the default, makes `width`
  *   the larger of the anchor's width and `floatingNaturalWidth`.
  * - That width is at most the window's width minus two side margins of 8 px.
- * - The floating element then stays inside those side margins.
- * - In ltr, the left edges align, and the floating element grows rightward.
- * - In rtl, the right edges align, and it grows leftward.
- * - `widthPolicy === 'match-trigger-wrapper'` copies the anchor's `width` and
- *   `left`, in either direction, with no horizontal clamp.
+ * - In ltr, the floating element starts at the anchor's left edge.
+ * - In ltr, it grows rightward.
+ * - In rtl, it starts at the anchor's right edge.
+ * - In rtl, it grows leftward.
+ * - If it then crosses a side margin, it shifts back inside the margins.
+ * - `widthPolicy === 'match-trigger-wrapper'` copies the anchor's `width`.
+ * - That policy also copies the anchor's `left`.
+ * - That policy ignores `direction`.
+ * - That policy has no horizontal clamp.
  */
 export function computePosition(input: PositionInput): PositionResult {
   const {
@@ -166,7 +173,12 @@ export function computePosition(input: PositionInput): PositionResult {
     top = aboveEnd - Math.min(floatingHeight, maxHeight)
   }
   // Only a side with no room at all can put `top` outside the visible window.
-  top = Math.min(Math.max(top, viewportTop), viewportBottom)
+  // The clamp spares an anchor whose edge next to the popup is visible, which
+  // keeps exactly the placement it had before the visible edge stood in.
+  const anchorEdge = placement === 'below' ? anchorRect.bottom : anchorRect.top
+  if (anchorEdge < viewportTop || anchorEdge > viewportBottom) {
+    top = Math.min(Math.max(top, viewportTop), viewportBottom)
+  }
 
   let width: number
   let left: number

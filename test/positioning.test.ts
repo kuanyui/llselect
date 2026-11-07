@@ -848,7 +848,7 @@ test('a trigger that crosses one edge of the visible window keeps the popup agai
   assert.equal(bottom.maxHeight, 390 - 4 - 8)
 })
 
-test('a side with no room at all gives maxHeight 0 and keeps top inside the visible window', () => {
+test('a side with no room at all gives maxHeight 0, and keeps top inside the visible window unless the trigger edge next to it is visible', () => {
   // Above: a 2 px window [0, 2] over a trigger below it; top would be -2.
   const above = computePosition({
     anchorRect: { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 },
@@ -872,15 +872,40 @@ test('a side with no room at all gives maxHeight 0 and keeps top inside the visi
   })
   assert.equal(covered.maxHeight, 0)
   assert.equal(covered.top, 120)
-  // Even next to a visible trigger edge: in the window [0, 20], the trigger's
-  // bottom at 18 is visible, and top would be 22.
-  const visibleEdge = computePosition({
+  // Next to a visible trigger edge, the old placement stays: in the window
+  // [0, 20], the trigger's bottom at 18 is visible, and top stays at 22.
+  const visibleBottom = computePosition({
     anchorRect: { top: 0, left: 50, right: 250, bottom: 18, width: 200, height: 18 },
     viewportWidth: 1024, viewportHeight: 20, floatingHeight: 200,
   })
-  assert.equal(visibleEdge.placement, 'below')
-  assert.equal(visibleEdge.maxHeight, 0)
-  assert.equal(visibleEdge.top, 20)
+  assert.equal(visibleBottom.placement, 'below')
+  assert.equal(visibleBottom.maxHeight, 0)
+  assert.equal(visibleBottom.top, 22)
+  // The mirror: the trigger's top at 2 is visible, and top stays at -2.
+  const visibleTop = computePosition({
+    anchorRect: { top: 2, left: 50, right: 250, bottom: 20, width: 200, height: 18 },
+    viewportWidth: 1024, viewportHeight: 20, floatingHeight: 200,
+  })
+  assert.equal(visibleTop.placement, 'above')
+  assert.equal(visibleTop.maxHeight, 0)
+  assert.equal(visibleTop.top, -2)
+  // A trigger edge exactly on a window edge counts as visible, and the edge
+  // that counts is the one next to the popup.
+  for (const [viewportHeight, anchorTop, anchorBottom, placement, top] of [
+    [2, -10, 0, 'below', 4],
+    [2, 2, 12, 'above', -2],
+    [20, -10, 18, 'below', 22],
+    [20, 2, 30, 'above', -2],
+  ] as const) {
+    const r = computePosition({
+      anchorRect: { top: anchorTop, left: 50, right: 250, bottom: anchorBottom, width: 200, height: anchorBottom - anchorTop },
+      viewportWidth: 1024, viewportHeight, floatingHeight: 200,
+    })
+    const where = `[${anchorTop}, ${anchorBottom}] in [0, ${viewportHeight}]`
+    assert.equal(r.placement, placement, where)
+    assert.equal(r.maxHeight, 0, where)
+    assert.equal(r.top, top, where)
+  }
 })
 
 test('zero offsets reproduce the unshifted math exactly', () => {

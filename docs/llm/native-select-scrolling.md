@@ -1,6 +1,6 @@
 # Native select: scrolling and dragging while the popup is open
 
-Agent-facing record of the owner's hand tests of the browser's native `<select>`: what the native control does with a mouse wheel, with a touch swipe and with a mouse drag while its popup is open. It is the evidence behind the scroll gesture behavior that the owner ruled and the agent implemented, MEDIUM-795 in `FIXME.md`: the presets `behaviorPresetsOfFirefoxOnWindows` and `behaviorPresetsOfChromiumOnWindows` follow its rows on the wheel and on a touch outside the popup, and `DESIGN.md` "Scroll gestures while the popup is open" holds the contract. Its rows on a drag inside the popup, which the presets follow only in blocking the page scroll, feed the later drag behaviors in `TODO.md`.
+Agent-facing record of the owner's hand tests of the browser's native `<select>`: what the native control does with a mouse wheel, with a touch swipe, with a mouse drag and with a two-finger zoom while its popup is open. It is the evidence behind the scroll gesture behavior that the owner ruled and the agent implemented, MEDIUM-795 in `FIXME.md`: the presets `behaviorPresetsOfFirefoxOnWindows` and `behaviorPresetsOfChromiumOnWindows` follow its rows on the wheel and on a touch outside the popup, and `DESIGN.md` "Scroll gestures while the popup is open" holds the contract. Its rows on a drag inside the popup, which the presets follow only in blocking the page scroll, feed the later drag behaviors in `TODO.md`. Its rows on a two-finger zoom are the owner's spec for the presets, still to be built, "Two-finger zoom in the presets" in `TODO.md`.
 
 How to read this record:
 
@@ -103,6 +103,29 @@ Chromium behaves exactly as Firefox does here.
 - Releasing outside the popup chooses nothing, and the popup does not close by itself.
 - The two browsers behave the same.
 
+## Two-finger zoom
+
+### Linux, with a touchpad, and Windows, on a touchscreen
+
+The owner tested the desktop versions of both browsers, on Linux with a touchpad and on Windows on a touchscreen, and reported one set of results.
+
+- In both browsers, the popup's options do not zoom: after a two-finger zoom of the page, the `<option>` elements keep their size.
+
+Firefox:
+
+- While the popup is open, Firefox blocks the two-finger zoom. Two fingers inside the popup, outside the popup or on the `<select>` element have no effect.
+- The popup stays open.
+
+Chromium:
+
+- Two fingers outside the popup: Chromium first closes the popup, then at once zooms the page with the fingers.
+- Two fingers inside the popup: Chromium blocks the zoom. Only outside the popup does the gesture close the popup.
+- Two fingers on the `<select>` element, on Linux with a touchpad: Chromium at once closes the popup.
+
+### llselect, for comparison
+
+- The owner compares llselect's popup, which is part of the page: a two-finger zoom enlarges its options with the page, so llselect does better than the native popup here.
+
 ## Mouse and touch differ
 
 - The owner notes that Chromium's drag behavior differs again, and that a mouse and a touch behave differently in two places: a drag after pressing an item, and a release on an item or outside the popup.
@@ -121,3 +144,6 @@ Chromium behaves exactly as Firefox does here.
 - The record does not say whether the earlier tests used the same browser versions, and it names no WebKit version.
 - The mouse-drag tests name Linux without Wayland or X11, give no browser versions, and hold no WebKit result and no Windows result.
 - The mouse-drag tests do not say whether the drag inside the popup started with a press on an item.
+- The two-finger zoom test gives no browser versions and no Windows version.
+- For two fingers on the `<select>` element, the record holds Chromium on Linux with a touchpad only, and does not say whether the page then zooms.
+- The two-finger zoom test does not say whether a page that was already zoomed behaves differently.
