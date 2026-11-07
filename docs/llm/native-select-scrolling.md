@@ -122,6 +122,13 @@ Chromium:
 - Two fingers inside the popup: Chromium blocks the zoom. Only outside the popup does the gesture close the popup.
 - Two fingers on the `<select>` element, on Linux with a touchpad: Chromium at once closes the popup.
 
+### macOS, Safari
+
+The owner reported, in the owner's words, translated from Chinese: "in macOS Safari, while the popup is open, a two-finger zoom, whether on the page, on the popup or on the select, does not work at all, and the popup does not close because of it either".
+
+- While the popup is open, Safari blocks the two-finger zoom everywhere: on the page, inside the popup and on the `<select>` element.
+- The popup stays open.
+
 ### llselect, for comparison
 
 - The owner compares llselect's popup, which is part of the page: a two-finger zoom enlarges its options with the page, so llselect does better than the native popup here.
@@ -148,4 +155,5 @@ Chromium:
 - The two-finger zoom test gives no browser versions and no Windows version.
 - For two fingers on the `<select>` element, the record holds Chromium on Linux with a touchpad only, and does not say whether the page then zooms.
 - The two-finger zoom test does not say whether a page that was already zoomed behaves differently.
+- The Safari test gives no Safari or macOS version, and does not say whether a touchpad or a mouse was used.
 - No test says whether the native select treats a wheel or a one-finger touch differently on a pinch-zoomed page. The owner's ruling of MEDIUM-939 expects it to act the same.

@@ -224,6 +224,17 @@ function withMockedRect(el: HTMLElement, rect: Partial<AnchorRect>): void {
   })
 }
 
+// A visual viewport that the tests pan by its offsets. At scroll 0, `pageLeft`
+// and `pageTop` equal the offsets.
+function pannableViewport(dom: ReturnType<typeof setupDom>, size: { width: number; height: number }): EventTarget & { width: number; height: number; offsetLeft: number; offsetTop: number; readonly pageLeft: number; readonly pageTop: number } {
+  const vv = Object.assign(new dom.window.EventTarget(), { ...size, offsetLeft: 0, offsetTop: 0 })
+  Object.defineProperties(vv, {
+    pageLeft: { get: () => vv.offsetLeft },
+    pageTop: { get: () => vv.offsetTop },
+  })
+  return vv as typeof vv & { readonly pageLeft: number; readonly pageTop: number }
+}
+
 test('createPositioner sets fixed positioning styles and data-placement', () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
   const anchor = document.getElementById('a')!
@@ -407,7 +418,7 @@ test('a pan of the visual viewport re-clamps the popup both ways, and never clos
   const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
   // The keyboard leaves a 400 px visual viewport, which a swipe pans inside
   // the 768 px layout viewport without a document scroll.
-  const vv = Object.assign(new dom.window.EventTarget(), { width: 1024, height: 400, offsetLeft: 0, offsetTop: 0 })
+  const vv = pannableViewport(dom, { width: 1024, height: 400 })
   Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
   const added = t.mock.method(vv, 'addEventListener')
   const anchor = document.getElementById('a')!
@@ -447,7 +458,7 @@ test('a pan of the visual viewport re-clamps the popup both ways, and never clos
 
 test('with the on-screen keyboard up, a page scroll that moves the trigger under the keyboard keeps the popup above the keyboard', () => {
   const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
-  const vv = Object.assign(new dom.window.EventTarget(), { width: 1024, height: 400, offsetLeft: 0, offsetTop: 0 })
+  const vv = pannableViewport(dom, { width: 1024, height: 400 })
   Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
   const anchor = document.getElementById('a')!
   const floating = document.getElementById('b')!
@@ -470,7 +481,7 @@ test('with the on-screen keyboard up, a page scroll that moves the trigger under
 
 test('a pan of the visual viewport moves a popup above the trigger, not only its height', () => {
   const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
-  const vv = Object.assign(new dom.window.EventTarget(), { width: 1024, height: 400, offsetLeft: 0, offsetTop: 0 })
+  const vv = pannableViewport(dom, { width: 1024, height: 400 })
   Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
   const anchor = document.getElementById('a')!
   const floating = document.getElementById('b')!
@@ -484,6 +495,57 @@ test('a pan of the visual viewport moves a popup above the trigger, not only its
   assert.equal(floating.getAttribute('data-placement'), 'above')
   assert.equal(floating.style.top, '108px')
   assert.equal(floating.style.maxHeight, '238px')
+  p.detach()
+})
+
+// The same pinch-zoomed scene in both engine models: the visual viewport, 512
+// by 384 px, sits at (300, 200) in the layout viewport, and the anchor at
+// (350, 250) to (450, 280) in layout-viewport coordinates. Chromium reports
+// client rects from the layout viewport, WebKit from the visual viewport.
+function zoomedScene(model: 'chromium' | 'webkit'): { floating: HTMLElement; detach: () => void } {
+  const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const vv = pannableViewport(dom, { width: 512, height: 384 })
+  vv.offsetLeft = 300
+  vv.offsetTop = 200
+  Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
+  const shift = model === 'webkit' ? { x: 300, y: 200 } : { x: 0, y: 0 }
+  withMockedRect(document.documentElement, { top: -shift.y, left: -shift.x, right: 1024 - shift.x, bottom: 768 - shift.y, width: 1024, height: 768 })
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  withMockedRect(anchor, { top: 250 - shift.y, left: 350 - shift.x, right: 450 - shift.x, bottom: 280 - shift.y, width: 100, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 100, configurable: true })
+  const p = createPositioner(anchor, floating, { widthPolicy: 'match-trigger-wrapper' })
+  return { floating, detach: () => { p.detach() } }
+}
+
+test('a pinch-zoomed page places the popup under its trigger, whether client rects start at the layout viewport or at the visual viewport', () => {
+  for (const model of ['chromium', 'webkit'] as const) {
+    const { floating, detach } = zoomedScene(model)
+    assert.equal(floating.getAttribute('data-placement'), 'below', model)
+    assert.equal(floating.style.top, '284px', model)
+    assert.equal(floating.style.left, '350px', model)
+    assert.equal(floating.style.maxHeight, `${200 + 384 - 8 - 284}px`, model)
+    detach()
+  }
+})
+
+test('in WebKit, a trigger inside the layout viewport but above the visual viewport does not count as hidden', () => {
+  const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const vv = pannableViewport(dom, { width: 512, height: 384 })
+  vv.offsetTop = 200
+  Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
+  // WebKit: client rects start at the visual viewport, 200 px down the layout viewport.
+  withMockedRect(document.documentElement, { top: -200, left: 0, right: 1024, bottom: 568, width: 1024, height: 768 })
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  // 50 px down the layout viewport, so 150 px above the visible area.
+  withMockedRect(anchor, { top: -150, left: 50, right: 250, bottom: -120, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 100, configurable: true })
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  assert.equal(calls, 0)
+  // The visible top edge stands in for the trigger, 4 px below it.
+  assert.equal(floating.style.top, '204px')
   p.detach()
 })
 

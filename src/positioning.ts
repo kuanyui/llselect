@@ -1,7 +1,7 @@
 // Positioner: places `floating` (popup) relative to `anchor` (trigger).
 // Pure math is split into `computePosition` so it can be tested without layout.
 
-/** Minimal rect shape consumed by {@link computePosition}. */
+/** Minimal rect shape consumed by {@link computePosition}, in layout-viewport coordinates. */
 export interface AnchorRect {
   top: number
   left: number
@@ -30,11 +30,12 @@ export interface PositionInput {
   viewportWidth: number
   viewportHeight: number
   /**
-   * Origin of the VISIBLE viewport in layout-viewport (client) coordinates.
+   * Origin of the VISIBLE viewport in layout-viewport coordinates, those of
+   * `position: fixed`.
    * - `0` unless the visual viewport is panned inside the layout viewport,
    *   under pinch zoom or while the on-screen keyboard shrinks it
    *   (`visualViewport.offsetLeft/offsetTop`).
-   * - Anchor rects stay in client coordinates, so clamping against
+   * - The anchor rect is in the same coordinates, so clamping against
    *   `[0, viewportWidth]` alone would drag the floating element toward the
    *   layout origin.
    * - Default `0`.
@@ -83,7 +84,8 @@ const VIEWPORT_PADDING = 8
 
 /**
  * Compute where to place the floating element relative to the anchor.
- * - The window here is the visible window, in client coordinates.
+ * - The window here is the visible window, in layout-viewport coordinates,
+ *   those of `position: fixed`. The anchor rect and the result use them too.
  * - Across, it spans `[viewportLeft, viewportLeft + viewportWidth]`.
  * - Down, it spans `[viewportTop, viewportTop + viewportHeight]`.
  * - Both offsets are 0 unless the visual viewport is panned. See
@@ -431,15 +433,17 @@ function shadowRootsOnPath(anchor: Element): ShadowRoot[] {
 }
 
 // Anchor fully outside the LAYOUT viewport (window.innerWidth/Height, not the
-// visual viewport - see reposition) or clipped away by an ancestor.
+// visual viewport - see reposition) or clipped away by an ancestor. `origin`
+// is the layout viewport's corner in client coordinates, from
+// getLayoutViewportClientOrigin; the ancestors' clips compare client rects.
 // Strict comparisons so an unsized anchor at (0,0,0,0) - common in jsdom or
 // before first layout - reads as "in viewport, no rect yet", not "off-screen".
-function isAnchorHiddenForRect(anchor: HTMLElement, rect: DOMRect): boolean {
+function isAnchorHiddenForRect(anchor: HTMLElement, rect: DOMRect, origin: ClientPoint): boolean {
   const outOfViewport =
-    rect.bottom < 0 ||
-    rect.top > window.innerHeight ||
-    rect.right < 0 ||
-    rect.left > window.innerWidth
+    rect.bottom - origin.y < 0 ||
+    rect.top - origin.y > window.innerHeight ||
+    rect.right - origin.x < 0 ||
+    rect.left - origin.x > window.innerWidth
   return outOfViewport || isClippedByAncestor(anchor, rect)
 }
 
@@ -451,7 +455,7 @@ function isAnchorHiddenForRect(anchor: HTMLElement, rect: DOMRect): boolean {
  * opening and then hiding re-entrantly.
  */
 export function isAnchorHidden(anchor: HTMLElement): boolean {
-  return isAnchorHiddenForRect(anchor, anchor.getBoundingClientRect())
+  return isAnchorHiddenForRect(anchor, anchor.getBoundingClientRect(), getLayoutViewportClientOrigin())
 }
 
 /** Controls the lifecycle of an active positioner. */
@@ -542,10 +546,45 @@ function getVisibleViewport(): { left: number; top: number; width: number; heigh
   const vv = window.visualViewport
   // The offsets matter whenever the visual viewport pans inside the layout
   // viewport, under pinch zoom or while the on-screen keyboard shrinks it.
-  // Anchor rects and `position: fixed` stay in layout (client) coordinates.
-  // Both offsets are 0 otherwise.
+  // The result is in layout-viewport coordinates, those of `position: fixed`;
+  // reposition brings the anchor rect into them. Both offsets are 0 otherwise.
   if (vv) { return { left: vv.offsetLeft, top: vv.offsetTop, width: vv.width, height: vv.height } }
   return { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight }
+}
+
+/** A point in client coordinates, those of `getBoundingClientRect`. */
+interface ClientPoint {
+  readonly x: number
+  readonly y: number
+}
+
+/**
+ * Return where the layout viewport's top-left corner sits in client
+ * coordinates, the coordinates that `getBoundingClientRect` reports.
+ * - `position: fixed` places an element against the layout viewport, so the
+ *   positioner subtracts this point from the anchor rect before it places
+ *   the popup.
+ * - In Chromium and Firefox, client coordinates start at the layout viewport,
+ *   so the point is (0, 0).
+ * - In WebKit, client coordinates start at the visual viewport, the area the
+ *   user sees. While the page is pinch-zoomed, the point is then
+ *   (-visualViewport.offsetLeft, -visualViewport.offsetTop) (HIGH-942).
+ * - The point is measured, not picked by engine. The layout viewport's corner
+ *   in document coordinates is `pageLeft - offsetLeft`, and `<html>`, whose
+ *   border box starts at its margin in document coordinates, shows where the
+ *   client origin is.
+ */
+function getLayoutViewportClientOrigin(): ClientPoint {
+  const vv = window.visualViewport
+  // Without an offset, both viewports share their corner in every engine.
+  if (!vv || (!vv.offsetLeft && !vv.offsetTop)) { return { x: 0, y: 0 } }
+  const html = document.documentElement
+  const rect = html.getBoundingClientRect()
+  const style = window.getComputedStyle(html)
+  return {
+    x: vv.pageLeft - vv.offsetLeft - (parseFloat(style.marginLeft) || 0) + rect.left,
+    y: vv.pageTop - vv.offsetTop - (parseFloat(style.marginTop) || 0) + rect.top,
+  }
 }
 
 /**
@@ -591,16 +630,26 @@ export function createPositioner(
   // resize or a pan of the visual viewport never do - see onResize.
   function reposition(allowHide: boolean): void {
     if (!attached) { return }
-    const rect = anchor.getBoundingClientRect()
+    const clientRect = anchor.getBoundingClientRect()
+    // The anchor rect in layout-viewport coordinates, those of `position: fixed`.
+    const origin = getLayoutViewportClientOrigin()
+    const rect = {
+      top: clientRect.top - origin.y,
+      left: clientRect.left - origin.x,
+      right: clientRect.right - origin.x,
+      bottom: clientRect.bottom - origin.y,
+      width: clientRect.width,
+      height: clientRect.height,
+    }
     const { left: viewportLeft, top: viewportTop, width: viewportWidth, height: viewportHeight } = getVisibleViewport()
     // Visibility test uses the LAYOUT viewport (window.innerWidth/Height), NOT
     // the visual viewport. A virtual keyboard / URL bar shrinks the visual
-    // viewport from the bottom without scrolling the anchor away, while
-    // getBoundingClientRect reports layout-viewport coords - comparing the two
-    // spaces would treat a lower-screen anchor as "scrolled out" and close the
-    // popup the instant the keyboard opens. The visual viewport still drives
-    // computePosition below (maxHeight clamps to the actually-visible area).
-    if (allowHide && isAnchorHiddenForRect(anchor, rect) && options?.onHide) {
+    // viewport from the bottom without scrolling the anchor away - comparing
+    // the anchor with the visual viewport would treat a lower-screen anchor as
+    // "scrolled out" and close the popup the instant the keyboard opens. The
+    // visual viewport still drives computePosition below (maxHeight clamps to
+    // the actually-visible area).
+    if (allowHide && isAnchorHiddenForRect(anchor, clientRect, origin) && options?.onHide) {
       options.onHide()
       return
     }
@@ -620,14 +669,7 @@ export function createPositioner(
     const clampedOverflow = inner ? Math.max(0, inner.scrollHeight - inner.clientHeight) : 0
     const floatingHeight = floating.offsetHeight + clampedOverflow
     const result = computePosition({
-      anchorRect: {
-        top: rect.top,
-        left: rect.left,
-        right: rect.right,
-        bottom: rect.bottom,
-        width: rect.width,
-        height: rect.height,
-      },
+      anchorRect: rect,
       viewportWidth,
       viewportHeight,
       viewportLeft,
