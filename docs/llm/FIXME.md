@@ -842,9 +842,9 @@ Process: the owner raised two problems: a mouse wheel inside the open popup scro
 - [x] **[DOCUMENTATION-966] - The docs and the record, after round six of the post-fix review**
   - Symptom: the references to other findings that the record of round five added or edited led with a bare id, while `CLAUDE.md` wants each finding named first and its id only as a trailing reference (Codex Sol). `HANDOFF.md` said that `npm run verify` passed after the fixes of round five and that `public/` was built from that state, while a wording edit of `FIXME.md` came after that run and only `npm run check` ran after it (Codex Sol).
   - Fix: those references name each finding first and end with its id; older references stay as written, as Codex Sol's fix asked. `npm run verify` ran again after the last edit of this record, and `HANDOFF.md` says so.
-- [ ] **[LINT-952] - Commit subjects that explain the mechanism or list sub-parts**
+- [x] **[LINT-952] - Commit subjects that explain the mechanism or list sub-parts**
   - Symptom: `419a0da` and `1975530` describe the mechanism, at 110 and 103 characters, and `206905f` lists the parts of a handoff update (Codex Sol; Codex Astra); `6635fd6`, `c52e3d5` and `61dbf46` list bullets or doc surfaces (Codex Sol). Round two added `22bf822`, which lists two sub-parts (Codex Sol), `d386272`, which names the mechanism (Codex Sol; Codex Astra), and `fb34b65`, at 103 characters with "after the review" (Codex Sol; Codex Astra).
-  - Fix: a new subject needs a rewrite of the history, which changes the hashes that `HANDOFF.md` cites; left for the owner's next squash of the review rounds, which rewrites these subjects anyway.
+  - Fix: the owner's squash of the review rounds gave the listed fix commits new subjects and merged the listed docs commits into neighboring commits; the old commits stay on the branch `backup/dev-before-squash-for-v0.0.14`.
 
 ## review (the trigger structure and the screen-reader text, post-fix rounds)
 

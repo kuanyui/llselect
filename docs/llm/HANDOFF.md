@@ -12,7 +12,7 @@ Agent-facing state of the work in progress, so that a session after a context co
 
 ## Waiting for the owner
 
-1. The owner's retest in WebKit of MEDIUM-955: the layout viewport's corner now comes from the window's scroll position, `TODO.md` "WebKit retest of the corner from the scroll position". LINT-952, nine commit subjects, needs a history rewrite and is left for the owner's next squash.
+1. The owner's retest in WebKit of MEDIUM-955: the layout viewport's corner now comes from the window's scroll position, `TODO.md` "WebKit retest of the corner from the scroll position".
    - NEEDS-VERIFICATION-944, low priority by the owner's ruling: Firefox on Windows closes its popup at a touchpad scroll outside it, unlike its mouse wheel, and the page cannot tell the two apart.
    - The two-finger zoom in the presets is built, `DESIGN.md` "Zoom gestures while the popup is open"; the owner took shape B with the house names for now and a zone type per group. Its two open questions, a first finger that lands alone and Ctrl with a mouse wheel, are the low-priority entries NEEDS-VERIFICATION-940 and NEEDS-VERIFICATION-941, the owner's ruling: native tests when there is time.
    - The owner's macOS Safari test of the native select is in `native-select-scrolling.md`: while the popup is open, Safari blocks every two-finger zoom and keeps the popup open.
@@ -40,6 +40,7 @@ Agent-facing state of the work in progress, so that a session after a context co
 - The later steps, such as the drag behaviors, wait in `TODO.md` "Scroll-gesture behaviors - later steps", each with its own design round.
 - MEDIUM-858 and MEDIUM-862 are ruled and fixed: `open()` undoes itself through `close()` when `showPopover()` throws, and a canceled `beforetoggle` is documented as unsupported.
 - The squash of the history: the owner adopted the form that merges the review rounds of each topic. The branch `dev-squash-rounds` marks where the squashed history ends, at `532e1e8`; `dev` continues on top of it. The history before it stays on the branch `backup/dev-before-squash`, which holds the commit hashes that `FIXME.md` and `aria-committee.md` cite; it is local, so it must be pushed before anyone else needs those hashes. The commit `be9f943`, signed by the owner, lost its signature in the rebuild.
+- The second squash, at the owner's request: the 126 commits after `branch_v0.0.13` became 29 on the branch `dev-squash-for-v0.0.14`. Every commit that changes code stays its own commit, so each step of trial and error stays visible; the docs commits and the small test commits of the review rounds are merged into a neighboring commit, and the rules in `CLAUDE.md` stay their own commits. The squashed tree is the same as before. The history before it stays on the local branch `backup/dev-before-squash-for-v0.0.14`, which holds the commit hashes that `FIXME.md` and this file cite, such as `f019750`; `dev` still points at that history until the owner moves it.
 
 ## The scratchpad
 
