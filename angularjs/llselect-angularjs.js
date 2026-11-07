@@ -215,6 +215,8 @@
     if (triggerScreenReaderTextFn) { settings.triggerContextToScreenReaderTextFn = triggerScreenReaderTextFn }
     var scrollGestureToBehaviorFn = evalFnAttr(scope, attrs, 'llScrollGestureToBehaviorFn')
     if (scrollGestureToBehaviorFn) { settings.scrollGestureToBehaviorFn = scrollGestureToBehaviorFn }
+    var zoomGestureToBehaviorFn = evalFnAttr(scope, attrs, 'llZoomGestureToBehaviorFn')
+    if (zoomGestureToBehaviorFn) { settings.zoomGestureToBehaviorFn = zoomGestureToBehaviorFn }
     // Popup header / footer slots. The core calls each fn exactly ONCE, in its
     // constructor - so right here at link time, inside the link digest, unlike
     // the row / trigger content fns it calls per render outside any digest -
@@ -230,7 +232,7 @@
     if (attrs.llPopupListLeadingRowsPinned) { settings.popupListLeadingRowsPinned = scope.$eval(attrs.llPopupListLeadingRowsPinned) }
     if (attrs.llPopupListTrailingRowsPinned) { settings.popupListTrailingRowsPinned = scope.$eval(attrs.llPopupListTrailingRowsPinned) }
     wireEventAttr(scope, attrs, 'llOnOpen', settings, 'onOpen', exceptionHandler, function (meta) { return { $reason: meta.reason } })
-    wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler, function (meta) { return { $reason: meta.reason, $scrollGesture: meta.scrollGesture } })
+    wireEventAttr(scope, attrs, 'llOnClose', settings, 'onClose', exceptionHandler, function (meta) { return { $reason: meta.reason, $scrollGesture: meta.scrollGesture, $zoomGesture: meta.zoomGesture } })
     wireEventAttr(scope, attrs, 'llOnFocus', settings, 'onFocus', exceptionHandler)
     wireEventAttr(scope, attrs, 'llOnActiveItemChange', settings, 'onActiveItemChange', exceptionHandler, function (item) { return { $item: item } })
     wireEventAttr(scope, attrs, 'llOnFilterQueryChange', settings, 'onFilterQueryChange', exceptionHandler, function (query) { return { $query: query } })
@@ -260,7 +262,7 @@
     settings[key] = function () {
       // toLocals maps the core's callback arguments to expression locals
       // (ll-on-open / ll-on-close expose `$reason`, ll-on-close also
-      // `$scrollGesture`, ll-on-filter-query-change
+      // `$scrollGesture` and `$zoomGesture`, ll-on-filter-query-change
       // `$query`, ll-on-active-item-change `$item`, ll-on-before-change
       // `$next` / `$previous` / `$event`); ll-on-focus has none.
       var locals = toLocals ? toLocals.apply(null, arguments) : undefined

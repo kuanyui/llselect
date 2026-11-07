@@ -709,6 +709,40 @@ test('ll-scroll-gesture-to-behavior-fn picks the behavior of a scroll gesture, a
   assert.deepEqual(a.errors, [])
 })
 
+test('ll-zoom-gesture-to-behavior-fn picks the behavior of a zoom gesture, and ll-on-close exposes $zoomGesture', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <p id="outside">page</p>
+      <span id="n">{{vm.log.join(',')}}</span>
+      <llselect-single ng-model="vm.x" ll-zoom-gesture-to-behavior-fn="vm.toBehavior"
+        ll-on-close="vm.log.push($reason + ($zoomGesture ? ':' + $zoomGesture.zone : ''))"
+        ll-options="f for f in vm.fruits"></llselect-single></div>`,
+    controller: function () {
+      this.fruits = FRUITS.slice()
+      this.log = []
+      this.toBehavior = function (g) {
+        return g.zone === 'outside' ? 'close-popup-and-allow-page-zoom' : 'leave-popup-open-and-block-page-zoom'
+      }
+    },
+  })
+  const ctrlWheel = (el) => {
+    const ev = new a.window.WheelEvent('wheel', { deltaY: 3, ctrlKey: true, bubbles: true, cancelable: true })
+    el.dispatchEvent(ev)
+    return ev.defaultPrevented
+  }
+  a.$('.llselect-trigger').click()
+  assert.equal(ctrlWheel(a.$('.llselect-popup-list')), true)
+  assert.equal(ctrlWheel(a.$('#outside')), false)
+  a.scope.$apply(() => {
+    const sel = a.ng.element(a.$('llselect-single')).controller('llselectSingle').instance()
+    sel.open()
+    sel.close()
+  })
+  assert.equal(a.$('#n').textContent, 'zoom-gesture:outside,api')
+  assert.deepEqual(a.errors, [])
+})
+
 test('ll-item-to-lang-fn and ll-group-key-to-lang-fn write lang on the rows and on the group containers', () => {
   const a = boot({
     deps: ['llselect'],

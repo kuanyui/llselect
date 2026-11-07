@@ -78,8 +78,9 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 > No **before** counterpart: there is no `ll-on-before-close`.
 
-- `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the select component), `'blur'` (DOM focus left the select component), `'trigger-buttons'` (DOM focus moved into the trigger buttons strip, the row of the clear button and the chips' remove buttons; no `ll-on-blur` follows), `'toggle'` (a click in the trigger wrapper, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed), `'hidden'` (the trigger scrolled out of view or was clipped) or `'scroll-gesture'` (a wheel or a touch for which [`ll-scroll-gesture-to-behavior-fn`](#ll-scroll-gesture-to-behavior-fn) picked a behavior that closes the popup).
+- `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the select component), `'blur'` (DOM focus left the select component), `'trigger-buttons'` (DOM focus moved into the trigger buttons strip, the row of the clear button and the chips' remove buttons; no `ll-on-blur` follows), `'toggle'` (a click in the trigger wrapper, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed), `'hidden'` (the trigger scrolled out of view or was clipped), `'scroll-gesture'` (a wheel or a touch for which [`ll-scroll-gesture-to-behavior-fn`](#ll-scroll-gesture-to-behavior-fn) picked a behavior that closes the popup) or `'zoom-gesture'` (a two-finger zoom, or a wheel with Ctrl held, for which [`ll-zoom-gesture-to-behavior-fn`](#ll-zoom-gesture-to-behavior-fn) picked a behavior that closes the popup).
 - `$scrollGesture` holds the gesture that closed the popup, `{ kind, zone }`, when `$reason` is `'scroll-gesture'`. For every other reason, it is `undefined`.
+- `$zoomGesture` holds the gesture that closed the popup, `{ zone }`, when `$reason` is `'zoom-gesture'`. For every other reason, it is `undefined`.
 - Same rules as [`ll-on-open`](#ll-on-open), except that `ll-on-close` fires when a listener closes the select component while `showPopover()` shows the popup.
 - It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and AngularJS broadcasts `$destroy` before disabling the scope.
 - In that teardown case, writes to parent-owned state (`vm.*`, a service) persist; writes to the dying child scope itself are lost with it.
@@ -272,6 +273,7 @@ $scope.ifaceMatch = function (i, query) {
 - When a gesture closes the popup, [`ll-on-close`](#ll-on-close) gets `$reason` `'scroll-gesture'` and the gesture in `$scrollGesture`.
 - For the gesture, the four behaviors and the cases llselect leaves alone, see the core setting `scrollGestureToBehaviorFn` under `LLSelectBaseSettings` in the API reference.
 - The Firefox and Chromium presets copy the native select of one browser on one operating system.
+- A preset also holds a function for two-finger zooms; see [`ll-zoom-gesture-to-behavior-fn`](#ll-zoom-gesture-to-behavior-fn).
 
 To copy the native select of one browser on one operating system, load `behavior-presets.umd.js`, which sets `window.llselectBehaviorPresets`, and hand a preset's function to the attribute:
 
@@ -282,6 +284,29 @@ $scope.scrollGestureToBehavior = llselectBehaviorPresets.behaviorPresetsOfFirefo
 ```html
 <llselect-single ng-model="picked" ll-scroll-gesture-to-behavior-fn="scrollGestureToBehavior"
   ll-options="f for f in fruits"></llselect-single>
+```
+
+### `ll-zoom-gesture-to-behavior-fn`
+
+**Expression** -> `zoomGestureToBehaviorFn`. Decides what a two-finger zoom does while the popup is open.
+
+- Evaluated once at link time to a function `(gesture) => behavior`.
+- llselect calls it outside any digest, on the zoom gestures that the core setting `zoomGestureToBehaviorFn` lists, while the popup is open: once per touch when a second finger lands, and on every wheel with Ctrl held.
+- When the attribute holds a function other than the default, llselect listens on the whole page while the popup is open, so every scroll of the page waits for that listener.
+- Without it, every zoom zooms the page, and the popup stays open.
+- When a zoom closes the popup, [`ll-on-close`](#ll-on-close) gets `$reason` `'zoom-gesture'` and the gesture in `$zoomGesture`.
+- For the gesture and the four behaviors, see the core setting `zoomGestureToBehaviorFn` under `LLSelectBaseSettings` in the API reference.
+
+To copy a whole preset, hand both of its functions to the two attributes:
+
+```js
+$scope.preset = llselectBehaviorPresets.behaviorPresetsOfFirefoxOnWindows
+```
+
+```html
+<llselect-single ng-model="picked" ll-options="f for f in fruits"
+  ll-scroll-gesture-to-behavior-fn="preset.scrollGestureToBehaviorFn"
+  ll-zoom-gesture-to-behavior-fn="preset.zoomGestureToBehaviorFn"></llselect-single>
 ```
 
 ### `ll-arrow`
