@@ -417,9 +417,10 @@ test('a pan of the visual viewport re-clamps the popup both ways, and never clos
   let calls = 0
   const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
   const first = parseFloat(floating.style.maxHeight)
-  vv.offsetTop = 200
+  // A pan that keeps the trigger inside the visible area.
+  vv.offsetTop = 20
   vv.dispatchEvent(new dom.window.Event('scroll'))
-  assert.equal(parseFloat(floating.style.maxHeight), first + 200)
+  assert.equal(parseFloat(floating.style.maxHeight), first + 20)
   vv.offsetTop = 0
   vv.dispatchEvent(new dom.window.Event('scroll'))
   assert.equal(parseFloat(floating.style.maxHeight), first)
@@ -432,6 +433,29 @@ test('a pan of the visual viewport re-clamps the popup both ways, and never clos
   const removed = t.mock.method(vv, 'removeEventListener')
   p.detach()
   assert.ok(removed.mock.calls.some((call) => isRemovalOf(panAdd.arguments, call.arguments)))
+})
+
+test('with the on-screen keyboard up, a page scroll that moves the trigger under the keyboard keeps the popup above the keyboard', () => {
+  const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const vv = Object.assign(new dom.window.EventTarget(), { width: 1024, height: 400, offsetLeft: 0, offsetTop: 0 })
+  Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  withMockedRect(anchor, { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 200, configurable: true })
+  let calls = 0
+  const p = createPositioner(anchor, floating, { onHide: () => { calls++ } })
+  assert.equal(floating.getAttribute('data-placement'), 'below')
+  // The page scrolls; the trigger now sits under the keyboard, inside the
+  // 768 px layout viewport, so it still counts as visible.
+  withMockedRect(anchor, { top: 500, left: 50, right: 250, bottom: 530, width: 200, height: 30 })
+  dom.window.dispatchEvent(new dom.window.Event('scroll'))
+  assert.equal(calls, 0)
+  assert.equal(floating.getAttribute('data-placement'), 'above')
+  const top = parseFloat(floating.style.top)
+  const bottom = top + Math.min(200, parseFloat(floating.style.maxHeight))
+  assert.equal(bottom, 400 - 8)
+  p.detach()
 })
 
 test('a pan of the visual viewport moves a popup above the trigger, not only its height', () => {
@@ -732,7 +756,8 @@ test('pinch-zoom offsets: the right-edge clamp happens at the VISIBLE right edge
 
 test('pinch-zoom offsets: vertical space measures against the visible window', () => {
   // Visible window [300, 1068]; the anchor sits above it, so only "below"
-  // has room, and maxHeight runs to the VISIBLE bottom.
+  // has room. The popup starts at the VISIBLE top, not under the anchor, and
+  // maxHeight runs to the VISIBLE bottom.
   const r = computePosition({
     anchorRect: ANCHOR_AT_TOP,
     viewportWidth: 1024,
@@ -742,8 +767,23 @@ test('pinch-zoom offsets: vertical space measures against the visible window', (
     floatingHeight: 200,
   })
   assert.equal(r.placement, 'below')
-  assert.equal(r.top, 134)
-  assert.equal(r.maxHeight, 300 + 768 - 134 - 8)
+  assert.equal(r.top, 300 + 8)
+  assert.equal(r.maxHeight, 300 + 768 - 8 - (300 + 8))
+})
+
+test('a trigger below the visible window keeps the popup above it inside the window (on-screen keyboard)', () => {
+  // The keyboard leaves a visible window [0, 400]; the anchor at 500 sits
+  // under the keyboard but inside the layout viewport, so it counts as
+  // visible. The popup ends at the VISIBLE bottom, not at the anchor's top.
+  const anchorRect = { top: 500, left: 50, right: 250, bottom: 530, width: 200, height: 30 }
+  const r = computePosition({ anchorRect, viewportWidth: 1024, viewportHeight: 400, floatingHeight: 300 })
+  assert.equal(r.placement, 'above')
+  assert.equal(r.maxHeight, 400 - 8 - 8)
+  assert.equal(r.top, 400 - 8 - 300)
+  // A popup taller than the window fills it, and no more.
+  const tall = computePosition({ anchorRect, viewportWidth: 1024, viewportHeight: 400, floatingHeight: 600 })
+  assert.equal(tall.top, 8)
+  assert.equal(tall.maxHeight, 400 - 8 - 8)
 })
 
 test('zero offsets reproduce the unshifted math exactly', () => {

@@ -91,6 +91,15 @@ const VIEWPORT_PADDING = 8
  * "below" on every content change would make the popup jump sides whenever
  * the list shrinks and regrows.
  *
+ * The floating element stays inside the visible window, even when the anchor
+ * is outside it:
+ * - If the anchor sits below the visible window, as under the on-screen
+ *   keyboard, a floating element above it ends at the visible bottom.
+ * - If the anchor sits above the visible window, a floating element below it
+ *   starts at the visible top.
+ * - In both cases the floating element no longer touches the anchor, as the
+ *   horizontal clamp below does sideways.
+ *
  * Horizontal: `widthPolicy === 'fit-content'` (default) returns
  * `width = max(anchor.width, floatingNaturalWidth)`, clamps to
  * `viewport - 2 * VIEWPORT_PADDING`, and keeps the popup inside the viewport
@@ -120,8 +129,13 @@ export function computePosition(input: PositionInput): PositionResult {
   } = input
 
   const viewportBottom = viewportTop + viewportHeight
-  const spaceBelow = viewportBottom - anchorRect.bottom - GAP - VIEWPORT_PADDING
-  const spaceAbove = anchorRect.top - viewportTop - GAP - VIEWPORT_PADDING
+  // Where a popup below the anchor starts, and where one above it ends, both
+  // kept inside the visible window: an anchor under the on-screen keyboard
+  // still counts as visible, since the hidden check reads the layout viewport.
+  const belowStart = Math.max(anchorRect.bottom + GAP, viewportTop + VIEWPORT_PADDING)
+  const aboveEnd = Math.min(anchorRect.top - GAP, viewportBottom - VIEWPORT_PADDING)
+  const spaceBelow = viewportBottom - VIEWPORT_PADDING - belowStart
+  const spaceAbove = aboveEnd - viewportTop - VIEWPORT_PADDING
 
   const fitsBelow = floatingHeight <= spaceBelow
   const fitsAbove = floatingHeight <= spaceAbove
@@ -143,11 +157,11 @@ export function computePosition(input: PositionInput): PositionResult {
   let top: number
   let maxHeight: number
   if (placement === 'below') {
-    top = anchorRect.bottom + GAP
-    maxHeight = Math.max(0, viewportBottom - top - VIEWPORT_PADDING)
+    top = belowStart
+    maxHeight = Math.max(0, spaceBelow)
   } else {
-    maxHeight = Math.max(0, anchorRect.top - viewportTop - GAP - VIEWPORT_PADDING)
-    top = anchorRect.top - GAP - Math.min(floatingHeight, maxHeight)
+    maxHeight = Math.max(0, spaceAbove)
+    top = aboveEnd - Math.min(floatingHeight, maxHeight)
   }
 
   let width: number
