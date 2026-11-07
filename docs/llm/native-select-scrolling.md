@@ -147,3 +147,4 @@ Chromium:
 - The two-finger zoom test gives no browser versions and no Windows version.
 - For two fingers on the `<select>` element, the record holds Chromium on Linux with a touchpad only, and does not say whether the page then zooms.
 - The two-finger zoom test does not say whether a page that was already zoomed behaves differently.
+- No test says whether the native select treats a wheel or a one-finger touch differently on a pinch-zoomed page. The owner's ruling of MEDIUM-939 expects it to act the same.

@@ -398,12 +398,12 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *     the protected `shouldListenForScrollGesturesOutside` returns `true`.
    *     By default, that is while this setting is not
    *     `defaultScrollGestureToBehavior`.
-   *   - So that a user who needs a larger page can still zoom it and move
-   *     around it, the function is never called for a `wheel` with
-   *     `ctrlKey`, for a touch from the moment a second finger lands, or
-   *     while the page is pinch-zoomed.
-   *   - Firefox before 91 on the desktop has no `visualViewport`, so the
-   *     library cannot tell that the page is pinch-zoomed there.
+   *   - So that a user who needs a larger page can still zoom it, the
+   *     function is never called for a `wheel` with `ctrlKey`, or for a
+   *     touch from the moment a second finger lands.
+   *   - So that a preset never changes its behavior because of a zoom that
+   *     the user may not notice, the function is also called while the page
+   *     is pinch-zoomed.
    *   - A pinch starts with one finger, so the function sees the touch-down
    *     of that finger. A preset that closes at a touch-down closes the
    *     popup there, as the native select does.

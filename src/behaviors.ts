@@ -158,15 +158,6 @@ function blocks(behavior: LLSelectScrollGestureBehavior): boolean {
   return behavior === 'leave-popup-open-and-block-page-scroll' || behavior === 'close-popup-and-block-page-scroll'
 }
 
-// So that a user who needs a larger page can move around it, a gesture is left
-// alone while the page is pinch-zoomed: it pans the visual viewport. Firefox
-// before 91 on the desktop has no `visualViewport`, so a zoomed page reads as
-// unzoomed there.
-function isZoomed(): boolean {
-  const viewport = window.visualViewport
-  return viewport !== null && viewport !== undefined && viewport.scale > 1
-}
-
 // The touch target of a hold can be any node, an SVG element included, so its
 // listeners take a plain `Event`.
 function isTouchEvent(ev: Event): ev is TouchEvent {
@@ -342,10 +333,9 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
  * - A wheel or a drag inside the popup that something in the popup can still
  *   scroll is left to the browser and does not reach `behaviorFor`. A
  *   touch-down always reaches it, since it has no direction yet.
- * - A `wheel` with `ctrlKey`, a touch from the moment a second finger lands,
- *   and any gesture while the page is pinch-zoomed are left alone. Firefox
- *   before 91 on the desktop has no `visualViewport`, so a zoomed page reads
- *   as unzoomed there.
+ * - A `wheel` with `ctrlKey`, and a touch from the moment a second finger
+ *   lands, are left alone, since they zoom or pan the page.
+ * - A pinch-zoomed page gets the same calls as a page that is not zoomed.
  * - In a closed shadow root around the select component, the document sees
  *   no deeper than the shadow host:
  *   - The document's listeners read every gesture there as `'outside'`,
@@ -375,7 +365,7 @@ export function attachScrollGestureListeners(host: ScrollGestureHost, listenOuts
   }
 
   const onWheel = (ev: WheelEvent): void => {
-    if (ev.ctrlKey || isZoomed()) { return }
+    if (ev.ctrlKey) { return }
     const path = ev.composedPath()
     const zone = zoneOf(path)
     if (zone === 'popup' && canScrollWithin(path, host.popupEl, Math.sign(ev.deltaX), Math.sign(ev.deltaY))) { return }
@@ -389,7 +379,6 @@ export function attachScrollGestureListeners(host: ScrollGestureHost, listenOuts
     }
     multiTouch = false
     touch = null
-    if (isZoomed()) { return }
     const t = ev.touches.item(0)
     const path = ev.composedPath()
     const target = path[0]
@@ -423,7 +412,7 @@ export function attachScrollGestureListeners(host: ScrollGestureHost, listenOuts
       multiTouch = true
       return
     }
-    if (touch === null || multiTouch || isZoomed()) { return }
+    if (touch === null || multiTouch) { return }
     const t = findTouch(ev.touches, touch.id)
     if (t === null) { return }
     // The content scrolls against the finger.

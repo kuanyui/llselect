@@ -175,15 +175,34 @@ test('a wheel that the popup list can still scroll is left to the browser and do
   assert.deepEqual(sel.seen, [{ kind: 'wheel', zone: 'popup' }])
 })
 
-test('a wheel with ctrlKey, and any gesture while the page is zoomed, are left alone', () => {
+test('a wheel with ctrlKey is left alone', () => {
   const { sel } = mount()
   sel.open()
   assert.equal(wheel(sel.popupEl, { deltaY: 3, ctrlKey: true }).defaultPrevented, false)
-  Object.defineProperty(window, 'visualViewport', { value: { scale: 2 }, configurable: true })
-  assert.equal(wheel(sel.popupEl).defaultPrevented, false)
-  touch('touchstart', sel.popupEl, [{ id: 1, x: 10, y: 50 }])
-  assert.equal(touch('touchmove', sel.popupEl, [{ id: 1, x: 10, y: 20 }]).defaultPrevented, false)
   assert.deepEqual(sel.seen, [])
+})
+
+test('a pinch-zoomed page gets the same behavior as a page that is not zoomed', () => {
+  const { sel } = mount()
+  sel.open()
+  Object.defineProperty(window, 'visualViewport', { value: { scale: 2 }, configurable: true })
+  assert.equal(wheel(sel.popupEl).defaultPrevented, true)
+  touch('touchstart', sel.popupEl, [{ id: 1, x: 10, y: 50 }])
+  assert.equal(touch('touchmove', sel.popupEl, [{ id: 1, x: 10, y: 20 }]).defaultPrevented, true)
+  assert.deepEqual(sel.seen, [{ kind: 'wheel', zone: 'popup' }, { kind: 'touch-start', zone: 'popup' }, { kind: 'touch-drag', zone: 'popup' }])
+})
+
+test('on a slightly pinch-zoomed page, the presets act as on a page that is not zoomed', () => {
+  const chromium = mount({ ...behaviorPresetsOfChromiumOnWindows })
+  chromium.sel.open()
+  Object.defineProperty(window, 'visualViewport', { value: { scale: 1.05 }, configurable: true })
+  assert.equal(wheel(chromium.outside).defaultPrevented, false)
+  assert.deepEqual(chromium.closes, [{ reason: 'scroll-gesture', scrollGesture: { kind: 'wheel', zone: 'outside' } }])
+  const firefox = mount({ ...behaviorPresetsOfFirefoxOnWindows })
+  firefox.sel.open()
+  Object.defineProperty(window, 'visualViewport', { value: { scale: 1.05 }, configurable: true })
+  assert.equal(wheel(firefox.outside).defaultPrevented, true)
+  assert.equal(firefox.sel.isOpened(), true)
 })
 
 test('a wheel on the trigger reaches the setting with the zone trigger, and the default lets the page scroll', () => {
@@ -809,11 +828,11 @@ test('a close picked for a touch-drag blocks that one move only', () => {
   assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 60 }]).defaultPrevented, false)
 })
 
-test('a page that gets pinch-zoomed during a touch leaves the rest of that touch alone', () => {
+test('a page that gets pinch-zoomed during a touch still sends the rest of that touch', () => {
   const { sel } = mount()
   sel.open()
   touch('touchstart', sel.popupListEl, [{ id: 1, x: 10, y: 50 }])
   Object.defineProperty(window, 'visualViewport', { value: { scale: 2 }, configurable: true })
-  assert.equal(touch('touchmove', sel.popupListEl, [{ id: 1, x: 10, y: 20 }]).defaultPrevented, false)
-  assert.deepEqual(sel.seen, [{ kind: 'touch-start', zone: 'popup' }])
+  assert.equal(touch('touchmove', sel.popupListEl, [{ id: 1, x: 10, y: 20 }]).defaultPrevented, true)
+  assert.deepEqual(sel.seen, [{ kind: 'touch-start', zone: 'popup' }, { kind: 'touch-drag', zone: 'popup' }])
 })
