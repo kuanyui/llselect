@@ -380,7 +380,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
   compareFn: (a: T, b: T) => boolean
   /**
    * See {@link LLSelectOutsideClickBehavior}.
-   * @group Popup
+   * @group Behaviors
    */
   outsideClickBehavior: LLSelectOutsideClickBehavior
   /**
@@ -438,7 +438,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   - Over the list, the browser may still stop a scroll that the
    *     function allows, at the end of the list.
    *   - Safari supports the property from version 16.
-   * @group Popup
+   * @group Behaviors
    */
   scrollGestureToBehaviorFn: (gesture: LLSelectScrollGesture) => LLSelectScrollGestureBehavior
   /**
