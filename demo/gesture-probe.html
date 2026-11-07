@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>llselect - gesture event probe</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 1rem; max-width: 60rem; }
+  h1 { font-size: 1.2rem; }
+  p.note { color: #555; }
+  .row { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; align-items: center; margin: 0.75rem 0; }
+  #state { font-family: ui-monospace, monospace; }
+  .log { display: flex; }
+  .log textarea { flex: 1; height: 24rem; font: 12px/1.4 ui-monospace, monospace; }
+  button { font: inherit; padding: 0.3rem 0.8rem; }
+</style>
+</head>
+<body>
+<h1>Gesture event probe</h1>
+<p class="note">This page logs what the browser sends to a page at a two-finger zoom: a pinch on a touchscreen, a pinch on a touchpad, and Ctrl with the mouse wheel. Each checkbox cancels one kind of event, so a test can show whether canceling it stops the zoom. Try the gestures with the native select's popup open, too. Equal events in a row share one line, with a count.</p>
+<div class="row">
+  <label><input type="checkbox" id="cancel-ctrl-wheel"> Cancel each <code>wheel</code> with <code>ctrlKey</code></label>
+  <label><input type="checkbox" id="cancel-multi-start"> Cancel each <code>touchstart</code> with two or more touches</label>
+  <label><input type="checkbox" id="cancel-multi-move"> Cancel each <code>touchmove</code> with two or more touches</label>
+</div>
+<div class="row">
+  <label>Native select <select id="native"></select></label>
+  <button type="button" id="copy">Copy the log</button>
+  <button type="button" id="clear">Clear the log</button>
+</div>
+<div class="row" id="state"></div>
+<div class="log"><textarea id="log" readonly aria-label="Event log"></textarea></div>
+<script>
+  const logEl = document.getElementById('log')
+  const stateEl = document.getElementById('state')
+  const cancelCtrlWheel = document.getElementById('cancel-ctrl-wheel')
+  const cancelMultiStart = document.getElementById('cancel-multi-start')
+  const cancelMultiMove = document.getElementById('cancel-multi-move')
+  const native = document.getElementById('native')
+  for (let i = 1; i <= 30; i++) { native.add(new Option(`Option ${i}`)) }
+
+  const t0 = performance.now()
+  const MAX_LINES = 400
+  const lines = []
+  let lastKey = null
+  let lastCount = 0
+
+  // Newest line first. An event equal to the one before it, by `key`, updates
+  // that line and its count instead of adding a line.
+  function log(key, text) {
+    const time = (performance.now() - t0).toFixed(0).padStart(7)
+    if (key === lastKey) {
+      lastCount += 1
+      lines[0] = `${time} ms  ${text}  (x${lastCount})`
+    } else {
+      lastKey = key
+      lastCount = 1
+      lines.unshift(`${time} ms  ${text}`)
+      if (lines.length > MAX_LINES) { lines.length = MAX_LINES }
+    }
+    logEl.value = lines.join('\n')
+  }
+
+  function targetText(target) {
+    if (!(target instanceof Element)) { return String(target) }
+    return target.tagName.toLowerCase() + (target.id ? `#${target.id}` : '')
+  }
+
+  function viewportText() {
+    const vv = window.visualViewport
+    const zoom = vv
+      ? `visualViewport scale ${vv.scale.toFixed(3)}, offset ${vv.offsetLeft.toFixed(0)},${vv.offsetTop.toFixed(0)}, size ${vv.width.toFixed(0)}x${vv.height.toFixed(0)}`
+      : 'no visualViewport'
+    return `${zoom}; innerWidth ${window.innerWidth}; devicePixelRatio ${window.devicePixelRatio.toFixed(3)}`
+  }
+  function showState() { stateEl.textContent = viewportText() }
+  showState()
+
+  window.addEventListener('wheel', (ev) => {
+    if (ev.ctrlKey && cancelCtrlWheel.checked && ev.cancelable) { ev.preventDefault() }
+    const head = `wheel ctrlKey ${ev.ctrlKey} deltaMode ${ev.deltaMode} cancelable ${ev.cancelable} canceled ${ev.defaultPrevented} on ${targetText(ev.target)}`
+    log(head, `${head}, last deltaX ${ev.deltaX.toFixed(2)} deltaY ${ev.deltaY.toFixed(2)}`)
+  }, { capture: true, passive: false })
+
+  function touchText(ev) {
+    const changed = Array.from(ev.changedTouches, (t) => t.identifier).join(',')
+    return `${ev.type} touches ${ev.touches.length} changed ${changed} cancelable ${ev.cancelable} canceled ${ev.defaultPrevented} on ${targetText(ev.target)}`
+  }
+  window.addEventListener('touchstart', (ev) => {
+    if (ev.touches.length >= 2 && cancelMultiStart.checked && ev.cancelable) { ev.preventDefault() }
+    log(touchText(ev), touchText(ev))
+  }, { capture: true, passive: false })
+  window.addEventListener('touchmove', (ev) => {
+    if (ev.touches.length >= 2 && cancelMultiMove.checked && ev.cancelable) { ev.preventDefault() }
+    log(touchText(ev), touchText(ev))
+  }, { capture: true, passive: false })
+  for (const type of ['touchend', 'touchcancel']) {
+    window.addEventListener(type, (ev) => { log(touchText(ev), touchText(ev)) }, { capture: true })
+  }
+
+  for (const type of ['pointerdown', 'pointerup', 'pointercancel']) {
+    window.addEventListener(type, (ev) => {
+      const text = `${type} pointerType ${ev.pointerType} pointerId ${ev.pointerId} on ${targetText(ev.target)}`
+      log(text, text)
+    }, { capture: true })
+  }
+
+  // A physical Ctrl key shows up here; a touchpad pinch may set ctrlKey without it.
+  for (const type of ['keydown', 'keyup']) {
+    window.addEventListener(type, (ev) => {
+      if (ev.key === 'Control') { log(`${type} Control`, `${type} Control, repeat ${ev.repeat}`) }
+    }, { capture: true })
+  }
+
+  // Safari's own gesture events; other browsers do not send them.
+  for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+    window.addEventListener(type, (ev) => { log(type, `${type} scale ${typeof ev.scale === 'number' ? ev.scale.toFixed(3) : '?'}`) })
+  }
+
+  if (window.visualViewport) {
+    for (const type of ['resize', 'scroll']) {
+      window.visualViewport.addEventListener(type, () => {
+        showState()
+        log(`visualViewport ${type}`, `visualViewport ${type}: ${viewportText()}`)
+      })
+    }
+  }
+  window.addEventListener('resize', () => {
+    showState()
+    log('window resize', `window resize: ${viewportText()}`)
+  })
+
+  document.getElementById('clear').addEventListener('click', () => {
+    lines.length = 0
+    lastKey = null
+    logEl.value = ''
+  })
+  // The Clipboard API needs a secure context, which a LAN address is not.
+  document.getElementById('copy').addEventListener('click', () => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(logEl.value)
+      return
+    }
+    logEl.focus()
+    logEl.select()
+    document.execCommand('copy')
+  })
+</script>
+</body>
+</html>
