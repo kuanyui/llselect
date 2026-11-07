@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { assertEveryListenerRemoved, isRemovalOf } from '../test-utils/listeners.js'
-import { computePosition, createPositioner, type AnchorRect } from '../src/positioning.js'
+import { computePosition, createPositioner, isAnchorHidden, type AnchorRect } from '../src/positioning.js'
 import { LLSelectSingle } from '../src/single.js'
 
 const ANCHOR_AT_TOP: AnchorRect = {
@@ -547,6 +547,48 @@ test('in WebKit, a trigger inside the layout viewport but above the visual viewp
   // The visible top edge stands in for the trigger, 4 px below it.
   assert.equal(floating.style.top, '204px')
   p.detach()
+})
+
+test('in WebKit at a high zoom, where innerWidth and innerHeight shrink to the visual viewport, a visible trigger still counts as visible', () => {
+  const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  // Zoomed 3x: a 341 by 256 px visual viewport at (600, 400) in the 1024 by
+  // 768 px layout viewport, whose size only `<html>` still reports.
+  const vv = pannableViewport(dom, { width: 341, height: 256 })
+  vv.offsetLeft = 600
+  vv.offsetTop = 400
+  Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
+  Object.defineProperty(dom.window, 'innerWidth', { configurable: true, value: 341 })
+  Object.defineProperty(dom.window, 'innerHeight', { configurable: true, value: 256 })
+  Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 1024 })
+  Object.defineProperty(document.documentElement, 'clientHeight', { configurable: true, value: 768 })
+  withMockedRect(document.documentElement, { top: -400, left: -600, right: 424, bottom: 368, width: 1024, height: 768 })
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  // At (650, 450) in the layout viewport, 50 px inside the visible area.
+  withMockedRect(anchor, { top: 50, left: 50, right: 150, bottom: 80, width: 100, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 100, configurable: true })
+  assert.equal(isAnchorHidden(anchor), false)
+  let calls = 0
+  const p = createPositioner(anchor, floating, { widthPolicy: 'match-trigger-wrapper', onHide: () => { calls++ } })
+  assert.equal(calls, 0)
+  assert.equal(floating.style.top, '484px')
+  assert.equal(floating.style.left, '650px')
+  assert.equal(floating.style.maxHeight, `${400 + 256 - 8 - 484}px`)
+  p.detach()
+})
+
+test('in quirks mode, the layout viewport is the client box of the body, not that of the html element', () => {
+  // No doctype: quirks mode, where `<html>` reports the document's height.
+  setupDom('<html><body><div id="a"></div><div id="b"></div></body></html>')
+  assert.equal(document.compatMode, 'BackCompat')
+  Object.defineProperty(document.documentElement, 'clientHeight', { configurable: true, value: 5000 })
+  Object.defineProperty(document.body, 'clientWidth', { configurable: true, value: 1024 })
+  Object.defineProperty(document.body, 'clientHeight', { configurable: true, value: 768 })
+  const anchor = document.getElementById('a')!
+  withMockedRect(anchor, { top: 1000, left: 50, right: 250, bottom: 1030, width: 200, height: 30 })
+  assert.equal(isAnchorHidden(anchor), true)
+  withMockedRect(anchor, { top: 700, left: 50, right: 250, bottom: 730, width: 200, height: 30 })
+  assert.equal(isAnchorHidden(anchor), false)
 })
 
 test('positioner auto-closes on scroll but NOT on resize (virtual keyboard)', () => {

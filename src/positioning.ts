@@ -432,18 +432,29 @@ function shadowRootsOnPath(anchor: Element): ShadowRoot[] {
   return roots
 }
 
-// Anchor fully outside the LAYOUT viewport (window.innerWidth/Height, not the
-// visual viewport - see reposition) or clipped away by an ancestor. `origin`
-// is the layout viewport's corner in client coordinates, from
-// getLayoutViewportClientOrigin; the ancestors' clips compare client rects.
+// The size of the layout viewport: the client box of the element that CSSOM
+// View makes report it, `<html>`, or `<body>` in quirks mode. A pinch zoom
+// leaves it alone, while WebKit shrinks innerWidth/Height to the visual
+// viewport (HIGH-943). An element without layout, as in jsdom, reports 0, so
+// the window's inner size stands in.
+function getLayoutViewportSize(): { width: number; height: number } {
+  const el = document.compatMode === 'BackCompat' && document.body !== null ? document.body : document.documentElement
+  return { width: el.clientWidth || window.innerWidth, height: el.clientHeight || window.innerHeight }
+}
+
+// Anchor fully outside the LAYOUT viewport (not the visual viewport - see
+// reposition) or clipped away by an ancestor. `origin` is the layout
+// viewport's corner in client coordinates, from getLayoutViewportClientOrigin;
+// the ancestors' clips compare client rects.
 // Strict comparisons so an unsized anchor at (0,0,0,0) - common in jsdom or
 // before first layout - reads as "in viewport, no rect yet", not "off-screen".
 function isAnchorHiddenForRect(anchor: HTMLElement, rect: DOMRect, origin: ClientPoint): boolean {
+  const layout = getLayoutViewportSize()
   const outOfViewport =
     rect.bottom - origin.y < 0 ||
-    rect.top - origin.y > window.innerHeight ||
+    rect.top - origin.y > layout.height ||
     rect.right - origin.x < 0 ||
-    rect.left - origin.x > window.innerWidth
+    rect.left - origin.x > layout.width
   return outOfViewport || isClippedByAncestor(anchor, rect)
 }
 
@@ -536,9 +547,9 @@ function measureNaturalWidth(el: HTMLElement): number {
 
 /**
  * Return the origin and the size of the currently visible viewport.
- * - On mobile, `window.innerHeight` reports the layout viewport.
  * - The layout viewport is often larger than the visible area while a URL
- *   bar or the on-screen keyboard takes part of the screen.
+ *   bar or the on-screen keyboard takes part of the screen, or while the
+ *   page is pinch-zoomed.
  * - `visualViewport`, when present, gives the visible area, so the popup's
  *   `maxHeight` clamps to what the user can actually see.
  */
@@ -642,7 +653,7 @@ export function createPositioner(
       height: clientRect.height,
     }
     const { left: viewportLeft, top: viewportTop, width: viewportWidth, height: viewportHeight } = getVisibleViewport()
-    // Visibility test uses the LAYOUT viewport (window.innerWidth/Height), NOT
+    // Visibility test uses the LAYOUT viewport (see getLayoutViewportSize), NOT
     // the visual viewport. A virtual keyboard / URL bar shrinks the visual
     // viewport from the bottom without scrolling the anchor away - comparing
     // the anchor with the visual viewport would treat a lower-screen anchor as
