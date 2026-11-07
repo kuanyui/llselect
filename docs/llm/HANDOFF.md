@@ -12,7 +12,7 @@ Agent-facing state of the work in progress, so that a session after a context co
 
 ## Waiting for the owner
 
-1. The post-fix review of the 36 commits after `3b4a5ac`, round one, by Codex Sol and Codex Astra: both found bugs, MEDIUM-945 to MEDIUM-949, all fixed with tests, QUALITY-950, and doc items, DOCUMENTATION-951, all fixed. The rules call for a round two over the fixes; the owner had agreed to one review, so round two waits for the owner. LINT-952, six commit subjects, needs a history rewrite and is left for the owner's next squash. HIGH-942 and HIGH-943, the two WebKit fixes, are resolved by the owner's test in WebKit.
+1. The post-fix review of the 36 commits after `3b4a5ac`, round one, by Codex Sol and Codex Astra: both found bugs, MEDIUM-945 to MEDIUM-949, all fixed with tests, QUALITY-950, and doc items, DOCUMENTATION-951, all fixed. The rules call for a round two over the fixes, which runs now; the owner ruled that such a round runs without asking, `CLAUDE.md`. LINT-952, six commit subjects, needs a history rewrite and is left for the owner's next squash. HIGH-942 and HIGH-943, the two WebKit fixes, are resolved by the owner's test in WebKit.
    - NEEDS-VERIFICATION-944, low priority by the owner's ruling: Firefox on Windows closes its popup at a touchpad scroll outside it, unlike its mouse wheel, and the page cannot tell the two apart.
    - The two-finger zoom in the presets is built, `DESIGN.md` "Zoom gestures while the popup is open"; the owner took shape B with the house names for now and a zone type per group. Its two open questions, a first finger that lands alone and Ctrl with a mouse wheel, are the low-priority entries NEEDS-VERIFICATION-940 and NEEDS-VERIFICATION-941, the owner's ruling: native tests when there is time.
    - The owner's macOS Safari test of the native select is in `native-select-scrolling.md`: while the popup is open, Safari blocks every two-finger zoom and keeps the popup open.
@@ -24,7 +24,7 @@ Agent-facing state of the work in progress, so that a session after a context co
 6. Optional, from Fable 5 in the round on the owner's cost criterion: one sentence for the `popupEl` docstring that names `close()` inside `onOpen` as the supported way to stop an open, MEDIUM-862. It recommends an API pattern, so it waits for the owner.
 ## Next steps, in order
 
-1. If the owner agrees, run round two of the post-fix review, with Codex Sol and Codex Astra, over the commits after the one that recorded round one; stop after a round whose findings are documentation only.
+1. Round two of the post-fix review, with Codex Sol and Codex Astra, over the commits after `3325c1a`; stop after a round whose findings are documentation only, and otherwise fix and run the next round without asking.
 2. When the owner has time: the probe page on both machines, and the native tests of NEEDS-VERIFICATION-940, -941 and -944, all low priority.
 
 ## Where the work stands
