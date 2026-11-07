@@ -454,11 +454,12 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * Decides what the select component does with a zoom gesture while the
    * popup is open.
    * - Called through the protected `zoomGestureToBehavior`, while the popup
-   *   is open; nothing is kept for a later call:
+   *   is open:
    *   - on a touchscreen, **once** per touch, when a second finger lands; the
-   *     answer holds until every finger lifts;
+   *     library keeps the answer until every finger lifts;
    *   - on **every** `wheel` with `ctrlKey`, which Ctrl with a mouse wheel
-   *     gives, and a touchpad pinch in Chromium too.
+   *     gives, and a touchpad pinch in Chromium too; nothing is kept for the
+   *     next wheel.
    *   - Outside the select component, the function is called only while
    *     the protected `shouldListenForZoomGesturesOutside` returns `true`.
    *     By default, that is while this setting is not
@@ -474,6 +475,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   {@link LLSelectZoomGestureBehavior}.
    * - The default is `defaultZoomGestureToBehavior`: every zoom zooms the
    *   page, and the popup stays open.
+   * - Even with the default, the `touchstart` listeners on the popup and the
+   *   root element are not passive, so that a zoom can cancel the touch-down
+   *   of a further finger. A touch scroll that starts on the select component
+   *   then waits for those listeners.
    * - `@llselect/core/behavior-presets` holds other functions, as presets
    *   to spread into the settings, such as `behaviorPresetsOfFirefoxOnWindows`.
    * @group Behaviors
@@ -1898,9 +1903,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private pendingZoomGesture: LLSelectZoomGesture | undefined = undefined
   /** Detaches the scroll-gesture and zoom-gesture listeners of the open cycle; set while the popup is open. */
   private detachGestures: (() => void) | undefined = undefined
-  // Ends the rest of a touch whose touch-down closed the popup; the touch
-  // outlives the close, not the instance.
-  private releaseTouchHold: (() => void) | undefined = undefined
+  // The functions that end the touch holds still going on: the rest of a touch
+  // whose touch-down closed the popup, and the rest of a zoom that closed it
+  // and blocks. A touch outlives the close, not the instance, and a popup
+  // reopened during a touch can start a second hold.
+  private readonly touchHoldReleases = new Set<() => void>()
   /** The whole-life focus listeners on `rootEl`; see `attachFocusListeners`. */
   private focusInHandler: ((ev: FocusEvent) => void) | undefined
   private focusOutHandler: ((ev: FocusEvent) => void) | undefined
@@ -2521,11 +2528,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Close the popup.
    * - If the popup is already closed, does nothing.
    * - Detaches the positioner, the outside-click listener and the
-   *   scroll-gesture listeners.
+   *   scroll-gesture and zoom-gesture listeners.
    * - If the library blocks the moves of a touch whose touch-down closed
    *   the popup, or swallows its click, that touch keeps its own listeners.
    *   - They go when the touch and its click are over, or when a second
    *     finger or a new touch lands.
+   * - If a zoom closed the popup and blocks the zoom, the zoom keeps its own
+   *   listeners, on its fingers and on the document.
+   *   - They go when every finger has lifted.
    * - Clears the item DOM.
    * - Resets the focused-item state.
    *
@@ -2704,10 +2714,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Configure via `zoomGestureToBehaviorFn` (no subclass needed).
    * - An override replaces the setting, and
    *   `super.zoomGestureToBehavior(gesture)` still reaches the setting.
-   * - An override that answers zoom gestures outside the select component
-   *   also overrides {@link shouldListenForZoomGesturesOutside}. By default
-   *   the library listens there only while the setting is not
-   *   `defaultZoomGestureToBehavior`.
+   * - An override that may block or close a zoom also overrides
+   *   {@link shouldListenForZoomGesturesOutside}, since a finger of a pinch
+   *   may land outside the select component. By default the library listens
+   *   there only while the setting is not `defaultZoomGestureToBehavior`.
    * @group Subclassing: semantics
    */
   protected zoomGestureToBehavior(gesture: LLSelectZoomGesture): LLSelectZoomGestureBehavior {
@@ -2725,8 +2735,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *     not listen outside the select component for it.
    *   - `@llselect/core` and `@llselect/core/behavior-presets` each export a
    *     copy of the default function, and either copy counts as the default.
-   * - A subclass whose `zoomGestureToBehavior` answers zoom gestures outside
-   *   the select component overrides this method to return `true`.
+   * - A subclass whose `zoomGestureToBehavior` may block or close a zoom
+   *   overrides this method to return `true`: a finger of a pinch may land
+   *   outside the select component, where only the document's listeners see
+   *   its events and can cancel them.
    * - Listening there has a cost. Non-passive `wheel`, `touchstart` and
    *   `touchmove` listeners on the document make every scroll of the page
    *   wait for script while the popup is open.
@@ -2757,10 +2769,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // the wrapper; only the strip's buttons stop their own clicks.
       clickToggles: (path) => path.includes(this.triggerWrapperEl) && !this.getTriggerButtonEls().some((button) => path.includes(button)),
       swallowsOutsideClick: this.settings.outsideClickBehavior === 'block',
-      holdStarted: (release) => { this.releaseTouchHold = release },
-      holdEnded: (release) => {
-        if (this.releaseTouchHold === release) { this.releaseTouchHold = undefined }
-      },
+      holdStarted: (release) => { this.touchHoldReleases.add(release) },
+      holdEnded: (release) => { this.touchHoldReleases.delete(release) },
     })
   }
 
@@ -2807,14 +2817,22 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   content or for a second instance.
    * - REQUIRED before discarding an instance whose popup might be open; a
    *   framework wrapper calls it on unmount. Skipping it there leaks the
-   *   outside-click, scroll-gesture, focusout, scroll and resize listeners.
+   *   outside-click, scroll-gesture, zoom-gesture, focusout, scroll and
+   *   resize listeners.
    * - Ends the library's handling of a touch whose touch-down closed the
    *   popup.
    *   - That handling blocks the moves of the touch or swallows its click.
    *   - Without `destroy()`, the handling lasts until the finger lifts, a
    *     second finger lands or a new touch starts, and the wait for the
    *     click up to a second after the lift.
-   * - Discarding a CLOSED instance without `destroy()` leaks nothing: only
+   * - Ends the library's handling of a zoom that closed the popup and blocks
+   *   the zoom.
+   *   - That handling blocks the moves of the zoom and the touch-down of a
+   *     further finger.
+   *   - Without `destroy()`, the handling lasts until every finger has
+   *     lifted.
+   * - Once those handlings are over, discarding a CLOSED instance without
+   *   `destroy()` leaks nothing: only
    *   its mount element and `labelEl` retain it, through its own DOM
    *   listeners. Once those elements leave the document and the application
    *   holds no reference to them, the instance is collectable. The root
@@ -2838,8 +2856,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.destroyed = true
     this.transitionGeneration++
     this.closeWithReason('destroy')
-    this.releaseTouchHold?.()
-    this.releaseTouchHold = undefined
+    for (const release of [...this.touchHoldReleases]) { release() }
+    this.touchHoldReleases.clear()
     if (this.settings.labelEl !== null) {
       this.settings.labelEl.removeEventListener('click', this.handleLabelElClick)
       if (this.labelElIdMinted) { this.settings.labelEl.removeAttribute('id') }

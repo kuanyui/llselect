@@ -41,8 +41,8 @@ export type { LLSelectUiTranslationPack } from './i18n.js'
 
 /**
  * The types of the `scrollGestureToBehaviorFn` and `zoomGestureToBehaviorFn`
- * settings. The presets live under the `@llselect/core/behavior-presets`
- * subpath.
+ * settings.
+ * - The presets live under the `@llselect/core/behavior-presets` subpath.
  * @group Behaviors
  */
 export type {
@@ -57,8 +57,8 @@ export type {
 } from './behaviors.js'
 /**
  * The defaults of the `scrollGestureToBehaviorFn` and
- * `zoomGestureToBehaviorFn` settings. The presets entry point exports them
- * too.
+ * `zoomGestureToBehaviorFn` settings.
+ * - The presets entry point exports them too.
  * @group Behaviors
  */
 export { defaultScrollGestureToBehavior, defaultZoomGestureToBehavior } from './behavior-presets.js'

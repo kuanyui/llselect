@@ -699,9 +699,16 @@ sel = new LLSelectSingle(el, {
 
 #### Wheel, touch and zoom while the popup is open
 
-The `scrollGestureToBehaviorFn` setting decides what a wheel or a touch does while the popup is open. The `zoomGestureToBehaviorFn` setting decides what a two-finger zoom does. The native select of each browser does both in its own way.
+Two settings decide what a gesture does while the popup is open:
 
-By default, a wheel or a drag inside the popup does not scroll the page behind it. Outside the popup, the page scrolls and the popup stays open. A two-finger zoom always zooms the page.
+- `scrollGestureToBehaviorFn` decides what a wheel or a touch does.
+- `zoomGestureToBehaviorFn` decides what a two-finger zoom does.
+
+By default:
+
+- A wheel or a drag inside the popup does not scroll the page behind it.
+- Outside the popup, the page scrolls, and the popup stays open.
+- A two-finger zoom always zooms the page.
 
 To copy the native select of one browser on one operating system, spread a preset into the settings:
 
@@ -712,7 +719,7 @@ import { behaviorPresetsOfFirefoxOnWindows } from '@llselect/core/behavior-prese
 const sel = new LLSelectSingle(el, { ...behaviorPresetsOfFirefoxOnWindows })
 ```
 
-- With `behaviorPresetsOfFirefoxOnWindows`, a wheel outside the popup scrolls nothing. A touch outside the popup closes the popup, and the rest of that touch scrolls nothing. A two-finger zoom never zooms the page, and the popup stays open.
+- With `behaviorPresetsOfFirefoxOnWindows`, a wheel outside the popup scrolls nothing. A touch outside the popup closes the popup, and the rest of that touch scrolls nothing. A two-finger zoom never zooms the page, and the popup stays open. On a touchscreen, the first finger of a zoom closes the popup when it lands outside.
 - With `behaviorPresetsOfChromiumOnWindows`, a wheel or a touch outside the popup closes the popup. The page scrolls as usual. A two-finger zoom inside the popup does not zoom the page. Elsewhere, it closes the popup and zooms the page.
 - With `behaviorPresetsOfSafariOnMac`, a wheel outside the popup scrolls nothing. A two-finger zoom never zooms the page. The popup stays open.
 - The library does not detect the browser. Your app picks the preset.
@@ -740,11 +747,12 @@ const sel = new LLSelectSingle(el, {
 })
 ```
 
-- When a gesture closes the popup, `onClose` gets the reason `'scroll-gesture'` or `'zoom-gesture'`.
+- When a wheel or a touch closes the popup, `onClose` gets the reason `'scroll-gesture'`.
+- When a two-finger zoom closes the popup, the reason is `'zoom-gesture'`.
 - A touch counts as a zoom from the moment a second finger lands. A wheel with Ctrl held counts as a zoom too.
 - In Chromium, a touchpad pinch reaches the page as a wheel with Ctrl held.
 - A preset that blocks a zoom stops the user from zooming while the popup is open. Closing the popup lifts that block.
-- Either preset above, or your own function, makes the library listen on the whole page. Every scroll of the page then waits for that listener while the popup is open.
+- Any preset above, or your own function, makes the library listen on the whole page. Every scroll of the page then waits for that listener while the popup is open.
 
 ### Subclassing (extending the library)
 

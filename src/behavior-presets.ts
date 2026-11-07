@@ -79,6 +79,8 @@ export const behaviorPresetsOfLLSelectDefault: LLSelectBehaviorPreset = {
  * - A wheel or a drag inside the popup does not scroll the page.
  * - A two-finger zoom, anywhere, does not zoom the page, and the popup stays
  *   open. So does a `wheel` with `ctrlKey`.
+ * - On a touchscreen, the first finger of a zoom that lands outside the
+ *   popup closes it at its touch-down, as above, before the zoom begins.
  * - This preset does not cover one Firefox behavior: Firefox closes the
  *   popup when a drag that started inside the popup moves beyond the popup.
  * - This preset follows the mouse wheel, not the touchpad: Firefox closes
@@ -121,8 +123,8 @@ export const behaviorPresetsOfChromiumOnWindows: LLSelectBehaviorPreset = {
 /**
  * The native `<select>` of Safari on macOS, with a mouse or a touchpad.
  * - A wheel outside the popup, on the trigger or elsewhere, scrolls
- *   nothing, and the popup stays open. A two-finger scroll on the touchpad
- *   gives a wheel too.
+ *   nothing, and the popup stays open.
+ * - A two-finger scroll on the touchpad counts as a wheel.
  * - A wheel inside the popup does not scroll the page.
  * - A two-finger zoom, anywhere, does not zoom the page, and the popup stays
  *   open. So does a `wheel` with `ctrlKey`.

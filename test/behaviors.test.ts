@@ -157,13 +157,15 @@ function wheel(target: EventTarget, init: WheelEventInit = { deltaY: 3 }): Wheel
   return ev
 }
 
-type Point = { id: number; x: number; y: number }
+// A finger keeps the target it touched down on; without one, it takes the
+// event's target.
+type Point = { id: number; x: number; y: number; target?: EventTarget }
 
 // jsdom has no Touch constructor, so the touch lists are plain look-alikes.
 // A lift keeps `remaining` down; every other event has `points` down.
 function touch(type: string, target: EventTarget, points: Point[], changed = points, remaining: Point[] = []): Event {
   const list = (ps: Point[]): TouchList => {
-    const items = ps.map((p) => ({ identifier: p.id, clientX: p.x, clientY: p.y, target }))
+    const items = ps.map((p) => ({ identifier: p.id, clientX: p.x, clientY: p.y, target: p.target ?? target }))
     return { length: items.length, item: (i: number) => items[i] ?? null } as unknown as TouchList
   }
   const ev = new window.Event(type, { bubbles: true, cancelable: true, composed: true })
@@ -872,6 +874,81 @@ test('a close that blocks the zoom holds the rest of the touch until every finge
   assert.equal(touch('touchmove', row, [{ id: 1, x: 0, y: 30 }]).defaultPrevented, false)
   touch('touchend', row, [], [{ id: 1, x: 0, y: 30 }], [])
   assert.equal(touch('touchmove', row, [{ id: 3, x: 0, y: 50 }, { id: 4, x: 80, y: 50 }]).defaultPrevented, false)
+})
+
+test('a zoom hold follows each finger, also one whose row the close removed, and ends at the last lift in either order', () => {
+  for (const order of ['b-first', 'a-first'] as const) {
+    const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+    sel.open()
+    const rowA = sel.popupListEl.children[0]
+    const rowB = sel.popupListEl.children[1]
+    assert.ok(rowA && rowB)
+    const a = { id: 1, x: 10, y: 10, target: rowA }
+    const b = { id: 2, x: 10, y: 40, target: rowB }
+    touch('touchstart', rowA, [a])
+    touch('touchstart', rowB, [a, b], [b])
+    assert.equal(sel.isOpened(), false, order)
+    assert.equal(rowA.isConnected, false, order)
+    // The removed row A still gets its finger's events, and only it does.
+    assert.equal(touch('touchmove', rowA, [a, b], [a]).defaultPrevented, true, order)
+    if (order === 'b-first') {
+      touch('touchend', rowB, [], [b], [a])
+      touch('touchend', rowA, [], [a], [])
+    } else {
+      touch('touchend', rowA, [], [a], [b])
+      touch('touchend', rowB, [], [b], [])
+    }
+    // The hold has ended, so a later pinch on the page is not blocked.
+    assert.equal(touch('touchmove', outside, [{ id: 3, x: 0, y: 0 }, { id: 4, x: 50, y: 0 }]).defaultPrevented, false, order)
+  }
+})
+
+test('a zoom hold blocks the touch-down of a finger that lands while it lasts', () => {
+  const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  const a = { id: 1, x: 10, y: 50, target: row }
+  const b = { id: 2, x: 60, y: 50, target: row }
+  touch('touchstart', row, [a, b])
+  // One finger lifts, and another lands before the last one lifts.
+  touch('touchend', row, [], [b], [a])
+  const c = { id: 3, x: 200, y: 50 }
+  assert.equal(touch('touchstart', outside, [a, c], [c]).defaultPrevented, true)
+})
+
+test('a first finger that no listener saw still gives the zoom its zone', () => {
+  // By default the library does not listen outside, so a finger outside is unseen.
+  const { sel, outside } = mount()
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  const a = { id: 1, x: 0, y: 0, target: outside }
+  const b = { id: 2, x: 10, y: 10, target: row }
+  touch('touchstart', outside, [a])
+  touch('touchstart', row, [a, b], [b])
+  // An outside zoom, which the library does not ask about while it does not listen outside.
+  assert.deepEqual(sel.zooms, [])
+})
+
+test('destroy() ends every touch hold, also one that started before the popup was reopened', () => {
+  const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  const a = { id: 1, x: 10, y: 50, target: row }
+  const b = { id: 2, x: 60, y: 50, target: row }
+  touch('touchstart', row, [a, b])
+  assert.equal(sel.isOpened(), false)
+  // Reopened while both fingers stay down; a third finger closes it again.
+  sel.open()
+  const row2 = sel.popupListEl.firstElementChild
+  assert.ok(row2)
+  const c = { id: 3, x: 100, y: 50, target: row2 }
+  touch('touchstart', row2, [a, b, c], [c])
+  assert.equal(sel.isOpened(), false)
+  sel.destroy()
+  assert.equal(touch('touchmove', outside, [{ ...a, target: outside }, { ...c, target: outside }]).defaultPrevented, false)
 })
 
 test('destroy() ends the hold of a zoom that closed the popup and blocks the zoom', () => {

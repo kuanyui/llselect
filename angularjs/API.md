@@ -290,8 +290,10 @@ $scope.scrollGestureToBehavior = llselectBehaviorPresets.behaviorPresetsOfFirefo
 
 **Expression** -> `zoomGestureToBehaviorFn`. Decides what a two-finger zoom does while the popup is open.
 
-- Evaluated once at link time to a function `(gesture) => behavior`.
-- llselect calls it outside any digest, on the zoom gestures that the core setting `zoomGestureToBehaviorFn` lists, while the popup is open: once per touch when a second finger lands, and on every wheel with Ctrl held.
+- llselect calls it outside any digest, while the popup is open:
+  - **once** per touch, when a second finger lands;
+  - on **every** wheel with Ctrl held.
+- Evaluated **once** at link time to a function `(gesture) => behavior`.
 - When the attribute holds a function other than the default, llselect listens on the whole page while the popup is open, so every scroll of the page waits for that listener.
 - Without it, every zoom zooms the page, and the popup stays open.
 - When a zoom closes the popup, [`ll-on-close`](#ll-on-close) gets `$reason` `'zoom-gesture'` and the gesture in `$zoomGesture`.

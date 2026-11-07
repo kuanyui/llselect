@@ -400,14 +400,19 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
  * Blocks the rest of a touchscreen zoom whose answer closed the popup and
  * blocks the zoom, until every finger lifts.
  * - Returns the function that ends the hold early.
- * - Listens on the target of the event that made the touch a zoom, which
- *   keeps getting its events after the close, and on the document, for the
- *   other fingers.
- * - Blocks only moves with two or more touches: a finger left alone after
- *   the others lifted pans as usual.
+ * - `targets` are the targets of the fingers that touch when the hold
+ *   starts. Each target keeps getting its finger's events after the close,
+ *   even when the close removed it from the document, as it removes the rows
+ *   of the list.
+ * - Also listens on the document, for a finger that lands later.
+ * - Blocks the touch-down of a further finger, and every move with two or
+ *   more touches. A finger left alone after the others lifted pans as usual.
  */
-function holdZoomTouch(target: EventTarget, ended: () => void): () => void {
+function holdZoomTouch(targets: ReadonlySet<EventTarget>, ended: () => void): () => void {
   let done = false
+  const onStart = (ev: Event): void => {
+    if (isTouchEvent(ev) && ev.touches.length > 1 && ev.cancelable) { ev.preventDefault() }
+  }
   const onMove = (ev: Event): void => {
     if (isTouchEvent(ev) && ev.touches.length > 1 && ev.cancelable) { ev.preventDefault() }
   }
@@ -417,21 +422,33 @@ function holdZoomTouch(target: EventTarget, ended: () => void): () => void {
   const release = (): void => {
     if (done) { return }
     done = true
-    target.removeEventListener('touchmove', onMove, NON_PASSIVE)
-    target.removeEventListener('touchend', onEnd, PASSIVE)
-    target.removeEventListener('touchcancel', onEnd, PASSIVE)
+    for (const target of targets) {
+      target.removeEventListener('touchmove', onMove, NON_PASSIVE)
+      target.removeEventListener('touchend', onEnd, PASSIVE)
+      target.removeEventListener('touchcancel', onEnd, PASSIVE)
+    }
+    document.removeEventListener('touchstart', onStart, CAPTURE_NON_PASSIVE)
     document.removeEventListener('touchmove', onMove, CAPTURE_NON_PASSIVE)
     document.removeEventListener('touchend', onEnd, CAPTURE_PASSIVE)
     document.removeEventListener('touchcancel', onEnd, CAPTURE_PASSIVE)
     ended()
   }
-  target.addEventListener('touchmove', onMove, NON_PASSIVE)
-  target.addEventListener('touchend', onEnd, PASSIVE)
-  target.addEventListener('touchcancel', onEnd, PASSIVE)
+  for (const target of targets) {
+    target.addEventListener('touchmove', onMove, NON_PASSIVE)
+    target.addEventListener('touchend', onEnd, PASSIVE)
+    target.addEventListener('touchcancel', onEnd, PASSIVE)
+  }
+  document.addEventListener('touchstart', onStart, CAPTURE_NON_PASSIVE)
   document.addEventListener('touchmove', onMove, CAPTURE_NON_PASSIVE)
   document.addEventListener('touchend', onEnd, CAPTURE_PASSIVE)
   document.addEventListener('touchcancel', onEnd, CAPTURE_PASSIVE)
   return release
+}
+
+// The parent that the composed path follows: a shadow root leads to its host.
+function composedParent(node: Node): Node | null {
+  if (node.parentNode !== null) { return node.parentNode }
+  return 'host' in node && node.host instanceof Node ? node.host : null
 }
 
 // The zones of both gesture groups, which hold the same values today.
@@ -462,14 +479,17 @@ type Zone = LLSelectScrollGestureZone & LLSelectZoomGestureZone
  *   until every finger lifts. The touch asks once, and its answer holds for
  *   the rest of it.
  * - A pinch-zoomed page gets the same calls as a page that is not zoomed.
+ * - The hold of a zoom that closed the popup and blocks the zoom lasts until
+ *   every finger lifts, or until `destroy()`; see `holdZoomTouch`.
  * - In a closed shadow root around the select component, the document sees
  *   no deeper than the shadow host:
  *   - The document's listeners read every gesture there as `'outside'`,
  *     before the listeners inside see it.
- *   - A hold that the document's listeners start sits on the shadow host.
+ *   - The hold of a one-finger close that the document's listeners start
+ *     sits on the shadow host.
  *   - If the close removed the node that the touch started on, the shadow
  *     host may miss the rest of the touch, as inferred from the code.
- *   - The next touch-down still ends the hold.
+ *   - The next touch-down still ends that hold.
  * @internal
  */
 export function attachGestureListeners(host: GestureHost): () => void {
@@ -486,6 +506,24 @@ export function attachGestureListeners(host: GestureHost): () => void {
     if (path.includes(host.rootEl)) { return 'trigger' }
     return 'outside'
   }
+  const zoneOfTarget = (target: EventTarget): Zone => {
+    for (let node = target instanceof Node ? target : null; node !== null; node = composedParent(node)) {
+      if (node === host.popupEl) { return 'popup' }
+      if (node === host.rootEl) { return 'trigger' }
+    }
+    return 'outside'
+  }
+  // The zone of the first finger of a zoom. A touch keeps its target, so a
+  // finger whose touch-down no listener saw, such as one outside while the
+  // library does not listen there, still shows where it landed.
+  const firstFingerZone = (ev: TouchEvent): Zone => {
+    if (touch !== null) { return touch.zone }
+    for (let i = 0; i < ev.touches.length; i++) {
+      const t = ev.touches.item(i)
+      if (t !== null && findTouch(ev.changedTouches, t.identifier) === null) { return zoneOfTarget(t.target) }
+    }
+    return zoneOf(ev.composedPath())
+  }
   const carryOut = (gesture: LLSelectScrollGesture, ev: Event): void => {
     if (gesture.zone === 'outside' && !host.scrollOutside) { return }
     const behavior = host.behaviorFor(gesture)
@@ -500,9 +538,15 @@ export function attachGestureListeners(host: GestureHost): () => void {
     if (zoomBlocks(behavior) && ev.cancelable) { ev.preventDefault() }
     if (zoomCloses(behavior)) {
       // The close removes these listeners, so a hold blocks the rest of the touch.
-      const target = ev.composedPath()[0]
-      if (zoomBlocks(behavior) && isTouchEvent(ev) && target !== undefined) {
-        const release = holdZoomTouch(target, () => { host.holdEnded(release) })
+      if (zoomBlocks(behavior) && isTouchEvent(ev)) {
+        const targets = new Set<EventTarget>()
+        const own = ev.composedPath()[0]
+        if (own !== undefined) { targets.add(own) }
+        for (let i = 0; i < ev.touches.length; i++) {
+          const t = ev.touches.item(i)
+          if (t !== null) { targets.add(t.target) }
+        }
+        const release = holdZoomTouch(targets, () => { host.holdEnded(release) })
         host.holdStarted(release)
       }
       host.closeForZoom(gesture)
@@ -516,7 +560,7 @@ export function attachGestureListeners(host: GestureHost): () => void {
       if (zoomAnswer !== null && zoomBlocks(zoomAnswer) && ev.cancelable) { ev.preventDefault() }
       return
     }
-    const zone = touch !== null ? touch.zone : zoneOf(ev.composedPath())
+    const zone = firstFingerZone(ev)
     touch = null
     multiTouch = true
     zoomAnswer = carryOutZoom(zone, ev)
