@@ -40,8 +40,9 @@ export type { LLSelectColorScheme } from './color-scheme.js'
 export type { LLSelectUiTranslationPack } from './i18n.js'
 
 /**
- * The types of the `scrollGestureToBehaviorFn` setting. The presets live
- * under the `@llselect/core/behavior-presets` subpath.
+ * The types of the `scrollGestureToBehaviorFn` and `zoomGestureToBehaviorFn`
+ * settings. The presets live under the `@llselect/core/behavior-presets`
+ * subpath.
  * @group Behaviors
  */
 export type {
@@ -50,13 +51,17 @@ export type {
   LLSelectScrollGestureBehavior,
   LLSelectScrollGestureKind,
   LLSelectScrollGestureZone,
+  LLSelectZoomGesture,
+  LLSelectZoomGestureBehavior,
+  LLSelectZoomGestureZone,
 } from './behaviors.js'
 /**
- * The default of the `scrollGestureToBehaviorFn` setting. The presets
- * entry point exports it too.
+ * The defaults of the `scrollGestureToBehaviorFn` and
+ * `zoomGestureToBehaviorFn` settings. The presets entry point exports them
+ * too.
  * @group Behaviors
  */
-export { defaultScrollGestureToBehavior } from './behavior-presets.js'
+export { defaultScrollGestureToBehavior, defaultZoomGestureToBehavior } from './behavior-presets.js'
 
 export { LLSelectSingle } from './single.js'
 export type {

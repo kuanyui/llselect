@@ -5,12 +5,13 @@ import { assertEveryListenerRemoved } from '../test-utils/listeners.js'
 import { LLSelectSingle, type LLSelectSingleSettingsInput } from '../src/single.js'
 import { LLSelectMultiple } from '../src/multiple.js'
 import type { LLSelectCloseMeta } from '../src/base.js'
-import { attachScrollGestureListeners, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior, type LLSelectScrollGestureKind, type LLSelectScrollGestureZone } from '../src/behaviors.js'
+import { attachGestureListeners, type GestureHost, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior, type LLSelectScrollGestureKind, type LLSelectScrollGestureZone, type LLSelectZoomGesture, type LLSelectZoomGestureBehavior, type LLSelectZoomGestureZone } from '../src/behaviors.js'
 import {
   behaviorPresetsOfChromiumOnWindows,
   behaviorPresetsOfFirefoxOnWindows,
   behaviorPresetsOfLLSelectDefault,
   defaultScrollGestureToBehavior,
+  defaultZoomGestureToBehavior,
 } from '../src/behavior-presets.js'
 
 const KINDS: LLSelectScrollGestureKind[] = ['wheel', 'touch-start', 'touch-drag']
@@ -67,13 +68,45 @@ test('the Chromium-on-Windows preset closes at a wheel or a touch outside the po
   })
 })
 
+const ZOOM_ZONES: LLSelectZoomGestureZone[] = ['popup', 'trigger', 'outside']
+
+function zoomTable(fn: (g: LLSelectZoomGesture) => LLSelectZoomGestureBehavior): Record<string, LLSelectZoomGestureBehavior> {
+  const out: Record<string, LLSelectZoomGestureBehavior> = {}
+  for (const zone of ZOOM_ZONES) { out[zone] = fn({ zone }) }
+  return out
+}
+
+test('the zoom answers: the default allows every zoom, Firefox blocks every zoom, Chromium blocks inside the popup and closes elsewhere', () => {
+  assert.equal(behaviorPresetsOfLLSelectDefault.zoomGestureToBehaviorFn, defaultZoomGestureToBehavior)
+  assert.deepEqual(zoomTable(defaultZoomGestureToBehavior), {
+    popup: 'leave-popup-open-and-allow-page-zoom',
+    trigger: 'leave-popup-open-and-allow-page-zoom',
+    outside: 'leave-popup-open-and-allow-page-zoom',
+  })
+  assert.deepEqual(zoomTable(behaviorPresetsOfFirefoxOnWindows.zoomGestureToBehaviorFn), {
+    popup: 'leave-popup-open-and-block-page-zoom',
+    trigger: 'leave-popup-open-and-block-page-zoom',
+    outside: 'leave-popup-open-and-block-page-zoom',
+  })
+  assert.deepEqual(zoomTable(behaviorPresetsOfChromiumOnWindows.zoomGestureToBehaviorFn), {
+    popup: 'leave-popup-open-and-block-page-zoom',
+    trigger: 'close-popup-and-allow-page-zoom',
+    outside: 'close-popup-and-allow-page-zoom',
+  })
+})
+
 // Records each gesture that reaches the setting. Wrapping the setting instead
 // would hide the default function, and the library would listen outside.
 class Probe extends LLSelectSingle<string> {
   public readonly seen: LLSelectScrollGesture[] = []
+  public readonly zooms: LLSelectZoomGesture[] = []
   protected override scrollGestureToBehavior(gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior {
     this.seen.push(gesture)
     return super.scrollGestureToBehavior(gesture)
+  }
+  protected override zoomGestureToBehavior(gesture: LLSelectZoomGesture): LLSelectZoomGestureBehavior {
+    this.zooms.push(gesture)
+    return super.zoomGestureToBehavior(gesture)
   }
 }
 
@@ -151,14 +184,15 @@ test('a wheel inside the popup that the popup cannot scroll is blocked, and the 
 
 test('the popup gestures go to non-passive listeners on the popup element itself', (t) => {
   // Chromium 156 dispatches a wheel over the top-layer popup as not
-  // cancelable when the only non-passive listener sits on an ancestor.
+  // cancelable when the only non-passive listener sits on an ancestor. A
+  // zoom cancels the touch-down of a second finger, hence `touchstart`.
   const { sel } = mount()
   const spy = t.mock.method(sel.popupEl, 'addEventListener')
   sel.open()
   const blocking = spy.mock.calls
     .filter((call) => { const options = call.arguments[2]; return typeof options === 'object' && options.passive === false })
     .map((call) => call.arguments[0])
-  assert.deepEqual(blocking.sort(), ['touchmove', 'wheel'])
+  assert.deepEqual(blocking.sort(), ['touchmove', 'touchstart', 'wheel'])
 })
 
 test('a wheel that the popup list can still scroll is left to the browser and does not reach the setting', () => {
@@ -175,11 +209,78 @@ test('a wheel that the popup list can still scroll is left to the browser and do
   assert.deepEqual(sel.seen, [{ kind: 'wheel', zone: 'popup' }])
 })
 
-test('a wheel with ctrlKey is left alone', () => {
+test('a wheel with ctrlKey reaches the zoom setting, not the scroll setting, and the default lets it zoom', () => {
   const { sel } = mount()
   sel.open()
   assert.equal(wheel(sel.popupEl, { deltaY: 3, ctrlKey: true }).defaultPrevented, false)
   assert.deepEqual(sel.seen, [])
+  assert.deepEqual(sel.zooms, [{ zone: 'popup' }])
+  // A list that could still scroll does not keep a zoom from the setting.
+  makeScrollable(sel.popupListEl, 'y')
+  wheel(sel.popupListEl, { deltaY: 3, ctrlKey: true })
+  assert.deepEqual(sel.zooms, [{ zone: 'popup' }, { zone: 'popup' }])
+})
+
+test('by default the library does not listen for zoom gestures outside the select component', () => {
+  const { sel, outside } = mount()
+  sel.open()
+  wheel(outside, { deltaY: 3, ctrlKey: true })
+  touch('touchstart', outside, [{ id: 1, x: 0, y: 0 }, { id: 2, x: 50, y: 0 }])
+  assert.deepEqual(sel.zooms, [])
+})
+
+test('with the Firefox preset, a wheel with ctrlKey is blocked everywhere, and the popup stays open', () => {
+  const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows })
+  sel.open()
+  assert.equal(wheel(sel.popupEl, { deltaY: 3, ctrlKey: true }).defaultPrevented, true)
+  assert.equal(wheel(sel.triggerEl, { deltaY: 3, ctrlKey: true }).defaultPrevented, true)
+  assert.equal(wheel(outside, { deltaY: 3, ctrlKey: true }).defaultPrevented, true)
+  assert.equal(sel.isOpened(), true)
+  assert.deepEqual(sel.zooms, [{ zone: 'popup' }, { zone: 'trigger' }, { zone: 'outside' }])
+  assert.deepEqual(sel.seen, [])
+})
+
+test('with the Chromium preset, a wheel with ctrlKey is blocked inside the popup, and outside it closes the popup and zooms', () => {
+  const { sel, outside, closes } = mount({ ...behaviorPresetsOfChromiumOnWindows })
+  sel.open()
+  assert.equal(wheel(sel.popupEl, { deltaY: 3, ctrlKey: true }).defaultPrevented, true)
+  assert.equal(sel.isOpened(), true)
+  assert.equal(wheel(outside, { deltaY: 3, ctrlKey: true }).defaultPrevented, false)
+  assert.equal(sel.isOpened(), false)
+  assert.deepEqual(closes, [{ reason: 'zoom-gesture', zoomGesture: { zone: 'outside' } }])
+})
+
+test('outside the select component, a group that does not listen there hears nothing, while the other group listens', () => {
+  class ScrollOnlyOutside extends Probe {
+    protected override shouldListenForZoomGesturesOutside(): boolean { return false }
+  }
+  const scroll = mount({ ...behaviorPresetsOfFirefoxOnWindows }, ScrollOnlyOutside)
+  scroll.sel.open()
+  assert.equal(wheel(scroll.outside, { deltaY: 3, ctrlKey: true }).defaultPrevented, false)
+  assert.deepEqual(scroll.sel.zooms, [])
+  assert.equal(wheel(scroll.outside).defaultPrevented, true)
+  assert.deepEqual(scroll.sel.seen, [{ kind: 'wheel', zone: 'outside' }])
+
+  class ZoomOnlyOutside extends Probe {
+    protected override shouldListenForScrollGesturesOutside(): boolean { return false }
+  }
+  const zoom = mount({ ...behaviorPresetsOfFirefoxOnWindows }, ZoomOnlyOutside)
+  zoom.sel.open()
+  assert.equal(wheel(zoom.outside).defaultPrevented, false)
+  touch('touchstart', zoom.outside, [{ id: 1, x: 0, y: 0 }])
+  assert.deepEqual(zoom.sel.seen, [])
+  assert.equal(zoom.sel.isOpened(), true)
+  // The unasked touch-down still gives the zoom its zone.
+  touch('touchstart', zoom.sel.popupEl, [{ id: 1, x: 0, y: 0 }, { id: 2, x: 50, y: 0 }], [{ id: 2, x: 50, y: 0 }])
+  assert.deepEqual(zoom.sel.zooms, [{ zone: 'outside' }])
+})
+
+test('a zoom gesture reaches the zoom setting on a pinch-zoomed page too', () => {
+  const { sel } = mount({ ...behaviorPresetsOfFirefoxOnWindows })
+  sel.open()
+  Object.defineProperty(window, 'visualViewport', { value: { scale: 2 }, configurable: true })
+  assert.equal(wheel(sel.popupEl, { deltaY: -3, ctrlKey: true }).defaultPrevented, true)
+  assert.deepEqual(sel.zooms, [{ zone: 'popup' }])
 })
 
 test('a pinch-zoomed page gets the same behavior as a page that is not zoomed', () => {
@@ -683,6 +784,93 @@ test('a second finger ends the rest of a touch that closed the popup, so a pinch
   assert.equal(clicks, 1)
 })
 
+test('a second finger makes the touch a zoom, asked once with the zone of the first finger, and the answer holds until every finger lifts', () => {
+  const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows })
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  touch('touchstart', row, [{ id: 1, x: 10, y: 50 }])
+  assert.equal(touch('touchstart', outside, [{ id: 1, x: 10, y: 50 }, { id: 2, x: 200, y: 50 }], [{ id: 2, x: 200, y: 50 }]).defaultPrevented, true)
+  assert.equal(touch('touchmove', row, [{ id: 1, x: 5, y: 50 }, { id: 2, x: 210, y: 50 }]).defaultPrevented, true)
+  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 50 }, { id: 2, x: 220, y: 50 }]).defaultPrevented, true)
+  assert.deepEqual(sel.zooms, [{ zone: 'popup' }])
+  assert.equal(sel.isOpened(), true)
+  // A lone finger after the zoom pans; neither setting hears of it.
+  touch('touchend', outside, [], [{ id: 2, x: 220, y: 50 }], [{ id: 1, x: 0, y: 50 }])
+  assert.equal(touch('touchmove', row, [{ id: 1, x: 0, y: 30 }]).defaultPrevented, false)
+  touch('touchend', row, [], [{ id: 1, x: 0, y: 30 }], [])
+  // A new touch asks again.
+  touch('touchstart', row, [{ id: 3, x: 10, y: 50 }, { id: 4, x: 60, y: 50 }])
+  assert.deepEqual(sel.zooms, [{ zone: 'popup' }, { zone: 'popup' }])
+})
+
+test('a second finger seen first in a move still makes the touch a zoom', () => {
+  const { sel } = mount({ ...behaviorPresetsOfChromiumOnWindows })
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  touch('touchstart', row, [{ id: 1, x: 10, y: 50 }])
+  assert.equal(touch('touchmove', row, [{ id: 1, x: 12, y: 50 }, { id: 2, x: 300, y: 300 }]).defaultPrevented, true)
+  assert.deepEqual(sel.zooms, [{ zone: 'popup' }])
+  assert.equal(sel.isOpened(), true)
+})
+
+test('with the Chromium preset, two fingers that land together on the trigger close the popup with the zoom gesture and zoom', () => {
+  const { sel, closes } = mount({ ...behaviorPresetsOfChromiumOnWindows })
+  sel.open()
+  const start = touch('touchstart', sel.triggerEl, [{ id: 1, x: 10, y: 10 }, { id: 2, x: 60, y: 10 }])
+  assert.equal(start.defaultPrevented, false)
+  assert.equal(sel.isOpened(), false)
+  assert.deepEqual(closes, [{ reason: 'zoom-gesture', zoomGesture: { zone: 'trigger' } }])
+  assert.equal(touch('touchmove', sel.triggerEl, [{ id: 1, x: 5, y: 10 }, { id: 2, x: 70, y: 10 }]).defaultPrevented, false)
+})
+
+test('a close that blocks the zoom holds the rest of the touch until every finger lifts', () => {
+  const { sel, outside, closes } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  assert.equal(touch('touchstart', row, [{ id: 1, x: 10, y: 50 }, { id: 2, x: 60, y: 50 }]).defaultPrevented, true)
+  assert.equal(sel.isOpened(), false)
+  assert.deepEqual(closes, [{ reason: 'zoom-gesture', zoomGesture: { zone: 'popup' } }])
+  assert.equal(touch('touchmove', row, [{ id: 1, x: 5, y: 50 }, { id: 2, x: 70, y: 50 }]).defaultPrevented, true)
+  // The document part of the hold covers a finger whose events go elsewhere.
+  assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 50 }, { id: 2, x: 80, y: 50 }]).defaultPrevented, true)
+  // A lone finger pans.
+  touch('touchend', row, [], [{ id: 2, x: 80, y: 50 }], [{ id: 1, x: 0, y: 50 }])
+  assert.equal(touch('touchmove', row, [{ id: 1, x: 0, y: 30 }]).defaultPrevented, false)
+  touch('touchend', row, [], [{ id: 1, x: 0, y: 30 }], [])
+  assert.equal(touch('touchmove', row, [{ id: 3, x: 0, y: 50 }, { id: 4, x: 80, y: 50 }]).defaultPrevented, false)
+})
+
+test('destroy() ends the hold of a zoom that closed the popup and blocks the zoom', () => {
+  const { sel } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  sel.open()
+  const row = sel.popupListEl.firstElementChild
+  assert.ok(row)
+  touch('touchstart', row, [{ id: 1, x: 10, y: 50 }, { id: 2, x: 60, y: 50 }])
+  sel.destroy()
+  assert.equal(touch('touchmove', row, [{ id: 1, x: 5, y: 50 }, { id: 2, x: 70, y: 50 }]).defaultPrevented, false)
+})
+
+test('the touch-down listeners can cancel a second finger: always on the popup and the root, on the document only while zooms outside are asked', (t) => {
+  for (const zoomOutside of [false, true]) {
+    setupDom('<!doctype html><html><body><div id="root"><div id="popup"></div></div></body></html>')
+    const rootEl = document.getElementById('root')
+    const popupEl = document.getElementById('popup')
+    assert.ok(rootEl && popupEl)
+    const adds = [popupEl, rootEl, document].map((target) => t.mock.method(target, 'addEventListener'))
+    const detach = attachGestureListeners(gestureHost(rootEl, popupEl, { scrollOutside: true, zoomOutside }))
+    const passiveOfTouchStart = adds.map((add) => {
+      const options = add.mock.calls.find((call) => call.arguments[0] === 'touchstart')?.arguments[2]
+      return typeof options === 'object' ? options.passive : undefined
+    })
+    assert.deepEqual(passiveOfTouchStart, [false, false, !zoomOutside], `zoomOutside ${zoomOutside}`)
+    detach()
+    for (const add of adds) { add.mock.restore() }
+  }
+})
+
 test('a move with two touches, whose second touch-down no listener saw, also ends the hold', () => {
   const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows, outsideClickBehavior: 'block' })
   let clicks = 0
@@ -696,7 +884,25 @@ test('a move with two touches, whose second touch-down no listener saw, also end
   assert.equal(clicks, 1)
 })
 
-test('the function that attachScrollGestureListeners returns removes every gesture listener, with the same function and capture flag', (t) => {
+function gestureHost(rootEl: HTMLElement, popupEl: HTMLElement, overrides: Partial<GestureHost> = {}): GestureHost {
+  return {
+    rootEl,
+    popupEl,
+    scrollOutside: false,
+    zoomOutside: false,
+    behaviorFor: () => 'leave-popup-open-and-allow-page-scroll',
+    closeFor: () => {},
+    zoomBehaviorFor: () => 'leave-popup-open-and-allow-page-zoom',
+    closeForZoom: () => {},
+    clickToggles: () => false,
+    swallowsOutsideClick: false,
+    holdStarted: () => {},
+    holdEnded: () => {},
+    ...overrides,
+  }
+}
+
+test('the function that attachGestureListeners returns removes every gesture listener, with the same function and capture flag', (t) => {
   setupDom('<!doctype html><html><body><div id="root"><div id="popup"></div></div></body></html>')
   const rootEl = document.getElementById('root')
   const popupEl = document.getElementById('popup')
@@ -704,16 +910,7 @@ test('the function that attachScrollGestureListeners returns removes every gestu
   const popupAdd = t.mock.method(popupEl, 'addEventListener')
   const rootAdd = t.mock.method(rootEl, 'addEventListener')
   const documentAdd = t.mock.method(document, 'addEventListener')
-  const detach = attachScrollGestureListeners({
-    rootEl,
-    popupEl,
-    behaviorFor: () => 'leave-popup-open-and-allow-page-scroll',
-    closeFor: () => {},
-    clickToggles: () => false,
-    swallowsOutsideClick: false,
-    holdStarted: () => {},
-    holdEnded: () => {},
-  }, true)
+  const detach = attachGestureListeners(gestureHost(rootEl, popupEl, { scrollOutside: true, zoomOutside: true }))
   const popupRemove = t.mock.method(popupEl, 'removeEventListener')
   const rootRemove = t.mock.method(rootEl, 'removeEventListener')
   const documentRemove = t.mock.method(document, 'removeEventListener')
@@ -738,16 +935,12 @@ test('a hold that ends by itself reports its end with the function that started 
   assert.ok(rootEl && popupEl && trigger)
   const started: Array<() => void> = []
   const ended: Array<() => void> = []
-  const detach = attachScrollGestureListeners({
-    rootEl,
-    popupEl,
+  const detach = attachGestureListeners(gestureHost(rootEl, popupEl, {
     behaviorFor: () => 'close-popup-and-allow-page-scroll',
-    closeFor: () => {},
     clickToggles: () => true,
-    swallowsOutsideClick: false,
     holdStarted: (release) => { started.push(release) },
     holdEnded: (release) => { ended.push(release) },
-  }, false)
+  }))
   touch('touchstart', trigger, [{ id: 1, x: 5, y: 5 }])
   touch('touchend', trigger, [{ id: 1, x: 5, y: 5 }])
   assert.deepEqual(ended, [])

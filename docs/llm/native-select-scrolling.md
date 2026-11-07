@@ -125,6 +125,7 @@ Chromium:
 ### llselect, for comparison
 
 - The owner compares llselect's popup, which is part of the page: a two-finger zoom enlarges its options with the page, so llselect does better than the native popup here.
+- The presets copy the rows above through `zoomGestureToBehaviorFn`; `DESIGN.md` "Zoom gestures while the popup is open" has the details and the open first-finger question.
 
 ## Mouse and touch differ
 

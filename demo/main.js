@@ -1487,8 +1487,8 @@ for (const [key, name, preset] of [
     placeholder: name,
     ...preset,
     onClose: (meta) => {
-      const gesture = meta.scrollGesture
-      out.textContent = gesture ? `last close: ${meta.reason}, ${gesture.kind} on ${gesture.zone}` : `last close: ${meta.reason}`
+      const where = meta.scrollGesture ? `, ${meta.scrollGesture.kind} on ${meta.scrollGesture.zone}` : meta.zoomGesture ? `, zoom on ${meta.zoomGesture.zone}` : ''
+      out.textContent = `last close: ${meta.reason}${where}`
     },
   })
   sel.setItems(COUNTRIES)
@@ -1511,8 +1511,8 @@ for (const [key, name, preset] of [
     filterable: true,
     ...preset,
     onClose: (meta) => {
-      const gesture = meta.scrollGesture
-      out.textContent = gesture ? `last close: ${meta.reason}, ${gesture.kind} on ${gesture.zone}` : `last close: ${meta.reason}`
+      const where = meta.scrollGesture ? `, ${meta.scrollGesture.kind} on ${meta.scrollGesture.zone}` : meta.zoomGesture ? `, zoom on ${meta.zoomGesture.zone}` : ''
+      out.textContent = `last close: ${meta.reason}${where}`
     },
   })
   sel.setItems(COUNTRIES)

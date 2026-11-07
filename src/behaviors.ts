@@ -1,7 +1,7 @@
 /**
- * Scroll gestures while the popup is open: the types of the
- * `scrollGestureToBehaviorFn` setting, and the listeners that sort each
- * gesture and carry out the behavior the setting picks.
+ * Scroll and zoom gestures while the popup is open: the types of the
+ * `scrollGestureToBehaviorFn` and `zoomGestureToBehaviorFn` settings, and the
+ * listeners that sort each gesture and carry out the behavior a setting picks.
  * - The presets that fill the setting live in `@llselect/core/behavior-presets`.
  * - `base.ts` only wires the setting, the protected methods and these
  *   listeners.
@@ -10,6 +10,8 @@
 /**
  * What a scroll gesture is. See {@link LLSelectScrollGesture}.
  * - `'wheel'`: a `wheel` event, which a mouse wheel and a touchpad both give.
+ *   A `wheel` with `ctrlKey` is a zoom gesture instead; see
+ *   {@link LLSelectZoomGesture}.
  * - `'touch-start'`: one finger touching down.
  * - `'touch-drag'`: one finger moving while it touches.
  * - `'touch-end'`: one finger lifting. The library does not send it.
@@ -31,10 +33,10 @@ export type LLSelectScrollGestureZone = 'popup' | 'trigger' | 'outside'
 /**
  * One scroll gesture while the popup is open, as `scrollGestureToBehaviorFn`
  * receives it.
- * - So that a user who needs a larger page can still zoom it, the library
- *   leaves a touch alone from the moment a second finger lands: the touch is
- *   then a zoom or a pan. A touch gesture counts only while one finger
- *   touches.
+ * - A touch counts as a scroll gesture only while one finger touches. From
+ *   the moment a second finger lands until every finger lifts, the touch is
+ *   a zoom gesture, which `zoomGestureToBehaviorFn` answers; see
+ *   {@link LLSelectZoomGesture}.
  * - A pinch starts with one finger, so the touch-down of that finger is a
  *   gesture like any other.
  * - A touch keeps the zone where it touched down, wherever it moves later.
@@ -85,6 +87,59 @@ export type LLSelectScrollGestureBehavior =
   | 'close-popup-and-block-page-scroll'
 
 /**
+ * Where a zoom gesture happens. See {@link LLSelectZoomGesture}.
+ * - `'popup'`: inside the popup, its header, footer and filter input included.
+ * - `'trigger'`: inside the root element, outside the popup.
+ * - `'outside'`: anywhere else on the page.
+ * - The scroll gestures have a type of their own with the same values,
+ *   {@link LLSelectScrollGestureZone}, so that each type can change alone.
+ * @group Behaviors
+ */
+export type LLSelectZoomGestureZone = 'popup' | 'trigger' | 'outside'
+
+/**
+ * One zoom gesture while the popup is open, as `zoomGestureToBehaviorFn`
+ * receives it.
+ * - On a touchscreen, a touch becomes a zoom gesture when a second finger
+ *   lands, and stays one until every finger lifts.
+ * - Its zone is where the first finger touched down. If both fingers land
+ *   in one event, the zone is where that event happens.
+ * - Every `wheel` with `ctrlKey` is a zoom gesture of its own, whose zone is
+ *   where the pointer is. Ctrl with a mouse wheel gives such a wheel, and so
+ *   does a touchpad pinch in Chromium; the page cannot tell the two apart.
+ * @group Behaviors
+ */
+export interface LLSelectZoomGesture {
+  /** Where the zoom happens. */
+  readonly zone: LLSelectZoomGestureZone
+}
+
+/**
+ * What the select component does with one zoom gesture: keep the popup open
+ * or close it, and let the page zoom or block it.
+ * - `'leave-popup-open-and-allow-page-zoom'`: nothing happens; the browser
+ *   zooms as it would without the select component.
+ * - `'leave-popup-open-and-block-page-zoom'`: the popup stays open, and the
+ *   gesture does not zoom the page.
+ * - `'close-popup-and-allow-page-zoom'`: the popup closes, with the close
+ *   reason `'zoom-gesture'`, and the page zooms as usual.
+ * - `'close-popup-and-block-page-zoom'`: the popup closes, with the close
+ *   reason `'zoom-gesture'`, and the gesture does not zoom the page.
+ * - On a touchscreen, the answer holds until every finger lifts, also after
+ *   a close.
+ * - For a `wheel` with `ctrlKey`, the answer covers that one event. The next
+ *   one asks again while the popup is open.
+ * - The library blocks a zoom by canceling its events. A browser may still
+ *   zoom when it sends them as not cancelable.
+ * @group Behaviors
+ */
+export type LLSelectZoomGestureBehavior =
+  | 'leave-popup-open-and-allow-page-zoom'
+  | 'leave-popup-open-and-block-page-zoom'
+  | 'close-popup-and-allow-page-zoom'
+  | 'close-popup-and-block-page-zoom'
+
+/**
  * A set of behavior settings, spread into the settings of a select
  * component. The presets of `@llselect/core/behavior-presets` have this
  * shape.
@@ -93,6 +148,8 @@ export type LLSelectScrollGestureBehavior =
 export interface LLSelectBehaviorPreset {
   /** See `scrollGestureToBehaviorFn` in `LLSelectBaseSettings`. */
   readonly scrollGestureToBehaviorFn: (gesture: LLSelectScrollGesture) => LLSelectScrollGestureBehavior
+  /** See `zoomGestureToBehaviorFn` in `LLSelectBaseSettings`. */
+  readonly zoomGestureToBehaviorFn: (gesture: LLSelectZoomGesture) => LLSelectZoomGestureBehavior
 }
 
 /**
@@ -104,16 +161,31 @@ export interface LLSelectBehaviorPreset {
 export const DEFAULT_SCROLL_GESTURE_TO_BEHAVIOR_MARK: unique symbol = Symbol.for('llselect.defaultScrollGestureToBehavior')
 
 /**
+ * The mark that `defaultZoomGestureToBehavior` carries, for the reason of
+ * {@link DEFAULT_SCROLL_GESTURE_TO_BEHAVIOR_MARK}.
+ * @internal
+ */
+export const DEFAULT_ZOOM_GESTURE_TO_BEHAVIOR_MARK: unique symbol = Symbol.for('llselect.defaultZoomGestureToBehavior')
+
+/**
  * What the listeners need from the select component.
  * @internal
  */
-export interface ScrollGestureHost {
+export interface GestureHost {
   readonly rootEl: HTMLElement
   readonly popupEl: HTMLElement
-  /** The behavior for one gesture: the protected `scrollGestureToBehavior`. */
+  /** Whether scroll gestures outside the select component reach `behaviorFor`: the protected `shouldListenForScrollGesturesOutside`. */
+  readonly scrollOutside: boolean
+  /** Whether zoom gestures outside the select component reach `zoomBehaviorFor`: the protected `shouldListenForZoomGesturesOutside`. */
+  readonly zoomOutside: boolean
+  /** The behavior for one scroll gesture: the protected `scrollGestureToBehavior`. */
   behaviorFor(gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior
   /** Closes the popup with the close reason `'scroll-gesture'`. */
   closeFor(gesture: LLSelectScrollGesture): void
+  /** The behavior for one zoom gesture: the protected `zoomGestureToBehavior`. */
+  zoomBehaviorFor(gesture: LLSelectZoomGesture): LLSelectZoomGestureBehavior
+  /** Closes the popup with the close reason `'zoom-gesture'`. */
+  closeForZoom(gesture: LLSelectZoomGesture): void
   /** Whether a click with this composed path would toggle the popup: a click on the trigger wrapper, outside the buttons of the trigger buttons strip. */
   clickToggles(path: readonly EventTarget[]): boolean
   /** Whether a click outside the select component is swallowed while the popup is open: `outsideClickBehavior: 'block'`. */
@@ -133,16 +205,16 @@ const TAP_SLOP = 16
 const CLICK_WAIT_MS = 1000
 
 // The events the listeners take, typed for an element and the document alike.
-interface ScrollGestureEventMap {
+interface GestureEventMap {
   wheel: WheelEvent
   touchstart: TouchEvent
   touchmove: TouchEvent
   touchend: TouchEvent
   touchcancel: TouchEvent
 }
-interface ScrollGestureEventTarget {
-  addEventListener<K extends keyof ScrollGestureEventMap>(type: K, listener: (ev: ScrollGestureEventMap[K]) => void, options: AddEventListenerOptions): void
-  removeEventListener<K extends keyof ScrollGestureEventMap>(type: K, listener: (ev: ScrollGestureEventMap[K]) => void, options: AddEventListenerOptions): void
+interface GestureEventTarget {
+  addEventListener<K extends keyof GestureEventMap>(type: K, listener: (ev: GestureEventMap[K]) => void, options: AddEventListenerOptions): void
+  removeEventListener<K extends keyof GestureEventMap>(type: K, listener: (ev: GestureEventMap[K]) => void, options: AddEventListenerOptions): void
 }
 
 const PASSIVE: AddEventListenerOptions = { passive: true }
@@ -156,6 +228,14 @@ function closes(behavior: LLSelectScrollGestureBehavior): boolean {
 
 function blocks(behavior: LLSelectScrollGestureBehavior): boolean {
   return behavior === 'leave-popup-open-and-block-page-scroll' || behavior === 'close-popup-and-block-page-scroll'
+}
+
+function zoomCloses(behavior: LLSelectZoomGestureBehavior): boolean {
+  return behavior === 'close-popup-and-allow-page-zoom' || behavior === 'close-popup-and-block-page-zoom'
+}
+
+function zoomBlocks(behavior: LLSelectZoomGestureBehavior): boolean {
+  return behavior === 'leave-popup-open-and-block-page-zoom' || behavior === 'close-popup-and-block-page-zoom'
 }
 
 // The touch target of a hold can be any node, an SVG element included, so its
@@ -317,24 +397,70 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
 }
 
 /**
- * Attaches the scroll-gesture listeners for one open cycle; the returned
- * function detaches them.
+ * Blocks the rest of a touchscreen zoom whose answer closed the popup and
+ * blocks the zoom, until every finger lifts.
+ * - Returns the function that ends the hold early.
+ * - Listens on the target of the event that made the touch a zoom, which
+ *   keeps getting its events after the close, and on the document, for the
+ *   other fingers.
+ * - Blocks only moves with two or more touches: a finger left alone after
+ *   the others lifted pans as usual.
+ */
+function holdZoomTouch(target: EventTarget, ended: () => void): () => void {
+  let done = false
+  const onMove = (ev: Event): void => {
+    if (isTouchEvent(ev) && ev.touches.length > 1 && ev.cancelable) { ev.preventDefault() }
+  }
+  const onEnd = (ev: Event): void => {
+    if (isTouchEvent(ev) && ev.touches.length === 0) { release() }
+  }
+  const release = (): void => {
+    if (done) { return }
+    done = true
+    target.removeEventListener('touchmove', onMove, NON_PASSIVE)
+    target.removeEventListener('touchend', onEnd, PASSIVE)
+    target.removeEventListener('touchcancel', onEnd, PASSIVE)
+    document.removeEventListener('touchmove', onMove, CAPTURE_NON_PASSIVE)
+    document.removeEventListener('touchend', onEnd, CAPTURE_PASSIVE)
+    document.removeEventListener('touchcancel', onEnd, CAPTURE_PASSIVE)
+    ended()
+  }
+  target.addEventListener('touchmove', onMove, NON_PASSIVE)
+  target.addEventListener('touchend', onEnd, PASSIVE)
+  target.addEventListener('touchcancel', onEnd, PASSIVE)
+  document.addEventListener('touchmove', onMove, CAPTURE_NON_PASSIVE)
+  document.addEventListener('touchend', onEnd, CAPTURE_PASSIVE)
+  document.addEventListener('touchcancel', onEnd, CAPTURE_PASSIVE)
+  return release
+}
+
+// The zones of both gesture groups, which hold the same values today.
+type Zone = LLSelectScrollGestureZone & LLSelectZoomGestureZone
+
+/**
+ * Attaches the scroll-gesture and zoom-gesture listeners for one open cycle;
+ * the returned function detaches them.
  * - On the popup: a `wheel` listener and the touch listeners, which see the
  *   zone `'popup'`. Chromium 156 makes a wheel over the top-layer popup
  *   cancelable only for a non-passive listener on the popup itself, not on
  *   an ancestor such as the root element.
  * - On the root element: the same listeners, which see the zone `'trigger'`
  *   and skip the gestures of the popup.
- * - On the document, only when `listenOutside` is set: the same listeners in
- *   the capture phase, which see the zone `'outside'`. A non-passive `wheel`
- *   or `touchmove` listener there makes every scroll of the page wait for
- *   script, so the default behavior, which leaves the outside alone, does not
- *   attach them.
+ * - On the document, only while `host.scrollOutside` or `host.zoomOutside`
+ *   is set: the same listeners in the capture phase, which see the zone
+ *   `'outside'` and pass each group only the gestures it listens for there.
+ *   - A non-passive `wheel` or `touchmove` listener there makes every scroll
+ *     of the page wait for script, so the default behaviors, which leave the
+ *     outside alone, do not attach them.
+ *   - The `touchstart` listener there is non-passive only while
+ *     `host.zoomOutside` is set, since only a zoom cancels a touch-down.
  * - A wheel or a drag inside the popup that something in the popup can still
  *   scroll is left to the browser and does not reach `behaviorFor`. A
  *   touch-down always reaches it, since it has no direction yet.
- * - A `wheel` with `ctrlKey`, and a touch from the moment a second finger
- *   lands, are left alone, since they zoom or pan the page.
+ * - A `wheel` with `ctrlKey` reaches `zoomBehaviorFor` instead of
+ *   `behaviorFor`, and so does a touch from the moment a second finger lands
+ *   until every finger lifts. The touch asks once, and its answer holds for
+ *   the rest of it.
  * - A pinch-zoomed page gets the same calls as a page that is not zoomed.
  * - In a closed shadow root around the select component, the document sees
  *   no deeper than the shadow host:
@@ -346,45 +472,82 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
  *   - The next touch-down still ends the hold.
  * @internal
  */
-export function attachScrollGestureListeners(host: ScrollGestureHost, listenOutside: boolean): () => void {
+export function attachGestureListeners(host: GestureHost): () => void {
   // The touch that is going on, from its touch-down to its lift.
-  let touch: { id: number; x: number; y: number; zone: LLSelectScrollGestureZone; path: readonly EventTarget[] } | null = null
+  let touch: { id: number; x: number; y: number; zone: Zone; path: readonly EventTarget[] } | null = null
   // True from a second finger's touch-down until every finger lifts.
   let multiTouch = false
+  // The answer to the zoom that the touch became, kept until every finger lifts.
+  let zoomAnswer: LLSelectZoomGestureBehavior | null = null
 
   // The composed path crosses into open shadow roots, which `contains` does not.
-  const zoneOf = (path: readonly EventTarget[]): LLSelectScrollGestureZone => {
+  const zoneOf = (path: readonly EventTarget[]): Zone => {
     if (path.includes(host.popupEl)) { return 'popup' }
     if (path.includes(host.rootEl)) { return 'trigger' }
     return 'outside'
   }
   const carryOut = (gesture: LLSelectScrollGesture, ev: Event): void => {
+    if (gesture.zone === 'outside' && !host.scrollOutside) { return }
     const behavior = host.behaviorFor(gesture)
     if (blocks(behavior) && ev.cancelable) { ev.preventDefault() }
     if (closes(behavior)) { host.closeFor(gesture) }
   }
+  // Asks about one zoom gesture and carries out the answer on `ev`.
+  const carryOutZoom = (zone: Zone, ev: Event): LLSelectZoomGestureBehavior => {
+    if (zone === 'outside' && !host.zoomOutside) { return 'leave-popup-open-and-allow-page-zoom' }
+    const gesture: LLSelectZoomGesture = { zone }
+    const behavior = host.zoomBehaviorFor(gesture)
+    if (zoomBlocks(behavior) && ev.cancelable) { ev.preventDefault() }
+    if (zoomCloses(behavior)) {
+      // The close removes these listeners, so a hold blocks the rest of the touch.
+      const target = ev.composedPath()[0]
+      if (zoomBlocks(behavior) && isTouchEvent(ev) && target !== undefined) {
+        const release = holdZoomTouch(target, () => { host.holdEnded(release) })
+        host.holdStarted(release)
+      }
+      host.closeForZoom(gesture)
+    }
+    return behavior
+  }
+  // A touch becomes a zoom when a second finger lands, seen at its touch-down
+  // or, where no listener saw that, at the next move with two touches.
+  const onMultiTouch = (ev: TouchEvent): void => {
+    if (multiTouch) {
+      if (zoomAnswer !== null && zoomBlocks(zoomAnswer) && ev.cancelable) { ev.preventDefault() }
+      return
+    }
+    const zone = touch !== null ? touch.zone : zoneOf(ev.composedPath())
+    touch = null
+    multiTouch = true
+    zoomAnswer = carryOutZoom(zone, ev)
+  }
 
   const onWheel = (ev: WheelEvent): void => {
-    if (ev.ctrlKey) { return }
     const path = ev.composedPath()
     const zone = zoneOf(path)
+    if (ev.ctrlKey) {
+      carryOutZoom(zone, ev)
+      return
+    }
     if (zone === 'popup' && canScrollWithin(path, host.popupEl, Math.sign(ev.deltaX), Math.sign(ev.deltaY))) { return }
     carryOut({ kind: 'wheel', zone }, ev)
   }
   const onTouchStart = (ev: TouchEvent): void => {
-    if (ev.touches.length !== 1) {
-      touch = null
-      multiTouch = true
+    if (ev.touches.length > 1) {
+      onMultiTouch(ev)
       return
     }
     multiTouch = false
+    zoomAnswer = null
     touch = null
     const t = ev.touches.item(0)
     const path = ev.composedPath()
     const target = path[0]
     if (t === null || target === undefined) { return }
     const zone = zoneOf(path)
+    // Kept even where no scroll gesture is asked for: a zoom takes its zone.
     touch = { id: t.identifier, x: t.clientX, y: t.clientY, zone, path }
+    if (zone === 'outside' && !host.scrollOutside) { return }
     const gesture: LLSelectScrollGesture = { kind: 'touch-start', zone }
     const behavior = host.behaviorFor(gesture)
     if (!closes(behavior)) { return }
@@ -407,9 +570,7 @@ export function attachScrollGestureListeners(host: ScrollGestureHost, listenOuts
   }
   const onTouchMove = (ev: TouchEvent): void => {
     if (ev.touches.length > 1) {
-      // A second finger may have landed where no listener saw it.
-      touch = null
-      multiTouch = true
+      onMultiTouch(ev)
       return
     }
     if (touch === null || multiTouch) { return }
@@ -428,39 +589,43 @@ export function attachScrollGestureListeners(host: ScrollGestureHost, listenOuts
     if (ev.touches.length > 0) { return }
     touch = null
     multiTouch = false
+    zoomAnswer = null
   }
 
   // Attaches the five listeners to `target`, each passing over the events
-  // that `skip` names, and returns the function that removes them.
-  const listen = (target: ScrollGestureEventTarget, skip: (ev: Event) => boolean, capture: boolean): (() => void) => {
+  // that `skip` names, and returns the function that removes them. The
+  // `touchstart` listener is non-passive when `startBlocks` is set, so that
+  // a zoom can cancel the touch-down of a second finger.
+  const listen = (target: GestureEventTarget, skip: (ev: Event) => boolean, capture: boolean, startBlocks: boolean): (() => void) => {
     const blocking = capture ? CAPTURE_NON_PASSIVE : NON_PASSIVE
     const passive = capture ? CAPTURE_PASSIVE : PASSIVE
+    const startOptions = startBlocks ? blocking : passive
     const wheel = (ev: WheelEvent): void => { if (!skip(ev)) { onWheel(ev) } }
     const start = (ev: TouchEvent): void => { if (!skip(ev)) { onTouchStart(ev) } }
     const move = (ev: TouchEvent): void => { if (!skip(ev)) { onTouchMove(ev) } }
     const end = (ev: TouchEvent): void => { if (!skip(ev)) { onTouchEnd(ev) } }
     target.addEventListener('wheel', wheel, blocking)
-    target.addEventListener('touchstart', start, passive)
+    target.addEventListener('touchstart', start, startOptions)
     target.addEventListener('touchmove', move, blocking)
     target.addEventListener('touchend', end, passive)
     target.addEventListener('touchcancel', end, passive)
     return (): void => {
       target.removeEventListener('wheel', wheel, blocking)
-      target.removeEventListener('touchstart', start, passive)
+      target.removeEventListener('touchstart', start, startOptions)
       target.removeEventListener('touchmove', move, blocking)
       target.removeEventListener('touchend', end, passive)
       target.removeEventListener('touchcancel', end, passive)
     }
   }
   const detachers = [
-    listen(host.popupEl, () => false, false),
+    listen(host.popupEl, () => false, false, true),
     // The popup's own listeners handle its gestures.
-    listen(host.rootEl, (ev) => ev.composedPath().includes(host.popupEl), false),
+    listen(host.rootEl, (ev) => ev.composedPath().includes(host.popupEl), false, true),
   ]
-  if (listenOutside) {
+  if (host.scrollOutside || host.zoomOutside) {
     // The document sees an inside gesture first, in the capture phase; the
     // listeners above handle those.
-    detachers.push(listen(document, (ev) => ev.composedPath().includes(host.rootEl), true))
+    detachers.push(listen(document, (ev) => ev.composedPath().includes(host.rootEl), true, host.zoomOutside))
   }
   return (): void => {
     for (const detach of detachers) { detach() }

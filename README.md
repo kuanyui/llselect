@@ -285,7 +285,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Grouping (optgroup)                  | `itemToGroupKeyFn`, `groupKeyToStringFn`, `groupDisabledFn`                                                               |
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `chooseAllRow`, `hideChosenRows`, `chosenItemsOrder: 'as-chosen' \| 'as-listed'`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
 | Popup width                          | `popupWidthPolicy: 'fit-content' \| 'match-trigger-wrapper'` (default `'fit-content'` - grows to content like a native select)   |
-| Wheel and touch while the popup is open | `scrollGestureToBehaviorFn` + the presets of `@llselect/core/behavior-presets`; see Wheel and touch while the popup is open |
+| Wheel, touch and zoom while the popup is open | `scrollGestureToBehaviorFn`, `zoomGestureToBehaviorFn` + the presets of `@llselect/core/behavior-presets`; see Wheel, touch and zoom while the popup is open |
 | Rich rendering without subclassing   | `createPopupListItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
 | Action rows: commands in the list    | `popupListLeadingActionRows`, `popupListTrailingActionRows` - option rows in the arrow-key ring; see Action rows |
 | Pinned rows                          | `popupListLeadingRowsPinned`, `popupListTrailingRowsPinned` - the choose-all row and the command rows stay in view while the items scroll |
@@ -697,11 +697,11 @@ sel = new LLSelectSingle(el, {
 - A setter called inside the handler wins; the pending change is dropped.
 - A rule that never allows an item belongs in `itemDisabledFn`. `onBeforeChange` is for a decision that depends on the moment.
 
-#### Wheel and touch while the popup is open
+#### Wheel, touch and zoom while the popup is open
 
-The `scrollGestureToBehaviorFn` setting decides what a wheel or a touch does while the popup is open. The native select of each browser does this in its own way.
+The `scrollGestureToBehaviorFn` setting decides what a wheel or a touch does while the popup is open. The `zoomGestureToBehaviorFn` setting decides what a two-finger zoom does. The native select of each browser does both in its own way.
 
-By default, a wheel or a drag inside the popup does not scroll the page behind it. Outside the popup, the page scrolls and the popup stays open.
+By default, a wheel or a drag inside the popup does not scroll the page behind it. Outside the popup, the page scrolls and the popup stays open. A two-finger zoom always zooms the page.
 
 To copy the native select of one browser on one operating system, spread a preset into the settings:
 
@@ -712,8 +712,8 @@ import { behaviorPresetsOfFirefoxOnWindows } from '@llselect/core/behavior-prese
 const sel = new LLSelectSingle(el, { ...behaviorPresetsOfFirefoxOnWindows })
 ```
 
-- With `behaviorPresetsOfFirefoxOnWindows`, a wheel outside the popup scrolls nothing. A touch outside the popup closes the popup, and the rest of that touch scrolls nothing.
-- With `behaviorPresetsOfChromiumOnWindows`, a wheel or a touch outside the popup closes the popup. The page scrolls as usual.
+- With `behaviorPresetsOfFirefoxOnWindows`, a wheel outside the popup scrolls nothing. A touch outside the popup closes the popup, and the rest of that touch scrolls nothing. A two-finger zoom never zooms the page, and the popup stays open.
+- With `behaviorPresetsOfChromiumOnWindows`, a wheel or a touch outside the popup closes the popup. The page scrolls as usual. A two-finger zoom inside the popup does not zoom the page. Elsewhere, it closes the popup and zooms the page.
 - The library does not detect the browser. Your app picks the preset.
 
 To write your own rule, pass a function. The function gets the gesture and returns one of four behaviors:
@@ -728,8 +728,21 @@ const sel = new LLSelectSingle(el, {
 })
 ```
 
-- When a gesture closes the popup, `onClose` gets the reason `'scroll-gesture'`.
-- So that the user can still zoom the page, the library leaves Ctrl+wheel alone. The library also leaves a touch alone from the moment a second finger lands.
+To write your own rule for a two-finger zoom, pass a function to `zoomGestureToBehaviorFn`:
+
+```js
+const sel = new LLSelectSingle(el, {
+  // gesture.zone: 'popup', 'trigger' or 'outside'
+  zoomGestureToBehaviorFn: (gesture) => gesture.zone === 'popup'
+    ? 'leave-popup-open-and-block-page-zoom'
+    : 'leave-popup-open-and-allow-page-zoom',
+})
+```
+
+- When a gesture closes the popup, `onClose` gets the reason `'scroll-gesture'` or `'zoom-gesture'`.
+- A touch counts as a zoom from the moment a second finger lands. A wheel with Ctrl held counts as a zoom too.
+- In Chromium, a touchpad pinch reaches the page as a wheel with Ctrl held.
+- A preset that blocks a zoom stops the user from zooming while the popup is open. Closing the popup lifts that block.
 - Either preset above, or your own function, makes the library listen on the whole page. Every scroll of the page then waits for that listener while the popup is open.
 
 ### Subclassing (extending the library)

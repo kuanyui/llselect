@@ -10,7 +10,7 @@
  * - Nothing here detects the browser: the app picks the preset.
  * @module @llselect/core/behavior-presets
  */
-import { DEFAULT_SCROLL_GESTURE_TO_BEHAVIOR_MARK, type LLSelectBehaviorPreset, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior } from './behaviors.js'
+import { DEFAULT_SCROLL_GESTURE_TO_BEHAVIOR_MARK, DEFAULT_ZOOM_GESTURE_TO_BEHAVIOR_MARK, type LLSelectBehaviorPreset, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior, type LLSelectZoomGesture, type LLSelectZoomGestureBehavior } from './behaviors.js'
 
 export type {
   LLSelectBehaviorPreset,
@@ -18,6 +18,9 @@ export type {
   LLSelectScrollGestureBehavior,
   LLSelectScrollGestureKind,
   LLSelectScrollGestureZone,
+  LLSelectZoomGesture,
+  LLSelectZoomGestureBehavior,
+  LLSelectZoomGestureZone,
 } from './behaviors.js'
 
 /**
@@ -41,12 +44,29 @@ export function defaultScrollGestureToBehavior(gesture: LLSelectScrollGesture): 
 Object.defineProperty(defaultScrollGestureToBehavior, DEFAULT_SCROLL_GESTURE_TO_BEHAVIOR_MARK, { value: true })
 
 /**
+ * llselect's own behavior for a zoom gesture while the popup is open: the
+ * default of `zoomGestureToBehaviorFn`.
+ * - Every zoom zooms the page, inside the popup too, and the popup stays
+ *   open.
+ * - `@llselect/core` and `@llselect/core/behavior-presets` each export a
+ *   copy of this function. Either copy counts as the default, so neither
+ *   makes the library listen outside the select component.
+ * @group Behaviors
+ */
+export function defaultZoomGestureToBehavior(_gesture: LLSelectZoomGesture): LLSelectZoomGestureBehavior {
+  return 'leave-popup-open-and-allow-page-zoom'
+}
+Object.defineProperty(defaultZoomGestureToBehavior, DEFAULT_ZOOM_GESTURE_TO_BEHAVIOR_MARK, { value: true })
+
+/**
  * llselect's own behavior, the one a select component has when no preset is
- * passed. See {@link defaultScrollGestureToBehavior}.
+ * passed. See {@link defaultScrollGestureToBehavior} and
+ * {@link defaultZoomGestureToBehavior}.
  * @group Behaviors
  */
 export const behaviorPresetsOfLLSelectDefault: LLSelectBehaviorPreset = {
   scrollGestureToBehaviorFn: defaultScrollGestureToBehavior,
+  zoomGestureToBehaviorFn: defaultZoomGestureToBehavior,
 }
 
 /**
@@ -57,6 +77,8 @@ export const behaviorPresetsOfLLSelectDefault: LLSelectBehaviorPreset = {
  * - A touch-down outside the popup, on the trigger or elsewhere, closes the
  *   popup, and the rest of that touch scrolls nothing.
  * - A wheel or a drag inside the popup does not scroll the page.
+ * - A two-finger zoom, anywhere, does not zoom the page, and the popup stays
+ *   open. So does a `wheel` with `ctrlKey`.
  * - This preset does not cover one Firefox behavior: Firefox closes the
  *   popup when a drag that started inside the popup moves beyond the popup.
  * @group Behaviors
@@ -66,6 +88,7 @@ export const behaviorPresetsOfFirefoxOnWindows: LLSelectBehaviorPreset = {
     if (gesture.zone === 'popup' || gesture.kind === 'wheel') { return 'leave-popup-open-and-block-page-scroll' }
     return 'close-popup-and-block-page-scroll'
   },
+  zoomGestureToBehaviorFn: () => 'leave-popup-open-and-block-page-zoom',
 }
 
 /**
@@ -74,6 +97,9 @@ export const behaviorPresetsOfFirefoxOnWindows: LLSelectBehaviorPreset = {
  * - A wheel or a touch-down outside the popup, on the trigger or elsewhere,
  *   closes the popup, and the gesture scrolls the page as usual.
  * - A wheel or a drag inside the popup does not scroll the page.
+ * - A two-finger zoom inside the popup does not zoom the page. On the
+ *   trigger or elsewhere, it closes the popup and zooms the page. A `wheel`
+ *   with `ctrlKey` does the same.
  * - This preset does not cover Chromium's touch selection: a drag inside
  *   the popup moves the active row, and a lift there chooses that row.
  * @group Behaviors
@@ -82,5 +108,9 @@ export const behaviorPresetsOfChromiumOnWindows: LLSelectBehaviorPreset = {
   scrollGestureToBehaviorFn: (gesture) => {
     if (gesture.zone === 'popup') { return gesture.kind === 'touch-start' ? 'leave-popup-open-and-allow-page-scroll' : 'leave-popup-open-and-block-page-scroll' }
     return 'close-popup-and-allow-page-scroll'
+  },
+  zoomGestureToBehaviorFn: (gesture) => {
+    if (gesture.zone === 'popup') { return 'leave-popup-open-and-block-page-zoom' }
+    return 'close-popup-and-allow-page-zoom'
   },
 }
