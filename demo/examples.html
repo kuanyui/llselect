@@ -891,8 +891,8 @@
     </article>
 
     <article>
-      <h3>14.2 Column headings above two-column rows</h3>
-      <p class="hint">Rows show a name and a role, and the header repeats that layout in bold. The headings stay while the rows scroll. A listbox option cannot hold table cells, so a screen reader cannot link a row to the header. Instead, a <code>createPopupListItemEl</code> subclass writes the headings into each row's <code>aria-label</code>, such as "Alice Anderson, Role: admin".</p>
+      <h3>14.2 Column headings above two-column rows, and the ARIA name of each row</h3>
+      <p class="hint">In <strong>ARIA</strong>, a listbox option exposes one flat name and no table cells, so it cannot have column headings. An override of <code>createPopupListItemEl</code> adds the role to each option's <code>aria-label</code>, such as "Alice Anderson, Role: admin". Filtering still uses the name alone. The header stays fixed and is hidden from screen readers.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-header-columns"></div>

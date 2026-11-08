@@ -1120,12 +1120,13 @@ writeHeaderState(2)
 // Column headings for two-column rows: the header repeats the row layout
 // (.user-row, name left, role right) in bold. Rows re-render per filter
 // keystroke; the header is built once and never scrolls.
-// The rows are listbox options, whose children cannot be table cells, so
-// no ARIA attribute links a row to a heading. The recommended way: name
-// each option with its headings. The library sets aria-label from
-// itemToStringFn; the override replaces it, while itemToStringFn keeps
-// the name alone for filtering and the trigger. The visible header then
-// only repeats what each name already says, so it is aria-hidden.
+// An option exposes one flat accessible name, not table cells, so it
+// cannot have column headings. The recommended way: put the role heading
+// and value into the accessible name. The library sets aria-label from
+// itemToStringFn, and the override replaces it. itemToStringFn still
+// returns the person's name alone, for filtering and the trigger.
+// The visible headings repeat what each option's name says, so the
+// header is aria-hidden.
 class UserColumnsSingle extends LLSelectSingle {
   createPopupListItemEl(user, index) {
     const el = super.createPopupListItemEl(user, index)
