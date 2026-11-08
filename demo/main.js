@@ -1120,19 +1120,21 @@ writeHeaderState(2)
 // Column headings for two-column rows: the header repeats the row layout
 // (.user-row, name left, role right) in bold. Rows re-render per filter
 // keystroke; the header is built once and never scrolls.
-function createUserColumnsEl(user) {
-  const row = document.createElement('span')
-  row.className = 'user-row'
-  const name = document.createElement('span')
-  name.textContent = user.name
-  const role = document.createElement('small')
-  role.className = 'hint'
-  role.textContent = user.role
-  row.append(name, role)
-  return row
+// The rows are listbox options, whose children cannot be table cells, so
+// no ARIA attribute links a row to a heading. The recommended way: name
+// each option with its headings. The library sets aria-label from
+// itemToStringFn; the override replaces it, while itemToStringFn keeps
+// the name alone for filtering and the trigger. The visible header then
+// only repeats what each name already says, so it is aria-hidden.
+class UserColumnsSingle extends LLSelectSingle {
+  createPopupListItemEl(user, index) {
+    const el = super.createPopupListItemEl(user, index)
+    el.setAttribute('aria-label', `${user.name}, Role: ${user.role}`)
+    return el
+  }
 }
 const outHeaderColumns = document.getElementById('out-header-columns')
-const selHeaderColumns = new LLSelectSingle(
+const selHeaderColumns = new UserColumnsSingle(
   document.getElementById('mount-header-columns'),
   {
   ariaLabel: 'Pick a user (column headings)',
@@ -1140,10 +1142,21 @@ const selHeaderColumns = new LLSelectSingle(
     filterable: true,
     compareFn: (a, b) => a.id === b.id,
     itemToStringFn: (u) => u.name,
-    createPopupListItemContentElFn: createUserColumnsEl,
+    createPopupListItemContentElFn: (user) => {
+      const row = document.createElement('span')
+      row.className = 'user-row'
+      const name = document.createElement('span')
+      name.textContent = user.name
+      const role = document.createElement('small')
+      role.className = 'hint'
+      role.textContent = user.role
+      row.append(name, role)
+      return row
+    },
     createPopupHeaderContentElFn: () => {
       const head = document.createElement('span')
       head.className = 'user-row'
+      head.setAttribute('aria-hidden', 'true')
       const name = document.createElement('strong')
       name.textContent = 'Name'
       const role = document.createElement('strong')

@@ -892,7 +892,7 @@
 
     <article>
       <h3>14.2 Column headings above two-column rows</h3>
-      <p class="hint">Rows show a name and a role; the header repeats the same layout in bold. It sits between the filter input and the list, so the headings stay while the rows scroll.</p>
+      <p class="hint">Rows show a name and a role, and the header repeats that layout in bold. The headings stay while the rows scroll. A listbox option cannot hold table cells, so a screen reader cannot link a row to the header. Instead, a <code>createPopupListItemEl</code> subclass writes the headings into each row's <code>aria-label</code>, such as "Alice Anderson, Role: admin".</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div id="mount-header-columns"></div>
