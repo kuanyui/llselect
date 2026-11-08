@@ -36,8 +36,8 @@ Status marks: `[ ]` open, `[~]` in progress, `[x]` done. Newest entry on top. No
 
 | Run | 100 x 100 build | 100 x 100 teardown | 1000 x 10 build | 1000 x 10 teardown |
 |---|---|---|---|---|
-| README, v0.0.7 (commit `7ccaf36`), Chromium 151, Performance | 12 | 0.50 | 30 | 4.30 |
-| Tree at 0.0.10 about `96ac235`, Chromium 154, profile not recorded | 35 | 2.20 | 58 | 7.80 |
+| README, v0.0.7, Chromium 151, Performance | 12 | 0.50 | 30 | 4.30 |
+| Tree at 0.0.10 about "docs: [docs/llm] open reason: the panel round on renaming 'keyboard'; the owner keeps the four values", Chromium 154, profile not recorded | 35 | 2.20 | 58 | 7.80 |
 | v0.0.7 checked out and rebuilt, profile not recorded | 35 | 1.70 | 62 | 8.40 |
 | dev head, profile not recorded | 36 | 1.70 | 61 | 8.50 |
 | v0.0.7 checked out and rebuilt, Performance | 15 | 0.70 | 33 | 5.60 |
@@ -52,10 +52,10 @@ Status marks: `[ ]` open, `[~]` in progress, `[x]` done. Newest entry on top. No
   - No browser-version effect: the same two builds give the same picture under headless Chromium 151, 153 and 156. No Playwright release ships 154; 153 and 156 bracket it.
   - Teardown: the current `destroy()` costs about 1 ms per 1000 select components more than 0.0.7 (`removeEventListener` for the whole-life focus listener pair, `detachFocusListeners`), in 9 of 12 adjacent pairs; not worth chasing.
   - A first run that shared one browser process across the four versions showed 0.0.7 at 34 ms and 0.0.9 at 61 ms; fresh processes in reverse order erased the spread, so it was process state and order, not code.
-  - The benchmark page's timing code and its llselect adapter are unchanged since the README measurement (the diff since `7ccaf36` is demo chrome, chart colors, renamed selectors in the interaction section and the renamed custom-renderer option, which the mass build does not use), and the page writes no attribute on `<html>` or `<body>` during a run, so the shared `refreshAll` pass does not fire.
+  - The benchmark page's timing code and its llselect adapter are unchanged since the README measurement (the diff since v0.0.7 is demo chrome, chart colors, renamed selectors in the interaction section and the renamed custom-renderer option, which the mass build does not use), and the page writes no attribute on `<html>` or `<body>` during a run, so the shared `refreshAll` pass does not fire.
 - What the benchmark measures (`demo/benchmark.js`, `buildAll`): Build total is the sum of the synchronous adapter `setup` calls over all select components, one pass, with a `requestAnimationFrame` yield between chunks (25 select components per chunk at 1000 select components, 1 at 100); the yields and the final reflow are excluded. Teardown total is one timed loop of the adapter `teardown` over the select components just built. DOM nodes is the resting count after the build. The interaction tables use medians of repeats; build and teardown do not, so each cell is a single pass.
 - The llselect path per select component (the `llselect` adapter): `new LLSelectSingle(mount, { filterable: true, ariaLabel })`, then `setItems(items)`, then `setChosenItem(items[0])`, since every select component is built pre-selected; teardown is `destroy()`. The items array is built once and shared by all select components.
-- The run that opened this entry, all six libraries, by the owner on the 13900HX, Chromium 154.0.8037.57 stable x86_64, tree at 0.0.10 after the events work (about commit `96ac235`), profile not recorded, single run per cell:
+- The run that opened this entry, all six libraries, by the owner on the 13900HX, Chromium 154.0.8037.57 stable x86_64, tree at 0.0.10 after the events work (about commit "docs: [docs/llm] open reason: the panel round on renaming 'keyboard'; the owner keeps the four values"), profile not recorded, single run per cell:
 
 | Library | 100 x 100 build (ms) | 100 x 100 DOM nodes | 100 x 100 teardown (ms) | 1000 x 10 build (ms) | 1000 x 10 DOM nodes | 1000 x 10 teardown (ms) |
 |---|---|---|---|---|---|---|
