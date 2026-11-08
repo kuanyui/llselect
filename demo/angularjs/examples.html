@@ -651,6 +651,17 @@
       Rows show a name and a role; the header repeats the same layout in
       bold. Rows re-render per keystroke, the header never does.
     </p>
+    <div class="alert alert-warning">
+      <strong>ARIA limitation:</strong> a listbox option has no cells, so no
+      header labels its columns.
+      <ul>
+        <li><a href="../examples.html">Core example 14.2</a> puts the role
+          heading in each option's accessible name.</li>
+        <li>This directive cannot do that cleanly.</li>
+        <li>If ARIA matters, do not put column headings in a header or
+          footer.</li>
+      </ul>
+    </div>
     <div class="demo-row" data-src="12b">
       <llselect-single ll-aria-label="User (column headings)" ng-model="vm.userColumns" ll-filterable="true"
         ll-popup-list-item-content-fn="vm.renderUserColumns" ll-popup-header-content-fn="vm.userColumnsHeaderEl"
