@@ -62,6 +62,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 - Does not fire when a call does not open the popup. That happens in each of these cases:
   - the popup is already open;
   - the select component is disabled;
+  - the element is being destroyed, or was: for example a reopen from an [`ll-on-close`](#ll-on-close) expression that the teardown runs;
   - the call is made while a close returns focus to the trigger;
   - the call is made while the select component's own `showPopover()` is still showing its popup, for example a reopen from an [`ll-on-focus`](#ll-on-focus) expression;
   - the call is made while an open undoes a show that the browser refused, for example from an [`ll-on-active-item-change`](#ll-on-active-item-change) expression that the undo runs;

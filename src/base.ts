@@ -1818,6 +1818,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - The clear button's and the chip remove button's clicks check it after
    *   their focus step, since an `onFocus` listener may destroy the select component
    *   there.
+   * - `open()` checks it, since a listener that `destroy()` runs, such as
+   *   `onClose`, may call `open()`.
    * @internal
    */
   protected destroyed = false
@@ -2332,6 +2334,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Does nothing in each of these cases:
    *   - the popup is already open;
    *   - the select component is disabled;
+   *   - `destroy()` has started, so an `open()` call from a listener that
+   *     `destroy()` runs is ignored, such as an `onClose` that reopens the
+   *     popup;
    *   - `close()` is returning focus to the trigger, so a focus handler that
    *     calls `open()` there is ignored;
    *   - this select component's own `showPopover()` is running, so an
@@ -2393,7 +2398,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   public open(): void {
     const reason = this.pendingOpenReason
     this.pendingOpenReason = 'api'
-    if (this.opened || this.disabled || this.closing || this.opening) { return }
+    if (this.opened || this.disabled || this.destroyed || this.closing || this.opening) { return }
     // A trigger already scrolled out of view / clipped by an ancestor when
     // open() runs cannot host a visible popup, so opening is a no-op (mirrors
     // the disabled guard). This also prevents the positioner's initial
@@ -2808,6 +2813,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Tear down the instance.
    * - Closes the popup, which removes the document and window listeners of
    *   the open popup and stops the popup positioning.
+   * - Once `destroy()` has started, `open()` does nothing. So a listener
+   *   that this close runs, such as an `onClose` that reopens the popup,
+   *   cannot open it again.
    * - Removes the click listener from `labelEl`, and removes an id the
    *   library minted on it.
    * - Removes the library's class, its inline styles and the

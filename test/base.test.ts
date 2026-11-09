@@ -160,6 +160,32 @@ test('destroy is idempotent and safe on a closed instance', () => {
   assert.equal(target.children.length, 0)
 })
 
+test('open() does nothing once destroy() has started, also from an onClose listener that reopens (MEDIUM-968)', () => {
+  const target = mount()
+  const opens: string[] = []
+  const closes: string[] = []
+  const inst = new TestSelect<string>(target, {
+    onOpen: (meta) => { opens.push(meta.reason) },
+    // A listener that keeps the popup open reopens it at every close.
+    onClose: (meta) => { closes.push(meta.reason); inst.open() },
+  })
+  inst.setItems(['a', 'b'])
+  inst.open()
+  inst.destroy()
+  assert.deepEqual(closes, ['destroy'], 'destroy closed the popup once')
+  assert.deepEqual(opens, ['api'], 'the open() from onClose was refused')
+  assert.equal(inst.isOpened(), false)
+  assert.equal(target.children.length, 0)
+  // An outside press closes nothing more.
+  document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+  assert.deepEqual(closes, ['destroy'])
+  // A later call is refused as well, with no reason left behind.
+  inst.open()
+  inst.toggle()
+  assert.deepEqual(opens, ['api'])
+  assert.equal(inst.isOpened(), false)
+})
+
 test('IDs are unique across multiple instances', () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
   const a = document.getElementById('a')
