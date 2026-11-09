@@ -1,6 +1,6 @@
 # Native select: scrolling and dragging while the popup is open
 
-Agent-facing record of the owner's hand tests of the browser's native `<select>`: what the native control does with a mouse wheel, with a touch swipe, with a mouse drag and with a two-finger zoom while its popup is open. It is the evidence behind the scroll gesture behavior that the owner ruled and the agent implemented, MEDIUM-795 in `FIXME.md`: the presets `behaviorPresetsOfFirefoxOnWindows` and `behaviorPresetsOfChromiumOnWindows` follow its rows on the wheel and on a touch outside the popup, and `behaviorPresetsOfSafariOnMac` its Safari rows on the wheel and the touchpad, leaving every touch to the default, and `DESIGN.md` "Scroll gestures while the popup is open" holds the contract. Its rows on a drag inside the popup, which the presets follow only in blocking the page scroll, feed the later drag behaviors in `TODO.md`. Its rows on a two-finger zoom are the owner's spec for the zoom answers of the presets, which `DESIGN.md` "Zoom gestures while the popup is open" holds.
+Agent-facing record of the owner's hand tests of the browser's native `<select>`: what the native control does with a mouse wheel, with a touch swipe, with a mouse drag and with a two-finger zoom while its popup is open, and how tall the rows of its popup are when a touch opens it. It is the evidence behind the scroll gesture behavior that the owner ruled and the agent implemented, MEDIUM-795 in `FIXME.md`: the presets `behaviorPresetsOfFirefoxOnWindows` and `behaviorPresetsOfChromiumOnWindows` follow its rows on the wheel and on a touch outside the popup, and `behaviorPresetsOfSafariOnMac` its Safari rows on the wheel and the touchpad, leaving every touch to the default, and `DESIGN.md` "Scroll gestures while the popup is open" holds the contract. Its rows on a drag inside the popup, which the presets follow only in blocking the page scroll, feed the later drag behaviors in `TODO.md`. Its rows on a two-finger zoom are the owner's spec for the zoom answers of the presets, which `DESIGN.md` "Zoom gestures while the popup is open" holds.
 
 How to read this record:
 
@@ -154,6 +154,15 @@ The owner reported, in the owner's words, translated from Chinese: "in macOS Saf
 - The owner compares llselect's popup, which is part of the page: a two-finger zoom enlarges its options with the page, so llselect does better than the native popup here.
 - The presets copy the rows above through `zoomGestureToBehaviorFn`; `DESIGN.md` "Zoom gestures while the popup is open" has the details and the open first-finger question.
 
+## Row height when a touch opens the popup
+
+No preset follows these rows: the owner abandoned the plan for taller rows, which `ABANDONED_PLAN_MOBILE_NATIVE_SIMULATION.md` records with the browsers' source.
+
+### Desktop browsers, on a touchscreen
+
+- Firefox: the owner's observation, translated from Chinese: on the desktop version of Firefox, at a touch, the top and bottom padding of an item gets bigger. This wording names no operating system; the older entry in `TODO.md`, since removed, named a Windows touchscreen.
+- Chromium: the owner's test, in the owner's words, translated from Chinese: "Right, Chromium for desktop does not make the options taller for touch. (At least in the test on Windows.)"
+
 ## Mouse and touch differ
 
 - The owner notes that Chromium's drag behavior differs again, and that a mouse and a touch behave differently in two places: a drag after pressing an item, and a release on an item or outside the popup.
@@ -164,7 +173,7 @@ The owner reported, in the owner's words, translated from Chinese: "in macOS Saf
 
 ## Gaps, noted by the agent
 
-- No observation covers Android or iOS. For macOS, the record holds Safari only: the wheel and the touchpad scroll inside the popup, outside it and on the `<select>` element, and the two-finger zoom.
+- No observation of the native select covers Android or iOS. The owner's tests of llselect itself on Android, in Firefox and in Chromium, are a different record: `TODO.md` "Scroll-gesture pass on real devices". For macOS, the record holds Safari only: the wheel and the touchpad scroll inside the popup, outside it and on the `<select>` element, and the two-finger zoom.
 - For the mouse wheel inside the popup, the record holds the owner's first report, which named no operating system and no browser, and the Safari row on macOS.
 - The owner stated the test of the `<select>` element itself as one notch of the mouse wheel. For the Windows touchscreen the owner named only the behavior the result matches, a swipe outside the popup, so the gesture on the `<select>` element there is the agent's reading.
 - The test of the `<select>` element itself names Chromium and Firefox on Linux and on Windows, and Safari on macOS; it holds no result for WebKit on Linux.
@@ -178,3 +187,4 @@ The owner reported, in the owner's words, translated from Chinese: "in macOS Saf
 - The Safari tests give no Safari or macOS version. The wheel answers were picked from the agent's options, not described freely.
 - The touchpad row on Windows names Firefox only, outside the popup only, and gives no version.
 - No test says whether the native select treats a wheel or a one-finger touch differently on a pinch-zoomed page. The owner's ruling of MEDIUM-939 expects it to act the same.
+- The row-height rows give no browser versions, and the Firefox row names no operating system.
