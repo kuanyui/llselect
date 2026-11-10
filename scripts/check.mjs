@@ -13,7 +13,9 @@
 //   3. if / else / while / for / do bodies must be wrapped in { }.
 //   4. `any` needs an explaining comment on the same or previous line.
 //   5. Release wiring: the angularjs package version and its `@llselect/core`
-//      peer range follow the root package.json version.
+//      peer range follow the root package.json version; `typesVersions`
+//      names the types of every subpath entry of `exports` that declares
+//      `types`.
 //   6. Theme files keep the color-scheme contract (DESIGN.md "Color scheme
 //      (light / dark) in the themes"): no `color-scheme` and no
 //      `--llselect-color-scheme` declared on the root element, no
@@ -253,6 +255,19 @@ for (const rel of markdownFiles) {
   const peer = ngPkg.peerDependencies?.['@llselect/core']
   if (peer !== `^${rootPkg.version}`) {
     problems.push(`angularjs/package.json: peer range for @llselect/core is ${peer}, expected ^${rootPkg.version}`)
+  }
+  // TypeScript's `node10` module resolution (`moduleResolution: "node"`) does
+  // not read `exports`, so it finds the types of a subpath entry such as
+  // `@llselect/core/i18n` only through `typesVersions`. Every subpath that
+  // declares `types` in `exports` needs the same file there.
+  const mapped = rootPkg.typesVersions?.['*'] ?? {}
+  for (const [subpath, target] of Object.entries(rootPkg.exports ?? {})) {
+    if (subpath === '.' || typeof target !== 'object' || target === null || typeof target.types !== 'string') { continue }
+    const name = subpath.replace(/^\.\//, '')
+    const entry = mapped[name]
+    if (!Array.isArray(entry) || entry.length !== 1 || entry[0] !== target.types) {
+      problems.push(`package.json: typesVersions["*"]["${name}"] must be ["${target.types}"], as exports["${subpath}"].types says`)
+    }
   }
 }
 

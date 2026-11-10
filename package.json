@@ -9,6 +9,16 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "i18n": [
+        "./dist/i18n.d.ts"
+      ],
+      "behavior-presets": [
+        "./dist/behavior-presets.d.ts"
+      ]
+    }
+  },
   "unpkg": "./dist/index.umd.js",
   "jsdelivr": "./dist/index.umd.js",
   "exports": {
