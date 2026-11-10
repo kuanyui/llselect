@@ -527,6 +527,12 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   - A `setItems` that leaves the selection as it is re-renders the trigger content only and does not call it.
    * - fn returns `null` - no arrow for that state.
    * - setting is `null` (default) - the library adds nothing to the arrow slot.
+   * - The shipped themes turn the arrow half a turn while the popup is open.
+   * - The shipped themes do not turn a returned element that carries the attribute `data-llselect-no-rotate`.
+   *   - The built-in `createChevronUpDownSvgEl` and `createTriangleUpDownSvgEl` carry it, since an icon that points both up and down has no direction to turn.
+   *   - To keep your own icon still, give the returned element that attribute.
+   *   - The themes find the attribute with the CSS `:has()` selector.
+   *   - Chrome before 105, Firefox before 121 and Safari before 15.4 lack `:has()`, so these browsers still turn the arrow.
    * @group Trigger
    */
   createTriggerArrowContentElFn: ((state: { isOpened: boolean }) => HTMLElement | SVGElement | null) | null

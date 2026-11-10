@@ -94,7 +94,9 @@ export type { LLSelectWidthPolicy, LLSelectPlacement } from './positioning.js'
 
 export {
   createChevronDownSvgEl,
+  createChevronUpDownSvgEl,
   createTriangleDownSvgEl,
+  createTriangleUpDownSvgEl,
   createCheckmarkSvgEl,
   createOutlinedCheckboxSvgEl,
   createFilledCheckboxSvgEl,

@@ -1,4 +1,4 @@
-import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createOutlinedCheckboxSvgEl, createFilledCheckboxSvgEl, createCheckmarkSvgEl, createHighlightedTextEl, defaultScrollGestureToBehavior } from '../dist/index.mjs'
+import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createChevronUpDownSvgEl, createTriangleUpDownSvgEl, createOutlinedCheckboxSvgEl, createFilledCheckboxSvgEl, createCheckmarkSvgEl, createHighlightedTextEl, defaultScrollGestureToBehavior } from '../dist/index.mjs'
 import { behaviorPresetsOfChromiumOnWindows, behaviorPresetsOfFirefoxOnWindows, behaviorPresetsOfSafariOnMac } from '../dist/behavior-presets.mjs'
 import { ar, en, he, ja, zhTW, uiTranslationPackByLocale } from '../dist/i18n.mjs'
 import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS, MIXED_DIRECTION_COUNTRIES } from './data.js'
@@ -236,6 +236,26 @@ new LLSelectSingle(
   ariaLabel: 'triangle',
     placeholder: 'triangle',
     createTriggerArrowContentElFn: () => createTriangleDownSvgEl(),
+  },
+).setItems(COUNTRIES)
+
+// 4.2c createChevronUpDownSvgEl: carries data-llselect-no-rotate, so in a browser with :has() it stays still on open
+new LLSelectSingle(
+  document.getElementById('mount-ind-chevron-up-down'),
+  {
+  ariaLabel: 'chevron up-down',
+    placeholder: 'chevron up-down',
+    createTriggerArrowContentElFn: () => createChevronUpDownSvgEl(),
+  },
+).setItems(COUNTRIES)
+
+// 4.2d createTriangleUpDownSvgEl: carries data-llselect-no-rotate, so in a browser with :has() it stays still on open
+new LLSelectSingle(
+  document.getElementById('mount-ind-triangle-up-down'),
+  {
+  ariaLabel: 'triangle up-down',
+    placeholder: 'triangle up-down',
+    createTriggerArrowContentElFn: () => createTriangleUpDownSvgEl(),
   },
 ).setItems(COUNTRIES)
 //#endregion

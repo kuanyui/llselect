@@ -343,9 +343,12 @@ $scope.preset = llselectBehaviorPresets.behaviorPresetsOfFirefoxOnWindows
 
 ### `ll-arrow`
 
-**Literal**. The trigger arrow icon: `chevron` (default) / `triangle` / `none`.
+**Literal**. The trigger arrow icon: `chevron` (default) / `triangle` / `chevron-up-down` / `triangle-up-down` / `none`.
 
-- The chevron default is this package being batteries-included, unlike the core (which ships no arrow so the app decides).
+- The chevron default is this package being batteries-included, unlike the core, which adds no arrow by default and leaves the choice to the app.
+- `chevron-up-down` and `triangle-up-down` point both up and down, so the shipped themes do not turn them while the popup is open.
+  - The themes find these two arrows with the CSS `:has()` selector.
+  - Chrome before 105, Firefox before 121 and Safari before 15.4 lack `:has()`, so these browsers still turn the two arrows.
 - `none` opts out and leaves the slot to the theme.
 - A custom arrow means editing your copy of `llselect-angularjs.js` - which is what a copy-paste package is for.
 
@@ -587,7 +590,7 @@ vm.langRows = [{
 
 - On by default - the same batteries-included trade as the arrow.
 - `ll-checkboxes="false"` strips every checkbox visual, including the choose-all row's icon; that row then shows only the counting text, which is also the core's own default.
-- The core itself ships no icons and no default indicator; per item its answer is the subclass recipe (demo 5.4 / 5.5).
+- The core itself adds no icon and no indicator by default; per item its answer is a settings recipe with its opt-in icon helpers, as demos 5.4 and 5.5 show.
 - Single-select never gets checkboxes - a radio-like look would misstate multiplicity.
 
 ## `llselectConfigProvider`
@@ -598,7 +601,7 @@ A house style set once, rather than repeated on 40 elements. A per-element `ll-*
 angular.module('app', ['llselect'])
   .config(['llselectConfigProvider', function (llselectConfigProvider) {
     llselectConfigProvider.defaults({
-      arrow: 'chevron',          // 'chevron' | 'triangle' | 'none' | null (null = the chevron default)
+      arrow: 'chevron',          // 'chevron' | 'triangle' | 'chevron-up-down' | 'triangle-up-down' | 'none' | null (null = the chevron default)
       filterable: true,          // boolean, or a predicate (items) => boolean
       highlight: true,           // wrap filter matches in the default item text in <mark>
       popupWidthPolicy: 'match-trigger-wrapper',  // llselect's own default is 'fit-content'
@@ -616,7 +619,7 @@ Takes the defaults bag above. Only settings that are app-wide **by nature** are 
 
 #### `arrow`
 
-`'chevron' | 'triangle' | 'none' | null` - `null` (the default) resolves to this package's batteries-included chevron; `'none'` leaves the arrow slot to the theme. The app-wide default behind [`ll-arrow`](#ll-arrow).
+`'chevron' | 'triangle' | 'chevron-up-down' | 'triangle-up-down' | 'none' | null` - `null` (the default) resolves to this package's batteries-included chevron; `'none'` leaves the arrow slot to the theme. The app-wide default behind [`ll-arrow`](#ll-arrow).
 
 #### `filterable`
 

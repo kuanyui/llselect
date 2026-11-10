@@ -206,9 +206,11 @@
     <article>
       <h3>4.2 Built-in SVG helpers</h3>
       <p class="hint">
-        Both return SVGElement with <code>fill="currentColor"</code> and
-        <code>aria-hidden="true"</code>. CSS rotates them on
-        <code>[data-state="open"]</code>.
+        Each returns an SVGElement with <code>fill="currentColor"</code> and
+        <code>aria-hidden="true"</code>. The themes turn an arrow on
+        <code>[data-state="open"]</code>. The up-down arrows carry
+        <code>data-llselect-no-rotate</code>, so in a browser with
+        <code>:has()</code> they stay still.
       </p>
       <div class="demo-split">
         <div class="demo-pane">
@@ -220,6 +222,14 @@
             <div>
               <div class="arrow-label"><code>createTriangleDownSvgEl()</code></div>
               <div id="mount-ind-triangle"></div>
+            </div>
+            <div>
+              <div class="arrow-label"><code>createChevronUpDownSvgEl()</code></div>
+              <div id="mount-ind-chevron-up-down"></div>
+            </div>
+            <div>
+              <div class="arrow-label"><code>createTriangleUpDownSvgEl()</code></div>
+              <div id="mount-ind-triangle-up-down"></div>
             </div>
           </div>
         </div>

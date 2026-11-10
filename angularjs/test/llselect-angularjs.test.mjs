@@ -194,11 +194,31 @@ test('ll-arrow renders a built-in arrow, and a fresh one per trigger', () => {
   assert.ok(arrows[2].querySelector('svg'), 'no ll-arrow must default to the chevron')
 })
 
+test('ll-arrow="chevron-up-down" and "triangle-up-down" render the up-down icons, which carry data-llselect-no-rotate', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `<div ng-controller="C as vm">
+      <llselect-single ng-model="vm.a" ll-arrow="chevron-up-down" ll-options="f for f in vm.fruits"></llselect-single>
+      <llselect-single ng-model="vm.b" ll-arrow="triangle-up-down" ll-options="f for f in vm.fruits"></llselect-single>
+    </div>`,
+    controller: function () { this.fruits = FRUITS.slice() },
+  })
+  assert.deepEqual(a.errors, [])
+  const arrows = a.$$('.llselect-trigger-arrow')
+  assert.equal(arrows.length, 2)
+  const pathOf = (el) => el.querySelector('path').getAttribute('d')
+  assert.equal(pathOf(arrows[0]), pathOf(a.window.llselect.createChevronUpDownSvgEl()))
+  assert.equal(pathOf(arrows[1]), pathOf(a.window.llselect.createTriangleUpDownSvgEl()))
+  for (const arrow of arrows) {
+    assert.ok(arrow.querySelector('svg').hasAttribute('data-llselect-no-rotate'), 'the up-down icons carry the attribute the themes read')
+  }
+})
+
 test('an unknown ll-arrow is reported and names the built-ins', () => {
   const a = app()
   a.compile('<llselect-single ng-model="x" ll-arrow="sparkle" ll-options="f for f in vm.fruits"></llselect-single>')
   assert.equal(a.errors.length, 1)
-  assert.match(a.errors[0].message, /unknown arrow "sparkle".*chevron, triangle/)
+  assert.match(a.errors[0].message, /unknown arrow "sparkle"; supported: chevron, triangle, chevron-up-down, triangle-up-down, none/)
 })
 
 test('llselectConfigProvider sets app-wide defaults, and ll-* attributes win', () => {

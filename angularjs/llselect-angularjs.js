@@ -113,11 +113,14 @@
   var ARROWS = {
     chevron: llselect.createChevronDownSvgEl,
     triangle: llselect.createTriangleDownSvgEl,
+    'chevron-up-down': llselect.createChevronUpDownSvgEl,
+    'triangle-up-down': llselect.createTriangleUpDownSvgEl,
   }
 
   function resolveArrow(name) {
-    // Batteries-included default: the chevron. Core deliberately ships no
-    // arrow (the app decides); these directives are the opposite trade.
+    // Batteries-included default: the chevron. Core deliberately adds no
+    // arrow by default (the app decides); these directives are the opposite
+    // trade.
     if (name === 'none') { return null }
     if (!name) { name = 'chevron' }
     var create = ARROWS[name]
@@ -472,7 +475,7 @@
      */
     .provider('llselectConfig', function () {
       var config = {
-        /** 'chevron' | 'triangle' | 'none' | null. null = this package's default (the chevron); 'none' leaves the slot to the theme. */
+        /** 'chevron' | 'triangle' | 'chevron-up-down' | 'triangle-up-down' | 'none' | null. null = this package's default (the chevron); 'none' leaves the slot to the theme. */
         arrow: null,
         /** boolean | ((items) => boolean) | null. null = llselect's own default (off). */
         filterable: null,
@@ -591,8 +594,9 @@
           // one plus the pack's counting text. ll-checkboxes="false" opts out;
           // everything then falls back to the core defaults, which draw no
           // indicator at all (the choose-all row is just its counting text).
-          // Core ships no icons; per item its answer is the subclass recipe
-          // (demo 5.4 / 5.5), and this package's answer is a default. Rows
+          // Core adds no icons by default; per item its answer is a settings
+          // recipe with its opt-in icon helpers (demo 5.4 / 5.5), and this
+          // package's answer is a default. Rows
           // render only after construction, so reading `sel` here is safe.
           // An ll-popup-list-item-content-fn composes: its element renders beside the
           // checkbox (null falls back to the label text); opting out of

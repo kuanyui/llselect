@@ -116,6 +116,18 @@
   transform: rotate(180deg);
 }
 
+/* An arrow that carries data-llselect-no-rotate, such as the up-down icons,
+   stays still. Browsers without :has() still turn it. The first rule stops
+   the slot from turning such an arrow back when it replaces a turned arrow,
+   on a close or a rerender(). */
+.llselect-trigger-arrow:has(> [data-llselect-no-rotate]) {
+  transition: none;
+}
+
+.llselect-trigger-wrapper[data-state='open'] .llselect-trigger-arrow:has(> [data-llselect-no-rotate]) {
+  transform: none;
+}
+
 /* --- popup (matches .dropdown-menu look) ---------------------- */
 
 .llselect-popup {

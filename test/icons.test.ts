@@ -3,7 +3,9 @@ import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import {
   createChevronDownSvgEl,
+  createChevronUpDownSvgEl,
   createTriangleDownSvgEl,
+  createTriangleUpDownSvgEl,
   createCheckmarkSvgEl,
   createOutlinedCheckboxSvgEl,
   createFilledCheckboxSvgEl,
@@ -29,6 +31,34 @@ test('createTriangleDownSvgEl returns an SVG element with currentColor', () => {
   const svg = createTriangleDownSvgEl()
   assert.equal(svg.tagName.toLowerCase(), 'svg')
   assert.equal(svg.querySelector('path')?.getAttribute('fill'), 'currentColor')
+})
+
+test('the up-down arrows return SVG elements with currentColor + aria-hidden, marked data-llselect-no-rotate', () => {
+  setupDom()
+  for (const svg of [createChevronUpDownSvgEl(), createTriangleUpDownSvgEl()]) {
+    assert.equal(svg.tagName.toLowerCase(), 'svg')
+    assert.equal(svg.getAttribute('aria-hidden'), 'true')
+    assert.equal(svg.querySelector('path')?.getAttribute('fill'), 'currentColor')
+    assert.equal(svg.getAttribute('data-llselect-no-rotate'), '')
+  }
+  assert.notEqual(
+    createChevronUpDownSvgEl().querySelector('path')?.getAttribute('d'),
+    createTriangleUpDownSvgEl().querySelector('path')?.getAttribute('d'),
+  )
+})
+
+test('the up-down arrows honor the size option', () => {
+  setupDom()
+  for (const svg of [createChevronUpDownSvgEl({ size: 24 }), createTriangleUpDownSvgEl({ size: 24 })]) {
+    assert.equal(svg.getAttribute('width'), '24')
+    assert.equal(svg.getAttribute('height'), '24')
+  }
+})
+
+test('the down arrows carry no data-llselect-no-rotate', () => {
+  setupDom()
+  assert.equal(createChevronDownSvgEl().hasAttribute('data-llselect-no-rotate'), false)
+  assert.equal(createTriangleDownSvgEl().hasAttribute('data-llselect-no-rotate'), false)
 })
 
 test('createCheckmarkSvgEl returns an SVG element with currentColor + aria-hidden', () => {

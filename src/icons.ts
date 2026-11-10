@@ -4,7 +4,8 @@
 // so people who do not want to pull in mdi / FontAwesome still get sensible
 // built-ins. All paths use fill="currentColor" so they inherit the
 // surrounding text color (light / dark color schemes "just work"). Paths are from
-// Material Design Icons (MIT).
+// Material Design Icons (MIT). The up-down arrows are drawn here from the shapes
+// of the down arrows.
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
@@ -32,6 +33,10 @@ function createSvgEl(viewBox: string, pathD: string, size: number): SVGElement {
   return svg
 }
 
+// The shipped themes turn the arrow half a turn while the popup is open,
+// except an arrow that carries this attribute.
+const NO_ROTATE_ATTRIBUTE = 'data-llselect-no-rotate'
+
 /**
  * Solid filled triangle pointing down. Sized to roughly match the chevron's
  * visual weight (MDI's `arrow_drop_down` path occupies a small portion of
@@ -41,6 +46,20 @@ function createSvgEl(viewBox: string, pathD: string, size: number): SVGElement {
  */
 export function createTriangleDownSvgEl(opts: LLSelectIconOptions = {}): SVGElement {
   return createSvgEl('0 0 24 24', 'M4 8l8 10 8-10z', opts.size ?? 16)
+}
+
+/**
+ * Two solid filled triangles, the upper one pointing up and the lower one pointing down.
+ * - Each triangle is the {@link createTriangleDownSvgEl} triangle at three quarters of its size.
+ * - The element carries the attribute `data-llselect-no-rotate`, so the shipped themes do not turn it while the popup is open.
+ * - The icon looks the same after a half turn, so a browser that still turns it shows the same icon once the turn ends.
+ * @group Icons
+ * @category Arrows
+ */
+export function createTriangleUpDownSvgEl(opts: LLSelectIconOptions = {}): SVGElement {
+  const svg = createSvgEl('0 0 24 24', 'M6 11l6-7.5 6 7.5zM6 13l6 7.5 6-7.5z', opts.size ?? 16)
+  svg.setAttribute(NO_ROTATE_ATTRIBUTE, '')
+  return svg
 }
 
 /**
@@ -54,6 +73,24 @@ export function createChevronDownSvgEl(opts: LLSelectIconOptions = {}): SVGEleme
     'M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z',
     opts.size ?? 16,
   )
+}
+
+/**
+ * Two chevrons, the upper one pointing up and the lower one pointing down.
+ * - Each chevron is the {@link createChevronDownSvgEl} chevron at its full size.
+ * - The element carries the attribute `data-llselect-no-rotate`, so the shipped themes do not turn it while the popup is open.
+ * - The icon looks the same after a half turn, so a browser that still turns it shows the same icon once the turn ends.
+ * @group Icons
+ * @category Arrows
+ */
+export function createChevronUpDownSvgEl(opts: LLSelectIconOptions = {}): SVGElement {
+  const svg = createSvgEl(
+    '0 0 24 24',
+    'M16.59 10.41 12 5.83 7.41 10.41 6 9l6-6 6 6zM16.59 13.59 12 18.17 7.41 13.59 6 15l6 6 6-6z',
+    opts.size ?? 16,
+  )
+  svg.setAttribute(NO_ROTATE_ATTRIBUTE, '')
+  return svg
 }
 
 /**

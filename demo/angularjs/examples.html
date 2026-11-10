@@ -397,8 +397,10 @@
   <section>
     <h2>7. ll-arrow, and llselectConfigProvider defaults</h2>
     <p>
-      <code>ll-arrow</code> takes llselect's two built-in arrows and nothing
-      else; a custom one means editing your copy of the file. The house style
+      <code>ll-arrow</code> takes llselect's four built-in arrows and nothing
+      else; a custom one means editing your copy of the file. In a browser
+      with <code>:has()</code>, the up-down arrow does not turn when the popup
+      opens. The house style
       comes from <code>llselectConfigProvider</code> in <code>.config()</code>
       (see <code>app.js</code>) - this demo sets <code>arrow: 'chevron'</code>
       app-wide, which is why the select components above have one without
@@ -406,6 +408,9 @@
     </p>
     <div class="demo-row" data-src="7">
       <llselect-single ll-aria-label="Country" ng-model="vm.country3" ll-arrow="triangle"
+        ll-options="c for c in vm.countries">
+      </llselect-single>
+      <llselect-single ll-aria-label="Country, up-down arrow" ng-model="vm.country3UpDown" ll-arrow="chevron-up-down"
         ll-options="c for c in vm.countries">
       </llselect-single>
     </div>
