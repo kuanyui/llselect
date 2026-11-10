@@ -220,7 +220,7 @@ sel.rootEl.addEventListener('click', () => { touchClick = false })
 
 ## Found on the way
 
-- Two lifecycle problems in the code as it is, both found by Codex Astra while reviewing step 1: `open()` reopened a select component that `destroy()` was tearing down, since fixed (MEDIUM-968 in `FIXME.md`), and a `close()` from inside the list render leaves the listeners of that open attached, still open (MEDIUM-969).
+- Two lifecycle problems in the code as it is, both found by Codex Astra while reviewing step 1: `open()` reopened a select component that `destroy()` was tearing down, since fixed (MEDIUM-968 in `FIXME.md`), and a `close()` from inside the list render left the listeners of that open attached, since fixed as well (MEDIUM-969).
 - A stale entry of `TODO.md`, found by Codex Sol: "Close reason on `onClose`" still said that `onClose()` has no argument (DOCUMENTATION-970).
 
 ## Sources

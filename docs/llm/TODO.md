@@ -139,6 +139,7 @@ The owner's rulings on MEDIUM-795 left these out of the first step (`FIXME.md` M
 
 ## Accepted limitations (known, deliberately not planned)
 
+- A function that builds or decides must not change the select component (owner ruling, FIXME MEDIUM-969): a content function or a predicate that calls `close()`, `setItems()` and the like can leave outdated rows in the popup. Only the basic guard stays: such a call during `open()` leaves no listener behind. `DESIGN.md` "Functions that build or decide" holds the rule, what is and is not promised, and how the ruling came about.
 - No simulation of the native select on phones and touchscreens beyond the scroll and zoom gestures (owner ruling): the Android back button does not close the popup, the rows do not grow taller when a touch opens the popup, and the popup has no phone layout. `ABANDONED_PLAN_MOBILE_NATIVE_SIMULATION.md` holds the three plans, the evidence, the committee's review and what an app can do with the public API instead.
 - A single set of `.d.ts` serves both ESM and CJS. TypeScript consumers on `moduleResolution: nodenext` who `require()` the package hit the classic dual-types edge (bundler / `import` consumers are unaffected). Fixing it properly means bundling declarations into per-format `.d.ts` / `.d.cts` - revisit if anyone actually hits it.
 - Per-item click listeners stay (no event delegation) until a benchmark shows a win; lazy render already bounds the cost. See the event-delegation deferral in `archive/roadmap-v0.0.1.md`.

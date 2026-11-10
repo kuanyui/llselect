@@ -387,6 +387,34 @@ test('positioner calls onHide when anchor is fully below viewport', () => {
   p.detach()
 })
 
+test('createPositioner registers nothing when onHide throws at the first placement', () => {
+  const dom = setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const vv = Object.assign(new dom.window.EventTarget(), { width: 1024, height: 768, offsetLeft: 0, offsetTop: 0, pageLeft: 0, pageTop: 0 })
+  Object.defineProperty(dom.window, 'visualViewport', { configurable: true, value: vv })
+  const original = globalThis.ResizeObserver
+  globalThis.ResizeObserver = RecordingResizeObserver
+  RecordingResizeObserver.last = undefined
+  let added = 0
+  const targets: EventTarget[] = [window, vv]
+  for (const target of targets) {
+    const add = target.addEventListener.bind(target)
+    target.addEventListener = (...args: Parameters<EventTarget['addEventListener']>): void => { added++; add(...args) }
+  }
+  try {
+    const anchor = document.getElementById('a')!
+    const floating = document.getElementById('b')!
+    // Fully above the viewport, so the first placement finds the anchor hidden.
+    withMockedRect(anchor, { top: -100, left: 50, right: 250, bottom: -70, width: 200, height: 30 })
+    assert.throws(() => { createPositioner(anchor, floating, { onHide: () => { throw new Error('close failed') } }) }, /close failed/)
+    // The caller got no handle, so nothing could ever be detached.
+    assert.equal(added, 0, 'no listener on the window or on the visual viewport')
+    assert.equal(RecordingResizeObserver.last, undefined, 'no ResizeObserver')
+    assert.equal(floating.getAttribute('style'), null, 'no inline style on the popup')
+  } finally {
+    globalThis.ResizeObserver = original
+  }
+})
+
 test('positioner does NOT call onHide when anchor is in viewport', () => {
   setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
   const anchor = document.getElementById('a')!

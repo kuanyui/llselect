@@ -70,6 +70,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
     - `instance().open()` then throws the browser's error;
   - the trigger is fully outside the viewport, or fully clipped away by an ancestor.
 - It does not fire either when a listener closes the select component while `showPopover()` shows the popup, as an [`ll-on-focus`](#ll-on-focus) expression can after the `autofocus` move of the Popover API. [`ll-on-close`](#ll-on-close) fires then, with no `ll-on-open` **before** it.
+- The same holds when another function that the `open()` call runs **before** `ll-on-open` closes the select component. A content function, such as [`ll-popup-list-item-content-fn`](#ll-popup-list-item-content-fn), must not do that: the core's README lists it under its limitations.
 - An error thrown by the expression goes to `$exceptionHandler`, like `ng-click`; it never aborts the open.
 - This is the only way to observe opening from the directive: the core `onOpen` setting is construction-frozen and the directive owns it.
 
@@ -82,7 +83,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 - `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the select component), `'blur'` (DOM focus left the select component), `'trigger-buttons'` (DOM focus moved into the trigger buttons strip, the row of the clear button and the chips' remove buttons; no `ll-on-blur` follows), `'toggle'` (a click in the trigger wrapper, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed), `'hidden'` (the trigger scrolled out of view or was clipped), `'scroll-gesture'` (a wheel or a touch for which [`ll-scroll-gesture-to-behavior-fn`](#ll-scroll-gesture-to-behavior-fn) picked a behavior that closes the popup) or `'zoom-gesture'` (a two-finger zoom, or a wheel with Ctrl held, for which [`ll-zoom-gesture-to-behavior-fn`](#ll-zoom-gesture-to-behavior-fn) picked a behavior that closes the popup).
 - `$scrollGesture` holds the gesture that closed the popup, `{ kind, zone }`, when `$reason` is `'scroll-gesture'`. For every other reason, it is `undefined`.
 - `$zoomGesture` holds the gesture that closed the popup, `{ zone }`, when `$reason` is `'zoom-gesture'`. For every other reason, it is `undefined`.
-- Same rules as [`ll-on-open`](#ll-on-open), except that `ll-on-close` fires when a listener closes the select component while `showPopover()` shows the popup.
+- Same rules as [`ll-on-open`](#ll-on-open), except that `ll-on-close` fires when a listener closes the select component while `showPopover()` shows the popup, and when a function that the `open()` call runs closes it.
 - It also fires for the close that destroying the element runs (for example `ng-if` removing an open control): the popup did close, and AngularJS broadcasts `$destroy` before disabling the scope.
 - In that teardown case, writes to parent-owned state (`vm.*`, a service) persist; writes to the dying child scope itself are lost with it.
 

@@ -306,6 +306,20 @@ export interface LLSelectConstructionContext {
  * - If a setting must vary at runtime, use its function form where one
  *   exists. `filterable: (items) => boolean` is re-evaluated on every open
  *   (and consulted by closed-state typeahead - see the setting).
+ * - A function setting that builds content or decides something must not
+ *   change the select component:
+ *   - Such settings are the content functions, like
+ *     `createPopupListItemContentElFn`, and the predicates and mappers, like
+ *     `itemDisabledFn` and `itemToStringFn`.
+ *   - The library calls them while it builds or checks something, so a
+ *     change made there can leave outdated rows in the popup.
+ *   - A change is a call of a method such as `close()`, `destroy()`,
+ *     `setItems()`, `rerender()` or `setChosenItem()`.
+ *   - To change the select component, use an event callback, a setting named
+ *     `on...`, or call the method after the function has returned.
+ *   - If such a function closes or destroys the select component during
+ *     `open()` all the same, `open()` stops and leaves no listener behind.
+ *   - The library promises nothing more for that case.
  * @group Settings
  * @category Base
  */
@@ -1057,10 +1071,13 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   `showPopover()`, as an `onFocus` can after the `autofocus` move of the
    *   Popover API, this does not fire, while {@link onClose} does. The
    *   `open()` docstring describes that path.
+   * - If a function that `open()` calls **before** this closes the select
+   *   component, such as a content function of the list or an `onOpened`
+   *   override, this does not fire either, while {@link onClose} does.
    * - If the browser refuses the `showPopover()` of `open()`, this does not
    *   fire. The `open()` docstring describes that path too.
-   * - Fires in ADDITION to the protected `onOpened` hook: the setting is for
-   *   consumers, the hook for subclasses, both run.
+   * - Fires in ADDITION to the protected `onOpened` hook, which runs first:
+   *   the setting is for consumers, the hook for subclasses.
    * - `null` (default) = no consumer listener.
    * @group Events
    */
@@ -1085,6 +1102,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   `showPopover()`, as an `onFocus` can after the `autofocus` move of the
    *   Popover API, this fires with no {@link onOpen} **before** it. The
    *   `open()` docstring describes that path.
+   * - If a function that `open()` calls **before** {@link onOpen} closes the
+   *   select component, such as a content function of the list, this fires
+   *   with no {@link onOpen} **before** it as well.
    * - The close that `open()` runs to undo itself, when the browser refuses
    *   its `showPopover()`, does not fire this. The `open()` docstring
    *   describes that path too.
@@ -1787,7 +1807,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   protected items: T[] = []
   /** Whether the popup is currently open; public reader {@link isOpened}. */
   private opened = false
-  /** True while `close()` returns focus to the trigger; `open()` refuses during that call. */
+  /** True while `close()` returns focus to the trigger, and while `clearOpenState()` runs; `open()` refuses during both. */
   private closing = false
   /** True while `open()` runs `showPopover()`, and the undo after a refused show; a nested `open()` of this select component refuses during that time, since Chromium 156, Firefox 153 and WebKit 26.5 throw on a show during another show. */
   private opening = false
@@ -1888,6 +1908,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * (DESIGN.md "Active item change").
    */
   private transitionGeneration = 0
+  /**
+   * Counts the open cycles: `open()` bumps it when it marks the popup open.
+   * - An `open()` call compares it with the value it took, to learn whether
+   *   a function it ran closed the select component and opened it again.
+   */
+  private openCycle = 0
   /** The rendered action rows of the current render, in array order; empty while closed. Never part of `itemEls`. */
   private leadingActionRowEls: HTMLElement[] = []
   private trailingActionRowEls: HTMLElement[] = []
@@ -2339,6 +2365,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *     popup;
    *   - `close()` is returning focus to the trigger, so a focus handler that
    *     calls `open()` there is ignored;
+   *   - the select component is putting its closed state back, in `close()`
+   *     or in `destroy()`, so an `open()` call from code that the browser
+   *     runs there is ignored, such as a `beforetoggle` listener of the
+   *     popup or the reaction of a root that is a custom element;
    *   - this select component's own `showPopover()` is running, so an
    *     `open()` call from a listener there is ignored, for example after
    *     the listener closed the select component;
@@ -2358,13 +2388,28 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    *   - While the filter is active, the filter input takes DOM focus after
    *     that.
    * - If a listener closes the select component while `showPopover()` runs,
-   *   such as an `onFocus` that the `autofocus` move fires, the open stops
-   *   there.
+   *   such as an `onFocus` that the `autofocus` move fires, or a
+   *   `beforetoggle` listener of the popup, the open stops there.
    *   - It attaches no positioner, no outside-click handler and no
    *     scroll-gesture listener.
    *   - It fires no `onOpen`.
    *   - A reopen from that listener is ignored, as the list above says.
    *   - A listener that only re-renders does not stop the open.
+   * - If a function that `open()` calls closes or destroys the select
+   *   component, the open stops there too.
+   *   - Such functions are the `filterable` predicate, the group functions,
+   *     the content functions of the arrow and of the list, and the
+   *     overridable methods that `open()` runs: `isEmpty`, the two
+   *     `shouldListenFor...` predicates, `focusInitial` and `onOpened`.
+   *     `onOpen` is one too.
+   *   - The open attaches nothing more, and what it had attached is detached.
+   *   - Of `onOpened` and `onOpen`, the ones that have not run yet do not
+   *     run. `onClose` has fired for that close.
+   *   - If the function also opens the select component again, that newer
+   *     open is the one that counts. The first call adds nothing to it.
+   *   - Only the notifications among those functions are meant to do this.
+   *     A function that builds or decides must not change the select
+   *     component: the popup may then show outdated rows.
    * - If another popover of the same document is in the middle of its show
    *   or hide, `showPopover()` can throw an `InvalidStateError`, as
    *   Chromium 156, Firefox 153 and WebKit 26.5 do.
@@ -2398,36 +2443,71 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   public open(): void {
     const reason = this.pendingOpenReason
     this.pendingOpenReason = 'api'
-    if (this.opened || this.disabled || this.destroyed || this.closing || this.opening) { return }
+    const refused = (): boolean => this.opened || this.disabled || this.destroyed || this.closing || this.opening
+    if (refused()) { return }
     // A trigger already scrolled out of view / clipped by an ancestor when
     // open() runs cannot host a visible popup, so opening is a no-op (mirrors
-    // the disabled guard). This also prevents the positioner's initial
-    // synchronous placement from firing onHide -> close() re-entrantly before
-    // this.positioner is assigned and the listeners are attached - which would
-    // strand the outside-click / focusout / scroll / resize handlers with the
-    // control already reporting itself closed (destroy() -> close() then early-
-    // returns and cannot recover them).
+    // the disabled guard). It also spares an open that the positioner's first
+    // placement would close at once, through onHide.
     if (isAnchorHidden(this.triggerWrapperEl)) {
       this.warnHiddenTriggerOnce()
       return
     }
+    const cycleBefore = this.openCycle
     this.syncColorScheme()
+    // The scheme write can change an attribute of the root element. A root
+    // that is a custom element may observe that attribute, and its reaction
+    // runs inside the write: it may destroy or disable the select component,
+    // or open it. So the tests of the top are asked again. A reaction that
+    // opened the popup and closed it again has had the last word as well:
+    // the cycle number tells.
+    if (refused() || this.openCycle !== cycleBefore) { return }
     const restoreWindowScroll = this.captureWindowScroll()
     this.opened = true
     this.transitionGeneration++
+    // This call runs app and subclass code: predicates, content functions,
+    // hooks. Such a function may close or destroy the select component, and
+    // may open it again. The cycle that this call started is then over, and
+    // the rest of the call must attach nothing and fire no open notification
+    // that is still due (FIXME MEDIUM-969). Each check below follows a step
+    // that runs such code.
+    const cycle = ++this.openCycle
+    // A destroyed select component is closed as well: `destroy()` leaves none
+    // open, whatever its `close()` call did, and the tests above mark none
+    // open.
+    const superseded = (): boolean => !this.opened || this.openCycle !== cycle
+    // Ends the call. A destroyed select component is left alone: nothing of
+    // it is written again, and the scroll restore does nothing for it. A
+    // closed one gets its closed state again, since the step that ran the
+    // function may have written after the close. One that is open again
+    // belongs to the newer cycle: nothing of it is touched. Either way the
+    // active item is reported last: the close, or the newer open, may have
+    // tried to report while this call still held the report back.
+    const abandon = (): void => {
+      if (this.destroyed) { return }
+      if (!this.opened) { this.clearOpenState() }
+      restoreWindowScroll()
+      this.reportActiveItem()
+    }
     // Filter mode is (re)evaluated once per open cycle, before anything that
     // depends on it (role, focus host, filtering).
-    this.filterActive = this.computeFilterActive()
+    const filterActive = this.computeFilterActive()
+    if (superseded()) { abandon(); return }
+    this.filterActive = filterActive
     this.syncFilterModeToDom()
     this.syncTriggerButtonsToDom()
+    if (superseded()) { abandon(); return }
     this.triggerEl.setAttribute('aria-expanded', 'true')
     this.triggerWrapperEl.setAttribute('data-state', 'open')
     this.rootEl.classList.add(this.classIdMap.openClass)
+    // A root that is a custom element may observe its class as well.
+    if (superseded()) { abandon(); return }
     if (this.filterActive) {
       this.query = ''
       this.filterInputEl.value = ''
       this.filterInputEl.setAttribute('aria-expanded', 'true')
       this.recomputeFilteredItems()
+      if (superseded()) { abandon(); return }
     }
     // Start from no active row, before `showPopover()` can run a listener
     // that re-renders: a `setFocusedIndex` made while closed must not be
@@ -2493,33 +2573,44 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       } finally {
         this.opening = false
       }
-      // The popover focusing steps can focus an `autofocus` slot control, and
-      // a focus listener may close the select component there.
-      if (!this.opened) { restoreWindowScroll(); return }
+      // A listener that the browser runs inside the show may close the
+      // select component: a focus listener, since the popover focusing steps
+      // can focus an `autofocus` slot control, or a `beforetoggle` listener.
+      // The second runs before the popover shows, so the `hidePopover()` of
+      // its close has nothing to hide, and the show then completes: the
+      // stopped call puts the closed state back once more.
+      if (superseded()) { abandon(); return }
       this.popupEl.style.right = 'auto'
       this.popupEl.style.bottom = 'auto'
       this.popupEl.style.height = 'auto'
     }
     this.renderTriggerArrow()
+    if (superseded()) {
+      // The render above has committed the arrow of the open state. If its
+      // content function closed the select component, that commit came after
+      // the arrow that `close()` rendered.
+      if (!this.destroyed && !this.opened) { this.renderTriggerArrow() }
+      abandon()
+      return
+    }
+    // The active-item report waits while the steps of `attachOpenPopup` run.
+    // A stopped call ends only after that wait is over, so that `abandon`
+    // can report for a newer cycle.
     this.activeItemReportSuspendDepth++
+    let attached: boolean
     try {
-      this.renderPopupList()
-      this.positioner = createPositioner(this.triggerWrapperEl, this.popupEl, {
-        onHide: () => this.closeWithReason('hidden'),
-        widthPolicy: this.settings.popupWidthPolicy,
-        innerScrollEl: this.popupListEl,
-      })
-      this.attachOutsideClick()
-      this.attachGestures()
-      this.focusInitial()
+      attached = this.attachOpenPopup(superseded)
     } finally {
       this.activeItemReportSuspendDepth--
     }
+    if (!attached) { abandon(); return }
     this.onOpened()
+    if (superseded()) { abandon(); return }
     const onOpen = this.settings.onOpen
     onOpen?.({ reason })
-    // A hook above may have closed the popup: nothing below is left to do.
-    if (!this.opened) { restoreWindowScroll(); return }
+    // A hook above may have closed the popup, and may have opened it again:
+    // nothing below is left to do for this call.
+    if (superseded()) { abandon(); return }
     if (this.filterActive) {
       this.warnIfFocusableBeforeFilterInput()
       this.filterInputEl.focus({ preventScroll: true })
@@ -2528,6 +2619,44 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // Last, so a listener that closes the select component does so after this open
     // completed, with no step above left to run on a closed popup.
     this.reportActiveItem()
+  }
+
+  /**
+   * The steps of `open()` that run while the active-item report waits.
+   * - They are the list render, the positioner, the outside-click handler,
+   *   the gesture listeners and the initial active row.
+   * - `superseded` is the test of `open()`: whether a function that the call
+   *   ran has closed or destroyed the select component, or opened it again.
+   * - Returns `false` as soon as a step finds the call superseded. Nothing
+   *   that this call created is attached then.
+   */
+  private attachOpenPopup(superseded: () => boolean): boolean {
+    this.renderPopupList()
+    if (superseded()) { return false }
+    // The first placement can find the trigger hidden and close the popup
+    // through `onHide`, before `this.positioner` is set. That close cannot
+    // detach this positioner, so this method does. If a listener opened the
+    // popup again, the newer positioner places the popup once more, since
+    // the detach cleared the inline styles they share.
+    const positioner = createPositioner(this.triggerWrapperEl, this.popupEl, {
+      onHide: () => this.closeWithReason('hidden'),
+      widthPolicy: this.settings.popupWidthPolicy,
+      innerScrollEl: this.popupListEl,
+    })
+    if (superseded()) {
+      positioner.detach()
+      this.positioner?.reposition()
+      return false
+    }
+    this.positioner = positioner
+    this.attachOutsideClick()
+    const scrollOutside = this.shouldListenForScrollGesturesOutside()
+    if (superseded()) { return false }
+    const zoomOutside = this.shouldListenForZoomGesturesOutside()
+    if (superseded()) { return false }
+    this.attachGestures(scrollOutside, zoomOutside)
+    this.focusInitial()
+    return !superseded()
   }
 
   /**
@@ -2588,55 +2717,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         this.closing = false
       }
     }
-    this.rootEl.classList.remove(this.classIdMap.openClass)
-    if (this.filterActive) {
-      this.filterInputEl.setAttribute('aria-expanded', 'false')
-      this.filterInputEl.value = ''
-      this.query = ''
-      this.filteredItems = undefined
-    }
-    this.positioner?.detach()
-    this.positioner = undefined
-    this.detachOutsideClick()
-    this.detachGestures?.()
-    this.detachGestures = undefined
-    this.popupListEl.replaceChildren()
-    // The no-results region hides with the popup; reset so a reopen with a
-    // still-empty list counts as a fresh appearance and re-announces.
-    this.lastNoResultsText = null
-    if (this.popoverSupported) {
-      try {
-        this.popupEl.hidePopover()
-      } catch {
-        // The popup may not be showing: never shown, after a refused show, or
-        // hidden without us, as dialog.showModal() may do (TODO.md
-        // "Modal-over-popup real-browser pass" asks whether it does). A
-        // never-shown popup's hidePopover() returned without effect in
-        // Chromium 156, Firefox 153, WebKit 26.5 and WebKit 18.4; one that
-        // dialog.showModal() hid may throw InvalidStateError (unmeasured).
-        // State resyncs right here.
-      }
-      this.popupEl.style.right = ''
-      this.popupEl.style.bottom = ''
-      this.popupEl.style.height = ''
-    }
-    this.popupEl.hidden = true
-    // Clear inline display + position so the `[hidden]` UA rule can hide the
-    // popup cleanly. (Position was set in open() to keep the popup out of
-    // flow before the positioner attached; positioner.detach() also clears
-    // it, but be explicit and symmetric with what open() set.)
-    this.popupEl.style.position = ''
-    this.popupEl.style.display = ''
-    this.popupEl.style.flexDirection = ''
-    this.itemEls = []
-    this.focusedEl = undefined
-    this.focusedIndex = -1
-    this.typeaheadBuffer = ''
-    this.chooseAllRowEl = undefined
-    this.leadingActionRowEls = []
-    this.trailingActionRowEls = []
-    this.focusedRow = null
-    this.comboboxEl.removeAttribute('aria-activedescendant')
+    this.clearOpenState()
     this.renderTriggerArrow()
     // An open undone after `showPopover()` threw fired no `onOpened` /
     // `onOpen`, so its close fires neither mirror.
@@ -2648,6 +2729,90 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // Last, so a listener that reopens the select component does so after this close
     // completed, with no step above left to run on an open popup.
     this.reportActiveItem()
+  }
+
+  /**
+   * Puts the popup and its list into the closed state.
+   * - Detaches the positioner and the listeners of the open popup.
+   * - Empties the list and hides the popup.
+   * - Resets the active row and the filter query.
+   * - It calls no content function, no predicate and no overridable method,
+   *   and it fires none of the library's callbacks.
+   * - The arrow of the closed state is not its work: `close()` renders that
+   *   arrow right after it.
+   * - The browser can still run app code inside its writes: the reaction of
+   *   a root that is a custom element, a `beforetoggle` listener of the
+   *   popup, and the reactions of custom elements in the rows it removes.
+   * - `open()` does nothing while it runs.
+   * - `close()` runs it, after the focus return.
+   * - `open()` runs it when a function it called closed the select
+   *   component, since that call may have written over the closed state
+   *   afterwards.
+   * - `destroy()` always runs it after its `close()` call, whatever that
+   *   call did.
+   * - A second run on a closed popup writes the same values again.
+   */
+  private clearOpenState(): void {
+    // The writes below can run app code: a root that is a custom element may
+    // observe its class, `hidePopover()` fires `beforetoggle`, and removing
+    // the rows disconnects custom elements in their content. `open()` is
+    // refused until the closed state is whole, since the rest of this method
+    // would take the new popup's positioner, listeners and rows away.
+    const closing = this.closing
+    this.closing = true
+    try {
+      this.rootEl.classList.remove(this.classIdMap.openClass)
+      if (this.filterActive) {
+        this.filterInputEl.setAttribute('aria-expanded', 'false')
+        this.filterInputEl.value = ''
+        this.query = ''
+        this.filteredItems = undefined
+      }
+      this.positioner?.detach()
+      this.positioner = undefined
+      this.detachOutsideClick()
+      this.detachGestures?.()
+      this.detachGestures = undefined
+      this.popupListEl.replaceChildren()
+      // The no-results region hides with the popup; reset so a reopen with a
+      // still-empty list counts as a fresh appearance and re-announces.
+      this.lastNoResultsText = null
+      if (this.popoverSupported) {
+        try {
+          this.popupEl.hidePopover()
+        } catch {
+          // The popup may not be showing: never shown, after a refused show, or
+          // hidden without us, as dialog.showModal() may do (TODO.md
+          // "Modal-over-popup real-browser pass" asks whether it does). A
+          // never-shown popup's hidePopover() returned without effect in
+          // Chromium 156, Firefox 153, WebKit 26.5 and WebKit 18.4; one that
+          // dialog.showModal() hid may throw InvalidStateError (unmeasured).
+          // State resyncs right here.
+        }
+        this.popupEl.style.right = ''
+        this.popupEl.style.bottom = ''
+        this.popupEl.style.height = ''
+      }
+      this.popupEl.hidden = true
+      // Clear inline display + position so the `[hidden]` UA rule can hide the
+      // popup cleanly. (Position was set in open() to keep the popup out of
+      // flow before the positioner attached; positioner.detach() also clears
+      // it, but be explicit and symmetric with what open() set.)
+      this.popupEl.style.position = ''
+      this.popupEl.style.display = ''
+      this.popupEl.style.flexDirection = ''
+      this.itemEls = []
+      this.focusedEl = undefined
+      this.focusedIndex = -1
+      this.typeaheadBuffer = ''
+      this.chooseAllRowEl = undefined
+      this.leadingActionRowEls = []
+      this.trailingActionRowEls = []
+      this.focusedRow = null
+      this.comboboxEl.removeAttribute('aria-activedescendant')
+    } finally {
+      this.closing = closing
+    }
   }
 
   /** `open()` with a stated reason; see `pendingOpenReason`. */
@@ -2756,12 +2921,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /** Attaches the scroll-gesture and zoom-gesture listeners for this open cycle; `close()` detaches them. */
-  private attachGestures(): void {
+  private attachGestures(scrollOutside: boolean, zoomOutside: boolean): void {
     this.detachGestures = attachGestureListeners({
       rootEl: this.rootEl,
       popupEl: this.popupEl,
-      scrollOutside: this.shouldListenForScrollGesturesOutside(),
-      zoomOutside: this.shouldListenForZoomGesturesOutside(),
+      scrollOutside,
+      zoomOutside,
       behaviorFor: (gesture) => this.scrollGestureToBehavior(gesture),
       closeFor: (gesture) => {
         this.pendingScrollGesture = gesture
@@ -2813,6 +2978,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Tear down the instance.
    * - Closes the popup, which removes the document and window listeners of
    *   the open popup and stops the popup positioning.
+   * - If a `close()` override does not close the popup, `destroy()` removes
+   *   those listeners and stops the positioning itself. `onClose` does not
+   *   fire then.
+   * - If that close throws, in a `close()` override or in an `onClose`
+   *   listener, `destroy()` still finishes every step below, and then passes
+   *   the error on to its caller.
    * - Once `destroy()` has started, `open()` does nothing. So a listener
    *   that this close runs, such as an `onClose` that reopens the popup,
    *   cannot open it again.
@@ -2865,20 +3036,32 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.detachFocusListeners()
     this.destroyed = true
     this.transitionGeneration++
-    this.closeWithReason('destroy')
-    for (const release of [...this.touchHoldReleases]) { release() }
-    this.touchHoldReleases.clear()
-    if (this.settings.labelEl !== null) {
-      this.settings.labelEl.removeEventListener('click', this.handleLabelElClick)
-      if (this.labelElIdMinted) { this.settings.labelEl.removeAttribute('id') }
+    try {
+      this.closeWithReason('destroy')
+    } finally {
+      // The teardown does not depend on that `close()`: an override may not
+      // have closed the popup, and the call may have thrown at any point, in
+      // an override or in an `onClose` listener, also after it had marked the
+      // popup closed. Nothing of an open popup may outlive the instance, so
+      // the closed state is put back whatever `opened` says. No step below
+      // calls a function of the settings or an overridable method, so an
+      // error of the `close()` above still reaches the caller.
+      this.opened = false
+      this.clearOpenState()
+      for (const release of [...this.touchHoldReleases]) { release() }
+      this.touchHoldReleases.clear()
+      if (this.settings.labelEl !== null) {
+        this.settings.labelEl.removeEventListener('click', this.handleLabelElClick)
+        if (this.labelElIdMinted) { this.settings.labelEl.removeAttribute('id') }
+      }
+      this.rootEl.classList.remove(this.classIdMap.rootClass, this.classIdMap.openClass)
+      this.rootEl.style.overflowAnchor = ''
+      unsubscribeColorScheme(this.rootEl)
+      cancelFirstDecision(this.rootEl, this.colorSchemeDecision)
+      this.colorSchemeDecisionPending = false
+      this.rootEl.removeAttribute(COLOR_SCHEME_ATTRIBUTE)
+      this.rootEl.replaceChildren()
     }
-    this.rootEl.classList.remove(this.classIdMap.rootClass, this.classIdMap.openClass)
-    this.rootEl.style.overflowAnchor = ''
-    unsubscribeColorScheme(this.rootEl)
-    cancelFirstDecision(this.rootEl, this.colorSchemeDecision)
-    this.colorSchemeDecisionPending = false
-    this.rootEl.removeAttribute(COLOR_SCHEME_ATTRIBUTE)
-    this.rootEl.replaceChildren()
   }
 
   /**
@@ -3147,26 +3330,38 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Subclass hook: called once **after** the popup finishes opening. Default no-op.
-   * The `onOpen` setting fires alongside this (both run) - hook for subclass
-   * logic, setting for consumer notification.
+   * Subclass hook: called once **after** the popup finishes opening.
    *
    * > No **before** counterpart: there is no `onOpening`.
    *
+   * - Default no-op.
+   * - The `onOpen` setting fires right **after** this.
+   * - The hook is for subclass logic, and the setting for consumer
+   *   notification.
+   * - If an override of this closes or destroys the select component, or
+   *   opens it again, the `onOpen` setting does not fire for this `open()`
+   *   call.
    * - If a listener closes the select component while `open()` runs
    *   `showPopover()`, this does not run, while {@link onClosed} does.
+   * - If a function that `open()` calls **before** this closes the select
+   *   component, such as a content function of the list, this does not run
+   *   either.
    * - If the browser refuses the `showPopover()` of `open()`, neither this
    *   nor {@link onClosed} runs.
    * @group Subclassing: reactions
    */
   protected onOpened(): void {}
   /**
-   * Subclass hook: called once **after** the popup finishes closing. The `onClose` setting fires alongside this (both run).
+   * Subclass hook: called once **after** the popup finishes closing.
    *
    * > No **before** counterpart: there is no `onClosing`.
    *
+   * - The `onClose` setting fires right **after** this, and both run.
    * - If a listener closes the select component while `open()` runs
    *   `showPopover()`, this runs with no {@link onOpened} **before** it.
+   * - If a function that `open()` calls **before** {@link onOpened} closes
+   *   the select component, such as a content function of the list, this
+   *   runs with no {@link onOpened} **before** it as well.
    * - If the browser refuses the `showPopover()` of `open()`, the close that
    *   undoes the open does not run this.
    * @group Subclassing: reactions
@@ -3175,7 +3370,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   /**
    * Subclass hook: called **after** the chosen state actually changed, right
    * **before** the variant's `onChange` setting fires (the hook runs first and both run,
-   * as with `onOpened` / `onClosed`). Default no-op.
+   * as with `onClosed`). Default no-op.
    *
    * > Pairs with the variant's `onChosenChanging`, which runs **before** a user change and can stop it.
    * @group Subclassing: reactions
@@ -4372,10 +4567,15 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Restores with `behavior: 'instant'`: the two-arg `scrollTo` obeys the
    * page's CSS `scroll-behavior`, so under `scroll-behavior: smooth` the
    * correction would render as a visible glide instead of a revert.
+   * - The restore does nothing once the select component is destroyed, the
+   *   one that waits for the next frame included: whoever destroyed it has
+   *   taken over the page, a route change for one, and may have set a scroll
+   *   position of its own.
    */
   private captureWindowScroll(): () => void {
     const { scrollX, scrollY } = window
     const restore = (): void => {
+      if (this.destroyed) { return }
       if (window.scrollX !== scrollX || window.scrollY !== scrollY) {
         window.scrollTo({ left: scrollX, top: scrollY, behavior: 'instant' })
       }

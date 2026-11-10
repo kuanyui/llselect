@@ -144,6 +144,75 @@ test('a focus listener that closes the popup inside showPopover() stops the open
   assert.equal(sel.popupListEl.children.length, 0)
 })
 
+test('a focus listener that destroys the select component inside showPopover(): the window scroll is left alone', () => {
+  const root = mount()
+  mockAutofocusPopover()
+  const restores: number[] = []
+  let top = 0
+  Object.defineProperty(window, 'scrollY', { configurable: true, get: () => top })
+  window.scrollTo = ((options?: ScrollToOptions | number): void => {
+    restores.push(typeof options === 'object' ? options.top ?? 0 : 0)
+  }) as typeof window.scrollTo
+  const sel: LLSelectSingle<string> = new LLSelectSingle<string>(root, {
+    ariaLabel: 'Letter',
+    createPopupHeaderContentElFn: autofocusButton,
+    // The code that destroys the select component has moved the page.
+    onFocus: () => { sel.destroy(); top = 300 },
+  })
+  sel.setItems(['a', 'b'])
+  focusPageButton()
+  sel.open()
+  assert.equal(sel.isOpened(), false)
+  assert.deepEqual(restores, [], 'whoever destroyed the select component owns the page scroll')
+})
+
+// The native order of a show: `beforetoggle` fires first, and the popover
+// shows after its listeners ran. A hide of a popover that is not showing does
+// nothing, as measured in Chromium 156, Firefox 153 and WebKit 26.5.
+function mockBeforetogglePopover(): { isShowing: (el: HTMLElement) => boolean } {
+  const proto = window.HTMLElement.prototype as unknown as {
+    showPopover?: () => void
+    hidePopover?: () => void
+  }
+  const showing = new Set<HTMLElement>()
+  proto.showPopover = function (this: HTMLElement) {
+    if (showing.has(this)) { return }
+    this.dispatchEvent(new window.Event('beforetoggle'))
+    showing.add(this)
+  }
+  proto.hidePopover = function (this: HTMLElement) { showing.delete(this) }
+  return { isShowing: (el) => showing.has(el) }
+}
+
+test('a beforetoggle listener that closes the select component inside showPopover(): the popover does not stay shown', () => {
+  const root = mount()
+  const popover = mockBeforetogglePopover()
+  const events: string[] = []
+  const arrowStates: boolean[] = []
+  const sel: LLSelectSingle<string> = new LLSelectSingle<string>(root, {
+    ariaLabel: 'Letter',
+    onOpen: () => { events.push('open') },
+    onClose: () => { events.push('close') },
+    createTriggerArrowContentElFn: (state) => { arrowStates.push(state.isOpened); return null },
+  })
+  sel.setItems(['a', 'b'])
+  let closeOnShow = true
+  sel.popupEl.addEventListener('beforetoggle', () => { if (closeOnShow) { closeOnShow = false; sel.close() } })
+  arrowStates.length = 0
+  sel.open()
+  assert.deepEqual(events, ['close'])
+  assert.equal(sel.isOpened(), false)
+  assert.deepEqual(arrowStates, [false], 'the arrow content function ran once, for the close: the stopped call went no further')
+  // The close ran before the popover showed, so its hide had nothing to hide.
+  assert.equal(popover.isShowing(sel.popupEl), false, 'the stopped open() hid the popover once its show had completed')
+  assert.equal(sel.popupEl.hidden, true)
+  sel.open()
+  assert.deepEqual(events, ['close', 'open'])
+  assert.equal(popover.isShowing(sel.popupEl), true)
+  sel.close()
+  assert.equal(popover.isShowing(sel.popupEl), false)
+})
+
 test('a focus listener that closes and reopens the popup inside showPopover() has its reopen ignored', () => {
   const root = mount()
   mockAutofocusPopover()
@@ -186,6 +255,36 @@ test('a focus listener that re-renders inside showPopover() does not stop the op
 class ActiveRowProbe extends LLSelectSingle<string> {
   public setIndex(index: number): void { this.setFocusedIndex(index) }
 }
+
+test('a close inside the steps that hold the active-item report back: the stopped open() reports that no row is active', () => {
+  const root = mount()
+  mockAutofocusPopover()
+  const reports: (string | undefined)[] = []
+  const rect = { top: 10, bottom: 30, left: 10, right: 110, width: 100, height: 20, x: 10, y: 10, toJSON: (): string => '' }
+  let armed = true
+  const sel: ActiveRowProbe = new ActiveRowProbe(root, {
+    ariaLabel: 'Letter',
+    createPopupHeaderContentElFn: autofocusButton,
+    onFocus: () => {
+      if (!armed) { return }
+      armed = false
+      // The listener renders the rows and moves the active row, which is
+      // reported at once: `open()` holds the report back only later.
+      sel.rerender()
+      sel.setIndex(1)
+      // Then the trigger leaves the viewport, so the first placement of the
+      // positioner closes the popup, inside the steps that hold the report back.
+      rect.top = -500; rect.bottom = -480; rect.y = -500
+    },
+    onActiveItemChange: (item) => { reports.push(item) },
+  })
+  sel.setItems(['a', 'b'])
+  sel.triggerWrapperEl.getBoundingClientRect = (): DOMRect => rect
+  focusPageButton()
+  sel.open()
+  assert.equal(sel.isOpened(), false)
+  assert.deepEqual(reports, ['b', undefined], 'the close could not report, so the stopped call does')
+})
 
 test('a re-render inside showPopover() reports no stale active row before onOpen', () => {
   const root = mount()

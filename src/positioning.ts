@@ -628,6 +628,8 @@ function getLayoutViewportClientOrigin(): ClientPoint {
  *   `floating` that the capture listeners see, checks whether the anchor is
  *   hidden (`isAnchorHidden`). If it is and `onHide` is provided, calls
  *   `onHide` and skips the style updates.
+ * - The first placement runs before any listener or observer is registered.
+ *   If `onHide` throws there, the positioner leaves nothing behind.
  * - Otherwise, and on every resize and every pan of the visual viewport,
  *   applies the coordinates from {@link computePosition} and sets
  *   `data-placement` on `floating` for CSS hooks.
@@ -730,6 +732,12 @@ export function createPositioner(
   // dismiss the popup the instant the on-screen keyboard opens.
   const onResize = (): void => reposition(false)
 
+  // The first placement comes before every registration below. It can run
+  // app code, through `onHide` and the close notifications, and if that code
+  // throws, the caller never gets the handle: nothing may be registered yet
+  // that only `detach()` could remove.
+  reposition(true)
+
   // Capture phase catches scrolls inside any ancestor scrollable container. A
   // scroll event never leaves its shadow root, so every shadow root on the
   // anchor's flat-tree path listens too.
@@ -755,8 +763,6 @@ export function createPositioner(
     ro.observe(anchor)
     ro.observe(floating)
   }
-
-  reposition(true)
 
   return {
     // Public re-place: never auto-closes. Called after list re-renders (incl.

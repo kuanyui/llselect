@@ -207,6 +207,11 @@ The bare URLs `https://cdn.jsdelivr.net/npm/@llselect/core` and `https://unpkg.c
 - **No virtual scrolling.** llselect is aimed to be a simple `<select>` replacement, not an omnipotent library.
 - **Prefix typeahead cannot cover IME input, because composition needs a text field and the trigger is not one.** Typing letters to jump still works like a native `<select>` on alphabetic lists. For CJK lists, enable `filterable` and type in its search box.
 - **No auto destroy.** - You *must* call `destroy()` manually when unmounting.
+- **No changes from inside a function that builds or decides.**
+  - A change made inside such a function can leave old rows on the screen.
+  - The library calls a content function or a predicate while it builds or checks something.
+  - Methods such as `close()` and `setItems()` are such changes.
+  - To change the select component, use an event callback such as `onChange`.
 - **No official React / Vue / Angular wrapper** - llselect provides the minimal library and the CSS themes only.
   > Because:
   >
