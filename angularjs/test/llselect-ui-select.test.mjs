@@ -768,7 +768,7 @@ test('the i18n recipe covers <ui-llselect>: a same-name directive re-packs it fr
   assert.equal(text(), 'Please select', 'an unmapped key must restore the English defaults')
 })
 
-test('config: <ui-llselect> takes popupWidthPolicy, and NOT arrow / filterable / highlight (ui-select owns those)', () => {
+test('config: <ui-llselect> takes popupWidthPolicy and the two popup distances, and NOT arrow / filterable / highlight (ui-select owns those)', () => {
   const a = boot({
     files: ['llselect-angularjs.js', 'llselect-ui-select.js'],
     deps: ['llselect', 'llselect.uiCompat'],
@@ -781,12 +781,14 @@ test('config: <ui-llselect> takes popupWidthPolicy, and NOT arrow / filterable /
       </div>`,
     controller: function () { this.users = USERS; this.person = undefined },
     config: ['llselectConfigProvider', function (llselectConfigProvider) {
-      llselectConfigProvider.defaults({ arrow: 'triangle', filterable: false, highlight: true, popupWidthPolicy: 'match-trigger-wrapper' })
+      llselectConfigProvider.defaults({ arrow: 'triangle', filterable: false, highlight: true, popupWidthPolicy: 'match-trigger-wrapper', popupDistanceFromTriggerWrapper: 0, popupDistanceFromViewportEdge: 16 })
     }],
   })
   assert.deepEqual(a.errors, [])
   const sel = a.ng.element(a.$('ui-llselect')).controller('uiLlselect').instance()
   assert.equal(sel.settings.popupWidthPolicy, 'match-trigger-wrapper', 'popupWidthPolicy is house style: the bridge must take it')
+  assert.equal(sel.settings.popupDistanceFromTriggerWrapper, 0, 'ui-select has no word for the popup distances: the bridge must take them, a 0 included')
+  assert.equal(sel.settings.popupDistanceFromViewportEdge, 16)
   const chevron = a.window.llselect.createChevronDownSvgEl().querySelector('path').getAttribute('d')
   assert.equal(a.$('ui-llselect .llselect-trigger-arrow path').getAttribute('d'), chevron, 'every ui-select theme has a caret: config arrow must not change it')
   a.$('ui-llselect .llselect-trigger').click()

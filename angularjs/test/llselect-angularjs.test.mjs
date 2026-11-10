@@ -1229,6 +1229,70 @@ test('llselectConfigProvider.defaults({ colorScheme }) is the app-wide default; 
   assert.equal(a.$('[name=fromAttr]').getAttribute('data-llselect-color-scheme'), 'light')
 })
 
+test('the two popup distance attributes reach the settings; the app-wide defaults sit under them', () => {
+  const a = boot({
+    deps: ['llselect'],
+    html: `
+      <div ng-controller="C as vm">
+        <llselect-single name="fromConfig" ng-model="vm.fruit" ll-aria-label="Fruit"
+          ll-options="f for f in vm.fruits"></llselect-single>
+        <llselect-multiple name="fromAttr" ng-model="vm.tops" ll-aria-label="Fruit"
+          ll-popup-distance-from-trigger-wrapper="vm.gap" ll-popup-distance-from-viewport-edge="0"
+          ll-options="f for f in vm.fruits"></llselect-multiple>
+      </div>`,
+    controller: function () { this.fruits = FRUITS.slice(); this.fruit = 'Apple'; this.tops = []; this.gap = 2 },
+    config: ['llselectConfigProvider', function (llselectConfigProvider) {
+      llselectConfigProvider.defaults({ popupDistanceFromTriggerWrapper: 0, popupDistanceFromViewportEdge: 16 })
+    }],
+  })
+  assert.deepEqual(a.errors, [])
+  const fromConfig = a.ng.element(a.$('[name=fromConfig]')).controller('llselectSingle').instance()
+  assert.equal(fromConfig.settings.popupDistanceFromTriggerWrapper, 0, 'a config default of 0 must not read as unset')
+  assert.equal(fromConfig.settings.popupDistanceFromViewportEdge, 16)
+  const fromAttr = a.ng.element(a.$('[name=fromAttr]')).controller('llselectMultiple').instance()
+  assert.equal(fromAttr.settings.popupDistanceFromTriggerWrapper, 2, 'the attribute wins over the config default')
+  assert.equal(fromAttr.settings.popupDistanceFromViewportEdge, 0, 'an attribute of 0 must not read as absent')
+})
+
+test('without the popup distance attributes and config keys, the core defaults apply', () => {
+  const a = app()
+  const sel = a.ng.element(a.$('[name=fruit]')).controller('llselectSingle').instance()
+  assert.equal(sel.settings.popupDistanceFromTriggerWrapper, 4)
+  assert.equal(sel.settings.popupDistanceFromViewportEdge, 8)
+})
+
+test('a popup distance attribute that is not a finite number warns and leaves the default', () => {
+  for (const [expr, why] of [['vm.missing', 'undefined'], ["'8'", 'a string'], ['0 / 0', 'NaN'], ['1 / 0', 'Infinity']]) {
+    const warnings = []
+    const orig = console.warn
+    console.warn = (...args) => { warnings.push(args.join(' ')) }
+    let a
+    try {
+      a = boot({
+        deps: ['llselect'],
+        html: `
+          <div ng-controller="C as vm">
+            <llselect-single name="t" ng-model="vm.fruit" ll-aria-label="F"
+              ll-popup-distance-from-trigger-wrapper="${expr}" ll-popup-distance-from-viewport-edge="${expr}"
+              ll-options="f for f in vm.fruits"></llselect-single>
+          </div>`,
+        controller: function () { this.fruits = FRUITS.slice(); this.fruit = 'Apple' },
+        config: ['llselectConfigProvider', function (llselectConfigProvider) {
+          llselectConfigProvider.defaults({ popupDistanceFromViewportEdge: 16 })
+        }],
+      })
+    } finally {
+      console.warn = orig
+    }
+    assert.deepEqual(a.errors, [], why)
+    assert.ok(warnings.some(m => m.includes('ll-popup-distance-from-trigger-wrapper')), `${why} must warn for the first attribute`)
+    assert.ok(warnings.some(m => m.includes('ll-popup-distance-from-viewport-edge')), `${why} must warn for the second attribute`)
+    const sel = a.ng.element(a.$('[name=t]')).controller('llselectSingle').instance()
+    assert.equal(sel.settings.popupDistanceFromTriggerWrapper, 4, `${why}: the core default stays`)
+    assert.equal(sel.settings.popupDistanceFromViewportEdge, 16, `${why}: the app-wide default stays`)
+  }
+})
+
 test('ll-on-before-change: $next and $previous are model values; preventDefault keeps the model and ng-change silent; a single pick still closes', () => {
   const a = boot({
     deps: ['llselect'],

@@ -290,6 +290,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Grouping (optgroup)                  | `itemToGroupKeyFn`, `groupKeyToStringFn`, `groupDisabledFn`                                                               |
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `chooseAllRow`, `hideChosenRows`, `chosenItemsOrder: 'as-chosen' \| 'as-listed'`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
 | Popup width                          | `popupWidthPolicy: 'fit-content' \| 'match-trigger-wrapper'` (default `'fit-content'` - grows to content like a native select)   |
+| Popup distances                      | `popupDistanceFromTriggerWrapper` (default `4`) - CSS pixels between the trigger wrapper and the popup; `popupDistanceFromViewportEdge` (default `8`) - CSS pixels that the popup leaves to the edges of the viewport |
 | Wheel, touch and zoom while the popup is open | `scrollGestureToBehaviorFn`, `zoomGestureToBehaviorFn` + the presets of `@llselect/core/behavior-presets`; see Wheel, touch and zoom while the popup is open |
 | Rich rendering without subclassing   | `createPopupListItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
 | Action rows: commands in the list    | `popupListLeadingActionRows`, `popupListTrailingActionRows` - option rows in the arrow-key ring; see Action rows |

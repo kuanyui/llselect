@@ -3,7 +3,7 @@
 // LLSelectMultiple. Subclasses own chosen-state and decide what happens on
 // item click.
 
-import { createPositioner, isAnchorHidden, type Positioner, type LLSelectWidthPolicy } from './positioning.js'
+import { createPositioner, isAnchorHidden, DEFAULT_DISTANCE_FROM_ANCHOR, DEFAULT_DISTANCE_FROM_VIEWPORT_EDGE, type Positioner, type LLSelectWidthPolicy } from './positioning.js'
 import { gatherItemsByGroupKey } from './grouping.js'
 import {
   LLSelectKeyboardAction,
@@ -783,6 +783,47 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * @group Popup
    */
   popupWidthPolicy: LLSelectWidthPolicy
+  /**
+   * The distance between the trigger wrapper and the popup, in CSS pixels.
+   * - Default `4`.
+   * - The distance lies between the edge of `triggerWrapperEl` and the edge of the popup next to it.
+   * - The distance is the same when the popup opens below the trigger wrapper and when it opens above.
+   * - Above the trigger wrapper, the distance is not exact, since the library reads the popup's height in whole pixels:
+   *   - The distance can be off by up to half a pixel.
+   *   - If the popup is less than two pixels taller than its height limit, the distance can be off by up to one and a half pixels.
+   * - `0` makes the two edges touch.
+   * - A negative number counts as `0`.
+   * - If the trigger wrapper's edge next to the popup lies outside the viewport, the edge of the viewport takes its place:
+   *   - The popup keeps the distance from that edge of the viewport.
+   *   - If that side of the viewport has no room for the popup at all, the popup's edge stays inside the viewport.
+   * - The viewport here is the visual viewport, the part of the page that the user sees.
+   * - In a browser without the `visualViewport` API, the viewport is the layout viewport.
+   * @group Popup
+   */
+  popupDistanceFromTriggerWrapper: number
+  /**
+   * The room that the popup leaves to the edges of the viewport, in CSS pixels.
+   * - Default `8`.
+   * - The viewport here is the visual viewport, the part of the page that the user sees.
+   * - In a browser without the `visualViewport` API, the viewport is the layout viewport.
+   * - The setting limits the popup's height:
+   *   - Below the trigger wrapper, the popup's room ends this far above the bottom edge of the viewport.
+   *   - Above the trigger wrapper, the popup's room starts this far below the top edge of the viewport.
+   *   - The popup's height is at most that room.
+   *   - If a side has no room left, the height limit on that side is `0`.
+   * - The library counts the same room when it picks the side of the popup.
+   * - When `popupWidthPolicy` is `'fit-content'`, the setting also acts sideways:
+   *   - The setting is the margin at the left and at the right edge of the viewport.
+   *   - A margin is at most half the viewport's width, so the two margins never cross.
+   *   - The popup's width is at most the viewport's width minus the two margins.
+   *   - The popup shifts sideways to stay between the two margins.
+   * - When `popupWidthPolicy` is `'match-trigger-wrapper'`, the setting does not act sideways.
+   * - The popup's edge next to the trigger wrapper follows `popupDistanceFromTriggerWrapper`, not this setting.
+   * - `0` lets the popup reach the edge of the viewport.
+   * - A negative number counts as `0`.
+   * @group Popup
+   */
+  popupDistanceFromViewportEdge: number
   /**
    * Predicate deciding whether an individual item is disabled. `null` (default)
    * = nothing disabled. A disabled item is not selectable (click / Enter) and is
@@ -2056,6 +2097,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       popupListLeadingRowsPinned: settings?.popupListLeadingRowsPinned ?? false,
       popupListTrailingRowsPinned: settings?.popupListTrailingRowsPinned ?? false,
       popupWidthPolicy: settings?.popupWidthPolicy ?? 'fit-content',
+      popupDistanceFromTriggerWrapper: settings?.popupDistanceFromTriggerWrapper ?? DEFAULT_DISTANCE_FROM_ANCHOR,
+      popupDistanceFromViewportEdge: settings?.popupDistanceFromViewportEdge ?? DEFAULT_DISTANCE_FROM_VIEWPORT_EDGE,
       itemDisabledFn: settings?.itemDisabledFn ?? null,
       focusableWhenDisabled: settings?.focusableWhenDisabled ?? false,
       itemToStringFn: settings?.itemToStringFn ?? null,
@@ -2641,6 +2684,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     const positioner = createPositioner(this.triggerWrapperEl, this.popupEl, {
       onHide: () => this.closeWithReason('hidden'),
       widthPolicy: this.settings.popupWidthPolicy,
+      distanceFromAnchor: this.settings.popupDistanceFromTriggerWrapper,
+      distanceFromViewportEdge: this.settings.popupDistanceFromViewportEdge,
       innerScrollEl: this.popupListEl,
     })
     if (superseded()) {

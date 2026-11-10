@@ -19,10 +19,11 @@
  * ignored, never half-implemented. See README.md.
  *
  * The module depends on `llselect`: the app-wide defaults ui-select's markup
- * has no word for (`uiTranslationPack`, `popupWidthPolicy`; API.md says which
- * keys and why) reach this element, and a controller under `uiLlselect`
- * publishes instance(), the door the two llselect directives have, so the
- * API.md language-switch recipe covers it.
+ * has no word for (`uiTranslationPack`, `popupWidthPolicy`, `colorScheme` and
+ * the two popup distances; API.md says which keys and why) reach this
+ * element, and a controller under `uiLlselect` publishes instance(), the door
+ * the two llselect directives have, so the API.md language-switch recipe
+ * covers it.
  */
 ;(function (angular, llselect) {
   'use strict'
@@ -380,6 +381,8 @@
     // (API.md, <ui-llselect>). A slot placeholder still wins over the pack.
     if (llselectConfig.uiTranslationPack) { settings.uiTranslationPack = llselectConfig.uiTranslationPack }
     if (llselectConfig.popupWidthPolicy) { settings.popupWidthPolicy = llselectConfig.popupWidthPolicy }
+    if (llselectConfig.popupDistanceFromTriggerWrapper !== null) { settings.popupDistanceFromTriggerWrapper = llselectConfig.popupDistanceFromTriggerWrapper }
+    if (llselectConfig.popupDistanceFromViewportEdge !== null) { settings.popupDistanceFromViewportEdge = llselectConfig.popupDistanceFromViewportEdge }
     if (llselectConfig.colorScheme) { settings.colorScheme = llselectConfig.colorScheme }
     if (slots.matchAttrs.placeholder) { settings.placeholder = slots.matchAttrs.placeholder }
     // ui-select defaults searchEnabled to true (uiSelectConfig.searchEnabled);

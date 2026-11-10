@@ -34,7 +34,7 @@ test('computePosition flips up when no room below but room above', () => {
     floatingHeight: 400,
   })
   assert.equal(r.placement, 'above')
-  // top = anchorTop - GAP - min(floatingHeight, maxHeightAbove)
+  // top = anchorTop - 4 - min(floatingHeight, maxHeightAbove)
   // maxHeightAbove = 600 - 4 - 8 = 588
   // top = 600 - 4 - 400 = 196
   assert.equal(r.top, 196)
@@ -1233,5 +1233,245 @@ test('open() on an out-of-view trigger is a no-op and attaches no listeners', ()
   assert.equal(sel.popupEl.hidden, true)
   assert.equal(sel.popupEl.hasAttribute('data-placement'), false)
   // destroy() stays clean (nothing stranded to tear down).
+  sel.destroy()
+})
+
+// --- the two distances: the `popupDistanceFromTriggerWrapper` and
+// `popupDistanceFromViewportEdge` settings ---
+
+const ANCHOR_IN_MIDDLE: AnchorRect = {
+  top: 300, left: 50, right: 250, bottom: 330, width: 200, height: 30,
+}
+
+test('distanceFromAnchor: the gap to the anchor, the same below and above', () => {
+  const below = computePosition({
+    anchorRect: ANCHOR_AT_TOP, viewportWidth: 1024, viewportHeight: 768,
+    floatingHeight: 200, distanceFromAnchor: 10,
+  })
+  assert.equal(below.placement, 'below')
+  assert.equal(below.top, 130 + 10)
+  assert.equal(below.maxHeight, 768 - 8 - 140)
+  const above = computePosition({
+    anchorRect: ANCHOR_NEAR_BOTTOM, ...NEAR_BOTTOM_VIEWPORT,
+    floatingHeight: 400, distanceFromAnchor: 10,
+  })
+  assert.equal(above.placement, 'above')
+  assert.equal(above.top + 400, 600 - 10, 'the bottom edge of the popup ends 10 px above the anchor')
+  assert.equal(above.maxHeight, 600 - 10 - 8)
+})
+
+test('distanceFromAnchor: 0 makes the edges touch, and a negative value counts as 0', () => {
+  const at = (distanceFromAnchor: number) => computePosition({
+    anchorRect: ANCHOR_AT_TOP, viewportWidth: 1024, viewportHeight: 768,
+    floatingHeight: 200, distanceFromAnchor,
+  })
+  assert.equal(at(0).top, 130)
+  assert.deepEqual(at(-1), at(0))
+  assert.deepEqual(at(-500), at(0))
+  const above = (distanceFromAnchor: number) => computePosition({
+    anchorRect: ANCHOR_NEAR_BOTTOM, ...NEAR_BOTTOM_VIEWPORT,
+    floatingHeight: 400, distanceFromAnchor,
+  })
+  assert.equal(above(0).placement, 'above')
+  assert.equal(above(0).top + 400, 600, 'the popup ends at the anchor')
+  assert.deepEqual(above(-1), above(0))
+})
+
+test('distanceFromAnchor: a visible edge that stands in for the anchor keeps the distance', () => {
+  // The anchor lies above the visible window [300, 1068].
+  const r = computePosition({
+    anchorRect: ANCHOR_AT_TOP, viewportWidth: 1024, viewportHeight: 768, viewportTop: 300,
+    floatingHeight: 200, distanceFromAnchor: 10,
+  })
+  assert.equal(r.placement, 'below')
+  assert.equal(r.top, 310)
+})
+
+test('a negative distance counts as 0 where a visible edge stands in for the anchor, on either side', () => {
+  // The anchor [50, 80] lies above the visible window [100, 500]. A distance
+  // of -500 taken as written would find room above the anchor, at [100, 550].
+  for (const distanceFromAnchor of [-20, -500]) {
+    const r = computePosition({
+      anchorRect: { top: 50, left: 50, right: 250, bottom: 80, width: 200, height: 30 },
+      viewportWidth: 1024, viewportHeight: 400, viewportTop: 100,
+      floatingHeight: 500, distanceFromAnchor,
+    })
+    assert.equal(r.placement, 'below', String(distanceFromAnchor))
+    assert.equal(r.top, 100, 'the popup starts at the visible top')
+    assert.equal(r.top + r.maxHeight, 500 - 8, 'and ends 8 px above the visible bottom')
+  }
+  // The anchor [520, 550] lies below the visible window [100, 500].
+  for (const distanceFromAnchor of [-20, -500]) {
+    const r = computePosition({
+      anchorRect: { top: 520, left: 50, right: 250, bottom: 550, width: 200, height: 30 },
+      viewportWidth: 1024, viewportHeight: 400, viewportTop: 100,
+      floatingHeight: 500, distanceFromAnchor,
+    })
+    assert.equal(r.placement, 'above', String(distanceFromAnchor))
+    assert.equal(r.top, 100 + 8)
+    assert.equal(r.top + r.maxHeight, 500, 'the popup ends at the visible bottom')
+  }
+  // A sticky placement does not change it.
+  const sticky = computePosition({
+    anchorRect: { top: 50, left: 50, right: 250, bottom: 80, width: 200, height: 30 },
+    viewportWidth: 1024, viewportHeight: 400, viewportTop: 100,
+    floatingHeight: 500, distanceFromAnchor: -500, currentPlacement: 'above',
+  })
+  assert.equal(sticky.placement, 'below')
+  assert.equal(sticky.top + sticky.maxHeight, 500 - 8)
+})
+
+test('a negative viewport distance counts as 0 where a visible edge stands in for the anchor', () => {
+  // The anchor [520, 550] lies below the visible window [100, 500].
+  const r = computePosition({
+    anchorRect: { top: 520, left: 50, right: 250, bottom: 550, width: 200, height: 30 },
+    viewportWidth: 1024, viewportHeight: 400, viewportTop: 100,
+    floatingHeight: 1000, distanceFromAnchor: 4, distanceFromViewportEdge: -20,
+  })
+  assert.equal(r.placement, 'above')
+  assert.equal(r.top, 100, 'the popup starts at the visible top, not above it')
+  assert.equal(r.top + r.maxHeight, 500 - 4, 'and ends 4 px above the visible bottom')
+})
+
+test('distanceFromViewportEdge: limits the height on the chosen side', () => {
+  const below = computePosition({
+    anchorRect: ANCHOR_AT_TOP, viewportWidth: 1024, viewportHeight: 768,
+    floatingHeight: 2000, distanceFromViewportEdge: 20,
+  })
+  assert.equal(below.placement, 'below')
+  assert.equal(below.top + below.maxHeight, 768 - 20)
+  const above = computePosition({
+    anchorRect: ANCHOR_NEAR_BOTTOM, ...NEAR_BOTTOM_VIEWPORT,
+    floatingHeight: 2000, distanceFromViewportEdge: 20,
+  })
+  assert.equal(above.placement, 'above')
+  assert.equal(above.top, 20)
+  assert.equal(above.maxHeight, 600 - 4 - 20)
+})
+
+test('distanceFromViewportEdge: counts when the side is picked', () => {
+  const at = (distanceFromViewportEdge?: number) => computePosition({
+    anchorRect: ANCHOR_IN_MIDDLE, viewportWidth: 1024, viewportHeight: 600, floatingHeight: 250,
+    ...(distanceFromViewportEdge === undefined ? {} : { distanceFromViewportEdge }),
+  })
+  // Room below: 600 - 8 - 334 = 258, so 250 px fit.
+  assert.equal(at().placement, 'below')
+  // Room below: 600 - 30 - 334 = 236. Room above: 300 - 4 - 30 = 266.
+  assert.equal(at(30).placement, 'above')
+})
+
+test('distanceFromViewportEdge: under fit-content it is the side margin and limits the width', () => {
+  const nearRight: AnchorRect = { top: 100, bottom: 130, left: 800, right: 900, width: 100, height: 30 }
+  const shifted = computePosition({
+    anchorRect: nearRight, viewportWidth: 1024, viewportHeight: 768,
+    floatingHeight: 200, floatingNaturalWidth: 300, distanceFromViewportEdge: 20,
+  })
+  assert.equal(shifted.width, 300)
+  assert.equal(shifted.left, 1024 - 20 - 300)
+  const capped = computePosition({
+    anchorRect: nearRight, viewportWidth: 1024, viewportHeight: 768,
+    floatingHeight: 200, floatingNaturalWidth: 5000, distanceFromViewportEdge: 20,
+  })
+  assert.equal(capped.width, 1024 - 2 * 20)
+  assert.equal(capped.left, 20)
+  const rtl = computePosition({
+    anchorRect: { top: 100, bottom: 130, left: 30, right: 130, width: 100, height: 30 },
+    viewportWidth: 1024, viewportHeight: 768,
+    floatingHeight: 200, floatingNaturalWidth: 300, direction: 'rtl', distanceFromViewportEdge: 20,
+  })
+  assert.equal(rtl.left, 20, 'rtl grows leftward and stops at the left margin')
+})
+
+test('distanceFromViewportEdge: the two side margins never cross, whatever the direction', () => {
+  // 200 px on each side of a window that is 100 px wide.
+  const at = (direction: 'ltr' | 'rtl') => computePosition({
+    anchorRect: { top: 10, left: 20, right: 60, bottom: 30, width: 40, height: 20 },
+    viewportWidth: 100, viewportHeight: 768,
+    floatingHeight: 100, floatingNaturalWidth: 300, direction, distanceFromViewportEdge: 200,
+  })
+  assert.equal(at('ltr').width, 0)
+  assert.equal(at('ltr').left, 50, 'each margin is cut to half the window, so both end at its middle')
+  assert.equal(at('rtl').width, 0)
+  assert.equal(at('rtl').left, 50)
+})
+
+test('distanceFromViewportEdge: 0 reaches the edge, and a negative value counts as 0', () => {
+  const at = (distanceFromViewportEdge: number) => computePosition({
+    anchorRect: ANCHOR_AT_TOP, viewportWidth: 1024, viewportHeight: 768,
+    floatingHeight: 2000, floatingNaturalWidth: 5000, distanceFromViewportEdge,
+  })
+  const zero = at(0)
+  assert.equal(zero.top + zero.maxHeight, 768)
+  assert.equal(zero.left, 0)
+  assert.equal(zero.width, 1024)
+  assert.deepEqual(at(-5), zero)
+})
+
+test('distanceFromViewportEdge: match-trigger-wrapper takes no side margin from it', () => {
+  const r = computePosition({
+    anchorRect: { top: 100, bottom: 130, left: 900, right: 1020, width: 120, height: 30 },
+    viewportWidth: 1024, viewportHeight: 768,
+    floatingHeight: 2000, widthPolicy: 'match-trigger-wrapper', distanceFromViewportEdge: 50,
+  })
+  assert.equal(r.left, 900)
+  assert.equal(r.width, 120)
+  assert.equal(r.top + r.maxHeight, 768 - 50, 'the height limit still follows it')
+})
+
+test('createPositioner applies the two distances on every placement', () => {
+  setupDom('<!doctype html><html><body><div id="a"></div><div id="b"></div></body></html>')
+  const anchor = document.getElementById('a')!
+  const floating = document.getElementById('b')!
+  withMockedRect(anchor, { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 })
+  Object.defineProperty(floating, 'offsetHeight', { value: 150, configurable: true })
+
+  const p = createPositioner(anchor, floating, { distanceFromAnchor: 12, distanceFromViewportEdge: 20 })
+  assert.equal(floating.style.top, '142px')
+  assert.equal(floating.style.maxHeight, `${window.innerHeight - 20 - 142}px`)
+  withMockedRect(anchor, { top: 200, left: 50, right: 250, bottom: 230, width: 200, height: 30 })
+  p.reposition()
+  assert.equal(floating.style.top, '242px')
+  assert.equal(floating.style.maxHeight, `${window.innerHeight - 20 - 242}px`)
+  p.detach()
+})
+
+test('without the two distance settings, the select component places its popup by 4 px and 8 px', () => {
+  setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
+  const sel = new LLSelectSingle<string>(document.getElementById('mount')!, { ariaLabel: 'Letter' })
+  sel.setItems(['a', 'b'])
+  withMockedRect(sel.triggerWrapperEl, { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 })
+  sel.open()
+  assert.equal(sel.popupEl.style.top, '134px')
+  assert.equal(sel.popupEl.style.maxHeight, `${window.innerHeight - 8 - 134}px`)
+  sel.destroy()
+})
+
+test('the select component places its popup by the two distance settings', () => {
+  setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
+  const sel = new LLSelectSingle<string>(document.getElementById('mount')!, {
+    ariaLabel: 'Letter',
+    popupDistanceFromTriggerWrapper: 12,
+    popupDistanceFromViewportEdge: 20,
+  })
+  sel.setItems(['a', 'b'])
+  withMockedRect(sel.triggerWrapperEl, { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 })
+  sel.open()
+  assert.equal(sel.popupEl.style.top, '142px')
+  assert.equal(sel.popupEl.style.maxHeight, `${window.innerHeight - 20 - 142}px`)
+  sel.destroy()
+})
+
+test('a distance setting of 0 is kept, not replaced by the default', () => {
+  setupDom('<!doctype html><html><body><div id="mount"></div></body></html>')
+  const sel = new LLSelectSingle<string>(document.getElementById('mount')!, {
+    ariaLabel: 'Letter',
+    popupDistanceFromTriggerWrapper: 0,
+    popupDistanceFromViewportEdge: 0,
+  })
+  sel.setItems(['a', 'b'])
+  withMockedRect(sel.triggerWrapperEl, { top: 100, left: 50, right: 250, bottom: 130, width: 200, height: 30 })
+  sel.open()
+  assert.equal(sel.popupEl.style.top, '130px')
+  assert.equal(sel.popupEl.style.maxHeight, `${window.innerHeight - 130}px`)
   sel.destroy()
 })

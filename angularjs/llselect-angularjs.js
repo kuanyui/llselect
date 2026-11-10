@@ -166,6 +166,26 @@
   }
 
   /**
+   * $eval a number attribute (ll-popup-distance-from-trigger-wrapper,
+   * ll-popup-distance-from-viewport-edge). The core takes a finite number and
+   * does not check for one, so the check is here: anything else warns, naming
+   * the attribute; never throw - the default still gives a working select
+   * component.
+   * An attribute with no value counts as absent, as in evalFnAttr.
+   * @returns the number, or null when the attribute is absent or warned.
+   */
+  function evalNumberAttr(scope, attrs, name) {
+    if (!attrs[name]) { return null }
+    var value = scope.$eval(attrs[name])
+    if (typeof value !== 'number' || !isFinite(value)) {
+      console.warn('llselect-angularjs: ' + attrs.$attr[name] + '="' + attrs[name] +
+        '" did not evaluate to a finite number. Falling back to the default.')
+      return null
+    }
+    return value
+  }
+
+  /**
    * Settings shared by both directives: config defaults first, then this
    * element's ll-* attributes on top.
    *
@@ -190,6 +210,8 @@
     if (config.uiTranslationPack) { settings.uiTranslationPack = config.uiTranslationPack }
     if (config.filterable !== null) { settings.filterable = config.filterable }
     if (config.popupWidthPolicy) { settings.popupWidthPolicy = config.popupWidthPolicy }
+    if (config.popupDistanceFromTriggerWrapper !== null) { settings.popupDistanceFromTriggerWrapper = config.popupDistanceFromTriggerWrapper }
+    if (config.popupDistanceFromViewportEdge !== null) { settings.popupDistanceFromViewportEdge = config.popupDistanceFromViewportEdge }
     if (config.colorScheme) { settings.colorScheme = config.colorScheme }
     var arrow = config.arrow
 
@@ -199,6 +221,10 @@
     if (attrs.llPlaceholder) { settings.placeholder = scope.$eval(attrs.llPlaceholder) }
     if (attrs.llFilterable) { settings.filterable = scope.$eval(attrs.llFilterable) }
     if (attrs.llPopupWidthPolicy) { settings.popupWidthPolicy = evalEnumAttr(scope, attrs, 'llPopupWidthPolicy') }
+    var distanceFromTriggerWrapper = evalNumberAttr(scope, attrs, 'llPopupDistanceFromTriggerWrapper')
+    if (distanceFromTriggerWrapper !== null) { settings.popupDistanceFromTriggerWrapper = distanceFromTriggerWrapper }
+    var distanceFromViewportEdge = evalNumberAttr(scope, attrs, 'llPopupDistanceFromViewportEdge')
+    if (distanceFromViewportEdge !== null) { settings.popupDistanceFromViewportEdge = distanceFromViewportEdge }
     if (attrs.llColorScheme) { settings.colorScheme = evalEnumAttr(scope, attrs, 'llColorScheme') }
     if (attrs.llArrow) { arrow = attrs.llArrow }
     var itemContentFn = evalFnAttr(scope, attrs, 'llPopupListItemContentFn')
@@ -437,7 +463,7 @@
      * Only settings that are app-wide by nature are here. `uiTranslationPack` is the
      * clearest case - an app picks its language once, and llselect's chrome
      * strings are not per-field copy. `placeholder` is deliberately absent: it
-     * IS per-field copy. Per-element ll-* attributes always win.
+     * IS per-field copy. A per-element ll-* attribute with a valid value wins.
      *
      *   angular.module('app', ['llselect'])
      *     .config(['llselectConfigProvider', function (llselectConfigProvider) {
@@ -454,6 +480,10 @@
         highlight: null,
         /** 'match-trigger-wrapper' | 'fit-content' | null. null = llselect's own default. */
         popupWidthPolicy: null,
+        /** number | null. CSS pixels between the trigger wrapper and the popup. null = llselect's own default (4). */
+        popupDistanceFromTriggerWrapper: null,
+        /** number | null. CSS pixels the popup leaves to the edges of the viewport. null = llselect's own default (8). */
+        popupDistanceFromViewportEdge: null,
         /** 'auto' | 'light' | 'dark' | null. null = llselect's own default ('auto': decided from the page). */
         colorScheme: null,
         /** A UI-translation pack (@llselect/core/i18n), or null for the English defaults. */

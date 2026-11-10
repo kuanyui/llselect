@@ -67,6 +67,25 @@ export interface PositionInput {
    * forth. Omit / `undefined` (first placement) to pick fresh.
    */
   currentPlacement?: LLSelectPlacement | undefined
+  /**
+   * Distance in px between the anchor's edge and the floating element's edge
+   * next to it.
+   * - The same below and above the anchor.
+   * - A negative value counts as `0`.
+   * - Default `4`.
+   */
+  distanceFromAnchor?: number
+  /**
+   * Room in px that the floating element leaves to the edges of the visible
+   * window.
+   * - Below the anchor, the room is to the bottom edge; above it, to the top
+   *   edge.
+   * - Under `'fit-content'`, it is the margin on both sides as well, and
+   *   there at most half the window's width.
+   * - A negative value counts as `0`.
+   * - Default `8`.
+   */
+  distanceFromViewportEdge?: number
 }
 
 /** Result of {@link computePosition}: coordinates and chosen placement. */
@@ -79,8 +98,16 @@ export interface PositionResult {
   placement: LLSelectPlacement
 }
 
-const GAP = 4
-const VIEWPORT_PADDING = 8
+/**
+ * Package-internal: the default of `PositionInput.distanceFromAnchor`, and of
+ * the `popupDistanceFromTriggerWrapper` setting.
+ */
+export const DEFAULT_DISTANCE_FROM_ANCHOR = 4
+/**
+ * Package-internal: the default of `PositionInput.distanceFromViewportEdge`,
+ * and of the `popupDistanceFromViewportEdge` setting.
+ */
+export const DEFAULT_DISTANCE_FROM_VIEWPORT_EDGE = 8
 
 /**
  * Compute where to place the floating element relative to the anchor.
@@ -98,9 +125,12 @@ const VIEWPORT_PADDING = 8
  * - A `currentPlacement` that still fits is kept.
  * - Keeping it means that a list that shrinks and regrows does not make the
  *   popup jump sides.
- * - The floating element keeps a gap of 4 px from the anchor.
- * - Below the anchor, it keeps a margin of 8 px from the bottom of the window.
- * - Above the anchor, it keeps a margin of 8 px from the top of the window.
+ * - The floating element keeps a gap of `distanceFromAnchor` from the anchor.
+ * - Below the anchor, its room ends `distanceFromViewportEdge` above the
+ *   bottom of the window.
+ * - Above the anchor, its room starts the same distance below the top of the
+ *   window.
+ * - A negative value of either distance counts as 0.
  * - It also stays inside the window vertically when the anchor is outside it:
  *   - If the anchor's top lies below the window, the bottom of the window
  *     stands in for that top.
@@ -115,7 +145,9 @@ const VIEWPORT_PADDING = 8
  *   outside the window, `top` is kept inside the window.
  * - Horizontally, `widthPolicy === 'fit-content'`, the default, makes `width`
  *   the larger of the anchor's width and `floatingNaturalWidth`.
- * - That width is at most the window's width minus two side margins of 8 px.
+ * - That width is at most the window's width minus two side margins.
+ * - A side margin is `distanceFromViewportEdge`, and at most half the
+ *   window's width, so the two margins never cross.
  * - In ltr, the floating element starts at the anchor's left edge.
  * - In ltr, it grows rightward.
  * - In rtl, it starts at the anchor's right edge.
@@ -139,15 +171,19 @@ export function computePosition(input: PositionInput): PositionResult {
     direction = 'ltr',
     currentPlacement,
   } = input
+  // Neither distance may be negative: the rules below rest on a floating
+  // element that starts beyond the anchor and ends inside its margin.
+  const distanceFromAnchor = Math.max(0, input.distanceFromAnchor ?? DEFAULT_DISTANCE_FROM_ANCHOR)
+  const distanceFromViewportEdge = Math.max(0, input.distanceFromViewportEdge ?? DEFAULT_DISTANCE_FROM_VIEWPORT_EDGE)
 
   const viewportBottom = viewportTop + viewportHeight
   // A visible edge stands in for an anchor edge beyond it: an anchor under the
   // on-screen keyboard still counts as visible, since the hidden check reads
   // the layout viewport.
-  const belowStart = Math.max(anchorRect.bottom, viewportTop) + GAP
-  const aboveEnd = Math.min(anchorRect.top, viewportBottom) - GAP
-  const spaceBelow = viewportBottom - VIEWPORT_PADDING - belowStart
-  const spaceAbove = aboveEnd - viewportTop - VIEWPORT_PADDING
+  const belowStart = Math.max(anchorRect.bottom, viewportTop) + distanceFromAnchor
+  const aboveEnd = Math.min(anchorRect.top, viewportBottom) - distanceFromAnchor
+  const spaceBelow = viewportBottom - distanceFromViewportEdge - belowStart
+  const spaceAbove = aboveEnd - viewportTop - distanceFromViewportEdge
 
   const fitsBelow = floatingHeight <= spaceBelow
   const fitsAbove = floatingHeight <= spaceAbove
@@ -190,10 +226,12 @@ export function computePosition(input: PositionInput): PositionResult {
     left = anchorRect.left
   } else {
     const desiredWidth = Math.max(anchorRect.width, floatingNaturalWidth)
-    const maxAvailable = viewportWidth - 2 * VIEWPORT_PADDING
+    // Each side margin is at most half the window, so the two never cross.
+    const sideMargin = Math.min(distanceFromViewportEdge, viewportWidth / 2)
+    const maxAvailable = viewportWidth - 2 * sideMargin
     width = Math.min(desiredWidth, Math.max(0, maxAvailable))
-    const leftEdge = viewportLeft + VIEWPORT_PADDING
-    const rightEdge = viewportLeft + viewportWidth - VIEWPORT_PADDING
+    const leftEdge = viewportLeft + sideMargin
+    const rightEdge = viewportLeft + viewportWidth - sideMargin
     if (direction === 'rtl') {
       // Mirror of ltr: right edges aligned, growth goes leftward; push back
       // inside the LEFT margin first, then clamp at the right one.
@@ -508,6 +546,21 @@ export interface PositionerOptions {
    */
   widthPolicy?: LLSelectWidthPolicy
   /**
+   * Distance in px between the anchor and the floating element.
+   * - The contract is that of {@link PositionInput.distanceFromAnchor}.
+   * - Default `4`, the default of the `popupDistanceFromTriggerWrapper`
+   *   setting.
+   */
+  distanceFromAnchor?: number
+  /**
+   * Room in px that the floating element leaves to the edges of the visible
+   * window.
+   * - The contract is that of {@link PositionInput.distanceFromViewportEdge}.
+   * - Default `8`, the default of the `popupDistanceFromViewportEdge`
+   *   setting.
+   */
+  distanceFromViewportEdge?: number
+  /**
    * The floating element's inner scroll container (the popup list). Under an
    * active `maxHeight` clamp the floating element's overflow is absorbed as
    * this element's internal scrolling, so `offsetHeight` alone under-reports
@@ -645,6 +698,8 @@ export function createPositioner(
 ): Positioner {
   let attached = true
   const widthPolicy: LLSelectWidthPolicy = options?.widthPolicy ?? 'fit-content'
+  const distanceFromAnchor = options?.distanceFromAnchor ?? DEFAULT_DISTANCE_FROM_ANCHOR
+  const distanceFromViewportEdge = options?.distanceFromViewportEdge ?? DEFAULT_DISTANCE_FROM_VIEWPORT_EDGE
   // Snapshot at attach (= once per open cycle): direction changes are rare
   // and the next open re-reads it. Only fit-content consults it.
   const direction: 'ltr' | 'rtl' =
@@ -708,6 +763,8 @@ export function createPositioner(
       floatingNaturalWidth,
       direction,
       currentPlacement: lastPlacement,
+      distanceFromAnchor,
+      distanceFromViewportEdge,
     })
     lastPlacement = result.placement
     floating.style.position = 'fixed'

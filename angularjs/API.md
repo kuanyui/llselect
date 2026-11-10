@@ -30,7 +30,7 @@ Attributes of both `<llselect-single>` and `<llselect-multiple>`. Every entry op
 - **Flag**: acts by presence alone.
 - **Event expression**: evaluated on EACH event, inside a digest, like `ng-click`. Only [`ll-on-open`](#ll-on-open) / [`ll-on-close`](#ll-on-close) / [`ll-on-focus`](#ll-on-focus) / [`ll-on-blur`](#ll-on-blur) / [`ll-on-active-item-change`](#ll-on-active-item-change) / [`ll-on-filter-query-change`](#ll-on-filter-query-change) / [`ll-on-before-change`](#ll-on-before-change).
 
-App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` / `uiTranslationPack` are set once via [`llselectConfigProvider`](#llselectconfigprovider); a per-element attribute always wins.
+App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` / `popupDistanceFromTriggerWrapper` / `popupDistanceFromViewportEdge` / `colorScheme` / `uiTranslationPack` are set once via [`llselectConfigProvider`](#llselectconfigprovider); a per-element attribute with a valid value wins.
 
 ### `ng-model`
 
@@ -252,6 +252,34 @@ $scope.ifaceMatch = function (i, query) {
 ### `ll-popup-width-policy`
 
 **Expression** -> `popupWidthPolicy`. `'fit-content'` (llselect's default) / `'match-trigger-wrapper'`.
+
+### `ll-popup-distance-from-trigger-wrapper`
+
+**Expression** -> `popupDistanceFromTriggerWrapper`. The distance between the trigger wrapper and the popup, as a number of CSS pixels.
+
+- llselect's default is `4`.
+- `0` makes the two edges touch.
+- A negative number counts as `0`.
+- The value must be a finite number.
+- If it is anything else, such as the string `'8'` or a scope property that does not exist, the directive logs a warning and keeps the default.
+- That default is the one from [`llselectConfigProvider`](#llselectconfigprovider) if the app set one, otherwise llselect's own.
+- An attribute with no value counts as absent: the directive logs nothing and keeps the default.
+- The core's reference for the setting has the full contract.
+
+### `ll-popup-distance-from-viewport-edge`
+
+**Expression** -> `popupDistanceFromViewportEdge`. The room that the popup leaves to the edges of the viewport, as a number of CSS pixels.
+
+- llselect's default is `8`.
+- The setting limits the popup's height.
+- If [`ll-popup-width-policy`](#ll-popup-width-policy) is `'fit-content'`, the setting is also the margin at the left and at the right edge, and limits the popup's width.
+- A side margin is at most half the viewport's width.
+- `0` lets the popup reach the edge of the viewport.
+- A negative number counts as `0`.
+- The value must be a finite number.
+- If it is anything else, the directive logs a warning and keeps the default, as [`ll-popup-distance-from-trigger-wrapper`](#ll-popup-distance-from-trigger-wrapper) does.
+- An attribute with no value counts as absent: the directive logs nothing and keeps the default.
+- The core's reference for the setting has the full contract.
 
 ### `ll-color-scheme`
 
@@ -564,7 +592,7 @@ vm.langRows = [{
 
 ## `llselectConfigProvider`
 
-A house style set once, rather than repeated on 40 elements. Per-element `ll-*` attributes always win over it.
+A house style set once, rather than repeated on 40 elements. A per-element `ll-*` attribute with a valid value wins over it.
 
 ```js
 angular.module('app', ['llselect'])
@@ -574,6 +602,8 @@ angular.module('app', ['llselect'])
       filterable: true,          // boolean, or a predicate (items) => boolean
       highlight: true,           // wrap filter matches in the default item text in <mark>
       popupWidthPolicy: 'match-trigger-wrapper',  // llselect's own default is 'fit-content'
+      popupDistanceFromTriggerWrapper: 2,  // CSS pixels; llselect's own default is 4
+      popupDistanceFromViewportEdge: 16,   // CSS pixels; llselect's own default is 8
       colorScheme: 'auto',       // 'auto' | 'light' | 'dark'; llselect's own default is 'auto'
       uiTranslationPack: llselectI18n.zhTW,  // an llselect language pack
     })
@@ -599,6 +629,22 @@ Boolean. The app-wide default behind [`ll-highlight`](#ll-highlight): wrap each 
 #### `popupWidthPolicy`
 
 `'fit-content'` (llselect's own default) / `'match-trigger-wrapper'`. The app-wide default behind [`ll-popup-width-policy`](#ll-popup-width-policy).
+
+#### `popupDistanceFromTriggerWrapper`
+
+The app-wide default of the distance between the trigger wrapper and the popup, as a number of CSS pixels or `null`.
+
+- The default `null` uses llselect's own default, `4`.
+- A valid value of the [`ll-popup-distance-from-trigger-wrapper`](#ll-popup-distance-from-trigger-wrapper) attribute overrides it per element.
+- `<ui-llselect>` uses this default too, because ui-select's markup has no attribute for it.
+
+#### `popupDistanceFromViewportEdge`
+
+The app-wide default of the room that the popup leaves to the edges of the viewport, as a number of CSS pixels or `null`.
+
+- The default `null` uses llselect's own default, `8`.
+- A valid value of the [`ll-popup-distance-from-viewport-edge`](#ll-popup-distance-from-viewport-edge) attribute overrides it per element.
+- `<ui-llselect>` uses this default too, because ui-select's markup has no attribute for it.
 
 #### `colorScheme`
 
@@ -695,7 +741,7 @@ Migrating a call site, at a glance:
 
 - Scoping rule: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible.
 - It always renders the chevron - every ui-select theme has a caret, so a bare trigger would read as broken.
-- From [`llselectConfigProvider`](#llselectconfigprovider) it takes the two keys ui-select's markup has no word for: `uiTranslationPack` and `popupWidthPolicy`. The other three follow ui-select: the caret is always rendered (`arrow`), `search-enabled` is ui-select's word for `filterable`, and `highlight` is the row template's own `| highlight:` filter.
+- From [`llselectConfigProvider`](#llselectconfigprovider) it takes the five keys ui-select's markup has no word for: `uiTranslationPack`, `popupWidthPolicy`, `colorScheme`, `popupDistanceFromTriggerWrapper` and `popupDistanceFromViewportEdge`. The other three follow ui-select: the caret is always rendered (`arrow`), `search-enabled` is ui-select's word for `filterable`, and `highlight` is the row template's own `| highlight:` filter.
 - It publishes a controller under `uiLlselect` with `instance()`, the same door as the two llselect directives, so [Reaching the instance from your own directive](#reaching-the-instance-from-your-own-directive) and [Switching the UI language at runtime](#switching-the-ui-language-at-runtime) cover it.
 - `$touched` turns true when DOM focus leaves the select component, as on the two llselect directives (see [`ng-model`](#ng-model)). ui-select's markup has no attribute for the blur itself, and none is added.
 - How the bridge is built, and why it is not a full ui-select reimplementation: [the README](README.md#the-ui-select-bridge), [`DESIGN.md`](DESIGN.md#the-ui-select-bridge) and [`SPEC.md`](SPEC.md).
