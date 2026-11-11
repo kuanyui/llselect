@@ -119,10 +119,13 @@ test('block: a click that no pointer made passes the swallow of an outside press
   const btn = document.getElementById('other') as HTMLButtonElement
   const second = document.getElementById('second') as HTMLButtonElement
   const calls: string[] = []
+  // Read in the test body: an assertion that throws inside a listener would
+  // only be reported by jsdom, not fail the test.
+  let secondPrevented: boolean | undefined
   btn.addEventListener('click', () => { calls.push('other') })
   second.addEventListener('click', (ev) => {
     calls.push('second')
-    assert.equal(ev.defaultPrevented, false, 'the click from click() keeps its default')
+    secondPrevented = ev.defaultPrevented
   })
   btn.addEventListener('mousedown', () => { btn.focus() })
   // A handler of the page that clicks another control once focus leaves.
@@ -133,6 +136,7 @@ test('block: a click that no pointer made passes the swallow of an outside press
   fireMousedown(btn)
   assert.equal(sel.isOpened(), false, 'precondition: the focus move closed the popup during the press')
   assert.deepEqual(calls, ['second'], 'the click from click() is not the click of the press, so it reaches its button')
+  assert.equal(secondPrevented, false, 'the click from click() keeps its default')
   btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }))
   assert.equal(firePointerClick(btn).defaultPrevented, true)
   assert.deepEqual(calls, ['second'], 'the click of the press is still swallowed')

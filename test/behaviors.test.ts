@@ -485,10 +485,13 @@ test('a click that no pointer made passes the click swallow of a touch hold, whi
   assert.ok(outside && second && el)
   let outsideClicks = 0
   let secondClicks = 0
+  // Read in the test body: an assertion that throws inside a listener would
+  // only be reported by jsdom, not fail the test.
+  let secondPrevented: boolean | undefined
   outside.addEventListener('click', () => { outsideClicks++ })
   second.addEventListener('click', (ev) => {
     secondClicks++
-    assert.equal(ev.defaultPrevented, false, 'the click from click() keeps its default')
+    secondPrevented = ev.defaultPrevented
   })
   // The hold starts before the close, so this click() meets its listener;
   // at (0, 0), it lies within the radius of the touch-down.
@@ -498,9 +501,37 @@ test('a click that no pointer made passes the click swallow of a touch hold, whi
   touch('touchstart', outside, [{ id: 1, x: 10, y: 10 }])
   assert.equal(sel.isOpened(), false, 'precondition: the touch-down closed the popup')
   assert.equal(secondClicks, 1, 'the click from click() is not the click of the tap, so it reaches its button')
+  assert.equal(secondPrevented, false, 'the click from click() keeps its default')
   touch('touchend', outside, [{ id: 1, x: 10, y: 10 }])
   assert.equal(clickAt(outside, 10, 10).defaultPrevented, true)
   assert.equal(outsideClicks, 0, 'the click of the tap is still swallowed')
+})
+
+test('the press of a mouse ends the wait for a tap\'s click, while the pointerdown of a touch leaves it', () => {
+  // jsdom has no PointerEvent, so the pointer type rides on a MouseEvent.
+  const pointerDown = (target: EventTarget, pointerType: string, x: number, y: number): void => {
+    const ev = new window.MouseEvent('pointerdown', { bubbles: true, cancelable: true, clientX: x, clientY: y })
+    Object.defineProperty(ev, 'pointerType', { value: pointerType })
+    target.dispatchEvent(ev)
+  }
+  for (const pointerType of ['touch', 'mouse']) {
+    const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, behaviorOfOutsideClick: 'block' })
+    let clicks = 0
+    outside.addEventListener('click', () => { clicks++ })
+    sel.open()
+    touch('touchstart', outside, [{ id: 1, x: 10, y: 10 }])
+    assert.equal(sel.isOpened(), false, `${pointerType}: precondition: the touch-down closed the popup`)
+    touch('touchend', outside, [{ id: 1, x: 10, y: 10 }])
+    // A press near the touch-down, before the tap's click came.
+    pointerDown(outside, pointerType, 12, 12)
+    const mousedown = new window.MouseEvent('mousedown', { bubbles: true, cancelable: true, clientX: 12, clientY: 12, detail: 1 })
+    outside.dispatchEvent(mousedown)
+    const click = clickAt(outside, 12, 12)
+    const held = pointerType === 'touch'
+    assert.equal(mousedown.defaultPrevented, held, pointerType)
+    assert.equal(click.defaultPrevented, held, pointerType)
+    assert.equal(clicks, held ? 0 : 1, `${pointerType}: the click of a mouse press is the user's own`)
+  }
 })
 
 test('a touch-down outside that closes swallows its click under behaviorOfOutsideClick block, and not under pass-through', () => {
@@ -544,7 +575,7 @@ test('a hold that ends removes every listener it added, with the same function a
   touch('touchend', outside, [{ id: 1, x: 0, y: 0 }])
   clickAt(outside, 0, 0)
   const cases = [
-    { where: 'document', adds: documentAdd.mock.calls, removes: documentRemove.mock.calls, types: ['click', 'mousedown', 'touchstart'] },
+    { where: 'document', adds: documentAdd.mock.calls, removes: documentRemove.mock.calls, types: ['click', 'mousedown', 'pointerdown', 'touchstart'] },
     { where: 'touched node', adds: outsideAdd.mock.calls, removes: outsideRemove.mock.calls, types: ['touchcancel', 'touchend', 'touchmove'] },
   ]
   for (const { where, adds, removes, types } of cases) {

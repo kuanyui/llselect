@@ -81,6 +81,8 @@ export interface LLSelectScrollGesture {
  *   as the tap's click.
  * - A click from the keyboard or from `click()` never counts as the tap's
  *   click.
+ * - A later touch, or the press of a mouse or a pen, ends the wait for the
+ *   tap's click.
  * @group Behaviors
  */
 export type LLSelectScrollGestureBehavior =
@@ -206,13 +208,14 @@ export interface GestureHost {
 // tap limits, which the real-device pass in docs/llm/TODO.md checks.
 const TAP_SLOP = 16
 /**
- * How far from its touch-down a tap's click may land, in CSS pixels.
+ * A tap's click may land at most this far from its touch-down, in CSS pixels.
  * - `base.ts` binds the click swallow of a blocked outside press with it too.
  * @internal
  */
 export const TAP_CLICK_RADIUS = 2 * TAP_SLOP
 /**
- * How long after the touch lifts a tap's click may still come.
+ * A tap's click may still come this long after the touch lifts, in
+ * milliseconds.
  * - Browsers can hold the click back by about 300 ms on a page without a
  *   mobile viewport.
  * - `base.ts` waits as long in the click swallow of a blocked outside press.
@@ -362,6 +365,13 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
     if (!clickDone) { timer = setTimeout(endClick, CLICK_WAIT_MS) }
   }
   const onNextTouchStart = (): void => { release() }
+  // The press of a mouse or a pen is a new press too. A later touch ends the
+  // hold at its touchstart, so its pointerdown is left alone, wherever a
+  // browser sends it.
+  const onNextPointerDown = (ev: Event): void => {
+    if ((ev as PointerEvent).pointerType === 'touch') { return }
+    release()
+  }
   // A click far from the touch-down came from something else, such as a mouse.
   const isTapClick = (ev: MouseEvent): boolean => near(ev.clientX, ev.clientY, TAP_CLICK_RADIUS)
   const onMousedown = (ev: MouseEvent): void => {
@@ -381,6 +391,7 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
     if (!touchDone || !clickDone || ended) { return }
     ended = true
     document.removeEventListener('touchstart', onNextTouchStart, CAPTURE_PASSIVE)
+    document.removeEventListener('pointerdown', onNextPointerDown, CAPTURE_PASSIVE)
     options.ended()
   }
   const endTouch = (): void => {
@@ -407,6 +418,7 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
   target.addEventListener('touchend', onEnd, PASSIVE)
   target.addEventListener('touchcancel', onEnd, PASSIVE)
   document.addEventListener('touchstart', onNextTouchStart, CAPTURE_PASSIVE)
+  document.addEventListener('pointerdown', onNextPointerDown, CAPTURE_PASSIVE)
   if (swallowClick) {
     if (mousedown !== 'leave') { document.addEventListener('mousedown', onMousedown, true) }
     document.addEventListener('click', onClick, true)
