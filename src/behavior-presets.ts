@@ -7,11 +7,18 @@
  * - The other presets follow the native `<select>` of one browser on one
  *   operating system, as recorded by hand tests in
  *   `docs/llm/native-select-scrolling.md`.
+ * - The `outsideClickBehavior` of the Chromium and Firefox presets comes from
+ *   the source code of those browsers instead, as `docs/llm/DESIGN.md`
+ *   records.
+ * - The `outsideClickBehavior` of the Safari preset is inferred from the
+ *   macOS menu that Safari shows.
+ * - No hand test has checked these values yet.
  * - Nothing here detects the browser: the app picks the preset.
  * @module @llselect/core/behavior-presets
  */
 import { DEFAULT_SCROLL_GESTURE_TO_BEHAVIOR_MARK, DEFAULT_ZOOM_GESTURE_TO_BEHAVIOR_MARK, type LLSelectBehaviorPreset, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior, type LLSelectZoomGesture, type LLSelectZoomGestureBehavior } from './behaviors.js'
 
+export type { LLSelectOutsideClickBehavior } from './base.js'
 export type {
   LLSelectBehaviorPreset,
   LLSelectScrollGesture,
@@ -62,9 +69,12 @@ Object.defineProperty(defaultZoomGestureToBehavior, DEFAULT_ZOOM_GESTURE_TO_BEHA
  * llselect's own behavior, the one a select component has when no preset is
  * passed. See {@link defaultScrollGestureToBehavior} and
  * {@link defaultZoomGestureToBehavior}.
+ * - A click outside the select component while the popup is open closes the
+ *   popup and does nothing else: `outsideClickBehavior: 'block'`.
  * @group Behaviors
  */
 export const behaviorPresetsOfLLSelectDefault: LLSelectBehaviorPreset = {
+  outsideClickBehavior: 'block',
   scrollGestureToBehaviorFn: defaultScrollGestureToBehavior,
   zoomGestureToBehaviorFn: defaultZoomGestureToBehavior,
 }
@@ -83,6 +93,9 @@ export const behaviorPresetsOfLLSelectDefault: LLSelectBehaviorPreset = {
  * - On a touchscreen, the first finger of a zoom that lands outside the
  *   popup closes it at its touch-down, as above.
  * - The zoom that follows then zooms the page, since the popup is closed.
+ * - A click or a tap outside the select component closes the popup, and the
+ *   click also reaches the element under it:
+ *   `outsideClickBehavior: 'pass-through'`.
  * - This preset does not cover one Firefox behavior: Firefox closes the
  *   popup when a drag that started inside the popup moves beyond the popup.
  * - This preset follows the mouse wheel, not the touchpad: Firefox closes
@@ -91,6 +104,7 @@ export const behaviorPresetsOfLLSelectDefault: LLSelectBehaviorPreset = {
  * @group Behaviors
  */
 export const behaviorPresetsOfFirefoxOnWindows: LLSelectBehaviorPreset = {
+  outsideClickBehavior: 'pass-through',
   scrollGestureToBehaviorFn: (gesture) => {
     if (gesture.zone === 'popup' || gesture.kind === 'wheel') { return 'leave-popup-open-and-block-page-scroll' }
     return 'close-popup-and-block-page-scroll'
@@ -108,11 +122,15 @@ export const behaviorPresetsOfFirefoxOnWindows: LLSelectBehaviorPreset = {
  * - On the trigger or elsewhere, a two-finger zoom closes the popup and
  *   zooms the page.
  * - A `wheel` with `ctrlKey` counts as such a zoom.
+ * - A click or a tap outside the select component closes the popup, and the
+ *   click also reaches the element under it:
+ *   `outsideClickBehavior: 'pass-through'`.
  * - This preset does not cover Chromium's touch selection: a drag inside
  *   the popup moves the active row, and a lift there chooses that row.
  * @group Behaviors
  */
 export const behaviorPresetsOfChromiumOnWindows: LLSelectBehaviorPreset = {
+  outsideClickBehavior: 'pass-through',
   scrollGestureToBehaviorFn: (gesture) => {
     if (gesture.zone === 'popup') { return gesture.kind === 'touch-start' ? 'leave-popup-open-and-allow-page-scroll' : 'leave-popup-open-and-block-page-scroll' }
     return 'close-popup-and-allow-page-scroll'
@@ -132,11 +150,14 @@ export const behaviorPresetsOfChromiumOnWindows: LLSelectBehaviorPreset = {
  * - A two-finger zoom, anywhere, does not zoom the page, and the popup stays
  *   open.
  * - A `wheel` with `ctrlKey` counts as such a zoom.
+ * - A click outside the select component closes the popup and does nothing
+ *   else: `outsideClickBehavior: 'block'`.
  * - A Mac has no touchscreen, so every touch gets llselect's own behavior,
  *   {@link defaultScrollGestureToBehavior}.
  * @group Behaviors
  */
 export const behaviorPresetsOfSafariOnMac: LLSelectBehaviorPreset = {
+  outsideClickBehavior: 'block',
   scrollGestureToBehaviorFn: (gesture) => {
     if (gesture.kind === 'wheel') { return 'leave-popup-open-and-block-page-scroll' }
     return defaultScrollGestureToBehavior(gesture)

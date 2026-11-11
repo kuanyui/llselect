@@ -763,6 +763,76 @@ test('ll-zoom-gesture-to-behavior-fn picks the behavior of a zoom gesture, and l
   assert.deepEqual(a.errors, [])
 })
 
+test("the llselect directives swallow an outside click by default, and ll-outside-click-behavior=\"'pass-through'\" lets it through", () => {
+  for (const [tag, controller] of [['llselect-single', 'llselectSingle'], ['llselect-multiple', 'llselectMultiple']]) {
+    const a = boot({
+      deps: ['llselect'],
+      html: `<div ng-controller="C as vm">
+        <button id="outside">page</button>
+        <${tag} id="blocking" ng-model="vm.x" ll-options="f for f in vm.fruits"></${tag}>
+        <${tag} id="passing" ng-model="vm.y" ll-outside-click-behavior="'pass-through'"
+          ll-options="f for f in vm.fruits"></${tag}></div>`,
+      controller: function () {
+        this.fruits = FRUITS.slice()
+        if (tag === 'llselect-multiple') {
+          this.x = []
+          this.y = []
+        }
+      },
+    })
+    const outside = a.$('#outside')
+    let clicks = 0
+    outside.addEventListener('click', () => { clicks++ })
+    const press = () => {
+      const ev = new a.window.MouseEvent('mousedown', { bubbles: true, cancelable: true })
+      outside.dispatchEvent(ev)
+      return ev.defaultPrevented
+    }
+    const instance = (id) => a.ng.element(a.$('#' + id)).controller(controller).instance()
+    a.$('#blocking .llselect-trigger').click()
+    assert.equal(instance('blocking').isOpened(), true, tag)
+    assert.equal(press(), true, `${tag}: the default keeps focus at the outside press`)
+    outside.click()
+    assert.equal(instance('blocking').isOpened(), false, tag)
+    assert.equal(clicks, 0, `${tag}: the default swallows the outside click`)
+    a.$('#passing .llselect-trigger').click()
+    assert.equal(instance('passing').isOpened(), true, tag)
+    assert.equal(press(), false, tag)
+    assert.equal(instance('passing').isOpened(), false, `${tag}: pass-through closes at the outside press`)
+    outside.click()
+    assert.equal(clicks, 1, `${tag}: pass-through lets the outside click through`)
+    assert.deepEqual(a.errors, [], tag)
+  }
+})
+
+test('an enum attribute that is not a string warns and keeps the default, the app-wide one included', () => {
+  const warnings = []
+  const orig = console.warn
+  console.warn = (...args) => { warnings.push(args.join(' ')) }
+  let a
+  try {
+    // "false" $evals to false and "fit-content" to 0, as a subtraction.
+    a = boot({
+      deps: ['llselect'],
+      html: `<div ng-controller="C as vm">
+        <llselect-single name="s" ng-model="vm.x" ll-aria-label="F" ll-outside-click-behavior="false"
+          ll-popup-width-policy="fit-content" ll-options="f for f in vm.fruits"></llselect-single></div>`,
+      controller: function () { this.fruits = FRUITS.slice() },
+      config: ['llselectConfigProvider', function (llselectConfigProvider) {
+        llselectConfigProvider.defaults({ popupWidthPolicy: 'match-trigger-wrapper' })
+      }],
+    })
+  } finally {
+    console.warn = orig
+  }
+  assert.ok(warnings.some((m) => m.includes('ll-outside-click-behavior')), 'the attribute warns')
+  assert.ok(warnings.some((m) => m.includes('ll-popup-width-policy')), 'the attribute warns')
+  const sel = a.ng.element(a.$('[name=s]')).controller('llselectSingle').instance()
+  assert.equal(sel.settings.outsideClickBehavior, 'block', 'the core default stays')
+  assert.equal(sel.settings.popupWidthPolicy, 'match-trigger-wrapper', 'the app-wide default stays')
+  assert.deepEqual(a.errors, [])
+})
+
 test('ll-item-to-lang-fn and ll-group-key-to-lang-fn write lang on the rows and on the group containers', () => {
   const a = boot({
     deps: ['llselect'],

@@ -33,13 +33,19 @@ import {
 } from './color-scheme.js'
 
 /**
- * What happens when the user clicks outside an open popup.
+ * What a click outside the select component does while the popup is open.
  *
- * - `'pass-through'` (default): close the popup; the outside click still
- *   triggers its normal action (button click, link navigation, etc.).
- * - `'block'`: close the popup only; the outside click is swallowed so no
- *   underlying handler or default action fires. Avoids accidental side
- *   effects when the user only intended to dismiss the dropdown.
+ * - `'block'` (default): the popup closes, and the click does nothing else.
+ *   - The click never reaches the element under it, so neither that
+ *     element's handlers nor its default action run, such as following a
+ *     link.
+ *   - The press does not move focus. If focus was in the select component,
+ *     it stays there.
+ *   - A user who only wants to close the popup cannot press a button or a
+ *     link by mistake.
+ * - `'pass-through'`: the popup closes, and the click also does what it
+ *   would do without the popup, such as pressing a button.
+ * - A preset of `@llselect/core/behavior-presets` sets this too.
  * @group Settings
  * @category Base
  */
@@ -436,12 +442,12 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *     function as `'outside'` before the listeners inside see it.
    *   - A preset may then close the popup at a touch-down or a wheel inside
    *     the select component, and block a wheel that the list could scroll.
-   *   - If `outsideClickBehavior` is `'pass-through'`, the default, the click
-   *     of a tap whose touch-down closed the popup then gets through. A tap on
-   *     the trigger then reopens the popup, and the click of a tap inside the
+   *   - If `outsideClickBehavior` is `'block'`, the default, the click of a
+   *     tap whose touch-down closed the popup is swallowed, as for any
+   *     outside press.
+   *   - If it is `'pass-through'`, that click gets through. A tap on the
+   *     trigger then reopens the popup, and the click of a tap inside the
    *     popup may reach the page under the closed popup.
-   *   - If it is `'block'`, that click is swallowed, as for any outside
-   *     press.
    *   - An open shadow root does not have this limit.
    * - `gesture` says what the gesture is and where it happens. See
    *   {@link LLSelectScrollGesture}.
@@ -1211,9 +1217,9 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   `setDisabled(true)` closes an open popup, which returns focus to the
    *   trigger, inside the select component; `destroy()` detaches the focus listeners
    *   before its teardown can move focus.
-   * - While the popup is open with `outsideClickBehavior: 'block'`, an
-   *   outside mousedown is default-prevented: focus stays, the popup closes,
-   *   and this does not fire.
+   * - While the popup is open with `outsideClickBehavior: 'block'`, the
+   *   default, an outside mousedown is default-prevented: focus stays, the
+   *   popup closes, and this does not fire.
    * - `null` (default) = no consumer listener.
    * @group Events
    */
@@ -1993,6 +1999,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * capture and detach it before the click fires.
    */
   private blockMouseDownHandler: ((ev: Event) => void) | undefined
+  /** Block-mode only. Arms the swallow of the click of an outside press at its `pointerdown`. */
+  private blockPointerDownHandler: ((ev: Event) => void) | undefined
+  /** Ends the swallow that an outside press armed under `'block'`; `null` while none is armed. */
+  private disarmOutsidePressClickSwallow: (() => void) | null = null
   /**
    * Element that owns `aria-activedescendant` and receives keydown for option
    * navigation. Equals the filter input while the filter is active, else the
@@ -2085,7 +2095,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       ariaLabelledBy: blankToNull(settings?.ariaLabelledBy) ?? (blankToNull(settings?.ariaLabel) === null && labelEl !== null ? labelEl.id : null),
       labelEl,
       compareFn: settings?.compareFn ?? defaultCompareFn,
-      outsideClickBehavior: settings?.outsideClickBehavior ?? 'pass-through',
+      outsideClickBehavior: settings?.outsideClickBehavior ?? behaviorPresetsOfLLSelectDefault.outsideClickBehavior,
       scrollGestureToBehaviorFn: settings?.scrollGestureToBehaviorFn ?? behaviorPresetsOfLLSelectDefault.scrollGestureToBehaviorFn,
       zoomGestureToBehaviorFn: settings?.zoomGestureToBehaviorFn ?? behaviorPresetsOfLLSelectDefault.zoomGestureToBehaviorFn,
       colorScheme: settings?.colorScheme ?? 'auto',
@@ -3101,6 +3111,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.clearOpenState()
       for (const release of [...this.touchHoldReleases]) { release() }
       this.touchHoldReleases.clear()
+      this.disarmOutsidePressClickSwallow?.()
       if (this.settings.labelEl !== null) {
         this.settings.labelEl.removeEventListener('click', this.handleLabelElClick)
         if (this.labelElIdMinted) { this.settings.labelEl.removeAttribute('id') }
@@ -4666,8 +4677,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       }
       document.addEventListener('mousedown', this.outsideHandler)
     } else {
-      // 'block' needs TWO listeners because of an event-ordering race with
-      // the focusout-close path:
+      // 'block' cannot rely on the click capture alone, because of an
+      // event-ordering race with the focusout-close path:
       //   mousedown outside -> browser shifts focus to the clicked target ->
       //   focusout fires on trigger -> focusOutHandler closes the popup ->
       //   detachOutsideClick removes the click capture below -> click then
@@ -4675,10 +4686,22 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // The mousedown capture below preventDefaults the focus shift on
       // outside mousedowns, so no focusout fires and the click capture stays
       // attached long enough to swallow the click.
+      // A handler of the page can still move focus during the press, such as
+      // a mousedown handler that calls focus(); the focusout then closes the
+      // popup before the click. So each outside press also arms a swallow
+      // that outlives the close (armOutsidePressClickSwallow).
+      this.blockPointerDownHandler = (ev: Event) => {
+        const t = this.eventTargetNode(ev)
+        if (t instanceof Node && !this.rootEl.contains(t)) {
+          this.armOutsidePressClickSwallow()
+        }
+      }
+      document.addEventListener('pointerdown', this.blockPointerDownHandler, true)
       this.blockMouseDownHandler = (ev: Event) => {
         const t = this.eventTargetNode(ev)
         if (t instanceof Node && !this.rootEl.contains(t)) {
           ev.preventDefault()
+          this.armOutsidePressClickSwallow()
         }
       }
       document.addEventListener('mousedown', this.blockMouseDownHandler, true)
@@ -4709,6 +4732,55 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       document.removeEventListener('mousedown', this.blockMouseDownHandler, true)
       this.blockMouseDownHandler = undefined
     }
+    if (this.blockPointerDownHandler) {
+      document.removeEventListener('pointerdown', this.blockPointerDownHandler, true)
+      this.blockPointerDownHandler = undefined
+    }
+    // The swallow of a press under way stays armed: the close may come from
+    // that press, before its click.
+  }
+
+  /**
+   * Swallows the click of an outside press under `'block'`, even when the
+   * popup closed during that press.
+   * - Called by the `pointerdown` and `mousedown` capture listeners of
+   *   `'block'` for a press outside the select component.
+   * - The click of the press ends the swallow.
+   * - The task after the press's `pointerup` or `mouseup` ends it too, since
+   *   a browser dispatches the click of a press in the same task as its
+   *   release.
+   * - So a press without a click leaves nothing armed for a later click,
+   *   such as one from the keyboard.
+   * - A `pointercancel`, a new press that arms again, and `destroy()` end the
+   *   swallow as well.
+   */
+  private armOutsidePressClickSwallow(): void {
+    this.disarmOutsidePressClickSwallow?.()
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const swallow = (ev: Event): void => {
+      const t = this.eventTargetNode(ev)
+      if (t instanceof Node && !this.rootEl.contains(t)) {
+        ev.stopPropagation()
+        ev.preventDefault()
+      }
+      disarm()
+    }
+    const released = (): void => {
+      if (timer === undefined) { timer = setTimeout(disarm, 0) }
+    }
+    const disarm = (): void => {
+      if (timer !== undefined) { clearTimeout(timer) }
+      document.removeEventListener('click', swallow, true)
+      document.removeEventListener('pointerup', released, true)
+      document.removeEventListener('mouseup', released, true)
+      document.removeEventListener('pointercancel', disarm, true)
+      if (this.disarmOutsidePressClickSwallow === disarm) { this.disarmOutsidePressClickSwallow = null }
+    }
+    document.addEventListener('click', swallow, true)
+    document.addEventListener('pointerup', released, true)
+    document.addEventListener('mouseup', released, true)
+    document.addEventListener('pointercancel', disarm, true)
+    this.disarmOutsidePressClickSwallow = disarm
   }
 
   /**

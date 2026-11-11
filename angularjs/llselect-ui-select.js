@@ -405,6 +405,11 @@
     // Batteries-included default arrow: every ui-select theme renders a caret,
     // so a bare trigger would read as broken to a migrating call site.
     settings.createTriggerArrowContentElFn = function () { return llselect.createChevronDownSvgEl() }
+    // This line imitates ui-select's behavior, which is why the value is
+    // 'pass-through' and not llselect's default 'block': ui-select closes its
+    // dropdown from a click listener on the document and lets that click
+    // reach what it lands on (uiSelectDirective.js, onDocumentClick).
+    settings.outsideClickBehavior = 'pass-through'
 
     var gate = { suppressed: false }
     function withoutWriteBack(fn) {

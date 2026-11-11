@@ -152,18 +152,20 @@
   <section>
     <h2>3. Outside-click behavior</h2>
     <p class="hint">
-      Open the dropdown, then click the outside button. The two modes differ in
-      whether the outside click also triggers its own action.
+      Block is the default, so that a click meant only to close the dropdown
+      presses nothing by mistake. Open the dropdown, then click the outside
+      button. The two modes differ in whether the outside click also triggers
+      its own action.
     </p>
 
     <article>
-      <h3>3.1 pass-through (default)</h3>
-      <p class="hint">Outside click closes the dropdown AND triggers the button. Count below should increment.</p>
+      <h3>3.1 block (default)</h3>
+      <p class="hint">Outside click closes the dropdown only; the button does NOT receive the click. Count below should stay 0. A native select does this on Linux.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div class="demo-row">
-            <div id="mount-pass"></div>
-            <button id="btn-pass" type="button">Outside button (clicks: 0)</button>
+            <div id="mount-block"></div>
+            <button id="btn-block" type="button">Outside button (clicks: 0)</button>
           </div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="3.1"><code></code></pre></details>
@@ -171,13 +173,13 @@
     </article>
 
     <article>
-      <h3>3.2 block</h3>
-      <p class="hint">Outside click closes the dropdown only; the button does NOT receive the click. Count below should stay 0.</p>
+      <h3>3.2 pass-through</h3>
+      <p class="hint">Outside click closes the dropdown AND triggers the button. Count below should increment. A native select of Chromium or Firefox does this on Windows.</p>
       <div class="demo-split">
         <div class="demo-pane">
           <div class="demo-row">
-            <div id="mount-block"></div>
-            <button id="btn-block" type="button">Outside button (clicks: 0)</button>
+            <div id="mount-pass"></div>
+            <button id="btn-pass" type="button">Outside button (clicks: 0)</button>
           </div>
         </div>
         <details class="code-toggle"><summary>code</summary><pre data-demo="3.2"><code></code></pre></details>

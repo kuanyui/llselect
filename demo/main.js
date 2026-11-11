@@ -175,24 +175,6 @@ const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
 scrollContainer.scrollTop = 10 * rem
 
 //#region 3.1
-let passCount = 0
-const btnPass = document.getElementById('btn-pass')
-btnPass.addEventListener('click', () => {
-  passCount++
-  btnPass.textContent = `Outside button (clicks: ${passCount})`
-})
-const selPass = new LLSelectSingle(
-  document.getElementById('mount-pass'),
-  {
-  ariaLabel: 'pass-through select component',
-    placeholder: 'pass-through select component',
-    // default outsideClickBehavior
-  }
-)
-selPass.setItems(COUNTRIES)
-//#endregion
-
-//#region 3.2
 let blockCount = 0
 const btnBlock = document.getElementById('btn-block')
 btnBlock.addEventListener('click', () => {
@@ -204,10 +186,28 @@ const selBlock = new LLSelectSingle(
   {
   ariaLabel: 'block select component',
     placeholder: 'block select component',
-    outsideClickBehavior: 'block',
+    // default outsideClickBehavior: 'block'
   }
 )
 selBlock.setItems(COUNTRIES)
+//#endregion
+
+//#region 3.2
+let passCount = 0
+const btnPass = document.getElementById('btn-pass')
+btnPass.addEventListener('click', () => {
+  passCount++
+  btnPass.textContent = `Outside button (clicks: ${passCount})`
+})
+const selPass = new LLSelectSingle(
+  document.getElementById('mount-pass'),
+  {
+  ariaLabel: 'pass-through select component',
+    placeholder: 'pass-through select component',
+    outsideClickBehavior: 'pass-through',
+  }
+)
+selPass.setItems(COUNTRIES)
 //#endregion
 
 //#region 4.1

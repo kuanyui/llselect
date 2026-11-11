@@ -6,6 +6,7 @@
  * - `base.ts` only wires the setting, the protected methods and these
  *   listeners.
  */
+import type { LLSelectOutsideClickBehavior } from './base.js'
 
 /**
  * What a scroll gesture is. See {@link LLSelectScrollGesture}.
@@ -146,6 +147,8 @@ export type LLSelectZoomGestureBehavior =
  * @group Behaviors
  */
 export interface LLSelectBehaviorPreset {
+  /** See `outsideClickBehavior` in `LLSelectBaseSettings`. */
+  readonly outsideClickBehavior: LLSelectOutsideClickBehavior
   /** See `scrollGestureToBehaviorFn` in `LLSelectBaseSettings`. */
   readonly scrollGestureToBehaviorFn: (gesture: LLSelectScrollGesture) => LLSelectScrollGestureBehavior
   /** See `zoomGestureToBehaviorFn` in `LLSelectBaseSettings`. */

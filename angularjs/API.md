@@ -110,6 +110,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 > No **before** counterpart: there is no `ll-on-before-blur`, and the `focusin` / `focusout` events the library observes are not cancelable, so none could stop the move.
 
 - Fires when focus moves to an element outside the select component or to nowhere: Tab away, a click outside, a click on a non-focusable area.
+- While the popup is open with llselect's default [`ll-outside-click-behavior`](#ll-outside-click-behavior), `'block'`, a click outside moves no focus, so the expression does not run.
 - Does not fire for a focus move inside the select component.
 - The directive marks the control touched first, in the same digest, so the expression already sees `$touched === true` (see [`ng-model`](#ng-model)).
 - When focus leaving closes the popup, [`ll-on-close`](#ll-on-close) runs first; `instance().isOpened()` is already `false` here.
@@ -304,6 +305,7 @@ $scope.ifaceMatch = function (i, query) {
 - For the gesture, the four behaviors and the cases llselect leaves alone, see the core setting `scrollGestureToBehaviorFn` under `LLSelectBaseSettings` in the API reference.
 - The Firefox, Chromium and Safari presets copy the native select of one browser on one operating system.
 - A preset also holds a function for two-finger zooms; see [`ll-zoom-gesture-to-behavior-fn`](#ll-zoom-gesture-to-behavior-fn).
+- A preset also holds an `outsideClickBehavior`; see [`ll-outside-click-behavior`](#ll-outside-click-behavior).
 
 To copy the native select of one browser on one operating system, load `behavior-presets.umd.js`, which sets `window.llselectBehaviorPresets`, and hand a preset's function to the attribute:
 
@@ -329,7 +331,7 @@ $scope.scrollGestureToBehavior = llselectBehaviorPresets.behaviorPresetsOfFirefo
 - When a zoom closes the popup, [`ll-on-close`](#ll-on-close) gets `$reason` `'zoom-gesture'` and the gesture in `$zoomGesture`.
 - For the gesture and the four behaviors, see the core setting `zoomGestureToBehaviorFn` under `LLSelectBaseSettings` in the API reference.
 
-To copy a whole preset, hand both of its functions to the two attributes:
+To copy a whole preset, hand its two functions and its `outsideClickBehavior` to the three attributes:
 
 ```js
 $scope.preset = llselectBehaviorPresets.behaviorPresetsOfFirefoxOnWindows
@@ -338,8 +340,19 @@ $scope.preset = llselectBehaviorPresets.behaviorPresetsOfFirefoxOnWindows
 ```html
 <llselect-single ng-model="picked" ll-options="f for f in fruits"
   ll-scroll-gesture-to-behavior-fn="preset.scrollGestureToBehaviorFn"
-  ll-zoom-gesture-to-behavior-fn="preset.zoomGestureToBehaviorFn"></llselect-single>
+  ll-zoom-gesture-to-behavior-fn="preset.zoomGestureToBehaviorFn"
+  ll-outside-click-behavior="preset.outsideClickBehavior"></llselect-single>
 ```
+
+### `ll-outside-click-behavior`
+
+**Expression** -> `outsideClickBehavior`. `'block'` (llselect's default) / `'pass-through'` - quoted: `ll-outside-click-behavior="'pass-through'"`.
+
+- `'block'`: while the popup is open, a click outside the select component closes the popup and does nothing else.
+- With `'block'`, a user who only wants to close the popup cannot press a button or a link by mistake.
+- `'pass-through'`: the click closes the popup and also reaches the element under it.
+- For the details, see the core setting `outsideClickBehavior` under `LLSelectBaseSettings` in the API reference.
+- [`<ui-llselect>`](#ui-llselect) has no such attribute. It always lets the click through, as ui-select does.
 
 ### `ll-arrow`
 
@@ -744,6 +757,7 @@ Migrating a call site, at a glance:
 
 - Scoping rule: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible.
 - It always renders the chevron - every ui-select theme has a caret, so a bare trigger would read as broken.
+- While the popup is open, a click outside the select component closes the popup and still reaches the element under it, as in ui-select. The bridge sets `outsideClickBehavior: 'pass-through'` for this, while the two llselect directives keep llselect's default, `'block'`.
 - From [`llselectConfigProvider`](#llselectconfigprovider) it takes the five keys ui-select's markup has no word for: `uiTranslationPack`, `popupWidthPolicy`, `colorScheme`, `popupDistanceFromTriggerWrapper` and `popupDistanceFromViewportEdge`. The other three follow ui-select: the caret is always rendered (`arrow`), `search-enabled` is ui-select's word for `filterable`, and `highlight` is the row template's own `| highlight:` filter.
 - It publishes a controller under `uiLlselect` with `instance()`, the same door as the two llselect directives, so [Reaching the instance from your own directive](#reaching-the-instance-from-your-own-directive) and [Switching the UI language at runtime](#switching-the-ui-language-at-runtime) cover it.
 - `$touched` turns true when DOM focus leaves the select component, as on the two llselect directives (see [`ng-model`](#ng-model)). ui-select's markup has no attribute for the blur itself, and none is added.

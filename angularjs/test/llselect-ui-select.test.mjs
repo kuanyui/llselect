@@ -148,6 +148,25 @@ test('the bridge renders the default chevron arrow', () => {
   assert.ok(a.$('ui-llselect .llselect-trigger-arrow svg'), 'bridge arrow missing')
 })
 
+test('an outside click closes the dropdown and still reaches what it lands on, as in ui-select', () => {
+  const a = app()
+  const trigger = a.$('ui-llselect .llselect-trigger')
+  const outside = trigger.ownerDocument.createElement('button')
+  trigger.ownerDocument.body.appendChild(outside)
+  let clicks = 0
+  outside.addEventListener('click', () => { clicks++ })
+  trigger.click()
+  const sel = a.ng.element(a.$('ui-llselect')).controller('uiLlselect').instance()
+  assert.equal(sel.isOpened(), true)
+  const down = new a.window.MouseEvent('mousedown', { bubbles: true, cancelable: true })
+  outside.dispatchEvent(down)
+  assert.equal(down.defaultPrevented, false, 'the press keeps its default, so focus can move, as in ui-select')
+  assert.equal(sel.isOpened(), false)
+  outside.click()
+  assert.equal(clicks, 1, 'the outside click reaches the button, as in ui-select')
+  assert.deepEqual(a.errors, [])
+})
+
 test('disabled aligns with ui-select: ng-disabled, static literal, and interpolated - all via $observe', () => {
   // ui-select observes the attribute and rides ngDisabled's attr.$set boolean
   // (select.js:1135, "thanks to ng-disabled ... a boolean instead of a

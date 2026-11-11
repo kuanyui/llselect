@@ -292,6 +292,7 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Popup width                          | `popupWidthPolicy: 'fit-content' \| 'match-trigger-wrapper'` (default `'fit-content'` - grows to content like a native select)   |
 | Popup distances                      | `popupDistanceFromTriggerWrapper` (default `4`) - CSS pixels between the trigger wrapper and the popup; `popupDistanceFromViewportEdge` (default `8`) - CSS pixels that the popup leaves to the edges of the viewport |
 | Wheel, touch and zoom while the popup is open | `scrollGestureToBehaviorFn`, `zoomGestureToBehaviorFn` + the presets of `@llselect/core/behavior-presets`; see Wheel, touch and zoom while the popup is open |
+| A click outside while the popup is open | `outsideClickBehavior`: `'block'` (default) or `'pass-through'`, also set by the presets; see A click outside while the popup is open |
 | Rich rendering without subclassing   | `createPopupListItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
 | Action rows: commands in the list    | `popupListLeadingActionRows`, `popupListTrailingActionRows` - option rows in the arrow-key ring; see Action rows |
 | Pinned rows                          | `popupListLeadingRowsPinned`, `popupListTrailingRowsPinned` - the choose-all row and the command rows stay in view while the items scroll |
@@ -738,6 +739,7 @@ const sel = new LLSelectSingle(el, { ...behaviorPresetsOfFirefoxOnWindows })
   - A wheel outside the popup scrolls nothing, and the popup stays open.
   - A two-finger zoom never zooms the page, and the popup stays open.
 - The library does not detect the browser. Your app picks the preset.
+- Each preset also sets `outsideClickBehavior`, which the next section explains.
 
 To write your own rule, pass a function. The function gets the gesture and returns one of four behaviors:
 
@@ -771,6 +773,25 @@ const sel = new LLSelectSingle(el, {
   - On a touchscreen, that zoom then stays blocked until every finger lifts, or until `destroy()` runs.
   - For a wheel with Ctrl held, the block covers that one wheel event.
 - Any preset above, or your own function, makes the library listen on the whole page. Every scroll of the page then waits for that listener while the popup is open.
+
+#### A click outside while the popup is open
+
+A click meant only to close the popup should not press a button or a link by mistake. So by default, a click outside the select component only closes the popup. `outsideClickBehavior` sets what such a click does:
+
+- `'block'`, the default: the click closes the popup and does nothing else.
+- `'pass-through'`: the click closes the popup and also reaches the button or the link under the pointer.
+
+To let the click through, write `'pass-through'`:
+
+```js
+const sel = new LLSelectSingle(el, { outsideClickBehavior: 'pass-through' })
+```
+
+- On Linux, a native select blocks the click.
+- On Windows, Chromium and Firefox let the click through, as their source code shows.
+- Each preset of the section above sets `outsideClickBehavior` too.
+- `behaviorPresetsOfChromiumOnWindows` and `behaviorPresetsOfFirefoxOnWindows` let the click through.
+- `behaviorPresetsOfSafariOnMac` blocks the click.
 
 ### Subclassing (extending the library)
 

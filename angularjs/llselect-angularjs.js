@@ -149,21 +149,26 @@
   }
 
   /**
-   * $eval an enum-literal attribute (ll-trigger-display, ll-popup-width-policy).
+   * $eval an enum-literal attribute (ll-trigger-display, ll-popup-width-policy,
+   * ll-color-scheme, ll-chosen-items-order, ll-outside-click-behavior).
    * The value is meant to be a QUOTED string literal ("'tags'"); the classic typo
    * drops the inner quotes. A valid enum value is always a string, so anything else
    * is a typo: "tags" reads a non-existent scope property (undefined), while a
    * dashed literal like "match-trigger-wrapper" / "fit-content" $evals as subtraction to 0.
    * Warn on any non-string (naming the attribute and re-quoting the given value as
    * the fix); never throw - the default is still a working control.
-   * @returns the evaluated value (a valid string, or the non-string that warned).
+   * An attribute with no value counts as absent, as in evalFnAttr.
+   * @returns the string, or null when the attribute is absent or warned, so the
+   *   caller keeps the default, the app-wide one included.
    */
   function evalEnumAttr(scope, attrs, name) {
+    if (!attrs[name]) { return null }
     var value = scope.$eval(attrs[name])
     if (typeof value !== 'string') {
       console.warn('llselect-angularjs: ' + attrs.$attr[name] + '="' + attrs[name] +
         '" did not evaluate to a string; an enum literal needs inner quotes, e.g. ' +
         attrs.$attr[name] + '="\'' + attrs[name] + '\'". Falling back to the default.')
+      return null
     }
     return value
   }
@@ -223,12 +228,16 @@
     // too, but as an app-wide config it has no per-element binding here.)
     if (attrs.llPlaceholder) { settings.placeholder = scope.$eval(attrs.llPlaceholder) }
     if (attrs.llFilterable) { settings.filterable = scope.$eval(attrs.llFilterable) }
-    if (attrs.llPopupWidthPolicy) { settings.popupWidthPolicy = evalEnumAttr(scope, attrs, 'llPopupWidthPolicy') }
+    var popupWidthPolicy = evalEnumAttr(scope, attrs, 'llPopupWidthPolicy')
+    if (popupWidthPolicy !== null) { settings.popupWidthPolicy = popupWidthPolicy }
     var distanceFromTriggerWrapper = evalNumberAttr(scope, attrs, 'llPopupDistanceFromTriggerWrapper')
     if (distanceFromTriggerWrapper !== null) { settings.popupDistanceFromTriggerWrapper = distanceFromTriggerWrapper }
     var distanceFromViewportEdge = evalNumberAttr(scope, attrs, 'llPopupDistanceFromViewportEdge')
     if (distanceFromViewportEdge !== null) { settings.popupDistanceFromViewportEdge = distanceFromViewportEdge }
-    if (attrs.llColorScheme) { settings.colorScheme = evalEnumAttr(scope, attrs, 'llColorScheme') }
+    var colorScheme = evalEnumAttr(scope, attrs, 'llColorScheme')
+    if (colorScheme !== null) { settings.colorScheme = colorScheme }
+    var outsideClickBehavior = evalEnumAttr(scope, attrs, 'llOutsideClickBehavior')
+    if (outsideClickBehavior !== null) { settings.outsideClickBehavior = outsideClickBehavior }
     if (attrs.llArrow) { arrow = attrs.llArrow }
     var itemContentFn = evalFnAttr(scope, attrs, 'llPopupListItemContentFn')
     if (itemContentFn) { settings.createPopupListItemContentElFn = itemContentFn }
@@ -577,10 +586,12 @@
           wireBlurAttr(scope, attrs, settings, ngModelCtrl, $exceptionHandler)
 
           if (attrs.llClearable) { settings.clearable = scope.$eval(attrs.llClearable) }
-          if (attrs.llTriggerDisplay) { settings.triggerDisplay = evalEnumAttr(scope, attrs, 'llTriggerDisplay') }
+          var triggerDisplay = evalEnumAttr(scope, attrs, 'llTriggerDisplay')
+          if (triggerDisplay !== null) { settings.triggerDisplay = triggerDisplay }
           if (attrs.llChooseAllRow) { settings.chooseAllRow = scope.$eval(attrs.llChooseAllRow) }
           if (attrs.llHideChosenRows) { settings.hideChosenRows = scope.$eval(attrs.llHideChosenRows) }
-          if (attrs.llChosenItemsOrder) { settings.chosenItemsOrder = evalEnumAttr(scope, attrs, 'llChosenItemsOrder') }
+          var chosenItemsOrder = evalEnumAttr(scope, attrs, 'llChosenItemsOrder')
+          if (chosenItemsOrder !== null) { settings.chosenItemsOrder = chosenItemsOrder }
           var tagContentFn = evalFnAttr(scope, attrs, 'llTagContentFn')
           if (tagContentFn) { settings.createTagContentElFn = tagContentFn }
           var tagRemoveIconFn = evalFnAttr(scope, attrs, 'llTagRemoveButtonContentFn')
