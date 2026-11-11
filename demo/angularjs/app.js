@@ -229,8 +229,10 @@
       vm.peopleKeep = [] // 1g
       vm.locked = false
       vm.avFruit = undefined
-      vm.country3 = undefined
-      vm.country3UpDown = undefined
+      vm.countryChevron = undefined
+      vm.countryTriangle = undefined
+      vm.countryChevronUpDown = undefined
+      vm.countryTriangleUpDown = undefined
       vm.lang = undefined
       vm.uiLang = 'en' // 14: $translate.use() is what the recipe watches; this is only the <select>'s model
       vm.setUiLang = function () { $translate.use(vm.uiLang) }
