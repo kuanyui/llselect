@@ -16,7 +16,7 @@ import {
 } from './keyboard.js'
 import { en as DEFAULT_UI_TRANSLATION_PACK } from './i18n/en.js'
 import { attachGestureListeners, CLICK_WAIT_MS, DEFAULT_BEHAVIOR_OF_SCROLL_GESTURE_MARK, DEFAULT_BEHAVIOR_OF_ZOOM_GESTURE_MARK, TAP_CLICK_RADIUS, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior, type LLSelectZoomGesture, type LLSelectZoomGestureBehavior } from './behaviors.js'
-import { behaviorPresetsOfLLSelectDefault } from './behavior-presets.js'
+import { behaviorPresetsOfOriginalLLSelect } from './behavior-presets.js'
 import type { LLSelectUiTranslationPack } from './i18n.js'
 import {
   COLOR_SCHEME_ATTRIBUTE,
@@ -2102,9 +2102,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       ariaLabelledBy: blankToNull(settings?.ariaLabelledBy) ?? (blankToNull(settings?.ariaLabel) === null && labelEl !== null ? labelEl.id : null),
       labelEl,
       compareFn: settings?.compareFn ?? defaultCompareFn,
-      behaviorOfOutsideClick: settings?.behaviorOfOutsideClick ?? behaviorPresetsOfLLSelectDefault.behaviorOfOutsideClick,
-      behaviorOfScrollGestureFn: settings?.behaviorOfScrollGestureFn ?? behaviorPresetsOfLLSelectDefault.behaviorOfScrollGestureFn,
-      behaviorOfZoomGestureFn: settings?.behaviorOfZoomGestureFn ?? behaviorPresetsOfLLSelectDefault.behaviorOfZoomGestureFn,
+      behaviorOfOutsideClick: settings?.behaviorOfOutsideClick ?? behaviorPresetsOfOriginalLLSelect.behaviorOfOutsideClick,
+      behaviorOfScrollGestureFn: settings?.behaviorOfScrollGestureFn ?? behaviorPresetsOfOriginalLLSelect.behaviorOfScrollGestureFn,
+      behaviorOfZoomGestureFn: settings?.behaviorOfZoomGestureFn ?? behaviorPresetsOfOriginalLLSelect.behaviorOfZoomGestureFn,
       colorScheme: settings?.colorScheme ?? 'auto',
       createTriggerArrowContentElFn: settings?.createTriggerArrowContentElFn ?? null,
       clearable: settings?.clearable ?? false,

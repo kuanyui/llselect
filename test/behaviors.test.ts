@@ -9,7 +9,7 @@ import { attachGestureListeners, type GestureHost, type LLSelectScrollGesture, t
 import {
   behaviorPresetsOfChromiumOnWindows,
   behaviorPresetsOfFirefoxOnWindows,
-  behaviorPresetsOfLLSelectDefault,
+  behaviorPresetsOfOriginalLLSelect,
   behaviorPresetsOfSafariOnMac,
   defaultBehaviorOfScrollGesture,
   defaultBehaviorOfZoomGesture,
@@ -27,7 +27,7 @@ function table(fn: (g: LLSelectScrollGesture) => LLSelectScrollGestureBehavior):
 }
 
 test('the default behavior blocks the page scroll inside the popup only, and never closes', () => {
-  assert.equal(behaviorPresetsOfLLSelectDefault.behaviorOfScrollGestureFn, defaultBehaviorOfScrollGesture)
+  assert.equal(behaviorPresetsOfOriginalLLSelect.behaviorOfScrollGestureFn, defaultBehaviorOfScrollGesture)
   assert.deepEqual(table(defaultBehaviorOfScrollGesture), {
     'wheel popup': 'leave-popup-open-and-block-page-scroll',
     'wheel trigger': 'leave-popup-open-and-allow-page-scroll',
@@ -78,7 +78,7 @@ function zoomTable(fn: (g: LLSelectZoomGesture) => LLSelectZoomGestureBehavior):
 }
 
 test('the zoom answers: the default allows every zoom, Firefox blocks every zoom, Chromium blocks inside the popup and closes elsewhere', () => {
-  assert.equal(behaviorPresetsOfLLSelectDefault.behaviorOfZoomGestureFn, defaultBehaviorOfZoomGesture)
+  assert.equal(behaviorPresetsOfOriginalLLSelect.behaviorOfZoomGestureFn, defaultBehaviorOfZoomGesture)
   assert.deepEqual(zoomTable(defaultBehaviorOfZoomGesture), {
     popup: 'leave-popup-open-and-allow-page-zoom',
     trigger: 'leave-popup-open-and-allow-page-zoom',

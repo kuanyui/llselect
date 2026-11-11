@@ -2,7 +2,7 @@
  * Behavior presets: sets of behavior settings, spread into the settings of a
  * select component, such as
  * `new LLSelectSingle(el, { ...behaviorPresetsOfFirefoxOnWindows })`.
- * - `behaviorPresetsOfLLSelectDefault` is what a select component does when
+ * - `behaviorPresetsOfOriginalLLSelect` is what a select component does when
  *   no preset is passed.
  * - The other presets follow the native `<select>` of one browser on one
  *   operating system, as recorded by hand tests in
@@ -73,7 +73,7 @@ Object.defineProperty(defaultBehaviorOfZoomGesture, DEFAULT_BEHAVIOR_OF_ZOOM_GES
  *   popup and does nothing else: `behaviorOfOutsideClick: 'block'`.
  * @group Behaviors
  */
-export const behaviorPresetsOfLLSelectDefault: LLSelectBehaviorPreset = {
+export const behaviorPresetsOfOriginalLLSelect: LLSelectBehaviorPreset = {
   behaviorOfOutsideClick: 'block',
   behaviorOfScrollGestureFn: defaultBehaviorOfScrollGesture,
   behaviorOfZoomGestureFn: defaultBehaviorOfZoomGesture,

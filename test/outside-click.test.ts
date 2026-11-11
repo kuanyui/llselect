@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from '../test-utils/dom.js'
 import { LLSelectSingle, type LLSelectSingleSettingsInput } from '../src/single.js'
-import { behaviorPresetsOfChromiumOnWindows, behaviorPresetsOfFirefoxOnWindows, behaviorPresetsOfLLSelectDefault, behaviorPresetsOfSafariOnMac } from '../src/behavior-presets.js'
+import { behaviorPresetsOfChromiumOnWindows, behaviorPresetsOfFirefoxOnWindows, behaviorPresetsOfOriginalLLSelect, behaviorPresetsOfSafariOnMac } from '../src/behavior-presets.js'
 
 function mountWithButton(settings: LLSelectSingleSettingsInput<string> = {}): { sel: LLSelectSingle<string>; btn: HTMLButtonElement; calls: number[] } {
   setupDom('<!doctype html><html><body><div id="mount"></div><button id="other">click me</button></body></html>')
@@ -57,8 +57,8 @@ test('block is the default: an outside press keeps focus, its click closes the p
   assert.deepEqual(calls, [1])
 })
 
-test('the default is the value of behaviorPresetsOfLLSelectDefault, and each preset carries its own outside click', () => {
-  assert.equal(behaviorPresetsOfLLSelectDefault.behaviorOfOutsideClick, 'block')
+test('the default is the value of behaviorPresetsOfOriginalLLSelect, and each preset carries its own outside click', () => {
+  assert.equal(behaviorPresetsOfOriginalLLSelect.behaviorOfOutsideClick, 'block')
   assert.equal(behaviorPresetsOfChromiumOnWindows.behaviorOfOutsideClick, 'pass-through')
   assert.equal(behaviorPresetsOfFirefoxOnWindows.behaviorOfOutsideClick, 'pass-through')
   assert.equal(behaviorPresetsOfSafariOnMac.behaviorOfOutsideClick, 'block')
