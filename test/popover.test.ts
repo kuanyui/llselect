@@ -213,6 +213,75 @@ test('a beforetoggle listener that closes the select component inside showPopove
   assert.equal(popover.isShowing(sel.popupEl), false)
 })
 
+// The hide side: `beforetoggle` fires inside hidePopover() of a showing
+// popover, before the popover hides.
+function mockHideBeforetogglePopover(): void {
+  const proto = window.HTMLElement.prototype as unknown as {
+    showPopover?: () => void
+    hidePopover?: () => void
+  }
+  const showing = new Set<HTMLElement>()
+  proto.showPopover = function (this: HTMLElement) { showing.add(this) }
+  proto.hidePopover = function (this: HTMLElement) {
+    if (!showing.has(this)) { return }
+    this.dispatchEvent(new window.Event('beforetoggle'))
+    showing.delete(this)
+  }
+}
+
+// A subclass that renders the list on demand, as an app's own wrapper could.
+class RenderingOnDemand extends LLSelectSingle<string> {
+  public renderList(): void { this.renderPopupList() }
+}
+
+test('a beforetoggle listener that renders the list during the hide of a close: the close still empties the list', () => {
+  const root = mount()
+  mockHideBeforetogglePopover()
+  const sel = new RenderingOnDemand(root, { ariaLabel: 'Letter' })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  let renderOnHide = true
+  sel.popupEl.addEventListener('beforetoggle', () => { if (renderOnHide) { renderOnHide = false; sel.renderList() } })
+  sel.close()
+  assert.equal(renderOnHide, false, 'the listener rendered during the hide')
+  assert.equal(sel.popupListEl.children.length, 0)
+})
+
+test('a beforetoggle listener that renders an empty list during the hide of a close: the next open writes the no-results text again', () => {
+  const root = mount()
+  mockHideBeforetogglePopover()
+  const sel = new RenderingOnDemand(root, { ariaLabel: 'Letter' })
+  sel.setItems([])
+  sel.open()
+  let renderOnHide = true
+  sel.popupEl.addEventListener('beforetoggle', () => { if (renderOnHide) { renderOnHide = false; sel.renderList() } })
+  sel.close()
+  assert.equal(renderOnHide, false, 'the listener rendered during the hide')
+  const noResults = sel.popupEl.querySelector(`.${sel.classIdMap.popupListNoResultsClass}`)
+  assert.ok(noResults)
+  const textAfterClose = noResults.firstChild
+  assert.ok(textAfterClose, 'the render during the hide wrote the no-results text')
+  sel.open()
+  assert.notEqual(noResults.firstChild, textAfterClose, 'the open wrote the text again, so it counts as a fresh appearance')
+})
+
+test('a beforetoggle listener that renders the list during the hide that destroy() makes itself: destroy() still empties the list', () => {
+  const root = mount()
+  mockHideBeforetogglePopover()
+  // A close() that does not close leaves the hide to the put-back of destroy().
+  class NotClosing extends RenderingOnDemand {
+    public override close(): void {}
+  }
+  const sel = new NotClosing(root, { ariaLabel: 'Letter' })
+  sel.setItems(['a', 'b'])
+  sel.open()
+  let renderOnHide = true
+  sel.popupEl.addEventListener('beforetoggle', () => { if (renderOnHide) { renderOnHide = false; sel.renderList() } })
+  sel.destroy()
+  assert.equal(renderOnHide, false, 'the listener rendered during the hide of the put-back')
+  assert.equal(sel.popupListEl.children.length, 0)
+})
+
 test('a focus listener that closes and reopens the popup inside showPopover() has its reopen ignored', () => {
   const root = mount()
   mockAutofocusPopover()

@@ -2865,10 +2865,6 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.detachOutsideClick()
       this.detachGestures?.()
       this.detachGestures = undefined
-      this.popupListEl.replaceChildren()
-      // The no-results region hides with the popup; reset so a reopen with a
-      // still-empty list counts as a fresh appearance and re-announces.
-      this.lastNoResultsText = null
       if (this.popoverSupported) {
         try {
           this.popupEl.hidePopover()
@@ -2885,6 +2881,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         this.popupEl.style.bottom = ''
         this.popupEl.style.height = ''
       }
+      // After the hide: a `beforetoggle` listener of the hide may render rows
+      // again, and this removal takes them away too.
+      this.popupListEl.replaceChildren()
+      // The no-results region hides with the popup; reset so a reopen with a
+      // still-empty list counts as a fresh appearance and re-announces.
+      this.lastNoResultsText = null
       this.popupEl.hidden = true
       // Clear inline display + position so the `[hidden]` UA rule can hide the
       // popup cleanly. (Position was set in open() to keep the popup out of
@@ -4578,15 +4580,16 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   /**
-   * Make the DOM reflect the active row (`focusedRow`, else `focusedIndex`):
-   * move the focused class onto its element, point `aria-activedescendant` at
-   * it, and scroll it into view; with no row, clear the class and the
-   * attribute. Then report the active item (`reportActiveItem`). Reads the
-   * rendered elements, so it has an effect only while rows exist: while the
-   * popup is open, or after a subclass rendered the list while it was closed.
-   * Called after every active-row change (`setFocusedIndex`,
-   * `focusChooseAllRow`, `focusActionRow`) and after the list is rebuilt
-   * (`renderPopupList`, whose clamp assigns `focusedIndex` directly).
+   * Make the DOM reflect the active row, `focusedRow`, else `focusedIndex`.
+   * - With an active row, it moves the focused class onto the row's element,
+   *   points `aria-activedescendant` at it, and scrolls it into view.
+   * - With no active row, it clears the class and the attribute.
+   * - Then it reports the active item (`reportActiveItem`).
+   * - It reads the row elements that the select component currently stores.
+   * - Called after every active-row change (`setFocusedIndex`,
+   *   `focusChooseAllRow`, `focusActionRow`).
+   * - Called after the list is rebuilt (`renderPopupList`, whose clamp
+   *   assigns `focusedIndex` directly).
    */
   private syncFocusedIndexToDom(): void {
     if (this.focusedEl) {
