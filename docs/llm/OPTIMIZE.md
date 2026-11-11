@@ -4,9 +4,43 @@ Agent-facing log of llselect's own runtime performance: measurements, regression
 
 Status marks: `[ ]` open, `[~]` in progress, `[x]` done. Newest entry on top. No dates: `git log` owns the when; a measurement is identified by the commit the tree was at. Every measurement records the machine's power profile: a run without it is not comparable with the README (the lesson of the resolved entry below).
 
+## Mass instantiation slowed between the README's run and the 0.0.15 candidate
+
+- [~] **The owner's run of the 0.0.15 candidate found llselect slower than the README's run, which was made at 0.0.11; a comparison of five versions in this devcontainer reproduces it, and CPU profiles place most of it.** The bump of 0.0.15 waits for this entry: the agent had bumped 0.0.15 and tagged it before the run, and withdrew both after the owner's rulings (CLAUDE.md, the bullet on the benchmark before every version bump).
+- The owner's run: the i9-13900HX under the KDE Performance profile, Chromium 154.0.8037.57 stable x86_64, the benchmark page's default options, one run per cell; the tree was the commit "docs: [demo][CLAUDE.md] hints list the browsers as ul items" with the version numbers of 0.0.15. The README's run is the one of "docs: [README.md][src][demo][angularjs][test-utils][docs/llm][CLAUDE.md] Before paint data and wording; a vocabulary rule". In ms, with the README's numbers in parentheses:
+
+| Library | 100 x 100 build | 100 x 100 before paint | 100 x 100 teardown | 1000 x 10 build | 1000 x 10 before paint | 1000 x 10 teardown |
+|---|---|---|---|---|---|---|
+| Native `<select>` | 40 (28) | 133 (105) | 4.20 (4.40) | 29 (31) | 135 (137) | 7.90 (5.60) |
+| llselect | 17 (9.10) | 33 (22) | 1.60 (0.50) | 37 (32) | 61 (39) | 9.80 (5.40) |
+| Choices.js | 195 (149) | 40 (32) | 8.40 (6.10) | 871 (869) | 20 (18) | 29 (28) |
+| Select2 | 166 (118) | 112 (95) | 12 (11) | 466 (471) | 175 (167) | 38 (36) |
+| Tom Select | 48 (40) | 39 (35) | 1.80 (1.10) | 454 (457) | 71 (74) | 21 (25) |
+| Slim Select | 83 (63) | 135 (113) | 6.10 (5.40) | 134 (129) | 220 (210) | 26 (24) |
+
+- DOM nodes in the owner's run: llselect 1,000 at 100 x 100 and 10,000 at 1000 x 10, against 900 and 9,000 in the README's run, one element more per select component, the trigger wrapper (the entry below). Every other library counts the same as in the README's run.
+- Reading of the owner's run: at 100 x 100 every library built slower than in the README's run, 1.2 to 1.43 times, so that pass ran on a slower machine state, and llselect 1.9 times. At 1000 x 10 the other libraries built within 7 percent of their README numbers, while llselect took 1.16 times as long to build, 1.56 times before paint and 1.81 times to tear down.
+- The comparison in this devcontainer, with the rig of the entry "Mass instantiation looked regressed since v0.0.7", rebuilt for this run: headless Chromium 156.0.8078.4 through Playwright; a page that runs the benchmark page's `buildAll`, its llselect adapter with pre-select on, and its node count and teardown loop, step for step, on one version's minified `dist/index.umd.js` and that version's vanilla theme, under the current `demo/style.css`; each version built from its own tree; four rounds of fresh browser launches, the order of the versions reversed every round; five passes per launch, the median of each launch as one sample. The host's power profile is unknown, so only the comparison inside this run counts. Medians of the four launches, in ms:
+
+| Version | 100 x 100 build | 100 x 100 before paint | 100 x 100 teardown | 1000 x 10 build | 1000 x 10 before paint | 1000 x 10 teardown | 1000 x 10 DOM nodes |
+|---|---|---|---|---|---|---|---|
+| The README's run | 9.70 | 15.05 | 0.55 | 24.70 | 27.80 | 4.75 | 9,000 |
+| v0.0.12 | 10.35 | 16.65 | 0.60 | 27.40 | 30.40 | 4.65 | 9,000 |
+| v0.0.13 | 11.45 | 18.10 | 0.70 | 30.25 | 38.00 | 6.00 | 10,000 |
+| v0.0.14 | 12.65 | 18.95 | 0.70 | 29.65 | 37.25 | 6.55 | 10,000 |
+| The 0.0.15 candidate | 13.05 | 19.35 | 0.90 | 31.90 | 38.65 | 8.35 | 10,000 |
+
+- So the slowdown is spread over three releases, not one commit. Before paint jumps at v0.0.13, from 30.40 to 38.00 ms at 1000 x 10. Teardown steps up at v0.0.13, from 4.65 to 6.00 ms, and at the candidate, from 6.55 to 8.35 ms. Build rises a little at every step. Against the README's run, the candidate takes 1.29 times as long to build, 1.39 times before paint and 1.76 times to tear down at 1000 x 10, and 1.35, 1.29 and 1.64 times at 100 x 100.
+- CPU profiles, in the same browser: 1000 select components with 10 items each, built in one synchronous loop on the unminified `dist/index.mjs`, then destroyed; the CDP `Profiler` sampling every 50 microseconds; three launches per variant, and the sums divided by three, so each figure is ms per 1000 select components.
+  - Build: the constructor path, `LLSelectBase` inclusive, takes 17.5 ms at the README's run and 27.1 ms at the candidate. The largest new item is `hideVisually` in `src/base.ts`, 4.5 ms of self time: it writes ten inline style properties one by one on the screen-reader text of every trigger. It came with "feat: [src][themes] trigger wrapper and trigger buttons strip; 'match-trigger' renamed 'match-trigger-wrapper'". At the README's run, the value mirror that this text replaced carried the `hidden` attribute, so it had no layout box and no inline style. Per select component, the candidate creates 9 elements against 8, calls `setAttribute` 30 times against 28, and adds 10 listeners against 9, the extra one the trigger wrapper's `mousedown`.
+  - Style: the first color-scheme decision forces the style recalculation of every new select component in its microtask, `decideBatch` to `readColorSchemeInputs` to `getPropertyValue` (the entry "Color-scheme first decision forces one style recalculation per select component"). That read takes 8.4 ms at the README's run, 15.4 ms at v0.0.14 and 15.6 ms at the candidate. Stylesheet swaps on the candidate's DOM move it little: 13.6 ms with the vanilla theme of the README's run, and 12.7 ms with the candidate's theme without its two `:has()` rules. Three launches per variant do not separate these from noise, and v0.0.14 has no `:has()` rule yet costs the same as the candidate, so neither the theme changes nor the `:has()` rules explain the doubling. Hypothesis, not tested: the extra element, and the screen-reader text, which now has a layout box and ten inline styles, where the old value mirror had neither; the inline styles may keep the browser from reusing one computed style across select components.
+  - Teardown: `destroy()` takes 5.8 ms at the README's run and 8.5 ms at the candidate. `clearOpenState()` takes 2.5 ms of it: `destroy()` now calls it for every select component, also one whose popup never opened, and it writes `aria-expanded` and the open class back and calls `hidePopover()` on a popup that is not showing. It came with "fix: [src][test][angularjs][docs/llm] open() stops when a function it calls closes the popup".
+- Candidates for a fix, not applied, the owner's call: `hideVisually` writes the ten properties in one `style.cssText` write; `destroy()` skips the writes of `clearOpenState()` when the popup never opened, or `clearOpenState()` writes only what differs; the doubled style recalculation needs one more experiment before any fix.
+
 ## The trigger wrapper adds elements to every select component
 
-- [ ] **Not yet measured: the trigger structure of the ARIA blind votes adds DOM to every instance.** Every select component gains one element, the trigger wrapper; the screen-reader span moved inside the trigger and is not new. An instance with `clearable` or tags mode gains a second, the trigger buttons strip. The README's benchmark tables predate the change; a re-run on the next benchmark pass records whether mass instantiation moved (`DESIGN.md` "Trigger structure").
+- [~] **Measured in part: the trigger structure of the ARIA blind votes adds DOM to every instance.** Every select component gains one element, the trigger wrapper; the screen-reader span moved inside the trigger and is not new. An instance with `clearable` or tags mode gains a second, the trigger buttons strip. The README's benchmark tables predate the change; a re-run on the next benchmark pass records whether mass instantiation moved (`DESIGN.md` "Trigger structure").
+- The owner's run of the 0.0.15 candidate shows the extra element: 1,000 DOM nodes per 100 select components against 900, and 10,000 per 1000 against 9,000. How much of the slowdown it causes is open, in the entry above.
 
 ## The fit-content width measure stays at its prior cost
 
