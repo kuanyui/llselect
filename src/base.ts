@@ -1541,24 +1541,29 @@ function canBeTabStop(el: Element): boolean {
   return Number.isNaN(tabindex) ? el.matches(NATIVE_TAB_STOP_SELECTOR) : tabindex >= 0
 }
 
+/** The common visually-hidden recipe, as the value of a `style` attribute. */
+const VISUALLY_HIDDEN_STYLE = 'position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; white-space: nowrap; clip: rect(0 0 0 0); clip-path: inset(50%)'
+
+/** The span that `createVisuallyHiddenSpan` clones, built on its first call in a document. */
+let visuallyHiddenSpanTemplate: HTMLSpanElement | undefined
+
 /**
- * Hide `el` from the screen while keeping its text in the accessibility tree:
- * `hidden` or `aria-hidden` would drop it from the value a combobox takes
- * from its content. The common visually-hidden recipe, written inline so an
- * unthemed select component behaves the same.
+ * Create a span that is hidden from the screen while its text stays in the
+ * accessibility tree: `hidden` or `aria-hidden` would drop it from the value
+ * a combobox takes from its content. The common visually-hidden recipe,
+ * written inline so an unthemed select component behaves the same.
+ * - Every span is a clone of one template span, so all of them share one
+ *   parsed inline style: building a select component and the browser's style
+ *   calculation cost less than with one style write per property
+ *   (OPTIMIZE.md "Mass instantiation slowed between the README's run and the
+ *   0.0.15 candidate").
  */
-function hideVisually(el: HTMLElement): void {
-  const s = el.style
-  s.position = 'absolute'
-  s.width = '1px'
-  s.height = '1px'
-  s.margin = '-1px'
-  s.padding = '0'
-  s.border = '0'
-  s.overflow = 'hidden'
-  s.whiteSpace = 'nowrap'
-  s.clip = 'rect(0 0 0 0)'
-  s.clipPath = 'inset(50%)'
+function createVisuallyHiddenSpan(): HTMLSpanElement {
+  if (visuallyHiddenSpanTemplate === undefined || visuallyHiddenSpanTemplate.ownerDocument !== document) {
+    visuallyHiddenSpanTemplate = document.createElement('span')
+    visuallyHiddenSpanTemplate.setAttribute('style', VISUALLY_HIDDEN_STYLE)
+  }
+  return visuallyHiddenSpanTemplate.cloneNode(false) as HTMLSpanElement
 }
 
 /** Write an attribute only when its value changes, so an unchanged value queues no mutation record; `null` removes it. */
@@ -5061,10 +5066,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // syncFilterModeToDom, which the constructor runs after building the
     // trigger.
     el.setAttribute('aria-expanded', 'false')
-    const screenReaderTextEl = document.createElement('span')
+    const screenReaderTextEl = createVisuallyHiddenSpan()
     screenReaderTextEl.id = this.classIdMap.triggerScreenReaderTextId
     screenReaderTextEl.className = this.classIdMap.triggerScreenReaderTextClass
-    hideVisually(screenReaderTextEl)
     const contentEl = document.createElement('span')
     contentEl.id = this.classIdMap.triggerContentId
     contentEl.className = this.classIdMap.triggerContentClass
