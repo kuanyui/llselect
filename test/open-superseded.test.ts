@@ -751,34 +751,6 @@ test('an isEmpty override that throws inside the close of destroy(), after that 
   assert.equal(p.sel.rootEl.children.length, 0)
 })
 
-// The attribute writes of destroy() on the elements below the root element,
-// as `class: attribute` pairs. The root element's own writes are left out.
-function attributeWritesBelowRootOfDestroy(sel: LLSelectSingle<string>): string[] {
-  const observer = new window.MutationObserver(() => {})
-  observer.observe(sel.rootEl, { attributes: true, subtree: true })
-  sel.destroy()
-  const records = observer.takeRecords().filter((r) => r.target !== sel.rootEl)
-  observer.disconnect()
-  return records.map((r) => `${(r.target as Element).className}: ${r.attributeName ?? ''}`)
-}
-
-test('destroy() of a select component whose popup never opened writes no attribute below its root element', () => {
-  const sel = new LLSelectSingle<string>(mount(), { filterable: true })
-  sel.setItems(['a', 'b'])
-  sel.setChosenItem('a')
-  assert.deepEqual(attributeWritesBelowRootOfDestroy(sel), [])
-  assert.equal(sel.rootEl.children.length, 0)
-})
-
-test('destroy() after a close that completed writes no attribute below its root element either', () => {
-  const p = build(() => ({}))
-  p.sel.open()
-  p.sel.close()
-  assert.equal(p.leftover(), 0)
-  assert.deepEqual(attributeWritesBelowRootOfDestroy(p.sel), [])
-  assert.equal(p.sel.rootEl.children.length, 0)
-})
-
 // A subclass that can render the list and set the active row from outside.
 class RenderingWhileClosed extends LLSelectSingle<string> {
   public renderList(): void { this.renderPopupList() }

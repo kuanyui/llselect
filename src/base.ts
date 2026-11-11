@@ -1870,8 +1870,6 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private opened = false
   /** True while `close()` returns focus to the trigger, and while `clearOpenState()` runs; `open()` refuses during both. */
   private closing = false
-  /** True from the moment `open()` marks the popup open, or `renderPopupList()` starts to write rows, until a run of `clearOpenState()` completes; while false, nothing that `destroy()` must put back has been written. */
-  private openStateWritten = false
   /** True while `open()` runs `showPopover()`, and the undo after a refused show; a nested `open()` of this select component refuses during that time, since Chromium 156, Firefox 153 and WebKit 26.5 throw on a show during another show. */
   private opening = false
   /** True while `open()` undoes itself through `close()` after `showPopover()` threw; that `close()` fires no `onClosed` / `onClose`, since the open fired neither of their mirrors. */
@@ -2534,7 +2532,6 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // the cycle number tells.
     if (refused() || this.openCycle !== cycleBefore) { return }
     const restoreWindowScroll = this.captureWindowScroll()
-    this.openStateWritten = true
     this.opened = true
     this.transitionGeneration++
     // This call runs app and subclass code: predicates, content functions,
@@ -2822,9 +2819,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - `open()` runs it when a function it called closed the select
    *   component, since that call may have written over the closed state
    *   afterwards.
-   * - `destroy()` runs it after its `close()` call, whatever that call did,
-   *   unless nothing that it puts back was written since its last complete
-   *   run.
+   * - `destroy()` always runs it after its `close()` call, whatever that
+   *   call did.
    * - A second run on a closed popup writes the same values again.
    */
   private clearOpenState(): void {
@@ -2885,8 +2881,6 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.trailingActionRowEls = []
       this.focusedRow = null
       this.comboboxEl.removeAttribute('aria-activedescendant')
-      // Last, so a write above that throws leaves the flag set for destroy().
-      this.openStateWritten = false
     } finally {
       this.closing = closing
     }
@@ -3120,13 +3114,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // have closed the popup, and the call may have thrown at any point, in
       // an override or in an `onClose` listener, also after it had marked the
       // popup closed. Nothing of an open popup may outlive the instance, so
-      // the closed state is put back whatever `opened` says, unless nothing
-      // that the put-back undoes was written since its last complete run
-      // (`openStateWritten`). No step below
+      // the closed state is put back whatever `opened` says. No step below
       // calls a function of the settings or an overridable method, so an
       // error of the `close()` above still reaches the caller.
       this.opened = false
-      if (this.openStateWritten) { this.clearOpenState() }
+      this.clearOpenState()
       for (const release of [...this.touchHoldReleases]) { release() }
       this.touchHoldReleases.clear()
       this.disarmOutsidePressClickSwallow?.()
@@ -3674,9 +3666,6 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: rendering
    */
   protected renderPopupList(): void {
-    // The rows are part of what clearOpenState() puts back, also rows that a
-    // subclass renders while the popup is closed.
-    this.openStateWritten = true
     const list = this.getVisibleItems()
     const els = list.map((item, i) => this.createPopupListItemEl(item, i))
     this.itemEls = els
@@ -4572,7 +4561,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * move the focused class onto its element, point `aria-activedescendant` at
    * it, and scroll it into view; with no row, clear the class and the
    * attribute. Then report the active item (`reportActiveItem`). Reads the
-   * rendered elements, so it only has an effect while the popup is open.
+   * rendered elements, so it has an effect only while rows exist: while the
+   * popup is open, or after a subclass rendered the list while it was closed.
    * Called after every active-row change (`setFocusedIndex`,
    * `focusChooseAllRow`, `focusActionRow`) and after the list is rebuilt
    * (`renderPopupList`, whose clamp assigns `focusedIndex` directly).
