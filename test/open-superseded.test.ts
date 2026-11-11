@@ -750,3 +750,83 @@ test('an isEmpty override that throws inside the close of destroy(), after that 
   assert.equal(p.sel.popupEl.hasAttribute('data-placement'), false)
   assert.equal(p.sel.rootEl.children.length, 0)
 })
+
+// The attribute writes of destroy() on the elements below the root element,
+// as `class: attribute` pairs. The root element's own writes are left out.
+function attributeWritesBelowRootOfDestroy(sel: LLSelectSingle<string>): string[] {
+  const observer = new window.MutationObserver(() => {})
+  observer.observe(sel.rootEl, { attributes: true, subtree: true })
+  sel.destroy()
+  const records = observer.takeRecords().filter((r) => r.target !== sel.rootEl)
+  observer.disconnect()
+  return records.map((r) => `${(r.target as Element).className}: ${r.attributeName ?? ''}`)
+}
+
+test('destroy() of a select component whose popup never opened writes no attribute below its root element', () => {
+  const sel = new LLSelectSingle<string>(mount(), { filterable: true })
+  sel.setItems(['a', 'b'])
+  sel.setChosenItem('a')
+  assert.deepEqual(attributeWritesBelowRootOfDestroy(sel), [])
+  assert.equal(sel.rootEl.children.length, 0)
+})
+
+test('destroy() after a close that completed writes no attribute below its root element either', () => {
+  const p = build(() => ({}))
+  p.sel.open()
+  p.sel.close()
+  assert.equal(p.leftover(), 0)
+  assert.deepEqual(attributeWritesBelowRootOfDestroy(p.sel), [])
+  assert.equal(p.sel.rootEl.children.length, 0)
+})
+
+// A subclass that can render the list and set the active row from outside.
+class RenderingWhileClosed extends LLSelectSingle<string> {
+  public renderList(): void { this.renderPopupList() }
+  public activateRow(index: number): void { this.setFocusedIndex(index) }
+}
+
+test('a subclass that renders the list while the popup never opened: destroy() still empties the list and clears the active row', () => {
+  const sel = new RenderingWhileClosed(mount(), {})
+  sel.setItems(['a', 'b'])
+  sel.renderList()
+  sel.activateRow(0)
+  assert.equal(sel.popupListEl.children.length > 0, true, 'the rows were rendered while closed')
+  assert.equal(sel.triggerEl.hasAttribute('aria-activedescendant'), true)
+  sel.destroy()
+  assert.equal(sel.popupListEl.children.length, 0)
+  assert.equal(sel.triggerEl.hasAttribute('aria-activedescendant'), false)
+})
+
+test('an onClosed override that renders the list after a close that completed: destroy() still empties the list', () => {
+  class RenderingOnClosed extends LLSelectSingle<string> {
+    protected override onClosed(): void { this.renderPopupList() }
+  }
+  const p = build(() => ({}), RenderingOnClosed)
+  p.sel.open()
+  p.sel.close()
+  assert.equal(p.sel.popupListEl.children.length > 0, true, 'onClosed rendered the rows again')
+  p.sel.destroy()
+  assert.equal(p.sel.popupListEl.children.length, 0)
+})
+
+test('a write of the put-back that throws inside close(): destroy() runs the put-back again and completes it', () => {
+  const p = build(() => ({}))
+  p.sel.open()
+  const list = p.sel.popupListEl
+  let throwOnce = true
+  list.replaceChildren = function (this: HTMLElement, ...nodes: (Node | string)[]): void {
+    if (throwOnce) {
+      throwOnce = false
+      throw new Error('replace failed')
+    }
+    window.Element.prototype.replaceChildren.apply(this, nodes)
+  }
+  assert.throws(() => { p.sel.close() }, /replace failed/)
+  assert.equal(p.sel.popupEl.hidden, false, 'the put-back stopped before it hid the popup')
+  assert.equal(list.children.length > 0, true)
+  p.sel.destroy()
+  assert.equal(p.sel.popupEl.hidden, true)
+  assert.equal(p.sel.popupEl.style.position, '')
+  assert.equal(list.children.length, 0)
+  assert.equal(p.leftover(), 0)
+})
