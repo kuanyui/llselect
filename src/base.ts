@@ -1541,27 +1541,48 @@ function canBeTabStop(el: Element): boolean {
   return Number.isNaN(tabindex) ? el.matches(NATIVE_TAB_STOP_SELECTOR) : tabindex >= 0
 }
 
-/** The common visually-hidden recipe, as the value of a `style` attribute. */
-const VISUALLY_HIDDEN_STYLE = 'position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; white-space: nowrap; clip: rect(0 0 0 0); clip-path: inset(50%)'
-
 /** The span that `createVisuallyHiddenSpan` clones, built on its first call in a document. */
 let visuallyHiddenSpanTemplate: HTMLSpanElement | undefined
 
 /**
- * Create a span that is hidden from the screen while its text stays in the
- * accessibility tree: `hidden` or `aria-hidden` would drop it from the value
- * a combobox takes from its content. The common visually-hidden recipe,
- * written inline so an unthemed select component behaves the same.
- * - Every span is a clone of one template span, so all of them share one
- *   parsed inline style: building a select component and the browser's style
- *   calculation cost less than with one style write per property
- *   (OPTIMIZE.md "Mass instantiation slowed between the README's run and the
- *   0.0.15 candidate").
+ * Create the span for the screen-reader text of the trigger.
+ * - While the filter is inactive, the trigger is a `combobox`, and WAI-ARIA
+ *   1.2 gives a combobox that is not a text field the value of its
+ *   descendant content.
+ * - `hidden` or `aria-hidden` would drop the span's text from that value, so
+ *   the span is hidden from the screen only.
+ * - While the filter is active, the trigger is a `button`, whose
+ *   `aria-labelledby` chain ends at this span.
+ * - The span holds the screen-reader text, which the library writes apart
+ *   from the visible content, from `computeTriggerScreenReaderText`.
+ * - The common visually-hidden recipe hides the span.
+ * - The recipe is written inline, so an unthemed select component hides the
+ *   span too.
+ * - The first call in a document builds one template span with the recipe.
+ * - Every call returns a clone of that template.
+ * - A clone costs less than writing the recipe on every span (OPTIMIZE.md
+ *   "Mass instantiation slowed between the README's run and the 0.0.15
+ *   candidate").
+ * - The template takes the recipe through property writes, never through
+ *   `setAttribute('style', ...)`.
+ * - A Content-Security-Policy such as `style-src 'self'` refuses a style that
+ *   `setAttribute` sets, and allows property writes (FIXME MEDIUM-1046).
  */
 function createVisuallyHiddenSpan(): HTMLSpanElement {
   if (visuallyHiddenSpanTemplate === undefined || visuallyHiddenSpanTemplate.ownerDocument !== document) {
-    visuallyHiddenSpanTemplate = document.createElement('span')
-    visuallyHiddenSpanTemplate.setAttribute('style', VISUALLY_HIDDEN_STYLE)
+    const template = document.createElement('span')
+    const s = template.style
+    s.position = 'absolute'
+    s.width = '1px'
+    s.height = '1px'
+    s.margin = '-1px'
+    s.padding = '0'
+    s.border = '0'
+    s.overflow = 'hidden'
+    s.whiteSpace = 'nowrap'
+    s.clip = 'rect(0 0 0 0)'
+    s.clipPath = 'inset(50%)'
+    visuallyHiddenSpanTemplate = template
   }
   return visuallyHiddenSpanTemplate.cloneNode(false) as HTMLSpanElement
 }

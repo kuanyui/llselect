@@ -76,6 +76,30 @@ test('filterable + ariaLabelledBy: trigger button name chains label ids + hidden
   assert.equal(listbox(sel).getAttribute('aria-labelledby'), 'field-label')
 })
 
+test('no style attribute through setAttribute, which a Content-Security-Policy that blocks inline styles refuses: building, opening and closing', () => {
+  const root = mount()
+  const proto = window.Element.prototype
+  const original = proto.setAttribute
+  const styleWrites: string[] = []
+  proto.setAttribute = function (this: Element, name: string, value: string): void {
+    if (name.toLowerCase() === 'style') { styleWrites.push(value) }
+    original.call(this, name, value)
+  }
+  try {
+    const sel = new LLSelectSingle<string>(root, { filterable: true, ariaLabel: 'Country' })
+    sel.setItems(['a', 'b'])
+    sel.setChosenItem('a')
+    sel.open()
+    sel.close()
+    const valueEl = document.getElementById(sel.classIdMap.triggerScreenReaderTextId)!
+    assert.equal(valueEl.style.position, 'absolute', 'the screen-reader text is still hidden')
+    assert.equal(valueEl.style.clipPath, 'inset(50%)')
+  } finally {
+    proto.setAttribute = original
+  }
+  assert.deepEqual(styleWrites, [])
+})
+
 test('filterable + ariaLabel: trigger keeps aria-label and self-references it in the chain', () => {
   const sel = new LLSelectSingle<string>(mount(), { filterable: true, ariaLabel: 'Country' })
   sel.setItems(['a', 'b'])
