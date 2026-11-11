@@ -64,9 +64,11 @@ export interface LLSelectScrollGesture {
  * - `'close-popup-and-block-page-scroll'`: the popup closes, with the close
  *   reason `'scroll-gesture'`, and the gesture scrolls nothing.
  * - A `'touch-start'` scrolls nothing by itself, so its page-scroll half acts
- *   only when the popup closes there: it then holds for the rest of that
- *   touch, until a second finger lands or a mouse or a pen presses. While the
- *   popup stays open, each move of the touch asks again, as a `'touch-drag'`.
+ *   only when the popup closes there.
+ * - That half then holds for the rest of that touch, until a second finger
+ *   lands or a mouse or a pen presses.
+ * - While the popup stays open, each move of the touch asks again, as a
+ *   `'touch-drag'`.
  * - A close picked for a `'touch-drag'` blocks that one move at most. The
  *   library sees no later move of that touch and blocks none of them.
  * - When a touch-down closes the popup, the click of that tap would reopen
@@ -330,12 +332,19 @@ interface TouchHoldOptions {
  *   - If the close removed the node that the touch started on, the shadow
  *     host may miss the rest of the touch, as inferred from the code.
  * - Its moves scroll nothing while `block` is set.
- * - When `swallowClick` is set, its click is swallowed: the first click near
- *   the touch-down, within one second of the lift.
- * - The hold ends when the touch is over and its click came or cannot come,
- *   at any later touch-down, and at a move with two touches. A second finger
- *   makes a pinch, which most likely gives no click, and a new touch shows
- *   that the held one is over.
+ * - When `swallowClick` is set, the hold swallows the touch's click, the first
+ *   click that satisfies all of the following:
+ *   - it lands near the touch-down;
+ *   - it comes within one second of the lift;
+ *   - a pointer made it.
+ * - The hold ends at the first of these moments:
+ *   - the touch is over, and its click came or cannot come;
+ *   - a later touch-down;
+ *   - a move with two touches;
+ *   - the press of a mouse or a pen.
+ * - A second finger makes a pinch, which most likely gives no click.
+ * - A later touch-down or press is a new press, whose click must not be taken
+ *   for the click of the held touch.
  */
 function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOptions): () => void {
   const { block, swallowClick, mousedown } = options

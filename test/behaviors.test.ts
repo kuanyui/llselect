@@ -535,14 +535,23 @@ test('the press of a mouse or a pen ends the wait for a tap\'s click, while the 
   }
 })
 
-test('the press of a mouse or a pen before the lift ends the whole hold, so the later moves of the finger are not blocked', () => {
+test('the press of a mouse or a pen before the lift ends the whole hold: its click gets through, and the later moves of the finger are not blocked', () => {
   for (const pointerType of ['mouse', 'pen']) {
-    const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows })
+    // A hold that blocks the moves and swallows the click.
+    const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows, behaviorOfOutsideClick: 'block' })
+    let clicks = 0
+    outside.addEventListener('click', () => { clicks++ })
     sel.open()
     touch('touchstart', outside, [{ id: 1, x: 10, y: 10 }])
     assert.equal(sel.isOpened(), false, `${pointerType}: precondition: the touch-down closed the popup`)
     assert.equal(touch('touchmove', outside, [{ id: 1, x: 10, y: 40 }]).defaultPrevented, true, `${pointerType}: precondition: the hold blocks the move`)
-    pointerDown(outside, pointerType, 200, 200)
+    // A press near the touch-down, while the finger is still down.
+    pointerDown(outside, pointerType, 12, 12)
+    const mousedown = new window.MouseEvent('mousedown', { bubbles: true, cancelable: true, clientX: 12, clientY: 12, detail: 1 })
+    outside.dispatchEvent(mousedown)
+    assert.equal(mousedown.defaultPrevented, false, pointerType)
+    assert.equal(clickAt(outside, 12, 12).defaultPrevented, false, pointerType)
+    assert.equal(clicks, 1, `${pointerType}: the click of the press reaches the page`)
     assert.equal(touch('touchmove', outside, [{ id: 1, x: 10, y: 70 }]).defaultPrevented, false, `${pointerType}: the press ended the hold`)
   }
 })

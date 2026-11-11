@@ -105,6 +105,7 @@ Each question here has its own answers.
   - a: nothing is chosen, and the popup stays open.
   - b: nothing is chosen, and the popup closes.
   - c: an option is chosen.
+  - d: the popup did not open at the press.
 - `drag-inside-highlight`: with the popup open, press on an option, and drag along the list while you hold the button. Did the highlighted option follow the pointer?
   - a: yes.
   - b: no.
