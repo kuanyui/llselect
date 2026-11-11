@@ -23,8 +23,10 @@ function fireMousedown(target: HTMLElement): MouseEvent {
 
 // The click that a pointer makes: a detail of 1, where the keyboard and
 // click() give 0.
-function firePointerClick(target: HTMLElement, x = 0, y = 0): void {
-  target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1, clientX: x, clientY: y }))
+function firePointerClick(target: HTMLElement, x = 0, y = 0): MouseEvent {
+  const ev = new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1, clientX: x, clientY: y })
+  target.dispatchEvent(ev)
+  return ev
 }
 
 // jsdom has no PointerEvent, so the pointer type rides on a MouseEvent.
@@ -44,14 +46,14 @@ test('block is the default: an outside press keeps focus, its click closes the p
   // the press is default-prevented, so the test makes that move.
   if (!down.defaultPrevented) { btn.focus() }
   assert.equal(sel.isOpened(), true, 'block closes on the click, not on the press')
-  firePointerClick(btn)
+  assert.equal(firePointerClick(btn).defaultPrevented, true, 'the default action of the click, such as following a link, does not run')
   assert.equal(sel.isOpened(), false)
   assert.deepEqual(calls, [])
   assert.equal(document.activeElement, sel.triggerEl, 'focus stays on the trigger')
   assert.equal(blurs, 0)
   // The close detached the capture listeners: the next press and click are the page's own.
   assert.equal(fireMousedown(btn).defaultPrevented, false)
-  firePointerClick(btn)
+  assert.equal(firePointerClick(btn).defaultPrevented, false)
   assert.deepEqual(calls, [1])
 })
 
@@ -88,9 +90,28 @@ test('block: the click of an outside press stays swallowed when a page handler m
     assert.equal(sel.isOpened(), false, `${pressType}: precondition: the focus move closed the popup during the press`)
     btn.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, cancelable: true }))
     btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }))
-    firePointerClick(btn)
+    assert.equal(firePointerClick(btn).defaultPrevented, true, pressType)
     assert.deepEqual(calls, [], `${pressType}: the click of the blocked press is still swallowed`)
   }
+})
+
+test('block: the mousedown of an outside press stays default-prevented when a page handler closes the popup at the pointerdown', () => {
+  let blurs = 0
+  const { sel, btn, calls } = mountWithButton({ onBlur: () => { blurs++ } })
+  btn.addEventListener('pointerdown', () => { sel.close() })
+  sel.triggerEl.focus()
+  sel.open()
+  btn.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }))
+  assert.equal(sel.isOpened(), false, 'precondition: the page handler closed the popup at the pointerdown')
+  const down = fireMousedown(btn)
+  assert.equal(down.defaultPrevented, true, 'so the browser moves no focus')
+  if (!down.defaultPrevented) { btn.focus() }
+  btn.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, cancelable: true }))
+  btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }))
+  assert.equal(firePointerClick(btn).defaultPrevented, true)
+  assert.deepEqual(calls, [])
+  assert.equal(document.activeElement, sel.triggerEl)
+  assert.equal(blurs, 0)
 })
 
 test('block: a click that no pointer made passes the swallow of an outside press, which then takes the press\'s own click', () => {
@@ -99,7 +120,10 @@ test('block: a click that no pointer made passes the swallow of an outside press
   const second = document.getElementById('second') as HTMLButtonElement
   const calls: string[] = []
   btn.addEventListener('click', () => { calls.push('other') })
-  second.addEventListener('click', () => { calls.push('second') })
+  second.addEventListener('click', (ev) => {
+    calls.push('second')
+    assert.equal(ev.defaultPrevented, false, 'the click from click() keeps its default')
+  })
   btn.addEventListener('mousedown', () => { btn.focus() })
   // A handler of the page that clicks another control once focus leaves.
   const sel = new LLSelectSingle<string>(document.getElementById('mount')!, { onBlur: () => { second.click() } })
@@ -110,7 +134,7 @@ test('block: a click that no pointer made passes the swallow of an outside press
   assert.equal(sel.isOpened(), false, 'precondition: the focus move closed the popup during the press')
   assert.deepEqual(calls, ['second'], 'the click from click() is not the click of the press, so it reaches its button')
   btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }))
-  firePointerClick(btn)
+  assert.equal(firePointerClick(btn).defaultPrevented, true)
   assert.deepEqual(calls, ['second'], 'the click of the press is still swallowed')
 })
 
@@ -125,12 +149,30 @@ test('block: after a tap, the swallow waits for the click that a browser holds b
   fireTouchPointer(btn, 'pointerup', 10, 10)
   // A browser can send the compatibility events of a tap about 300 ms later.
   t.mock.timers.tick(300)
-  firePointerClick(btn, 100, 100)
+  assert.equal(firePointerClick(btn, 100, 100).defaultPrevented, false)
   assert.deepEqual(calls, [1], 'a click far from the touch-down is not the click of the tap')
   btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }))
   btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }))
-  firePointerClick(btn, 10, 10)
+  assert.equal(firePointerClick(btn, 10, 10).defaultPrevented, true)
   assert.deepEqual(calls, [1], 'the click of the tap is swallowed after the delay')
+})
+
+test('block: the mousedown of a tap leaves the tap\'s swallow and its wait, also when it comes before the lift', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  const { sel, btn, calls } = mountWithButton()
+  btn.addEventListener('mousedown', () => { btn.focus() })
+  sel.triggerEl.focus()
+  sel.open()
+  fireTouchPointer(btn, 'pointerdown', 10, 10)
+  // The compatibility mousedown before the lift, while the popup is open; the
+  // handler of the page then closes the popup through focusout.
+  btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }))
+  assert.equal(sel.isOpened(), false, 'precondition: the focus move closed the popup at the mousedown')
+  fireTouchPointer(btn, 'pointerup', 10, 10)
+  t.mock.timers.tick(300)
+  btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }))
+  assert.equal(firePointerClick(btn, 10, 10).defaultPrevented, true)
+  assert.deepEqual(calls, [], 'the click of the tap is swallowed after the delay')
 })
 
 test('block: the swallow of a tap ends a second after the lift, and at the next press', (t) => {
@@ -150,7 +192,7 @@ test('block: the swallow of a tap ends a second after the lift, and at the next 
       fireTouchPointer(btn, 'pointerdown', 12, 12)
       fireTouchPointer(btn, 'pointerup', 12, 12)
     }
-    firePointerClick(btn, 12, 12)
+    assert.equal(firePointerClick(btn, 12, 12).defaultPrevented, false, end)
     assert.deepEqual(calls, [1], `${end}: the click reaches the button`)
   }
 })
@@ -173,7 +215,7 @@ test('block: the swallow of an outside press ends with the press, so a later cli
       sel.destroy()
     }
     // A pointer's click, which a swallow still armed would take.
-    firePointerClick(btn)
+    assert.equal(firePointerClick(btn).defaultPrevented, false, end)
     assert.deepEqual(calls, [1], `${end}: the later click reaches the button`)
   }
 })

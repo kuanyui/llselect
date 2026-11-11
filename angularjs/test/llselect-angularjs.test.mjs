@@ -783,23 +783,30 @@ test("the llselect directives swallow an outside click by default, and ll-behavi
     const outside = a.$('#outside')
     let clicks = 0
     outside.addEventListener('click', () => { clicks++ })
+    // A press as a browser sends it: pointerdown, then mousedown.
     const press = () => {
+      outside.dispatchEvent(new a.window.MouseEvent('pointerdown', { bubbles: true, cancelable: true }))
       const ev = new a.window.MouseEvent('mousedown', { bubbles: true, cancelable: true })
       outside.dispatchEvent(ev)
       return ev.defaultPrevented
+    }
+    // The click of that press: a pointer made it, so its detail is 1.
+    const release = () => {
+      outside.dispatchEvent(new a.window.MouseEvent('mouseup', { bubbles: true, cancelable: true }))
+      outside.dispatchEvent(new a.window.MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }))
     }
     const instance = (id) => a.ng.element(a.$('#' + id)).controller(controller).instance()
     a.$('#blocking .llselect-trigger').click()
     assert.equal(instance('blocking').isOpened(), true, tag)
     assert.equal(press(), true, `${tag}: the default keeps focus at the outside press`)
-    outside.click()
+    release()
     assert.equal(instance('blocking').isOpened(), false, tag)
     assert.equal(clicks, 0, `${tag}: the default swallows the outside click`)
     a.$('#passing .llselect-trigger').click()
     assert.equal(instance('passing').isOpened(), true, tag)
     assert.equal(press(), false, tag)
     assert.equal(instance('passing').isOpened(), false, `${tag}: pass-through closes at the outside press`)
-    outside.click()
+    release()
     assert.equal(clicks, 1, `${tag}: pass-through lets the outside click through`)
     assert.deepEqual(a.errors, [], tag)
   }

@@ -2006,6 +2006,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   private blockPointerDownHandler: ((ev: Event) => void) | undefined
   /** Ends the swallow that an outside press armed under `'block'`; `null` while none is armed. */
   private disarmOutsidePressClickSwallow: (() => void) | null = null
+  /** The pointer type of the press whose swallow is armed; `null` while none is armed. */
+  private outsidePressPointerType: string | null = null
   /**
    * Element that owns `aria-activedescendant` and receives keydown for option
    * navigation. Equals the filter input while the filter is active, else the
@@ -4705,10 +4707,14 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         const t = this.eventTargetNode(ev)
         if (t instanceof Node && !this.rootEl.contains(t)) {
           ev.preventDefault()
-          // The mousedown of a tap comes with the tap's click, after its
-          // pointerup, so it arms again as a mouse press does.
-          const press = ev as MouseEvent
-          this.armOutsidePressClickSwallow('mouse', press.clientX, press.clientY)
+          // A mouse press arms again here, which also covers a browser that
+          // sends no pointerdown. The mousedown of a tap leaves the tap's
+          // swallow and its longer wait, wherever the browser sends that
+          // mousedown among the tap's events.
+          if (this.outsidePressPointerType === null || this.outsidePressPointerType === 'mouse') {
+            const press = ev as MouseEvent
+            this.armOutsidePressClickSwallow('mouse', press.clientX, press.clientY)
+          }
         }
       }
       document.addEventListener('mousedown', this.blockMouseDownHandler, true)
@@ -4753,6 +4759,11 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Called by the `pointerdown` and `mousedown` capture listeners of
    *   `'block'` for a press outside the select component, with the pointer
    *   type of the press and the place where it went down.
+   * - The `mousedown` listener arms again as a mouse press, unless a press
+   *   that is not a mouse press armed the swallow.
+   * - While armed, the swallow also prevents the default of an outside
+   *   `mousedown`, so the browser moves no focus, even after the popup
+   *   closed at the `pointerdown`.
    * - Only the press's own click counts. The swallow lets every other click
    *   through and stays armed:
    *   - a pointer made the press's click, so its `detail` is not `0`, while
@@ -4774,6 +4785,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     this.disarmOutsidePressClickSwallow?.()
     const mouse = pointerType === 'mouse'
     let timer: ReturnType<typeof setTimeout> | undefined
+    const keepFocus = (ev: Event): void => {
+      const t = this.eventTargetNode(ev)
+      if (t instanceof Node && !this.rootEl.contains(t)) { ev.preventDefault() }
+    }
     const isPressClick = (click: MouseEvent): boolean => {
       if (click.detail === 0) { return false }
       return mouse || Math.hypot(click.clientX - x, click.clientY - y) <= TAP_CLICK_RADIUS
@@ -4797,8 +4812,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       document.removeEventListener('mouseup', released, true)
       document.removeEventListener('pointercancel', disarm, true)
       document.removeEventListener('pointerdown', disarm, true)
-      if (this.disarmOutsidePressClickSwallow === disarm) { this.disarmOutsidePressClickSwallow = null }
+      document.removeEventListener('mousedown', keepFocus, true)
+      if (this.disarmOutsidePressClickSwallow === disarm) {
+        this.disarmOutsidePressClickSwallow = null
+        this.outsidePressPointerType = null
+      }
     }
+    document.addEventListener('mousedown', keepFocus, true)
     document.addEventListener('click', swallow, true)
     document.addEventListener('pointerup', released, true)
     document.addEventListener('mouseup', released, true)
@@ -4807,6 +4827,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
     // the pointerdown of a later press reaches it.
     document.addEventListener('pointerdown', disarm, true)
     this.disarmOutsidePressClickSwallow = disarm
+    this.outsidePressPointerType = pointerType
   }
 
   /**

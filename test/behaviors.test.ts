@@ -176,8 +176,10 @@ function touch(type: string, target: EventTarget, points: Point[], changed = poi
   return ev
 }
 
+// The click of a tap: a pointer made it, so its detail is 1, where the
+// keyboard and click() give 0.
 function clickAt(target: EventTarget, x: number, y: number): MouseEvent {
-  const ev = new window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: x, clientY: y })
+  const ev = new window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: x, clientY: y, detail: 1 })
   target.dispatchEvent(ev)
   return ev
 }
@@ -423,10 +425,10 @@ test('with the Chromium preset, a touch-down on the trigger closes the popup and
   assert.equal(sel.isOpened(), false)
   assert.deepEqual(closes, [{ reason: 'scroll-gesture', scrollGesture: { kind: 'touch-start', zone: 'trigger' } }])
   touch('touchend', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
-  sel.triggerEl.click()
+  clickAt(sel.triggerEl, 5, 5)
   assert.equal(sel.isOpened(), false)
   // The next click is the user's own again.
-  sel.triggerEl.click()
+  clickAt(sel.triggerEl, 5, 5)
   assert.equal(sel.isOpened(), true)
   sel.close()
   assert.deepEqual(closes.at(-1), { reason: 'api' })
@@ -438,7 +440,7 @@ test('a touch on the trigger that moves gives no click, so a later click is the 
   touch('touchstart', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
   touch('touchmove', sel.triggerEl, [{ id: 1, x: 5, y: 40 }])
   touch('touchend', sel.triggerEl, [{ id: 1, x: 5, y: 40 }])
-  sel.triggerEl.click()
+  clickAt(sel.triggerEl, 5, 5)
   assert.equal(sel.isOpened(), true)
 })
 
@@ -449,7 +451,7 @@ test('when a tap\'s click has not come within a second, a later click is the use
   touch('touchstart', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
   touch('touchend', sel.triggerEl, [{ id: 1, x: 5, y: 5 }])
   t.mock.timers.tick(1000)
-  sel.triggerEl.click()
+  clickAt(sel.triggerEl, 5, 5)
   assert.equal(sel.isOpened(), true)
 })
 
@@ -473,6 +475,32 @@ test('with the Firefox preset, a touch-down outside closes the popup and the res
   touch('touchend', outside, [{ id: 1, x: 0, y: 40 }])
   touch('touchstart', outside, [{ id: 2, x: 0, y: 100 }])
   assert.equal(touch('touchmove', outside, [{ id: 2, x: 0, y: 40 }]).defaultPrevented, false)
+})
+
+test('a click that no pointer made passes the click swallow of a touch hold, which then takes the tap\'s own click', () => {
+  setupDom('<!doctype html><html><body><div id="mount"></div><p id="outside">page</p><button id="second">second</button></body></html>')
+  const outside = document.getElementById('outside')
+  const second = document.getElementById('second')
+  const el = document.getElementById('mount')
+  assert.ok(outside && second && el)
+  let outsideClicks = 0
+  let secondClicks = 0
+  outside.addEventListener('click', () => { outsideClicks++ })
+  second.addEventListener('click', (ev) => {
+    secondClicks++
+    assert.equal(ev.defaultPrevented, false, 'the click from click() keeps its default')
+  })
+  // The hold starts before the close, so this click() meets its listener;
+  // at (0, 0), it lies within the radius of the touch-down.
+  const sel = new LLSelectSingle<string>(el, { ...behaviorPresetsOfChromiumOnWindows, behaviorOfOutsideClick: 'block', onClose: () => { second.click() } })
+  sel.setItems(['a', 'b', 'c'])
+  sel.open()
+  touch('touchstart', outside, [{ id: 1, x: 10, y: 10 }])
+  assert.equal(sel.isOpened(), false, 'precondition: the touch-down closed the popup')
+  assert.equal(secondClicks, 1, 'the click from click() is not the click of the tap, so it reaches its button')
+  touch('touchend', outside, [{ id: 1, x: 10, y: 10 }])
+  assert.equal(clickAt(outside, 10, 10).defaultPrevented, true)
+  assert.equal(outsideClicks, 0, 'the click of the tap is still swallowed')
 })
 
 test('a touch-down outside that closes swallows its click under behaviorOfOutsideClick block, and not under pass-through', () => {

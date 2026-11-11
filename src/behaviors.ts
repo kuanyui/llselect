@@ -79,6 +79,8 @@ export interface LLSelectScrollGesture {
  *     `'block'`.
  * - Only a click near the touch-down, within one second of the lift, counts
  *   as the tap's click.
+ * - A click from the keyboard or from `click()` never counts as the tap's
+ *   click.
  * @group Behaviors
  */
 export type LLSelectScrollGestureBehavior =
@@ -205,14 +207,15 @@ export interface GestureHost {
 const TAP_SLOP = 16
 /**
  * How far from its touch-down a tap's click may land, in CSS pixels.
- * `base.ts` binds the click swallow of a blocked outside press with it too.
+ * - `base.ts` binds the click swallow of a blocked outside press with it too.
  * @internal
  */
 export const TAP_CLICK_RADIUS = 2 * TAP_SLOP
 /**
- * How long after the touch lifts a tap's click may still come. Browsers can
- * hold it back by about 300 ms on a page without a mobile viewport.
- * `base.ts` waits as long in the click swallow of a blocked outside press.
+ * How long after the touch lifts a tap's click may still come.
+ * - Browsers can hold the click back by about 300 ms on a page without a
+ *   mobile viewport.
+ * - `base.ts` waits as long in the click swallow of a blocked outside press.
  * @internal
  */
 export const CLICK_WAIT_MS = 1000
@@ -367,7 +370,9 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
     if (mousedown === 'swallow') { ev.stopPropagation() }
   }
   const onClick = (ev: MouseEvent): void => {
-    if (!isTapClick(ev)) { return }
+    // A click from the keyboard or from click() has a detail of 0, so it is
+    // not the tap's, whatever its place; the wait goes on.
+    if (ev.detail === 0 || !isTapClick(ev)) { return }
     ev.preventDefault()
     ev.stopPropagation()
     endClick()
