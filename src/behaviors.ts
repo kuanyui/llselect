@@ -65,8 +65,8 @@ export interface LLSelectScrollGesture {
  *   reason `'scroll-gesture'`, and the gesture scrolls nothing.
  * - A `'touch-start'` scrolls nothing by itself, so its page-scroll half acts
  *   only when the popup closes there: it then holds for the rest of that
- *   touch, until a second finger lands. While the popup stays open, each move
- *   of the touch asks again, as a `'touch-drag'`.
+ *   touch, until a second finger lands or a mouse or a pen presses. While the
+ *   popup stays open, each move of the touch asks again, as a `'touch-drag'`.
  * - A close picked for a `'touch-drag'` blocks that one move at most. The
  *   library sees no later move of that touch and blocks none of them.
  * - When a touch-down closes the popup, the click of that tap would reopen

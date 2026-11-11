@@ -101,6 +101,10 @@ Each question here has its own answers.
   - a: the option is chosen, and the popup closes.
   - b: nothing is chosen, and the popup stays open.
   - c: the popup did not open at the press.
+- `drag-from-select-release-outside`: while the popup is closed, press the mouse button on the `<select>` element. Drag into the popup and on out of it while you hold the button, and release outside the popup.
+  - a: nothing is chosen, and the popup stays open.
+  - b: nothing is chosen, and the popup closes.
+  - c: an option is chosen.
 - `drag-inside-highlight`: with the popup open, press on an option, and drag along the list while you hold the button. Did the highlighted option follow the pointer?
   - a: yes.
   - b: no.
@@ -140,7 +144,7 @@ For each platform, these questions have no answer in the record yet. The last se
   - `click-outside-field` and `click-on-select`. For `click-outside-control`, the owner's test found the answer c in all three.
   - `wheel-inside-at-end`, the touchpad scroll questions, the three Ctrl questions and `zoomed-repeat`.
   - Every touchscreen question. The owner has not tested a touchscreen on Linux yet.
-  - `drag-inside-highlight` and `drag-inside-release` in Chromium and Firefox. The record does not say whether its drag started with a press on an option.
+  - `drag-inside-highlight`, `drag-inside-release`, `drag-out-and-release` and `drag-release-on-select` in Chromium and Firefox. The record does not say whether its drags started with a press on an option.
   - In WebKit, `wheel-on-select`, the pinch questions and every mouse drag question.
   - In Chromium, whether the page zooms in `pinch-on-select`; the record says only that the popup closes.
 - Android and iOS: every question. No record covers them.
@@ -156,7 +160,9 @@ For each platform, these questions have no answer in the record yet. The last se
   - The close moment of a swipe says which kind its answer belongs to: a close at the touch-down is a `'touch-start'` answer, and a close when the finger begins to move is a `'touch-drag'` answer.
   - A close when the finger leaves the popup, or when it lifts, needs what a gesture does not carry: the place of the finger, or the kind `'touch-end'`, which the library does not send yet. No preset can copy such a close, so the answer is evidence for the drag behaviors of `TODO.md`.
 - The pinch and Ctrl questions decide `behaviorOfZoomGestureFn`: a is `'leave-popup-open-and-block-page-zoom'`, b is `'leave-popup-open-and-allow-page-zoom'`, c is `'close-popup-and-block-page-zoom'`, and d is `'close-popup-and-allow-page-zoom'`.
-  - On a touchscreen, a pinch answer decides the zoom value only if the popup stayed open until the second finger touched down, the answer b or later of `pinch-first-finger-alone` for that place. If the first finger closed the popup, the answer a, the close is a `'touch-start'` answer of `behaviorOfScrollGestureFn` instead, and the zoom setting was never asked.
+  - On a touchscreen, a pinch answer decides the zoom value only if the popup closed when the second finger touched down, or did not close: the answers b and d of `pinch-first-finger-alone` for that place.
+  - If the first finger closed the popup, the answer a, the close is a `'touch-start'` answer of `behaviorOfScrollGestureFn` instead, and the zoom setting was never asked.
+  - If the popup closed when the fingers moved, the answer c, no preset can copy that close: the library asks the zoom setting once, when the second finger touches down, and keeps the answer. The answer is evidence.
   - A pinch on a touchpad and Ctrl with the mouse wheel decide the zoom value directly.
   - The Ctrl questions also answer an open question of the zoom presets (NEEDS-VERIFICATION-941).
 - The questions with their own answers:
