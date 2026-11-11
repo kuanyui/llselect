@@ -9,6 +9,7 @@ How to read this record:
 - "The `<select>` element" is the control's own box on the page, the box the popup opens from.
 - "The active item" is the highlighted row of the popup, the same highlight a mouse hover over an item shows.
 - "A mouse drag" is moving the mouse while its button is held down.
+- The questions of a later sitting are in `native-select-questionnaire.md`, which the agent asks the owner in the conversation, and which lists the questions that this record does not answer yet.
 
 ## Mouse wheel inside the popup
 
