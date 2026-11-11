@@ -11,8 +11,8 @@ import {
   behaviorPresetsOfFirefoxOnWindows,
   behaviorPresetsOfLLSelectDefault,
   behaviorPresetsOfSafariOnMac,
-  defaultScrollGestureToBehavior,
-  defaultZoomGestureToBehavior,
+  defaultBehaviorOfScrollGesture,
+  defaultBehaviorOfZoomGesture,
 } from '../src/behavior-presets.js'
 
 const KINDS: LLSelectScrollGestureKind[] = ['wheel', 'touch-start', 'touch-drag']
@@ -27,8 +27,8 @@ function table(fn: (g: LLSelectScrollGesture) => LLSelectScrollGestureBehavior):
 }
 
 test('the default behavior blocks the page scroll inside the popup only, and never closes', () => {
-  assert.equal(behaviorPresetsOfLLSelectDefault.scrollGestureToBehaviorFn, defaultScrollGestureToBehavior)
-  assert.deepEqual(table(defaultScrollGestureToBehavior), {
+  assert.equal(behaviorPresetsOfLLSelectDefault.behaviorOfScrollGestureFn, defaultBehaviorOfScrollGesture)
+  assert.deepEqual(table(defaultBehaviorOfScrollGesture), {
     'wheel popup': 'leave-popup-open-and-block-page-scroll',
     'wheel trigger': 'leave-popup-open-and-allow-page-scroll',
     'wheel outside': 'leave-popup-open-and-allow-page-scroll',
@@ -42,7 +42,7 @@ test('the default behavior blocks the page scroll inside the popup only, and nev
 })
 
 test('the Firefox-on-Windows preset blocks every wheel and closes at a touch outside the popup', () => {
-  assert.deepEqual(table(behaviorPresetsOfFirefoxOnWindows.scrollGestureToBehaviorFn), {
+  assert.deepEqual(table(behaviorPresetsOfFirefoxOnWindows.behaviorOfScrollGestureFn), {
     'wheel popup': 'leave-popup-open-and-block-page-scroll',
     'wheel trigger': 'leave-popup-open-and-block-page-scroll',
     'wheel outside': 'leave-popup-open-and-block-page-scroll',
@@ -56,7 +56,7 @@ test('the Firefox-on-Windows preset blocks every wheel and closes at a touch out
 })
 
 test('the Chromium-on-Windows preset closes at a wheel or a touch outside the popup and lets the page scroll', () => {
-  assert.deepEqual(table(behaviorPresetsOfChromiumOnWindows.scrollGestureToBehaviorFn), {
+  assert.deepEqual(table(behaviorPresetsOfChromiumOnWindows.behaviorOfScrollGestureFn), {
     'wheel popup': 'leave-popup-open-and-block-page-scroll',
     'wheel trigger': 'close-popup-and-allow-page-scroll',
     'wheel outside': 'close-popup-and-allow-page-scroll',
@@ -78,18 +78,18 @@ function zoomTable(fn: (g: LLSelectZoomGesture) => LLSelectZoomGestureBehavior):
 }
 
 test('the zoom answers: the default allows every zoom, Firefox blocks every zoom, Chromium blocks inside the popup and closes elsewhere', () => {
-  assert.equal(behaviorPresetsOfLLSelectDefault.zoomGestureToBehaviorFn, defaultZoomGestureToBehavior)
-  assert.deepEqual(zoomTable(defaultZoomGestureToBehavior), {
+  assert.equal(behaviorPresetsOfLLSelectDefault.behaviorOfZoomGestureFn, defaultBehaviorOfZoomGesture)
+  assert.deepEqual(zoomTable(defaultBehaviorOfZoomGesture), {
     popup: 'leave-popup-open-and-allow-page-zoom',
     trigger: 'leave-popup-open-and-allow-page-zoom',
     outside: 'leave-popup-open-and-allow-page-zoom',
   })
-  assert.deepEqual(zoomTable(behaviorPresetsOfFirefoxOnWindows.zoomGestureToBehaviorFn), {
+  assert.deepEqual(zoomTable(behaviorPresetsOfFirefoxOnWindows.behaviorOfZoomGestureFn), {
     popup: 'leave-popup-open-and-block-page-zoom',
     trigger: 'leave-popup-open-and-block-page-zoom',
     outside: 'leave-popup-open-and-block-page-zoom',
   })
-  assert.deepEqual(zoomTable(behaviorPresetsOfChromiumOnWindows.zoomGestureToBehaviorFn), {
+  assert.deepEqual(zoomTable(behaviorPresetsOfChromiumOnWindows.behaviorOfZoomGestureFn), {
     popup: 'leave-popup-open-and-block-page-zoom',
     trigger: 'close-popup-and-allow-page-zoom',
     outside: 'close-popup-and-allow-page-zoom',
@@ -97,7 +97,7 @@ test('the zoom answers: the default allows every zoom, Firefox blocks every zoom
 })
 
 test('the Safari-on-Mac preset blocks every wheel and every zoom, and leaves every touch to the default', () => {
-  assert.deepEqual(table(behaviorPresetsOfSafariOnMac.scrollGestureToBehaviorFn), {
+  assert.deepEqual(table(behaviorPresetsOfSafariOnMac.behaviorOfScrollGestureFn), {
     'wheel popup': 'leave-popup-open-and-block-page-scroll',
     'wheel trigger': 'leave-popup-open-and-block-page-scroll',
     'wheel outside': 'leave-popup-open-and-block-page-scroll',
@@ -108,7 +108,7 @@ test('the Safari-on-Mac preset blocks every wheel and every zoom, and leaves eve
     'touch-drag trigger': 'leave-popup-open-and-allow-page-scroll',
     'touch-drag outside': 'leave-popup-open-and-allow-page-scroll',
   })
-  assert.deepEqual(zoomTable(behaviorPresetsOfSafariOnMac.zoomGestureToBehaviorFn), {
+  assert.deepEqual(zoomTable(behaviorPresetsOfSafariOnMac.behaviorOfZoomGestureFn), {
     popup: 'leave-popup-open-and-block-page-zoom',
     trigger: 'leave-popup-open-and-block-page-zoom',
     outside: 'leave-popup-open-and-block-page-zoom',
@@ -120,13 +120,13 @@ test('the Safari-on-Mac preset blocks every wheel and every zoom, and leaves eve
 class Probe extends LLSelectSingle<string> {
   public readonly seen: LLSelectScrollGesture[] = []
   public readonly zooms: LLSelectZoomGesture[] = []
-  protected override scrollGestureToBehavior(gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior {
+  protected override behaviorOfScrollGesture(gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior {
     this.seen.push(gesture)
-    return super.scrollGestureToBehavior(gesture)
+    return super.behaviorOfScrollGesture(gesture)
   }
-  protected override zoomGestureToBehavior(gesture: LLSelectZoomGesture): LLSelectZoomGestureBehavior {
+  protected override behaviorOfZoomGesture(gesture: LLSelectZoomGesture): LLSelectZoomGestureBehavior {
     this.zooms.push(gesture)
-    return super.zoomGestureToBehavior(gesture)
+    return super.behaviorOfZoomGesture(gesture)
   }
 }
 
@@ -379,7 +379,7 @@ test('the listeners go with the close: a wheel after it reaches nothing', () => 
   assert.deepEqual(sel.seen, [])
 })
 
-test('a subclass that overrides shouldListenForScrollGesturesOutside sees the outside, through scrollGestureToBehavior', () => {
+test('a subclass that overrides shouldListenForScrollGesturesOutside sees the outside, through behaviorOfScrollGesture', () => {
   const { sel, outside } = mount({}, OutsideProbe)
   sel.open()
   assert.equal(wheel(outside).defaultPrevented, false)
@@ -475,9 +475,9 @@ test('with the Firefox preset, a touch-down outside closes the popup and the res
   assert.equal(touch('touchmove', outside, [{ id: 2, x: 0, y: 40 }]).defaultPrevented, false)
 })
 
-test('a touch-down outside that closes swallows its click under outsideClickBehavior block, and not under pass-through', () => {
-  for (const outsideClickBehavior of ['block', 'pass-through'] as const) {
-    const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, outsideClickBehavior })
+test('a touch-down outside that closes swallows its click under behaviorOfOutsideClick block, and not under pass-through', () => {
+  for (const behaviorOfOutsideClick of ['block', 'pass-through'] as const) {
+    const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, behaviorOfOutsideClick })
     let clicks = 0
     let presses = 0
     outside.addEventListener('click', () => { clicks++ })
@@ -489,21 +489,21 @@ test('a touch-down outside that closes swallows its click under outsideClickBeha
     // 'block' the mousedown still reaches the page, as a blocked mouse press does.
     const mousedown = new window.MouseEvent('mousedown', { bubbles: true, cancelable: true })
     outside.dispatchEvent(mousedown)
-    assert.equal(mousedown.defaultPrevented, outsideClickBehavior === 'block', outsideClickBehavior)
-    assert.equal(presses, 1, outsideClickBehavior)
+    assert.equal(mousedown.defaultPrevented, behaviorOfOutsideClick === 'block', behaviorOfOutsideClick)
+    assert.equal(presses, 1, behaviorOfOutsideClick)
     const click = clickAt(outside, 0, 0)
-    assert.equal(click.defaultPrevented, outsideClickBehavior === 'block', outsideClickBehavior)
-    assert.equal(clicks, outsideClickBehavior === 'block' ? 0 : 1, outsideClickBehavior)
+    assert.equal(click.defaultPrevented, behaviorOfOutsideClick === 'block', behaviorOfOutsideClick)
+    assert.equal(clicks, behaviorOfOutsideClick === 'block' ? 0 : 1, behaviorOfOutsideClick)
     // Under 'block' the tap's click ends the hold, and under 'pass-through'
     // there is no hold, so a later press is the user's own.
     const later = new window.MouseEvent('mousedown', { bubbles: true, cancelable: true })
     outside.dispatchEvent(later)
-    assert.equal(later.defaultPrevented, false, outsideClickBehavior)
+    assert.equal(later.defaultPrevented, false, behaviorOfOutsideClick)
   }
 })
 
 test('a hold that ends removes every listener it added, with the same function and capture flag', (t) => {
-  const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, outsideClickBehavior: 'block' })
+  const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, behaviorOfOutsideClick: 'block' })
   sel.open()
   // Spied after open(), so the added listeners recorded here are only the
   // hold's, not the listeners that open() adds to the document.
@@ -526,9 +526,9 @@ test('a hold that ends removes every listener it added, with the same function a
 
 test('a copy of the default function, as the presets bundle holds, counts as the default', () => {
   // The two bundles share no code, so each holds its own copy, with the mark.
-  const copy = (gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior => defaultScrollGestureToBehavior(gesture)
-  Object.defineProperty(copy, Symbol.for('llselect.defaultScrollGestureToBehavior'), { value: true })
-  const { sel, outside } = mount({ scrollGestureToBehaviorFn: copy })
+  const copy = (gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior => defaultBehaviorOfScrollGesture(gesture)
+  Object.defineProperty(copy, Symbol.for('llselect.defaultBehaviorOfScrollGesture'), { value: true })
+  const { sel, outside } = mount({ behaviorOfScrollGestureFn: copy })
   sel.open()
   wheel(outside)
   assert.deepEqual(sel.seen, [])
@@ -619,14 +619,14 @@ test('a gesture inside an open shadow root in the popup counts as the popup', ()
 })
 
 test('in a closed shadow root, a touch-down inside the popup reaches the function as outside, so its click is swallowed under block only', (t) => {
-  for (const outsideClickBehavior of ['block', 'pass-through'] as const) {
+  for (const behaviorOfOutsideClick of ['block', 'pass-through'] as const) {
     setupDom('<!doctype html><html><body><div id="host"></div><p id="outside">page</p></body></html>')
     const host = document.getElementById('host')
     const outside = document.getElementById('outside')
     assert.ok(host && outside)
     const el = document.createElement('div')
     host.attachShadow({ mode: 'closed' }).appendChild(el)
-    const sel = new Probe(el, { scrollGestureToBehaviorFn: () => 'close-popup-and-allow-page-scroll', outsideClickBehavior })
+    const sel = new Probe(el, { behaviorOfScrollGestureFn: () => 'close-popup-and-allow-page-scroll', behaviorOfOutsideClick })
     sel.setItems(['a', 'b', 'c'])
     let clicks = 0
     outside.addEventListener('click', () => { clicks++ })
@@ -635,15 +635,15 @@ test('in a closed shadow root, a touch-down inside the popup reaches the functio
     assert.ok(row)
     const hostAdd = t.mock.method(host, 'addEventListener')
     touch('touchstart', row, [{ id: 1, x: 10, y: 10 }])
-    assert.deepEqual(sel.seen, [{ kind: 'touch-start', zone: 'outside' }], outsideClickBehavior)
-    assert.equal(sel.isOpened(), false, outsideClickBehavior)
+    assert.deepEqual(sel.seen, [{ kind: 'touch-start', zone: 'outside' }], behaviorOfOutsideClick)
+    assert.equal(sel.isOpened(), false, behaviorOfOutsideClick)
     // Only a hold that swallows the click is attached, and it sits on the shadow host.
-    const held = outsideClickBehavior === 'block' ? ['touchcancel', 'touchend', 'touchmove'] : []
-    assert.deepEqual(hostAdd.mock.calls.map((call) => call.arguments[0]).sort(), held, outsideClickBehavior)
+    const held = behaviorOfOutsideClick === 'block' ? ['touchcancel', 'touchend', 'touchmove'] : []
+    assert.deepEqual(hostAdd.mock.calls.map((call) => call.arguments[0]).sort(), held, behaviorOfOutsideClick)
     touch('touchend', row, [{ id: 1, x: 10, y: 10 }])
     const click = clickAt(outside, 10, 10)
-    assert.equal(click.defaultPrevented, outsideClickBehavior === 'block', outsideClickBehavior)
-    assert.equal(clicks, outsideClickBehavior === 'block' ? 0 : 1, outsideClickBehavior)
+    assert.equal(click.defaultPrevented, behaviorOfOutsideClick === 'block', behaviorOfOutsideClick)
+    assert.equal(clicks, behaviorOfOutsideClick === 'block' ? 0 : 1, behaviorOfOutsideClick)
   }
 })
 
@@ -666,7 +666,7 @@ test('when one of two fingers lifts, the other one stays ignored', () => {
 })
 
 test('with the Chromium preset, the rest of a touch that closed the popup scrolls as usual, through a passive listener', (t) => {
-  const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, outsideClickBehavior: 'block' })
+  const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, behaviorOfOutsideClick: 'block' })
   const spy = t.mock.method(outside, 'addEventListener')
   sel.open()
   touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
@@ -722,7 +722,7 @@ test('with a preset, a tap on the clear button closes the popup and still clears
 })
 
 test('a touch-down that closes the popup from inside it swallows the click that would reach the page under it', () => {
-  const { sel, outside } = mount({ scrollGestureToBehaviorFn: () => 'close-popup-and-allow-page-scroll' })
+  const { sel, outside } = mount({ behaviorOfScrollGestureFn: () => 'close-popup-and-allow-page-scroll' })
   let clicks = 0
   outside.addEventListener('click', () => { clicks++ })
   sel.open()
@@ -803,7 +803,7 @@ test('with a preset, a tap on a chip\'s text closes the popup and its click does
 })
 
 test('a second finger ends the rest of a touch that closed the popup, so a pinch is not blocked and no click is swallowed', () => {
-  const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows, outsideClickBehavior: 'block' })
+  const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows, behaviorOfOutsideClick: 'block' })
   let clicks = 0
   outside.addEventListener('click', () => { clicks++ })
   sel.open()
@@ -859,7 +859,7 @@ test('with the Chromium preset, two fingers that land together on the trigger cl
 })
 
 test('a close that blocks the zoom holds the rest of the touch until every finger lifts', () => {
-  const { sel, outside, closes } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  const { sel, outside, closes } = mount({ behaviorOfZoomGestureFn: () => 'close-popup-and-block-page-zoom' })
   sel.open()
   const row = sel.popupListEl.firstElementChild
   assert.ok(row)
@@ -878,7 +878,7 @@ test('a close that blocks the zoom holds the rest of the touch until every finge
 
 test('a zoom hold follows each finger, also one whose row the close removed, and ends at the last lift in either order', () => {
   for (const order of ['b-first', 'a-first'] as const) {
-    const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+    const { sel, outside } = mount({ behaviorOfZoomGestureFn: () => 'close-popup-and-block-page-zoom' })
     sel.open()
     const rowA = sel.popupListEl.children[0]
     const rowB = sel.popupListEl.children[1]
@@ -904,7 +904,7 @@ test('a zoom hold follows each finger, also one whose row the close removed, and
 })
 
 test('a zoom hold blocks the touch-down of a finger that lands while it lasts', () => {
-  const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  const { sel, outside } = mount({ behaviorOfZoomGestureFn: () => 'close-popup-and-block-page-zoom' })
   sel.open()
   const row = sel.popupListEl.firstElementChild
   assert.ok(row)
@@ -932,7 +932,7 @@ test('a first finger that no listener saw still gives the zoom its zone', () => 
 })
 
 test('destroy() ends every touch hold, also one that started before the popup was reopened', () => {
-  const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  const { sel, outside } = mount({ behaviorOfZoomGestureFn: () => 'close-popup-and-block-page-zoom' })
   sel.open()
   const row = sel.popupListEl.firstElementChild
   assert.ok(row)
@@ -953,7 +953,7 @@ test('destroy() ends every touch hold, also one that started before the popup wa
 })
 
 test('an older zoom hold takes in a finger that lands while it lasts, and ends at that finger\'s lift on its removed row', () => {
-  const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  const { sel, outside } = mount({ behaviorOfZoomGestureFn: () => 'close-popup-and-block-page-zoom' })
   sel.open()
   const row = sel.popupListEl.firstElementChild
   assert.ok(row)
@@ -980,7 +980,7 @@ test('an older zoom hold follows a later finger inside an open shadow root, whos
   assert.ok(shadowHost && outside)
   const el = document.createElement('div')
   shadowHost.attachShadow({ mode: 'open' }).appendChild(el)
-  const sel = new Probe(el, { zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  const sel = new Probe(el, { behaviorOfZoomGestureFn: () => 'close-popup-and-block-page-zoom' })
   sel.setItems(['a', 'b', 'c'])
   sel.open()
   const row = sel.popupListEl.firstElementChild
@@ -1003,7 +1003,7 @@ test('an older zoom hold follows a later finger inside an open shadow root, whos
 })
 
 test('a zoom hold removes every listener it added, also on a target that two later fingers shared', (t) => {
-  const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  const { sel, outside } = mount({ behaviorOfZoomGestureFn: () => 'close-popup-and-block-page-zoom' })
   sel.open()
   const row = sel.popupListEl.firstElementChild
   assert.ok(row)
@@ -1028,7 +1028,7 @@ test('a zoom hold removes every listener it added, also on a target that two lat
 })
 
 test('a zoom hold keeps blocking after a partial touchcancel, and ends at the last one', () => {
-  const { sel, outside } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  const { sel, outside } = mount({ behaviorOfZoomGestureFn: () => 'close-popup-and-block-page-zoom' })
   sel.open()
   const row = sel.popupListEl.firstElementChild
   assert.ok(row)
@@ -1059,7 +1059,7 @@ test('an unseen first finger inside a shadow root within the popup gives the zoo
 })
 
 test('destroy() ends the hold of a zoom that closed the popup and blocks the zoom', () => {
-  const { sel } = mount({ zoomGestureToBehaviorFn: () => 'close-popup-and-block-page-zoom' })
+  const { sel } = mount({ behaviorOfZoomGestureFn: () => 'close-popup-and-block-page-zoom' })
   sel.open()
   const row = sel.popupListEl.firstElementChild
   assert.ok(row)
@@ -1087,7 +1087,7 @@ test('the touch-down listeners can cancel a second finger: always on the popup a
 })
 
 test('a move with two touches, whose second touch-down no listener saw, also ends the hold', () => {
-  const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows, outsideClickBehavior: 'block' })
+  const { sel, outside } = mount({ ...behaviorPresetsOfFirefoxOnWindows, behaviorOfOutsideClick: 'block' })
   let clicks = 0
   outside.addEventListener('click', () => { clicks++ })
   sel.open()
@@ -1166,7 +1166,7 @@ test('a hold that ends by itself reports its end with the function that started 
 })
 
 test('a close from inside the popup stops the compatibility mousedown before it reaches the page under the popup', () => {
-  const { sel, outside } = mount({ scrollGestureToBehaviorFn: () => 'close-popup-and-allow-page-scroll' })
+  const { sel, outside } = mount({ behaviorOfScrollGestureFn: () => 'close-popup-and-allow-page-scroll' })
   let pressed = 0
   outside.addEventListener('mousedown', () => { pressed++ })
   sel.open()
@@ -1191,7 +1191,7 @@ test('a close from the trigger leaves the compatibility mousedown unprevented, s
 })
 
 test('destroy() also ends the wait for the tap\'s click', () => {
-  const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, outsideClickBehavior: 'block' })
+  const { sel, outside } = mount({ ...behaviorPresetsOfChromiumOnWindows, behaviorOfOutsideClick: 'block' })
   let clicks = 0
   outside.addEventListener('click', () => { clicks++ })
   sel.open()
@@ -1228,7 +1228,7 @@ test('the tap\'s click lands within 32 px of the touch-down; a click 33 px away 
 test('a close picked for a touch-drag blocks that one move only', () => {
   const closeAtDragOutside = (gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior =>
     gesture.kind === 'touch-drag' && gesture.zone === 'outside' ? 'close-popup-and-block-page-scroll' : 'leave-popup-open-and-allow-page-scroll'
-  const { sel, outside } = mount({ scrollGestureToBehaviorFn: closeAtDragOutside })
+  const { sel, outside } = mount({ behaviorOfScrollGestureFn: closeAtDragOutside })
   sel.open()
   touch('touchstart', outside, [{ id: 1, x: 0, y: 100 }])
   assert.equal(touch('touchmove', outside, [{ id: 1, x: 0, y: 80 }]).defaultPrevented, true)

@@ -80,7 +80,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 
 > No **before** counterpart: there is no `ll-on-before-close`.
 
-- `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the select component), `'blur'` (DOM focus left the select component), `'trigger-buttons'` (DOM focus moved into the trigger buttons strip, the row of the clear button and the chips' remove buttons; no `ll-on-blur` follows), `'toggle'` (a click in the trigger wrapper, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed), `'hidden'` (the trigger scrolled out of view or was clipped), `'scroll-gesture'` (a wheel or a touch for which [`ll-scroll-gesture-to-behavior-fn`](#ll-scroll-gesture-to-behavior-fn) picked a behavior that closes the popup) or `'zoom-gesture'` (a two-finger zoom, or a wheel with Ctrl held, for which [`ll-zoom-gesture-to-behavior-fn`](#ll-zoom-gesture-to-behavior-fn) picked a behavior that closes the popup).
+- `$reason` is one of `'choose'` (a pick in single mode, vetoed or not), `'escape'` (Escape or Alt+ArrowUp on the trigger or the filter input, and Escape on a slot control), `'outside'` (a press outside the select component), `'blur'` (DOM focus left the select component), `'trigger-buttons'` (DOM focus moved into the trigger buttons strip, the row of the clear button and the chips' remove buttons; no `ll-on-blur` follows), `'toggle'` (a click in the trigger wrapper, or `instance().toggle()`), `'api'` (`instance().close()`), `'disabled'` (the control was disabled), `'destroy'` (the element was destroyed), `'hidden'` (the trigger scrolled out of view or was clipped), `'scroll-gesture'` (a wheel or a touch for which [`ll-behavior-of-scroll-gesture-fn`](#ll-behavior-of-scroll-gesture-fn) picked a behavior that closes the popup) or `'zoom-gesture'` (a two-finger zoom, or a wheel with Ctrl held, for which [`ll-behavior-of-zoom-gesture-fn`](#ll-behavior-of-zoom-gesture-fn) picked a behavior that closes the popup).
 - `$scrollGesture` holds the gesture that closed the popup, `{ kind, zone }`, when `$reason` is `'scroll-gesture'`. For every other reason, it is `undefined`.
 - `$zoomGesture` holds the gesture that closed the popup, `{ zone }`, when `$reason` is `'zoom-gesture'`. For every other reason, it is `undefined`.
 - Same rules as [`ll-on-open`](#ll-on-open), except that `ll-on-close` fires when a listener closes the select component while `showPopover()` shows the popup, and when a function that the `open()` call runs closes it.
@@ -110,7 +110,7 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 > No **before** counterpart: there is no `ll-on-before-blur`, and the `focusin` / `focusout` events the library observes are not cancelable, so none could stop the move.
 
 - Fires when focus moves to an element outside the select component or to nowhere: Tab away, a click outside, a click on a non-focusable area.
-- While the popup is open with llselect's default [`ll-outside-click-behavior`](#ll-outside-click-behavior), `'block'`, a click outside moves no focus, so the expression does not run.
+- While the popup is open with llselect's default [`ll-behavior-of-outside-click`](#ll-behavior-of-outside-click), `'block'`, a click outside moves no focus, so the expression does not run.
 - Does not fire for a focus move inside the select component.
 - The directive marks the control touched first, in the same digest, so the expression already sees `$touched === true` (see [`ng-model`](#ng-model)).
 - When focus leaving closes the popup, [`ll-on-close`](#ll-on-close) runs first; `instance().isOpened()` is already `false` here.
@@ -293,34 +293,34 @@ $scope.ifaceMatch = function (i, query) {
 - `'light'` or `'dark'`: the select component shows that scheme. The CSS sources and the operating system do not matter. The bootstrap-5 theme still takes its colors from Bootstrap's own CSS variables; see the core README section "Dark color scheme".
 - The select component's root element receives `data-llselect-color-scheme="light"` or `data-llselect-color-scheme="dark"`. The themes apply their dark colors when the value is `dark`.
 
-### `ll-scroll-gesture-to-behavior-fn`
+### `ll-behavior-of-scroll-gesture-fn`
 
-**Expression** -> `scrollGestureToBehaviorFn`. Decides what a wheel or a touch does while the popup is open.
+**Expression** -> `behaviorOfScrollGestureFn`. Decides what a wheel or a touch does while the popup is open.
 
 - Evaluated once at link time to a function `(gesture) => behavior`.
-- llselect calls it outside any digest, on the wheels and the one-finger touches that the core setting `scrollGestureToBehaviorFn` lists, while the popup is open.
+- llselect calls it outside any digest, on the wheels and the one-finger touches that the core setting `behaviorOfScrollGestureFn` lists, while the popup is open.
 - When the attribute holds a function other than the default, llselect listens on the whole page while the popup is open, so every scroll of the page waits for that listener.
 - Without it, a wheel or a drag inside the popup does not scroll the page. Outside the popup, the page scrolls and the popup stays open.
 - When a gesture closes the popup, [`ll-on-close`](#ll-on-close) gets `$reason` `'scroll-gesture'` and the gesture in `$scrollGesture`.
-- For the gesture, the four behaviors and the cases llselect leaves alone, see the core setting `scrollGestureToBehaviorFn` under `LLSelectBaseSettings` in the API reference.
+- For the gesture, the four behaviors and the cases llselect leaves alone, see the core setting `behaviorOfScrollGestureFn` under `LLSelectBaseSettings` in the API reference.
 - The Firefox, Chromium and Safari presets copy the native select of one browser on one operating system.
-- A preset also holds a function for two-finger zooms; see [`ll-zoom-gesture-to-behavior-fn`](#ll-zoom-gesture-to-behavior-fn).
-- A preset also holds an `outsideClickBehavior`; see [`ll-outside-click-behavior`](#ll-outside-click-behavior).
+- A preset also holds a function for two-finger zooms; see [`ll-behavior-of-zoom-gesture-fn`](#ll-behavior-of-zoom-gesture-fn).
+- A preset also holds an `behaviorOfOutsideClick`; see [`ll-behavior-of-outside-click`](#ll-behavior-of-outside-click).
 
 To copy the native select of one browser on one operating system, load `behavior-presets.umd.js`, which sets `window.llselectBehaviorPresets`, and hand a preset's function to the attribute:
 
 ```js
-$scope.scrollGestureToBehavior = llselectBehaviorPresets.behaviorPresetsOfFirefoxOnWindows.scrollGestureToBehaviorFn
+$scope.behaviorOfScrollGesture = llselectBehaviorPresets.behaviorPresetsOfFirefoxOnWindows.behaviorOfScrollGestureFn
 ```
 
 ```html
-<llselect-single ng-model="picked" ll-scroll-gesture-to-behavior-fn="scrollGestureToBehavior"
+<llselect-single ng-model="picked" ll-behavior-of-scroll-gesture-fn="behaviorOfScrollGesture"
   ll-options="f for f in fruits"></llselect-single>
 ```
 
-### `ll-zoom-gesture-to-behavior-fn`
+### `ll-behavior-of-zoom-gesture-fn`
 
-**Expression** -> `zoomGestureToBehaviorFn`. Decides what a two-finger zoom does while the popup is open.
+**Expression** -> `behaviorOfZoomGestureFn`. Decides what a two-finger zoom does while the popup is open.
 
 - llselect calls it outside any digest, while the popup is open:
   - **once** per touch, when a second finger lands;
@@ -329,9 +329,9 @@ $scope.scrollGestureToBehavior = llselectBehaviorPresets.behaviorPresetsOfFirefo
 - When the attribute holds a function other than the default, llselect listens on the whole page while the popup is open, so every scroll of the page waits for that listener.
 - Without it, every zoom zooms the page, and the popup stays open.
 - When a zoom closes the popup, [`ll-on-close`](#ll-on-close) gets `$reason` `'zoom-gesture'` and the gesture in `$zoomGesture`.
-- For the gesture and the four behaviors, see the core setting `zoomGestureToBehaviorFn` under `LLSelectBaseSettings` in the API reference.
+- For the gesture and the four behaviors, see the core setting `behaviorOfZoomGestureFn` under `LLSelectBaseSettings` in the API reference.
 
-To copy a whole preset, hand its two functions and its `outsideClickBehavior` to the three attributes:
+To copy a whole preset, hand its two functions and its `behaviorOfOutsideClick` to the three attributes:
 
 ```js
 $scope.preset = llselectBehaviorPresets.behaviorPresetsOfFirefoxOnWindows
@@ -339,19 +339,19 @@ $scope.preset = llselectBehaviorPresets.behaviorPresetsOfFirefoxOnWindows
 
 ```html
 <llselect-single ng-model="picked" ll-options="f for f in fruits"
-  ll-scroll-gesture-to-behavior-fn="preset.scrollGestureToBehaviorFn"
-  ll-zoom-gesture-to-behavior-fn="preset.zoomGestureToBehaviorFn"
-  ll-outside-click-behavior="preset.outsideClickBehavior"></llselect-single>
+  ll-behavior-of-scroll-gesture-fn="preset.behaviorOfScrollGestureFn"
+  ll-behavior-of-zoom-gesture-fn="preset.behaviorOfZoomGestureFn"
+  ll-behavior-of-outside-click="preset.behaviorOfOutsideClick"></llselect-single>
 ```
 
-### `ll-outside-click-behavior`
+### `ll-behavior-of-outside-click`
 
-**Expression** -> `outsideClickBehavior`. `'block'` (llselect's default) / `'pass-through'` - quoted: `ll-outside-click-behavior="'pass-through'"`.
+**Expression** -> `behaviorOfOutsideClick`. `'block'` (llselect's default) / `'pass-through'` - quoted: `ll-behavior-of-outside-click="'pass-through'"`.
 
 - `'block'`: while the popup is open, a click outside the select component closes the popup and does nothing else.
 - With `'block'`, a user who only wants to close the popup cannot press a button or a link by mistake.
 - `'pass-through'`: the click closes the popup and also reaches the element under it.
-- For the details, see the core setting `outsideClickBehavior` under `LLSelectBaseSettings` in the API reference.
+- For the details, see the core setting `behaviorOfOutsideClick` under `LLSelectBaseSettings` in the API reference.
 - [`<ui-llselect>`](#ui-llselect) has no such attribute. It always lets the click through, as ui-select does.
 
 ### `ll-arrow`
@@ -757,7 +757,7 @@ Migrating a call site, at a glance:
 
 - Scoping rule: **bridge what llselect has; ignore what it does not.** Nothing is half-implemented to look compatible.
 - It always renders the chevron - every ui-select theme has a caret, so a bare trigger would read as broken.
-- While the popup is open, a click outside the select component closes the popup and still reaches the element under it, as in ui-select. The bridge sets `outsideClickBehavior: 'pass-through'` for this, while the two llselect directives keep llselect's default, `'block'`.
+- While the popup is open, a click outside the select component closes the popup and still reaches the element under it, as in ui-select. The bridge sets `behaviorOfOutsideClick: 'pass-through'` for this, while the two llselect directives keep llselect's default, `'block'`.
 - From [`llselectConfigProvider`](#llselectconfigprovider) it takes the five keys ui-select's markup has no word for: `uiTranslationPack`, `popupWidthPolicy`, `colorScheme`, `popupDistanceFromTriggerWrapper` and `popupDistanceFromViewportEdge`. The other three follow ui-select: the caret is always rendered (`arrow`), `search-enabled` is ui-select's word for `filterable`, and `highlight` is the row template's own `| highlight:` filter.
 - It publishes a controller under `uiLlselect` with `instance()`, the same door as the two llselect directives, so [Reaching the instance from your own directive](#reaching-the-instance-from-your-own-directive) and [Switching the UI language at runtime](#switching-the-ui-language-at-runtime) cover it.
 - `$touched` turns true when DOM focus leaves the select component, as on the two llselect directives (see [`ng-model`](#ng-model)). ui-select's markup has no attribute for the blur itself, and none is added.

@@ -43,10 +43,10 @@ test('block is the default: an outside press keeps focus, its click closes the p
 })
 
 test('the default is the value of behaviorPresetsOfLLSelectDefault, and each preset carries its own outside click', () => {
-  assert.equal(behaviorPresetsOfLLSelectDefault.outsideClickBehavior, 'block')
-  assert.equal(behaviorPresetsOfChromiumOnWindows.outsideClickBehavior, 'pass-through')
-  assert.equal(behaviorPresetsOfFirefoxOnWindows.outsideClickBehavior, 'pass-through')
-  assert.equal(behaviorPresetsOfSafariOnMac.outsideClickBehavior, 'block')
+  assert.equal(behaviorPresetsOfLLSelectDefault.behaviorOfOutsideClick, 'block')
+  assert.equal(behaviorPresetsOfChromiumOnWindows.behaviorOfOutsideClick, 'pass-through')
+  assert.equal(behaviorPresetsOfFirefoxOnWindows.behaviorOfOutsideClick, 'pass-through')
+  assert.equal(behaviorPresetsOfSafariOnMac.behaviorOfOutsideClick, 'block')
   // Spread into the settings, the preset's value reaches the outside click.
   const chromium = mountWithButton({ ...behaviorPresetsOfChromiumOnWindows })
   chromium.sel.open()
@@ -104,7 +104,7 @@ test('block: the swallow of an outside press ends with the press, so a later cli
 })
 
 test('pass-through: mousedown outside closes; click still triggers outside button', () => {
-  const { sel, btn, calls } = mountWithButton({ outsideClickBehavior: 'pass-through' })
+  const { sel, btn, calls } = mountWithButton({ behaviorOfOutsideClick: 'pass-through' })
   sel.open()
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'true')
 
@@ -141,7 +141,7 @@ test('MEDIUM-76 (block mode): an inside click in a shadow root does not close', 
   document.body.appendChild(host)
   const mountEl = document.createElement('div')
   host.attachShadow({ mode: 'open' }).appendChild(mountEl)
-  const sel = new LLSelectSingle<string>(mountEl, { ariaLabel: 'x', outsideClickBehavior: 'block' })
+  const sel = new LLSelectSingle<string>(mountEl, { ariaLabel: 'x', behaviorOfOutsideClick: 'block' })
   sel.setItems(['a', 'b'])
   sel.open()
   assert.equal(sel.isOpened(), true, 'precondition: open')
@@ -159,7 +159,7 @@ test('block: click outside closes; outside button does NOT receive click', () =>
   const btn = document.getElementById('other') as HTMLButtonElement
   const calls: number[] = []
   btn.addEventListener('click', () => { calls.push(1) })
-  const sel = new LLSelectSingle<string>(mount, { outsideClickBehavior: 'block' })
+  const sel = new LLSelectSingle<string>(mount, { behaviorOfOutsideClick: 'block' })
   sel.setItems(['a', 'b'])
   sel.open()
 
@@ -184,7 +184,7 @@ test('block: focus shifting on mousedown before click does not unhook the block 
   const btn = document.getElementById('other') as HTMLButtonElement
   const calls: number[] = []
   btn.addEventListener('click', () => { calls.push(1) })
-  const sel = new LLSelectSingle<string>(mount, { outsideClickBehavior: 'block' })
+  const sel = new LLSelectSingle<string>(mount, { behaviorOfOutsideClick: 'block' })
   sel.setItems(['a', 'b'])
   sel.triggerEl.focus()
   sel.open()
@@ -202,7 +202,7 @@ test('block: focus shifting on mousedown before click does not unhook the block 
 })
 
 test('click on trigger itself does not trigger outside-close (pass-through)', () => {
-  const { sel } = mountWithButton({ outsideClickBehavior: 'pass-through' })
+  const { sel } = mountWithButton({ behaviorOfOutsideClick: 'pass-through' })
   sel.open()
   // mousedown on trigger should NOT close (target is inside rootEl).
   fireMousedown(sel.triggerEl)
@@ -210,7 +210,7 @@ test('click on trigger itself does not trigger outside-close (pass-through)', ()
 })
 
 test('click on option in popup does not trigger outside-close (pass-through)', () => {
-  const { sel } = mountWithButton({ outsideClickBehavior: 'pass-through' })
+  const { sel } = mountWithButton({ behaviorOfOutsideClick: 'pass-through' })
   sel.open()
   const firstOption = sel.popupListEl.querySelector<HTMLElement>('[role="option"]')!
   fireMousedown(firstOption)
@@ -220,7 +220,7 @@ test('click on option in popup does not trigger outside-close (pass-through)', (
 })
 
 test('listener is detached after close so further outside clicks do nothing (pass-through)', () => {
-  const { sel, btn, calls } = mountWithButton({ outsideClickBehavior: 'pass-through' })
+  const { sel, btn, calls } = mountWithButton({ behaviorOfOutsideClick: 'pass-through' })
   sel.open()
   fireMousedown(btn)
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')
@@ -230,7 +230,7 @@ test('listener is detached after close so further outside clicks do nothing (pas
 })
 
 test('reopen reattaches listener (pass-through)', () => {
-  const { sel, btn } = mountWithButton({ outsideClickBehavior: 'pass-through' })
+  const { sel, btn } = mountWithButton({ behaviorOfOutsideClick: 'pass-through' })
   sel.open()
   fireMousedown(btn)
   assert.equal(sel.triggerEl.getAttribute('aria-expanded'), 'false')

@@ -409,7 +409,7 @@
     // 'pass-through' and not llselect's default 'block': ui-select closes its
     // dropdown from a click listener on the document and lets that click
     // reach what it lands on (uiSelectDirective.js, onDocumentClick).
-    settings.outsideClickBehavior = 'pass-through'
+    settings.behaviorOfOutsideClick = 'pass-through'
 
     var gate = { suppressed: false }
     function withoutWriteBack(fn) {

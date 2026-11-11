@@ -153,13 +153,13 @@ test('focus leaving still closes the popup when neither listener is set', () => 
   assert.equal(sel.isOpened(), false)
 })
 
-test('outsideClickBehavior block: an outside press while open closes without onBlur, since the press never moves focus', () => {
+test('behaviorOfOutsideClick block: an outside press while open closes without onBlur, since the press never moves focus', () => {
   const { el, outside } = mount()
   const log: string[] = []
   const sel = new LLSelectSingle<string>(el, {
     ariaLabel: 'x',
     filterable: true,
-    outsideClickBehavior: 'block',
+    behaviorOfOutsideClick: 'block',
     onFocus: () => { log.push('focus') },
     onBlur: () => { log.push('blur') },
     onClose: () => { log.push('close') },

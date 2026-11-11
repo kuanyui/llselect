@@ -17,13 +17,13 @@ function key(el: HTMLElement, k: string, init: KeyboardEventInit = {}): void {
   el.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true, ...init }))
 }
 
-function logged(el: HTMLElement, extra: { filterable?: boolean; outsideClickBehavior?: 'pass-through' | 'block' } = {}): { sel: LLSelectSingle<string>; opens: LLSelectOpenReason[]; closes: LLSelectCloseReason[] } {
+function logged(el: HTMLElement, extra: { filterable?: boolean; behaviorOfOutsideClick?: 'pass-through' | 'block' } = {}): { sel: LLSelectSingle<string>; opens: LLSelectOpenReason[]; closes: LLSelectCloseReason[] } {
   const opens: LLSelectOpenReason[] = []
   const closes: LLSelectCloseReason[] = []
   const sel = new LLSelectSingle<string>(el, {
     ariaLabel: 'x',
     filterable: extra.filterable ?? false,
-    outsideClickBehavior: extra.outsideClickBehavior ?? 'pass-through',
+    behaviorOfOutsideClick: extra.behaviorOfOutsideClick ?? 'pass-through',
     onOpen: (meta) => { opens.push(meta.reason) },
     onClose: (meta) => { closes.push(meta.reason) },
   })
@@ -96,7 +96,7 @@ test('close reason: escape on a control inside a slot, outside under block, and 
   const closes: LLSelectCloseReason[] = []
   const sel = new LLSelectMultiple<string>(el, {
     ariaLabel: 'x',
-    outsideClickBehavior: 'block',
+    behaviorOfOutsideClick: 'block',
     createPopupFooterContentElFn: () => { const b = document.createElement('button'); b.textContent = 'ok'; return b },
     onClose: (meta) => { closes.push(meta.reason) },
   })

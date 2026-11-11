@@ -695,13 +695,13 @@ test('ll-filter-fn drives the search box beyond the label-text default', () => {
   assert.equal(rows[0].textContent, 'vlan 2')
 })
 
-test('ll-scroll-gesture-to-behavior-fn picks the behavior of a scroll gesture, and ll-on-close exposes $scrollGesture', () => {
+test('ll-behavior-of-scroll-gesture-fn picks the behavior of a scroll gesture, and ll-on-close exposes $scrollGesture', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm">
       <p id="outside">page</p>
       <span id="n">{{vm.log.join(',')}}</span>
-      <llselect-single ng-model="vm.x" ll-scroll-gesture-to-behavior-fn="vm.toBehavior"
+      <llselect-single ng-model="vm.x" ll-behavior-of-scroll-gesture-fn="vm.toBehavior"
         ll-on-close="vm.log.push($reason + ($scrollGesture ? ':' + $scrollGesture.kind + ':' + $scrollGesture.zone : ''))"
         ll-options="f for f in vm.fruits"></llselect-single></div>`,
     controller: function () {
@@ -729,13 +729,13 @@ test('ll-scroll-gesture-to-behavior-fn picks the behavior of a scroll gesture, a
   assert.deepEqual(a.errors, [])
 })
 
-test('ll-zoom-gesture-to-behavior-fn picks the behavior of a zoom gesture, and ll-on-close exposes $zoomGesture', () => {
+test('ll-behavior-of-zoom-gesture-fn picks the behavior of a zoom gesture, and ll-on-close exposes $zoomGesture', () => {
   const a = boot({
     deps: ['llselect'],
     html: `<div ng-controller="C as vm">
       <p id="outside">page</p>
       <span id="n">{{vm.log.join(',')}}</span>
-      <llselect-single ng-model="vm.x" ll-zoom-gesture-to-behavior-fn="vm.toBehavior"
+      <llselect-single ng-model="vm.x" ll-behavior-of-zoom-gesture-fn="vm.toBehavior"
         ll-on-close="vm.log.push($reason + ($zoomGesture ? ':' + $zoomGesture.zone : ''))"
         ll-options="f for f in vm.fruits"></llselect-single></div>`,
     controller: function () {
@@ -763,14 +763,14 @@ test('ll-zoom-gesture-to-behavior-fn picks the behavior of a zoom gesture, and l
   assert.deepEqual(a.errors, [])
 })
 
-test("the llselect directives swallow an outside click by default, and ll-outside-click-behavior=\"'pass-through'\" lets it through", () => {
+test("the llselect directives swallow an outside click by default, and ll-behavior-of-outside-click=\"'pass-through'\" lets it through", () => {
   for (const [tag, controller] of [['llselect-single', 'llselectSingle'], ['llselect-multiple', 'llselectMultiple']]) {
     const a = boot({
       deps: ['llselect'],
       html: `<div ng-controller="C as vm">
         <button id="outside">page</button>
         <${tag} id="blocking" ng-model="vm.x" ll-options="f for f in vm.fruits"></${tag}>
-        <${tag} id="passing" ng-model="vm.y" ll-outside-click-behavior="'pass-through'"
+        <${tag} id="passing" ng-model="vm.y" ll-behavior-of-outside-click="'pass-through'"
           ll-options="f for f in vm.fruits"></${tag}></div>`,
       controller: function () {
         this.fruits = FRUITS.slice()
@@ -815,7 +815,7 @@ test('an enum attribute that is not a string warns and keeps the default, the ap
     a = boot({
       deps: ['llselect'],
       html: `<div ng-controller="C as vm">
-        <llselect-single name="s" ng-model="vm.x" ll-aria-label="F" ll-outside-click-behavior="false"
+        <llselect-single name="s" ng-model="vm.x" ll-aria-label="F" ll-behavior-of-outside-click="false"
           ll-popup-width-policy="fit-content" ll-options="f for f in vm.fruits"></llselect-single></div>`,
       controller: function () { this.fruits = FRUITS.slice() },
       config: ['llselectConfigProvider', function (llselectConfigProvider) {
@@ -825,10 +825,10 @@ test('an enum attribute that is not a string warns and keeps the default, the ap
   } finally {
     console.warn = orig
   }
-  assert.ok(warnings.some((m) => m.includes('ll-outside-click-behavior')), 'the attribute warns')
+  assert.ok(warnings.some((m) => m.includes('ll-behavior-of-outside-click')), 'the attribute warns')
   assert.ok(warnings.some((m) => m.includes('ll-popup-width-policy')), 'the attribute warns')
   const sel = a.ng.element(a.$('[name=s]')).controller('llselectSingle').instance()
-  assert.equal(sel.settings.outsideClickBehavior, 'block', 'the core default stays')
+  assert.equal(sel.settings.behaviorOfOutsideClick, 'block', 'the core default stays')
   assert.equal(sel.settings.popupWidthPolicy, 'match-trigger-wrapper', 'the app-wide default stays')
   assert.deepEqual(a.errors, [])
 })

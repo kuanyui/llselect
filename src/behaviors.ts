@@ -1,6 +1,6 @@
 /**
  * Scroll and zoom gestures while the popup is open: the types of the
- * `scrollGestureToBehaviorFn` and `zoomGestureToBehaviorFn` settings, and the
+ * `behaviorOfScrollGestureFn` and `behaviorOfZoomGestureFn` settings, and the
  * listeners that sort each gesture and carry out the behavior a setting picks.
  * - The presets that fill the setting live in `@llselect/core/behavior-presets`.
  * - `base.ts` only wires the setting, the protected methods and these
@@ -32,11 +32,11 @@ export type LLSelectScrollGestureKind = 'wheel' | 'touch-start' | 'touch-drag' |
 export type LLSelectScrollGestureZone = 'popup' | 'trigger' | 'outside'
 
 /**
- * One scroll gesture while the popup is open, as `scrollGestureToBehaviorFn`
+ * One scroll gesture while the popup is open, as `behaviorOfScrollGestureFn`
  * receives it.
  * - A touch counts as a scroll gesture only while one finger touches. From
  *   the moment a second finger lands until every finger lifts, the touch is
- *   a zoom gesture, which `zoomGestureToBehaviorFn` answers; see
+ *   a zoom gesture, which `behaviorOfZoomGestureFn` answers; see
  *   {@link LLSelectZoomGesture}.
  * - A pinch starts with one finger, so the touch-down of that finger is a
  *   gesture like any other.
@@ -75,7 +75,7 @@ export interface LLSelectScrollGesture {
  *   - on the trigger, except on a button of the trigger buttons strip, whose
  *     click does that button's action;
  *   - inside the popup;
- *   - outside the select component, while `outsideClickBehavior` is
+ *   - outside the select component, while `behaviorOfOutsideClick` is
  *     `'block'`.
  * - Only a click near the touch-down, within one second of the lift, counts
  *   as the tap's click.
@@ -99,7 +99,7 @@ export type LLSelectScrollGestureBehavior =
 export type LLSelectZoomGestureZone = 'popup' | 'trigger' | 'outside'
 
 /**
- * One zoom gesture while the popup is open, as `zoomGestureToBehaviorFn`
+ * One zoom gesture while the popup is open, as `behaviorOfZoomGestureFn`
  * receives it.
  * - On a touchscreen, a touch becomes a zoom gesture when a second finger
  *   lands, and stays one until every finger lifts.
@@ -147,28 +147,28 @@ export type LLSelectZoomGestureBehavior =
  * @group Behaviors
  */
 export interface LLSelectBehaviorPreset {
-  /** See `outsideClickBehavior` in `LLSelectBaseSettings`. */
-  readonly outsideClickBehavior: LLSelectOutsideClickBehavior
-  /** See `scrollGestureToBehaviorFn` in `LLSelectBaseSettings`. */
-  readonly scrollGestureToBehaviorFn: (gesture: LLSelectScrollGesture) => LLSelectScrollGestureBehavior
-  /** See `zoomGestureToBehaviorFn` in `LLSelectBaseSettings`. */
-  readonly zoomGestureToBehaviorFn: (gesture: LLSelectZoomGesture) => LLSelectZoomGestureBehavior
+  /** See `behaviorOfOutsideClick` in `LLSelectBaseSettings`. */
+  readonly behaviorOfOutsideClick: LLSelectOutsideClickBehavior
+  /** See `behaviorOfScrollGestureFn` in `LLSelectBaseSettings`. */
+  readonly behaviorOfScrollGestureFn: (gesture: LLSelectScrollGesture) => LLSelectScrollGestureBehavior
+  /** See `behaviorOfZoomGestureFn` in `LLSelectBaseSettings`. */
+  readonly behaviorOfZoomGestureFn: (gesture: LLSelectZoomGesture) => LLSelectZoomGestureBehavior
 }
 
 /**
- * The mark that `defaultScrollGestureToBehavior` carries. The main bundle and
+ * The mark that `defaultBehaviorOfScrollGesture` carries. The main bundle and
  * the presets bundle each hold a copy of that function, so the library tests
  * for the mark, not for the identity.
  * @internal
  */
-export const DEFAULT_SCROLL_GESTURE_TO_BEHAVIOR_MARK: unique symbol = Symbol.for('llselect.defaultScrollGestureToBehavior')
+export const DEFAULT_BEHAVIOR_OF_SCROLL_GESTURE_MARK: unique symbol = Symbol.for('llselect.defaultBehaviorOfScrollGesture')
 
 /**
- * The mark that `defaultZoomGestureToBehavior` carries, for the reason of
- * {@link DEFAULT_SCROLL_GESTURE_TO_BEHAVIOR_MARK}.
+ * The mark that `defaultBehaviorOfZoomGesture` carries, for the reason of
+ * {@link DEFAULT_BEHAVIOR_OF_SCROLL_GESTURE_MARK}.
  * @internal
  */
-export const DEFAULT_ZOOM_GESTURE_TO_BEHAVIOR_MARK: unique symbol = Symbol.for('llselect.defaultZoomGestureToBehavior')
+export const DEFAULT_BEHAVIOR_OF_ZOOM_GESTURE_MARK: unique symbol = Symbol.for('llselect.defaultBehaviorOfZoomGesture')
 
 /**
  * What the listeners need from the select component.
@@ -181,17 +181,17 @@ export interface GestureHost {
   readonly scrollOutside: boolean
   /** Whether zoom gestures outside the select component reach `zoomBehaviorFor`: the protected `shouldListenForZoomGesturesOutside`. */
   readonly zoomOutside: boolean
-  /** The behavior for one scroll gesture: the protected `scrollGestureToBehavior`. */
+  /** The behavior for one scroll gesture: the protected `behaviorOfScrollGesture`. */
   behaviorFor(gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior
   /** Closes the popup with the close reason `'scroll-gesture'`. */
   closeFor(gesture: LLSelectScrollGesture): void
-  /** The behavior for one zoom gesture: the protected `zoomGestureToBehavior`. */
+  /** The behavior for one zoom gesture: the protected `behaviorOfZoomGesture`. */
   zoomBehaviorFor(gesture: LLSelectZoomGesture): LLSelectZoomGestureBehavior
   /** Closes the popup with the close reason `'zoom-gesture'`. */
   closeForZoom(gesture: LLSelectZoomGesture): void
   /** Whether a click with this composed path would toggle the popup: a click on the trigger wrapper, outside the buttons of the trigger buttons strip. */
   clickToggles(path: readonly EventTarget[]): boolean
-  /** Whether a click outside the select component is swallowed while the popup is open: `outsideClickBehavior: 'block'`. */
+  /** Whether a click outside the select component is swallowed while the popup is open: `behaviorOfOutsideClick: 'block'`. */
   readonly swallowsOutsideClick: boolean
   /** Takes the function that ends a touch hold early, for `destroy()`. */
   holdStarted(release: () => void): void
@@ -286,7 +286,7 @@ function canScrollWithin(path: readonly EventTarget[], boundary: Element, dx: nu
 // - `'leave'`: nothing; a press on the trigger focuses it natively, and
 //   `handleTriggerWrapperMousedown` focuses it for a press elsewhere in the
 //   trigger wrapper, unless the `mousedown` was prevented.
-// - `'prevent-default'`: the contract of an outside press under `outsideClickBehavior: 'block'`.
+// - `'prevent-default'`: the contract of an outside press under `behaviorOfOutsideClick: 'block'`.
 // - `'swallow'`: the page under the closed popup was never touched on purpose.
 type TouchHoldMousedown = 'leave' | 'prevent-default' | 'swallow'
 

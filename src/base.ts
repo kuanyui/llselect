@@ -15,7 +15,7 @@ import {
   isImeKeydown,
 } from './keyboard.js'
 import { en as DEFAULT_UI_TRANSLATION_PACK } from './i18n/en.js'
-import { attachGestureListeners, DEFAULT_SCROLL_GESTURE_TO_BEHAVIOR_MARK, DEFAULT_ZOOM_GESTURE_TO_BEHAVIOR_MARK, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior, type LLSelectZoomGesture, type LLSelectZoomGestureBehavior } from './behaviors.js'
+import { attachGestureListeners, DEFAULT_BEHAVIOR_OF_SCROLL_GESTURE_MARK, DEFAULT_BEHAVIOR_OF_ZOOM_GESTURE_MARK, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior, type LLSelectZoomGesture, type LLSelectZoomGestureBehavior } from './behaviors.js'
 import { behaviorPresetsOfLLSelectDefault } from './behavior-presets.js'
 import type { LLSelectUiTranslationPack } from './i18n.js'
 import {
@@ -128,13 +128,13 @@ export interface LLSelectOpenMeta {
  * - `'hidden'`: the trigger scrolled out of view or was clipped, so the
  *   popup could not stay anchored.
  * - `'scroll-gesture'`: a wheel or a touch while the popup was open, for
- *   which `scrollGestureToBehaviorFn` picked a behavior that closes the
- *   popup, or an override of the protected `scrollGestureToBehavior` did.
+ *   which `behaviorOfScrollGestureFn` picked a behavior that closes the
+ *   popup, or an override of the protected `behaviorOfScrollGesture` did.
  *   `meta.scrollGesture` holds the gesture.
  * - `'zoom-gesture'`: a two-finger zoom, or a `wheel` with `ctrlKey`, while
- *   the popup was open, for which `zoomGestureToBehaviorFn` picked a behavior
+ *   the popup was open, for which `behaviorOfZoomGestureFn` picked a behavior
  *   that closes the popup, or an override of the protected
- *   `zoomGestureToBehavior` did. `meta.zoomGesture` holds the gesture.
+ *   `behaviorOfZoomGesture` did. `meta.zoomGesture` holds the gesture.
  * @group Events
  */
 export type LLSelectCloseReason = 'choose' | 'escape' | 'outside' | 'blur' | 'trigger-buttons' | 'toggle' | 'api' | 'disabled' | 'destroy' | 'hidden' | 'scroll-gesture' | 'zoom-gesture'
@@ -411,12 +411,12 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    * See {@link LLSelectOutsideClickBehavior}.
    * @group Behaviors
    */
-  outsideClickBehavior: LLSelectOutsideClickBehavior
+  behaviorOfOutsideClick: LLSelectOutsideClickBehavior
   /**
    * Decides what the select component does with a scroll gesture, a wheel or
    * a touch, while the popup is open.
    * - Called on **every** scroll gesture while the popup is open, through
-   *   the protected `scrollGestureToBehavior`; nothing is kept for a later
+   *   the protected `behaviorOfScrollGesture`; nothing is kept for a later
    *   call. A scroll gesture is each `wheel` event, and each `touchstart`
    *   and `touchmove` of a one-finger touch.
    *   - Inside the popup, a wheel or a drag that an element of the popup
@@ -426,10 +426,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   - Outside the select component, the function is called only while
    *     the protected `shouldListenForScrollGesturesOutside` returns `true`.
    *     By default, that is while this setting is not
-   *     `defaultScrollGestureToBehavior`.
+   *     `defaultBehaviorOfScrollGesture`.
    *   - The function is never called for a `wheel` with `ctrlKey`, or for a
    *     touch from the moment a second finger lands. Those are zoom
-   *     gestures, which `zoomGestureToBehaviorFn` answers.
+   *     gestures, which `behaviorOfZoomGestureFn` answers.
    *   - So that a preset never changes its behavior because of a zoom that
    *     the user may not notice, the function is also called while the page
    *     is pinch-zoomed.
@@ -442,7 +442,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *     function as `'outside'` before the listeners inside see it.
    *   - A preset may then close the popup at a touch-down or a wheel inside
    *     the select component, and block a wheel that the list could scroll.
-   *   - If `outsideClickBehavior` is `'block'`, the default, the click of a
+   *   - If `behaviorOfOutsideClick` is `'block'`, the default, the click of a
    *     tap whose touch-down closed the popup is swallowed, as for any
    *     outside press.
    *   - If it is `'pass-through'`, that click gets through. A tap on the
@@ -453,7 +453,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   {@link LLSelectScrollGesture}.
    * - The answer is one of four behaviors. See
    *   {@link LLSelectScrollGestureBehavior}.
-   * - The default is `defaultScrollGestureToBehavior`. Inside the popup, the
+   * - The default is `defaultBehaviorOfScrollGesture`. Inside the popup, the
    *   page behind does not scroll. Everywhere else, the page scrolls as it
    *   would without the select component, and the popup stays open.
    * - `@llselect/core/behavior-presets` holds other functions, as presets
@@ -469,11 +469,11 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   - Safari supports the property from version 16.
    * @group Behaviors
    */
-  scrollGestureToBehaviorFn: (gesture: LLSelectScrollGesture) => LLSelectScrollGestureBehavior
+  behaviorOfScrollGestureFn: (gesture: LLSelectScrollGesture) => LLSelectScrollGestureBehavior
   /**
    * Decides what the select component does with a zoom gesture while the
    * popup is open.
-   * - Called through the protected `zoomGestureToBehavior`, while the popup
+   * - Called through the protected `behaviorOfZoomGesture`, while the popup
    *   is open:
    *   - on a touchscreen, **once** per touch, when a second finger lands; the
    *     library keeps the answer until every finger lifts;
@@ -483,17 +483,17 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   - Outside the select component, the function is called only while
    *     the protected `shouldListenForZoomGesturesOutside` returns `true`.
    *     By default, that is while this setting is not
-   *     `defaultZoomGestureToBehavior`.
+   *     `defaultBehaviorOfZoomGesture`.
    *   - The function is also called while the page is pinch-zoomed, so a
    *     zoom back out reaches it too.
    *   - A pinch starts with one finger, whose touch-down
-   *     `scrollGestureToBehaviorFn` answers first. A preset that closes the
+   *     `behaviorOfScrollGestureFn` answers first. A preset that closes the
    *     popup at that touch-down closes it before the zoom begins, and this
    *     function is not called.
    * - `gesture` says where the zoom happens. See {@link LLSelectZoomGesture}.
    * - The answer is one of four behaviors. See
    *   {@link LLSelectZoomGestureBehavior}.
-   * - The default is `defaultZoomGestureToBehavior`: every zoom zooms the
+   * - The default is `defaultBehaviorOfZoomGesture`: every zoom zooms the
    *   page, and the popup stays open.
    * - Even with the default, the `touchstart` listeners on the popup and the
    *   root element are not passive, so that a zoom can cancel the touch-down
@@ -504,7 +504,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   to spread into the settings, such as `behaviorPresetsOfFirefoxOnWindows`.
    * @group Behaviors
    */
-  zoomGestureToBehaviorFn: (gesture: LLSelectZoomGesture) => LLSelectZoomGestureBehavior
+  behaviorOfZoomGestureFn: (gesture: LLSelectZoomGesture) => LLSelectZoomGestureBehavior
   /**
    * Which color scheme the select component shows: light or dark.
    * - `'auto'`, the default: the library chooses the scheme from the two CSS sources below.
@@ -1217,7 +1217,7 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   `setDisabled(true)` closes an open popup, which returns focus to the
    *   trigger, inside the select component; `destroy()` detaches the focus listeners
    *   before its teardown can move focus.
-   * - While the popup is open with `outsideClickBehavior: 'block'`, the
+   * - While the popup is open with `behaviorOfOutsideClick: 'block'`, the
    *   default, an outside mousedown is default-prevented: focus stays, the
    *   popup closes, and this does not fire.
    * - `null` (default) = no consumer listener.
@@ -2095,9 +2095,9 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       ariaLabelledBy: blankToNull(settings?.ariaLabelledBy) ?? (blankToNull(settings?.ariaLabel) === null && labelEl !== null ? labelEl.id : null),
       labelEl,
       compareFn: settings?.compareFn ?? defaultCompareFn,
-      outsideClickBehavior: settings?.outsideClickBehavior ?? behaviorPresetsOfLLSelectDefault.outsideClickBehavior,
-      scrollGestureToBehaviorFn: settings?.scrollGestureToBehaviorFn ?? behaviorPresetsOfLLSelectDefault.scrollGestureToBehaviorFn,
-      zoomGestureToBehaviorFn: settings?.zoomGestureToBehaviorFn ?? behaviorPresetsOfLLSelectDefault.zoomGestureToBehaviorFn,
+      behaviorOfOutsideClick: settings?.behaviorOfOutsideClick ?? behaviorPresetsOfLLSelectDefault.behaviorOfOutsideClick,
+      behaviorOfScrollGestureFn: settings?.behaviorOfScrollGestureFn ?? behaviorPresetsOfLLSelectDefault.behaviorOfScrollGestureFn,
+      behaviorOfZoomGestureFn: settings?.behaviorOfZoomGestureFn ?? behaviorPresetsOfLLSelectDefault.behaviorOfZoomGestureFn,
       colorScheme: settings?.colorScheme ?? 'auto',
       createTriggerArrowContentElFn: settings?.createTriggerArrowContentElFn ?? null,
       clearable: settings?.clearable ?? false,
@@ -2494,7 +2494,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * - Attaches the positioner.
    * - Attaches the outside-click handler.
    * - Attaches the scroll-gesture and zoom-gesture listeners; see
-   *   `scrollGestureToBehaviorFn` and `zoomGestureToBehaviorFn`.
+   *   `behaviorOfScrollGestureFn` and `behaviorOfZoomGestureFn`.
    * - The initial active row comes from `focusInitial`, which a subclass can
    *   override.
    * @group Open & close
@@ -2896,21 +2896,21 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Picks what the select component does with one scroll gesture while the
    * popup is open.
    * - The library's scroll-gesture listeners call this method on every
-   *   gesture that the docstring of `scrollGestureToBehaviorFn` lists.
+   *   gesture that the docstring of `behaviorOfScrollGestureFn` lists.
    * - The listeners fill `gesture`: what the gesture is and where it
    *   happens. See {@link LLSelectScrollGesture}.
-   * - The default returns `scrollGestureToBehaviorFn(gesture)`.
-   * - Configure via `scrollGestureToBehaviorFn` (no subclass needed).
+   * - The default returns `behaviorOfScrollGestureFn(gesture)`.
+   * - Configure via `behaviorOfScrollGestureFn` (no subclass needed).
    * - An override replaces the setting, and
-   *   `super.scrollGestureToBehavior(gesture)` still reaches the setting.
+   *   `super.behaviorOfScrollGesture(gesture)` still reaches the setting.
    * - An override that answers gestures outside the select component also
    *   overrides {@link shouldListenForScrollGesturesOutside}. By default the
    *   library listens there only while the setting is not
-   *   `defaultScrollGestureToBehavior`.
+   *   `defaultBehaviorOfScrollGesture`.
    * @group Subclassing: semantics
    */
-  protected scrollGestureToBehavior(gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior {
-    return this.settings.scrollGestureToBehaviorFn(gesture)
+  protected behaviorOfScrollGesture(gesture: LLSelectScrollGesture): LLSelectScrollGestureBehavior {
+    return this.settings.behaviorOfScrollGestureFn(gesture)
   }
 
   /**
@@ -2918,13 +2918,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * itself, on the document, while the popup is open.
    * - `open()` calls this method once per open, right after it attaches the
    *   outside-click listeners.
-   * - The default returns `true` when `scrollGestureToBehaviorFn` is not
-   *   `defaultScrollGestureToBehavior`.
+   * - The default returns `true` when `behaviorOfScrollGestureFn` is not
+   *   `defaultBehaviorOfScrollGesture`.
    *   - The default function leaves every gesture outside the select
    *     component alone, so the library does not listen there for it.
    *   - `@llselect/core` and `@llselect/core/behavior-presets` each export a
    *     copy of the default function, and either copy counts as the default.
-   * - A subclass whose `scrollGestureToBehavior` answers gestures outside
+   * - A subclass whose `behaviorOfScrollGesture` answers gestures outside
    *   the select component overrides this method to return `true`.
    * - Listening there has a cost. A non-passive `wheel` or `touchmove`
    *   listener on the document makes every scroll of the page wait for
@@ -2932,29 +2932,29 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: semantics
    */
   protected shouldListenForScrollGesturesOutside(): boolean {
-    return !(DEFAULT_SCROLL_GESTURE_TO_BEHAVIOR_MARK in this.settings.scrollGestureToBehaviorFn)
+    return !(DEFAULT_BEHAVIOR_OF_SCROLL_GESTURE_MARK in this.settings.behaviorOfScrollGestureFn)
   }
 
   /**
    * Picks what the select component does with one zoom gesture while the
    * popup is open.
    * - The library's gesture listeners call this method on every zoom
-   *   gesture that the docstring of `zoomGestureToBehaviorFn` lists.
+   *   gesture that the docstring of `behaviorOfZoomGestureFn` lists.
    * - The listeners fill `gesture`: where the zoom happens. See
    *   {@link LLSelectZoomGesture}.
-   * - The default returns `zoomGestureToBehaviorFn(gesture)`.
-   * - Configure via `zoomGestureToBehaviorFn` (no subclass needed).
+   * - The default returns `behaviorOfZoomGestureFn(gesture)`.
+   * - Configure via `behaviorOfZoomGestureFn` (no subclass needed).
    * - An override replaces the setting, and
-   *   `super.zoomGestureToBehavior(gesture)` still reaches the setting.
+   *   `super.behaviorOfZoomGesture(gesture)` still reaches the setting.
    * - An override that may block or close a zoom also overrides
    *   {@link shouldListenForZoomGesturesOutside}, since a finger of a pinch
    *   may land outside the select component.
    * - By default the library listens there only while the setting is not
-   *   `defaultZoomGestureToBehavior`.
+   *   `defaultBehaviorOfZoomGesture`.
    * @group Subclassing: semantics
    */
-  protected zoomGestureToBehavior(gesture: LLSelectZoomGesture): LLSelectZoomGestureBehavior {
-    return this.settings.zoomGestureToBehaviorFn(gesture)
+  protected behaviorOfZoomGesture(gesture: LLSelectZoomGesture): LLSelectZoomGestureBehavior {
+    return this.settings.behaviorOfZoomGestureFn(gesture)
   }
 
   /**
@@ -2962,13 +2962,13 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * on the document, while the popup is open.
    * - `open()` calls this method once per open, right after it attaches the
    *   outside-click listeners.
-   * - The default returns `true` when `zoomGestureToBehaviorFn` is not
-   *   `defaultZoomGestureToBehavior`.
+   * - The default returns `true` when `behaviorOfZoomGestureFn` is not
+   *   `defaultBehaviorOfZoomGesture`.
    *   - The default function leaves every zoom alone, so the library does
    *     not listen outside the select component for it.
    *   - `@llselect/core` and `@llselect/core/behavior-presets` each export a
    *     copy of the default function, and either copy counts as the default.
-   * - A subclass whose `zoomGestureToBehavior` may block or close a zoom
+   * - A subclass whose `behaviorOfZoomGesture` may block or close a zoom
    *   overrides this method to return `true`: a finger of a pinch may land
    *   outside the select component, where only the document's listeners see
    *   its events and can cancel them.
@@ -2978,7 +2978,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * @group Subclassing: semantics
    */
   protected shouldListenForZoomGesturesOutside(): boolean {
-    return !(DEFAULT_ZOOM_GESTURE_TO_BEHAVIOR_MARK in this.settings.zoomGestureToBehaviorFn)
+    return !(DEFAULT_BEHAVIOR_OF_ZOOM_GESTURE_MARK in this.settings.behaviorOfZoomGestureFn)
   }
 
   /** Attaches the scroll-gesture and zoom-gesture listeners for this open cycle; `close()` detaches them. */
@@ -2988,12 +2988,12 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       popupEl: this.popupEl,
       scrollOutside,
       zoomOutside,
-      behaviorFor: (gesture) => this.scrollGestureToBehavior(gesture),
+      behaviorFor: (gesture) => this.behaviorOfScrollGesture(gesture),
       closeFor: (gesture) => {
         this.pendingScrollGesture = gesture
         this.closeWithReason('scroll-gesture')
       },
-      zoomBehaviorFor: (gesture) => this.zoomGestureToBehavior(gesture),
+      zoomBehaviorFor: (gesture) => this.behaviorOfZoomGesture(gesture),
       closeForZoom: (gesture) => {
         this.pendingZoomGesture = gesture
         this.closeWithReason('zoom-gesture')
@@ -3001,7 +3001,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       // A chip's text and the padding of the strip toggle like the rest of
       // the wrapper; only the strip's buttons stop their own clicks.
       clickToggles: (path) => path.includes(this.triggerWrapperEl) && !this.getTriggerButtonEls().some((button) => path.includes(button)),
-      swallowsOutsideClick: this.settings.outsideClickBehavior === 'block',
+      swallowsOutsideClick: this.settings.behaviorOfOutsideClick === 'block',
       holdStarted: (release) => { this.touchHoldReleases.add(release) },
       holdEnded: (release) => { this.touchHoldReleases.delete(release) },
     })
@@ -4665,7 +4665,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
   }
 
   private attachOutsideClick(): void {
-    const mode = this.settings.outsideClickBehavior
+    const mode = this.settings.behaviorOfOutsideClick
     if (mode === 'pass-through') {
       // mousedown fires before mouseup/click - feels snappier; we do not
       // preventDefault, so the outside click still triggers its own action.
@@ -4721,7 +4721,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
 
   private detachOutsideClick(): void {
     if (this.outsideHandler) {
-      if (this.settings.outsideClickBehavior === 'pass-through') {
+      if (this.settings.behaviorOfOutsideClick === 'pass-through') {
         document.removeEventListener('mousedown', this.outsideHandler)
       } else {
         document.removeEventListener('click', this.outsideHandler, true)

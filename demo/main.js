@@ -1,4 +1,4 @@
-import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createChevronUpDownSvgEl, createTriangleUpDownSvgEl, createOutlinedCheckboxSvgEl, createFilledCheckboxSvgEl, createCheckmarkSvgEl, createHighlightedTextEl, defaultScrollGestureToBehavior } from '../dist/index.mjs'
+import { LLSelectSingle, LLSelectMultiple, version, createChevronDownSvgEl, createTriangleDownSvgEl, createChevronUpDownSvgEl, createTriangleUpDownSvgEl, createOutlinedCheckboxSvgEl, createFilledCheckboxSvgEl, createCheckmarkSvgEl, createHighlightedTextEl, defaultBehaviorOfScrollGesture } from '../dist/index.mjs'
 import { behaviorPresetsOfChromiumOnWindows, behaviorPresetsOfFirefoxOnWindows, behaviorPresetsOfSafariOnMac } from '../dist/behavior-presets.mjs'
 import { ar, en, he, ja, zhTW, uiTranslationPackByLocale } from '../dist/i18n.mjs'
 import { COUNTRIES, USERS, HUGE_ITEMS, LONG_NAMES, PROGRAMMING_LANGUAGES, GROUPED_FOODS, MIXED_DIRECTION_COUNTRIES } from './data.js'
@@ -186,7 +186,7 @@ const selBlock = new LLSelectSingle(
   {
   ariaLabel: 'block select component',
     placeholder: 'block select component',
-    // default outsideClickBehavior: 'block'
+    // default behaviorOfOutsideClick: 'block'
   }
 )
 selBlock.setItems(COUNTRIES)
@@ -204,7 +204,7 @@ const selPass = new LLSelectSingle(
   {
   ariaLabel: 'pass-through select component',
     placeholder: 'pass-through select component',
-    outsideClickBehavior: 'pass-through',
+    behaviorOfOutsideClick: 'pass-through',
   }
 )
 selPass.setItems(COUNTRIES)
@@ -1560,10 +1560,10 @@ const outGestureOwn = document.getElementById('out-gesture-own')
 const selGestureOwn = new LLSelectSingle(document.getElementById('mount-gesture-own'), {
   ariaLabel: 'own scroll gesture function',
   placeholder: 'own function',
-  scrollGestureToBehaviorFn: (gesture) => {
+  behaviorOfScrollGestureFn: (gesture) => {
     const behavior = gesture.zone === 'outside'
       ? 'close-popup-and-allow-page-scroll'
-      : defaultScrollGestureToBehavior(gesture)
+      : defaultBehaviorOfScrollGesture(gesture)
     outGestureOwn.textContent = `last gesture: ${gesture.kind} on ${gesture.zone} -> ${behavior}`
     return behavior
   },

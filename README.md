@@ -291,8 +291,8 @@ Why there is no built-in setting for this, and why the recipe uses hidden inputs
 | Multiple selection                   | `LLSelectMultiple`: `toggleItem()`, `getChosenItems()`, `chooseAllRow`, `hideChosenRows`, `chosenItemsOrder: 'as-chosen' \| 'as-listed'`, `triggerDisplay: 'count' \| 'tags'`, `clearable` |
 | Popup width                          | `popupWidthPolicy: 'fit-content' \| 'match-trigger-wrapper'` (default `'fit-content'` - grows to content like a native select)   |
 | Popup distances                      | `popupDistanceFromTriggerWrapper` (default `4`) - CSS pixels between the trigger wrapper and the popup; `popupDistanceFromViewportEdge` (default `8`) - CSS pixels that the popup leaves to the edges of the viewport |
-| Wheel, touch and zoom while the popup is open | `scrollGestureToBehaviorFn`, `zoomGestureToBehaviorFn` + the presets of `@llselect/core/behavior-presets`; see Wheel, touch and zoom while the popup is open |
-| A click outside while the popup is open | `outsideClickBehavior`: `'block'` (default) or `'pass-through'`, also set by the presets; see A click outside while the popup is open |
+| Wheel, touch and zoom while the popup is open | `behaviorOfScrollGestureFn`, `behaviorOfZoomGestureFn` + the presets of `@llselect/core/behavior-presets`; see Wheel, touch and zoom while the popup is open |
+| A click outside while the popup is open | `behaviorOfOutsideClick`: `'block'` (default) or `'pass-through'`, also set by the presets; see A click outside while the popup is open |
 | Rich rendering without subclassing   | `createPopupListItemContentElFn`, `createTriggerContentElFn`, `createTagContentElFn`, ...                                         |
 | Action rows: commands in the list    | `popupListLeadingActionRows`, `popupListTrailingActionRows` - option rows in the arrow-key ring; see Action rows |
 | Pinned rows                          | `popupListLeadingRowsPinned`, `popupListTrailingRowsPinned` - the choose-all row and the command rows stay in view while the items scroll |
@@ -543,7 +543,7 @@ A complete worked subclass, in TypeScript with typed subclass settings (the clas
 | Highlight filter matches in rows | `createPopupListItemContentElFn` + the `createHighlightedTextEl` helper |
 | Equality for object items        | `compareFn`                     |
 | Dropdown arrow                   | `createTriggerArrowContentElFn` |
-| What a wheel or a touch does while the popup is open | `scrollGestureToBehaviorFn` |
+| What a wheel or a touch does while the popup is open | `behaviorOfScrollGestureFn` |
 | Events                           | `onChange`, `onBeforeChange`, `onOpen`, `onClose`, `onFocus`, `onBlur`, `onActiveItemChange`, `onFilterQueryChange` |
 
 ```js
@@ -708,8 +708,8 @@ sel = new LLSelectSingle(el, {
 
 Two settings decide what a gesture does while the popup is open:
 
-- `scrollGestureToBehaviorFn` decides what a wheel or a touch does.
-- `zoomGestureToBehaviorFn` decides what a two-finger zoom does.
+- `behaviorOfScrollGestureFn` decides what a wheel or a touch does.
+- `behaviorOfZoomGestureFn` decides what a two-finger zoom does.
 
 By default:
 
@@ -739,7 +739,7 @@ const sel = new LLSelectSingle(el, { ...behaviorPresetsOfFirefoxOnWindows })
   - A wheel outside the popup scrolls nothing, and the popup stays open.
   - A two-finger zoom never zooms the page, and the popup stays open.
 - The library does not detect the browser. Your app picks the preset.
-- Each preset also sets `outsideClickBehavior`, which the next section explains.
+- Each preset also sets `behaviorOfOutsideClick`, which the next section explains.
 
 To write your own rule, pass a function. The function gets the gesture and returns one of four behaviors:
 
@@ -747,18 +747,18 @@ To write your own rule, pass a function. The function gets the gesture and retur
 const sel = new LLSelectSingle(el, {
   // gesture.kind: 'wheel', 'touch-start' or 'touch-drag'
   // gesture.zone: 'popup', 'trigger' or 'outside'
-  scrollGestureToBehaviorFn: (gesture) => gesture.zone === 'popup'
+  behaviorOfScrollGestureFn: (gesture) => gesture.zone === 'popup'
     ? 'leave-popup-open-and-block-page-scroll'
     : 'close-popup-and-allow-page-scroll',
 })
 ```
 
-To write your own rule for a two-finger zoom, pass a function to `zoomGestureToBehaviorFn`:
+To write your own rule for a two-finger zoom, pass a function to `behaviorOfZoomGestureFn`:
 
 ```js
 const sel = new LLSelectSingle(el, {
   // gesture.zone: 'popup', 'trigger' or 'outside'
-  zoomGestureToBehaviorFn: (gesture) => gesture.zone === 'popup'
+  behaviorOfZoomGestureFn: (gesture) => gesture.zone === 'popup'
     ? 'leave-popup-open-and-block-page-zoom'
     : 'leave-popup-open-and-allow-page-zoom',
 })
@@ -776,7 +776,7 @@ const sel = new LLSelectSingle(el, {
 
 #### A click outside while the popup is open
 
-A click meant only to close the popup should not press a button or a link by mistake. So by default, a click outside the select component only closes the popup. `outsideClickBehavior` sets what such a click does:
+A click meant only to close the popup should not press a button or a link by mistake. So by default, a click outside the select component only closes the popup. `behaviorOfOutsideClick` sets what such a click does:
 
 - `'block'`, the default: the click closes the popup and does nothing else.
 - `'pass-through'`: the click closes the popup and also reaches the button or the link under the pointer.
@@ -784,12 +784,12 @@ A click meant only to close the popup should not press a button or a link by mis
 To let the click through, write `'pass-through'`:
 
 ```js
-const sel = new LLSelectSingle(el, { outsideClickBehavior: 'pass-through' })
+const sel = new LLSelectSingle(el, { behaviorOfOutsideClick: 'pass-through' })
 ```
 
 - On Linux, a native select blocks the click.
 - On Windows, Chromium and Firefox let the click through, as their source code shows.
-- Each preset of the section above sets `outsideClickBehavior` too.
+- Each preset of the section above sets `behaviorOfOutsideClick` too.
 - `behaviorPresetsOfChromiumOnWindows` and `behaviorPresetsOfFirefoxOnWindows` let the click through.
 - `behaviorPresetsOfSafariOnMac` blocks the click.
 

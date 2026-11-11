@@ -150,7 +150,7 @@
 
   /**
    * $eval an enum-literal attribute (ll-trigger-display, ll-popup-width-policy,
-   * ll-color-scheme, ll-chosen-items-order, ll-outside-click-behavior).
+   * ll-color-scheme, ll-chosen-items-order, ll-behavior-of-outside-click).
    * The value is meant to be a QUOTED string literal ("'tags'"); the classic typo
    * drops the inner quotes. A valid enum value is always a string, so anything else
    * is a typo: "tags" reads a non-existent scope property (undefined), while a
@@ -236,8 +236,8 @@
     if (distanceFromViewportEdge !== null) { settings.popupDistanceFromViewportEdge = distanceFromViewportEdge }
     var colorScheme = evalEnumAttr(scope, attrs, 'llColorScheme')
     if (colorScheme !== null) { settings.colorScheme = colorScheme }
-    var outsideClickBehavior = evalEnumAttr(scope, attrs, 'llOutsideClickBehavior')
-    if (outsideClickBehavior !== null) { settings.outsideClickBehavior = outsideClickBehavior }
+    var behaviorOfOutsideClick = evalEnumAttr(scope, attrs, 'llBehaviorOfOutsideClick')
+    if (behaviorOfOutsideClick !== null) { settings.behaviorOfOutsideClick = behaviorOfOutsideClick }
     if (attrs.llArrow) { arrow = attrs.llArrow }
     var itemContentFn = evalFnAttr(scope, attrs, 'llPopupListItemContentFn')
     if (itemContentFn) { settings.createPopupListItemContentElFn = itemContentFn }
@@ -251,10 +251,10 @@
     if (triggerContentFn) { settings.createTriggerContentElFn = triggerContentFn }
     var triggerScreenReaderTextFn = evalFnAttr(scope, attrs, 'llTriggerContextToScreenReaderTextFn')
     if (triggerScreenReaderTextFn) { settings.triggerContextToScreenReaderTextFn = triggerScreenReaderTextFn }
-    var scrollGestureToBehaviorFn = evalFnAttr(scope, attrs, 'llScrollGestureToBehaviorFn')
-    if (scrollGestureToBehaviorFn) { settings.scrollGestureToBehaviorFn = scrollGestureToBehaviorFn }
-    var zoomGestureToBehaviorFn = evalFnAttr(scope, attrs, 'llZoomGestureToBehaviorFn')
-    if (zoomGestureToBehaviorFn) { settings.zoomGestureToBehaviorFn = zoomGestureToBehaviorFn }
+    var behaviorOfScrollGestureFn = evalFnAttr(scope, attrs, 'llBehaviorOfScrollGestureFn')
+    if (behaviorOfScrollGestureFn) { settings.behaviorOfScrollGestureFn = behaviorOfScrollGestureFn }
+    var behaviorOfZoomGestureFn = evalFnAttr(scope, attrs, 'llBehaviorOfZoomGestureFn')
+    if (behaviorOfZoomGestureFn) { settings.behaviorOfZoomGestureFn = behaviorOfZoomGestureFn }
     // Popup header / footer slots. The core calls each fn exactly ONCE, in its
     // constructor - so right here at link time, inside the link digest, unlike
     // the row / trigger content fns it calls per render outside any digest -
