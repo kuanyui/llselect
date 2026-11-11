@@ -203,9 +203,19 @@ export interface GestureHost {
 // taken for a drag that gives no click. Chosen to stay above the browsers' own
 // tap limits, which the real-device pass in docs/llm/TODO.md checks.
 const TAP_SLOP = 16
-// How long after the touch lifts a tap's click may still come. Browsers can
-// hold it back by about 300 ms on a page without a mobile viewport.
-const CLICK_WAIT_MS = 1000
+/**
+ * How far from its touch-down a tap's click may land, in CSS pixels.
+ * `base.ts` binds the click swallow of a blocked outside press with it too.
+ * @internal
+ */
+export const TAP_CLICK_RADIUS = 2 * TAP_SLOP
+/**
+ * How long after the touch lifts a tap's click may still come. Browsers can
+ * hold it back by about 300 ms on a page without a mobile viewport.
+ * `base.ts` waits as long in the click swallow of a blocked outside press.
+ * @internal
+ */
+export const CLICK_WAIT_MS = 1000
 
 // The events the listeners take, typed for an element and the document alike.
 interface GestureEventMap {
@@ -350,7 +360,7 @@ function holdRestOfTouch(target: EventTarget, start: Touch, options: TouchHoldOp
   }
   const onNextTouchStart = (): void => { release() }
   // A click far from the touch-down came from something else, such as a mouse.
-  const isTapClick = (ev: MouseEvent): boolean => near(ev.clientX, ev.clientY, 2 * TAP_SLOP)
+  const isTapClick = (ev: MouseEvent): boolean => near(ev.clientX, ev.clientY, TAP_CLICK_RADIUS)
   const onMousedown = (ev: MouseEvent): void => {
     if (!isTapClick(ev)) { return }
     ev.preventDefault()

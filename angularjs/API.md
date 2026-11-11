@@ -110,7 +110,8 @@ App-wide defaults for `arrow` / `filterable` / `highlight` / `popupWidthPolicy` 
 > No **before** counterpart: there is no `ll-on-before-blur`, and the `focusin` / `focusout` events the library observes are not cancelable, so none could stop the move.
 
 - Fires when focus moves to an element outside the select component or to nowhere: Tab away, a click outside, a click on a non-focusable area.
-- While the popup is open with llselect's default [`ll-behavior-of-outside-click`](#ll-behavior-of-outside-click), `'block'`, a click outside moves no focus, so the expression does not run.
+- While the popup is open with llselect's default [`ll-behavior-of-outside-click`](#ll-behavior-of-outside-click), `'block'`, the browser moves no focus at a click outside, so the expression does not run.
+- A handler of the page that moves focus during that click still runs the expression.
 - Does not fire for a focus move inside the select component.
 - The directive marks the control touched first, in the same digest, so the expression already sees `$touched === true` (see [`ng-model`](#ng-model)).
 - When focus leaving closes the popup, [`ll-on-close`](#ll-on-close) runs first; `instance().isOpened()` is already `false` here.
@@ -305,7 +306,7 @@ $scope.ifaceMatch = function (i, query) {
 - For the gesture, the four behaviors and the cases llselect leaves alone, see the core setting `behaviorOfScrollGestureFn` under `LLSelectBaseSettings` in the API reference.
 - The Firefox, Chromium and Safari presets copy the native select of one browser on one operating system.
 - A preset also holds a function for two-finger zooms; see [`ll-behavior-of-zoom-gesture-fn`](#ll-behavior-of-zoom-gesture-fn).
-- A preset also holds an `behaviorOfOutsideClick`; see [`ll-behavior-of-outside-click`](#ll-behavior-of-outside-click).
+- A preset also holds the field `behaviorOfOutsideClick`; see [`ll-behavior-of-outside-click`](#ll-behavior-of-outside-click).
 
 To copy the native select of one browser on one operating system, load `behavior-presets.umd.js`, which sets `window.llselectBehaviorPresets`, and hand a preset's function to the attribute:
 

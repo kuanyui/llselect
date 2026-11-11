@@ -15,7 +15,7 @@ import {
   isImeKeydown,
 } from './keyboard.js'
 import { en as DEFAULT_UI_TRANSLATION_PACK } from './i18n/en.js'
-import { attachGestureListeners, DEFAULT_BEHAVIOR_OF_SCROLL_GESTURE_MARK, DEFAULT_BEHAVIOR_OF_ZOOM_GESTURE_MARK, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior, type LLSelectZoomGesture, type LLSelectZoomGestureBehavior } from './behaviors.js'
+import { attachGestureListeners, CLICK_WAIT_MS, DEFAULT_BEHAVIOR_OF_SCROLL_GESTURE_MARK, DEFAULT_BEHAVIOR_OF_ZOOM_GESTURE_MARK, TAP_CLICK_RADIUS, type LLSelectScrollGesture, type LLSelectScrollGestureBehavior, type LLSelectZoomGesture, type LLSelectZoomGestureBehavior } from './behaviors.js'
 import { behaviorPresetsOfLLSelectDefault } from './behavior-presets.js'
 import type { LLSelectUiTranslationPack } from './i18n.js'
 import {
@@ -39,8 +39,9 @@ import {
  *   - The click never reaches the element under it, so neither that
  *     element's handlers nor its default action run, such as following a
  *     link.
- *   - The press does not move focus. If focus was in the select component,
- *     it stays there.
+ *   - The browser moves no focus at the press, so focus that was in the
+ *     select component stays there.
+ *   - A handler of the page can still move focus during the press.
  *   - A user who only wants to close the popup cannot press a button or a
  *     link by mistake.
  * - `'pass-through'`: the popup closes, and the click also does what it
@@ -1218,8 +1219,10 @@ export interface LLSelectBaseSettings<T, GroupKey = string> {
    *   trigger, inside the select component; `destroy()` detaches the focus listeners
    *   before its teardown can move focus.
    * - While the popup is open with `behaviorOfOutsideClick: 'block'`, the
-   *   default, an outside mousedown is default-prevented: focus stays, the
-   *   popup closes, and this does not fire.
+   *   default, an outside mousedown is default-prevented, so the browser
+   *   moves no focus, and this does not fire.
+   * - A handler of the page that moves focus during that press still fires
+   *   this.
    * - `null` (default) = no consumer listener.
    * @group Events
    */
@@ -4693,7 +4696,8 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       this.blockPointerDownHandler = (ev: Event) => {
         const t = this.eventTargetNode(ev)
         if (t instanceof Node && !this.rootEl.contains(t)) {
-          this.armOutsidePressClickSwallow()
+          const press = ev as PointerEvent
+          this.armOutsidePressClickSwallow(press.pointerType || 'mouse', press.clientX, press.clientY)
         }
       }
       document.addEventListener('pointerdown', this.blockPointerDownHandler, true)
@@ -4701,7 +4705,10 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
         const t = this.eventTargetNode(ev)
         if (t instanceof Node && !this.rootEl.contains(t)) {
           ev.preventDefault()
-          this.armOutsidePressClickSwallow()
+          // The mousedown of a tap comes with the tap's click, after its
+          // pointerup, so it arms again as a mouse press does.
+          const press = ev as MouseEvent
+          this.armOutsidePressClickSwallow('mouse', press.clientX, press.clientY)
         }
       }
       document.addEventListener('mousedown', this.blockMouseDownHandler, true)
@@ -4744,20 +4751,35 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
    * Swallows the click of an outside press under `'block'`, even when the
    * popup closed during that press.
    * - Called by the `pointerdown` and `mousedown` capture listeners of
-   *   `'block'` for a press outside the select component.
+   *   `'block'` for a press outside the select component, with the pointer
+   *   type of the press and the place where it went down.
+   * - Only the press's own click counts. The swallow lets every other click
+   *   through and stays armed:
+   *   - a pointer made the press's click, so its `detail` is not `0`, while
+   *     a click from the keyboard or from `click()` has a `detail` of `0`;
+   *   - after a press that is not a mouse press, such as a tap, the click
+   *     lands within `TAP_CLICK_RADIUS` of the place where the press went
+   *     down.
    * - The click of the press ends the swallow.
-   * - The task after the press's `pointerup` or `mouseup` ends it too, since
-   *   a browser dispatches the click of a press in the same task as its
-   *   release.
-   * - So a press without a click leaves nothing armed for a later click,
-   *   such as one from the keyboard.
-   * - A `pointercancel`, a new press that arms again, and `destroy()` end the
-   *   swallow as well.
+   * - After a mouse press, the task after its `pointerup` or `mouseup` ends
+   *   the swallow too, since a browser dispatches the click of a mouse press
+   *   in the same task as its release.
+   * - After a tap, `CLICK_WAIT_MS` after its `pointerup` ends the swallow,
+   *   since a browser can hold a tap's click back by about 300 ms.
+   * - A `pointercancel`, the `pointerdown` of a new press, a new arm and
+   *   `destroy()` end the swallow as well, so a press without a click leaves
+   *   nothing armed for a later click.
    */
-  private armOutsidePressClickSwallow(): void {
+  private armOutsidePressClickSwallow(pointerType: string, x: number, y: number): void {
     this.disarmOutsidePressClickSwallow?.()
+    const mouse = pointerType === 'mouse'
     let timer: ReturnType<typeof setTimeout> | undefined
+    const isPressClick = (click: MouseEvent): boolean => {
+      if (click.detail === 0) { return false }
+      return mouse || Math.hypot(click.clientX - x, click.clientY - y) <= TAP_CLICK_RADIUS
+    }
     const swallow = (ev: Event): void => {
+      if (!isPressClick(ev as MouseEvent)) { return }
       const t = this.eventTargetNode(ev)
       if (t instanceof Node && !this.rootEl.contains(t)) {
         ev.stopPropagation()
@@ -4766,7 +4788,7 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       disarm()
     }
     const released = (): void => {
-      if (timer === undefined) { timer = setTimeout(disarm, 0) }
+      if (timer === undefined) { timer = setTimeout(disarm, mouse ? 0 : CLICK_WAIT_MS) }
     }
     const disarm = (): void => {
       if (timer !== undefined) { clearTimeout(timer) }
@@ -4774,12 +4796,16 @@ export abstract class LLSelectBase<T = unknown, GroupKey = string, S extends LLS
       document.removeEventListener('pointerup', released, true)
       document.removeEventListener('mouseup', released, true)
       document.removeEventListener('pointercancel', disarm, true)
+      document.removeEventListener('pointerdown', disarm, true)
       if (this.disarmOutsidePressClickSwallow === disarm) { this.disarmOutsidePressClickSwallow = null }
     }
     document.addEventListener('click', swallow, true)
     document.addEventListener('pointerup', released, true)
     document.addEventListener('mouseup', released, true)
     document.addEventListener('pointercancel', disarm, true)
+    // Added during this press, while or after its pointerdown runs, so only
+    // the pointerdown of a later press reaches it.
+    document.addEventListener('pointerdown', disarm, true)
     this.disarmOutsidePressClickSwallow = disarm
   }
 

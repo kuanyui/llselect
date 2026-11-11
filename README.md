@@ -776,8 +776,9 @@ const sel = new LLSelectSingle(el, {
 
 #### A click outside while the popup is open
 
-A click meant only to close the popup should not press a button or a link by mistake. So by default, a click outside the select component only closes the popup. `behaviorOfOutsideClick` sets what such a click does:
+By default, an outside click only closes the popup, so that the click presses nothing by mistake.
 
+- `behaviorOfOutsideClick` sets what a click outside the select component does while the popup is open.
 - `'block'`, the default: the click closes the popup and does nothing else.
 - `'pass-through'`: the click closes the popup and also reaches the button or the link under the pointer.
 
