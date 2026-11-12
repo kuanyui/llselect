@@ -6,17 +6,8 @@ Agent-facing state of the work in progress, so that a later session, after a con
 
 - The owner's rulings: the slowdown is acceptable for 0.0.15, which goes to npm together with the four versions that npm lacks, 0.0.10, 0.0.11, 0.0.13 and 0.0.14 (`OPTIMIZE.md` "The first build in a page got slower after 0.0.9"); a script that publishes takes tags, which the owner adds, never commit hashes (`CLAUDE.md`, the bullet on the benchmark before every version bump); `make release` keeps its `login` step (`FIXME.md` MEDIUM-1094).
 - The script is `REFS/publish-tags.sh`; git ignores `REFS/`, so no commit holds it. It publishes both packages of each tag given, each from a clean git worktree of its tag in the folder `llselect-release` beside the repo. It checks the tags and the npm login first, runs the tests of every tag two at a time, and publishes nothing unless all of them pass. Then it publishes one package at a time in version order, gives `latest` to the highest version only and `backfill` to the others, and removes `backfill` at the end. `DRY_RUN=1` runs everything but the upload, and a real run reuses what a dry run prepared. Its argument checks were tested; a full run was not, since the owner runs it.
-- Only on the machine that last wrote this file: the branch `dev-squash-for-v0.0.14`, with no upstream, which holds every commit after `v0.0.12`, the bump commits of 0.0.13 and 0.0.14 among them; and `REFS/`. The owner plans to run the release on another machine, which needs both: the branch pushed or copied, and the script copied.
-- Step 1, the owner, the four missing versions, from the repo's top folder. The tags v0.0.10 and v0.0.11 exist already; the agent could not see which tags the remotes hold. Afterwards `latest` on npm is 0.0.14.
-
-```sh
-git tag -a v0.0.13 -m "0.0.13" "$(git log --format=%H -1 --grep='bump v0.0.13$')"
-git tag -a v0.0.14 -m "0.0.14" "$(git log --format=%H -1 --grep='bump v0.0.14$')"
-DRY_RUN=1 bash REFS/publish-tags.sh v0.0.10 v0.0.11 v0.0.13 v0.0.14
-bash REFS/publish-tags.sh v0.0.10 v0.0.11 v0.0.13 v0.0.14
-git push github v0.0.13 v0.0.14
-git push gitlab v0.0.13 v0.0.14
-```
+- The work after the bump commit of 0.0.14 is on the branch `dev_0_0_15`, which tracks `gitlab/dev_0_0_15`; `master` and the `master` of both remotes are at the bump commit of 0.0.14. The older local branch `dev-squash-for-v0.0.14` holds the same tree as the commit "docs: [docs/llm] the handoff of the release in progress" of `dev_0_0_15`.
+- Step 1, the four missing versions, is done as far as npm and the local repo show: both packages list 0.0.10, 0.0.11, 0.0.13 and 0.0.14, `latest` is 0.0.14, and the tags v0.0.13 and v0.0.14 exist. The dist-tag `backfill`, which the script removes at its end, still points at 0.0.13 on both packages. It changes nothing for `latest` or for the history page; to remove it, the owner runs `npm dist-tag rm @llselect/core backfill` and `npm dist-tag rm @llselect/angularjs backfill`.
 
 - Step 2, the owner: the run of the benchmark page on the README's machine for the README of 0.0.15, five runs per scenario, the page reloaded before each run (`CLAUDE.md`). A run of the version history page does not serve, since the README's tables compare every library of the benchmark page.
 - Step 3, the agent: the bump commit, whose first line is `chore: [<scope>] bump v0.0.15`, the scope listing the changed files as in the bump commit of 0.0.14. It changes the versions in `package.json` and `angularjs/package.json`, the core peer range of the AngularJS package, the version constant in `src/index.ts`, the lockfiles through `npm install` in both folders, the README's tables to the medians of step 2 and its bundle size where it states one, and the heading "Unreleased" of `CHANGELOG.md` to "0.0.15". The bump commit of 0.0.14 shows the files. Then `npm run verify`.
@@ -25,13 +16,23 @@ git push gitlab v0.0.13 v0.0.14
 
 ## Rules of the last session
 
-- The owner's uncommitted line in `README.md`, under "Features", stays out of every commit; stash it before a rebase.
+- The owner committed the line in `README.md` under "Features" as "docs: [README.md] update features".
 - A commit's author date equals its committer date, and dates never go backwards: a fixup or a squash takes the newer time. A small follow-up folds into the commit it follows up.
 - Reviews ran with Codex Sol and Codex Astra only, at max effort, the owner's request for that session; a new session asks the owner whether the limit still holds. `CLAUDE.md` gives the commands and the memory watchdog; the runner lived in the scratchpad and is gone.
 - The stop rule for post-fix loops is the owner's newest one in `CLAUDE.md`: when every finding of a round can be fixed by changing documentation only, fix that round's findings, start no further round, and report.
 - The system once ran out of disk space during a long review loop and went down; the restart cleared `/tmp`. Watch `df -h /` before long runs.
 - While a review runs, the tree stays frozen: no commit, and no edit to a file the reviewers may read.
 - Every brief tells the members to answer alone and to start no model, CLI or subagent, the owner's ruling in `CLAUDE.md`. In the consultation on the zoom API, Codex Sol read the genuine-fork rule of `CLAUDE.md` and tried to start Fable 5, Opus 5, Opus 4.8, Opus 5.5 and another Codex Sol from inside its sandbox; the sandbox blocked the network, so none of them reached its API.
+
+## The build slowdown: waiting for the owner
+
+- The search of `OPTIMIZE.md` "The first build in a page got slower after 0.0.9" found the cause: since 0.0.10, the build of every select component does more work, about 7 microseconds in this devcontainer, spread over many small items; the cost of a first run is a small part. Two test builds measured the fixes; neither is committed.
+- The decision: how to cut the build time of a select component.
+  - Prototype A skips the DOM writes that change nothing, with no change to the DOM or the API: about 2 to 3 ms less per 1000 select components.
+  - Prototype C adds to A a popup that is built at the first open: about 10 ms less than the current build per 1000 select components, below 0.0.9 and close to the native `<select>`, and about 3 ms less teardown. It reopens the decision of `DESIGN.md` "Popup DOM lifecycle (construction vs open)": the trigger's `aria-controls` while the popup was never opened, the public popup fields, the call time of the popup builders, and the tests.
+  - The agent's recommendation: carry out A, and take C to the review panel as a design question, since C alone reaches the owner's first goal, parity with the native `<select>`.
+- Open with it: which members review. The last session ran Codex Sol and Codex Astra only, at the owner's request for that session.
+- The bundles of both test builds are kept in `demo/bench-history/0.0.15-proto-a/` and `demo/bench-history/0.0.15-proto-c/`, which git ignores, and `demo/bench-history/versions.json` lists them, so the version history page of `make server` measures them on the README's machine too. `npm run bench-history:prepare` rewrites `versions.json` without them.
 
 ## Waiting for the owner
 
@@ -52,7 +53,7 @@ git push gitlab v0.0.13 v0.0.14
 ## Next steps, in order
 
 1. The release, above.
-2. The search for the build slowdown, a later session by the owner's request: `OPTIMIZE.md` "The first build in a page got slower after 0.0.9" holds the plan, and `TODO.md` points to it. Once 0.0.10 and 0.0.11 are on npm, the version history page measures them too.
+2. The build slowdown: the search is done, `OPTIMIZE.md` "The first build in a page got slower after 0.0.9"; the fix waits for the owner's decision above.
 3. When the owner has time: the probe page on both machines, and the native tests of NEEDS-VERIFICATION-940, -941 and -944, all low priority.
 
 ## Where the work stands
@@ -73,6 +74,8 @@ git push gitlab v0.0.13 v0.0.14
 
 ## The scratchpad
 
+The scratchpad of the slowdown search held the runner of the version history page, the copies of the measurement core that keep chunk times and CPU profiles, the counter of DOM calls, the comparison of the DOM of two builds, and the git worktree of the two test builds, whose `node_modules` was a link to the repo's. `OPTIMIZE.md` describes them well enough to rebuild; the bundles of the test builds stay in `demo/bench-history/`.
+
 The scratchpads of earlier sessions are gone, and so are the files that this section listed: the review runners, the briefs and answers of every round, which `FIXME.md` records, and the headless probes, which `rootless-browser-testing.md` explains how to rebuild. The list stays below as a record of what those files did; `$S` in it stood for the scratchpad of that session.
 
 - `$S/readme-dark/queue.sh`: the review runner above. Its members are `fable`, `opus5`, `opus48`, `opus55`, `sol` and `astra`; this session uses `sol` and `astra` only.
@@ -83,5 +86,5 @@ The scratchpads of earlier sessions are gone, and so are the files that this sec
 
 ## State of the tree
 
-- Branch `dev-squash-for-v0.0.14`, with no upstream, at the commit that last changed this file; the working tree holds only the owner's uncommitted line in `README.md`. `npm run verify` passed on this tree, with 962 core tests and 124 AngularJS tests, and `public/` was built from it.
+- Branch `dev_0_0_15` at the commit that last changed this file. The session of the slowdown search changed docs only; `npm run verify` passed on this tree, with 962 core tests and 124 AngularJS tests, and `public/` was built from it.
 - No review runs now, so the tree is not frozen. The last review, of the npm login check, the copy buttons and the owner's runs of the version history page, ended after round two under the stop rule (`FIXME.md`).
