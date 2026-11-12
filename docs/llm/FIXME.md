@@ -4,6 +4,56 @@ The history of `dev` was squashed twice, as the owner ruled: after the review of
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (the npm login check, the copy buttons and the owner's run, round two)
+
+Process: Codex Sol and Codex Astra, each in a fresh session at max effort, reviewed the fixes of round one and the new commit "docs: [docs/llm] a plan to find the build slowdown; the review of the login check and copy fix". Both found no defect in the new copy order and labeled every finding "documentation only", so by the stop rule of `CLAUDE.md` the agent fixed them and started no third round.
+
+- [x] **[DOCUMENTATION-1098] - The plan narrowed Build total to the constructors**
+  - Symptom: Codex Sol: "`buildAll` times more than constructors. The interval includes creating and appending mount elements, `adapter.setup`, `setItems`, initial `setChosenItem`, and handle collection. A regression in `setItems` could therefore be missed by a later investigation confined to constructors." Codex Astra found the same.
+  - Fix: the bullet "What the columns time" of the plan names the whole loop: the mount element, the constructor, `setItems`, `setChosenItem` and the handle.
+- [x] **[DOCUMENTATION-1099] - Step 5 of the plan named a trace that holds no JavaScript samples**
+  - Symptom: Codex Sol: "Those categories do not request the JavaScript CPU-profiler samples and stack events needed for a function-by-function execution comparison. The prepared 0.0.12 assets also lack `index.umd.js.map`". Codex Astra: "Supplying custom categories also replaces Playwright's defaults."
+  - Fix: step 5 profiles through the `Profiler` domain, as the earlier CPU profiles did, names the category that a trace needs, and profiles each version's unminified build.
+- [x] **[DOCUMENTATION-1100] - Step 4 of the plan drew a cause from one warm-up pass**
+  - Symptom: Codex Sol: "Warm-up also changes JIT compilation and inline caches, library-level document state, browser DOM/style caches, allocation, and garbage collection. A changed or unchanged gap does not establish either stated cause." Codex Astra: "One preliminary build does not establish that execution has reached stable performance."
+  - Fix: step 4 reads the result as support for the hypothesis or as weight against it, names those confounders, and leaves the cause to step 5.
+- [x] **[DOCUMENTATION-1101] - The comment on the login check said that `npm whoami` proves the login**
+  - Symptom: Codex Sol: "With Basic authentication, npm documents that the command only prints the configured username. A stale or wrong Basic-auth password can therefore pass `npm whoami` and fail at `npm publish`." Codex Astra found the same, and that round one had named the limit.
+  - Fix: the comment above `check-login` in `Makefile` says that only a token makes `npm whoami` ask the registry; the Fix line of the record of the missing limits says so too (DOCUMENTATION-1097).
+- [x] **[DOCUMENTATION-1102] - The record of the agent's reasons called Before paint the whole wait of the user**
+  - Symptom: Codex Sol: "The user also waits for the preceding synchronous "Build total" interval. The wording presents the column ratio as the entire perceived wait."
+  - Fix: the record keeps the agent's reason as the agent gave it and adds that the user waits for both columns, 82 ms against 159 ms for the native `<select>`.
+- [x] **[DOCUMENTATION-1103] - The open entries of round one named no line**
+  - Symptom: Codex Sol: "Both findings remain open, but neither entry retains the current file-and-line reference required by `CLAUDE.md`."
+  - Fix: the entry of the copy order named `demo/bench-history.js:311` until its browser checks resolved it; the entry of the release login is resolved by the owner's ruling.
+- [x] **[DOCUMENTATION-1104] - Step 2 of the plan said that the page runs the versions in the order of `versions.json`**
+  - Symptom: Codex Astra: "round two measures current first and reverses the published versions. `runAll()` reverses the complete entry order on alternating rounds."
+  - Fix: step 2 says that the first round follows `versions.json` and every second round runs the whole list in reverse.
+
+## review (the npm login check, the copy buttons and the owner's run, round one)
+
+Process: Codex Sol and Codex Astra, each in a fresh session at max effort, reviewed "build: [Makefile] publish checks the npm login before any test runs", the fix of the copy buttons folded into "feat: [demo][scripts][docs/llm] a benchmark history page for every published version", the records of three owner rulings, and "docs: [docs/llm] the owner's run of the benchmark history page". Both found the records of the rulings and every number of the owner's run faithful. The fix of the clipboard order changes the code of the page, so a second round reviews it.
+
+- [x] **[MEDIUM-1094] - `make release` still logs in when npm does not know the login, where the owner asked for a check**
+  - Symptom: Codex Sol: "An expired token makes `npm whoami` fail during `make release`. `npm login` then starts an interactive login. A successful login lets the release continue into the tests. `make release` therefore does not perform only the requested check." Codex Astra: "The new `check-login` target is check-only, but the release path still performs login."
+  - Cause: `release` lists the older target `login`, `npm whoami >/dev/null 2>&1 || npm login`, before `push` and `publish`.
+  - Fix: none, by the owner's ruling. Both reviewers proposed to replace `login` with `check-login` in the prerequisites of `release`. Asked to choose between keeping `login`, which asks for a login and then goes on (A), and a `release` that only checks and stops (B), the owner answered "A".
+  - Q: Why did the agent ask the owner, not apply the proposal at once?
+    - A: Because the owner's words, translated from Chinese, "(only checking is enough, because several times before, it ran tests for a long time, and only after the tests finished did it say that I was not logged in; or is such a check impossible?)", can mean that a check suffices or that a publish must never log in; and `login` predates the change and already runs before every test of `make release`, so that path never ran its tests before a failed login.
+- [x] **[QUALITY-1095] - After a delayed refusal of the Clipboard API, the fallback copy could run without the click's user activation**
+  - Symptom: Codex Sol: "A secure-context browser delays a rejected clipboard request. The click activation can end before `document.execCommand('copy')` runs. The fallback can then return `false`. A delayed rejection can also move focus back to the copy button after the user moved focus elsewhere." Codex Astra: "By inspection, a delayed clipboard rejection can leave the fallback without the original click's authorization. WebKit gates legacy copying on a user gesture."
+  - Cause: `copy` in `demo/bench-history.js` awaited `navigator.clipboard.writeText` before it called `copyWithExecCommand` and focused the button.
+  - Fix: `copy` in `demo/bench-history.js` calls `copyWithExecCommand` first and focuses the button inside the click, and calls `navigator.clipboard.writeText` only when that copy is refused, still before any await.
+  - Verified: the new order, after one round of the page each time, in headless Chromium 156 on the LAN address, where no `navigator.clipboard` exists, and on `localhost` with and without the clipboard permission, by reading the clipboard back after each button, which held the Markdown tables and the JSON; in Firefox on the LAN address by the page's status, "copied."; `npm run verify` passes. Round one's order, with `navigator.clipboard` first, had passed the same checks, and in the owner's second run of the page, in Chromium 154, it copied the JSON.
+  - Q: Why the older copy first, not both at once, as Codex Sol proposed?
+    - A: Because the older copy works on every address and answers at once, so it decides inside the click whether the second way runs; starting both would write the clipboard twice on the common path and leave two results to merge.
+- [x] **[DOCUMENTATION-1096] - The record of the headless run claimed that this devcontainer reproduces the owner's whole ordering**
+  - Symptom: Codex Astra: "At 1000 x 10, version 0.0.12 tears down faster than native in the owner's run: 5.50 versus 5.75 ms. The devcontainer reverses that comparison: 5.65 versus 4.85 ms." Codex Sol, also: "The owner's build results tie native and 0.0.9 at 26 ms, while the devcontainer separates them."
+  - Fix: the bullet in `OPTIMIZE.md` says that both runs agree on the rise of 0.0.9, 0.0.12 and the current build in all three columns, and that the comparisons with the native `<select>` differ.
+- [x] **[DOCUMENTATION-1097] - The limits of the login check were not recorded**
+  - Symptom: Codex Sol: "A short Makefile comment should state that `npm whoami` cannot preflight package permission, publish-time 2FA, or a token that expires after the check." Codex Astra: "The npm check establishes identity, not permission to publish. OTP challenges, package permissions, and credentials expiring after the check can still stop publication. Basic-auth `whoami` can merely print the configured username."
+  - Fix: a comment above `check-login` in `Makefile` names these limits, and that only a token makes `npm whoami` ask the registry, while with a username and password it prints the configured username (DOCUMENTATION-1101).
+
 ## review (the benchmark history page, round three)
 
 Process: Codex Sol and Codex Astra, each in a fresh session at max effort, reviewed the four commits of round two with its fixes. Both labeled every finding "documentation only", so by the stop rule of `CLAUDE.md` the agent fixed them and started no fourth round.
