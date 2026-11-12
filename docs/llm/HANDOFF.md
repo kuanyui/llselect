@@ -1,10 +1,33 @@
 # Handoff
 
-Agent-facing state of the work in progress, so that a session after a context compaction can continue without the conversation. `$S` stands for this machine's session scratchpad, `/tmp/claude-1000/-workspaces-llselect/b8084c63-e5f2-4d64-a2cb-e34b550f2fe0/scratchpad`. `FIXME.md` holds every finding and ruling in full; this file says what waits for whom, and in which order.
+Agent-facing state of the work in progress, so that a later session, after a context compaction or on another machine, can continue without the conversation. `FIXME.md` holds every finding and ruling in full; this file says what waits for whom, and in which order. The session that last wrote this file ran in a devcontainer on the owner's laptop, and its scratchpad lay under `/tmp`, a tmpfs: that folder is gone after a restart and exists on no other machine, so nothing below depends on it.
 
-## Rules for the rest of this session
+## The release in progress
 
-- Reviews run with Codex Sol and Codex Astra only, at max effort, since the Claude usage ran low (the owner's request for this session). Command: `$S/readme-dark/queue.sh <out-dir> 2 label:sol:max:<brief> label:astra:max:<brief>`, run in the background; it logs to `<out-dir>/watchdog.log` and starts no member while `/` has less than 2 GB free or `/tmp`, a tmpfs of 1.5 GB, less than 200 MB. Check that the log shows each member started.
+- The owner's rulings: the slowdown is acceptable for 0.0.15, which goes to npm together with the four versions that npm lacks, 0.0.10, 0.0.11, 0.0.13 and 0.0.14 (`OPTIMIZE.md` "The first build in a page got slower after 0.0.9"); a script that publishes takes tags, which the owner adds, never commit hashes (`CLAUDE.md`, the bullet on the benchmark before every version bump); `make release` keeps its `login` step (`FIXME.md` MEDIUM-1094).
+- The script is `REFS/publish-tags.sh`; git ignores `REFS/`, so no commit holds it. It publishes both packages of each tag given, each from a clean git worktree of its tag in the folder `llselect-release` beside the repo. It checks the tags and the npm login first, runs the tests of every tag two at a time, and publishes nothing unless all of them pass. Then it publishes one package at a time in version order, gives `latest` to the highest version only and `backfill` to the others, and removes `backfill` at the end. `DRY_RUN=1` runs everything but the upload, and a real run reuses what a dry run prepared. Its argument checks were tested; a full run was not, since the owner runs it.
+- Only on the machine that last wrote this file: the branch `dev-squash-for-v0.0.14`, with no upstream, which holds every commit after `v0.0.12`, the bump commits of 0.0.13 and 0.0.14 among them; and `REFS/`. The owner plans to run the release on another machine, which needs both: the branch pushed or copied, and the script copied.
+- Step 1, the owner, the four missing versions, from the repo's top folder. The tags v0.0.10 and v0.0.11 exist already; the agent could not see which tags the remotes hold. Afterwards `latest` on npm is 0.0.14.
+
+```sh
+git tag -a v0.0.13 -m "0.0.13" "$(git log --format=%H -1 --grep='bump v0.0.13$')"
+git tag -a v0.0.14 -m "0.0.14" "$(git log --format=%H -1 --grep='bump v0.0.14$')"
+DRY_RUN=1 bash REFS/publish-tags.sh v0.0.10 v0.0.11 v0.0.13 v0.0.14
+bash REFS/publish-tags.sh v0.0.10 v0.0.11 v0.0.13 v0.0.14
+git push github v0.0.13 v0.0.14
+git push gitlab v0.0.13 v0.0.14
+```
+
+- Step 2, the owner: the run of the benchmark page on the README's machine for the README of 0.0.15, five runs per scenario, the page reloaded before each run (`CLAUDE.md`). A run of the version history page does not serve, since the README's tables compare every library of the benchmark page.
+- Step 3, the agent: the bump commit, whose first line is `chore: [<scope>] bump v0.0.15`, the scope listing the changed files as in the bump commit of 0.0.14. It changes the versions in `package.json` and `angularjs/package.json`, the core peer range of the AngularJS package, the version constant in `src/index.ts`, the lockfiles through `npm install` in both folders, the README's tables to the medians of step 2 and its bundle size where it states one, and the heading "Unreleased" of `CHANGELOG.md` to "0.0.15". The bump commit of 0.0.14 shows the files. Then `npm run verify`.
+- Step 4, the owner: the tag v0.0.15 on the bump commit, then `bash REFS/publish-tags.sh v0.0.15`, which gives 0.0.15 `latest`; then `master` moved to the bump commit and pushed with the tag to `github` and `gitlab`, as `make push` and the push lines of `make tag` do for one version.
+- After the release: delete the branch `backup/before-unbump-v0.0.15`, which keeps the withdrawn first bump of 0.0.15. Open to the owner: moving `dev`, which still holds the history from before the second squash, and pushing the local branches `backup/dev-before-squash` and `backup/dev-before-squash-for-v0.0.14`, which keep the commits that `FIXME.md` names by subject.
+
+## Rules of the last session
+
+- The owner's uncommitted line in `README.md`, under "Features", stays out of every commit; stash it before a rebase.
+- A commit's author date equals its committer date, and dates never go backwards: a fixup or a squash takes the newer time. A small follow-up folds into the commit it follows up.
+- Reviews ran with Codex Sol and Codex Astra only, at max effort, the owner's request for that session; a new session asks the owner whether the limit still holds. `CLAUDE.md` gives the commands and the memory watchdog; the runner lived in the scratchpad and is gone.
 - The stop rule for post-fix loops is the owner's newest one in `CLAUDE.md`: when every finding of a round can be fixed by changing documentation only, fix that round's findings, start no further round, and report.
 - The system once ran out of disk space during a long review loop and went down; the restart cleared `/tmp`. Watch `df -h /` before long runs.
 - While a review runs, the tree stays frozen: no commit, and no edit to a file the reviewers may read.
@@ -22,10 +45,15 @@ Agent-facing state of the work in progress, so that a session after a context co
 4. MEDIUM-894: in Firefox, a wheel over the popup list soon after a page scroll still scrolls the page, likely Firefox's wheel transaction; the entry lists the options and the panel's views. MEDIUM-893, an older outside-press case in open shadow roots, is open too.
 5. NEEDS-VERIFICATION-840 (which chosen item becomes active at open, and the enabled condition) and NEEDS-VERIFICATION-850 (an `open()` call made while DOM focus is elsewhere, with the filter inactive): the owner was told they can wait.
 6. Optional, from Fable 5 in the round on the owner's cost criterion: one sentence for the `popupEl` docstring that names `close()` inside `onOpen` as the supported way to stop an open, MEDIUM-862. It recommends an API pattern, so it waits for the owner.
+7. The owner's review of the draft `CHANGELOG.md`, `TODO.md` "A changelog of every version". The draft becomes public with the push of the release.
+8. Whether to keep the pointer to `native-select-questionnaire.md` that the agent added to `native-select-scrolling.md`, the owner's record of experiments; the agent offered to remove it.
+9. The owner's observation that llselect is slower in Edge 154 than in Chromium 154, `OPTIMIZE.md`, with checks to run on the owner's machine.
+
 ## Next steps, in order
 
-1. The post-fix review, with Codex Sol and Codex Astra, ended after round six under the stop rule, since every finding of round six changed documentation only; a further round starts only when the owner asks for one. Rounds one to three found bugs, MEDIUM-945 to MEDIUM-949, MEDIUM-953, MEDIUM-955 and MEDIUM-958, all fixed with tests; MEDIUM-954 and MEDIUM-959 are documented limits; rounds four to six found no bug, only tests and docs.
-2. When the owner has time: the probe page on both machines, and the native tests of NEEDS-VERIFICATION-940, -941 and -944, all low priority.
+1. The release, above.
+2. The search for the build slowdown, a later session by the owner's request: `OPTIMIZE.md` "The first build in a page got slower after 0.0.9" holds the plan, and `TODO.md` points to it. Once 0.0.10 and 0.0.11 are on npm, the version history page measures them too.
+3. When the owner has time: the probe page on both machines, and the native tests of NEEDS-VERIFICATION-940, -941 and -944, all low priority.
 
 ## Where the work stands
 
@@ -45,6 +73,8 @@ Agent-facing state of the work in progress, so that a session after a context co
 
 ## The scratchpad
 
+The scratchpads of earlier sessions are gone, and so are the files that this section listed: the review runners, the briefs and answers of every round, which `FIXME.md` records, and the headless probes, which `rootless-browser-testing.md` explains how to rebuild. The list stays below as a record of what those files did; `$S` in it stood for the scratchpad of that session.
+
 - `$S/readme-dark/queue.sh`: the review runner above. Its members are `fable`, `opus5`, `opus48`, `opus55`, `sol` and `astra`; this session uses `sol` and `astra` only.
 - `$S/scroll/review-929.md` to `review-929-4.md`: the briefs of the four rounds of the post-fix review of MEDIUM-929; `$S/scroll/run49` to `run52`: their reviews, named `p1-*.md` to `p4-*.md`.
 - The restart cleared everything older: the mutation runners of MEDIUM-795, the browser probes, the consultation answers on MEDIUM-902 and the reviews of earlier rounds. `FIXME.md` records what they said. For MEDIUM-929, the agent checked mutations by hand: edit `src/positioning.ts`, run `npx tsc -p tsconfig.test.json` and `node --test .build/test/positioning.test.js`, then restore the file and compile again, since `.build` keeps the last compiled mutation.
@@ -53,5 +83,5 @@ Agent-facing state of the work in progress, so that a session after a context co
 
 ## State of the tree
 
-- Branch `dev`, with no upstream, at the commit that last changed this file, clean. `npm run verify` passed on this tree, after the last edit of the record of round six of the post-fix review, with 884 core tests and 117 AngularJS tests, and `public/` was built from that state. In headless Chromium 156, `probe-zoom3.mjs` showed the zoom answers of 17.1 at Ctrl with the wheel and at a two-finger touch as the spec says: the default lets every zoom through, the Firefox preset cancels it and keeps the popup open, and the Chromium preset cancels it inside the popup and closes the popup elsewhere.
-- No review runs now, so the tree is not frozen.
+- Branch `dev-squash-for-v0.0.14`, with no upstream, at the commit that last changed this file; the working tree holds only the owner's uncommitted line in `README.md`. `npm run verify` passed on this tree, with 962 core tests and 124 AngularJS tests, and `public/` was built from it.
+- No review runs now, so the tree is not frozen. The last review, of the npm login check, the copy buttons and the owner's runs of the version history page, ended after round two under the stop rule (`FIXME.md`).
