@@ -4,6 +4,123 @@ The history of `dev` was squashed twice, as the owner ruled: after the review of
 
 Findings from reviews of llselect, newest round on top. Format spec (severity words, `[SEVERITY-N]` ids, Symptom/Cause/Fix/Verified labels, cross-round Q&A) lives in `../../CLAUDE.md` "Review-findings log". `N` is a stable id in creation order, not a rank; open items are `[ ]`, resolved `[x]`. No dates here - git log owns the when.
 
+## review (the benchmark history page, round three)
+
+Process: Codex Sol and Codex Astra, each in a fresh session at max effort, reviewed the four commits of round two with its fixes. Both labeled every finding "documentation only", so by the stop rule of `CLAUDE.md` the agent fixed them and started no fourth round.
+
+- [x] **[DOCUMENTATION-1089] - The changelog draft still missed breaking changes and misstated a few entries**
+  - Symptom: Codex Astra, on 0.0.13: "The release removes the second argument of `commitTriggerContentToDom(element, text)`", "`--llselect-trigger-line` becomes `--llselect-trigger-wrapper-line`", the same for the hover variable, and "The open, empty and disabled data attributes also move from the trigger to the wrapper."
+  - Symptom: Codex Astra, on 0.0.4: "The changelog records setting renames but omits related subclass and styling breaks", the protected methods, the class map entry and the CSS class of the choose-all row and the group label. On 0.0.9: the line on `this` did not match the implementation, which "calls local function references", so "A non-strict ordinary function also receives the global object."
+  - Symptom: Codex Sol, on 0.0.13: "The changelog omits the focus fix when the first chosen value is `undefined`." On 0.0.10: "Only the base class equals either quoted name." On 0.0.12: "Batch-wide read-before-write applies to non-nested roots", and "The provisional value also belongs only to automatic decisions."
+  - Fix: each entry added or corrected after a check against the source of its version.
+- [x] **[DOCUMENTATION-1090] - The changelog draft has no entry for the screen-reader text under a strict Content-Security-Policy**
+  - Symptom: Codex Sol: "The changelog omits the CSP accessibility fix. Earlier builds could expose screen-reader text under `style-src 'self'`."
+  - Fix: none; the changelog lists the changes between versions, and no version had the defect.
+  - Q: Why no entry, when the fix exists?
+    - A: Because only a commit between versions had the defect. 0.0.13 and 0.0.14 hide the text through ten property writes, which such a policy allows, and the template that used one `setAttribute('style', ...)` was fixed before any version.
+- [x] **[DOCUMENTATION-1091] - The reason for keeping the plain handle claimed a bound that a Node microbenchmark cannot give**
+  - Symptom: Codex Astra: "The supplied script measures 20,000 repeated calls per timing in Node. The script uses existing dummy handles and a tiny teardown function. That experiment does not establish the browser cost during fresh-frame DOM construction and destruction." And: "The Node measurement supports a limited estimate, not a bound on browser measurements". Codex Sol found that the reason "holds for the practical benchmark output", and that "Cross-engine cost remains unverified."
+  - Fix: the answer of the finding on the old bookkeeping calls the number an estimate from Node and says that the cost inside a browser was not measured (MEDIUM-1082).
+- [x] **[DOCUMENTATION-1092] - The record of round two named findings by their ids**
+  - Symptom: Codex Astra: "Examples include "The record of MEDIUM-1067" and "the agent keeps the call of DOCUMENTATION-1080". These references use finding IDs as names, contrary to the trailing-reference rule."
+  - Fix: the titles and the Fix lines name each finding by what it is, with its id trailing.
+- [x] **[DOCUMENTATION-1093] - The reviewers stay split on amending the first commit**
+  - Symptom: Codex Sol: "The reason for leaving the issue does not hold under this brief. The brief explicitly reviews that commit through `git show HEAD~3`. A later replacement does not make the reviewed commit accurate." Codex Astra: "the reason holds for the current documentation. The first commit remains historically inaccurate, but the next commit replaces the draft."
+  - Fix: none. Asked whether to amend the first commit's wrong draft (DOCUMENTATION-1080), the owner chose not to, in the owner's words, translated from Chinese: "no rewrite". The owner typed a homophone of the Chinese word for not, and the agent read the answer that way.
+
+## review (the benchmark history page, round two)
+
+Process: Codex Sol and Codex Astra, each in a fresh session at max effort, reviewed the four newest commits: the three of round one with its fixes, and "docs: [CHANGELOG.md][scripts][docs/llm] a changelog of every version". The fixes went into the commit of the page and the commit of the changelog. The fix of the late result changes the code of the page, so a third round reviews it.
+
+- [x] **[MEDIUM-1081] - After Stop and a restart, a late result of the stopped run could enter the new run**
+  - Symptom: Codex Astra: "Stop and immediately restart during the first native run. A result already queued by the removed frame has the same ID as the replacement run. The handler checks origin and ID, but never checks the sending frame."
+  - Fix: the page takes a result only when the message comes from the frame of the run in progress, by `ev.source`.
+  - Verified: headless, a fake result that the history page posted itself, under the id of the run in progress, was ignored, and the row showed the frame's own result; with the check removed from the built page, the fake entered the table.
+- [x] **[MEDIUM-1082] - The shared measurement times less bookkeeping than the benchmark page did before the move**
+  - Symptom: Codex Sol: "Before extraction, the benchmark stored `{ key, h }` during setup. Teardown then performed a keyed adapter lookup. The shared code stores only the handle and calls the adapter directly." And: "Current benchmark results exclude work included in the README measurements."
+  - Fix: none; the shared code keeps the plain handle.
+  - Q: Why not restore the record per handle and the keyed lookup, as Codex Sol proposed?
+    - A: Because the estimate is far below what the page can show. A microbenchmark of the two loops in Node 20 put the old bookkeeping at about 1 microsecond more per 1000 handles in the build, and about 1 more in the teardown. The builds take 20 to 40 ms, and the finest digit that the page prints is 10 microseconds. The cost inside a browser, during real builds and teardowns, was not measured.
+- [x] **[DOCUMENTATION-1083] - The record of the handle-bookkeeping finding left out its teardown half (MEDIUM-1067)**
+  - Symptom: Codex Sol: "The record omits Codex Sol's statement that teardown changed "from keyed records to direct handles" and that the measurements contain different harness work."
+  - Fix: the Symptom of the handle-bookkeeping finding quotes both sentences (MEDIUM-1067), and the finding on the old bookkeeping records the decision on them (MEDIUM-1082).
+- [x] **[DOCUMENTATION-1084] - The spec said that every frame loads a version's bundle and theme**
+  - Symptom: Codex Sol: "A native `<select>` run receives no version and loads no llselect bundle or theme."
+  - Fix: the spec says that a frame for llselect loads the bundle and the theme of one version, and that a frame for the native `<select>` loads neither.
+- [x] **[DOCUMENTATION-1085] - The changelog draft missed or misstated public changes**
+  - Symptom: Codex Sol: "No changelog entry mentions the public packaging fix", the `typesVersions` entries of the unreleased work; Codex Astra: "The subpath type-resolution fix is missing."
+  - Symptom: Codex Astra, on 0.0.5: "The arrow callback's state property changed from `isOpen` to `isOpened`. Existing custom arrows need migration. The protected `isOpen` field also disappeared." The entry on `toggleAllVisible()` "misstates the operation", and "The new settings type parameter `S` is missing", with the `subclassSettings` argument.
+  - Symptom: Codex Astra, on 0.0.6: "Three notable changes are missing": the adoption of equal objects by `setItems()`, the preset model of AngularJS, and `angular.equals` in the ui-select bridge.
+  - Symptom: Codex Astra, on 0.0.9: the rename of `LLSelectAction` "presents an internal rename as a public break. Neither name is exported by the package entry or an allowed package subpath."
+  - Symptom: Codex Astra, on 0.0.10: the entry on the row classes "gives the wrong CSS names"; on 0.0.11: "the changelog omits" `ll-on-before-change`; on 0.0.14: "The changelog records their later renames without recording their introduction", of the two default gesture functions.
+  - Fix: each entry added or corrected after a check against the source of its version; the entry on `LLSelectAction` removed.
+- [x] **[DOCUMENTATION-1086] - The record of the first commit's wrong draft cut Codex Astra's "Both claims" off from the sentences it referred to (DOCUMENTATION-1080)**
+  - Symptom: Codex Astra: "Codex Astra's "Both claims" referred to the missing-filter claim and the promise to fill the README tables. The record places the quotation after the npm-version claim and the missing-filter claim, changing its apparent meaning."
+  - Fix: the record quotes the three sentences together.
+- [x] **[DOCUMENTATION-1087] - The message for a missing versions file put three commands on one line**
+  - Symptom: Codex Astra: "When the versions file is missing, the message puts three backticked commands on one line. The reader-facing limit is two."
+  - Fix: the message names the two commands and asks for a reload of the page.
+- [x] **[DOCUMENTATION-1088] - Codex Sol still holds that the first commit needs an amendment**
+  - Symptom: Codex Sol: "The reason in `DOCUMENTATION-1080` does not hold. A later commit replaces the draft, but the first reviewed commit still contains false statements. Draft status does not make the historical commit accurate." Codex Astra: "The reason for leaving the superseded TODO draft unchanged holds for this review of the current tree. The first commit's claims remain wrong, but the next commit replaces the draft. No amendment is needed to correct the current documentation."
+  - Fix: none; the agent keeps its call not to amend the first commit (DOCUMENTATION-1080) and reports the split to the owner.
+
+## review (the benchmark history page, round one)
+
+Process: Codex Sol and Codex Astra, each in a fresh session at max effort, reviewed three commits: "docs: [CLAUDE.md][docs/llm] the median of five runs for the README; the version history and changelog requests", "feat: [demo][scripts][docs/llm] a benchmark history page for every published version" and "docs: [docs/llm] the two teardown test builds after the withdrawn flag". The fixes went into those three commits, and the changelog draft into a commit of its own. Several fixes change the code of the pages, so a second round reviews them. Codex Astra also noted that the page "does not isolate JavaScript changes", since each version runs with its own theme; `SPEC_BENCHMARK.md` "Version history page" now says so.
+
+- [x] **[MEDIUM-1067] - The benchmark page timed more handle bookkeeping than the history page, and more than before the move**
+  - Symptom: Codex Sol: "The benchmark page pushes each built handle into `handles` and `live` during Build total. The history page pushes into `handles` and calls a no-op hook. The pre-move benchmark used one push. The teardown loop also changed from keyed records to direct handles. The three measurements therefore include different harness work."
+  - Fix: `buildAll` pushes every handle into one array that `measureMass` owns. The `onBuilt` hook and the benchmark page's `live` list are gone, so both pages time the same push and the same teardown loop.
+  - Verified: one headless round of the history page, and the benchmark page's runs of the native `<select>` and llselect at 1000 x 10, which left the stage empty.
+- [x] **[MEDIUM-1068] - Stop waited for the run in progress, and a stopped round left the entries with different run counts**
+  - Symptom: Codex Sol: "Stop cannot cancel the active run and may wait for the 120-second timer. A stop halfway through round two leaves early entries with two samples and later entries with one." Codex Astra: "Stop only prevents the next run." Codex Astra also found the caveat "A number is the median of all rounds" false "after failures or an interrupted round". Both noted that the Markdown copy omits the run and failure counts.
+  - Fix: Stop ends the run in progress at once and removes its frame. The runs of a round join the results only when the round is complete, so Stop drops the round. The caveat says that each number is the median of a row's successful runs and that a stopped round is left out. The Markdown carries the run count and the failed-run count.
+  - Verified: headless, a Stop during round two ended the run within 93 ms and left no frame, and every row kept one run.
+- [x] **[MEDIUM-1069] - A theme stylesheet that failed to load still gave a measurement**
+  - Symptom: Codex Astra: "If a version's vanilla stylesheet returns 404, the frame still measures the unstyled select components and reports success." Codex Sol found the same.
+  - Fix: before it measures, the frame checks that every stylesheet has a sheet with rules; otherwise the run fails.
+  - Verified: headless, with the server answering 404 for the theme of 0.0.5, its run failed with "a stylesheet did not load", and 0.0.4 measured.
+- [x] **[MEDIUM-1070] - A teardown that threw still counted as a measurement**
+  - Symptom: Codex Astra: "Every teardown exception is swallowed. A version whose `destroy()` throws can receive a successful teardown measurement, although destruction failed."
+  - Fix: `measureMass` counts the teardowns that throw, and the history page counts such a run as failed. The benchmark page ignores the count, as it ignored the errors before.
+  - Verified: by reading only, since no collected version's `destroy()` throws.
+- [x] **[MEDIUM-1071] - On a small viewport, the fixed frame could cover the Stop button**
+  - Symptom: Codex Astra: "The fixed frame can cover Stop. For example, at an 800-by-480 viewport, the frame occupies almost the entire visible page."
+  - Fix: the run toolbar sits above the frame in the stacking order, and it does not move.
+  - Verified: headless at 800 x 480, the Stop button overlapped the frame, the element at its center was the button, and its click stopped the run.
+- [x] **[QUALITY-1072] - When Chart.js did not load, the page finished a run with no chart and no message**
+  - Symptom: Codex Sol: "An offline run, CDN failure or restrictive policy leaves `window.Chart` absent. `renderCharts()` returns silently, and the status still reports completion without any line chart."
+  - Fix: in place of the charts, the page says that Chart.js did not load and that the tables and the copy buttons still work.
+- [x] **[QUALITY-1073] - The history page named its display text `label`**
+  - Symptom: Codex Sol: "Local identifiers and JSON fields use `label` for ordinary display text. `CLAUDE.md` reserves `label` for concepts named label by HTML."
+  - Fix: `text` for the scenarios and the columns, `name` for the entries and the JSON field. The `label` and `labels` keys of Chart.js stay, with a comment.
+- [x] **[DOCUMENTATION-1074] - The demo copy of the history page broke the sentence limit**
+  - Symptom: Codex Astra: "The warning beginning "Keep this tab in front" contains 30 words. The introductory explanation contains 23; the generated caption's first sentence contains 29." Codex Sol found the same.
+  - Fix: every sentence of the introduction, the warning and the caption has fewer than 20 words.
+- [x] **[DOCUMENTATION-1075] - The record of the owner's second batch read the same machine state into matching medians, and compared U with the wrong cutoff**
+  - Symptom: Codex Astra: ""So the machine state was the same" does not follow from similar control medians." And: "19 is the untied, one-sided cutoff; the samples contain ties. Enumerating assignments of the supplied values gives approximately 0.0424 one-sided or 0.0848 two-sided."
+  - Fix: the bullet reports the matching medians without the claim, and gives an exact permutation test: p = 0.042 for a rise and p = 0.084 two-sided, so no difference at the 5 percent level.
+  - Q: Why did the earlier text read U = 19.5 against 19 as the edge of the noise?
+    - A: Because the agent took 19 for the two-sided cutoff. It is the one-sided cutoff for untied runs, and these runs have ties, so only an exact test that handles the ties decides.
+  - Verified: an enumeration of all 31,824 splits of the 18 runs gave U = 19.5, p = 0.0424 one-sided, and p = 0.0841 two-sided by the distance from the mean; Codex Astra's 0.0848 is twice the one-sided value.
+- [x] **[DOCUMENTATION-1076] - The teardown record carried a saving of the rig over to the owner's machine, and missed that build trails too**
+  - Symptom: Codex Astra: ""It takes about 1 ms off the owner's 11 ms" transfers a devcontainer result to an unmeasured owner-machine result." And: ""Teardown is the column where llselect trails" also overlooks build time: 41 ms against native's 37 ms." Codex Sol: ""`clearOpenState()` writes only the values that differ from the closed state" is false. The test build guards DOM mutations, but several internal state assignments remain unconditional."
+  - Fix: the bullet names both columns where llselect trails, limits the saving to the rig, 0.90 ms of 8.20 ms, says that the saving on the owner's machine is not measured, and lists what the test build guards.
+- [x] **[DOCUMENTATION-1077] - "Accept for now" read as covering every remaining cost**
+  - Symptom: Codex Sol: "The words "the owner chose to accept the cost for now" can cover both remaining build and before-paint costs. The owner's answer covered the before-paint cost of the trigger's ARIA structure."
+  - Fix: the bullet names the question that the owner answered: the before-paint cost of the ARIA structure of the trigger. Codex Astra found no problem with the scope.
+- [x] **[DOCUMENTATION-1078] - The changelog request still waited for a choice that the owner had made**
+  - Symptom: Codex Sol and Codex Astra: the item in `TODO.md` still said that the draft "waits for the owner's choice", while the owner had answered "as recommended" to the question on its place.
+  - Fix: the item records the answer, and the draft, `CHANGELOG.md`, which waits for the owner's review.
+- [x] **[DOCUMENTATION-1079] - `OPTIMIZE.md` placed `buildAll` in `demo/benchmark.js`**
+  - Symptom: Codex Sol: "The reference" to `demo/benchmark.js`, `buildAll` "is stale. `buildAll()` now lives in `demo/bench-core.js`."
+  - Fix: the reference names `demo/bench-core.js`.
+- [x] **[DOCUMENTATION-1080] - The first commit's draft of the history-page item named wrong versions, and no filter input for 0.0.1 and 0.0.2**
+  - Symptom: Codex Sol: "The draft says "v0.0.1 to v0.0.12 from npm" and says v0.0.1 and v0.0.2 have no filter input. npm lacked v0.0.10 and v0.0.11. Both early versions use the `searchable` setting." Codex Astra: "The initial TODO draft wrongly claimed that the first two versions lacked a filter input. Its README-coverage promise was also wrong. Both claims were corrected by the next commit; no current fix remains."
+  - Fix: none; the first commit is not amended.
+  - Q: Why not amend the first commit, as Codex Sol proposed?
+    - A: Because the text was the agent's own draft plan, which the next commit replaced. The file is correct from that commit on, and an amendment would rewrite a line that the next commit rewrites again.
+
 ## review (the teardown optimization, round five)
 
 Process: Codex Sol and Codex Astra, each in a fresh session at max effort, reviewed the three commits into which the agent had split the commit of round four: "fix: [src][test] the screen-reader text stays hidden under a CSP of style-src 'self'", "fix: [src][test][docs/llm] the put-back empties the list after the hide of the popover" and "docs: [docs/llm] the clone's measurements and the owner's performance goal; Edge slower than Chromium". Both found documentation only. Codex Sol: "All findings are documentation only. Another review round is not needed after the documentation fixes." Codex Astra: "These findings require no further review round under the documentation-only stop rule." On the custom element that renders the list from its reaction, Codex Sol: "The custom-element contract reading holds."; Codex Astra found the record consistent with the agent's documented reading, and asked that its provisional status stay visible. By the stop rule of `CLAUDE.md`, the agent fixed these findings and started no further round.

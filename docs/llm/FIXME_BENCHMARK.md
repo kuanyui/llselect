@@ -2,6 +2,19 @@
 
 Plain checklist for the interaction-latency rework. No severity codes, no numbering - just tick when done. Design rationale and the traps behind these live in `SPEC_BENCHMARK.md`.
 
+## Benchmark history page
+
+Found by Codex Sol and Codex Astra in the review of the page (`FIXME.md`, rounds "the benchmark history page, round one" and "round two"), except the last item, which the owner found.
+
+- [x] After Stop and a restart, a late result of the stopped run could enter the new run. Fix: the page takes a result only from the frame of the run in progress.
+- [x] Stop waited for the run in progress, and a stopped round left the entries with different run counts. Fix: Stop removes the frame at once, and a round joins the results only when it is complete.
+- [x] A theme stylesheet that failed to load still gave a measurement. Fix: the frame checks every stylesheet before it measures.
+- [x] A teardown that threw still counted as a measurement. Fix: `measureMass` counts such teardowns, and the page counts the run as failed.
+- [x] On a small viewport, the fixed frame could cover the Stop button. Fix: the run toolbar sits above the frame.
+- [x] The benchmark page timed more handle bookkeeping than the history page. Fix: one collector in `bench-core.js`.
+- [x] When Chart.js did not load, the page showed no message. Fix: the page says so in place of the charts.
+- [x] The copy buttons copied nothing in the owner's first run of the page; in the owner's words, translated from Chinese: "this is too ridiculous: it ran for ages, and in the end those two copy buttons cannot copy; I will just paste the tables to you". The owner did not say at which address the page was open. Over plain http on an address that is not a loopback address such as `localhost`, for example the LAN address that `make server` prints, the page is not a secure context, so the browser offers no `navigator.clipboard` and the call to its `writeText` threw; the agent confirmed the missing `navigator.clipboard` there in Chromium 156 and Firefox. Fix: the page copies through `document.execCommand('copy')` on a hidden text area first, and through `navigator.clipboard` when the browser refuses that, both inside the click (`FIXME.md`, the round "the npm login check, the copy buttons and the owner's run", which holds the browser checks).
+
 ## Before paint measurement
 
 Found by Codex Astra in the review of the commits after v0.0.11 (`FIXME.md`, round "the commits after v0.0.11").

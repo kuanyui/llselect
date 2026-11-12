@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Page color scheme: resolves it before first paint and mounts the nav switch. -->
+  <script src="color-scheme.js"></script>
+  <title>llselect benchmark history</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .bh-table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+    .bh-table th, .bh-table td { border: 1px solid var(--line); padding: 5px 10px; text-align: right; }
+    .bh-table th:first-child, .bh-table td:first-child { text-align: left; }
+    .bh-table thead th { background: var(--muted); }
+    .bh-table caption { caption-side: top; text-align: left; font-size: 0.85rem; color: var(--fg-muted); padding: 0 0 0.4rem; }
+    .bh-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .bh-chart { position: relative; height: 18rem; }
+    #rounds { width: 4rem; padding: 0.25rem; }
+    /* Stop stays reachable when the frame below covers the toolbar on a small viewport. */
+    #run-toolbar { position: relative; z-index: 11; }
+    /* The frame of the run in progress stays in the viewport: a browser may
+       throttle the animation frames of a frame that is out of view. */
+    .bh-frame-host { position: fixed; right: 1rem; bottom: 1rem; width: min(56rem, calc(100vw - 2rem)); height: 30rem; border: 1px solid var(--line); background: var(--bg); z-index: 10; }
+    .bh-frame-host iframe { display: block; width: 100%; height: 100%; border: 0; }
+  </style>
+</head>
+<body>
+  <nav class="demo-nav">
+    <a href="../">&larr; Home</a>
+    <a href="../api/">API</a>
+    <a href="examples.html">Examples</a>
+    <a href="benchmark.html">Benchmark</a>
+    <a href="../angularjs/">AngularJS</a>
+    <a href="https://github.com/kuanyui/llselect" class="repo">GitHub</a>
+  </nav>
+  <script>
+  // One build serves both hosts: the nav repo link follows the serving domain.
+  if (location.hostname.includes('gitlab')) {
+    const repoLink = document.querySelector('nav a.repo')
+    repoLink.href = 'https://gitlab.com/kuanyui/llselect'
+    repoLink.textContent = 'GitLab'
+  }
+  </script>
+  <h1>llselect benchmark history</h1>
+  <p>
+    This page runs the mass-instantiation benchmark of the
+    <a href="benchmark.html">benchmark page</a> on every collected version of llselect.
+    The native <code>&lt;select&gt;</code> runs beside them as the reference.
+    <strong>Lower is better.</strong>
+  </p>
+  <ul class="bench-caveats">
+    <li>A round runs every version once in each scenario, and the next round runs them in reverse order.</li>
+    <li>Every run loads a fresh page in a frame, like a reload of the benchmark page.</li>
+    <li>Each number is the median of a row's successful runs. A stopped round is left out.</li>
+    <li>Each version runs with its own vanilla theme.</li>
+    <li>The entry "current" is the build in <code>dist/</code>, which the benchmark page loads too.</li>
+  </ul>
+  <p class="bench-warn">
+    During a run, keep this tab in front and do not scroll.
+    A tab in the background gets fewer animation frames.
+    Scrolling adds work to the measured frames.
+  </p>
+  <div class="bench-toolbar" id="run-toolbar">
+    <div class="bench-row">
+      <label>Rounds <input type="number" id="rounds" min="1" max="50" value="10"></label>
+      <button id="run" disabled>Run</button>
+      <button id="stop" disabled>Stop</button>
+      <span id="status">Loading the versions ...</span>
+    </div>
+  </div>
+  <div id="tables"></div>
+  <div class="bh-charts" id="charts"></div>
+  <div class="bench-toolbar">
+    <div class="bench-row">
+      <button id="copy-json" disabled>Copy the results as JSON</button>
+      <button id="copy-md" disabled>Copy the medians as Markdown</button>
+    </div>
+  </div>
+  <div class="bh-frame-host" id="frame-host" hidden></div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js"></script>
+  <script type="module" src="bench-history.js"></script>
+</body>
+</html>

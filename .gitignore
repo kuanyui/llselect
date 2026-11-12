@@ -8,3 +8,4 @@ public/
 REFS/
 angularjs/node_modules/
 angularjs/*.min.js
+demo/bench-history/

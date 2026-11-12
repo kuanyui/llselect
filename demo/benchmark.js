@@ -12,8 +12,10 @@
 //   the tab. The yields are excluded from the reported compute time.
 // - Every op is guarded: an adapter that cannot drive a loaded version reports
 //   "-"/error for that cell rather than breaking the page.
+// - The mass-instantiation measurement and the adapters of the native select and
+//   of llselect live in bench-core.js, which the benchmark history page shares.
 
-const BUDGET_MS = 20000
+import { BUDGET_MS, SCENARIOS, raf, buildItems, preCount, makeSelect, NATIVE_ADAPTER, LLSELECT_ADAPTER, measureMass } from './bench-core.js'
 
 // Display name + homepage for each library (rendered as a link), plus the
 // version actually under test (matches the CDN URLs in benchmark.html).
@@ -77,17 +79,6 @@ function ixCellText(td, text, key, col, multi) {
   td.append(text)
 }
 
-const SCENARIOS = {
-  's-100x100': { widgets: 100, itemsPer: 100, multi: false },
-  's-1000x10': { widgets: 1000, itemsPer: 10, multi: false },
-  's-10000x10': { widgets: 10000, itemsPer: 10, multi: false },
-  's-10x10000': { widgets: 10, itemsPer: 10000, multi: false },
-  'm-100x100': { widgets: 100, itemsPer: 100, multi: true },
-  'm-1000x10': { widgets: 1000, itemsPer: 10, multi: true },
-  'm-10000x10': { widgets: 10000, itemsPer: 10, multi: true },
-  'm-10x10000': { widgets: 10, itemsPer: 10000, multi: true },
-}
-
 // llselect UMD is now minified, so its number is comparable to the competitors'.
 const SIZE_URLS = {
   llselect: '../dist/index.umd.js',
@@ -102,76 +93,16 @@ const stage = document.getElementById('stage')
 
 // --- item content helpers (custom-renderer variant) -----------------------
 
-function iconSpan(text) {
-  const s = document.createElement('span')
-  const i = document.createElement('i')
-  i.className = 'mdi mdi-tag-outline'
-  i.setAttribute('aria-hidden', 'true')
-  s.append(i, ' ' + text)
-  return s
-}
 function iconHtml(text) { return '<i class="mdi mdi-tag-outline" aria-hidden="true"></i> ' + text }
-
-// How many items to pre-select when the toggle is on: one for a
-// single-select component, 10% for a multiple-select component (renders a
-// value / tags at build time).
-function preCount(items, opts) {
-  if (!opts.preselect) { return 0 }
-  return opts.multi ? Math.max(1, Math.ceil(items.length * 0.1)) : 1
-}
 
 // --- adapters -------------------------------------------------------------
 // setup(mount, items, {multi, custom, preselect, closeBtn}) -> handle; teardown
 // disposes it. The interaction test drives each handle through DRIVER (below),
 // which uses real DOM events rather than the library's API.
 
-function makeSelect(mount, multi) {
-  const sel = document.createElement('select')
-  if (multi) { sel.multiple = true }
-  mount.appendChild(sel)
-  return sel
-}
-
 const ADAPTERS = {
-  native: {
-    setup(mount, items, opts) {
-      const k = preCount(items, opts)
-      const sel = makeSelect(mount, opts.multi)
-      const frag = document.createDocumentFragment()
-      items.forEach((v, i) => {
-        const o = document.createElement('option')
-        o.value = v; o.textContent = v
-        if (i < k) { o.selected = true }
-        frag.appendChild(o)
-      })
-      sel.appendChild(frag)
-      return { sel }
-    },
-    teardown(h) { h.sel.remove() },
-  },
-  llselect: {
-    setup(mount, items, opts) {
-      const Ctor = opts.multi ? window.llselect.LLSelectMultiple : window.llselect.LLSelectSingle
-      const o = { filterable: true, ariaLabel: 'Benchmark select component' }
-      // Match the competitors: their multi-select components render each
-      // chosen item as a tag, so llselect renders tags too (not the lighter
-      // count text), otherwise it would be doing less per-selection work
-      // than they do.
-      if (opts.multi) { o.triggerDisplay = 'tags' }
-      if (opts.custom) {
-        o.createPopupListItemContentElFn = (it) => iconSpan(it)
-        // If list items carry an icon, the chosen display must carry it too:
-        // the tags in multi, the trigger content in single.
-        if (opts.multi) { o.createTagContentElFn = (it) => iconSpan(it) } else { o.createTriggerContentElFn = (ctx) => (ctx.chosenItem == null ? null : iconSpan(ctx.chosenItem)) }
-      }
-      const inst = new Ctor(mount, o)
-      inst.setItems(items)
-      const k = preCount(items, opts)
-      if (k > 0) { if (opts.multi) { inst.setChosenItems(items.slice(0, k)) } else { inst.setChosenItem(items[0]) } }
-      return { inst, mount }
-    },
-    teardown(h) { h.inst.destroy() },
-  },
+  native: NATIVE_ADAPTER,
+  llselect: LLSELECT_ADAPTER,
   choices: {
     setup(mount, items, opts) {
       const k = preCount(items, opts)
@@ -342,7 +273,6 @@ function available(key) {
 
 // --- harness --------------------------------------------------------------
 
-const raf = () => new Promise(r => requestAnimationFrame(r))
 function reflow(el) { return el.offsetHeight }
 function safe(fn) { try { return fn() } catch (e) { console.warn(e); return null } }
 // Some libraries bind their option / result click to mousedown / mouseup, not the
@@ -365,75 +295,16 @@ function flushShortTimers(fn) {
   try { return fn() } finally { window.setTimeout = orig }
 }
 function median(xs) { const s = xs.slice().sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2 }
-function buildItems(n) { return Array.from({ length: n }, (_, i) => 'Item ' + String(i + 1).padStart(6, '0')) }
 // Interaction items: every other one carries a ' q' token so a single-character
 // query 'q' filters the list to exactly half (the interaction filter test).
 function ixBuildItems(n) { return Array.from({ length: n }, (_, i) => 'Item ' + String(i + 1).padStart(6, '0') + (i % 2 === 0 ? ' q' : '')) }
-function countNodes() { return stage.querySelectorAll('*').length }
 
-let live = [] // { key, h } currently rendered, for teardown
 let results = {} // key -> latest metrics for the current scenario, for the chart
 let stopRequested = false // cooperative cancel for the mass build
 let select2SuppressOpen = false // set around a Select2 remove-tag click (see adapter)
 
 function clearStage() {
-  for (const { key, h } of live) { try { ADAPTERS[key].teardown(h) } catch (e) { /* ignore */ } }
-  live = []
   stage.replaceChildren()
-}
-
-// Build all N select components in chunks, yielding between them. With the budget on, a
-// library that overruns is cut off (timedOut). With noTimeout, it builds every
-// select component no matter how long. Returns compute time (yields excluded), the time
-// each chunk still cost before paint (prepaint, see the column's legend) and
-// how many were built.
-async function buildAll(key, scen, runOpts) {
-  const a = ADAPTERS[key]
-  const status = document.getElementById('status')
-  const items = buildItems(scen.itemsPer)
-  // closeBtn: true keeps the mass section's existing tag rendering (Choices /
-  // Tom Select keep their opt-in remove button); only the interaction section
-  // exposes this as a checkbox.
-  const opts = { multi: scen.multi, custom: runOpts.custom, preselect: runOpts.preselect, closeBtn: true }
-  const CHUNK = scen.widgets >= 1000 ? 25 : 1
-  let built = 0
-  let compute = 0
-  let prepaint = 0
-  let timedOut = false
-  let errored = false
-  let stopped = false
-  let chunk = 0
-  const wall0 = performance.now()
-  for (let i = 0; i < scen.widgets; i += CHUNK) {
-    const end = Math.min(i + CHUNK, scen.widgets)
-    const c0 = performance.now()
-    for (let j = i; j < end; j++) {
-      const mount = document.createElement('div')
-      mount.className = 'bench-widget'
-      stage.appendChild(mount)
-      try { live.push({ key, h: a.setup(mount, items, opts) }); built++ } catch (e) { console.warn(key, e); errored = true; break }
-    }
-    compute += performance.now() - c0
-    // What the chunk still costs before paint, timed apart from Build total:
-    // the microtasks it queued (a Promise, a MutationObserver callback) run at
-    // the await, then one forced style and layout pass covers the new select components
-    // for every library alike (a library whose microtask reads computed style
-    // has already paid the style part there). Timers, rAF callbacks and a
-    // microtask queued from inside one of those microtasks stay out of it.
-    // Timed before the exits below, so a chunk that Build total counts is
-    // always timed here too.
-    const p0 = performance.now()
-    await null
-    void stage.offsetHeight
-    prepaint += performance.now() - p0
-    if (errored) { break }
-    if (stopRequested) { stopped = true; break }
-    if (!runOpts.noTimeout && performance.now() - wall0 > BUDGET_MS) { timedOut = true; break }
-    if (++chunk % 8 === 0) { status.textContent = `${DISPLAY[key].name}: built ${built} / ${scen.widgets} ...` }
-    await raf()
-  }
-  reflow(stage)
-  return { built, compute, prepaint, timedOut, errored, stopped }
 }
 
 // --- table ----------------------------------------------------------------
@@ -493,21 +364,17 @@ async function runLib(key, renderAfter = true) {
   const scen = SCENARIOS[document.getElementById('scenario').value]
   if (!available(key)) { setCell(key, 'built', 'not loaded'); return }
   clearStage()
-  await raf()
-  status.textContent = `${DISPLAY[key].name}: building ${scen.widgets} select component(s) x ${scen.itemsPer} items ...`
-  await raf()
-  const before = countNodes()
-  const res = await buildAll(key, scen, runOptsFromDom())
-  const nodes = countNodes() - before
-
-  // Teardown: time destroying every select component just built (symmetric to Build total).
-  // This empties the scratch area - the mass select components are transient proof they
-  // rendered; the interaction section keeps its select components live for inspection.
-  const td0 = performance.now()
-  for (const w of live) { try { ADAPTERS[w.key].teardown(w.h) } catch (e) { /* ignore */ } }
-  const teardown = performance.now() - td0
-  live = []
-  stage.replaceChildren()
+  // The teardown at the end empties the scratch area - the mass select
+  // components are transient proof they rendered; the interaction section keeps
+  // its select components live for inspection.
+  const res = await measureMass(ADAPTERS[key], stage, scen, runOptsFromDom(), {
+    name: key,
+    budgetMs: BUDGET_MS,
+    onStart: () => { status.textContent = `${DISPLAY[key].name}: building ${scen.widgets} select component(s) x ${scen.itemsPer} items ...` },
+    shouldStop: () => stopRequested,
+    onProgress: (built) => { status.textContent = `${DISPLAY[key].name}: built ${built} / ${scen.widgets} ...` },
+  })
+  const { nodes, teardown } = res
 
   const builtCell = rowFor(key).querySelector('td[data-col="built"]')
   builtCell.textContent = `${res.built} / ${scen.widgets}` + (res.errored ? ' (error)' : res.stopped ? ' (stopped)' : res.timedOut ? ' (timeout)' : '')

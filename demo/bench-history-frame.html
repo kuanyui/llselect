@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>llselect benchmark history: one run</title>
+  <link rel="stylesheet" href="style.css">
+  <script>
+  // One run of the benchmark history page (bench-history.html): one library,
+  // one scenario. The llselect bundle and its vanilla theme load
+  // parser-blocking, as on benchmark.html: the current build from ../dist/, a
+  // published version from bench-history/<version>/, which mirrors dist/.
+  (function () {
+    var params = new URLSearchParams(location.search)
+    var v = params.get('v') || ''
+    var base = ''
+    if (v === 'current') {
+      base = '../dist/'
+    } else if (/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(v)) {
+      base = 'bench-history/' + v + '/'
+    }
+    if (params.get('lib') === 'llselect' && base) {
+      document.write('<link rel="stylesheet" href="' + base + 'themes/vanilla.css"><script src="' + base + 'index.umd.js"><\/script>')
+    }
+  })()
+  </script>
+  <style>
+    /* As on benchmark.html: the stage keeps the light form controls. */
+    .bench-stage { color-scheme: light; }
+  </style>
+</head>
+<body>
+  <div id="stage" class="bench-stage"></div>
+  <script type="module" src="bench-history-frame.js"></script>
+</body>
+</html>

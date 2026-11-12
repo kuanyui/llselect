@@ -52,6 +52,7 @@
     "build:themes": "mkdir -p dist/themes && cp src/themes/*.css dist/themes/",
     "build": "npm run clean && npm run build:dts && npm run build:js && npm run build:themes",
     "build:site": "typedoc && node scripts/build-site.mjs",
+    "bench-history:prepare": "node scripts/bench-history-prepare.mjs",
     "check": "node scripts/check.mjs",
     "prepublishOnly": "npm run check && npm run build && npm test",
     "test:compile": "rm -rf .build && tsc -p tsconfig.test.json",

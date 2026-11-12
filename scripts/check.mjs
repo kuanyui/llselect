@@ -24,7 +24,7 @@
 //      declaration, a hex also inside a data: url(); named and system colors
 //      in the properties that take a color).
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
-import { join, dirname, resolve } from 'node:path'
+import { join, dirname, resolve, sep } from 'node:path'
 import ts from 'typescript'
 
 const root = process.cwd()
@@ -57,7 +57,9 @@ const scriptFiles = walk('scripts', '.mjs')
 // Plain-JS surfaces carry the brace rule too (CLAUDE.md: the angularjs
 // directory keeps the ASCII / brace / comment rules; demo JS is real code).
 const demoTs = walk('demo', '.ts')
-const demoJs = walk('demo', '.js')
+// demo/bench-history/ holds the published bundles that `npm run
+// bench-history:prepare` collects: minified build output, not source.
+const demoJs = walk('demo', '.js').filter((f) => !f.startsWith(join('demo', 'bench-history') + sep))
 const angularjsJs = walk('angularjs', '.js').filter((f) => !f.endsWith('.min.js') && !f.includes('/test/') && !f.includes('\\test\\'))
 const angularjsTestMjs = walk('angularjs/test', '.mjs')
 const testUtilsTs = walk('test-utils', '.ts')
