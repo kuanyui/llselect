@@ -64,6 +64,7 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 - Search candidates in input, friendly for Eastern-Asian languages.
 - ARIA, A11Y and keyboard support, including native-style prefix typeahead.
 - I18n packages and RTL languages support.
+- Simulate the native behaviors of different OS / browsers (ex: Firefox, Chromium, Safari on Desktop, Android)
 
 > [!WARNING]
 > Browser support floor: Firefox 78+, Chrome/Edge 87+, Safari 14.1+. No polyfills or legacy-browser workarounds are included.
