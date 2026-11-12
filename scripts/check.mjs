@@ -77,6 +77,7 @@ const asciiFiles = [
   ...rootConfigMjs,
   'README.md',
   'CLAUDE.md',
+  'CHANGELOG.md',
   'package.json',
 ]
 
@@ -85,6 +86,7 @@ const markdownFiles = [
   ...walk('angularjs', '.md'),
   'README.md',
   'CLAUDE.md',
+  'CHANGELOG.md',
 ]
 
 // --- shared AST pass (rules 3 / 4, and string masking for rule 1) ---------
