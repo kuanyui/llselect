@@ -3,7 +3,7 @@
 
 VERSION := $(shell node -p "require('./package.json').version")
 
-.PHONY: help verify check-version login push publish-core publish-angularjs publish tag release build server
+.PHONY: help verify check-version login check-login push publish-core publish-angularjs publish tag release build server
 
 help: ## list targets
 	@grep -E '^[a-z-]+:.*##' Makefile | awk -F ':.*## ' '{ printf "  make %-18s %s\n", $$1, $$2 }'
@@ -24,14 +24,22 @@ login: ## ensure the npm token is alive (tokens expire; auth failure shows as 40
 	@npm whoami >/dev/null 2>&1 || npm login
 	@echo "npm user: $$(npm whoami)"
 
+# With a token, npm whoami asks the registry whose token it is; with a
+# username and password in .npmrc, it only prints the username. Either way it
+# proves no right to publish: after its tests, npm publish can still ask for a
+# one-time password, or fail on a missing package permission or on a token
+# that expired after the check.
+check-login: ## stop at once unless npm knows the login; every publish runs it before its tests
+	@user=$$(npm whoami 2>/dev/null) || { echo "ERROR: npm whoami failed (not logged in, an expired token, or no network): run make login, then publish again"; exit 1; }; echo "npm user: $$user"
+
 push: ## push master to both remotes
 	git push github master
 	git push gitlab master
 
-publish-core: ## publish @llselect/core (prepublishOnly: check + build + test)
+publish-core: check-login ## publish @llselect/core (prepublishOnly: check + build + test)
 	npm publish
 
-publish-angularjs: ## publish @llselect/angularjs (AFTER core - its peer range needs core on the registry)
+publish-angularjs: check-login ## publish @llselect/angularjs (AFTER core - its peer range needs core on the registry)
 	cd angularjs && npm install && npm publish
 
 publish: publish-core publish-angularjs ## both packages, in dependency order
