@@ -27,11 +27,10 @@ Agent-facing state of the work in progress, so that a later session, after a con
 ## The build slowdown: waiting for the owner
 
 - The search of `OPTIMIZE.md` "The first build in a page got slower after 0.0.9" found the cause: since 0.0.10, the build of every select component does more work, about 7 microseconds in this devcontainer, spread over many small items; the cost of a first run is a small part. Two test builds measured the fixes; neither is committed.
-- The decision: how to cut the build time of a select component.
-  - Prototype A skips the DOM writes that change nothing, with no change to the DOM or the API: about 2 to 3 ms less per 1000 select components.
-  - Prototype C adds to A a popup that is built at the first open: about 10 ms less than the current build per 1000 select components, below 0.0.9 and close to the native `<select>`, and about 3 ms less teardown. It reopens the decision of `DESIGN.md` "Popup DOM lifecycle (construction vs open)": the trigger's `aria-controls` while the popup was never opened, the public popup fields, the call time of the popup builders, and the tests.
-  - The agent's recommendation: carry out A, and take C to the review panel as a design question, since C alone reaches the owner's first goal, parity with the native `<select>`.
-- Open with it: which members review. The last session ran Codex Sol and Codex Astra only, at the owner's request for that session.
+- The owner's worry about the test build that builds the popup at the first open, in the owner's words, translated from Chinese: "what I was worried about just now is that after the change the maintenance complexity rises sharply, or that bugs come out that can never all be fixed".
+- At the owner's request, the committee proposed its own fixes, with a brief that held no proposal and left out the test builds: `build-time-committee.md`. Five of the seven members rank a clone of the fixed DOM from a cached template first, and Opus 4.8 ranks it second; none proposes a popup built at the first open as a first fix.
+- Waiting for the owner: the next step. The choices the agent offered: a second stage in which every member marks every proposal, anonymized; test builds of the main proposals first, then that stage; or the owner's own pick. The agent recommended the test builds first, since the members' estimates for the clone run from 2 to 8 microseconds per select component.
+- Open with it: which members review a fix. The last session ran Codex Sol and Codex Astra only, at the owner's request for that session.
 - The bundles of both test builds are kept in `demo/bench-history/0.0.15-proto-a/` and `demo/bench-history/0.0.15-proto-c/`, which git ignores, and `demo/bench-history/versions.json` lists them, so the version history page of `make server` measures them on the README's machine too. `npm run bench-history:prepare` rewrites `versions.json` without them.
 
 ## Waiting for the owner
