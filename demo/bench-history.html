@@ -30,6 +30,7 @@
     <a href="../api/">API</a>
     <a href="examples.html">Examples</a>
     <a href="benchmark.html">Benchmark</a>
+    <a href="bench-history.html" class="current">Benchmark history</a>
     <a href="../angularjs/">AngularJS</a>
     <a href="https://github.com/kuanyui/llselect" class="repo">GitHub</a>
   </nav>
@@ -43,18 +44,31 @@
   </script>
   <h1>llselect benchmark history</h1>
   <p>
-    This page runs the mass-instantiation benchmark of the
-    <a href="benchmark.html">benchmark page</a> on every collected version of llselect.
-    The native <code>&lt;select&gt;</code> runs beside them as the reference.
+    This page tracks how fast every version of llselect builds its select components.
+    The native <code>&lt;select&gt;</code> runs beside them as the baseline.
+    The comparison with other libraries is on the <a href="benchmark.html">benchmark page</a>.
     <strong>Lower is better.</strong>
   </p>
   <ul class="bench-caveats">
+    <li>The page runs the mass-instantiation benchmark of the benchmark page.</li>
     <li>A round runs every version once in each scenario, and the next round runs them in reverse order.</li>
     <li>Every run loads a fresh page in a frame, like a reload of the benchmark page.</li>
     <li>Each number is the median of a row's successful runs. A stopped round is left out.</li>
     <li>Each version runs with its own vanilla theme.</li>
-    <li>The entry "current" is the build in <code>dist/</code>, which the benchmark page loads too.</li>
   </ul>
+
+  <h2 id="latest-release">Results of the latest release</h2>
+  <p class="hint" id="saved-status">Loading the results ...</p>
+  <div id="saved-tables"></div>
+  <div class="bh-charts" id="saved-charts"></div>
+
+  <h2 id="run-it-yourself">Run it yourself</h2>
+  <ol>
+    <li>To install the dependencies, run <code>npm ci</code> in a clone of the repository.</li>
+    <li>To collect every published version from npm, run <code>npm run bench-history:prepare</code>.</li>
+    <li>Run <code>make server</code>, then open <code>/demo/bench-history.html</code> at the address it prints.</li>
+    <li>Click Run. The entry "current" is the build in <code>dist/</code>, which the benchmark page loads too.</li>
+  </ol>
   <p class="bench-warn">
     During a run, keep this tab in front and do not scroll.
     A tab in the background gets fewer animation frames.

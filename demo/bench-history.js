@@ -4,6 +4,9 @@
 // (bench-history-frame.html) per run, and draws the medians by version. The
 // published versions come from bench-history/versions.json, which
 // `npm run bench-history:prepare` writes; the current build is ../dist/.
+// Above the run, the page draws the results of the latest release from
+// bench-history-results.json, which the bump commit stores (CLAUDE.md, the
+// order of a release).
 
 const SCENARIOS = [
   { key: 's-100x100', text: '100 select components x 100 items' },
@@ -25,6 +28,7 @@ const roundsInput = document.getElementById('rounds')
 const copyJsonBtn = document.getElementById('copy-json')
 const copyMdBtn = document.getElementById('copy-md')
 const frameHost = document.getElementById('frame-host')
+const savedStatusEl = document.getElementById('saved-status')
 
 let entries = [] // { id, name, lib, v }; the native <select> first, the current build last
 let results = null // entry id -> scenario key -> { compute: [], prepaint: [], nodes: [], teardown: [], errors: [] }
@@ -32,6 +36,8 @@ let roundsDone = 0
 let stopRequested = false
 let cancelActiveRun = null // ends the run in progress as stopped
 let charts = []
+let saved = null // the latest release's results: { entries, results, rounds }, shaped as the run's
+let savedCharts = []
 
 function median(xs) {
   if (!xs.length) { return null }
@@ -149,13 +155,18 @@ async function runAll() {
 }
 
 function renderTables() {
-  const host = document.getElementById('tables')
+  renderTablesInto(document.getElementById('tables'), entries, results, roundsDone)
+}
+
+// One table per scenario, into host; `list` and `data` are shaped as
+// `entries` and `results`.
+function renderTablesInto(host, list, data, rounds) {
   host.replaceChildren()
   for (const s of SCENARIOS) {
     const table = document.createElement('table')
     table.className = 'bh-table'
     const caption = document.createElement('caption')
-    caption.textContent = `${s.text}. Each value is the median of the row's successful runs. Complete rounds: ${roundsDone}.`
+    caption.textContent = `${s.text}. Each value is the median of the row's successful runs. Complete rounds: ${rounds}.`
     table.append(caption)
     const thead = document.createElement('thead')
     const hr = document.createElement('tr')
@@ -167,8 +178,8 @@ function renderTables() {
     thead.append(hr)
     table.append(thead)
     const tbody = document.createElement('tbody')
-    for (const e of entries) {
-      const cell = results[e.id][s.key]
+    for (const e of list) {
+      const cell = data[e.id][s.key]
       const tr = document.createElement('tr')
       const values = [e.name, String(cell.compute.length), ...METRICS.map((m) => fmt(m.key, median(cell[m.key]))), cell.errors.length ? `${cell.errors.length}: ${cell.errors[0]}` : '0']
       for (const text of values) {
@@ -191,23 +202,32 @@ function isDarkScheme() {
 }
 
 function renderCharts() {
-  for (const c of charts) { c.destroy() }
-  charts = []
-  const host = document.getElementById('charts')
+  charts = renderChartsInto(document.getElementById('charts'), entries, results, charts)
+}
+
+function renderSavedCharts() {
+  savedCharts = renderChartsInto(document.getElementById('saved-charts'), saved.entries, saved.results, savedCharts)
+}
+
+// The line charts of one set of results, into host; destroys the charts
+// that host held (`old`) and returns the new ones.
+function renderChartsInto(host, list, data, old) {
+  for (const c of old) { c.destroy() }
+  const drawn = []
   host.replaceChildren()
-  if (!results) { return }
+  if (!data) { return drawn }
   if (!window.Chart) {
     const p = document.createElement('p')
     p.className = 'bench-warn'
     p.textContent = 'Chart.js did not load, so the page draws no chart. The tables and the copy buttons still work.'
     host.append(p)
-    return
+    return drawn
   }
   const dark = isDarkScheme()
   window.Chart.defaults.color = dark ? '#c4c4c4' : '#666'
   window.Chart.defaults.borderColor = dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)'
-  const versions = entries.filter((e) => e.lib === 'llselect')
-  const native = entries.find((e) => e.lib === 'native')
+  const versions = list.filter((e) => e.lib === 'llselect')
+  const native = list.find((e) => e.lib === 'native')
   for (const s of SCENARIOS) {
     for (const m of METRICS) {
       const box = document.createElement('div')
@@ -215,16 +235,16 @@ function renderCharts() {
       const canvas = document.createElement('canvas')
       box.append(canvas)
       host.append(box)
-      const nativeMedian = median(results[native.id][s.key][m.key])
+      const nativeMedian = median(data[native.id][s.key][m.key])
       // `label` is Chart.js's own name for a dataset's legend text.
-      charts.push(new window.Chart(canvas, {
+      drawn.push(new window.Chart(canvas, {
         type: 'line',
         data: {
           labels: versions.map((e) => e.name),
           datasets: [
             {
               label: 'llselect',
-              data: versions.map((e) => median(results[e.id][s.key][m.key])),
+              data: versions.map((e) => median(data[e.id][s.key][m.key])),
               borderColor: dark ? '#7fb1f5' : '#2456a6',
               backgroundColor: dark ? '#7fb1f5' : '#2456a6',
               pointRadius: 4,
@@ -248,12 +268,47 @@ function renderCharts() {
       }))
     }
   }
+  return drawn
 }
 
 // Rebuild the charts when the color scheme changes: an override writes
 // data-color-scheme on <html>, the OS case comes from matchMedia.
-darkSchemeMq.addEventListener('change', () => { if (charts.length) { renderCharts() } })
-new MutationObserver(() => { if (charts.length) { renderCharts() } }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-color-scheme'] })
+function rerenderChartsForScheme() {
+  if (charts.length) { renderCharts() }
+  if (savedCharts.length) { renderSavedCharts() }
+}
+darkSchemeMq.addEventListener('change', rerenderChartsForScheme)
+new MutationObserver(rerenderChartsForScheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-color-scheme'] })
+
+// The results of the latest release: the page's own JSON, as the copy
+// button gives it, with the released build named by its version number
+// instead of "current", and a `machine` line that the bump commit adds.
+async function loadSaved() {
+  let json
+  try {
+    const r = await fetch('bench-history-results.json', { cache: 'no-store' })
+    if (!r.ok) { throw new Error(String(r.status)) }
+    json = await r.json()
+  } catch (e) {
+    savedStatusEl.textContent = 'No results of a release are saved yet.'
+    return
+  }
+  const list = []
+  const data = {}
+  for (const e of json.entries) {
+    const id = `${e.lib}:${e.name}`
+    list.push({ id, name: e.name, lib: e.lib })
+    data[id] = {}
+    for (const s of SCENARIOS) {
+      const runs = e.results[s.key] && e.results[s.key].runs
+      data[id][s.key] = runs || { compute: [], prepaint: [], nodes: [], teardown: [], errors: [] }
+    }
+  }
+  saved = { entries: list, results: data, rounds: json.rounds }
+  savedStatusEl.textContent = `Measured on ${json.machine || 'an unnamed machine'}, in ${json.userAgent}.`
+  renderTablesInto(document.getElementById('saved-tables'), list, data, json.rounds)
+  renderSavedCharts()
+}
 
 function resultsJson() {
   const out = { userAgent: navigator.userAgent, rounds: roundsDone, scenarios: SCENARIOS.map((s) => s.key), entries: [] }
@@ -336,4 +391,5 @@ stopBtn.addEventListener('click', () => {
 copyJsonBtn.addEventListener('click', () => { copy(resultsJson(), copyJsonBtn) })
 copyMdBtn.addEventListener('click', () => { copy(resultsMarkdown(), copyMdBtn) })
 
+loadSaved()
 loadVersions()

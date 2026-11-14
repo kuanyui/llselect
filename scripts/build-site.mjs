@@ -294,6 +294,7 @@ const NAV = [
   ['API', 'api/'],
   ['Examples', 'demo/examples.html'],
   ['Benchmark', 'demo/benchmark.html'],
+  ['Benchmark history', 'demo/bench-history.html'],
   ['AngularJS', 'angularjs/'],
 ]
 function navHtml(prefix, current) {

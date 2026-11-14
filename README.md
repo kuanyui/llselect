@@ -104,6 +104,8 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 >   - Work that a library delays with a timer or with `requestAnimationFrame` is not counted. A microtask queued from inside another microtask is not counted either.
 > - The following table shows **instantiation** only, other tests (interactions like open popup, filter candidates, choose candidate, ... etc) cannot be accurately benchmarked nor able to be fairly compared across libraries due to the details in implementations of each library. But you still can test by yourself in benchmark page (Live Benchmark: [GitHub Page](https://kuanyui.github.io/llselect/demo/benchmark.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/benchmark.html). Source Code: [HTML](demo/benchmark.html), [JS](demo/benchmark.js)), and interact with them and feel the "real experience" instead of relying on inaccurate benchmark results.
 
+To see how every llselect version performs, with the native `<select>` as the baseline, open the benchmark history: [GitHub Pages](https://kuanyui.github.io/llselect/demo/bench-history.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/bench-history.html).
+
 ### 100 select components x 100 candidates
 
 | Library           | Build total (all select components, ms) | Before paint (all select components, ms)       | DOM nodes (all, resting) | Teardown total (all select components, ms) |
@@ -143,6 +145,7 @@ Minified bytes as loaded by the benchmark page (llselect from the local `dist/in
 
 - Live Example: [GitHub Pages](https://kuanyui.github.io/llselect/demo/) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/)
 - Live Benchmark: [GitHub Pages](https://kuanyui.github.io/llselect/demo/benchmark.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/benchmark.html)
+- Benchmark history: [GitHub Pages](https://kuanyui.github.io/llselect/demo/bench-history.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/bench-history.html)
 - AngularJS directives: [GitHub Pages](https://kuanyui.github.io/llselect/demo/angularjs/examples.html) or [GitLab Pages](https://kuanyui.gitlab.io/llselect/demo/angularjs/examples.html)
 - Local: clone this repo, `npm install && npm run build`, then `npm run serve` and open `http://localhost:8080/demo/`
 - Local, full-site preview: `npm run serve:site` (after `npm run build`) and open `http://localhost:8080/` - builds and serves `public/` exactly as the Pages hosts publish it (landing page, docs, API reference, demos)
