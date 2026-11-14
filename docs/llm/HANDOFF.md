@@ -24,13 +24,16 @@ Agent-facing state of the work in progress, so that a later session, after a con
 - While a review runs, the tree stays frozen: no commit, and no edit to a file the reviewers may read.
 - Every brief tells the members to answer alone and to start no model, CLI or subagent, the owner's ruling in `CLAUDE.md`. In the consultation on the zoom API, Codex Sol read the genuine-fork rule of `CLAUDE.md` and tried to start Fable 5, Opus 5, Opus 4.8, Opus 5.5 and another Codex Sol from inside its sandbox; the sandbox blocked the network, so none of them reached its API.
 
-## The build slowdown: the second stage of the committee
+## The build slowdown: waiting for the owner's decision
 
 - The search of `OPTIMIZE.md` "The first build in a page got slower after 0.0.9" found the cause: since 0.0.10, the build of every select component does more work, about 7 microseconds in this devcontainer, spread over many small items; the cost of a first run is a small part. Two test builds measured the fixes; neither is committed.
 - The owner's worry about the test build that builds the popup at the first open, in the owner's words, translated from Chinese: "what I was worried about just now is that after the change the maintenance complexity rises sharply, or that bugs come out that can never all be fixed".
 - At the owner's request, the committee proposed its own fixes, with a brief that held no proposal and left out the test builds: `build-time-committee.md`. Five of the seven members rank a clone of the fixed DOM from a cached template first, and Opus 4.8 ranks it second; none proposes a popup built at the first open as a first fix.
-- The owner chose the agent's recommendation, test builds of the main proposals first, then the second stage with the numbers; in the owner's words, translated from Chinese: "as you said". The test builds and their measurements in Chromium, Firefox and WebKit: `OPTIMIZE.md`, step 7. The second stage, every member marking every proposal, anonymized, follows in `build-time-committee.md`; then the owner decides.
-- Open with it: which members review a fix. The last session ran Codex Sol and Codex Astra only, at the owner's request for that session.
+- The owner chose the agent's recommendation, test builds of the main proposals first, then the second stage with the numbers; in the owner's words, translated from Chinese: "as you said". The test builds and their measurements in Chromium, Firefox and WebKit: `OPTIMIZE.md`, step 7.
+- The second stage ranked D, Opus 5.5's proposal, first: 6 best marks of 7 and one second; B, Opus 5's, had 5 best marks; G, Sonnet 4.6's, was marked unacceptable by six members. The marks, the members' notes and the parts of D each member would take: `build-time-committee.md` "The second stage".
+- Waiting for the owner, decision 1: which proposal, and in which form. The agent's recommendation: D's P1, the clone with the class-name cache, and D's P3, one `MediaQueryList` per window and `overflow: clip`, now; P2 and P4 only if a run of each alone, in Firefox, shows a gain, as Opus 5.5 and Codex Astra say; with the clone, the fixes the members name: the trigger's `role` written right after the clone, a defined bound for the template cache, the popover decision read from the template, a line for `overflow: clip` in the browser support floor of `CLAUDE.md`, and a real-browser check under a strict CSP. Under the owner's ruling that the slowdown is acceptable for 0.0.15, the agent keeps the release of 0.0.15 as planned and puts the fix into the next version, unless the owner wants it in 0.0.15.
+- Waiting for the owner, decision 2: which members review the fix after it is built, the review panel of `CLAUDE.md` or Codex Sol and Codex Astra only, as in the last session.
+- Not covered by any proposal: before paint in WebKit grew from 79 to 154 ms at 1000 x 10 since 0.0.9. Opus 5.5 suggests a run of the current bundle with the theme of 0.0.9, and the reverse, to split JavaScript from CSS.
 - The bundles of the test builds are kept in `demo/bench-history/0.0.15-<name>/`, which git ignores: `proto-a` and `proto-c` of step 6, and `clone`, `class`, `listen`, `writes`, `trigger`, `alloc`, `mql`, `clip`, `small`, `cs`, `csm` (cs with mql), `csc` (cs with clip) and `all` of step 7. `demo/bench-history/versions.json` lists `proto-a`, `proto-c`, `clone`, `small`, `cs` and `all`, so the version history page of `make server` measures them on the README's machine too. `npm run bench-history:prepare` rewrites `versions.json` without them.
 
 ## Waiting for the owner
@@ -52,7 +55,7 @@ Agent-facing state of the work in progress, so that a later session, after a con
 ## Next steps, in order
 
 1. The release, above.
-2. The build slowdown: the search and the test builds are done, `OPTIMIZE.md` "The first build in a page got slower after 0.0.9"; the committee's second stage, then the owner's decision, above.
+2. The build slowdown: the search, the test builds and both stages of the committee are done; the owner's two decisions, above, come next.
 3. When the owner has time: the probe page on both machines, and the native tests of NEEDS-VERIFICATION-940, -941 and -944, all low priority.
 
 ## Where the work stands
