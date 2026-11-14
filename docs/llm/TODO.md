@@ -4,6 +4,27 @@ Version-controlled source of truth for llselect's REMAINING work only. Review fi
 
 Status: `[ ]` todo, `[~]` in progress.
 
+## The version after 0.0.15 (owner ruling)
+
+The owner's ruling, on the agent's option one (0.0.15 is released as planned; then the findings of the external review are fixed; then the fix of the build time), in the owner's words, translated from Chinese: "Option one, then, so as not to fix too many things at once and then have trouble tracing where a problem started? (That is why I bumped 0.0.10 and 0.0.11 earlier but did not publish them.) Provided that v0.0.15 as it is now is really worth releasing as a version, and that the problems you are preparing to solve next in v0.0.16 are first written down clearly and recorded in the docs."
+
+- Order: 0.0.15 first (`HANDOFF.md` "The release in progress"); then 0.0.16 with the findings below; then the fix of the build time (`OPTIMIZE.md` "The first build in a page got slower after 0.0.9", step 8) in a version of its own, so that each version's changes stay few enough to trace. The split between 0.0.16 and the build-time fix is the agent's proposal, on the owner's reason above.
+- Each finding: one commit, a test that reproduces it before the fix, `npm run verify`, a line in `CHANGELOG.md`, and the post-fix review by the members the owner names (`HANDOFF.md`, decision 2). Before the bump of 0.0.16, the benchmark run of `CLAUDE.md`.
+- The findings of 0.0.16, all from `FIXME.md` "review (Sol on the web, the npm package 0.0.14)", each existing in 0.0.14 already:
+  - [ ] MEDIUM-1116: a `disable when` value that changes while the popup is open does not disable the row for a click.
+  - [ ] MEDIUM-1117: `ll-options` with a tab or a line break around `as` writes the whole object.
+  - [ ] MEDIUM-1118: holding Enter toggles the same item again on every key repeat.
+  - [ ] MEDIUM-1119: the `destroy()` of one instance removes the id that another instance's `aria-labelledby` uses on a shared `labelEl`.
+  - [ ] MEDIUM-1121: `ng-model-options` with `updateOn: 'blur'` never commits the choice.
+  - [ ] MEDIUM-1122: `<ui-llselect>` answers a query from a stored result after a clear.
+  - [ ] MEDIUM-1123: a setter called from `onActiveItemChange` during a toggle makes `onChange` report twice, the second time out of step.
+  - [ ] MEDIUM-1125: the count summary reads "All 1 selected" when the chosen count equals the item count but not every listed item is chosen.
+  - [ ] PERFORMANCE-1124: `setItems()` matches each chosen item by a linear scan, quadratic when most items are chosen.
+- Not in 0.0.16 unless the owner adds them:
+  - Waiting for the owner's ruling: QUALITY-1114, a keydown that an outer element prevented; QUALITY-1109, a `filterable` function that throws inside `open()`.
+  - Small, with a clear fix: QUALITY-1113, a select component disabled inside `onBeforeChange`; QUALITY-1115, a composition cut off by a close, low priority.
+  - Documentation only: DOCUMENTATION-1105, DOCUMENTATION-1108, DOCUMENTATION-1110 and DOCUMENTATION-1120.
+
 ## Release readiness - manual verification (open)
 
 The automatable layer of the original checklist ran green in real Chromium and Firefox (Playwright: accessibility trees, native Tab, layout, pointer, both benchmark pages, bundler builds) - evidence recorded in `FIXME.md` under the release-acceptance entries. What remains needs a human or real assistive technology:
