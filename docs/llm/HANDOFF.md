@@ -24,14 +24,14 @@ Agent-facing state of the work in progress, so that a later session, after a con
 - While a review runs, the tree stays frozen: no commit, and no edit to a file the reviewers may read.
 - Every brief tells the members to answer alone and to start no model, CLI or subagent, the owner's ruling in `CLAUDE.md`. In the consultation on the zoom API, Codex Sol read the genuine-fork rule of `CLAUDE.md` and tried to start Fable 5, Opus 5, Opus 4.8, Opus 5.5 and another Codex Sol from inside its sandbox; the sandbox blocked the network, so none of them reached its API.
 
-## The build slowdown: waiting for the owner
+## The build slowdown: the second stage of the committee
 
 - The search of `OPTIMIZE.md` "The first build in a page got slower after 0.0.9" found the cause: since 0.0.10, the build of every select component does more work, about 7 microseconds in this devcontainer, spread over many small items; the cost of a first run is a small part. Two test builds measured the fixes; neither is committed.
 - The owner's worry about the test build that builds the popup at the first open, in the owner's words, translated from Chinese: "what I was worried about just now is that after the change the maintenance complexity rises sharply, or that bugs come out that can never all be fixed".
 - At the owner's request, the committee proposed its own fixes, with a brief that held no proposal and left out the test builds: `build-time-committee.md`. Five of the seven members rank a clone of the fixed DOM from a cached template first, and Opus 4.8 ranks it second; none proposes a popup built at the first open as a first fix.
-- Waiting for the owner: the next step. The choices the agent offered: a second stage in which every member marks every proposal, anonymized; test builds of the main proposals first, then that stage; or the owner's own pick. The agent recommended the test builds first, since the members' estimates for the clone run from 2 to 8 microseconds per select component.
+- The owner chose the agent's recommendation, test builds of the main proposals first, then the second stage with the numbers; in the owner's words, translated from Chinese: "as you said". The test builds and their measurements in Chromium, Firefox and WebKit: `OPTIMIZE.md`, step 7. The second stage, every member marking every proposal, anonymized, follows in `build-time-committee.md`; then the owner decides.
 - Open with it: which members review a fix. The last session ran Codex Sol and Codex Astra only, at the owner's request for that session.
-- The bundles of both test builds are kept in `demo/bench-history/0.0.15-proto-a/` and `demo/bench-history/0.0.15-proto-c/`, which git ignores, and `demo/bench-history/versions.json` lists them, so the version history page of `make server` measures them on the README's machine too. `npm run bench-history:prepare` rewrites `versions.json` without them.
+- The bundles of the test builds are kept in `demo/bench-history/0.0.15-<name>/`, which git ignores: `proto-a` and `proto-c` of step 6, and `clone`, `class`, `listen`, `writes`, `trigger`, `alloc`, `mql`, `clip`, `small`, `cs`, `csm` (cs with mql), `csc` (cs with clip) and `all` of step 7. `demo/bench-history/versions.json` lists `proto-a`, `proto-c`, `clone`, `small`, `cs` and `all`, so the version history page of `make server` measures them on the README's machine too. `npm run bench-history:prepare` rewrites `versions.json` without them.
 
 ## Waiting for the owner
 
@@ -52,7 +52,7 @@ Agent-facing state of the work in progress, so that a later session, after a con
 ## Next steps, in order
 
 1. The release, above.
-2. The build slowdown: the search is done, `OPTIMIZE.md` "The first build in a page got slower after 0.0.9"; the fix waits for the owner's decision above.
+2. The build slowdown: the search and the test builds are done, `OPTIMIZE.md` "The first build in a page got slower after 0.0.9"; the committee's second stage, then the owner's decision, above.
 3. When the owner has time: the probe page on both machines, and the native tests of NEEDS-VERIFICATION-940, -941 and -944, all low priority.
 
 ## Where the work stands

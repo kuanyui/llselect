@@ -100,6 +100,11 @@ Agent-facing record of the committee that the owner asked for after the search o
 - Opus 5's statement that Blink's style properties can be wrapped as accessors: the convener's counter wrapped the own properties of `CSSStyleDeclaration.prototype` and of `CSSStyleProperties.prototype` in Chromium 156 and counted no style write. Not resolved.
 - Kept out of the brief, and relevant to several answers: the convener's two test builds, in `OPTIMIZE.md`. The first skipped the no-op writes and cached the class names, with the same DOM as the current build: about 2 to 3 ms less per 1000 select components. The second also built the popup at the first open: 10.45 ms less, for `LLSelectSingle` only.
 
+## Test builds before the second stage
+
+- The agent offered three ways on: the second stage at once; test builds of the main proposals first, then the second stage with the numbers; or the owner's own pick. It recommended the test builds. The owner answered, in the owner's words, translated from Chinese: "as you said".
+- The convener built and measured them: `OPTIMIZE.md` "The first build in a page got slower after 0.0.9", step 7, which says what each test build implements and of whose proposal. In short, at 1000 x 10, build total, against the current build: the clone of the skeleton saved about 2.3 ms in Chromium, 12 ms in Firefox and 9 ms in WebKit; the smaller fixes together saved about 1 ms, 6 ms and 5 ms; both together about 4.8, 17 and 10 ms, while 0.0.9 was 7.1, 15 and 21 ms faster than the current build. No single smaller fix was measurable alone in Chromium. Before paint moved with two changes only, one `MediaQueryList` per window and `overflow: clip` on the screen-reader span: together 1.15 to 2.50 ms in Chromium and 4.09 to 5.51 ms in Firefox, two runs each, against a growth of 9.30 ms and 22.30 ms since 0.0.9; in WebKit, before paint grew from 79 to 154 ms since 0.0.9, and no test build moved it measurably.
+
 ## Status
 
-- The proposals are in; the next step waits for the owner (`HANDOFF.md`).
+- The second stage: every member marks every proposal, anonymized, with the test builds' numbers in the brief.
