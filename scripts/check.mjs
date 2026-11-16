@@ -23,6 +23,7 @@
 //      `--llselect-*` variable declarations (hex and color functions in any
 //      declaration, a hex also inside a data: url(); named and system colors
 //      in the properties that take a color).
+import { spawnSync } from 'node:child_process'
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, dirname, resolve, sep } from 'node:path'
 import ts from 'typescript'
@@ -227,15 +228,18 @@ for (const rel of markdownFiles) {
 // --- rule 2b: backticked repo paths exist ---------------------------------
 // Only paths rooted in a checked-in top-level directory count - hypothetical
 // example paths never start with one, and build outputs (dist/, public/,
-// .build/) are legitimately absent on a fresh clone. docs/llm/archive/ is
+// .build/) are legitimately absent on a fresh clone. So is a path git ignores,
+// such as demo/bench-history/versions.json: it is skipped, so a local run, where
+// the file may exist, agrees with CI. docs/llm/archive/ is
 // exempt: an archive records history, and history references past paths.
 const PATHY = /`((?:src|test|test-utils|docs|angularjs|demo|scripts)\/[A-Za-z0-9_@./-]+\.(?:ts|mjs|cjs|js|css|md|json|html))`/g
+const gitIgnores = (path) => spawnSync('git', ['check-ignore', '-q', path], { cwd: root }).status === 0
 
 for (const rel of markdownFiles) {
   if (rel.includes('docs/llm/archive/') || rel.includes('docs\\llm\\archive\\')) { continue }
   const text = readFileSync(join(root, rel), 'utf8')
   for (const m of text.matchAll(PATHY)) {
-    if (!existsSync(join(root, m[1]))) {
+    if (!existsSync(join(root, m[1])) && !gitIgnores(m[1])) {
       const line = text.slice(0, m.index).split('\n').length
       problems.push(`${rel}:${line}: backticked path does not exist: ${m[1]}`)
     }
