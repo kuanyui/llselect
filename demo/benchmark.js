@@ -18,14 +18,15 @@
 import { BUDGET_MS, SCENARIOS, raf, buildItems, preCount, makeSelect, NATIVE_ADAPTER, LLSELECT_ADAPTER, measureMass } from './bench-core.js'
 
 // Display name + homepage for each library (rendered as a link), plus the
-// version actually under test (matches the CDN URLs in benchmark.html).
+// version actually under test (matches the CDN URLs in benchmark.html) and the
+// day npm published it.
 const DISPLAY = {
   native: { name: 'Native <select>', url: 'https://developer.mozilla.org/en-US/docs/Web/HTML/Element/select', version: 'browser built-in' },
   llselect: { name: 'llselect', url: 'https://gitlab.com/kuanyui/llselect', version: (window.llselect && window.llselect.version) || '(local build)' },
-  choices: { name: 'Choices.js', url: 'https://github.com/Choices-js/Choices', version: '11.1.0' },
-  select2: { name: 'Select2', url: 'https://select2.org/', version: '4.1.0-rc.0' },
-  'tom-select': { name: 'Tom Select', url: 'https://tom-select.js.org/', version: '2.4.3' },
-  'slim-select': { name: 'Slim Select', url: 'https://slimselectjs.com/', version: '2.10.0' },
+  choices: { name: 'Choices.js', url: 'https://github.com/Choices-js/Choices', version: '11.2.4', released: '2026-08-23' },
+  select2: { name: 'Select2', url: 'https://select2.org/', version: '4.1.0', released: '2026-05-26' },
+  'tom-select': { name: 'Tom Select', url: 'https://tom-select.js.org/', version: '2.7.0', released: '2026-11-07' },
+  'slim-select': { name: 'Slim Select', url: 'https://slimselectjs.com/', version: '2.10.0', released: '2024-11-21' },
 }
 const ORDER = ['native', 'llselect', 'choices', 'select2', 'tom-select', 'slim-select']
 // Interaction tables exclude native <select>: its dropdown is browser / OS-driven,
@@ -82,11 +83,11 @@ function ixCellText(td, text, key, col, multi) {
 // llselect UMD is now minified, so its number is comparable to the competitors'.
 const SIZE_URLS = {
   llselect: '../dist/index.umd.js',
-  choices: 'https://cdn.jsdelivr.net/npm/choices.js@11.1.0/public/assets/scripts/choices.min.js',
-  select2: 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js',
-  'tom-select': 'https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js',
+  choices: 'https://cdn.jsdelivr.net/npm/choices.js@11.2.4/public/assets/scripts/choices.min.js',
+  select2: 'https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js',
+  'tom-select': 'https://cdn.jsdelivr.net/npm/tom-select@2.7.0/dist/js/tom-select.complete.min.js',
   'slim-select': 'https://cdn.jsdelivr.net/npm/slim-select@2.10.0/dist/slimselect.umd.js',
-  jquery: 'https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js',
+  jquery: 'https://cdn.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js',
 }
 
 const stage = document.getElementById('stage')
@@ -481,19 +482,40 @@ async function measureSizes() {
   tbody.replaceChildren()
   // native has no script payload
   const nativeTr = document.createElement('tr')
-  nativeTr.innerHTML = '<td>Native &lt;select&gt;</td><td>browser built-in</td><td>0 KB</td>'
+  nativeTr.innerHTML = '<td>Native &lt;select&gt;</td><td>browser built-in</td><td>0 KB</td><td>0 KB</td><td>-</td>'
   tbody.appendChild(nativeTr)
   for (const [key, url] of Object.entries(SIZE_URLS)) {
     const tr = document.createElement('tr')
     const name = document.createElement('td'); name.textContent = key === 'jquery' ? 'jQuery (for Select2)' : DISPLAY[key].name
-    const ver = document.createElement('td'); ver.textContent = key === 'jquery' ? '3.7.1' : DISPLAY[key].version
+    const ver = document.createElement('td'); ver.textContent = key === 'jquery' ? '4.0.0' : DISPLAY[key].version
     const size = document.createElement('td'); size.textContent = '...'
-    tr.append(name, ver, size); tbody.appendChild(tr)
+    const gzipped = document.createElement('td'); gzipped.textContent = '...'
+    const released = document.createElement('td'); released.textContent = key === 'jquery' ? '2026-01-18' : (DISPLAY[key].released || '...')
+    tr.append(name, ver, size, gzipped, released); tbody.appendChild(tr)
+    if (key === 'llselect') { llselectReleaseDate().then(d => { released.textContent = d }) }
     try {
       const buf = await (await fetch(url)).arrayBuffer()
       size.textContent = (buf.byteLength / 1024).toFixed(1) + ' KB'
-    } catch (e) { size.textContent = '-' }
+      gzipped.textContent = (await gzipLength(buf) / 1024).toFixed(1) + ' KB'
+    } catch (e) {
+      if (size.textContent === '...') { size.textContent = '-' }
+      gzipped.textContent = '-'
+    }
   }
+}
+
+// The browser's own gzip at its default level, the level of the README's Gzipped column.
+async function gzipLength(buf) {
+  const stream = new Blob([buf]).stream().pipeThrough(new CompressionStream('gzip'))
+  return (await new Response(stream).arrayBuffer()).byteLength
+}
+
+// The local build has a release date only once npm lists its version.
+async function llselectReleaseDate() {
+  try {
+    const time = (await (await fetch('https://registry.npmjs.org/@llselect/core')).json()).time || {}
+    return (time[DISPLAY.llselect.version] || '-').slice(0, 10)
+  } catch (e) { return '-' }
 }
 
 // --- chart ----------------------------------------------------------------
@@ -1035,7 +1057,7 @@ document.getElementById('ix-size').addEventListener('change', () => { ixClearAll
 // drops Remove tag), so rebuild the tables and drop the stale results.
 document.getElementById('ix-closebtn').addEventListener('change', () => { ixClearAll(); IX_MODES.forEach(ixInitTable); document.getElementById('ix-status').textContent = 'Close-button option changed - press Build + measure.' })
 document.getElementById('versions').textContent =
-  ORDER.map(k => `${DISPLAY[k].name} ${DISPLAY[k].version}`).join('  |  ') + '  |  jQuery 3.7.1 (for Select2)'
+  ORDER.map(k => `${DISPLAY[k].name} ${DISPLAY[k].version}`).join('  |  ') + '  |  jQuery 4.0.0 (for Select2)'
 measureSizes()
 
 // --- hands-on playground ---------------------------------------------------

@@ -92,8 +92,9 @@ This is a low-level `<select>`-liked component library written in TypeScript. Fo
 
 > [!NOTE]
 > - Tested on Intel i9-13900HX (Linux, Wayland, KDE 6 power profile: Performance), Chromium 154.
-> - Tested versions of each libraries are the latest versions as of **2026-08-25**.
+> - Tested versions of each libraries are the latest versions as of **2026-11-16**.
 >   - Library versions are pinned in the bundle-size table below.
+>   - Slim Select is the one exception; see the footnote of that table.
 > - All tests use single select components.
 >   - Every select component is built WITH a pre-selected value (the benchmark page's `pre-select at build time`).
 > - **Before paint** measures the work that must finish before the browser can paint the new select components. Build total does not count this work.
@@ -110,35 +111,37 @@ To see how every llselect version performs, with the native `<select>` as the ba
 
 | Library           | Build total (all select components, ms) | Before paint (all select components, ms)       | DOM nodes (all, resting) | Teardown total (all select components, ms) |
 |-------------------|-------------------------------|--------------------------------------|--------------------------|----------------------------------|
-| Native `<select>` | 28                            | 105                                  | 10,200                   | 4.40                             |
-| llselect          | 9.10                          | 22                                   | 900                      | 0.50                             |
-| Choices.js        | 149                           | 32                                   | 20,900                   | 6.10                             |
-| Select2           | 118                           | 95                                   | 10,900                   | 11                               |
-| Tom Select        | 40                            | 35                                   | 900                      | 1.10                             |
-| Slim Select       | 63                            | 113                                  | 11,000                   | 5.40                             |
+| Native `<select>` | 37                            | 126                                  | 10,200                   | 3.80                             |
+| llselect          | 18                            | 29                                   | 1,000                    | 1.80                             |
+| Choices.js        | 198                           | 98                                   | 20,900                   | 10                               |
+| Select2           | 180                           | 118                                  | 10,900                   | 13                               |
+| Tom Select        | 54                            | 46                                   | 900                      | 1.40                             |
+| Slim Select       | 98                            | 151                                  | 11,000                   | 6.20                             |
 
 ### 1000 select components x 10 candidates
 | Library           | Build total (all select components, ms) | Before paint (all select components, ms)       | DOM nodes (all, resting) | Teardown total (all select components, ms) |
 |-------------------|-------------------------------|--------------------------------------|--------------------------|----------------------------------|
-| Native `<select>` | 31                            | 137                                  | 12,000                   | 5.60                             |
-| llselect          | 32                            | 39                                   | 9,000                    | 5.40                             |
-| Choices.js        | 869                           | 18                                   | 29,000                   | 28                               |
-| Select2           | 471                           | 167                                  | 19,000                   | 36                               |
-| Tom Select        | 457                           | 74                                   | 9,000                    | 25                               |
-| Slim Select       | 129                           | 210                                  | 20,000                   | 24                               |
+| Native `<select>` | 39                            | 161                                  | 12,000                   | 6.50                             |
+| llselect          | 41                            | 58                                   | 10,000                   | 11                               |
+| Choices.js        | 1221                          | 34                                   | 29,000                   | 34                               |
+| Select2           | 472                           | 171                                  | 19,000                   | 42                               |
+| Tom Select        | 467                           | 68                                   | 9,000                    | 22                               |
+| Slim Select       | 145                           | 230                                  | 20,000                   | 27                               |
 
 ### Bundle size
 
-Minified bytes as loaded by the benchmark page (llselect from the local `dist/index.umd.js`, the rest from the pinned CDN builds); not gzipped.
+Minified bytes as loaded by the benchmark page (llselect from the local `dist/index.umd.js`, the rest from the pinned CDN builds). Gzipped is the same file compressed with gzip at its default level, as the benchmark page does.
 
-| Library                      | Version    | Minified |
-|------------------------------|------------|----------|
-| llselect                     | 0.0.14     | 80.4 KB  |
-| Choices.js                   | 11.1.0     | 73.6 KB  |
-| Select2                      | 4.1.0-rc.0 | 71.4 KB  |
-| Tom Select                   | 2.4.3      | 49.1 KB  |
-| Slim Select                  | 2.10.0     | 86.1 KB  |
-| jQuery (required by Select2) | 3.7.1      | 85.5 KB  |
+| Library                      | Version  | Minified | Gzipped | Release date |
+|------------------------------|----------|----------|---------|--------------|
+| llselect                     | 0.0.15   | 84.2 KB  | 21.2 KB | 2026-11-16   |
+| Choices.js                   | 11.2.4   | 75.5 KB  | 20.4 KB | 2026-08-23   |
+| Select2                      | 4.1.0    | 72.6 KB  | 19.7 KB | 2026-05-26   |
+| Tom Select                   | 2.7.0    | 51.3 KB  | 17.4 KB | 2026-11-07   |
+| Slim Select                  | 2.10.0\* | 86.1 KB  | 13.0 KB | 2024-11-21   |
+| jQuery (required by Select2) | 4.0.0    | 76.9 KB  | 26.9 KB | 2026-01-18   |
+
+\* Slim Select stays at 2.10.0 for now, because its latest version, 4.7.0, has an extreme performance regression. At 1000 select components x 10 candidates, its Build total went from 145 ms to 1801 ms.
 
 
 ## Demo

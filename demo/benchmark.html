@@ -10,9 +10,9 @@
   <!-- llselect theme (the library under test) -->
   <link rel="stylesheet" href="../dist/themes/vanilla.css">
   <!-- competitor stylesheets (CDN; demo-only, like the examples page) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@11.1.0/public/assets/styles/choices.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@11.2.4/public/assets/styles/choices.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.7.0/dist/css/tom-select.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slim-select@2.10.0/dist/slimselect.css">
   <!-- Material Design Icons, for the custom-renderer variant only -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
@@ -455,13 +455,15 @@
   <p>Minified transfer bytes, <em>uncompressed</em> - the same method for every
     script: each cell fetches the library's minified UMD build live (competitors
     from the CDN, llselect its own <code>dist/index.umd.js</code> - the very
-    script this page runs) and reports the byte length; gzip shrinks them all by
-    roughly 3x. llselect's number is the complete usable library: the built-in
+    script this page runs) and reports the byte length. The gzipped column
+    compresses those bytes with the browser's own gzip,
+    <code>CompressionStream</code>, at its default level; the release date is
+    the day npm published that version. llselect's number is the complete usable library: the built-in
     English UI strings are inside it, and the optional
     <code>dist/i18n.umd.js</code> (every other language pack) is neither
     required nor counted. Select2 also requires jQuery, listed separately.</p>
   <table id="sizes">
-    <thead><tr><th>Script</th><th>Version</th><th>Minified bytes</th></tr></thead>
+    <thead><tr><th>Script</th><th>Version</th><th>Minified bytes</th><th>Gzipped bytes</th><th>Release date</th></tr></thead>
     <tbody></tbody>
   </table>
 
@@ -522,10 +524,10 @@
   <div id="pg-grid"></div>
 
   <!-- Competitor libraries via CDN (UMD globals). jQuery must precede Select2. -->
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/choices.js@11.1.0/public/assets/scripts/choices.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/choices.js@11.2.4/public/assets/scripts/choices.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.7.0/dist/js/tom-select.complete.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/slim-select@2.10.0/dist/slimselect.umd.js"></script>
   <!-- llselect (the library under test), UMD global `llselect` -->
   <script src="../dist/index.umd.js"></script>

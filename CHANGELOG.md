@@ -8,7 +8,7 @@ This file lists the notable changes of each version. With it, a reader can trace
 - "Breaking" lists the changes that need a change in an app that used the version before.
 - "Performance" names the changes that moved the benchmark numbers. The benchmark history page, `demo/bench-history.html`, measures every published version on one machine.
 
-## Unreleased
+## 0.0.15
 
 ### Added
 
